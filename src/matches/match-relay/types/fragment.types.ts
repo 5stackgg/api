@@ -1,35 +1,17 @@
-export type StartFieldData = {
-  data?: Buffer;
+export type FragmentField = "start" | "full" | "delta";
+
+// What the game server sent in the query string alongside a field's body, plus
+// what the relay records about it. Numeric protocol fields are stored as
+// numbers so /sync can return them as JSON numbers.
+export type FieldMeta = {
   gipped?: boolean;
+  timestamp?: number;
   signup_fragment?: number;
   tick?: number;
+  endtick?: number;
   tps?: number;
   map?: string;
   keyframe_interval?: number;
   protocol?: number;
-  [key: string]: any;
+  [key: string]: unknown;
 };
-
-export type FullFieldData = {
-  data?: Buffer;
-  gipped?: boolean;
-  tick?: number;
-  [key: string]: any;
-};
-
-export type DeltaFieldData = {
-  data?: Buffer;
-  gipped?: boolean;
-  timestamp?: number;
-  endtick?: number;
-  [key: string]: any;
-};
-
-export type Fragment = {
-  start?: StartFieldData;
-  full?: FullFieldData;
-  delta?: DeltaFieldData;
-  [key: string]: any;
-};
-
-export type Broadcast = Fragment[];

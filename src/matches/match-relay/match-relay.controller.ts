@@ -1,92 +1,84 @@
-import { Controller, Get, Post, Req, Res, Param } from "@nestjs/common";
+import { Controller, Get, Post, Req, Res, Param, Logger } from "@nestjs/common";
 import { Request, Response } from "express";
 import { MatchRelayService } from "./match-relay.service";
+import { FragmentField } from "./types/fragment.types";
 
 @Controller("match-relay/:id")
 export class MatchRelayController {
-  constructor(private readonly matchRelayService: MatchRelayService) {}
+  constructor(
+    private readonly logger: Logger,
+    private readonly matchRelayService: MatchRelayService,
+  ) {}
 
   @Get("sync")
-  public handleSyncGet(
+  public async handleSyncGet(
     @Param("id") matchId: string,
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    this.matchRelayService.getSyncInfo(request, response, matchId);
+    await this.relay(matchId, response, () =>
+      this.matchRelayService.getSyncInfo(request, response, matchId),
+    );
   }
 
   @Get(":fragment/start")
-  public handleGetStart(
+  public async handleGetStart(
     @Param("id") matchId: string,
     @Param("fragment") fragment: string,
     @Res() response: Response,
   ) {
-    this.matchRelayService.getStart(response, matchId, parseInt(fragment));
+    await this.relay(matchId, response, () =>
+      this.matchRelayService.getStart(response, matchId, parseInt(fragment)),
+    );
   }
 
   @Get(":fragment/full")
-  public handleGetFull(
+  public async handleGetFull(
     @Param("id") matchId: string,
     @Param("fragment") fragment: string,
     @Res() response: Response,
   ) {
-    this.matchRelayService.getFragment(
-      response,
-      matchId,
-      parseInt(fragment),
-      "full",
-    );
+    await this.getFragment(response, matchId, fragment, "full");
   }
 
   @Get(":fragment/delta")
-  public handleGetDelta(
+  public async handleGetDelta(
     @Param("id") matchId: string,
     @Param("fragment") fragment: string,
     @Res() response: Response,
   ) {
-    this.matchRelayService.getFragment(
-      response,
-      matchId,
-      parseInt(fragment),
-      "delta",
-    );
+    await this.getFragment(response, matchId, fragment, "delta");
   }
 
   @Get(":token/:fragment/start")
-  public handleGetStartWithToken(
+  public async handleGetStartWithToken(
     @Param("id") matchId: string,
     @Param("fragment") fragment: string,
     @Res() response: Response,
   ) {
-    this.matchRelayService.getStart(response, matchId, parseInt(fragment));
+    await this.relay(matchId, response, () =>
+      this.matchRelayService.getStart(response, matchId, parseInt(fragment)),
+    );
   }
 
   @Get(":token/:fragment/full")
-  public handleGetFullWithToken(
+  public async handleGetFullWithToken(
     @Param("id") matchId: string,
+    @Param("token") token: string,
     @Param("fragment") fragment: string,
     @Res() response: Response,
   ) {
-    this.matchRelayService.getFragment(
-      response,
-      matchId,
-      parseInt(fragment),
-      "full",
-    );
+    await this.getFragment(response, matchId, fragment, "full", token);
   }
 
   @Get(":token/:fragment/delta")
-  public handleGetDeltaWithToken(
+  public async handleGetDeltaWithToken(
     @Param("id") matchId: string,
+    @Param("token") token: string,
     @Param("fragment") fragment: string,
     @Res() response: Response,
   ) {
-    this.matchRelayService.getFragment(
-      response,
-      matchId,
-      parseInt(fragment),
-      "delta",
-    );
+    await this.getFragment(response, matchId, fragment, "delta", token);
   }
 
   @Post(":token/:fragment/start")
@@ -97,14 +89,7 @@ export class MatchRelayController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    this.matchRelayService.postField(
-      request,
-      response,
-      token,
-      "start",
-      matchId,
-      parseInt(fragment),
-    );
+    await this.postField(request, response, token, "start", matchId, fragment);
   }
 
   @Post(":token/:fragment/full")
@@ -115,14 +100,7 @@ export class MatchRelayController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    this.matchRelayService.postField(
-      request,
-      response,
-      token,
-      "full",
-      matchId,
-      parseInt(fragment),
-    );
+    await this.postField(request, response, token, "full", matchId, fragment);
   }
 
   @Post(":token/:fragment/delta")
@@ -133,13 +111,62 @@ export class MatchRelayController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    this.matchRelayService.postField(
-      request,
-      response,
-      token,
-      "delta",
-      matchId,
-      parseInt(fragment),
+    await this.postField(request, response, token, "delta", matchId, fragment);
+  }
+
+  private getFragment(
+    response: Response,
+    matchId: string,
+    fragment: string,
+    field: FragmentField,
+    token?: string,
+  ) {
+    return this.relay(matchId, response, () =>
+      this.matchRelayService.getFragment(
+        response,
+        matchId,
+        parseInt(fragment),
+        field,
+        token,
+      ),
     );
+  }
+
+  private postField(
+    request: Request,
+    response: Response,
+    token: string,
+    field: FragmentField,
+    matchId: string,
+    fragment: string,
+  ) {
+    return this.relay(matchId, response, () =>
+      this.matchRelayService.postField(
+        request,
+        response,
+        token,
+        field,
+        matchId,
+        parseInt(fragment),
+      ),
+    );
+  }
+
+  private async relay(
+    matchId: string,
+    response: Response,
+    handle: () => Promise<void>,
+  ) {
+    try {
+      await handle();
+    } catch (error) {
+      this.logger.error(
+        `[${matchId}] relay request failed: ${(error as Error)?.message}`,
+      );
+      if (!response.headersSent) {
+        response.writeHead(503, { "Cache-Control": "no-store" });
+      }
+      response.end();
+    }
   }
 }

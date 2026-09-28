@@ -93,6 +93,7 @@
     "@nestjs/schematics": "^11.0.5",
     "@nestjs/testing": "^11.1.3",
     "@testcontainers/postgresql": "^12.0.4",
+    "testcontainers": "^12.0.4",
     "@types/archiver": "^6.0.2",
     "@types/express": "^5.0.0",
     "@types/express-session": "^1.18.0",

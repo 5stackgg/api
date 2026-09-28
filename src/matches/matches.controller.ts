@@ -991,7 +991,13 @@ export class MatchesController {
     }
 
     if (!scheduled) {
-      this.matchRelayService.removeBroadcast(matchId);
+      await this.matchRelayService.removeBroadcast(matchId).catch((error) => {
+        this.logger.error(
+          `[${matchId}] failed to remove the relay broadcast: ${
+            (error as Error)?.message
+          }`,
+        );
+      });
     }
   }
 
@@ -1038,7 +1044,11 @@ export class MatchesController {
       );
     }
 
-    return feedEndsIn + this.matchRelayService.playoutSeconds(matchId);
+    const playout = await this.matchRelayService
+      .playoutSeconds(matchId)
+      .catch(() => 0);
+
+    return feedEndsIn + playout;
   }
 
   private static stopOnDemandServerJobOptions(delaySeconds = 0) {
