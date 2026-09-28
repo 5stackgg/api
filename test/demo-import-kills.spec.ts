@@ -379,4 +379,56 @@ describe("persist_imported_demo kill ingestion", () => {
       "TERRORIST",
     ]);
   });
+
+  // An uploaded 5stack demo had one player release several grenades on the
+  // same tick; player_utility's PK is (match_map_id, attacker_steam_id, time).
+  it("keeps every grenade one player throws on the same tick", async () => {
+    const ctx = await fx.bareMatch();
+    const demoId = await demoFor(ctx);
+    const [thrower, victim] = await fx.players(2);
+
+    const throwAt = (gid: number, type: string) => ({
+      tick: 300,
+      round: 1,
+      gid,
+      thrower,
+      thrower_team: "ct",
+      type,
+    });
+
+    await importDemo(demoId, {
+      map_name: "de_cache",
+      tick_rate: 64,
+      total_ticks: 2000,
+      round_ticks: [{ round: 1, start_tick: 0, end_tick: 2000 }],
+      players: [thrower, victim].map((steam_id) => ({
+        steam_id,
+        name: `p-${steam_id}`,
+      })),
+      grenade_throws: [
+        throwAt(1, "HE"),
+        throwAt(2, "HE"),
+        throwAt(3, "Flash"),
+      ],
+      flashes: [1, 2].map(() => ({
+        tick: 350,
+        round: 1,
+        attacker: thrower,
+        victim,
+        duration: 2,
+      })),
+    });
+
+    const [utility] = await postgres.query<Array<{ count: string }>>(
+      `SELECT count(*) FROM player_utility WHERE match_map_id = $1`,
+      [ctx.mapId],
+    );
+    expect(Number(utility.count)).toBe(3);
+
+    const [flashes] = await postgres.query<Array<{ count: string }>>(
+      `SELECT count(*) FROM player_flashes WHERE match_map_id = $1`,
+      [ctx.mapId],
+    );
+    expect(Number(flashes.count)).toBe(2);
+  });
 });
