@@ -66,7 +66,16 @@ export class ChatService {
   // back: an edit never extends a message's life. Comparing against the value
   // that was read and checked keeps an edit from bringing back a message that
   // expired or was deleted in the meantime, or from overwriting another edit.
+  //
+  // KEYS[2] is a receipt for this one attempt. ioredis resends a command whose
+  // reply was lost to a reconnect, seconds later, by which time the message may
+  // have been deleted or edited again; the receipt is what tells that resend it
+  // already applied, rather than reading as a failed swap and discarding the
+  // audit row of an edit that happened.
   private static readonly EDIT_ROOM_MESSAGE_SCRIPT = `
+    if redis.call('EXISTS', KEYS[2]) == 1 then
+      return 1
+    end
     if redis.call('HGET', KEYS[1], ARGV[1]) ~= ARGV[2] then
       return 0
     end
@@ -75,8 +84,11 @@ export class ChatService {
     if expiresAt > 0 then
       redis.call('HPEXPIREAT', KEYS[1], expiresAt, 'FIELDS', 1, ARGV[1])
     end
+    redis.call('SET', KEYS[2], '1', 'PX', ARGV[4])
     return 1
   `;
+
+  private static readonly EDIT_RECEIPT_TTL_MS = 60 * 60 * 1000;
 
   // One step, so an edit or a delete in the old room lands either before the
   // move and is carried with it, or after it and finds nothing -- never on a
@@ -908,18 +920,34 @@ export class ChatService {
 
       const editedAt = new Date().toISOString();
 
+      // Written before the swap, the way a deletion is audited before its
+      // HDEL, so no failure part way through can replace what was said
+      // without keeping it. A swap that does not apply takes its row back out.
+      const auditId = await this.recordEdit(
+        type,
+        id,
+        messageId,
+        message,
+        text,
+        editedAt,
+      );
+
       const swapped = await this.redis.eval(
         ChatService.EDIT_ROOM_MESSAGE_SCRIPT,
-        1,
+        2,
         messageKey,
+        `chat_edit_applied:${auditId}`,
         messageId,
         raw,
         JSON.stringify({ ...message, message: text, edited_at: editedAt }),
+        ChatService.EDIT_RECEIPT_TTL_MS,
       );
 
       if (swapped === 1) {
         return await this.announceEdit(type, id, messageId, text, editedAt);
       }
+
+      await this.discardEdit(auditId);
     }
 
     this.logger.warn(
@@ -1116,8 +1144,6 @@ export class ChatService {
     message: ChatMessage,
     deletedBy: User,
   ) {
-    const createdAt = new Date(message.timestamp);
-
     await this.postgres.query(
       `INSERT INTO public.chat_message_deletions
               (message_id, room_type, room_id, author_steam_id, message,
@@ -1133,11 +1159,66 @@ export class ChatService {
         id,
         ChatService.authorSteamId(message),
         String(message.message ?? ""),
-        Number.isNaN(createdAt.getTime()) ? null : createdAt.toISOString(),
+        ChatService.messageCreatedAt(message),
         message.source ?? null,
         deletedBy.steam_id,
       ],
     );
+  }
+
+  // edited_at is the one the message itself now carries, so a row can be
+  // matched to the edit clients were shown.
+  private async recordEdit(
+    type: ChatLobbyType,
+    id: string,
+    messageId: string,
+    message: ChatMessage,
+    text: string,
+    editedAt: string,
+  ): Promise<string> {
+    const [row] = await this.postgres.query<Array<{ id: string }>>(
+      `INSERT INTO public.chat_message_edits
+              (message_id, room_type, room_id, author_steam_id,
+               previous_message, new_message, message_created_at, edited_at)
+            SELECT $1::uuid, $2, $3,
+                   (SELECT steam_id FROM public.players
+                     WHERE steam_id = $4::bigint),
+                   $5, $6, $7::timestamptz, $8::timestamptz
+         RETURNING id::text AS id`,
+      [
+        messageId,
+        type,
+        id,
+        ChatService.authorSteamId(message),
+        String(message.message ?? ""),
+        text,
+        ChatService.messageCreatedAt(message),
+        editedAt,
+      ],
+    );
+
+    return row.id;
+  }
+
+  // Only for a swap that found the message gone or changed, so the edit never
+  // happened. A swap that failed outright keeps its row: it may have applied.
+  private async discardEdit(auditId: string) {
+    await this.postgres
+      .query(`DELETE FROM public.chat_message_edits WHERE id = $1::uuid`, [
+        auditId,
+      ])
+      .catch((error) => {
+        this.logger.warn(
+          `unable to discard the audit row of an edit that did not apply`,
+          error,
+        );
+      });
+  }
+
+  private static messageCreatedAt(message: ChatMessage): string | null {
+    const sentAt = new Date(message.timestamp);
+
+    return Number.isNaN(sentAt.getTime()) ? null : sentAt.toISOString();
   }
 
   // A steam id stored as a JSON number has already been rounded by JSON.parse

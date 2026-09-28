@@ -1,4 +1,6 @@
 import { randomUUID } from "crypto";
+import { readFileSync } from "fs";
+import { join } from "path";
 import IORedis, { Redis } from "ioredis";
 import { GenericContainer, StartedTestContainer } from "testcontainers";
 import { PostgresService } from "./../src/postgres/postgres.service";
@@ -100,6 +102,7 @@ describe("chat edits and self deletes (SQL-driven)", () => {
     jest.clearAllMocks();
     await redis.flushall();
     await postgres.query("DELETE FROM chat_message_deletions");
+    await postgres.query("DELETE FROM chat_message_edits");
     await postgres.query("DELETE FROM player_sanctions");
     await postgres.query("DELETE FROM notifications");
     await postgres.query("DELETE FROM players");
@@ -253,22 +256,44 @@ describe("chat edits and self deletes (SQL-driven)", () => {
       await redis.call("HPEXPIREAT", key(matchId), at, "FIELDS", 1, id);
 
       const script = (ChatService as any).EDIT_ROOM_MESSAGE_SCRIPT;
+      const receipt = `chat_edit_applied:${randomUUID()}`;
 
       await expect(
-        redis.eval(script, 1, key(matchId), id, "stale", "replacement"),
+        redis.eval(
+          script,
+          2,
+          key(matchId),
+          receipt,
+          id,
+          "stale",
+          "replacement",
+          60_000,
+        ),
       ).resolves.toBe(0);
       await expect(
-        redis.eval(script, 1, key(matchId), randomUUID(), "", "replacement"),
+        redis.eval(
+          script,
+          2,
+          key(matchId),
+          receipt,
+          randomUUID(),
+          "",
+          "replacement",
+          60_000,
+        ),
       ).resolves.toBe(0);
 
       expect(await redis.hget(key(matchId), id)).toBe(current);
       expect(await expiresAt(matchId, id)).toBe(at);
       expect(await redis.hlen(key(matchId))).toBe(1);
+      expect(await redis.exists(receipt)).toBe(0);
     });
   });
 
   it("never resurrects a message when an edit races its deletion", async () => {
     const user = await author();
+
+    const applied: string[] = [];
 
     for (let round = 0; round < 25; round++) {
       const matchId = randomUUID();
@@ -282,6 +307,8 @@ describe("chat edits and self deletes (SQL-driven)", () => {
       expect(deleted).toEqual({ deleted: true });
       if (edited.edited === false) {
         expect(edited.code).toBe(ChatErrorCode.NotFound);
+      } else {
+        applied.push(id);
       }
       expect(await redis.hexists(key(matchId), id)).toBe(0);
     }
@@ -293,6 +320,14 @@ describe("chat edits and self deletes (SQL-driven)", () => {
     );
 
     expect(count).toBe("25");
+
+    const audited = await postgres.query<Array<{ message_id: string }>>(
+      `SELECT message_id::text AS message_id FROM chat_message_edits`,
+    );
+
+    expect(audited.map(({ message_id }) => message_id).sort()).toEqual(
+      applied.sort(),
+    );
   });
 
   it("stores the edit exactly as JSON.stringify writes it", async () => {
@@ -376,6 +411,219 @@ describe("chat edits and self deletes (SQL-driven)", () => {
     expect(rows).toEqual([
       { author: user.steam_id, deleted_by: user.steam_id, message: "typo" },
     ]);
+  });
+
+  describe("the edit audit", () => {
+    const up = readFileSync(
+      join(
+        __dirname,
+        "../hasura/migrations/default/1888000000250_chat_message_edits/up.sql",
+      ),
+      "utf8",
+    );
+
+    const down = readFileSync(
+      join(
+        __dirname,
+        "../hasura/migrations/default/1888000000250_chat_message_edits/down.sql",
+      ),
+      "utf8",
+    );
+
+    const edits = (messageId: string) =>
+      postgres.query<
+        Array<{
+          room_type: string;
+          room_id: string;
+          author: string | null;
+          previous_message: string;
+          new_message: string;
+          message_created_at: Date | null;
+          edited_at: Date;
+        }>
+      >(
+        `SELECT room_type, room_id, author_steam_id::text AS author,
+                previous_message, new_message, message_created_at, edited_at
+           FROM chat_message_edits
+          WHERE message_id = $1::uuid
+          ORDER BY edited_at`,
+        [messageId],
+      );
+
+    it("keeps what the message said before each edit", async () => {
+      const user = await author();
+      const matchId = randomUUID();
+      const id = await place(matchId, user);
+      const { timestamp } = JSON.parse(await redis.hget(key(matchId), id));
+
+      const first = await edit(matchId, id, user, "fixed");
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      const second = await edit(matchId, id, user, "fixed again");
+
+      expect(await edits(id)).toEqual([
+        {
+          room_type: "match",
+          room_id: matchId,
+          author: user.steam_id,
+          previous_message: "typo",
+          new_message: "fixed",
+          message_created_at: new Date(timestamp),
+          edited_at: new Date(first.edited ? first.edited_at : 0),
+        },
+        {
+          room_type: "match",
+          room_id: matchId,
+          author: user.steam_id,
+          previous_message: "fixed",
+          new_message: "fixed again",
+          message_created_at: new Date(timestamp),
+          edited_at: new Date(second.edited ? second.edited_at : 0),
+        },
+      ]);
+    });
+
+    it("keeps the original when a message is edited and then deleted", async () => {
+      const user = await author();
+      const matchId = randomUUID();
+      const id = await place(matchId, user);
+
+      await edit(matchId, id, user, "harmless");
+      await chat.deleteMessage(ChatLobbyType.Match, matchId, id, user);
+
+      const [deletion] = await postgres.query<Array<{ message: string }>>(
+        `SELECT message FROM chat_message_deletions WHERE message_id = $1::uuid`,
+        [id],
+      );
+
+      expect(deletion.message).toBe("harmless");
+      expect((await edits(id)).map((row) => row.previous_message)).toEqual([
+        "typo",
+      ]);
+    });
+
+    it("records nothing for an edit that never applied", async () => {
+      const user = await author();
+      const matchId = randomUUID();
+      const id = await place(matchId, user);
+
+      pauseFirstRead(() => redis.hdel(key(matchId), id));
+
+      await expect(edit(matchId, id, user)).resolves.toEqual({
+        edited: false,
+        code: ChatErrorCode.NotFound,
+      });
+
+      expect(await edits(id)).toEqual([]);
+    });
+
+    it("keeps only the edit that applied when another lands in between", async () => {
+      const user = await author();
+      const matchId = randomUUID();
+      const id = await place(matchId, user);
+
+      pauseFirstRead(() =>
+        chat.editMessage(ChatLobbyType.Match, matchId, id, user, "other tab"),
+      );
+
+      await expect(edit(matchId, id, user, "mine")).resolves.toMatchObject({
+        edited: true,
+      });
+
+      expect(
+        (await edits(id)).map(({ previous_message, new_message }) => [
+          previous_message,
+          new_message,
+        ]),
+      ).toEqual([
+        ["typo", "other tab"],
+        ["other tab", "mine"],
+      ]);
+    });
+
+    // The resend comes after ioredis reconnects, seconds later, so the message
+    // may already be gone or edited again by then.
+    it.each([
+      [
+        "deleted",
+        (matchId: string, id: string) => redis.hdel(key(matchId), id),
+      ],
+      [
+        "edited again",
+        (matchId: string, id: string) =>
+          redis.hset(
+            key(matchId),
+            id,
+            JSON.stringify({ id, message: "other" }),
+          ),
+      ],
+    ])(
+      "counts a resent swap that already applied as applied, though the message was since %s",
+      async (_, meanwhile) => {
+        const user = await author();
+        const matchId = randomUUID();
+        const id = await place(matchId, user);
+        const raw = await redis.hget(key(matchId), id);
+        const next = JSON.stringify({ ...JSON.parse(raw), message: "fixed" });
+        const script = (ChatService as any).EDIT_ROOM_MESSAGE_SCRIPT;
+        const receipt = `chat_edit_applied:${randomUUID()}`;
+        const swap = () =>
+          redis.eval(script, 2, key(matchId), receipt, id, raw, next, 60_000);
+
+        await expect(swap()).resolves.toBe(1);
+        expect(await redis.hget(key(matchId), id)).toBe(next);
+        expect(await redis.pttl(receipt)).toBeGreaterThan(0);
+
+        await meanwhile(matchId, id);
+        const since = await redis.hget(key(matchId), id);
+
+        await expect(swap()).resolves.toBe(1);
+        expect(await redis.hget(key(matchId), id)).toBe(since);
+      },
+    );
+
+    it("outlives the author's player row", async () => {
+      const user = await author();
+      const matchId = randomUUID();
+      const id = await place(matchId, user);
+
+      await edit(matchId, id, user);
+      await postgres.query(`DELETE FROM players WHERE steam_id = $1::bigint`, [
+        user.steam_id,
+      ]);
+
+      expect(await edits(id)).toEqual([
+        expect.objectContaining({ author: null, previous_message: "typo" }),
+      ]);
+    });
+
+    it("re-applies the migration cleanly and rolls back", async () => {
+      const table = async () =>
+        (
+          await postgres.query<Array<{ table: string | null }>>(
+            `SELECT to_regclass('public.chat_message_edits')::text AS table`,
+          )
+        )[0].table;
+
+      await expect(postgres.query(up)).resolves.toBeDefined();
+      await expect(postgres.query(up)).resolves.toBeDefined();
+      await expect(postgres.query(down)).resolves.toBeDefined();
+      expect(await table()).toBeNull();
+      await expect(postgres.query(down)).resolves.toBeDefined();
+      await expect(postgres.query(up)).resolves.toBeDefined();
+      expect(await table()).toBe("chat_message_edits");
+
+      const indexes = await postgres.query<Array<{ indexname: string }>>(
+        `SELECT indexname FROM pg_indexes
+          WHERE schemaname = 'public' AND tablename = 'chat_message_edits'
+          ORDER BY indexname`,
+      );
+
+      expect(indexes.map(({ indexname }) => indexname)).toEqual([
+        "chat_message_edits_author_idx",
+        "chat_message_edits_message_id_idx",
+        "chat_message_edits_pkey",
+      ]);
+    });
   });
 
   describe("the bell's preview", () => {

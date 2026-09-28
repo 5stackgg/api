@@ -488,6 +488,11 @@ describe("direct messages (SQL-driven)", () => {
         message: "fixed",
         edited_at: after.edited_at.toISOString(),
       });
+
+      const [{ count }] = await postgres.query<Array<{ count: string }>>(
+        `SELECT count(*)::text AS count FROM chat_message_edits`,
+      );
+      expect(count).toBe("0");
     });
 
     it("shows the edit in history after a reload", async () => {

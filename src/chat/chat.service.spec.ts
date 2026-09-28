@@ -38,6 +38,7 @@ describe("ChatService direct messages", () => {
   let queries: Array<{ sql: string; bindings: any[] }>;
   let gagged: boolean;
   let audited: boolean;
+  let editAuditIds: string[];
   // The one direct message the fake database holds, if a test put one there.
   let directMessage:
     | {
@@ -67,6 +68,12 @@ describe("ChatService direct messages", () => {
 
       if (sql.includes("SELECT 1 FROM public.chat_message_deletions")) {
         return [{ deleted: audited }];
+      }
+
+      if (sql.includes("INSERT INTO public.chat_message_edits")) {
+        const id = `edit-audit-${editAuditIds.length + 1}`;
+        editAuditIds.push(id);
+        return [{ id }];
       }
 
       if (sql.includes("AS open")) {
@@ -340,6 +347,7 @@ describe("ChatService direct messages", () => {
     queries = [];
     gagged = false;
     audited = false;
+    editAuditIds = [];
     rcon.send.mockResolvedValue(undefined);
     rcon.connect.mockResolvedValue(rcon);
 
@@ -1418,6 +1426,18 @@ describe("ChatService direct messages", () => {
         sql.includes("INSERT INTO public.chat_message_deletions"),
       );
 
+    const editAudits = () =>
+      queries.filter(({ sql }) =>
+        sql.includes("INSERT INTO public.chat_message_edits"),
+      );
+
+    const discardedEditAudits = () =>
+      queries
+        .filter(({ sql }) =>
+          sql.includes("DELETE FROM public.chat_message_edits"),
+        )
+        .map(({ bindings }) => bindings[0]);
+
     const flush = () => new Promise((resolve) => setImmediate(resolve));
 
     beforeEach(() => {
@@ -1439,6 +1459,7 @@ describe("ChatService direct messages", () => {
           script: string,
           _keys: number,
           key: string,
+          _receipt: string,
           field: string,
           expected: string,
           next: string,
@@ -1526,6 +1547,145 @@ describe("ChatService direct messages", () => {
         await flush();
 
         expect(rcon.connect).not.toHaveBeenCalled();
+      });
+
+      it("keeps what the message said before the edit", async () => {
+        store();
+        const { timestamp } = current();
+
+        const result = await edit();
+
+        expect(editAudits().map(({ bindings }) => bindings)).toEqual([
+          [
+            MESSAGE_ID,
+            "match",
+            "m-1",
+            ME,
+            "typo",
+            "fixed",
+            timestamp,
+            result.edited ? result.edited_at : undefined,
+          ],
+        ]);
+        expect(discardedEditAudits()).toEqual([]);
+      });
+
+      it("writes the audit row before the message changes", async () => {
+        store();
+
+        await edit();
+
+        const auditCall = postgres.query.mock.calls.findIndex(([sql]) =>
+          sql.includes("INSERT INTO public.chat_message_edits"),
+        );
+        const swapCall = redis.eval.mock.calls.findIndex(([script]) =>
+          script.includes("HPEXPIRETIME"),
+        );
+
+        expect(auditCall).toBeGreaterThanOrEqual(0);
+        expect(postgres.query.mock.invocationCallOrder[auditCall]).toBeLessThan(
+          redis.eval.mock.invocationCallOrder[swapCall],
+        );
+      });
+
+      it("leaves the message as it was when the audit row cannot be written", async () => {
+        store();
+        const database = postgres.query.getMockImplementation();
+        postgres.query.mockImplementation(async (sql, bindings) => {
+          if (sql.includes("INSERT INTO public.chat_message_edits")) {
+            throw new Error("database down");
+          }
+          return database(sql, bindings);
+        });
+
+        try {
+          await expect(edit()).rejects.toThrow("database down");
+        } finally {
+          postgres.query.mockImplementation(database);
+        }
+
+        await flush();
+
+        expect(current().message).toBe("typo");
+        expect(
+          redis.eval.mock.calls.some(([script]) =>
+            script.includes("HPEXPIRETIME"),
+          ),
+        ).toBe(false);
+        expect(broadcasts("lobby:match:m-1:edited")).toEqual([]);
+      });
+
+      it("keeps the audit row when the swap fails outright, since it may have applied", async () => {
+        store();
+        redis.eval.mockRejectedValueOnce(new Error("connection reset"));
+
+        await expect(edit()).rejects.toThrow("connection reset");
+
+        expect(editAudits()).toHaveLength(1);
+        expect(discardedEditAudits()).toEqual([]);
+      });
+
+      it("hands the swap a receipt named for its own audit row", async () => {
+        store();
+
+        await edit();
+
+        const swap = redis.eval.mock.calls.find(([script]) =>
+          script.includes("HPEXPIRETIME"),
+        );
+
+        expect(swap.slice(1, 4)).toEqual([
+          2,
+          "chat_match_m-1",
+          "chat_edit_applied:edit-audit-1",
+        ]);
+      });
+
+      it("still retries when an audit row it no longer needs cannot be discarded", async () => {
+        store();
+        redis.hget.mockImplementationOnce(
+          async (key: string, field: string) => {
+            const raw = stored[key][field];
+            stored[key][field] = JSON.stringify({
+              ...JSON.parse(raw),
+              message: "other tab",
+            });
+            return raw;
+          },
+        );
+        const database = postgres.query.getMockImplementation();
+        postgres.query.mockImplementation(async (sql, bindings) => {
+          if (sql.includes("DELETE FROM public.chat_message_edits")) {
+            throw new Error("database blip");
+          }
+          return database(sql, bindings);
+        });
+
+        try {
+          await expect(edit()).resolves.toMatchObject({ edited: true });
+        } finally {
+          postgres.query.mockImplementation(database);
+        }
+
+        expect(current().message).toBe("fixed");
+        expect(logger.warn).toHaveBeenCalledWith(
+          expect.stringContaining("unable to discard"),
+          expect.any(Error),
+        );
+      });
+
+      it("audits nothing for an edit it refuses", async () => {
+        store({ timestamp: ago(WINDOW + 6_000) });
+        await edit();
+
+        store();
+        gagged = true;
+        await edit();
+
+        store({ source: "game" });
+        await edit();
+
+        expect(editAudits()).toEqual([]);
       });
 
       it.each([
@@ -1636,6 +1796,8 @@ describe("ChatService direct messages", () => {
         });
         expect(current()).toBeNull();
         expect(broadcasts("lobby:match:m-1:edited")).toEqual([]);
+        expect(discardedEditAudits()).toEqual(editAuditIds);
+        expect(editAuditIds).toHaveLength(1);
       });
 
       it("applies an edit on top of one that landed between the read and the write", async () => {
@@ -1654,6 +1816,11 @@ describe("ChatService direct messages", () => {
 
         await expect(edit()).resolves.toMatchObject({ edited: true });
         expect(current().message).toBe("fixed");
+        expect(editAudits().map(({ bindings }) => bindings[4])).toEqual([
+          "typo",
+          "other tab",
+        ]);
+        expect(discardedEditAudits()).toEqual(["edit-audit-1"]);
       });
 
       it("lets the author delete their own message, and audits it", async () => {
@@ -1786,6 +1953,16 @@ describe("ChatService direct messages", () => {
           MESSAGE_ID,
           "fixed",
         );
+      });
+
+      it("never audits the edit of a direct message", async () => {
+        hold();
+
+        await expect(editDirect()).resolves.toMatchObject({ edited: true });
+
+        expect(
+          queries.some(({ sql }) => sql.includes("chat_message_edits")),
+        ).toBe(false);
       });
 
       it("is not held back by a gag", async () => {
