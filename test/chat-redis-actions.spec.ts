@@ -779,6 +779,28 @@ describe("chat edits and self deletes (SQL-driven)", () => {
       expect(await reactionsExpireAt(matchId, untimed)).toBe(-1);
     });
 
+    it("keeps the message's expiry when a reaction is taken back and others remain", async () => {
+      const user = await author();
+      const other = player(1);
+      const matchId = randomUUID();
+      await seat(matchId, user);
+      await seat(matchId, other);
+      const id = await place(matchId, user);
+      const at = Date.now() + 98_765;
+      await redis.call("HPEXPIREAT", key(matchId), at, "FIELDS", 1, id);
+
+      await react(matchId, id, user);
+      await react(matchId, id, other);
+      await react(matchId, id, other, "fire");
+      await react(matchId, id, user);
+
+      expect(await stored(matchId, id)).toEqual({
+        heart: [other.steam_id],
+        fire: [other.steam_id],
+      });
+      expect(await reactionsExpireAt(matchId, id)).toBe(at);
+    });
+
     it("lets reactions go when the message does", async () => {
       const user = await author();
       const matchId = randomUUID();
@@ -834,6 +856,84 @@ describe("chat edits and self deletes (SQL-driven)", () => {
       );
 
       expect(await redis.hexists(reactionsKey(matchId), id)).toBe(0);
+    });
+
+    // ioredis resends a command whose reply was lost to a reconnect, and a
+    // toggle that ran twice would undo itself.
+    it("never runs the same toggle twice", async () => {
+      const user = await author();
+      const matchId = randomUUID();
+      const id = await place(matchId, user);
+      const receipt = `chat_reaction_applied:${randomUUID()}`;
+      const toggle = () =>
+        redis.eval(
+          (ChatService as any).TOGGLE_ROOM_REACTION_SCRIPT,
+          3,
+          key(matchId),
+          reactionsKey(matchId),
+          receipt,
+          id,
+          "heart",
+          user.steam_id,
+          "0",
+          60_000,
+        );
+
+      await expect(toggle()).resolves.toBe(
+        JSON.stringify({ heart: [user.steam_id] }),
+      );
+      await expect(toggle()).resolves.toBe(
+        JSON.stringify({ heart: [user.steam_id] }),
+      );
+
+      expect(await stored(matchId, id)).toEqual({ heart: [user.steam_id] });
+      expect(await redis.pttl(receipt)).toBeGreaterThan(0);
+    });
+
+    it("lets a gagged player take a reaction back, but not give one", async () => {
+      const user = await author();
+      const matchId = randomUUID();
+      await seat(matchId, user);
+      const id = await place(matchId, user);
+
+      await react(matchId, id, user, "heart");
+      await postgres.query(
+        `INSERT INTO player_sanctions (player_steam_id, type)
+              VALUES ($1::bigint, 'gag')`,
+        [user.steam_id],
+      );
+
+      await expect(react(matchId, id, user, "fire")).resolves.toEqual({
+        toggled: false,
+        code: ChatErrorCode.Gagged,
+      });
+      expect(await stored(matchId, id)).toEqual({ heart: [user.steam_id] });
+
+      await expect(react(matchId, id, user, "heart")).resolves.toEqual({
+        toggled: true,
+        reactions: {},
+      });
+      expect(await redis.hexists(reactionsKey(matchId), id)).toBe(0);
+    });
+
+    it("hands reactions back in the list's order", async () => {
+      const user = await author();
+      const matchId = randomUUID();
+      await seat(matchId, user);
+      const id = await place(matchId, user);
+
+      for (const reaction of ["sad", "fire", "wow", "thumbsup"]) {
+        await react(matchId, id, user, reaction);
+      }
+
+      const history = await chat["getMessages"](ChatLobbyType.Match, matchId);
+
+      expect(Object.keys(history[0].reactions)).toEqual([
+        "thumbsup",
+        "fire",
+        "wow",
+        "sad",
+      ]);
     });
 
     it("stores steam ids as strings, whole", async () => {

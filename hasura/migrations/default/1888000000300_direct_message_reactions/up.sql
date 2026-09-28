@@ -8,3 +8,6 @@ CREATE TABLE IF NOT EXISTS public.direct_message_reactions (
 
     PRIMARY KEY (message_id, steam_id, reaction)
 );
+
+CREATE INDEX IF NOT EXISTS direct_message_reactions_steam_id_idx
+    ON public.direct_message_reactions (steam_id);

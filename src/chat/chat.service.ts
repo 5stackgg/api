@@ -144,7 +144,15 @@ export class ChatService {
   // never contend with an edit's compare-and-set. A message that is gone gets
   // none: they would outlive it with no expiry. HSET drops the field's expiry,
   // so the reactions are given the message's own, and go when it does.
+  //
+  // KEYS[3] is a receipt for this one toggle: ioredis resends a command whose
+  // reply was lost to a reconnect, and a toggle run twice undoes itself.
+  // ARGV[4] = '1' allows only taking a reaction back (a gagged player), and
+  // 0 is the answer when this toggle would have added one.
   private static readonly TOGGLE_ROOM_REACTION_SCRIPT = `
+    if redis.call('EXISTS', KEYS[3]) == 1 then
+      return redis.call('HGET', KEYS[2], ARGV[1]) or '{}'
+    end
     if redis.call('HEXISTS', KEYS[1], ARGV[1]) == 0 then
       return false
     end
@@ -163,6 +171,9 @@ export class ChatService {
       end
     end
     if not removed then
+      if ARGV[4] == '1' then
+        return 0
+      end
       table.insert(reactors, ARGV[3])
     end
     if #reactors == 0 then
@@ -170,6 +181,7 @@ export class ChatService {
     else
       reactions[ARGV[2]] = reactors
     end
+    redis.call('SET', KEYS[3], '1', 'PX', ARGV[5])
     if next(reactions) == nil then
       redis.call('HDEL', KEYS[2], ARGV[1])
       return '{}'
@@ -182,6 +194,8 @@ export class ChatService {
     end
     return encoded
   `;
+
+  private static readonly REACTION_RECEIPT_TTL_MS = 5 * 60 * 1000;
 
   // Each direct message's reactions as one object, for a query that has the
   // message as `dm`.
@@ -598,15 +612,27 @@ export class ChatService {
       .map(
         ([messageId, value]): ChatMessage => ({
           ...(JSON.parse(value) as ChatMessage),
-          reactions: reactions[messageId]
-            ? JSON.parse(reactions[messageId])
-            : {},
+          reactions: ChatService.orderedReactions(
+            reactions[messageId] ? JSON.parse(reactions[messageId]) : null,
+          ),
         }),
       )
       .sort(
         (a, b) =>
           new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
       );
+  }
+
+  // The stores keep reactions in whatever order they like (a Lua table's,
+  // jsonb's by key length), so clients are always handed the list's order.
+  private static orderedReactions(
+    state: ChatReactions | null | undefined,
+  ): ChatReactions {
+    return Object.fromEntries(
+      ChatService.REACTIONS.filter(
+        (reaction) => (state?.[reaction]?.length ?? 0) > 0,
+      ).map((reaction) => [reaction, state[reaction]]),
+    );
   }
 
   private static reactionsKey(type: ChatLobbyType, id: string) {
@@ -1048,14 +1074,23 @@ export class ChatService {
       return { toggled: false, code: ChatErrorCode.NotAllowed };
     }
 
-    if (type !== ChatLobbyType.Direct && (await this.isGagged(user.steam_id))) {
-      return { toggled: false, code: ChatErrorCode.Gagged };
-    }
-
     const reactions =
       type === ChatLobbyType.Direct
         ? await this.toggleDirectReaction(id, messageId, reaction, user)
-        : await this.toggleRoomReaction(type, id, messageId, reaction, user);
+        : await this.toggleRoomReaction(
+            type,
+            id,
+            messageId,
+            reaction,
+            user,
+            // Like deleting their own message, taking a reaction back is not
+            // speech, so a gag leaves it alone.
+            await this.isGagged(user.steam_id),
+          );
+
+    if (reactions === "gagged") {
+      return { toggled: false, code: ChatErrorCode.Gagged };
+    }
 
     if (!reactions) {
       return { toggled: false, code: ChatErrorCode.NotFound };
@@ -1083,22 +1118,30 @@ export class ChatService {
     messageId: string,
     reaction: string,
     user: User,
-  ): Promise<ChatReactions | null> {
+    removeOnly: boolean,
+  ): Promise<ChatReactions | "gagged" | null> {
     const state = await this.redis.eval(
       ChatService.TOGGLE_ROOM_REACTION_SCRIPT,
-      2,
+      3,
       `chat_${type}_${id}`,
       ChatService.reactionsKey(type, id),
+      `chat_reaction_applied:${randomUUID()}`,
       messageId,
       reaction,
       String(user.steam_id),
+      removeOnly ? "1" : "0",
+      ChatService.REACTION_RECEIPT_TTL_MS,
     );
+
+    if (state === 0) {
+      return "gagged";
+    }
 
     if (typeof state !== "string") {
       return null;
     }
 
-    return JSON.parse(state) as ChatReactions;
+    return ChatService.orderedReactions(JSON.parse(state));
   }
 
   private async toggleDirectReaction(
@@ -1107,52 +1150,55 @@ export class ChatService {
     reaction: string,
     user: User,
   ): Promise<ChatReactions | null> {
-    try {
-      await this.postgres.query(
-        `WITH message AS (
-           SELECT id FROM public.direct_messages
-            WHERE id = $1::uuid AND room_id = $4
-         ), removed AS (
-           DELETE FROM public.direct_message_reactions r
-            USING message
-            WHERE r.message_id = message.id
-              AND r.steam_id = $2::bigint
-              AND r.reaction = $3
+    return await this.postgres.transaction(async (client) => {
+      // Toggles on one message take turns here, and each then starts its
+      // statement after the last one committed. Two toggles on an absent row
+      // in one snapshot would both insert, and the second would quietly do
+      // nothing instead of taking it back. The lock also holds off the
+      // message's deletion until the reaction is written.
+      const { rows: found } = await client.query(
+        `SELECT 1 FROM public.direct_messages
+          WHERE id = $1::uuid AND room_id = $2
+            FOR NO KEY UPDATE`,
+        [messageId, roomId],
+      );
+
+      if (found.length === 0) {
+        return null;
+      }
+
+      await client.query(
+        `WITH removed AS (
+           DELETE FROM public.direct_message_reactions
+            WHERE message_id = $1::uuid
+              AND steam_id = $2::bigint
+              AND reaction = $3
         RETURNING 1
          )
          INSERT INTO public.direct_message_reactions
                 (message_id, steam_id, reaction)
-              SELECT message.id, $2::bigint, $3
-                FROM message
+              SELECT $1::uuid, $2::bigint, $3
                WHERE NOT EXISTS (SELECT 1 FROM removed)
+                 AND EXISTS (
+                   SELECT 1 FROM public.direct_messages
+                    WHERE id = $1::uuid AND room_id = $4
+                 )
          ON CONFLICT DO NOTHING`,
         [messageId, String(user.steam_id), reaction, roomId],
       );
-    } catch (error) {
-      // A message deleted after the statement found it fails the foreign
-      // key, rather than matching nothing.
-      if (error?.code === "23503") {
-        return null;
-      }
 
-      throw error;
-    }
+      const {
+        rows: [row],
+      } = await client.query<{ reactions: ChatReactions | null }>(
+        `SELECT reactions.reactions
+           FROM public.direct_messages dm
+           ${ChatService.DIRECT_MESSAGE_REACTIONS}
+          WHERE dm.id = $1::uuid`,
+        [messageId],
+      );
 
-    const [row] = await this.postgres.query<
-      Array<{ reactions: ChatReactions | null }>
-    >(
-      `SELECT reactions.reactions
-         FROM public.direct_messages dm
-         ${ChatService.DIRECT_MESSAGE_REACTIONS}
-        WHERE dm.id = $1::uuid AND dm.room_id = $2`,
-      [messageId, roomId],
-    );
-
-    if (!row) {
-      return null;
-    }
-
-    return row.reactions ?? {};
+      return ChatService.orderedReactions(row?.reactions);
+    });
   }
 
   private async editRoomMessage(
@@ -2191,7 +2237,7 @@ export class ChatService {
         ...(row.edited_at
           ? { edited_at: new Date(row.edited_at).toISOString() }
           : {}),
-        reactions: row.reactions ?? {},
+        reactions: ChatService.orderedReactions(row.reactions),
         from: {
           role: row.role,
           name: row.name,

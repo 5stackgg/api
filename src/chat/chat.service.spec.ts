@@ -41,7 +41,7 @@ describe("ChatService direct messages", () => {
   let audited: boolean;
   let editAuditIds: string[];
   let directReactions: Record<string, string[]> | null;
-  let directReactionFailure: (Error & { code?: string }) | undefined;
+  let directReactionFailure: Error | undefined;
   // The one direct message the fake database holds, if a test put one there.
   let directMessage:
     | {
@@ -73,6 +73,13 @@ describe("ChatService direct messages", () => {
         return [{ deleted: audited }];
       }
 
+      if (sql.includes("FOR NO KEY UPDATE")) {
+        return directMessage?.id === bindings[0] &&
+          directMessage.roomId === bindings[1]
+          ? [{ locked: 1 }]
+          : [];
+      }
+
       if (sql.includes("INSERT INTO public.direct_message_reactions")) {
         if (directReactionFailure) {
           throw directReactionFailure;
@@ -81,8 +88,7 @@ describe("ChatService direct messages", () => {
       }
 
       if (sql.includes("SELECT reactions.reactions")) {
-        return directMessage?.id === bindings[0] &&
-          directMessage.roomId === bindings[1]
+        return directMessage?.id === bindings[0]
           ? [{ reactions: directReactions }]
           : [];
       }
@@ -143,6 +149,17 @@ describe("ChatService direct messages", () => {
       return [];
     }),
   };
+
+  // Every statement in a transaction goes through the same fake as the rest.
+  Object.assign(postgres, {
+    transaction: jest.fn(async (work: (client: any) => Promise<unknown>) =>
+      work({
+        query: async (sql: string, bindings: any[]) => ({
+          rows: await postgres.query(sql, bindings),
+        }),
+      }),
+    ),
+  });
 
   const notifications = {
     notifyPlayers: jest.fn(),
@@ -2222,6 +2239,7 @@ describe("ChatService direct messages", () => {
 
     let hashes: Record<string, Record<string, string>>;
     let rates: Record<string, number>;
+    let receipts: Set<string>;
 
     const as = (steamId: string, overrides: Record<string, unknown> = {}) =>
       ({
@@ -2251,6 +2269,7 @@ describe("ChatService direct messages", () => {
 
     beforeEach(() => {
       rates = {};
+      receipts = new Set();
       hashes = {
         [ROOM]: {
           [MESSAGE_ID]: JSON.stringify({
@@ -2290,7 +2309,19 @@ describe("ChatService direct messages", () => {
           }
 
           if (script.includes("cjson")) {
-            const [roomKey, reactionsKey, messageId, reaction, steamId] = args;
+            const [
+              roomKey,
+              reactionsKey,
+              receipt,
+              messageId,
+              reaction,
+              steamId,
+              removeOnly,
+            ] = args;
+
+            if (receipts.has(receipt)) {
+              return hashes[reactionsKey]?.[messageId] ?? "{}";
+            }
 
             if (!hashes[roomKey]?.[messageId]) {
               return null;
@@ -2298,6 +2329,12 @@ describe("ChatService direct messages", () => {
 
             const state = JSON.parse(hashes[reactionsKey]?.[messageId] ?? "{}");
             const holders: string[] = state[reaction] ?? [];
+
+            if (!holders.includes(steamId) && removeOnly === "1") {
+              return 0;
+            }
+
+            receipts.add(receipt);
             state[reaction] = holders.includes(steamId)
               ? holders.filter((holder) => holder !== steamId)
               : [...holders, steamId];
@@ -2344,16 +2381,36 @@ describe("ChatService direct messages", () => {
       });
     });
 
-    it("hands the toggle both hashes and who reacted", async () => {
+    it("hands the toggle both hashes, a receipt of its own and who reacted", async () => {
+      await react("laugh");
       await react("laugh");
 
-      expect(toggles()[0].slice(1)).toEqual([
-        2,
+      const [first, second] = toggles();
+
+      expect(first.slice(1)).toEqual([
+        3,
         ROOM,
         REACTIONS,
+        expect.stringMatching(/^chat_reaction_applied:[0-9a-f-]{36}$/),
         MESSAGE_ID,
         "laugh",
         ME,
+        "0",
+        300_000,
+      ]);
+      expect(second[4]).not.toBe(first[4]);
+    });
+
+    it("orders reactions as the list does, whatever order they were stored in", async () => {
+      await react("sad");
+      await react("fire", as(FRIEND));
+
+      const result = await react("thumbsup");
+
+      expect(Object.keys(result.toggled ? result.reactions : {})).toEqual([
+        "thumbsup",
+        "fire",
+        "sad",
       ]);
     });
 
@@ -2432,14 +2489,28 @@ describe("ChatService direct messages", () => {
       expect(toggles()).toHaveLength(0);
     });
 
-    it("keeps a gagged player from reacting in a group room", async () => {
+    it("keeps a gagged player from adding a reaction in a group room", async () => {
       gagged = true;
 
       await expect(react()).resolves.toEqual({
         toggled: false,
         code: ChatErrorCode.Gagged,
       });
-      expect(toggles()).toHaveLength(0);
+      await flush();
+
+      expect(toggles()[0][8]).toBe("1");
+      expect(hashes[REACTIONS]).toBeUndefined();
+      expect(broadcasts("lobby:match:m-1:reaction")).toEqual([]);
+    });
+
+    it("lets a gagged player take back a reaction they already gave", async () => {
+      await react("heart");
+      gagged = true;
+
+      await expect(react("heart")).resolves.toEqual({
+        toggled: true,
+        reactions: {},
+      });
     });
 
     it("lets through eight toggles a second and refuses the ninth", async () => {
@@ -2572,8 +2643,10 @@ describe("ChatService direct messages", () => {
       expect(stored).not.toHaveProperty("reactions");
     });
 
-    it("moves reactions with a draft's messages into its match", async () => {
-      await react("fire");
+    // The move itself is a Lua script, exercised against real redis in
+    // test/chat-redis-actions.spec.ts; this is what the service does around it.
+    it("hands the move all four keys, then re-sends history with the reactions it carried", async () => {
+      hashes[REACTIONS] = { [MESSAGE_ID]: JSON.stringify({ fire: [ME] }) };
       redis.eval.mockResolvedValueOnce(1);
 
       await service.migrateLobbyMessages(
@@ -2634,17 +2707,24 @@ describe("ChatService direct messages", () => {
         );
       });
 
-      it("toggles in one statement scoped to the conversation, then reads the state", async () => {
+      it("locks the message, toggles in one statement scoped to the conversation, then reads the state", async () => {
         await expect(reactDirect()).resolves.toEqual({
           toggled: true,
           reactions: { heart: [ME] },
         });
         await flush();
 
-        const toggle = queries.find(({ sql }) =>
+        const lock = queries.findIndex(({ sql }) =>
+          sql.includes("FOR NO KEY UPDATE"),
+        );
+        const toggleAt = queries.findIndex(({ sql }) =>
           sql.includes("INSERT INTO public.direct_message_reactions"),
         );
+        const toggle = queries[toggleAt];
 
+        expect(postgres.transaction).toHaveBeenCalledTimes(1);
+        expect(queries[lock].bindings).toEqual([MESSAGE_ID, room]);
+        expect(lock).toBeLessThan(toggleAt);
         expect(toggle.bindings).toEqual([MESSAGE_ID, ME, "heart", room]);
         expect(toggle.sql).toContain(
           "DELETE FROM public.direct_message_reactions",
@@ -2689,7 +2769,10 @@ describe("ChatService direct messages", () => {
       });
 
       it("answers not_found for a message that is not in the conversation", async () => {
-        directMessage = undefined;
+        directMessage = {
+          ...directMessage,
+          roomId: directRoomId(FRIEND, STRANGER),
+        };
 
         await expect(reactDirect()).resolves.toEqual({
           toggled: false,
@@ -2697,19 +2780,24 @@ describe("ChatService direct messages", () => {
         });
         await flush();
 
+        expect(
+          queries.some(({ sql }) =>
+            sql.includes("INSERT INTO public.direct_message_reactions"),
+          ),
+        ).toBe(false);
         expect(broadcasts(`lobby:direct:${room}:reaction`)).toEqual([]);
       });
 
-      it("answers not_found when the message is deleted under the toggle", async () => {
-        directReactionFailure = Object.assign(
-          new Error("violates foreign key constraint"),
-          { code: "23503" },
-        );
+      it("orders reactions as the list does", async () => {
+        directReactions = { sad: [FRIEND], heart: [ME], thumbsup: [FRIEND] };
 
-        await expect(reactDirect()).resolves.toEqual({
-          toggled: false,
-          code: ChatErrorCode.NotFound,
-        });
+        const result = await reactDirect();
+
+        expect(Object.keys(result.toggled ? result.reactions : {})).toEqual([
+          "thumbsup",
+          "heart",
+          "sad",
+        ]);
       });
 
       it("lets any other failure through", async () => {

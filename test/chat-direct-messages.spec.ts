@@ -722,6 +722,49 @@ describe("direct messages (SQL-driven)", () => {
       expect(await rows()).toEqual([]);
     });
 
+    it("cancels one player's racing toggles out in pairs", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+      const even = await sent(room, friend, "even");
+      const odd = await sent(room, friend, "odd");
+
+      await Promise.all([
+        ...Array.from({ length: 6 }, () => react(room, even, me)),
+        ...Array.from({ length: 5 }, () => react(room, odd, me)),
+      ]);
+
+      expect(await rows()).toEqual([{ message_id: odd }]);
+    });
+
+    it("counts both parties toggling every reaction at once exactly", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+      const id = await sent(room, friend);
+
+      const results = await Promise.all(
+        [me, friend].flatMap((steamId) =>
+          ChatService.REACTIONS.map((reaction) =>
+            react(room, id, steamId, reaction),
+          ),
+        ),
+      );
+
+      expect(results.every((result) => result.toggled)).toBe(true);
+
+      const [message] = await chat["getMessages"](ChatLobbyType.Direct, room);
+
+      expect(Object.keys(message.reactions)).toEqual([
+        ...ChatService.REACTIONS,
+      ]);
+      for (const reaction of ChatService.REACTIONS) {
+        expect([...message.reactions[reaction]].sort()).toEqual(
+          [me, friend].sort(),
+        );
+      }
+    });
+
     it("hands back reactions with the conversation's history", async () => {
       const me = await fx.player();
       const friend = await fx.player();
@@ -819,6 +862,17 @@ describe("direct messages (SQL-driven)", () => {
         await postgres.query(migration("up.sql"));
         await postgres.query(migration("up.sql"));
         expect(await table()).toBe("direct_message_reactions");
+
+        const indexes = await postgres.query<Array<{ indexname: string }>>(
+          `SELECT indexname FROM pg_indexes
+            WHERE schemaname = 'public'
+              AND tablename = 'direct_message_reactions'
+            ORDER BY indexname`,
+        );
+        expect(indexes.map(({ indexname }) => indexname)).toEqual([
+          "direct_message_reactions_pkey",
+          "direct_message_reactions_steam_id_idx",
+        ]);
 
         await postgres.query(migration("down.sql"));
         expect(await table()).toBeNull();
