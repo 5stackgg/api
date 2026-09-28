@@ -30,6 +30,8 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { DISCORD_COLORS } from "../notifications/utilities/constants";
 import { GameStreamerService } from "../matches/game-streamer/game-streamer.service";
 import { GamePluginsService } from "../game-plugins/game-plugins.service";
+import { MapAssetsService } from "../map-assets/map-assets.service";
+import { User } from "../auth/types/User";
 
 @Controller("game-server-node")
 export class GameServerNodeController {
@@ -56,6 +58,7 @@ export class GameServerNodeController {
     private readonly bakeShadersQueue: Queue,
     @InjectQueue(GameServerQueues.ValidateGamedata)
     private readonly validateGamedataQueue: Queue,
+    protected readonly mapAssets: MapAssetsService,
   ) {
     this.appConfig = this.config.get<AppConfig>("app");
   }
@@ -341,36 +344,34 @@ export class GameServerNodeController {
   }
 
   @HasuraAction()
-  public async validateGamedata(data: { game_server_node_id: string }) {
-    if (process.env.WEB_DOMAIN !== "5stack.gg") {
-      return {
-        success: false,
-      };
+  public async validateGamedata(data: {
+    user: User;
+    game_server_node_id?: string | null;
+  }) {
+    const buildId = await this.currentBuildForJobs();
+
+    if (await this.gameServerNodeService.gamedataValidationActive(buildId)) {
+      throw new Error(
+        `Gamedata validation for build ${buildId} is already running`,
+      );
     }
 
-    const { game_server_nodes_by_pk } = await this.hasura.query({
-      game_server_nodes_by_pk: {
-        __args: {
-          id: data.game_server_node_id,
-        },
-        build_id: true,
-      },
-    });
-
-    if (!game_server_nodes_by_pk?.build_id) {
-      return {
-        success: false,
-      };
-    }
+    const gameServerNodeId = await this.gameServerNodeService.resolveBuildNode(
+      buildId,
+      data.game_server_node_id,
+    );
 
     await this.validateGamedataQueue.add(
       ValidateGamedata.name,
       {
-        gameServerNodeId: data.game_server_node_id,
-        buildId: game_server_nodes_by_pk.build_id,
+        gameServerNodeId,
+        buildId,
+        trigger: "manual",
+        requestedBy: data.user.steam_id,
+        requestedByName: data.user.name,
       },
       {
-        jobId: `validate.${data.game_server_node_id}.manual`,
+        jobId: `validate.${buildId}.manual`,
         attempts: 1,
         removeOnComplete: true,
         removeOnFail: true,
@@ -380,6 +381,44 @@ export class GameServerNodeController {
     return {
       success: true,
     };
+  }
+
+  @HasuraAction()
+  public async buildMapAssets(data: {
+    user: User;
+    game_server_node_id?: string | null;
+    force?: boolean | null;
+  }) {
+    const buildId = await this.currentBuildForJobs();
+
+    const gameServerNodeId = await this.gameServerNodeService.resolveBuildNode(
+      buildId,
+      data.game_server_node_id,
+    );
+
+    await this.mapAssets.queueManualBuild(
+      gameServerNodeId,
+      String(buildId),
+      { steamId: data.user.steam_id, name: data.user.name },
+      data.force === true,
+    );
+
+    return {
+      success: true,
+    };
+  }
+
+  private async currentBuildForJobs(): Promise<number> {
+    if (process.env.WEB_DOMAIN !== "5stack.gg") {
+      throw new Error("CS2 build jobs only run on the 5stack.gg instance");
+    }
+
+    const buildId = await this.gameServerNodeService.getCurrentBuild();
+    if (!buildId) {
+      throw new Error("No current CS2 build has been detected yet");
+    }
+
+    return buildId;
   }
 
   @HasuraAction()

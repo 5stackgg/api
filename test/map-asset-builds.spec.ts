@@ -83,6 +83,14 @@ describe("map asset builds (SQL-driven)", () => {
     return mapAssets;
   };
 
+  const manual = (force = false) =>
+    service().queueManualBuild(
+      "node-a",
+      "25537370",
+      { steamId: null, name: null },
+      force,
+    );
+
   const serve = (files: Record<string, unknown>) => {
     global.fetch = jest.fn(async (url: string) => {
       const key = url.replace("https://demo-dl.5stack.gg/maps/", "");
@@ -125,7 +133,7 @@ describe("map asset builds (SQL-driven)", () => {
     await expect(service().queueBuild("node-a", 25537370)).resolves.toBe(false);
     expect(await row("25537370")).toBeUndefined();
 
-    await expect(service().queueManualBuild("node-a")).resolves.toBe(true);
+    await expect(manual()).resolves.toBeUndefined();
     expect((await row("25537370")).status).toBe("Pending");
   });
 
@@ -167,7 +175,7 @@ describe("map asset builds (SQL-driven)", () => {
         [status],
       );
 
-      await expect(service().queueManualBuild("node-a")).resolves.toBe(true);
+      await expect(manual()).resolves.toBeUndefined();
       expect(await row("25537370")).toMatchObject({
         status: "Pending",
         error: null,
@@ -179,13 +187,13 @@ describe("map asset builds (SQL-driven)", () => {
     await postgres.query(
       `INSERT INTO map_asset_builds (build_id, status) VALUES ('25537370', 'Published')`,
     );
-    await expect(service().queueManualBuild("node-a")).resolves.toBe(false);
+    await expect(manual()).rejects.toThrow("already published");
 
     await postgres.query(
       `UPDATE map_asset_builds SET status = 'Building' WHERE build_id = '25537370'`,
     );
     queue.getJob.mockResolvedValueOnce({ id: "map-assets.25537370" });
-    await expect(service().queueManualBuild("node-a")).resolves.toBe(false);
+    await expect(manual()).rejects.toThrow("already queued");
     expect((await row("25537370")).status).toBe("Building");
     expect(queue.add).not.toHaveBeenCalled();
   });
@@ -277,5 +285,159 @@ describe("map asset builds (SQL-driven)", () => {
     expect(retried.status).toBe("Failed");
     expect(retried.maps).toEqual(maps);
     expect(retried.failed).toEqual(["de_anubis"]);
+  });
+  it("records who started each build and on which node", async () => {
+    await enableAutoBuild();
+    await service().queueBuild("node-a", 25537370);
+
+    const [auto] = await postgres.query<
+      Array<{ trigger: string; game_server_node_id: string }>
+    >(
+      `SELECT trigger, game_server_node_id FROM map_asset_builds WHERE build_id = '25537370'`,
+    );
+    expect(auto).toEqual({ trigger: "auto", game_server_node_id: "node-a" });
+
+    await postgres.query(
+      `UPDATE map_asset_builds SET status = 'Failed' WHERE build_id = '25537370'`,
+    );
+    await postgres.query(
+      `INSERT INTO players (steam_id, name) VALUES (76561198000000001, 'Luke')
+       ON CONFLICT (steam_id) DO NOTHING`,
+    );
+    await service().queueManualBuild("node-a", "25537370", {
+      steamId: "76561198000000001",
+      name: "Luke",
+    });
+
+    const [manualRow] = await postgres.query<
+      Array<{ trigger: string; requested_by_steam_id: string }>
+    >(
+      `SELECT trigger, requested_by_steam_id FROM map_asset_builds WHERE build_id = '25537370'`,
+    );
+    expect(manualRow).toEqual({
+      trigger: "manual",
+      requested_by_steam_id: "76561198000000001",
+    });
+
+    await postgres.query(`DELETE FROM game_server_nodes WHERE id = 'node-a'`);
+    const [orphaned] = await postgres.query<
+      Array<{ game_server_node_id: string | null }>
+    >(
+      `SELECT game_server_node_id FROM map_asset_builds WHERE build_id = '25537370'`,
+    );
+    expect(orphaned.game_server_node_id).toBeNull();
+  });
+
+  it("stores what changed against the previous published build", async () => {
+    await postgres.query(
+      `INSERT INTO map_asset_builds (build_id, status, finished_at, maps)
+       VALUES ('24957633', 'Published', now() - interval '7 days', $1::jsonb)`,
+      [
+        JSON.stringify({
+          de_mirage: {
+            tri: "24957633/de_mirage.tri.gz",
+            sha256: { tri: "old" },
+            source: { vpk_sha256: "v1", pipeline: "p" },
+          },
+          de_gone: { tri: "24957633/de_gone.tri.gz" },
+        }),
+      ],
+    );
+    const maps = {
+      de_mirage: {
+        tri: "25537370/de_mirage.tri.gz",
+        sha256: { tri: "new" },
+        source: { vpk_sha256: "v2", pipeline: "p" },
+      },
+    };
+    loggingService.getJobStatus
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({ succeeded: 1 });
+    serve({
+      "25537370/manifest.json": { version: 1, build: "25537370", maps },
+    });
+
+    await service().build("node-a", "25537370");
+
+    const [stored] = await postgres.query<
+      Array<{ previous_build_id: string; changes: Record<string, unknown> }>
+    >(
+      `SELECT previous_build_id, changes FROM map_asset_builds WHERE build_id = '25537370'`,
+    );
+    expect(stored).toEqual({
+      previous_build_id: "24957633",
+      changes: {
+        comparable: true,
+        total: 1,
+        added: [],
+        removed: ["de_gone"],
+        rebuilt: [{ map: "de_mirage", reason: "vpk", assets: ["tri"] }],
+        unchanged: 0,
+      },
+    });
+  });
+
+  it("only knows automatic and manual triggers", async () => {
+    await expect(
+      postgres.query(
+        `INSERT INTO map_asset_builds (build_id, trigger) VALUES ('3', 'cron')`,
+      ),
+    ).rejects.toThrow(/map_asset_builds_trigger_check/);
+  });
+  it("keeps a published build published when a forced rebuild fails", async () => {
+    await postgres.query(
+      `INSERT INTO map_asset_builds (build_id, status, finished_at, maps)
+       VALUES ('25537370', 'Published', now() - interval '1 day', '{"de_mirage": {}}')`,
+    );
+    loggingService.getJobStatus
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined);
+
+    await service().build("node-a", "25537370", true);
+
+    expect(await row("25537370")).toMatchObject({
+      status: "Published",
+      maps: { de_mirage: {} },
+    });
+  });
+
+  it("compares with the build before it, not the one that finished last", async () => {
+    await postgres.query(
+      `INSERT INTO map_asset_builds (build_id, status, finished_at, maps)
+       VALUES ('24957633', 'Published', now() - interval '2 days', '{"de_old": {}}'),
+              ('25600000', 'Published', now() - interval '1 hour', '{"de_new": {}}')`,
+    );
+    loggingService.getJobStatus
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({ succeeded: 1 });
+    serve({
+      "25537370/manifest.json": {
+        version: 1,
+        build: "25537370",
+        maps: { de_old: {} },
+      },
+    });
+
+    await service().build("node-a", "25537370");
+
+    const [stored] = await postgres.query<Array<{ previous_build_id: string }>>(
+      `SELECT previous_build_id FROM map_asset_builds WHERE build_id = '25537370'`,
+    );
+    expect(stored.previous_build_id).toBe("24957633");
+  });
+
+  it("clears the last run's times when a build is queued again", async () => {
+    await postgres.query(
+      `INSERT INTO map_asset_builds (build_id, status, started_at, finished_at)
+       VALUES ('25537370', 'Failed', now() - interval '3 days', now() - interval '3 days')`,
+    );
+
+    await manual();
+
+    expect(await row("25537370")).toMatchObject({
+      status: "Pending",
+      started_at: null,
+      finished_at: null,
+    });
   });
 });

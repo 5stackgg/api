@@ -55,6 +55,19 @@ export class NotificationsService {
     return NotificationsService.DISCORD_TYPES.has(type);
   }
 
+  // The setting names predate the channel carrying update and map-asset
+  // notices too; they are kept so existing configurations keep working.
+  public static readonly CS2_BUILD_ROUTING = {
+    webhook: "discord_gamedata_notifications_webhook",
+    role: "discord_gamedata_notifications_role_id",
+  } as const;
+
+  private static readonly DISCORD_DESCRIPTION_LIMIT = 4000;
+
+  public static cs2BuildEntityId(buildId: number | string): string {
+    return `cs2-build:${buildId}`;
+  }
+
   // Nobody has seen a notification in six months who hasn't signed in, and a
   // broadcast to every player row would include shadow rows created by match
   // imports.
@@ -334,6 +347,35 @@ export class NotificationsService {
     }
   }
 
+  // Build history is only recorded on the public instance, so elsewhere the
+  // link goes to the node list, which still shows the build.
+  public cs2BuildUrl(buildId: number | string): string {
+    if (process.env.WEB_DOMAIN !== "5stack.gg") {
+      return `${this.appConfig.webDomain}/game-server-nodes`;
+    }
+    return `${this.appConfig.webDomain}/game-server-nodes/builds?build=${encodeURIComponent(String(buildId))}`;
+  }
+
+  // One link per notice: the push target is the first href in the message.
+  public async sendCs2Build(
+    buildId: number | string,
+    notice: { title: string; message: string; color: number },
+  ) {
+    await this.send(
+      "GameUpdate",
+      {
+        title: notice.title,
+        message: `${notice.message}<br><a href="${this.cs2BuildUrl(buildId)}">View build ${NotificationsService.escapeHtml(String(buildId))}</a>`,
+        role: "administrator",
+        entity_id: NotificationsService.cs2BuildEntityId(buildId),
+      },
+      undefined,
+      notice.color,
+      undefined,
+      NotificationsService.CS2_BUILD_ROUTING,
+    );
+  }
+
   // Hasura's event trigger fires once per inserted row, so a fan-out that wrote
   // 200 rows would resolve recipients and send 200 times over. The rows are
   // claimed here so those events fall through, and one job covers the burst.
@@ -391,10 +433,12 @@ export class NotificationsService {
     },
   ) {
     try {
-      const description = new TurndownService().turndown(notification.message);
-      const content = roleId ? `<@&${roleId}>` : undefined;
+      const description = NotificationsService.truncateDiscord(
+        new TurndownService().turndown(notification.message),
+      );
+      const content = this.formatRoleMentions(roleId);
 
-      await fetch(webhook, {
+      const response = await fetch(webhook, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -411,9 +455,25 @@ export class NotificationsService {
           username: "5stack",
         }),
       });
+
+      if (!response.ok) {
+        this.logger.warn(
+          `discord rejected "${notification.title}": ${response.status}`,
+        );
+      }
     } catch (error) {
       this.logger.error("Error sending discord notification", error);
     }
+  }
+
+  // Discord refuses an embed whose description runs past 4096 characters, and
+  // refuses it silently from our side: the whole post is dropped.
+  public static truncateDiscord(description: string): string {
+    const limit = NotificationsService.DISCORD_DESCRIPTION_LIMIT;
+    if (description.length <= limit) {
+      return description;
+    }
+    return `${description.slice(0, limit - 1).trimEnd()}…`;
   }
 
   // Writers hand over `{ image: maybeUndefined }` as is; a row only carries

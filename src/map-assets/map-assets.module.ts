@@ -4,17 +4,18 @@ import { BullBoardModule } from "@bull-board/nestjs";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { PostgresModule } from "../postgres/postgres.module";
 import { K8sModule } from "../k8s/k8s.module";
+import { NotificationsModule } from "../notifications/notifications.module";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { MapAssetsQueues } from "./enums/MapAssetsQueues";
 import { MapAssetsService } from "./map-assets.service";
-import { MapAssetsController } from "./map-assets.controller";
 import { BuildMapAssets } from "./jobs/BuildMapAssets";
 
 @Module({
   imports: [
     PostgresModule,
     K8sModule,
+    NotificationsModule,
     BullModule.registerQueue({
       name: MapAssetsQueues.BuildMapAssets,
     }),
@@ -23,7 +24,6 @@ import { BuildMapAssets } from "./jobs/BuildMapAssets";
       adapter: BullMQAdapter,
     }),
   ],
-  controllers: [MapAssetsController],
   providers: [
     MapAssetsService,
     BuildMapAssets,

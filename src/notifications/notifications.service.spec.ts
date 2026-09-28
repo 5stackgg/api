@@ -98,3 +98,79 @@ describe("discord routing", () => {
     expect(offenders).toEqual([]);
   });
 });
+
+describe("CS2 build notices", () => {
+  const originalDomain = process.env.WEB_DOMAIN;
+  const originalFetch = global.fetch;
+
+  const service = () =>
+    new NotificationsService(
+      { mutation: jest.fn() } as any,
+      { query: jest.fn() } as any,
+      { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
+      { get: () => ({ webDomain: "https://5stack.gg" }) } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    );
+
+  afterEach(() => {
+    process.env.WEB_DOMAIN = originalDomain;
+    global.fetch = originalFetch;
+  });
+
+  it("stacks every notice for a build and links to its history", async () => {
+    process.env.WEB_DOMAIN = "5stack.gg";
+    const notifications = service();
+    const send = jest.spyOn(notifications, "send").mockResolvedValue();
+
+    await notifications.sendCs2Build(25537370, {
+      title: "Map Assets Published",
+      message: "done",
+      color: 1,
+    });
+
+    expect(send).toHaveBeenCalledWith(
+      "GameUpdate",
+      {
+        title: "Map Assets Published",
+        message:
+          'done<br><a href="https://5stack.gg/game-server-nodes/builds?build=25537370">View build 25537370</a>',
+        role: "administrator",
+        entity_id: "cs2-build:25537370",
+      },
+      undefined,
+      1,
+      undefined,
+      NotificationsService.CS2_BUILD_ROUTING,
+    );
+  });
+
+  it("links to the node list where no build history is kept", () => {
+    process.env.WEB_DOMAIN = "example.com";
+
+    expect(service().cs2BuildUrl(25537370)).toBe(
+      "https://5stack.gg/game-server-nodes",
+    );
+  });
+
+  it("mentions every role in a comma-separated list", async () => {
+    const fetch = jest.fn().mockResolvedValue({ ok: true, status: 204 });
+    global.fetch = fetch as any;
+
+    await (service() as any).postDiscord("https://discord.test/hook", "1, 2", {
+      title: "t",
+      message: "m",
+    });
+
+    expect(JSON.parse(fetch.mock.calls[0][1].body).content).toBe("<@&1> <@&2>");
+  });
+
+  it("keeps an embed description under Discord's limit", () => {
+    const long = "x".repeat(5000);
+
+    expect(NotificationsService.truncateDiscord(long)).toHaveLength(4000);
+    expect(NotificationsService.truncateDiscord("short")).toBe("short");
+  });
+});

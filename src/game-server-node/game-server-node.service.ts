@@ -25,6 +25,7 @@ import { NotificationsService } from "src/notifications/notifications.service";
 import { PluginRuntimeService } from "src/plugin-runtime/plugin-runtime.service";
 import { PluginRuntime } from "src/configs/types/GameServersConfig";
 import { MapAssetsService } from "src/map-assets/map-assets.service";
+import { PostgresService } from "src/postgres/postgres.service";
 
 export type GamedataValidationRuntime = PluginRuntime;
 
@@ -34,6 +35,7 @@ export type GamedataValidationEntry = {
   signature: string;
   kind?: "signature" | "vtable" | "patch";
   count: number | null;
+  ok?: boolean | null;
   skipped?: boolean;
   reason?: string;
 };
@@ -41,11 +43,60 @@ export type GamedataValidationEntry = {
 export type GamedataValidationResult = {
   build_id?: number | null;
   status: "pass" | "fail" | "error";
+  statuses?: Record<string, string | null>;
+  swiftly?: { version?: string | null; error?: string | null } | null;
   broken: Array<GamedataValidationEntry>;
   warnings?: Array<GamedataValidationEntry>;
   skipped?: Array<GamedataValidationEntry>;
-  results?: Array<Record<string, unknown>>;
+  results?: Array<GamedataValidationEntry>;
   error?: string;
+};
+
+export type GamedataChangeEntry = {
+  set: string;
+  kind: string;
+  signature: string;
+  runtimes: Array<GamedataValidationRuntime>;
+  previous_count: number | null;
+  count: number | null;
+};
+
+export type GamedataValidationChanges = {
+  comparable: boolean;
+  counts: {
+    checked: number;
+    broken: number;
+    warnings: number;
+    skipped: number;
+  };
+  newly_broken: Array<GamedataChangeEntry>;
+  fixed: Array<GamedataChangeEntry>;
+  new_warnings: Array<GamedataChangeEntry>;
+  cleared_warnings: Array<GamedataChangeEntry>;
+};
+
+export type GamedataValidationOutcome = {
+  result: GamedataValidationResult;
+  previousBuildId: number | null;
+  changes: GamedataValidationChanges | null;
+};
+
+export type BuildRunTrigger = "auto" | "manual";
+
+export type BuildRun = {
+  trigger: BuildRunTrigger;
+  requestedBy?: string | null;
+};
+
+export type BuildNodeCandidate = {
+  id: string;
+  label: string | null;
+  status: string | null;
+  enabled: boolean | null;
+  build_id: number | null;
+  update_status: string | null;
+  gpu: boolean | null;
+  enabled_for_match_making: boolean | null;
 };
 
 @Injectable()
@@ -75,6 +126,7 @@ export class GameServerNodeService {
     protected readonly notifications: NotificationsService,
     protected readonly pluginRuntimeService: PluginRuntimeService,
     protected readonly mapAssets: MapAssetsService,
+    protected readonly postgres: PostgresService,
     @InjectQueue(GameServerQueues.ValidateGamedata)
     private readonly validateGamedataQueue: Queue,
   ) {
@@ -940,6 +992,8 @@ export class GameServerNodeService {
     });
   }
 
+  private static readonly GAMEDATA_LOCK_TTL_S = 60 * 60;
+
   private static sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
@@ -965,21 +1019,22 @@ export class GameServerNodeService {
       return false;
     }
 
-    const { gamedata_signature_validations } = await this.hasura.query({
-      gamedata_signature_validations: {
-        __args: {
-          where: {
-            build_id: { _eq: buildId },
-            branch: { _eq: "public" },
-          },
-          limit: 1,
-        },
-        id: true,
-      },
-    });
+    // A run in progress keeps the map-assets build chained behind it; one
+    // left "running" past the lock's lifetime died with the api and chains
+    // nothing, so the caller queues the map-assets build itself.
+    const [existing] = await this.postgres.query<
+      Array<{ status: string; in_flight: boolean }>
+    >(
+      `SELECT status,
+              started_at > now() - make_interval(secs => $3) AS in_flight
+         FROM public.gamedata_signature_validations
+        WHERE build_id = $1
+          AND branch = $2`,
+      [buildId, "public", GameServerNodeService.GAMEDATA_LOCK_TTL_S],
+    );
 
-    if (gamedata_signature_validations.length > 0) {
-      return false;
+    if (existing) {
+      return existing.status === "running" && existing.in_flight === true;
     }
 
     await this.validateGamedataQueue.add(
@@ -988,6 +1043,7 @@ export class GameServerNodeService {
         gameServerNodeId,
         buildId,
         buildMapAssets: true,
+        trigger: "auto",
       },
       {
         jobId: `validate.${buildId}.auto`,
@@ -1004,6 +1060,138 @@ export class GameServerNodeService {
     gameServerNodeId: string,
     buildId: number,
     branch = "public",
+    run: BuildRun = { trigger: "manual" },
+  ): Promise<GamedataValidationOutcome | null> {
+    const lockKey = GameServerNodeService.gamedataLockKey(buildId, branch);
+    const acquired = await this.redis.set(
+      lockKey,
+      1,
+      "EX",
+      GameServerNodeService.GAMEDATA_LOCK_TTL_S,
+      "NX",
+    );
+    if (acquired === null) {
+      this.logger.warn(
+        `[validate-gamedata] validation already running for build ${buildId} (${branch})`,
+      );
+      return null;
+    }
+
+    try {
+      const [prior] = await this.postgres.query<
+        Array<{ status: string; validated_at: Date | null }>
+      >(
+        `SELECT status, validated_at
+           FROM public.gamedata_signature_validations
+          WHERE build_id = $1
+            AND branch = $2`,
+        [buildId, branch],
+      );
+
+      await this.postgres.query(
+        `INSERT INTO public.gamedata_signature_validations
+           (build_id, branch, status, started_at, validated_at,
+            game_server_node_id, trigger, requested_by_steam_id)
+         VALUES ($1, $2, 'running', now(), NULL, $3, $4, $5)
+         ON CONFLICT (build_id, branch) DO UPDATE
+            SET status = 'running',
+                started_at = now(),
+                validated_at = NULL,
+                game_server_node_id = EXCLUDED.game_server_node_id,
+                trigger = EXCLUDED.trigger,
+                requested_by_steam_id = EXCLUDED.requested_by_steam_id`,
+        [
+          buildId,
+          branch,
+          gameServerNodeId,
+          run.trigger,
+          run.requestedBy ?? null,
+        ],
+      );
+
+      let result: GamedataValidationResult;
+      try {
+        result = (await this.runGamedataValidation(
+          gameServerNodeId,
+          buildId,
+          branch,
+        )) ?? {
+          status: "error",
+          broken: [],
+          error: "the validation produced no result",
+        };
+      } catch (error) {
+        result = {
+          status: "error",
+          broken: [],
+          error: (error as Error)?.message ?? String(error),
+        };
+      }
+
+      if (
+        !GameServerNodeService.validatedAnything(result) &&
+        (prior?.status === "pass" || prior?.status === "fail")
+      ) {
+        await this.postgres.query(
+          `UPDATE public.gamedata_signature_validations
+              SET status = $3,
+                  validated_at = $4
+            WHERE build_id = $1
+              AND branch = $2`,
+          [buildId, branch, prior.status, prior.validated_at],
+        );
+
+        return { result, previousBuildId: null, changes: null };
+      }
+
+      const [previous] = await this.postgres.query<
+        Array<{ build_id: number; results: GamedataValidationResult }>
+      >(
+        `SELECT build_id, results
+           FROM public.gamedata_signature_validations
+          WHERE branch = $1
+            AND build_id < $2
+            AND status <> 'running'
+            AND jsonb_typeof(results -> 'results') = 'array'
+          ORDER BY build_id DESC
+          LIMIT 1`,
+        [branch, buildId],
+      );
+
+      const previousBuildId = previous?.build_id ?? null;
+      const changes = GameServerNodeService.validatedAnything(result)
+        ? GameServerNodeService.diffGamedata(result, previous?.results ?? null)
+        : null;
+
+      await this.postgres.query(
+        `UPDATE public.gamedata_signature_validations
+            SET status = $3,
+                results = $4::jsonb,
+                validated_at = now(),
+                previous_build_id = $5,
+                changes = $6::jsonb
+          WHERE build_id = $1
+            AND branch = $2`,
+        [
+          buildId,
+          branch,
+          result.status,
+          JSON.stringify(result),
+          previousBuildId,
+          changes ? JSON.stringify(changes) : null,
+        ],
+      );
+
+      return { result, previousBuildId, changes };
+    } finally {
+      await this.redis.del(lockKey);
+    }
+  }
+
+  private async runGamedataValidation(
+    gameServerNodeId: string,
+    buildId: number,
+    branch: string,
   ): Promise<GamedataValidationResult | null> {
     const jobName = GameServerNodeService.GET_VALIDATE_GAMEDATA_JOB_NAME(
       buildId,
@@ -1013,159 +1201,347 @@ export class GameServerNodeService {
     const sanitizedGameServerNodeId = gameServerNodeId.replaceAll(".", "-");
     const serverfilesVolumeName = `serverfiles-${sanitizedGameServerNodeId}`;
 
-    // without --runtime the validator defaults to "all" and fetches SwiftlyS2 gamedata,
-    // so a GitHub blip fails validation on installs that never load SwiftlyS2
-    const { game_server_nodes_by_pk: node } = await this.hasura.query({
-      game_server_nodes_by_pk: {
-        __args: { id: gameServerNodeId },
-        pin_plugin_runtime: true,
+    await this.batchApi
+      .deleteNamespacedJob({
+        name: jobName,
+        namespace: this.namespace,
+        propagationPolicy: "Background",
+        gracePeriodSeconds: 0,
+      })
+      .catch((error) => {
+        if (error.code?.toString() !== "404") {
+          throw error;
+        }
+      });
+
+    await this.batchApi.createNamespacedJob({
+      namespace: this.namespace,
+      body: {
+        apiVersion: "batch/v1",
+        kind: "Job",
+        metadata: {
+          name: jobName,
+        },
+        spec: {
+          template: {
+            metadata: {
+              labels: {
+                app: "validate-gamedata",
+              },
+            },
+            spec: {
+              affinity: {
+                nodeAffinity: {
+                  requiredDuringSchedulingIgnoredDuringExecution: {
+                    nodeSelectorTerms: [
+                      {
+                        matchExpressions: [
+                          {
+                            key: "kubernetes.io/hostname",
+                            operator: "In",
+                            values: [gameServerNodeId],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              },
+              restartPolicy: "Never",
+              dnsConfig: {
+                options: [
+                  {
+                    name: "ndots",
+                    value: "1",
+                  },
+                ],
+              },
+              containers: [
+                {
+                  name: "validate-gamedata",
+                  image: "ghcr.io/5stackgg/gamedata-validator:latest",
+                  args: ["--build-id", buildId.toString(), "--runtime", "all"],
+                  volumeMounts: [
+                    {
+                      name: serverfilesVolumeName,
+                      mountPath: "/serverdata/serverfiles",
+                      readOnly: true,
+                    },
+                  ],
+                  resources: {
+                    requests: {
+                      cpu: "500m",
+                      memory: "2Gi",
+                    },
+                    limits: {
+                      memory: "6Gi",
+                    },
+                  },
+                },
+              ],
+              volumes: [
+                {
+                  name: serverfilesVolumeName,
+                  persistentVolumeClaim: {
+                    claimName: `${serverfilesVolumeName}-claim`,
+                    readOnly: true,
+                  },
+                },
+              ],
+            },
+          },
+          backoffLimit: 0,
+          ttlSecondsAfterFinished: 60 * 60 * 24 * 7,
+        },
       },
     });
 
-    const runtime = await this.pluginRuntimeService.resolvePluginRuntime(node);
+    return await this.waitForGamedataValidation(jobName);
+  }
 
-    const lockKey = `gamedata:validate:lock:${buildId}:${branch}`;
-    const acquired = await this.redis.set(lockKey, 1, "EX", 60 * 60, "NX");
-    if (acquired === null) {
-      this.logger.warn(
-        `[validate-gamedata] validation already running for build ${buildId} (${branch})`,
+  // The validator reports "error" both when it never ran (no pod, no logs)
+  // and when it scanned everything but one set could not be verified, such
+  // as the Swiftly gamedata fetch failing. Only the second has results worth
+  // keeping or comparing against.
+  public static validatedAnything(result: GamedataValidationResult): boolean {
+    return Array.isArray(result.results);
+  }
+
+  public static gamedataErrorReason(
+    result: GamedataValidationResult,
+  ): string | null {
+    if (result.error) {
+      return result.error;
+    }
+    if (result.swiftly?.error) {
+      return result.swiftly.error;
+    }
+    const unverified = Object.entries(result.statuses ?? {})
+      .filter(([, status]) => status === "error")
+      .map(([set]) => set);
+    if (unverified.length) {
+      return `could not verify ${unverified.join(", ")}`;
+    }
+    return null;
+  }
+
+  public static gamedataLockKey(buildId: number, branch = "public") {
+    return `gamedata:validate:lock:${buildId}:${branch}`;
+  }
+
+  public static gamedataEntryKey(entry: {
+    set: string;
+    kind?: string | null;
+    signature: string;
+  }): string {
+    return `${entry.set}\u0000${entry.kind ?? "signature"}\u0000${entry.signature}`;
+  }
+
+  // An entry counts as fixed only when the new run actually resolved it: one
+  // the new run skipped (or no longer checks at all) is not evidence of a fix.
+  public static diffGamedata(
+    current: GamedataValidationResult,
+    previous: GamedataValidationResult | null,
+  ): GamedataValidationChanges {
+    const skipped = current.skipped ?? [];
+    const counts = {
+      checked: Math.max((current.results?.length ?? 0) - skipped.length, 0),
+      broken: current.broken?.length ?? 0,
+      warnings: current.warnings?.length ?? 0,
+      skipped: skipped.length,
+    };
+
+    if (!previous) {
+      return {
+        comparable: false,
+        counts,
+        newly_broken: [],
+        fixed: [],
+        new_warnings: [],
+        cleared_warnings: [],
+      };
+    }
+
+    const index = (entries?: Array<GamedataValidationEntry>) =>
+      new Map(
+        (entries ?? []).map((entry): [string, GamedataValidationEntry] => [
+          GameServerNodeService.gamedataEntryKey(entry),
+          entry,
+        ]),
       );
-      return null;
+
+    const currentBroken = index(current.broken);
+    const previousBroken = index(previous.broken);
+    const currentWarnings = index(current.warnings);
+    const previousWarnings = index(previous.warnings);
+    const currentResults = index(current.results);
+    const previousResults = index(previous.results);
+    const skippedKeys = new Set(
+      skipped.map(GameServerNodeService.gamedataEntryKey),
+    );
+
+    const change = (
+      entry: GamedataValidationEntry,
+      before: GamedataValidationEntry | undefined,
+      after: GamedataValidationEntry | undefined,
+    ): GamedataChangeEntry => ({
+      set: entry.set,
+      kind: entry.kind ?? "signature",
+      signature: entry.signature,
+      runtimes: entry.runtimes ?? [],
+      previous_count: before?.count ?? null,
+      count: after?.count ?? null,
+    });
+
+    const resolvedNow = (key: string) =>
+      !skippedKeys.has(key) &&
+      (current.results ? currentResults.get(key)?.ok === true : true);
+
+    return {
+      comparable: true,
+      counts,
+      newly_broken: [...currentBroken]
+        .filter(([key]) => !previousBroken.has(key))
+        .map(([key, entry]) => change(entry, previousResults.get(key), entry)),
+      fixed: [...previousBroken]
+        .filter(([key]) => !currentBroken.has(key) && resolvedNow(key))
+        .map(([key, entry]) => change(entry, entry, currentResults.get(key))),
+      new_warnings: [...currentWarnings]
+        .filter(([key]) => !previousWarnings.has(key))
+        .map(([key, entry]) => change(entry, previousResults.get(key), entry)),
+      cleared_warnings: [...previousWarnings]
+        .filter(
+          ([key]) =>
+            !currentWarnings.has(key) &&
+            !currentBroken.has(key) &&
+            resolvedNow(key),
+        )
+        .map(([key, entry]) => change(entry, entry, currentResults.get(key))),
+    };
+  }
+
+  public async gamedataValidationActive(
+    buildId: number,
+    branch = "public",
+  ): Promise<boolean> {
+    if (
+      await this.redis.exists(
+        GameServerNodeService.gamedataLockKey(buildId, branch),
+      )
+    ) {
+      return true;
     }
 
-    try {
-      await this.batchApi
-        .deleteNamespacedJob({
-          name: jobName,
-          namespace: this.namespace,
-          propagationPolicy: "Background",
-          gracePeriodSeconds: 0,
-        })
-        .catch((error) => {
-          if (error.code?.toString() !== "404") {
-            throw error;
-          }
-        });
-
-      await this.batchApi.createNamespacedJob({
-        namespace: this.namespace,
-        body: {
-          apiVersion: "batch/v1",
-          kind: "Job",
-          metadata: {
-            name: jobName,
-          },
-          spec: {
-            template: {
-              metadata: {
-                labels: {
-                  app: "validate-gamedata",
-                },
-              },
-              spec: {
-                affinity: {
-                  nodeAffinity: {
-                    requiredDuringSchedulingIgnoredDuringExecution: {
-                      nodeSelectorTerms: [
-                        {
-                          matchExpressions: [
-                            {
-                              key: "kubernetes.io/hostname",
-                              operator: "In",
-                              values: [gameServerNodeId],
-                            },
-                          ],
-                        },
-                      ],
-                    },
-                  },
-                },
-                restartPolicy: "Never",
-                dnsConfig: {
-                  options: [
-                    {
-                      name: "ndots",
-                      value: "1",
-                    },
-                  ],
-                },
-                containers: [
-                  {
-                    name: "validate-gamedata",
-                    image: "ghcr.io/5stackgg/gamedata-validator:latest",
-                    args: [
-                      "--build-id",
-                      buildId.toString(),
-                      "--runtime",
-                      runtime,
-                    ],
-                    volumeMounts: [
-                      {
-                        name: serverfilesVolumeName,
-                        mountPath: "/serverdata/serverfiles",
-                        readOnly: true,
-                      },
-                    ],
-                    resources: {
-                      requests: {
-                        cpu: "500m",
-                        memory: "2Gi",
-                      },
-                      limits: {
-                        memory: "6Gi",
-                      },
-                    },
-                  },
-                ],
-                volumes: [
-                  {
-                    name: serverfilesVolumeName,
-                    persistentVolumeClaim: {
-                      claimName: `${serverfilesVolumeName}-claim`,
-                      readOnly: true,
-                    },
-                  },
-                ],
-              },
-            },
-            backoffLimit: 0,
-            ttlSecondsAfterFinished: 60 * 60 * 24 * 7,
-          },
-        },
-      });
-
-      const result = await this.waitForGamedataValidation(jobName);
-
-      await this.hasura.mutation({
-        delete_gamedata_signature_validations: {
-          __args: {
-            where: {
-              build_id: { _eq: buildId },
-              branch: { _eq: branch },
-            },
-          },
-          affected_rows: true,
-        },
-      });
-
-      await this.hasura.mutation({
-        insert_gamedata_signature_validations_one: {
-          __args: {
-            object: {
-              build_id: buildId,
-              branch,
-              status: result?.status ?? "error",
-              results: result ?? null,
-            },
-          },
-          id: true,
-        },
-      });
-
-      return result;
-    } finally {
-      await this.redis.del(lockKey);
+    for (const jobId of [
+      `validate.${buildId}.auto`,
+      `validate.${buildId}.manual`,
+    ]) {
+      if (await this.validateGamedataQueue.getJob(jobId)) {
+        return true;
+      }
     }
+
+    return false;
+  }
+
+  // Why a node cannot run a build job, or null when it can. Both jobs mount
+  // the node's own install, so it has to be online and on the build itself.
+  public static buildNodeIneligibility(
+    node: BuildNodeCandidate,
+    buildId: number,
+  ): string | null {
+    const name = node.label || node.id;
+
+    if (!node.enabled) {
+      return `${name} is disabled`;
+    }
+    if (node.gpu && !node.enabled_for_match_making) {
+      return `${name} is a GPU-only node`;
+    }
+    if (node.status !== "Online") {
+      return `${name} is ${node.status ?? "offline"}`;
+    }
+    if (node.update_status) {
+      return `${name} is updating CS2`;
+    }
+    if (node.build_id !== buildId) {
+      return `${name} is on build ${node.build_id ?? "unknown"}, not ${buildId}`;
+    }
+
+    return null;
+  }
+
+  public static pickBuildNode(
+    nodes: Array<Pick<BuildNodeCandidate, "id">>,
+    busy: Set<string>,
+  ): string | null {
+    const [picked] = [...nodes].sort(
+      (a, b) =>
+        Number(busy.has(a.id)) - Number(busy.has(b.id)) ||
+        a.id.localeCompare(b.id),
+    );
+
+    return picked?.id ?? null;
+  }
+
+  public async resolveBuildNode(
+    buildId: number,
+    requested?: string | null,
+  ): Promise<string> {
+    const nodes = await this.postgres.query<Array<BuildNodeCandidate>>(
+      `SELECT id, label, status, enabled, build_id, update_status, gpu,
+              enabled_for_match_making
+         FROM public.game_server_nodes`,
+    );
+
+    if (requested) {
+      const node = nodes.find(({ id }) => id === requested);
+      if (!node) {
+        throw new Error(`Game server node ${requested} does not exist`);
+      }
+
+      const reason = GameServerNodeService.buildNodeIneligibility(
+        node,
+        buildId,
+      );
+      if (reason) {
+        throw new Error(reason);
+      }
+
+      return node.id;
+    }
+
+    const eligible = nodes.filter(
+      (node) => !GameServerNodeService.buildNodeIneligibility(node, buildId),
+    );
+    const picked = GameServerNodeService.pickBuildNode(
+      eligible,
+      await this.busyBuildNodes(),
+    );
+
+    if (!picked) {
+      throw new Error(`No online game server node is on CS2 build ${buildId}`);
+    }
+
+    return picked;
+  }
+
+  private async busyBuildNodes(): Promise<Set<string>> {
+    const rows = await this.postgres.query<
+      Array<{ game_server_node_id: string }>
+    >(
+      `SELECT game_server_node_id
+         FROM public.gamedata_signature_validations
+        WHERE status = 'running'
+          AND game_server_node_id IS NOT NULL
+       UNION
+       SELECT game_server_node_id
+         FROM public.map_asset_builds
+        WHERE status IN ('Pending', 'Building')
+          AND game_server_node_id IS NOT NULL`,
+    );
+
+    return new Set(rows.map(({ game_server_node_id }) => game_server_node_id));
   }
 
   private async waitForGamedataValidation(

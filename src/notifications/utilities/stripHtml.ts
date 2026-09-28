@@ -7,12 +7,14 @@ import { load } from "cheerio";
 //
 // cheerio rather than a tag-stripping regex because the entities have to be
 // decoded too: a regex leaves "&amp;" on screen where the bell shows "&".
+//
+// Line and list-item breaks become spaces first: .text() joins adjacent
+// blocks with nothing between them ("verified.Automatic run").
 export function stripHtml(html: string | null | undefined, maxLength = 160) {
-  const text = load(String(html ?? ""))
-    .root()
-    .text()
-    .replace(/\s+/g, " ")
-    .trim();
+  const $ = load(String(html ?? ""));
+  $("br").replaceWith(" ");
+  $("li, ul").before(" ").after(" ");
+  const text = $.root().text().replace(/\s+/g, " ").trim();
 
   if (text.length <= maxLength) {
     return text;

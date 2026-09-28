@@ -18,13 +18,40 @@ import { MapAssetsQueues } from "./enums/MapAssetsQueues";
 
 export type MapAssetKind = "tri" | "grenadeclip" | "view" | "callouts";
 
+export type MapAssetsManifestEntry = Partial<Record<MapAssetKind, string>> & {
+  sha256?: Partial<Record<MapAssetKind, string>>;
+  source?: { vpk_sha256?: string; pipeline?: string };
+};
+
 export type MapAssetsManifest = {
   version: number;
   build: string;
   created_at?: string;
-  maps: Record<string, Partial<Record<MapAssetKind, string>>>;
+  maps: Record<string, MapAssetsManifestEntry>;
   failed?: Array<string>;
   failed_view?: Array<string>;
+};
+
+export type MapAssetsChangeReason = "vpk" | "pipeline" | "assets";
+
+export type MapAssetsChanges = {
+  comparable: boolean;
+  total: number;
+  added: Array<string>;
+  removed: Array<string>;
+  rebuilt: Array<{
+    map: string;
+    reason: MapAssetsChangeReason;
+    assets: Array<MapAssetKind>;
+  }>;
+  unchanged: number;
+};
+
+export type MapAssetBuildRun = {
+  trigger: "auto" | "manual";
+  requestedBy?: string | null;
+  requestedByName?: string | null;
+  force?: boolean;
 };
 
 export type MapAssetsPointer = {
@@ -47,6 +74,11 @@ export type MapAssetBuildOutcome = {
   failed: Array<string> | null;
   failed_view: Array<string> | null;
   error: string | null;
+  kept_published?: boolean;
+  previous_build_id?: string | null;
+  changes?: MapAssetsChanges | null;
+  started_at?: Date | string | null;
+  finished_at?: Date | string | null;
 };
 
 @Injectable()
@@ -67,6 +99,13 @@ export class MapAssetsService {
     };
 
   public static readonly INDEX_VERSION = 1;
+
+  public static readonly ASSET_KINDS: Array<MapAssetKind> = [
+    "tri",
+    "grenadeclip",
+    "view",
+    "callouts",
+  ];
 
   public static readonly IMAGE = "ghcr.io/5stackgg/map-assets:latest";
 
@@ -169,7 +208,11 @@ export class MapAssetsService {
     return (await response.json()) as T;
   }
 
-  public static jobSpec(gameServerNodeId: string, buildId: string): V1Job {
+  public static jobSpec(
+    gameServerNodeId: string,
+    buildId: string,
+    force = false,
+  ): V1Job {
     const volume = `serverfiles-${gameServerNodeId.replaceAll(".", "-")}`;
 
     return {
@@ -230,6 +273,7 @@ export class MapAssetsService {
                   "--out",
                   "/work",
                   "--publish",
+                  ...(force ? ["--force"] : []),
                 ],
                 env: [
                   {
@@ -338,11 +382,11 @@ export class MapAssetsService {
     }
 
     const claimed = await this.postgres.query<Array<{ build_id: string }>>(
-      `INSERT INTO public.map_asset_builds (build_id)
-       VALUES ($1)
+      `INSERT INTO public.map_asset_builds (build_id, trigger, game_server_node_id)
+       VALUES ($1, 'auto', $2)
        ON CONFLICT (build_id) DO NOTHING
        RETURNING build_id`,
-      [String(buildId)],
+      [String(buildId), gameServerNodeId],
     );
 
     if (!claimed.length) {
@@ -350,7 +394,9 @@ export class MapAssetsService {
     }
 
     try {
-      await this.enqueue(gameServerNodeId, String(buildId));
+      await this.enqueue(gameServerNodeId, String(buildId), {
+        trigger: "auto",
+      });
     } catch (error) {
       await this.postgres.query(
         `DELETE FROM public.map_asset_builds
@@ -365,58 +411,103 @@ export class MapAssetsService {
   }
 
   // Retries a Partial or Failed build (the publisher rebuilds only the failed
-  // maps into a new manifest revision). A Published build is immutable, and one
-  // with a live queue job is already running; a Building row whose job is gone
-  // is what an api crash leaves behind, so it may be re-run.
-  public async queueManualBuild(gameServerNodeId: string): Promise<boolean> {
+  // maps into a new manifest revision). A Published build is only rebuilt when
+  // forced, which rebuilds every map into the next revision. One with a live
+  // queue job is already running; a Building row whose job is gone is what an
+  // api crash leaves behind, so it may be re-run.
+  public async queueManualBuild(
+    gameServerNodeId: string,
+    buildId: string,
+    requester: { steamId: string | null; name?: string | null },
+    force = false,
+  ): Promise<void> {
     if (process.env.WEB_DOMAIN !== "5stack.gg") {
-      return false;
+      throw new Error("Map assets are only built on the 5stack.gg instance");
     }
-
-    const [node] = await this.postgres.query<
-      Array<{ build_id: number | null }>
-    >(
-      `SELECT build_id
-         FROM public.game_server_nodes
-        WHERE id = $1`,
-      [gameServerNodeId],
-    );
-
-    if (!node?.build_id) {
-      return false;
-    }
-
-    const buildId = String(node.build_id);
 
     const [existing] = await this.postgres.query<
-      Array<{ status: MapAssetBuildStatus }>
+      Array<{
+        status: MapAssetBuildStatus;
+        trigger: string | null;
+        game_server_node_id: string | null;
+        requested_by_steam_id: string | null;
+        started_at: Date | null;
+        finished_at: Date | null;
+      }>
     >(
-      `SELECT status
+      `SELECT status, trigger, game_server_node_id, requested_by_steam_id,
+              started_at, finished_at
          FROM public.map_asset_builds
         WHERE build_id = $1`,
       [buildId],
     );
 
-    if (existing?.status === "Published") {
-      return false;
+    if (existing?.status === "Published" && !force) {
+      throw new Error(
+        `Map assets for build ${buildId} are already published; force a rebuild to build every map again`,
+      );
     }
 
     if (await this.queue.getJob(MapAssetsService.GET_QUEUE_JOB_ID(buildId))) {
-      return false;
+      throw new Error(
+        `A map-asset build for ${buildId} is already queued or running`,
+      );
     }
 
     await this.postgres.query(
-      `INSERT INTO public.map_asset_builds (build_id)
-       VALUES ($1)
+      `INSERT INTO public.map_asset_builds
+         (build_id, trigger, game_server_node_id, requested_by_steam_id)
+       VALUES ($1, 'manual', $2, $3)
        ON CONFLICT (build_id) DO UPDATE
           SET status = 'Pending',
-              error = NULL`,
-      [buildId],
+              error = NULL,
+              started_at = NULL,
+              finished_at = NULL,
+              trigger = 'manual',
+              game_server_node_id = EXCLUDED.game_server_node_id,
+              requested_by_steam_id = EXCLUDED.requested_by_steam_id`,
+      [buildId, gameServerNodeId, requester.steamId],
     );
 
-    await this.enqueue(gameServerNodeId, buildId);
-
-    return true;
+    try {
+      await this.enqueue(gameServerNodeId, buildId, {
+        trigger: "manual",
+        requestedBy: requester.steamId,
+        requestedByName: requester.name ?? null,
+        force,
+      });
+    } catch (error) {
+      if (existing) {
+        await this.postgres.query(
+          `UPDATE public.map_asset_builds
+              SET status = $2,
+                  trigger = $3,
+                  game_server_node_id = $4,
+                  requested_by_steam_id = $5,
+                  started_at = $6,
+                  finished_at = $7
+            WHERE build_id = $1
+              AND status = 'Pending'`,
+          [
+            buildId,
+            existing.status,
+            existing.trigger,
+            existing.game_server_node_id,
+            existing.requested_by_steam_id,
+            existing.started_at,
+            existing.finished_at,
+          ],
+        );
+      } else {
+        await this.postgres.query(
+          `DELETE FROM public.map_asset_builds
+            WHERE build_id = $1
+              AND status = 'Pending'`,
+          [buildId],
+        );
+      }
+      throw error;
+    }
   }
 
   // A job that is still running is attached to rather than replaced: the api
@@ -425,12 +516,23 @@ export class MapAssetsService {
   public async build(
     gameServerNodeId: string,
     buildId: string,
+    force = false,
   ): Promise<MapAssetBuildOutcome> {
     const jobName = MapAssetsService.GET_JOB_NAME(buildId);
 
+    const [prior] = await this.postgres.query<
+      Array<{ status: MapAssetBuildStatus }>
+    >(
+      `SELECT status
+         FROM public.map_asset_builds
+        WHERE build_id = $1`,
+      [buildId],
+    );
+
     await this.postgres.query(
-      `INSERT INTO public.map_asset_builds (build_id, status, started_at)
-       VALUES ($1, 'Building', now())
+      `INSERT INTO public.map_asset_builds
+         (build_id, status, started_at, game_server_node_id)
+       VALUES ($1, 'Building', now(), $2)
        ON CONFLICT (build_id) DO UPDATE
           SET status = 'Building',
               started_at = CASE
@@ -439,8 +541,9 @@ export class MapAssetsService {
                 ELSE now()
               END,
               finished_at = NULL,
-              error = NULL`,
-      [buildId],
+              error = NULL,
+              game_server_node_id = EXCLUDED.game_server_node_id`,
+      [buildId, gameServerNodeId],
     );
 
     let outcome: MapAssetBuildOutcome;
@@ -449,7 +552,7 @@ export class MapAssetsService {
       const existing = await this.loggingService.getJobStatus(jobName);
 
       if (!existing?.active || existing.succeeded || existing.failed) {
-        await this.startJob(gameServerNodeId, buildId);
+        await this.startJob(gameServerNodeId, buildId, force);
       }
 
       outcome = await this.waitForJob(jobName, buildId);
@@ -459,7 +562,37 @@ export class MapAssetsService {
       );
     }
 
-    await this.postgres.query(
+    // A forced rebuild that fails leaves the build's published manifest (and
+    // latest.json) exactly as they were, so the build is still Published.
+    const status =
+      outcome.status === "Failed" && prior?.status === "Published"
+        ? "Published"
+        : outcome.status;
+
+    let previousBuildId: string | null = null;
+    let changes: MapAssetsChanges | null = null;
+
+    if (outcome.maps) {
+      const [previous] = await this.postgres.query<
+        Array<{ build_id: string; maps: MapAssetsManifest["maps"] }>
+      >(
+        `SELECT build_id, maps
+           FROM public.map_asset_builds
+          WHERE maps IS NOT NULL
+            AND CASE WHEN build_id ~ '^[0-9]+$' THEN build_id::bigint END
+                < $1::bigint
+          ORDER BY CASE WHEN build_id ~ '^[0-9]+$' THEN build_id::bigint END DESC
+          LIMIT 1`,
+        [buildId],
+      );
+
+      previousBuildId = previous?.build_id ?? null;
+      changes = MapAssetsService.diffMaps(outcome.maps, previous?.maps ?? null);
+    }
+
+    const [row] = await this.postgres.query<
+      Array<{ started_at: Date | null; finished_at: Date | null }>
+    >(
       `UPDATE public.map_asset_builds
           SET status = $2,
               finished_at = now(),
@@ -467,20 +600,101 @@ export class MapAssetsService {
               maps = COALESCE($4::jsonb, maps),
               failed = COALESCE($5::jsonb, failed),
               failed_view = COALESCE($6::jsonb, failed_view),
-              error = $7
-        WHERE build_id = $1`,
+              error = $7,
+              previous_build_id = COALESCE($8, previous_build_id),
+              changes = COALESCE($9::jsonb, changes)
+        WHERE build_id = $1
+        RETURNING started_at, finished_at`,
       [
         buildId,
-        outcome.status,
+        status,
         outcome.manifest,
         outcome.maps ? JSON.stringify(outcome.maps) : null,
         outcome.failed ? JSON.stringify(outcome.failed) : null,
         outcome.failed_view ? JSON.stringify(outcome.failed_view) : null,
         outcome.error,
+        previousBuildId,
+        changes ? JSON.stringify(changes) : null,
       ],
     );
 
-    return outcome;
+    return {
+      ...outcome,
+      kept_published: status !== outcome.status,
+      previous_build_id: previousBuildId,
+      changes,
+      started_at: row?.started_at ?? null,
+      finished_at: row?.finished_at ?? null,
+    };
+  }
+
+  public static diffMaps(
+    current: MapAssetsManifest["maps"],
+    previous: MapAssetsManifest["maps"] | null,
+  ): MapAssetsChanges {
+    const names = Object.keys(current ?? {}).sort();
+
+    if (!previous) {
+      return {
+        comparable: false,
+        total: names.length,
+        added: [],
+        removed: [],
+        rebuilt: [],
+        unchanged: 0,
+      };
+    }
+
+    const added: Array<string> = [];
+    const rebuilt: MapAssetsChanges["rebuilt"] = [];
+    let unchanged = 0;
+
+    for (const map of names) {
+      const after = current[map];
+      const before = Object.hasOwn(previous, map) ? previous[map] : undefined;
+
+      if (!before) {
+        added.push(map);
+        continue;
+      }
+
+      const assets = MapAssetsService.ASSET_KINDS.filter(
+        (kind) =>
+          (before[kind] ?? null) !== (after[kind] ?? null) ||
+          (before.sha256?.[kind] ?? null) !== (after.sha256?.[kind] ?? null),
+      );
+
+      const vpkChanged =
+        !!before.source?.vpk_sha256 &&
+        !!after.source?.vpk_sha256 &&
+        before.source.vpk_sha256 !== after.source.vpk_sha256;
+      const pipelineChanged =
+        (before.source?.pipeline ?? null) !== (after.source?.pipeline ?? null);
+
+      if (!assets.length && !vpkChanged && !pipelineChanged) {
+        unchanged += 1;
+        continue;
+      }
+
+      rebuilt.push({
+        map,
+        reason: vpkChanged ? "vpk" : pipelineChanged ? "pipeline" : "assets",
+        assets,
+      });
+    }
+
+    const removed = Object.keys(previous)
+      .filter((map) => !Object.hasOwn(current, map))
+      .sort();
+
+    return {
+      comparable: true,
+      total: names.length,
+      added,
+      removed,
+      rebuilt,
+      unchanged,
+    };
   }
 
   private static failed(error: string): MapAssetBuildOutcome {
@@ -503,12 +717,17 @@ export class MapAssetsService {
     return setting?.value === "true";
   }
 
-  private async enqueue(gameServerNodeId: string, buildId: string) {
+  private async enqueue(
+    gameServerNodeId: string,
+    buildId: string,
+    run: MapAssetBuildRun,
+  ) {
     await this.queue.add(
       "BuildMapAssets",
       {
         gameServerNodeId,
         buildId,
+        ...run,
       },
       {
         jobId: MapAssetsService.GET_QUEUE_JOB_ID(buildId),
@@ -519,7 +738,11 @@ export class MapAssetsService {
     );
   }
 
-  private async startJob(gameServerNodeId: string, buildId: string) {
+  private async startJob(
+    gameServerNodeId: string,
+    buildId: string,
+    force: boolean,
+  ) {
     await this.batchApi
       .deleteNamespacedJob({
         name: MapAssetsService.GET_JOB_NAME(buildId),
@@ -535,7 +758,7 @@ export class MapAssetsService {
 
     await this.batchApi.createNamespacedJob({
       namespace: this.namespace,
-      body: MapAssetsService.jobSpec(gameServerNodeId, buildId),
+      body: MapAssetsService.jobSpec(gameServerNodeId, buildId, force),
     });
   }
 

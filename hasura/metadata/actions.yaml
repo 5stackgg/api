@@ -172,7 +172,7 @@ actions:
       forward_client_headers: true
     permissions:
       - role: administrator
-    comment: Build and publish map assets from a node's CS2 install (5stack.gg only)
+    comment: Build and publish map assets for the current CS2 build on a chosen or automatically picked node (5stack.gg only)
   - name: callForOrganizer
     definition:
       kind: synchronous
@@ -1241,7 +1241,7 @@ actions:
       forward_client_headers: true
     permissions:
       - role: administrator
-    comment: Validate CS2 gamedata signatures/offsets on a node (5stack.gg test instance only)
+    comment: Validate CS2 gamedata for the current build on a chosen or automatically picked node (5stack.gg only)
   - name: watchDemo
     definition:
       kind: synchronous

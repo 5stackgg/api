@@ -1101,6 +1101,14 @@ describe("stripHtml", () => {
   it("survives an empty message", () => {
     expect(stripHtml(null)).toBe("");
   });
+
+  it("keeps line breaks and list items apart", () => {
+    expect(
+      stripHtml(
+        "verified.<br><i>Automatic run.</i><ul><li><code>A</code></li><li>B</li></ul>",
+      ),
+    ).toBe("verified. Automatic run. A B");
+  });
 });
 
 describe("notificationUrl", () => {
