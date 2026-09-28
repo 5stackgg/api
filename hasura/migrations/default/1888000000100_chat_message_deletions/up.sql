@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS public.chat_message_deletions (
     deleted_at timestamptz NOT NULL DEFAULT now(),
 
     PRIMARY KEY (id),
-    UNIQUE (room_type, room_id, message_id)
+    UNIQUE (message_id, room_type, room_id)
 );
 
 CREATE INDEX IF NOT EXISTS chat_message_deletions_author_idx

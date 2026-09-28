@@ -310,6 +310,20 @@ describe("chat moderation (SQL-driven)", () => {
       expect(await audits()).toHaveLength(1);
     });
 
+    it("tells a deleted message from one that merely expired", async () => {
+      const mod = await moderator();
+      const author = await fx.player("Author");
+      const matchId = randomUUID();
+      const deleted = await post(matchId, author);
+      const expired = await post(matchId, author, "fine");
+
+      await chat.deleteMessage(ChatLobbyType.Match, matchId, deleted, mod);
+      await redis.hdel(`chat_match_${matchId}`, expired);
+
+      expect(await chat["wasDeleted"](deleted)).toBe(true);
+      expect(await chat["wasDeleted"](expired)).toBe(false);
+    });
+
     it("keeps the audit when the author's player row goes", async () => {
       const mod = await moderator();
       const author = await fx.player("Author");

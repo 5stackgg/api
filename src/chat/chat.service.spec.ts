@@ -15,7 +15,6 @@ describe("ChatService direct messages", () => {
     hget: jest.fn().mockResolvedValue(null),
     hgetall: jest.fn().mockResolvedValue({}),
     hdel: jest.fn(),
-    hexists: jest.fn().mockResolvedValue(1),
     get: jest.fn().mockResolvedValue(null),
     set: jest.fn(),
     del: jest.fn(),
@@ -38,12 +37,17 @@ describe("ChatService direct messages", () => {
   let role: string;
   let queries: Array<{ sql: string; bindings: any[] }>;
   let gagged: boolean;
+  let audited: boolean;
   const postgres = {
     query: jest.fn(async (sql: string, bindings: any[]): Promise<any[]> => {
       queries.push({ sql, bindings });
 
       if (sql.includes("public.is_gagged")) {
         return [{ gagged }];
+      }
+
+      if (sql.includes("SELECT 1 FROM public.chat_message_deletions")) {
+        return [{ deleted: audited }];
       }
 
       return [];
@@ -250,7 +254,6 @@ describe("ChatService direct messages", () => {
     // room would otherwise leave them seated for every test after it.
     redis.hget.mockResolvedValue(null);
     redis.hgetall.mockResolvedValue({});
-    redis.hexists.mockResolvedValue(1);
     redis.get.mockResolvedValue(null);
     notifications.retractChatMessage.mockResolvedValue(undefined);
     acceptedFriendships = [[ME, FRIEND]];
@@ -266,6 +269,7 @@ describe("ChatService direct messages", () => {
     role = "user";
     queries = [];
     gagged = false;
+    audited = false;
     rcon.send.mockResolvedValue(undefined);
     rcon.connect.mockResolvedValue(rcon);
 
@@ -1239,21 +1243,22 @@ describe("ChatService direct messages", () => {
       };
 
       it("retracts them once written if the message was deleted meanwhile", async () => {
-        redis.hexists.mockResolvedValue(0);
+        audited = true;
 
         const messageId = await sayInTournament();
 
         expect(notifications.notifyPlayers).toHaveBeenCalled();
-        expect(redis.hexists).toHaveBeenCalledWith(
-          "chat_tournament_t-1",
-          messageId,
-        );
+        expect(
+          queries.find(({ sql }) =>
+            sql.includes("SELECT 1 FROM public.chat_message_deletions"),
+          )?.bindings,
+        ).toEqual([messageId]);
         expect(notifications.retractChatMessage).toHaveBeenCalledWith(
           messageId,
         );
       });
 
-      it("leaves them alone while the message is still there", async () => {
+      it("leaves them alone when nothing deleted the message", async () => {
         await sayInTournament();
 
         expect(notifications.notifyPlayers).toHaveBeenCalled();

@@ -865,13 +865,23 @@ export class ChatService {
     );
 
     // A delete that landed while the rows above were being written retracted
-    // nothing, and it removes the message before it retracts.
-    if (
-      type !== ChatLobbyType.Direct &&
-      !(await this.redis.hexists(`chat_${type}_${id}`, messageId))
-    ) {
+    // nothing. Its audit row is committed before it retracts, and unlike the
+    // redis field it is not gone just because the message expired or moved.
+    if (type !== ChatLobbyType.Direct && (await this.wasDeleted(messageId))) {
       await this.notifications.retractChatMessage(messageId);
     }
+  }
+
+  private async wasDeleted(messageId: string): Promise<boolean> {
+    const [row] = await this.postgres.query<Array<{ deleted: boolean }>>(
+      `SELECT EXISTS (
+         SELECT 1 FROM public.chat_message_deletions
+          WHERE message_id = $1::uuid
+       ) AS deleted`,
+      [messageId],
+    );
+
+    return row?.deleted === true;
   }
 
   // Match chat is its own notification type, and so its own push category.

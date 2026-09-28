@@ -783,6 +783,7 @@ export class NotificationsService {
           SET deleted_at = COALESCE(deleted_at, now()),
               message = ''
         WHERE data->>'messageId' = $1
+          AND type IN ('ChatMessage', 'MatchChatMessage')
           AND (deleted_at IS NULL OR message <> '')`,
       [messageId],
     );

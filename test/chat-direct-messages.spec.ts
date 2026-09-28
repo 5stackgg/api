@@ -22,7 +22,6 @@ describe("direct messages (SQL-driven)", () => {
     hget: jest.fn().mockResolvedValue(null),
     hgetall: jest.fn().mockResolvedValue({}),
     hdel: jest.fn(),
-    hexists: jest.fn().mockResolvedValue(1),
     get: jest.fn().mockResolvedValue(null),
     set: jest.fn(),
     del: jest.fn(),
