@@ -789,6 +789,10 @@ type Query {
 }
 
 type Mutation {
+  testDownload: TestDownloadResponse
+}
+
+type Mutation {
   testUpload: TestUploadResponse
 }
 
@@ -1378,6 +1382,10 @@ type TelemetryStats {
   versions: [TelemetryVersionCount!]!
   runtimes: [TelemetryRuntimeCount!]!
   countries: [TelemetryCountryCount!]!
+}
+
+type TestDownloadResponse {
+  error: String
 }
 
 type TestUploadResponse {
