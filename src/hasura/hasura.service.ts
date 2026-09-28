@@ -161,6 +161,15 @@ export class HasuraService {
       [this.appConfig.relayDomain],
     );
 
+    // Left alone when unset, so a URL saved from the old settings-page field
+    // keeps working on panels that have not run ./backblaze-proxy.sh since.
+    if (this.appConfig.cloudflareWorkerUrl) {
+      await this.postgresService.query(
+        "insert into settings (name, value) values ('cloudflare_worker_url', $1) on conflict (name) do update set value = $1",
+        [this.appConfig.cloudflareWorkerUrl],
+      );
+    }
+
     // Steam presence bot is on by default; seed the row so the admin toggle
     // reflects it. `do nothing` preserves an admin's explicit off.
     await this.postgresService.query(

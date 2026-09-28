@@ -13,6 +13,9 @@ export default (): {
     relayDomain: `https://${process.env.RELAY_DOMAIN}`,
     demosDomain: `https://${process.env.DEMOS_DOMAIN}`,
     gameStreamDomain: `https://${process.env.GAME_STREAM_DOMAIN}`,
+    cloudflareWorkerUrl: process.env.CLOUDFLARE_WORKER_DOMAIN
+      ? `https://${process.env.CLOUDFLARE_WORKER_DOMAIN}`
+      : undefined,
     authCookieDomain:
       process.env.AUTH_COOKIE_DOMAIN || `.${process.env.WEB_DOMAIN}`,
     // Full origins, scheme and all -- `https://dev.5stack.gg`, not

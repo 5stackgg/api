@@ -8,6 +8,7 @@ export type AppConfig = {
   relayDomain: string;
   demosDomain: string;
   gameStreamDomain: string;
+  cloudflareWorkerUrl?: string;
   authCookieDomain: string;
   extraCorsOrigins: Array<string>;
   demoParserUrl: string;
