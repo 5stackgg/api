@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Delete,
   ForbiddenException,
@@ -48,6 +49,17 @@ export class BroadcastHudsController {
     );
 
     return { success: true, hud };
+  }
+
+  @Post(":slug/page")
+  public async setPage(
+    @Req() request: Request,
+    @Param("slug") slug: string,
+    @Body("url") url?: string | null,
+  ) {
+    this.requireAdmin(request);
+    const result = await this.huds.setPage(slug, url ?? null);
+    return { success: true, ...result };
   }
 
   @Delete(":slug")

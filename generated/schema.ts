@@ -2027,6 +2027,8 @@ export interface broadcast_huds {
     is_signed: Scalars['Boolean']
     jthud_id: Scalars['String']
     name: Scalars['String']
+    page_url: (Scalars['String'] | null)
+    preview: (Scalars['String'] | null)
     size_bytes: (Scalars['bigint'] | null)
     slug: Scalars['String']
     source: Scalars['String']
@@ -2085,6 +2087,8 @@ export interface broadcast_huds_max_fields {
     id: (Scalars['uuid'] | null)
     jthud_id: (Scalars['String'] | null)
     name: (Scalars['String'] | null)
+    page_url: (Scalars['String'] | null)
+    preview: (Scalars['String'] | null)
     size_bytes: (Scalars['bigint'] | null)
     slug: (Scalars['String'] | null)
     source: (Scalars['String'] | null)
@@ -2106,6 +2110,8 @@ export interface broadcast_huds_min_fields {
     id: (Scalars['uuid'] | null)
     jthud_id: (Scalars['String'] | null)
     name: (Scalars['String'] | null)
+    page_url: (Scalars['String'] | null)
+    preview: (Scalars['String'] | null)
     size_bytes: (Scalars['bigint'] | null)
     slug: (Scalars['String'] | null)
     source: (Scalars['String'] | null)
@@ -2130,7 +2136,7 @@ export interface broadcast_huds_mutation_response {
 
 
 /** select columns of table "broadcast_huds" */
-export type broadcast_huds_select_column = 'author' | 'created_at' | 'description' | 'enabled' | 'hud_json' | 'id' | 'is_signed' | 'jthud_id' | 'name' | 'size_bytes' | 'slug' | 'source' | 'storage_key' | 'thumbnail' | 'updated_at' | 'uploaded_by_steam_id' | 'variant' | 'version'
+export type broadcast_huds_select_column = 'author' | 'created_at' | 'description' | 'enabled' | 'hud_json' | 'id' | 'is_signed' | 'jthud_id' | 'name' | 'page_url' | 'preview' | 'size_bytes' | 'slug' | 'source' | 'storage_key' | 'thumbnail' | 'updated_at' | 'uploaded_by_steam_id' | 'variant' | 'version'
 
 
 /** aggregate stddev on columns */
@@ -2166,7 +2172,7 @@ export interface broadcast_huds_sum_fields {
 
 
 /** update columns of table "broadcast_huds" */
-export type broadcast_huds_update_column = 'author' | 'created_at' | 'description' | 'enabled' | 'hud_json' | 'id' | 'is_signed' | 'jthud_id' | 'name' | 'size_bytes' | 'slug' | 'source' | 'storage_key' | 'thumbnail' | 'updated_at' | 'uploaded_by_steam_id' | 'variant' | 'version'
+export type broadcast_huds_update_column = 'author' | 'created_at' | 'description' | 'enabled' | 'hud_json' | 'id' | 'is_signed' | 'jthud_id' | 'name' | 'page_url' | 'preview' | 'size_bytes' | 'slug' | 'source' | 'storage_key' | 'thumbnail' | 'updated_at' | 'uploaded_by_steam_id' | 'variant' | 'version'
 
 
 /** aggregate var_pop on columns */
@@ -48531,6 +48537,8 @@ export interface broadcast_hudsGenqlSelection{
     is_signed?: boolean | number
     jthud_id?: boolean | number
     name?: boolean | number
+    page_url?: boolean | number
+    preview?: boolean | number
     size_bytes?: boolean | number
     slug?: boolean | number
     source?: boolean | number
@@ -48586,7 +48594,7 @@ export interface broadcast_huds_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "broadcast_huds". All fields are combined with a logical 'AND'. */
-export interface broadcast_huds_bool_exp {_and?: (broadcast_huds_bool_exp[] | null),_not?: (broadcast_huds_bool_exp | null),_or?: (broadcast_huds_bool_exp[] | null),author?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),enabled?: (Boolean_comparison_exp | null),hud_json?: (jsonb_comparison_exp | null),id?: (uuid_comparison_exp | null),is_signed?: (Boolean_comparison_exp | null),jthud_id?: (String_comparison_exp | null),name?: (String_comparison_exp | null),size_bytes?: (bigint_comparison_exp | null),slug?: (String_comparison_exp | null),source?: (String_comparison_exp | null),storage_key?: (String_comparison_exp | null),thumbnail?: (String_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),uploaded_by_steam_id?: (bigint_comparison_exp | null),variant?: (String_comparison_exp | null),version?: (String_comparison_exp | null)}
+export interface broadcast_huds_bool_exp {_and?: (broadcast_huds_bool_exp[] | null),_not?: (broadcast_huds_bool_exp | null),_or?: (broadcast_huds_bool_exp[] | null),author?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),enabled?: (Boolean_comparison_exp | null),hud_json?: (jsonb_comparison_exp | null),id?: (uuid_comparison_exp | null),is_signed?: (Boolean_comparison_exp | null),jthud_id?: (String_comparison_exp | null),name?: (String_comparison_exp | null),page_url?: (String_comparison_exp | null),preview?: (String_comparison_exp | null),size_bytes?: (bigint_comparison_exp | null),slug?: (String_comparison_exp | null),source?: (String_comparison_exp | null),storage_key?: (String_comparison_exp | null),thumbnail?: (String_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),uploaded_by_steam_id?: (bigint_comparison_exp | null),variant?: (String_comparison_exp | null),version?: (String_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -48606,7 +48614,7 @@ export interface broadcast_huds_inc_input {size_bytes?: (Scalars['bigint'] | nul
 
 
 /** input type for inserting data into table "broadcast_huds" */
-export interface broadcast_huds_insert_input {author?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),hud_json?: (Scalars['jsonb'] | null),id?: (Scalars['uuid'] | null),is_signed?: (Scalars['Boolean'] | null),jthud_id?: (Scalars['String'] | null),name?: (Scalars['String'] | null),size_bytes?: (Scalars['bigint'] | null),slug?: (Scalars['String'] | null),source?: (Scalars['String'] | null),storage_key?: (Scalars['String'] | null),thumbnail?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),uploaded_by_steam_id?: (Scalars['bigint'] | null),variant?: (Scalars['String'] | null),version?: (Scalars['String'] | null)}
+export interface broadcast_huds_insert_input {author?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),hud_json?: (Scalars['jsonb'] | null),id?: (Scalars['uuid'] | null),is_signed?: (Scalars['Boolean'] | null),jthud_id?: (Scalars['String'] | null),name?: (Scalars['String'] | null),page_url?: (Scalars['String'] | null),preview?: (Scalars['String'] | null),size_bytes?: (Scalars['bigint'] | null),slug?: (Scalars['String'] | null),source?: (Scalars['String'] | null),storage_key?: (Scalars['String'] | null),thumbnail?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),uploaded_by_steam_id?: (Scalars['bigint'] | null),variant?: (Scalars['String'] | null),version?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -48617,6 +48625,8 @@ export interface broadcast_huds_max_fieldsGenqlSelection{
     id?: boolean | number
     jthud_id?: boolean | number
     name?: boolean | number
+    page_url?: boolean | number
+    preview?: boolean | number
     size_bytes?: boolean | number
     slug?: boolean | number
     source?: boolean | number
@@ -48639,6 +48649,8 @@ export interface broadcast_huds_min_fieldsGenqlSelection{
     id?: boolean | number
     jthud_id?: boolean | number
     name?: boolean | number
+    page_url?: boolean | number
+    preview?: boolean | number
     size_bytes?: boolean | number
     slug?: boolean | number
     source?: boolean | number
@@ -48669,7 +48681,7 @@ export interface broadcast_huds_on_conflict {constraint: broadcast_huds_constrai
 
 
 /** Ordering options when selecting data from "broadcast_huds". */
-export interface broadcast_huds_order_by {author?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),enabled?: (order_by | null),hud_json?: (order_by | null),id?: (order_by | null),is_signed?: (order_by | null),jthud_id?: (order_by | null),name?: (order_by | null),size_bytes?: (order_by | null),slug?: (order_by | null),source?: (order_by | null),storage_key?: (order_by | null),thumbnail?: (order_by | null),updated_at?: (order_by | null),uploaded_by_steam_id?: (order_by | null),variant?: (order_by | null),version?: (order_by | null)}
+export interface broadcast_huds_order_by {author?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),enabled?: (order_by | null),hud_json?: (order_by | null),id?: (order_by | null),is_signed?: (order_by | null),jthud_id?: (order_by | null),name?: (order_by | null),page_url?: (order_by | null),preview?: (order_by | null),size_bytes?: (order_by | null),slug?: (order_by | null),source?: (order_by | null),storage_key?: (order_by | null),thumbnail?: (order_by | null),updated_at?: (order_by | null),uploaded_by_steam_id?: (order_by | null),variant?: (order_by | null),version?: (order_by | null)}
 
 
 /** primary key columns input for table: broadcast_huds */
@@ -48681,7 +48693,7 @@ export interface broadcast_huds_prepend_input {hud_json?: (Scalars['jsonb'] | nu
 
 
 /** input type for updating data in table "broadcast_huds" */
-export interface broadcast_huds_set_input {author?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),hud_json?: (Scalars['jsonb'] | null),id?: (Scalars['uuid'] | null),is_signed?: (Scalars['Boolean'] | null),jthud_id?: (Scalars['String'] | null),name?: (Scalars['String'] | null),size_bytes?: (Scalars['bigint'] | null),slug?: (Scalars['String'] | null),source?: (Scalars['String'] | null),storage_key?: (Scalars['String'] | null),thumbnail?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),uploaded_by_steam_id?: (Scalars['bigint'] | null),variant?: (Scalars['String'] | null),version?: (Scalars['String'] | null)}
+export interface broadcast_huds_set_input {author?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),hud_json?: (Scalars['jsonb'] | null),id?: (Scalars['uuid'] | null),is_signed?: (Scalars['Boolean'] | null),jthud_id?: (Scalars['String'] | null),name?: (Scalars['String'] | null),page_url?: (Scalars['String'] | null),preview?: (Scalars['String'] | null),size_bytes?: (Scalars['bigint'] | null),slug?: (Scalars['String'] | null),source?: (Scalars['String'] | null),storage_key?: (Scalars['String'] | null),thumbnail?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),uploaded_by_steam_id?: (Scalars['bigint'] | null),variant?: (Scalars['String'] | null),version?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -48720,7 +48732,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface broadcast_huds_stream_cursor_value_input {author?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),hud_json?: (Scalars['jsonb'] | null),id?: (Scalars['uuid'] | null),is_signed?: (Scalars['Boolean'] | null),jthud_id?: (Scalars['String'] | null),name?: (Scalars['String'] | null),size_bytes?: (Scalars['bigint'] | null),slug?: (Scalars['String'] | null),source?: (Scalars['String'] | null),storage_key?: (Scalars['String'] | null),thumbnail?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),uploaded_by_steam_id?: (Scalars['bigint'] | null),variant?: (Scalars['String'] | null),version?: (Scalars['String'] | null)}
+export interface broadcast_huds_stream_cursor_value_input {author?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),hud_json?: (Scalars['jsonb'] | null),id?: (Scalars['uuid'] | null),is_signed?: (Scalars['Boolean'] | null),jthud_id?: (Scalars['String'] | null),name?: (Scalars['String'] | null),page_url?: (Scalars['String'] | null),preview?: (Scalars['String'] | null),size_bytes?: (Scalars['bigint'] | null),slug?: (Scalars['String'] | null),source?: (Scalars['String'] | null),storage_key?: (Scalars['String'] | null),thumbnail?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),uploaded_by_steam_id?: (Scalars['bigint'] | null),variant?: (Scalars['String'] | null),version?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -151181,6 +151193,8 @@ export const enumBroadcastHudsSelectColumn = {
    is_signed: 'is_signed' as const,
    jthud_id: 'jthud_id' as const,
    name: 'name' as const,
+   page_url: 'page_url' as const,
+   preview: 'preview' as const,
    size_bytes: 'size_bytes' as const,
    slug: 'slug' as const,
    source: 'source' as const,
@@ -151202,6 +151216,8 @@ export const enumBroadcastHudsUpdateColumn = {
    is_signed: 'is_signed' as const,
    jthud_id: 'jthud_id' as const,
    name: 'name' as const,
+   page_url: 'page_url' as const,
+   preview: 'preview' as const,
    size_bytes: 'size_bytes' as const,
    slug: 'slug' as const,
    source: 'source' as const,

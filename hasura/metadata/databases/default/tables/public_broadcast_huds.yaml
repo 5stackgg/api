@@ -16,6 +16,8 @@ select_permissions:
         - source
         - enabled
         - thumbnail
+        - preview
+        - page_url
         - is_signed
         - created_at
         - updated_at
@@ -39,6 +41,8 @@ select_permissions:
         - storage_key
         - size_bytes
         - thumbnail
+        - preview
+        - page_url
         - hud_json
         - is_signed
         - uploaded_by_steam_id

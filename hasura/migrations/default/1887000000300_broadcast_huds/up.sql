@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS public.broadcast_huds (
     storage_key text,
     size_bytes bigint,
     thumbnail text,
+    preview text,
+    page_url text,
     hud_json jsonb,
     is_signed boolean NOT NULL DEFAULT false,
     uploaded_by_steam_id bigint REFERENCES public.players (steam_id)
@@ -37,6 +39,9 @@ CREATE TABLE IF NOT EXISTS public.broadcast_huds (
          OR (source = 'imported' AND storage_key IS NOT NULL)
         )
 );
+
+ALTER TABLE public.broadcast_huds ADD COLUMN IF NOT EXISTS preview text;
+ALTER TABLE public.broadcast_huds ADD COLUMN IF NOT EXISTS page_url text;
 
 CREATE INDEX IF NOT EXISTS idx_broadcast_huds_enabled
     ON public.broadcast_huds (enabled);

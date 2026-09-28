@@ -7149,6 +7149,12 @@ export default {
             "name": [
                 85
             ],
+            "page_url": [
+                85
+            ],
+            "preview": [
+                85
+            ],
             "size_bytes": [
                 313
             ],
@@ -7294,6 +7300,12 @@ export default {
             "name": [
                 87
             ],
+            "page_url": [
+                87
+            ],
+            "preview": [
+                87
+            ],
             "size_bytes": [
                 315
             ],
@@ -7389,6 +7401,12 @@ export default {
             "name": [
                 85
             ],
+            "page_url": [
+                85
+            ],
+            "preview": [
+                85
+            ],
             "size_bytes": [
                 313
             ],
@@ -7439,6 +7457,12 @@ export default {
             "name": [
                 85
             ],
+            "page_url": [
+                85
+            ],
+            "preview": [
+                85
+            ],
             "size_bytes": [
                 313
             ],
@@ -7487,6 +7511,12 @@ export default {
                 85
             ],
             "name": [
+                85
+            ],
+            "page_url": [
+                85
+            ],
+            "preview": [
                 85
             ],
             "size_bytes": [
@@ -7573,6 +7603,12 @@ export default {
             "name": [
                 3710
             ],
+            "page_url": [
+                3710
+            ],
+            "preview": [
+                3710
+            ],
             "size_bytes": [
                 3710
             ],
@@ -7647,6 +7683,12 @@ export default {
                 85
             ],
             "name": [
+                85
+            ],
+            "page_url": [
+                85
+            ],
+            "preview": [
                 85
             ],
             "size_bytes": [
@@ -7750,6 +7792,12 @@ export default {
                 85
             ],
             "name": [
+                85
+            ],
+            "page_url": [
+                85
+            ],
+            "preview": [
                 85
             ],
             "size_bytes": [

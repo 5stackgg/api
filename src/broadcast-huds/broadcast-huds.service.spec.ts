@@ -1,4 +1,5 @@
 import AdmZip from "adm-zip";
+import sharp from "sharp";
 import { crc32 } from "zlib";
 import { BroadcastHudsService } from "./broadcast-huds.service";
 
@@ -377,5 +378,134 @@ describe("BroadcastHudsService", () => {
       service.bundleUrl({ storage_key: null } as never),
     ).resolves.toBeNull();
     expect(s3.getPresignedUrl).toHaveBeenCalledTimes(1);
+  });
+  const png = () =>
+    sharp({
+      create: { width: 1920, height: 1080, channels: 3, background: "#1a1a1a" },
+    })
+      .png()
+      .toBuffer();
+
+  it("renders a preview.png shipped in the bundle", async () => {
+    await service.import(
+      zipOf([
+        ["hud.json", manifest()],
+        ["preview.png", await png()],
+      ]),
+      "x.zip",
+    );
+
+    expect((inserted as Array<string>)[12]).toMatch(
+      /^data:image\/webp;base64,/,
+    );
+  });
+
+  describe("setPage", () => {
+    const html = (image: string) =>
+      `<html><head><meta content="${image}" property="og:image"/></head></html>`;
+
+    let updated: Array<unknown> | null;
+
+    beforeEach(() => {
+      updated = null;
+      postgres.query.mockImplementation(
+        async (sql: string, params: Array<unknown>) => {
+          if (sql.includes("UPDATE public.broadcast_huds")) {
+            updated = params;
+            return [{ slug: params[0], page_url: params[1] ?? null }];
+          }
+          return [{ slug: params[0], source: "imported" }];
+        },
+      );
+    });
+
+    it("takes the page's og:image as the preview", async () => {
+      const fetchPublic = jest
+        .spyOn(service as any, "fetchPublic")
+        .mockResolvedValueOnce({
+          body: Buffer.from(html("/img/echo.webp")),
+          contentType: "text/html; charset=utf-8",
+          url: new URL("https://cshuds.com/offer/echo"),
+        })
+        .mockResolvedValueOnce({
+          body: await png(),
+          contentType: "image/png",
+          url: new URL("https://cshuds.com/img/echo.webp"),
+        });
+
+      const result = await service.setPage(
+        "echo-hud",
+        " https://cshuds.com/offer/echo ",
+      );
+
+      expect(fetchPublic.mock.calls[1][0].toString()).toBe(
+        "https://cshuds.com/img/echo.webp",
+      );
+      expect(result.previewUpdated).toBe(true);
+      expect(updated?.[1]).toBe("https://cshuds.com/offer/echo");
+      expect(updated?.[2]).toMatch(/^data:image\/webp;base64,/);
+    });
+
+    it("keeps the link but not a preview when the page has no image", async () => {
+      jest.spyOn(service as any, "fetchPublic").mockResolvedValueOnce({
+        body: Buffer.from("<html></html>"),
+        contentType: "text/html",
+        url: new URL("https://example.com/hud"),
+      });
+
+      const result = await service.setPage(
+        "echo-hud",
+        "https://example.com/hud",
+      );
+
+      expect(result.previewUpdated).toBe(false);
+      expect(updated?.[2]).toBeNull();
+    });
+
+    it("accepts a direct image link", async () => {
+      jest.spyOn(service as any, "fetchPublic").mockResolvedValueOnce({
+        body: await png(),
+        contentType: "image/png",
+        url: new URL("https://example.com/shot.png"),
+      });
+
+      const result = await service.setPage(
+        "echo-hud",
+        "https://example.com/shot.png",
+      );
+
+      expect(result.previewUpdated).toBe(true);
+    });
+
+    it("clears the link when given nothing", async () => {
+      await service.setPage("echo-hud", "  ");
+
+      expect(updated).toEqual(["echo-hud"]);
+    });
+
+    it("refuses plain http", async () => {
+      await expect(
+        service.setPage("echo-hud", "http://cshuds.com/offer/echo"),
+      ).rejects.toThrow(/https/);
+    });
+
+    it.each([
+      "https://10.0.0.5/page",
+      "https://127.0.0.1/page",
+      "https://0x7f.1/page",
+      "https://[::1]/page",
+      "https://[::ffff:127.0.0.1]/page",
+      "https://169.254.169.254/latest/meta-data",
+    ])("refuses the private address %s", async (link) => {
+      await expect(service.setPage("echo-hud", link)).rejects.toThrow(
+        /not a public address/,
+      );
+    });
+
+    it("refuses a hostname that resolves to a private address", async () => {
+      await expect(
+        service.setPage("echo-hud", "https://localhost/page"),
+      ).rejects.toThrow(/not a public address/);
+    });
   });
 });

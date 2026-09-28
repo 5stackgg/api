@@ -3321,6 +3321,8 @@ type broadcast_huds {
   is_signed: Boolean!
   jthud_id: String!
   name: String!
+  page_url: String
+  preview: String
   size_bytes: bigint
   slug: String!
   source: String!
@@ -3384,6 +3386,8 @@ input broadcast_huds_bool_exp {
   is_signed: Boolean_comparison_exp
   jthud_id: String_comparison_exp
   name: String_comparison_exp
+  page_url: String_comparison_exp
+  preview: String_comparison_exp
   size_bytes: bigint_comparison_exp
   slug: String_comparison_exp
   source: String_comparison_exp
@@ -3452,6 +3456,8 @@ input broadcast_huds_insert_input {
   is_signed: Boolean
   jthud_id: String
   name: String
+  page_url: String
+  preview: String
   size_bytes: bigint
   slug: String
   source: String
@@ -3471,6 +3477,8 @@ type broadcast_huds_max_fields {
   id: uuid
   jthud_id: String
   name: String
+  page_url: String
+  preview: String
   size_bytes: bigint
   slug: String
   source: String
@@ -3490,6 +3498,8 @@ type broadcast_huds_min_fields {
   id: uuid
   jthud_id: String
   name: String
+  page_url: String
+  preview: String
   size_bytes: bigint
   slug: String
   source: String
@@ -3532,6 +3542,8 @@ input broadcast_huds_order_by {
   is_signed: order_by
   jthud_id: order_by
   name: order_by
+  page_url: order_by
+  preview: order_by
   size_bytes: order_by
   slug: order_by
   source: order_by
@@ -3585,6 +3597,12 @@ enum broadcast_huds_select_column {
   name
 
   """column name"""
+  page_url
+
+  """column name"""
+  preview
+
+  """column name"""
   size_bytes
 
   """column name"""
@@ -3625,6 +3643,8 @@ input broadcast_huds_set_input {
   is_signed: Boolean
   jthud_id: String
   name: String
+  page_url: String
+  preview: String
   size_bytes: bigint
   slug: String
   source: String
@@ -3676,6 +3696,8 @@ input broadcast_huds_stream_cursor_value_input {
   is_signed: Boolean
   jthud_id: String
   name: String
+  page_url: String
+  preview: String
   size_bytes: bigint
   slug: String
   source: String
@@ -3723,6 +3745,12 @@ enum broadcast_huds_update_column {
 
   """column name"""
   name
+
+  """column name"""
+  page_url
+
+  """column name"""
+  preview
 
   """column name"""
   size_bytes
