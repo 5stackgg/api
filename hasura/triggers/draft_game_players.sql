@@ -3,6 +3,7 @@ CREATE OR REPLACE FUNCTION public.tbi_draft_game_players() RETURNS TRIGGER
     AS $$
 DECLARE
     game public.draft_games%ROWTYPE;
+    _session json;
     actor text;
     accepted_count integer;
     player_elo jsonb;
@@ -14,10 +15,15 @@ BEGIN
         NEW.elo_snapshot := COALESCE(NULLIF(player_elo ->> lower(game.type), '')::numeric::integer, 5000);
     END IF;
 
-    actor := NULLIF(current_setting('hasura.user', true), '')::json ->> 'x-hasura-user-id';
+    _session := NULLIF(current_setting('hasura.user', true), '')::json;
+    actor := _session ->> 'x-hasura-user-id';
 
     IF actor IS NULL THEN
         RETURN NEW;
+    END IF;
+
+    IF actor::bigint <> NEW.steam_id AND NOT COALESCE(public.is_above_role('match_organizer', _session), false) THEN
+        PERFORM public.assert_not_blocked(actor::bigint, NEW.steam_id);
     END IF;
 
     SELECT count(*) INTO accepted_count
@@ -84,8 +90,13 @@ BEGIN
         RETURN OLD;
     END IF;
 
-    -- leaving once the draft has started tears the whole draft down
+    -- leaving once the draft has started tears the whole draft down; a pending
+    -- invite going away (declined, or cleared by a block) was never a seat
     IF game.status <> 'Open' THEN
+        IF OLD.status = 'Invited' THEN
+            RETURN OLD;
+        END IF;
+
         DELETE FROM public.draft_games WHERE id = game.id;
         RETURN OLD;
     END IF;

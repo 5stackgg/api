@@ -547,6 +547,7 @@ export class UtilityPracticeService {
        SELECT $1::uuid, s.steam_id, $3::bigint
          FROM unnest($2::bigint[]) AS s(steam_id)
         WHERE EXISTS (SELECT 1 FROM public.players p WHERE p.steam_id = s.steam_id)
+          AND NOT public.is_blocked_either_way(s.steam_id, $3::bigint)
        ON CONFLICT DO NOTHING
        RETURNING steam_id::text AS steam_id`,
       [session.id, steamIds, user.steam_id],

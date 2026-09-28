@@ -1,3 +1,23 @@
+-- A self-join carries the joiner as invited_by (the insert preset), so only a
+-- row naming somebody else is an invitation.
+CREATE OR REPLACE FUNCTION public.tbi_lobby_players()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.invited_by_steam_id IS NOT NULL AND NEW.invited_by_steam_id <> NEW.steam_id THEN
+        PERFORM public.assert_not_blocked(NEW.invited_by_steam_id, NEW.steam_id);
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tbi_lobby_players ON public.lobby_players;
+CREATE TRIGGER tbi_lobby_players
+    BEFORE INSERT ON lobby_players
+    FOR EACH ROW
+    EXECUTE FUNCTION public.tbi_lobby_players();
+
+
 CREATE OR REPLACE FUNCTION public.taiu_lobby_players()
 RETURNS TRIGGER AS $$
 BEGIN

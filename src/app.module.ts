@@ -33,6 +33,7 @@ import { SystemModule } from "./system/system.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { ChatModule } from "./chat/chat.module";
 import { FriendsModule } from "./friends/friends.module";
+import { PlayerBlocksModule } from "./player-blocks/player-blocks.module";
 import { TelemetryModule } from "./telemetry/telemetry.module";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { SignalServerModule } from "./signal-server/signal-server.module";
@@ -138,6 +139,7 @@ import { UtilityModule } from "./utility/utility.module";
     NotificationsModule,
     ChatModule,
     FriendsModule,
+    PlayerBlocksModule,
     TelemetryModule,
     SignalServerModule,
     InvitesModule,

@@ -21,6 +21,7 @@ import { DraftGame } from "./types/DraftGame";
 import { DraftGameError } from "./types/DraftGameError";
 import { DraftGameQueues } from "./enums/DraftGameQueues";
 import { DraftService } from "./draft.service";
+import { PlayerBlocksService } from "src/player-blocks/player-blocks.service";
 
 export interface CreateDraftGameSettings {
   type: e_match_types_enum;
@@ -69,6 +70,7 @@ export class DraftGameService {
     private readonly draftService: DraftService,
     @InjectQueue(DraftGameQueues.DraftGames) private queue: Queue,
     private readonly notifications: NotificationsService,
+    private readonly playerBlocks: PlayerBlocksService,
   ) {}
 
   public static lockKey(draftGameId: string): string {
@@ -816,6 +818,13 @@ export class DraftGameService {
         throw new DraftGameError(
           "This draft game is no longer accepting players",
         );
+      }
+
+      if (
+        !isRoleAbove(user.role, "match_organizer") &&
+        (await this.playerBlocks.isBlockedEitherWay(user.steam_id, steamId))
+      ) {
+        throw new DraftGameError("player_blocked");
       }
 
       if (draftGame.players.find((player) => player.steam_id === steamId)) {
