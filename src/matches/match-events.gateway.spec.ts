@@ -330,6 +330,31 @@ describe("MatchEventsGateway unauthenticated clients", () => {
     expect(processor.process).toHaveBeenCalledTimes(1);
   });
 
+  it("gives up on an auth lookup that stalls and drops the held events", async () => {
+    jest.useFakeTimers();
+    try {
+      const { gateway, processor } = makeGateway({
+        serverQuery: () => new Promise(() => {}),
+      });
+      const client = socket();
+
+      gateway.handleConnection(client, basic(SERVER_A, "password-a"));
+      const held = gateway.handleMatchEvent(client, event());
+
+      await jest.advanceTimersByTimeAsync(9_999);
+      expect(client.terminate).not.toHaveBeenCalled();
+
+      await jest.advanceTimersByTimeAsync(1);
+
+      await expect(held).resolves.toBeUndefined();
+      expect(client.terminate).toHaveBeenCalledTimes(1);
+      expect(client.authenticated).toBeFalsy();
+      expect(processor.process).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it("ignores events on a socket that never authenticated", async () => {
     const { gateway, processor } = makeGateway();
 
@@ -624,7 +649,11 @@ describe("MatchEventsGateway match binding", () => {
         const lateHost = authedSocket(SERVER_A);
         await gateway.handleMatchEvent(
           lateHost,
-          event({ messageId: "m2", name: "mapStatus" }),
+          event({
+            messageId: "m2",
+            name: "mapStatus",
+            data: { status: "Finished" },
+          }),
         );
         await gateway.handleMatchEvent(
           lateHost,
@@ -638,6 +667,74 @@ describe("MatchEventsGateway match binding", () => {
         expect(processor.process).toHaveBeenCalledTimes(4);
       },
     );
+
+    it.each(["WaitingForTV", "UploadingDemo", "Finished"])(
+      "lets the last host report the end-of-map status %s after the match ends",
+      async (mapStatus) => {
+        const { gateway, matches, processor } = makeGateway();
+
+        await gateway.handleMatchEvent(
+          authedSocket(SERVER_A),
+          event({ messageId: "m1" }),
+        );
+
+        endMatch(matches);
+
+        await gateway.handleMatchEvent(
+          authedSocket(SERVER_A),
+          event({
+            messageId: "m2",
+            name: "mapStatus",
+            data: { status: mapStatus },
+          }),
+        );
+
+        expect(processor.process).toHaveBeenCalledTimes(2);
+      },
+    );
+
+    it.each([["Surrendered"], ["Live"], ["Paused"], ["Knife"], [undefined]])(
+      "refuses a map status of %p from the last host once the match has ended",
+      async (mapStatus) => {
+        const { gateway, matches, processor } = makeGateway();
+
+        await gateway.handleMatchEvent(
+          authedSocket(SERVER_A),
+          event({ messageId: "m1" }),
+        );
+
+        endMatch(matches);
+
+        await gateway.handleMatchEvent(
+          authedSocket(SERVER_A),
+          event({
+            messageId: "m2",
+            name: "mapStatus",
+            data: { status: mapStatus, winning_lineup_id: "lineup-2" },
+          }),
+        );
+
+        expect(processor.process).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it("treats a match as ended by its status even before server_id is cleared", async () => {
+      const { gateway, matches, processor } = makeGateway();
+
+      matches[MATCH_1].status = "Finished";
+
+      const host = authedSocket(SERVER_A);
+      await gateway.handleMatchEvent(
+        host,
+        event({ messageId: "m1", name: "surrender" }),
+      );
+      await gateway.handleMatchEvent(
+        host,
+        event({ messageId: "m2", name: "chat" }),
+      );
+
+      expect(processor.process).toHaveBeenCalledTimes(1);
+    });
 
     it.each(["surrender", "score", "restoreRound", "techTimeout", "kill"])(
       "refuses %s from the last host once the match has ended",

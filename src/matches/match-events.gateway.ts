@@ -48,14 +48,22 @@ export class MatchEventsGateway {
     "Surrendered",
   ];
 
-  // What a server still sends once its match is over: the map Finished that
-  // follows a surrender, post-match chat and players leaving. Anything that
-  // could rewrite the result is refused.
+  // What a server still sends once its match is over: post-match chat, players
+  // leaving and the end-of-map statuses (the map Finished that follows a
+  // surrender). Anything that could rewrite the result is refused, including a
+  // map status that would reopen or re-award a map.
   private static readonly EVENTS_AFTER_MATCH_END: readonly string[] = [
-    "mapStatus",
     "chat",
     "player-disconnected",
   ];
+
+  private static readonly MAP_STATUSES_AFTER_MATCH_END: readonly string[] = [
+    "WaitingForTV",
+    "UploadingDemo",
+    "Finished",
+  ];
+
+  private static readonly AUTH_TIMEOUT_MS = 10 * 1000;
 
   // Processors write straight to the match map a payload names, so each of
   // these has to be a map of the match the event is for.
@@ -198,15 +206,17 @@ export class MatchEventsGateway {
       const serverId = decoded.substring(0, colonIndex);
       const apiPassword = decoded.substring(colonIndex + 1);
 
-      const { servers_by_pk } = await this.hasura.query({
-        servers_by_pk: {
-          __args: {
-            id: serverId,
+      const { servers_by_pk } = await this.withAuthTimeout(
+        this.hasura.query({
+          servers_by_pk: {
+            __args: {
+              id: serverId,
+            },
+            id: true,
+            api_password: true,
           },
-          id: true,
-          api_password: true,
-        },
-      });
+        }),
+      );
 
       if (
         !servers_by_pk?.id ||
@@ -224,6 +234,25 @@ export class MatchEventsGateway {
       client.authenticated = true;
     } catch {
       client.terminate();
+    }
+  }
+
+  // Events wait on the auth lookup, so a stalled one would hold every message
+  // an unauthenticated socket sends in memory.
+  private async withAuthTimeout<T>(lookup: Promise<T>): Promise<T> {
+    let timer: NodeJS.Timeout;
+    try {
+      return await Promise.race([
+        lookup,
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(
+            () => reject(new Error("game server auth timed out")),
+            MatchEventsGateway.AUTH_TIMEOUT_MS,
+          );
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
     }
   }
 
@@ -271,7 +300,7 @@ export class MatchEventsGateway {
 
     if (
       binding.ended &&
-      !MatchEventsGateway.EVENTS_AFTER_MATCH_END.includes(event)
+      !MatchEventsGateway.isAllowedAfterMatchEnd(event, data)
     ) {
       return false;
     }
@@ -281,7 +310,7 @@ export class MatchEventsGateway {
 
   // Ending a match clears its server_id while the server is still flushing
   // late events, so an ended match stays open to the last server seen hosting
-  // it, for EVENTS_AFTER_MATCH_END only.
+  // it, for what isAllowedAfterMatchEnd lets through only.
   private async lookupBinding(
     serverId: string,
     matchId: string,
@@ -305,7 +334,8 @@ export class MatchEventsGateway {
 
     const lastHostKey = MatchEventsGateway.lastHostKey(matchId);
 
-    let ended = false;
+    const ended = MatchEventsGateway.TERMINAL_STATUSES.includes(match.status);
+
     if (match.server_id) {
       await this.cache.put(
         lastHostKey,
@@ -316,15 +346,8 @@ export class MatchEventsGateway {
       if (match.server_id !== serverId) {
         return null;
       }
-    } else {
-      if (
-        !MatchEventsGateway.TERMINAL_STATUSES.includes(match.status) ||
-        (await this.cache.get(lastHostKey)) !== serverId
-      ) {
-        return null;
-      }
-
-      ended = true;
+    } else if (!ended || (await this.cache.get(lastHostKey)) !== serverId) {
+      return null;
     }
 
     return {
@@ -332,6 +355,20 @@ export class MatchEventsGateway {
       mapIds: new Set(match.match_maps.map(({ id }) => id)),
       ended,
     };
+  }
+
+  private static isAllowedAfterMatchEnd(
+    event: string,
+    data: Record<string, unknown> | undefined,
+  ) {
+    if (event === "mapStatus") {
+      return (
+        typeof data?.status === "string" &&
+        MatchEventsGateway.MAP_STATUSES_AFTER_MATCH_END.includes(data.status)
+      );
+    }
+
+    return MatchEventsGateway.EVENTS_AFTER_MATCH_END.includes(event);
   }
 
   private static lastHostKey(matchId: string) {
