@@ -51,6 +51,8 @@ describe("discord routing", () => {
     "MatchChatMessage",
     "PlayerSanctioned",
     "MatchImported",
+    "MatchFound",
+    "AdminCall",
   ])("keeps %s off discord", (type) => {
     expect(NotificationsService.relaysToDiscord(type)).toBe(false);
   });

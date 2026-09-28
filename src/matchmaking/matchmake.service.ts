@@ -13,6 +13,7 @@ import { MatchmakingQueues } from "./enums/MatchmakingQueues";
 import { MatchmakingLobbyService } from "./matchmaking-lobby.service";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 import { MatchAssistantService } from "src/matches/match-assistant/match-assistant.service";
+import { NotificationsService } from "src/notifications/notifications.service";
 import {
   getMatchmakingQueueCacheKey,
   getMatchmakingConformationCacheKey,
@@ -50,6 +51,7 @@ export class MatchmakeService {
     public readonly redisManager: RedisManagerService,
     public readonly matchAssistant: MatchAssistantService,
     private matchmakingLobbyService: MatchmakingLobbyService,
+    private readonly notifications: NotificationsService,
     @InjectQueue(MatchmakingQueues.Matchmaking) private queue: Queue,
   ) {
     this.redis = this.redisManager.getConnection();
@@ -651,6 +653,20 @@ export class MatchmakeService {
       await this.matchmakingLobbyService.sendQueueDetailsToLobby(lobbyId);
     }
 
+    void this.notifications
+      .notifyMatchFound(
+        confirmationId,
+        [...team1.players, ...team2.players].map(({ steam_id }) => steam_id),
+        type,
+        30,
+      )
+      .catch((error) => {
+        this.logger.warn(
+          `unable to push match found for confirmation ${confirmationId}`,
+          error,
+        );
+      });
+
     await this.cancelMatchMakingDueToReadyCheck(confirmationId);
   }
 
@@ -693,6 +709,13 @@ export class MatchmakeService {
   }
 
   public async removeConfirmationDetails(confirmationId: string) {
+    void this.notifications.retractMatchFound(confirmationId).catch((error) => {
+      this.logger.warn(
+        `unable to retract match found for confirmation ${confirmationId}`,
+        error,
+      );
+    });
+
     const confirmedKey = `${getMatchmakingConformationCacheKey(confirmationId)}:confirmed`;
     await this.redis.del(confirmedKey);
 

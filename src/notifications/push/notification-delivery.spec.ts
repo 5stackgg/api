@@ -86,6 +86,36 @@ describe("notification delivery policies", () => {
     });
   });
 
+  it.each(["MatchFound", "AdminCall"])(
+    "rings %s now, even in quiet hours, and lets it expire with its window",
+    (type) => {
+      expect(deliveryPolicyForType(type)).toEqual({
+        bundleSeconds: 0,
+        requireUnseen: true,
+        ttlSeconds: 30,
+        urgency: "high",
+        urgent: true,
+        ignoreQuietHours: true,
+      });
+    },
+  );
+
+  it("leaves every other type to the push service's defaults", () => {
+    const urgent = new Set(["MatchFound", "AdminCall"]);
+    const offenders = types.filter((type) => {
+      const policy = deliveryPolicyForType(type);
+      return (
+        !urgent.has(type) &&
+        (policy.ttlSeconds !== undefined ||
+          policy.urgency !== undefined ||
+          policy.urgent ||
+          policy.ignoreQuietHours)
+      );
+    });
+
+    expect(offenders).toEqual([]);
+  });
+
   describe("threadKeyFor", () => {
     it("keys on type and entity", () => {
       expect(
@@ -97,6 +127,15 @@ describe("notification delivery policies", () => {
       expect(threadKeyFor({ type: "GameUpdate" })).toEqual("GameUpdate:");
       expect(threadKeyFor({ type: "GameUpdate", entity_id: null })).toEqual(
         "GameUpdate:",
+      );
+    });
+
+    it("tags a ring by what it is about", () => {
+      expect(
+        threadKeyFor({ type: "MatchFound", entity_id: "confirmation-1" }),
+      ).toEqual("MatchFound:confirmation-1");
+      expect(threadKeyFor({ type: "AdminCall", entity_id: "m-1" })).toEqual(
+        "AdminCall:m-1",
       );
     });
 

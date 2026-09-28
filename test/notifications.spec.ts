@@ -1,7 +1,11 @@
 import * as webPush from "web-push";
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { Fixtures } from "./utils/fixtures";
-import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
+import {
+  bootMigratedDb,
+  seedRegionWithServer,
+  SqlTestDb,
+} from "./utils/sql-test-db";
 import { TournamentReminders } from "./../src/matches/jobs/TournamentReminders";
 import { NotificationsService } from "./../src/notifications/notifications.service";
 import { NotificationPreferencesService } from "./../src/notifications/preferences/notification-preferences.service";
@@ -31,6 +35,7 @@ describe("notifications (SQL-driven)", () => {
     db = await bootMigratedDb("NotificationsTest");
     postgres = db.postgres;
     fx = new Fixtures(postgres, 76561199300000000n);
+    await seedRegionWithServer(postgres, "NotificationsTestRegion");
   }, 600_000);
 
   afterAll(async () => {
@@ -43,6 +48,7 @@ describe("notifications (SQL-driven)", () => {
     await postgres.query("DELETE FROM notification_preferences");
     await postgres.query("DELETE FROM push_subscriptions");
     await postgres.query("DELETE FROM tournaments");
+    await postgres.query("DELETE FROM matches");
     await postgres.query("DELETE FROM match_options");
     await postgres.query("DELETE FROM teams");
     await postgres.query("DELETE FROM players");
@@ -270,6 +276,123 @@ describe("notifications (SQL-driven)", () => {
     });
   });
 
+  describe("push-only rows", () => {
+    const rows = async () =>
+      postgres.query<
+        Array<{ steam_id: string; entity_id: string; in_app: boolean }>
+      >(
+        `SELECT steam_id::text AS steam_id, entity_id, in_app
+           FROM notifications
+          ORDER BY steam_id, entity_id`,
+      );
+
+    it("writes a hidden row only for recipients who can be pushed to", async () => {
+      const pushable = await fx.player();
+      const unreachable = await fx.player();
+      await subscribed(pushable);
+
+      const written = await notifications().notifyPlayers("MatchFound", {
+        title: "Match found",
+        message: "Your Competitive match is ready",
+        role: "user",
+        entity_id: "confirmation-1",
+        steamIds: [pushable, unreachable],
+        inApp: false,
+      });
+
+      expect(written).toBe(1);
+      expect(await rows()).toEqual([
+        { steam_id: pushable, entity_id: "confirmation-1", in_app: false },
+      ]);
+    });
+
+    it("stays out of the bell for a player whose bell would show it", async () => {
+      const pushable = await fx.player();
+      await subscribed(pushable);
+      await preferences().set(pushable, "in_app", "MatchFound", true);
+
+      await notifications().notifyMatchFound(
+        "confirmation-1",
+        [pushable],
+        "Wingman",
+        30,
+      );
+
+      const [row] = await postgres.query<
+        Array<{ title: string; message: string; in_app: boolean }>
+      >(`SELECT title, message, in_app FROM notifications`);
+
+      expect(row).toEqual({
+        title: "Match found",
+        message: "Your Wingman match is ready — accept within 30s",
+        in_app: false,
+      });
+    });
+
+    it("retracts one ready check and leaves the next alone", async () => {
+      const [first, second] = [await fx.player(), await fx.player()];
+      await subscribed(first);
+      await subscribed(second);
+
+      await notifications().notifyMatchFound(
+        "confirmation-1",
+        [first, second],
+        "Competitive",
+        30,
+      );
+      await notifications().notifyMatchFound(
+        "confirmation-2",
+        [first],
+        "Competitive",
+        30,
+      );
+
+      await notifications().retractMatchFound("confirmation-1");
+
+      expect(await rows()).toEqual([
+        { steam_id: first, entity_id: "confirmation-2", in_app: false },
+      ]);
+    });
+
+    it("names the match an admin is calling about", async () => {
+      const { matchId } = await fx.bareMatch();
+      await postgres.query(
+        `UPDATE match_lineups ml SET team_name = 'Ancients'
+           FROM matches m
+          WHERE m.id = $1 AND ml.id = m.lineup_1_id`,
+        [matchId],
+      );
+      const called = await fx.player();
+      await subscribed(called);
+
+      await notifications().notifyAdminCall(matchId, called);
+
+      const [row] = await postgres.query<
+        Array<{ title: string; message: string; entity_id: string }>
+      >(`SELECT title, message, entity_id FROM notifications`);
+
+      expect(row).toEqual({
+        title: "Admin is calling you",
+        message:
+          "An admin wants to talk to you about Ancients vs Team 2. Open your camera page to answer.",
+        entity_id: matchId,
+      });
+    });
+
+    it("retracts a call for the player it rang and nobody else", async () => {
+      const { matchId } = await fx.bareMatch();
+      const [called, other] = [await fx.player(), await fx.player()];
+      await subscribed(called);
+      await subscribed(other);
+
+      await notifications().notifyAdminCall(matchId, called);
+      await notifications().notifyAdminCall(matchId, other);
+      await notifications().retractAdminCall(matchId, called);
+
+      expect((await rows()).map(({ steam_id }) => steam_id)).toEqual([other]);
+    });
+  });
+
   describe("collapseOlderUnread", () => {
     it("keeps only the newest unread row for a conversation", async () => {
       const steamId = await fx.player();
@@ -403,6 +526,24 @@ describe("notifications (SQL-driven)", () => {
 
       expect(posted).toEqual([]);
     });
+
+    it.each(["MatchFound", "AdminCall"])(
+      "keeps a %s ring out of the staff channel",
+      async (type) => {
+        const steamId = await fx.player();
+        await subscribed(steamId);
+        await withWebhook().notifyPlayers(type as any, {
+          title: "Ring",
+          message: "Ring ring.",
+          role: "user",
+          entity_id: "e-1",
+          steamIds: [steamId],
+          inApp: false,
+        });
+
+        expect(posted).toEqual([]);
+      },
+    );
 
     it("still relays the types that are meant for it", async () => {
       // Guards the test itself: if the webhook never fired for any type, every

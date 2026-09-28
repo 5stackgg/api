@@ -1,9 +1,12 @@
 import { Injectable, Logger } from "@nestjs/common";
+import Redis from "ioredis";
 import { HasuraService } from "../../hasura/hasura.service";
 import { PostgresService } from "../../postgres/postgres.service";
 import { MediaMtxService } from "../../mediamtx/mediamtx.service";
 import { MatchAssistantService } from "../match-assistant/match-assistant.service";
 import { GameStreamerService } from "../game-streamer/game-streamer.service";
+import { NotificationsService } from "../../notifications/notifications.service";
+import { RedisManagerService } from "../../redis/redis-manager/redis-manager.service";
 import { User } from "../../auth/types/User";
 import { isRoleAbove } from "../../utilities/isRoleAbove";
 
@@ -51,6 +54,12 @@ export type CameraPlayerStatus = {
 
 @Injectable()
 export class CameraService {
+  // One ring per call. An admin's WHIP publish can be retried or renegotiated
+  // mid-call, and each of those arrives here as a fresh publish.
+  private static readonly ADMIN_CALL_RING_SECONDS = 60;
+
+  private readonly redis: Redis;
+
   constructor(
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
@@ -58,7 +67,11 @@ export class CameraService {
     private readonly mediaMtx: MediaMtxService,
     private readonly matchAssistant: MatchAssistantService,
     private readonly gameStreamer: GameStreamerService,
-  ) {}
+    private readonly notifications: NotificationsService,
+    redisManager: RedisManagerService,
+  ) {
+    this.redis = redisManager.getConnection();
+  }
 
   public static pathForPlayer(matchId: string, steamId: string) {
     return `camera-${matchId}-${steamId}`;
@@ -68,6 +81,10 @@ export class CameraService {
   // the player's required camera publish.
   public static talkPathForPlayer(matchId: string, steamId: string) {
     return `camera-talk-${matchId}-${steamId}`;
+  }
+
+  public static adminCallRingKey(matchId: string, steamId: string) {
+    return `camera:admin-call-ring:${matchId}:${steamId}`;
   }
 
   // Whether this player's own camera is publishing right now. Used to gate
@@ -347,21 +364,69 @@ export class CameraService {
   ) {
     await this.assertCanWatchPlayer(matchId, steamId, user);
 
-    return this.mediaMtx.proxySdp(
+    const answer = await this.mediaMtx.proxySdp(
       CameraService.talkPathForPlayer(matchId, steamId),
       "whip",
       sdp,
     );
+
+    void this.ringPlayer(matchId, steamId);
+
+    return answer;
   }
 
   public async proxyPlayerTalk(matchId: string, user: User, sdp: string) {
     await this.assertCameraPlayer(matchId, user);
 
-    return this.mediaMtx.proxySdp(
+    const answer = await this.mediaMtx.proxySdp(
       CameraService.talkPathForPlayer(matchId, user.steam_id),
       "whep",
       sdp,
     );
+
+    // The ring guard is left standing: the player is on the call now, and a
+    // renegotiated publish must not ring them about the call they are on.
+    void this.endRing(matchId, user.steam_id, false);
+
+    return answer;
+  }
+
+  private async ringPlayer(matchId: string, steamId: string) {
+    try {
+      const claimed = await this.redis.set(
+        CameraService.adminCallRingKey(matchId, steamId),
+        1,
+        "EX",
+        CameraService.ADMIN_CALL_RING_SECONDS,
+        "NX",
+      );
+
+      if (!claimed) {
+        return;
+      }
+
+      await this.notifications.notifyAdminCall(matchId, steamId);
+    } catch (error) {
+      this.logger.warn(
+        `unable to ring ${steamId} for an admin call on match ${matchId}`,
+        error,
+      );
+    }
+  }
+
+  private async endRing(matchId: string, steamId: string, hungUp: boolean) {
+    try {
+      if (hungUp) {
+        await this.redis.del(CameraService.adminCallRingKey(matchId, steamId));
+      }
+
+      await this.notifications.retractAdminCall(matchId, steamId);
+    } catch (error) {
+      this.logger.warn(
+        `unable to retract the admin call ring for ${steamId} on match ${matchId}`,
+        error,
+      );
+    }
   }
 
   public async getPlayerTalkStatus(matchId: string, user: User) {
@@ -390,6 +455,8 @@ export class CameraService {
     await this.mediaMtx.kickSessions(
       CameraService.talkPathForPlayer(matchId, steamId),
     );
+
+    void this.endRing(matchId, steamId, true);
   }
 
   public async hangupPlayerTalk(matchId: string, user: User) {

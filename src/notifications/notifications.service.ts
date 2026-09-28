@@ -503,6 +503,9 @@ export class NotificationsService {
       // thread this belongs to, what that thread is called, whose avatar to
       // show. Read by the delivery gate, never by the bell.
       data?: NotificationData;
+      // false writes push-only rows: only for recipients with somewhere to be
+      // pushed to, and never shown in the bell.
+      inApp?: boolean;
     },
     actions?: Array<{
       label: string;
@@ -527,7 +530,9 @@ export class NotificationsService {
     // row could only ever be dead weight.
     const recipients = Array.from(new Set(notification.steamIds));
     const inApp = new Set(
-      await this.preferences.filterInAppRecipients(type, recipients),
+      notification.inApp === false
+        ? []
+        : await this.preferences.filterInAppRecipients(type, recipients),
     );
     const pushable = new Set(
       await this.pushNotifications.filterSubscribed(
@@ -585,6 +590,68 @@ export class NotificationsService {
     // fall back on, and the caller logging the wrong one sends whoever is
     // debugging "why was nobody told" after a delivery bug that is not there.
     return steamIds.length;
+  }
+
+  // Push-only: the ready check itself is on the player's screen over the
+  // matchmaking socket already, so the bell would only ever show a stale copy.
+  async notifyMatchFound(
+    confirmationId: string,
+    steamIds: string[],
+    matchTypeLabel: string,
+    seconds: number,
+  ) {
+    return this.notifyPlayers("MatchFound", {
+      title: "Match found",
+      message: `Your ${matchTypeLabel} match is ready — accept within ${seconds}s`,
+      role: "user",
+      entity_id: confirmationId,
+      steamIds,
+      inApp: false,
+    });
+  }
+
+  // Nothing else ever prunes these rows, and deleting them is also what stops a
+  // push still waiting on the event trigger from going out for a ready check
+  // that has already ended.
+  async retractMatchFound(confirmationId: string) {
+    await this.postgres.query(
+      `DELETE FROM public.notifications
+        WHERE type = 'MatchFound'
+          AND entity_id = $1`,
+      [confirmationId],
+    );
+  }
+
+  async notifyAdminCall(matchId: string, steamId: string) {
+    const [match] = await this.postgres.query<Array<{ label: string | null }>>(
+      `SELECT public.get_team_name(l1) || ' vs ' || public.get_team_name(l2) AS label
+         FROM public.matches m
+         JOIN public.match_lineups l1 ON l1.id = m.lineup_1_id
+         JOIN public.match_lineups l2 ON l2.id = m.lineup_2_id
+        WHERE m.id = $1::uuid`,
+      [matchId],
+    );
+
+    const about = match?.label ? `about ${match.label}` : "about your match";
+
+    return this.notifyPlayers("AdminCall", {
+      title: "Admin is calling you",
+      message: `An admin wants to talk to you ${about}. Open your camera page to answer.`,
+      role: "user",
+      entity_id: matchId,
+      steamIds: [steamId],
+      inApp: false,
+    });
+  }
+
+  async retractAdminCall(matchId: string, steamId: string) {
+    await this.postgres.query(
+      `DELETE FROM public.notifications
+        WHERE type = 'AdminCall'
+          AND entity_id = $1
+          AND steam_id = $2::bigint`,
+      [matchId, steamId],
+    );
   }
 
   // Retracts alerts that describe a condition rather than an event.

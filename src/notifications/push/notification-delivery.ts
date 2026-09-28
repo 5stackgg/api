@@ -11,6 +11,14 @@ export type DeliveryPolicy = {
   // sent. For chat this also means "the recipient's read cursor for the thread
   // has moved past this message".
   requireUnseen: boolean;
+  // How long the push service may hold the message for an offline device
+  // before discarding it. Unset keeps web-push's four-week default.
+  ttlSeconds?: number;
+  urgency?: "very-low" | "low" | "normal" | "high";
+  // Tells the service worker to ring rather than notify: vibration, and a
+  // notification that stays until it is acted on.
+  urgent?: boolean;
+  ignoreQuietHours?: boolean;
 };
 
 // Notifications differ in how much a delayed or dropped buzz costs, and that
@@ -25,6 +33,13 @@ export type DeliveryPolicy = {
 // Keep this exhaustive: notification-delivery.spec.ts reads the real type list
 // out of the tree and fails if anything is unmapped.
 const DELIVERY_POLICIES: Record<string, e_notification_types_enum[]> = {
+  // A ready check and a ringing call are worthless the moment their window
+  // closes, and the player is by definition awake for either: they just
+  // queued, or they are in a live match. A ready check lasts 30 seconds, so a
+  // buzz the push service delivers any later than that sends the player to a
+  // confirmation that no longer exists.
+  urgent: ["MatchFound", "AdminCall"],
+
   // Conversations. The only type where the recipient is routinely staring at
   // the thing being pushed to them.
   "15s-unseen": ["ChatMessage", "MatchChatMessage"],
@@ -104,6 +119,14 @@ const DELIVERY_POLICIES: Record<string, e_notification_types_enum[]> = {
 };
 
 const POLICY_BY_NAME: Record<string, DeliveryPolicy> = {
+  urgent: {
+    bundleSeconds: 0,
+    requireUnseen: true,
+    ttlSeconds: 30,
+    urgency: "high",
+    urgent: true,
+    ignoreQuietHours: true,
+  },
   "15s-unseen": { bundleSeconds: 15, requireUnseen: true },
   "30s-unseen": { bundleSeconds: 30, requireUnseen: true },
   "instant-unseen": { bundleSeconds: 0, requireUnseen: true },

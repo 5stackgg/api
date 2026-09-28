@@ -34,6 +34,8 @@ describe("camera authorization (SQL-driven)", () => {
       {} as any,
       {} as any,
       {} as any,
+      {} as any,
+      { getConnection: () => ({}) } as any,
     );
     await seedRegionWithServer(postgres, "CameraTestRegion", 27015);
   }, 600_000);

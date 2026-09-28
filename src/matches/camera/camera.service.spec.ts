@@ -18,6 +18,12 @@ describe("CameraService authorization", () => {
   let mediaMtx: { proxySdp: jest.Mock; isPathReady: jest.Mock; kickSessions: jest.Mock };
   let matchAssistant: { isOrganizer: jest.Mock };
   let gameStreamer: { validateStatusOriginAuth: jest.Mock };
+  let notifications: {
+    notifyAdminCall: jest.Mock;
+    retractAdminCall: jest.Mock;
+  };
+  let redisKeys: Map<string, string>;
+  let redis: { set: jest.Mock; del: jest.Mock };
   let service: CameraService;
 
   const scopeRow = (myLineupId: string | null, allowTeammates: boolean) => [
@@ -35,6 +41,21 @@ describe("CameraService authorization", () => {
     gameStreamer = {
       validateStatusOriginAuth: jest.fn().mockResolvedValue(true),
     };
+    notifications = {
+      notifyAdminCall: jest.fn().mockResolvedValue(1),
+      retractAdminCall: jest.fn().mockResolvedValue(undefined),
+    };
+    redisKeys = new Map();
+    redis = {
+      set: jest.fn(async (key: string, value: unknown, ...args: unknown[]) => {
+        if (args.includes("NX") && redisKeys.has(key)) {
+          return null;
+        }
+        redisKeys.set(key, String(value));
+        return "OK";
+      }),
+      del: jest.fn(async (key: string) => (redisKeys.delete(key) ? 1 : 0)),
+    };
 
     service = new CameraService(
       new Logger("CameraAuthTest"),
@@ -43,6 +64,8 @@ describe("CameraService authorization", () => {
       mediaMtx as any,
       matchAssistant as any,
       gameStreamer as any,
+      notifications as any,
+      { getConnection: () => redis } as any,
     );
   });
 
@@ -289,6 +312,119 @@ describe("CameraService authorization", () => {
     await expect(service.watchScope(MATCH_ID, admin)).rejects.toThrow(
       /not authorized/i,
     );
+  });
+
+  describe("admin call ring", () => {
+    const settle = () => new Promise((resolve) => setImmediate(resolve));
+
+    const adminCalls = async (steamId = player.steam_id) => {
+      postgres.query.mockResolvedValueOnce(scopeRow(null, false));
+      const answer = await service.proxyAdminTalk(
+        MATCH_ID,
+        steamId,
+        admin,
+        "offer",
+      );
+      await settle();
+      return answer;
+    };
+
+    const playerAnswers = async () => {
+      postgres.query.mockResolvedValueOnce([{ status: "Live" }]);
+      await service.proxyPlayerTalk(MATCH_ID, player, "offer");
+      await settle();
+    };
+
+    const adminHangsUp = async () => {
+      postgres.query.mockResolvedValueOnce(scopeRow(null, false));
+      await service.hangupAdminTalk(MATCH_ID, player.steam_id, admin);
+      await settle();
+    };
+
+    it("rings the player when an admin starts talking to them", async () => {
+      await adminCalls();
+
+      expect(notifications.notifyAdminCall).toHaveBeenCalledWith(
+        MATCH_ID,
+        player.steam_id,
+      );
+      expect(redis.set).toHaveBeenCalledWith(
+        CameraService.adminCallRingKey(MATCH_ID, player.steam_id),
+        1,
+        "EX",
+        60,
+        "NX",
+      );
+    });
+
+    it("rings once per call, not once per publish", async () => {
+      await adminCalls();
+      await adminCalls();
+
+      expect(notifications.notifyAdminCall).toHaveBeenCalledTimes(1);
+    });
+
+    it("keeps each player's ring separate", async () => {
+      await adminCalls(player.steam_id);
+      await adminCalls(TEAMMATE);
+
+      expect(notifications.notifyAdminCall).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not ring for a publish MediaMTX refused", async () => {
+      mediaMtx.proxySdp.mockRejectedValueOnce(new Error("mediamtx is down"));
+
+      await expect(adminCalls()).rejects.toThrow(/mediamtx/);
+
+      expect(notifications.notifyAdminCall).not.toHaveBeenCalled();
+    });
+
+    it("answers the publish without waiting on the push", async () => {
+      notifications.notifyAdminCall.mockReturnValue(new Promise(() => {}));
+
+      await expect(adminCalls()).resolves.toBe("answer");
+    });
+
+    it("answers the publish when the push fails", async () => {
+      notifications.notifyAdminCall.mockRejectedValue(new Error("no hasura"));
+
+      await expect(adminCalls()).resolves.toBe("answer");
+    });
+
+    it("retracts the ring on hangup and rings the next call again", async () => {
+      await adminCalls();
+      await adminHangsUp();
+
+      expect(notifications.retractAdminCall).toHaveBeenCalledWith(
+        MATCH_ID,
+        player.steam_id,
+      );
+
+      await adminCalls();
+
+      expect(notifications.notifyAdminCall).toHaveBeenCalledTimes(2);
+    });
+
+    it("retracts the ring when the player picks up, without ringing them again", async () => {
+      await adminCalls();
+      await playerAnswers();
+
+      expect(notifications.retractAdminCall).toHaveBeenCalledWith(
+        MATCH_ID,
+        player.steam_id,
+      );
+
+      await adminCalls();
+
+      expect(notifications.notifyAdminCall).toHaveBeenCalledTimes(1);
+    });
+
+    it("still hangs up when the retract fails", async () => {
+      notifications.retractAdminCall.mockRejectedValue(new Error("no db"));
+
+      await expect(adminHangsUp()).resolves.toBeUndefined();
+      expect(mediaMtx.kickSessions).toHaveBeenCalled();
+    });
   });
 
   // The broadcast pod has no session; it authenticates as the match itself.
