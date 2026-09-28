@@ -789,6 +789,27 @@ export class NotificationsService {
     );
   }
 
+  // For a recipient who blocked the sender after the rows were aimed but
+  // before they were written, which the block's own cleanup ran too early to
+  // see. Blanked the way retractChatMessage blanks, for the same reasons.
+  async retractChatMessageFromBlocked(messageId: string) {
+    await this.postgres.query(
+      `UPDATE public.notifications n
+          SET deleted_at = COALESCE(n.deleted_at, now()),
+              message = ''
+        WHERE n.data->>'messageId' = $1
+          AND n.type IN ('ChatMessage', 'MatchChatMessage')
+          AND (n.deleted_at IS NULL OR n.message <> '')
+          AND EXISTS (
+            SELECT 1
+              FROM public.player_blocks pb
+             WHERE pb.blocker_steam_id = n.steam_id
+               AND pb.blocked_steam_id::text = n.data->>'senderSteamId'
+          )`,
+      [messageId],
+    );
+  }
+
   // Read and collapsed rows too: the bell keeps read rows on show, and a
   // recipient can restore a collapsed one, so either would otherwise keep the
   // text the author took back. A preview is never empty, which is what tells a

@@ -42,6 +42,9 @@ describe("ChatService direct messages", () => {
   let editAuditIds: string[];
   let directReactions: Record<string, string[]> | null;
   let directReactionFailure: Error | undefined;
+  // What a block committed between a send's access check and its insert does
+  // to that insert.
+  let dmInsertBlocked: boolean;
   // The one direct message the fake database holds, if a test put one there.
   let directMessage:
     | {
@@ -91,6 +94,10 @@ describe("ChatService direct messages", () => {
         return directMessage?.id === bindings[0]
           ? [{ reactions: directReactions }]
           : [];
+      }
+
+      if (sql.includes("INSERT INTO public.direct_messages")) {
+        return dmInsertBlocked ? [] : [{ id: bindings[0] }];
       }
 
       if (sql.includes("INSERT INTO public.chat_message_edits")) {
@@ -165,6 +172,9 @@ describe("ChatService direct messages", () => {
   let blocks: Array<[string, string]>;
 
   const playerBlocks = {
+    hasBlocked: jest.fn(async (blocker: string, blocked: string) =>
+      blocks.some(([x, y]) => x === blocker && y === blocked),
+    ),
     isBlockedEitherWay: jest.fn(async (a: string, b: string) =>
       blocks.some(
         ([blocker, blocked]) =>
@@ -197,6 +207,7 @@ describe("ChatService direct messages", () => {
     collapseOlderUnread: jest.fn(),
     markConversationRead: jest.fn(),
     retractChatMessage: jest.fn().mockResolvedValue(undefined),
+    retractChatMessageFromBlocked: jest.fn().mockResolvedValue(undefined),
     updateChatMessagePreview: jest.fn().mockResolvedValue(undefined),
   };
 
@@ -397,6 +408,7 @@ describe("ChatService direct messages", () => {
     redis.get.mockResolvedValue(null);
     redis.eval.mockResolvedValue([1, 1]);
     notifications.retractChatMessage.mockResolvedValue(undefined);
+    notifications.retractChatMessageFromBlocked.mockResolvedValue(undefined);
     notifications.updateChatMessagePreview.mockResolvedValue(undefined);
     directMessage = undefined;
     acceptedFriendships = [[ME, FRIEND]];
@@ -416,6 +428,7 @@ describe("ChatService direct messages", () => {
     editAuditIds = [];
     directReactions = null;
     directReactionFailure = undefined;
+    dmInsertBlocked = false;
     blocks = [];
     rcon.send.mockResolvedValue(undefined);
     rcon.connect.mockResolvedValue(rcon);
@@ -3150,6 +3163,99 @@ describe("ChatService direct messages", () => {
           ).toBe(false);
         },
       );
+
+      it.each([ME, FRIEND])(
+        "refuses %s deleting their own message",
+        async (steamId) => {
+          directMessage = {
+            id: MESSAGE_ID,
+            roomId: room,
+            author: steamId,
+            message: "typo",
+            open: true,
+            editedAt: null,
+          };
+
+          await expect(
+            service.deleteMessage(
+              ChatLobbyType.Direct,
+              room,
+              MESSAGE_ID,
+              as(steamId),
+            ),
+          ).resolves.toEqual({
+            deleted: false,
+            code: ChatErrorCode.NotAllowed,
+          });
+
+          expect(directMessage).toBeDefined();
+          expect(redis.publish).not.toHaveBeenCalled();
+        },
+      );
+    });
+
+    it("refuses the pair's conversation under any id but the canonical one", async () => {
+      const [low, high] = room.split(":");
+
+      for (const id of [`${high}:${low}`, `${low}:0${high}`]) {
+        await service.joinMatchLobby(client(ME), ChatLobbyType.Direct, id);
+
+        await expect(
+          service.sendMessageToChat(ChatLobbyType.Direct, id, as(ME), "hi"),
+        ).resolves.toEqual({ accepted: false, code: ChatErrorCode.NotAllowed });
+      }
+
+      expect(redis.eval).not.toHaveBeenCalled();
+      expect(redis.publish).not.toHaveBeenCalled();
+    });
+
+    it("stores, delivers and announces nothing when a block lands between the check and the insert", async () => {
+      dmInsertBlocked = true;
+
+      await expect(
+        service.sendMessageToChat(ChatLobbyType.Direct, room, as(ME), "hi"),
+      ).resolves.toEqual({ accepted: false, code: ChatErrorCode.NotAllowed });
+      await flush();
+
+      const [insert] = queries.filter(({ sql }) =>
+        sql.includes("INSERT INTO public.direct_messages"),
+      );
+
+      expect(insert.sql).toContain("WHERE NOT public.is_blocked_either_way(");
+      expect(
+        queries.some(({ sql }) =>
+          sql.includes("INSERT INTO public.direct_conversations"),
+        ),
+      ).toBe(false);
+      expect(redis.publish).not.toHaveBeenCalled();
+      expect(notifications.notifyPlayers).not.toHaveBeenCalled();
+    });
+
+    it("keeps a direct message from a player its recipient has just blocked", async () => {
+      blocks = [[FRIEND, ME]];
+      playerBlocks.isBlockedEitherWay.mockResolvedValueOnce(false);
+
+      await expect(
+        service.sendMessageToChat(ChatLobbyType.Direct, room, as(ME), "hi"),
+      ).resolves.toMatchObject({ accepted: true });
+      await flush();
+      await flush();
+
+      expect(published().map(({ steamId }) => steamId)).not.toContain(FRIEND);
+      expect(playerBlocks.hasBlocked).toHaveBeenCalledWith(FRIEND, ME);
+      expect(notifications.notifyPlayers).not.toHaveBeenCalled();
+    });
+
+    it("keeps the socket's cleanup when the history's block lookup fails", async () => {
+      const socket = client(ME);
+      playerBlocks.blockedBy.mockRejectedValueOnce(new Error("pool timeout"));
+
+      await expect(
+        service.joinMatchLobby(socket, ChatLobbyType.Match, "m-1"),
+      ).rejects.toThrow("pool timeout");
+
+      expect(redis.eval).toHaveBeenCalled();
+      expect(socket.on).toHaveBeenCalledWith("close", expect.any(Function));
     });
 
     it("lets the same pair back into their conversation once unblocked", async () => {
@@ -3337,7 +3443,7 @@ describe("ChatService direct messages", () => {
       const sayInTournament = async (from: string) => {
         tournament.roster = [ME, FRIEND, STRANGER];
 
-        await service.sendMessageToChat(
+        const result = await service.sendMessageToChat(
           ChatLobbyType.Tournament,
           "t-1",
           as(from),
@@ -3346,6 +3452,8 @@ describe("ChatService direct messages", () => {
 
         await flush();
         await flush();
+
+        return result.accepted ? result.messageId : undefined;
       };
 
       it("writes none for a player who blocked the sender", async () => {
@@ -3372,7 +3480,26 @@ describe("ChatService direct messages", () => {
 
         await sayInTournament(FRIEND);
 
+        expect(playerBlocks.blockedAmong).toHaveBeenCalledWith(
+          [STRANGER, ME],
+          [FRIEND],
+        );
         expect(notifications.notifyPlayers).not.toHaveBeenCalled();
+        expect(logger.warn).not.toHaveBeenCalled();
+      });
+
+      it("catches up on a block that landed while the rows were being written", async () => {
+        const messageId = await sayInTournament(FRIEND);
+
+        expect(
+          notifications.retractChatMessageFromBlocked,
+        ).toHaveBeenCalledWith(messageId);
+        expect(
+          notifications.retractChatMessageFromBlocked.mock
+            .invocationCallOrder[0],
+        ).toBeGreaterThan(
+          notifications.notifyPlayers.mock.invocationCallOrder[0],
+        );
       });
 
       it("still notifies the player a block is aimed at", async () => {

@@ -72,6 +72,8 @@ describe("direct messages (SQL-driven)", () => {
         collapseOlderUnread: jest.fn(),
         retractChatMessage: (messageId: string) =>
           bell.retractChatMessage(messageId),
+        retractChatMessageFromBlocked: (messageId: string) =>
+          bell.retractChatMessageFromBlocked(messageId),
         updateChatMessagePreview: (messageId: string, preview: string) =>
           bell.updateChatMessagePreview(messageId, preview),
       } as any,

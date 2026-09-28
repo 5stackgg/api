@@ -22,9 +22,11 @@ describe("chat blocks (SQL-driven)", () => {
   let container: StartedTestContainer;
   let redis: Redis;
   let chat: ChatService;
+  let blocks: PlayerBlocksService;
 
   let roster: string[];
   let friendshipOverride: boolean;
+  let beforeBellInsert: (() => Promise<unknown>) | undefined;
 
   let to: jest.SpyInstance;
   let notify: jest.SpyInstance;
@@ -96,6 +98,10 @@ describe("chat blocks (SQL-driven)", () => {
         return {};
       }
 
+      const hook = beforeBellInsert;
+      beforeBellInsert = undefined;
+      await hook?.();
+
       const returning: Array<{ id: string }> = [];
 
       for (const object of insert.__args.objects) {
@@ -149,6 +155,8 @@ describe("chat blocks (SQL-driven)", () => {
       { add: jest.fn() } as any,
     );
 
+    blocks = new PlayerBlocksService(postgres);
+
     chat = new ChatService(
       logger as any,
       {} as any,
@@ -156,7 +164,7 @@ describe("chat blocks (SQL-driven)", () => {
       postgres,
       { getConnection: () => redis } as any,
       notifications,
-      new PlayerBlocksService(postgres),
+      blocks,
     );
   }, 600_000);
 
@@ -179,6 +187,7 @@ describe("chat blocks (SQL-driven)", () => {
 
     roster = [];
     friendshipOverride = false;
+    beforeBellInsert = undefined;
 
     to = jest.spyOn(chat as any, "to");
     notify = jest.spyOn(chat as any, "notifyLobbyMembers");
@@ -418,6 +427,22 @@ describe("chat blocks (SQL-driven)", () => {
       });
     });
 
+    it("blanks the blocker's row for a line whose rows were aimed before the block landed", async () => {
+      beforeBellInsert = () => block(blocker, blocked);
+
+      const id = messageIdOf(await inMatch(blocked, "racing"));
+
+      expect(await previews(id)).toEqual({
+        [blocker]: "",
+        [bystander]: "racing",
+      });
+      expect(await bell(id)).toContainEqual({
+        steam_id: blocker,
+        message: "",
+        deleted: true,
+      });
+    });
+
     it("leaves the bell alone for everyone when the blocker is the one talking", async () => {
       await block(blocker, blocked);
 
@@ -529,11 +554,13 @@ describe("chat blocks (SQL-driven)", () => {
       fromBlocked = second.accepted ? second.messageId : "";
     });
 
-    it("refuses both sides once one of them blocks", async () => {
-      await block(blocker, blocked);
+    const refusesEverything = async () => {
       publish.mockClear();
 
       for (const steamId of [blocker, blocked]) {
+        const own = steamId === blocker ? fromBlocker : fromBlocked;
+        const theirs = steamId === blocker ? fromBlocked : fromBlocker;
+
         await expect(
           say(ChatLobbyType.Direct, room, steamId, "still there?"),
         ).resolves.toEqual({
@@ -547,17 +574,21 @@ describe("chat blocks (SQL-driven)", () => {
           chat.editMessage(
             ChatLobbyType.Direct,
             room,
-            steamId === blocker ? fromBlocker : fromBlocked,
+            own,
             player(steamId),
             "edited",
           ),
         ).resolves.toEqual({ edited: false, code: ChatErrorCode.NotAllowed });
 
         await expect(
+          chat.deleteMessage(ChatLobbyType.Direct, room, own, player(steamId)),
+        ).resolves.toEqual({ deleted: false, code: ChatErrorCode.NotAllowed });
+
+        await expect(
           chat.toggleReaction(
             ChatLobbyType.Direct,
             room,
-            steamId === blocker ? fromBlocked : fromBlocker,
+            theirs,
             "heart",
             player(steamId),
           ),
@@ -572,25 +603,70 @@ describe("chat blocks (SQL-driven)", () => {
 
       expect(publish).not.toHaveBeenCalled();
 
-      const [{ count }] = await postgres.query<Array<{ count: number }>>(
-        `SELECT count(*)::int AS count FROM direct_messages WHERE room_id = $1`,
+      const messages = await postgres.query<
+        Array<{ message: string; edited: boolean; reactions: number }>
+      >(
+        `SELECT dm.message, dm.edited_at IS NOT NULL AS edited,
+                (SELECT count(*)::int FROM direct_message_reactions r
+                  WHERE r.message_id = dm.id) AS reactions
+           FROM direct_messages dm
+          WHERE dm.room_id = $1
+          ORDER BY dm.created_at`,
         [room],
       );
-      expect(count).toBe(2);
+      expect(messages).toEqual([
+        { message: "hi", edited: false, reactions: 0 },
+        { message: "hello", edited: false, reactions: 0 },
+      ]);
+
+      const [{ reads }] = await postgres.query<Array<{ reads: number }>>(
+        `SELECT count(*)::int AS reads FROM chat_read_state WHERE thread = $1`,
+        [`chat:direct:${room}`],
+      );
+      expect(reads).toBe(0);
+    };
+
+    it("refuses both sides once one of them blocks", async () => {
+      await postgres.query("DELETE FROM chat_read_state");
+      await block(blocker, blocked);
+
+      await refusesEverything();
     });
 
-    it("refuses both sides even while a friendship still reads as accepted", async () => {
+    it("refuses both sides on the block alone, while a friendship still reads as accepted", async () => {
+      await postgres.query("DELETE FROM chat_read_state");
       await block(blocked, blocker);
       friendshipOverride = true;
 
-      for (const steamId of [blocker, blocked]) {
-        await expect(
-          say(ChatLobbyType.Direct, room, steamId, "still there?"),
-        ).resolves.toEqual({
-          accepted: false,
-          code: ChatErrorCode.NotAllowed,
-        });
-      }
+      await refusesEverything();
+    });
+
+    it("writes, reopens and delivers nothing for a block that lands after the send's access check", async () => {
+      await block(blocker, blocked);
+      await postgres.query(
+        `UPDATE direct_conversations SET is_open = false WHERE room_id = $1`,
+        [room],
+      );
+      friendshipOverride = true;
+      jest.spyOn(blocks, "isBlockedEitherWay").mockResolvedValueOnce(false);
+      publish.mockClear();
+
+      await expect(
+        say(ChatLobbyType.Direct, room, blocked, "sneaking in"),
+      ).resolves.toEqual({ accepted: false, code: ChatErrorCode.NotAllowed });
+
+      expect(publish).not.toHaveBeenCalled();
+
+      const [{ count, open }] = await postgres.query<
+        Array<{ count: number; open: number }>
+      >(
+        `SELECT (SELECT count(*)::int FROM direct_messages
+                  WHERE room_id = $1) AS count,
+                (SELECT count(*)::int FROM direct_conversations
+                  WHERE room_id = $1 AND is_open) AS open`,
+        [room],
+      );
+      expect({ count, open }).toEqual({ count: 2, open: 0 });
     });
 
     it("takes the conversation off the blocker's rail only, and gives it back on unblock", async () => {

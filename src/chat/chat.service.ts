@@ -18,7 +18,7 @@ import { PostgresService } from "src/postgres/postgres.service";
 import { PlayerBlocksService } from "src/player-blocks/player-blocks.service";
 import { chatThreadKey } from "src/notifications/push/notification-delivery";
 import { SystemSettingName } from "src/system/enums/SystemSettingName";
-import { parseDirectRoomId } from "./utilities/directRoomId";
+import { directRoomId, parseDirectRoomId } from "./utilities/directRoomId";
 import { ChatErrorCode } from "./enums/ChatErrorCode";
 import { ChatMessage, ChatMessageSource } from "./types/ChatMessage";
 import { ChatSendResult } from "./types/ChatSendResult";
@@ -310,6 +310,10 @@ export class ChatService {
       client.id,
     );
 
+    client.on("close", () => {
+      void this.removeFromLobby(type, id, client);
+    });
+
     if (added === 1 && count === 1) {
       void this.to(type, id, "joined", {
         user: {
@@ -342,10 +346,6 @@ export class ChatService {
         },
       }),
     );
-
-    client.on("close", () => {
-      void this.removeFromLobby(type, id, client);
-    });
   }
 
   // Who is allowed in a room at all.
@@ -538,6 +538,13 @@ export class ChatService {
         const parties = parseDirectRoomId(id);
 
         if (!parties || !parties.includes(String(user.steam_id))) {
+          return false;
+        }
+
+        // Anything else names the same pair under a room id that nothing
+        // keyed on the canonical one -- the block trigger, the rail's filter
+        // -- would ever match.
+        if (id !== directRoomId(parties[0], parties[1])) {
           return false;
         }
 
@@ -866,7 +873,9 @@ export class ChatService {
     };
 
     if (type === ChatLobbyType.Direct) {
-      await this.storeDirectMessage(id, message);
+      if (!(await this.storeDirectMessage(id, message))) {
+        return { accepted: false, code: ChatErrorCode.NotAllowed };
+      }
     } else {
       const messageKey = `chat_${type}_${id}`;
       // Keyed by id and not `${steam_id}:${now}`, which silently dropped a
@@ -887,7 +896,14 @@ export class ChatService {
 
     const outgoing: ChatMessage = { ...message, reactions: {} };
 
-    void this.to(type, id, "chat", outgoing, message.from.steam_id);
+    void this.to(type, id, "chat", outgoing, message.from.steam_id).catch(
+      (error) => {
+        this.logger.warn(
+          `unable to broadcast a message to ${type}:${id}`,
+          error,
+        );
+      },
+    );
 
     if (type === ChatLobbyType.Direct) {
       void this.deliverDirectMessage(id, player, outgoing);
@@ -1490,7 +1506,9 @@ export class ChatService {
         edited_at: editedAt,
       },
       author,
-    );
+    ).catch((error) => {
+      this.logger.warn(`unable to broadcast an edit to ${type}:${id}`, error);
+    });
 
     await this.notifications
       .updateChatMessagePreview(
@@ -1704,6 +1722,8 @@ export class ChatService {
     id: string,
     messageId: string,
   ) {
+    await this.notifications.retractChatMessageFromBlocked(messageId);
+
     if (type === ChatLobbyType.Direct) {
       const [row] = await this.postgres.query<
         Array<{ message: string; edited_at: Date | null }>
@@ -2109,6 +2129,12 @@ export class ChatService {
         continue;
       }
 
+      if (
+        await this.playerBlocks.hasBlocked(steamId, String(sender.steam_id))
+      ) {
+        continue;
+      }
+
       await this.redis.publish(
         "send-message-to-steam-id",
         JSON.stringify({
@@ -2138,21 +2164,32 @@ export class ChatService {
   // milliseconds ahead leaves a just-read message looking unread -- forever,
   // and pushing every time. The websocket broadcast keeps the pod's timestamp;
   // clients dedupe on the message id, not on when it claims to have happened.
+  //
+  // A block committed after the send's access check still stops the insert,
+  // and with it the rail, the delivery and the notification.
   private async storeDirectMessage(
     roomId: string,
     message: { id: string; message: string; from: User },
-  ) {
+  ): Promise<boolean> {
     const parties = parseDirectRoomId(roomId);
 
     if (!parties) {
-      return;
+      return false;
     }
 
-    await this.postgres.query(
+    const stored = await this.postgres.query<Array<{ id: string }>>(
       `INSERT INTO public.direct_messages (id, room_id, from_steam_id, message)
-            VALUES ($1::uuid, $2, $3::bigint, $4)`,
+            SELECT $1::uuid, $2, $3::bigint, $4
+             WHERE NOT public.is_blocked_either_way(
+                     split_part($2, ':', 1)::bigint,
+                     split_part($2, ':', 2)::bigint)
+         RETURNING id::text AS id`,
       [message.id, roomId, message.from.steam_id, message.message],
     );
+
+    if (stored.length === 0) {
+      return false;
+    }
 
     // A message puts the conversation back on the bar, even if it was removed
     // from it -- someone writing to you is exactly when you want to see them
@@ -2178,6 +2215,8 @@ export class ChatService {
     );
 
     await this.enforceDirectBarLimit(parties);
+
+    return true;
   }
 
   // How many conversations the rail holds. Past this the quietest one drops
@@ -2871,6 +2910,8 @@ export class ChatService {
 
     const messages = await this.getRoomMessages(toType, toId);
 
-    void this.resendHistory(toType, toId, messages);
+    void this.resendHistory(toType, toId, messages).catch((error) => {
+      this.logger.warn(`unable to re-send history to ${toType}:${toId}`, error);
+    });
   }
 }

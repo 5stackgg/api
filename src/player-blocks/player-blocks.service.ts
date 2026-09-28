@@ -36,9 +36,8 @@ export class PlayerBlocksService {
     return new Set(rows.map((row) => row.steam_id));
   }
 
-  // blockedBy for many viewers at once, narrowed to `authors`: each viewer who
-  // blocked any of them, mapped to which. Server-side filtering only -- never
-  // hand this to a client.
+  // Server-side filtering only: it says who blocked whom, so never hand it to
+  // a client.
   public async blockedAmong(
     viewers: Array<string>,
     authors: Array<string>,
