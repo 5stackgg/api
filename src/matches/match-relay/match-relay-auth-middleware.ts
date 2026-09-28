@@ -33,7 +33,17 @@ export class MatchRelayAuthMiddleware implements NestMiddleware {
       const matchId = originAuth.substring(0, colonIndex);
       const apiPassword = originAuth.substring(colonIndex + 1);
 
-      const token = request.url.split("/")?.[3];
+      const [, , pathMatchId, token] = request.url.split("?")[0].split("/");
+
+      // The header proves who is posting, the path says which match it lands
+      // on. Without tying them together any match's credential could write
+      // into (and a new token wipe) every other match's broadcast.
+      if (matchId !== pathMatchId) {
+        this.logger.warn(
+          `auth: rejecting ${request.method} ${request.url} — x-origin-auth is for match ${matchId}`,
+        );
+        return response.status(401).end();
+      }
 
       const matchPassword = await this.cache.remember(
         `match-relay-auth:${matchId}:${token}`,
