@@ -22,6 +22,7 @@ BEGIN
         NEW.mr := 8;
         NEW.overtime := false;
         NEW.knife_round := false;
+        NEW.map_veto := false;
     END IF;
 
     SELECT COUNT(DISTINCT region) INTO region_count
@@ -76,6 +77,7 @@ BEGIN
         NEW.mr := 8;
         NEW.overtime := false;
         NEW.knife_round := false;
+        NEW.map_veto := false;
     END IF;
 
     IF _match_status != 'PickingPlayers' THEN

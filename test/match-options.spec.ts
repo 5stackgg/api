@@ -279,17 +279,24 @@ describe("match options locks (SQL-driven)", () => {
           mr: number;
           overtime: boolean;
           knife_round: boolean;
+          map_veto: boolean;
         }>
       >(
-        "SELECT best_of, mr, overtime, knife_round FROM match_options WHERE id = $1",
+        "SELECT best_of, mr, overtime, knife_round, map_veto FROM match_options WHERE id = $1",
         [optionsId],
       );
       return row;
     };
 
-    const pinned = { best_of: 1, mr: 8, overtime: false, knife_round: false };
+    const pinned = {
+      best_of: 1,
+      mr: 8,
+      overtime: false,
+      knife_round: false,
+      map_veto: false,
+    };
 
-    it("pins a single first-to-8 map with no overtime or knife round on insert", async () => {
+    it("pins a single first-to-8 map with no veto, overtime or knife round on insert", async () => {
       const match = await fx.match({ type: "Rush", mr: 12, bestOf: 3 });
 
       expect(await rules(match.options_id)).toEqual(pinned);
@@ -300,7 +307,7 @@ describe("match options locks (SQL-driven)", () => {
 
       await updateOptions(
         match.options_id,
-        "best_of = 3, mr = 15, overtime = true, knife_round = true",
+        "best_of = 3, mr = 15, overtime = true, knife_round = true, map_veto = true",
       );
 
       expect(await rules(match.options_id)).toEqual(pinned);
