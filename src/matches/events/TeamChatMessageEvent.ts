@@ -8,6 +8,16 @@ export default class TeamChatMessageEvent extends ChatMessageEvent {
   protected async room(): Promise<{ type: ChatLobbyType; id: string } | null> {
     const { lineupId, player } = this.data;
 
+    // a missing speaker would leave the roster filter below as
+    // `steam_id: {}`, which matches every player on the lineup
+    if (typeof player !== "string" || !/^\d+$/.test(player)) {
+      this.logger.warn(
+        `[${this.matchId}] dropping team chat: malformed player`,
+        { player },
+      );
+      return null;
+    }
+
     if (
       typeof lineupId !== "string" ||
       !TeamChatMessageEvent.UUID.test(lineupId)

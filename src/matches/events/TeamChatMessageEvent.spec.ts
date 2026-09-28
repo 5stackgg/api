@@ -163,6 +163,18 @@ describe("TeamChatMessageEvent", () => {
       expect(hasura.query).not.toHaveBeenCalled();
     });
 
+    it.each([
+      ["missing", undefined],
+      ["empty", ""],
+      ["not a string", 76561198000000001],
+      ["not a steam id", "keith"],
+    ])("drops a speaker that is %s", async (_, player) => {
+      await send({ player, lineupId: LINEUP_ID });
+
+      expectDropped();
+      expect(hasura.query).not.toHaveBeenCalled();
+    });
+
     it("drops a lineup that does not exist", async () => {
       lineup = null;
 
