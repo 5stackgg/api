@@ -180,13 +180,14 @@ describe("warning sanctions (SQL-driven)", () => {
     const other = await fx.player();
     const theirs = await sanction(other, "warning");
 
-    const result = await service().unsanctionServerPlayer({
-      steamId,
-      type: "warning",
-      sanctionId: theirs.id,
-    });
+    await expect(
+      service().unsanctionServerPlayer({
+        steamId,
+        type: "warning",
+        sanctionId: theirs.id,
+      }),
+    ).rejects.toThrow("sanction not found");
 
-    expect(result.id).toBeNull();
     const [row] = await postgres.query<Array<{ deleted_at: Date | null }>>(
       "SELECT deleted_at FROM player_sanctions WHERE id = $1",
       [theirs.id],

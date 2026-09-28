@@ -2,7 +2,8 @@ import { Controller, Get, Param } from "@nestjs/common";
 import { HasuraAction } from "src/hasura/hasura.controller";
 import { User } from "src/auth/types/User";
 import { isRoleAbove } from "src/utilities/isRoleAbove";
-import { SanctionsService, SanctionType } from "./sanctions.service";
+import { SanctionsService } from "./sanctions.service";
+import { SanctionType } from "./sanction-types";
 
 @Controller("sanctions")
 export class SanctionsController {

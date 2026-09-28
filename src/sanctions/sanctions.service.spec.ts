@@ -167,6 +167,21 @@ describe("SanctionsService", () => {
       });
     });
 
+    it("says so when the named row is not there to remove", async () => {
+      postgres.query.mockResolvedValueOnce([]);
+
+      await expect(
+        service.unsanctionServerPlayer({
+          serverId: "server-1",
+          steamId,
+          type: "ban",
+          sanctionId: "sanction-7",
+        }),
+      ).rejects.toThrow("sanction not found");
+
+      expect(rconService.connect).not.toHaveBeenCalled();
+    });
+
     it("refuses to clear warnings by type alone", async () => {
       await expect(
         service.unsanctionServerPlayer({ steamId, type: "warning" }),
@@ -176,6 +191,8 @@ describe("SanctionsService", () => {
     });
 
     it("never syncs the server when a warning is removed", async () => {
+      postgres.query.mockResolvedValueOnce([{ id: "sanction-7" }]);
+
       await service.unsanctionServerPlayer({
         serverId: "server-1",
         steamId,

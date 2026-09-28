@@ -12,6 +12,7 @@ import {
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { PostgresService } from "../postgres/postgres.service";
+import { SERVER_ENFORCED_SANCTION_TYPES } from "../sanctions/sanction-types";
 import { RefreshAllPlayersJob } from "./jobs/RefreshAllPlayers";
 
 // One publicly visible lineup, as the global search bar needs it. Only ever
@@ -532,7 +533,7 @@ export class TypeSenseService {
           __args: {
             where: {
               type: {
-                _neq: "warning",
+                _in: SERVER_ENFORCED_SANCTION_TYPES,
               },
             },
           },

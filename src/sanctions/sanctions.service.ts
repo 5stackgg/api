@@ -3,8 +3,7 @@ import { HasuraService } from "src/hasura/hasura.service";
 import { PostgresService } from "src/postgres/postgres.service";
 import { RconService } from "src/rcon/rcon.service";
 import { DedicatedServersService } from "src/dedicated-servers/dedicated-servers.service";
-
-export type SanctionType = "ban" | "mute" | "gag" | "silence" | "warning";
+import { SanctionType, SERVER_ENFORCED_SANCTION_TYPES } from "./sanction-types";
 
 @Injectable()
 export class SanctionsService {
@@ -24,13 +23,6 @@ export class SanctionsService {
     "warning",
   ];
 
-  public static readonly SERVER_ENFORCED_TYPES: SanctionType[] = [
-    "ban",
-    "mute",
-    "gag",
-    "silence",
-  ];
-
   public async getActiveServerSanctions(serverId: string): Promise<
     Array<{
       steam_id: string;
@@ -47,7 +39,7 @@ export class SanctionsService {
         WHERE deleted_at IS NULL
           AND type = ANY($1::text[])
           AND (remove_sanction_date IS NULL OR remove_sanction_date > now())`,
-      [SanctionsService.SERVER_ENFORCED_TYPES],
+      [SERVER_ENFORCED_SANCTION_TYPES],
     );
 
     const byPlayer: Record<
@@ -181,6 +173,10 @@ export class SanctionsService {
         [sanctionId, steamId, type],
       );
       removedId = removed.at(0)?.id ?? null;
+
+      if (!removedId) {
+        throw Error("sanction not found");
+      }
     } else {
       await this.postgres.query(
         `UPDATE public.player_sanctions
@@ -195,7 +191,7 @@ export class SanctionsService {
     let enforced = false;
     let message = type === "warning" ? "warning removed" : "sanction removed";
 
-    if (serverId && SanctionsService.SERVER_ENFORCED_TYPES.includes(type)) {
+    if (serverId && SERVER_ENFORCED_SANCTION_TYPES.includes(type)) {
       const result = await this.syncServer(serverId, null);
       enforced = result.enforced;
       message = result.message;
