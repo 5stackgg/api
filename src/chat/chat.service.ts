@@ -18,6 +18,10 @@ import { PostgresService } from "src/postgres/postgres.service";
 import { chatThreadKey } from "src/notifications/push/notification-delivery";
 import { SystemSettingName } from "src/system/enums/SystemSettingName";
 import { parseDirectRoomId } from "./utilities/directRoomId";
+import { ChatErrorCode } from "./enums/ChatErrorCode";
+import { ChatMessage, ChatMessageSource } from "./types/ChatMessage";
+import { ChatSendResult } from "./types/ChatSendResult";
+
 @Injectable()
 export class ChatService {
   private redis: Redis;
@@ -38,6 +42,14 @@ export class ChatService {
   ]);
 
   private static readonly DEFAULT_TTL = 60 * 60;
+
+  // Measured in UTF-16 code units, the same unit a textarea's maxlength counts.
+  public static readonly MAX_MESSAGE_LENGTH = 2000;
+
+  // What a relayed line is cut to in game. The game shows far less than a full
+  // website message, and 2000 characters of multibyte text can outgrow an rcon
+  // packet.
+  public static readonly RCON_MESSAGE_MAX_LENGTH = 240;
 
   // A drafted free agent is on a roster and gets in that way; withdrawn means
   // they left the pool.
@@ -513,57 +525,72 @@ export class ChatService {
     );
   }
 
+  // What a player typed on the website, or why it cannot be sent. Lines relayed
+  // from the game are not held to this: the game has already limited them.
+  public static messageText(
+    raw: unknown,
+  ): { text: string } | { error: ChatErrorCode } {
+    if (typeof raw !== "string") {
+      return { error: ChatErrorCode.Invalid };
+    }
+
+    const text = raw.trim();
+
+    if (text.length === 0) {
+      return { error: ChatErrorCode.Invalid };
+    }
+
+    if (text.length > ChatService.MAX_MESSAGE_LENGTH) {
+      return { error: ChatErrorCode.TooLong };
+    }
+
+    return { text };
+  }
+
   public async sendMessageToChat(
     type: ChatLobbyType,
     id: string,
     player: User,
     _message: string,
     skipCheck = false,
-  ) {
-    // verify they are in the lobby
-    if (skipCheck === false) {
-      const userData = await this.getUserData(type, id, player.steam_id);
-      if (!userData) {
-        return;
+    source: ChatMessageSource = "web",
+  ): Promise<ChatSendResult> {
+    let text = _message;
+
+    if (source === "web") {
+      const parsed = ChatService.messageText(_message);
+
+      if ("error" in parsed) {
+        return { accepted: false, code: parsed.error };
       }
 
-      if (
-        type === ChatLobbyType.Draft &&
-        !(await this.canSendDraftMessage(id, player))
-      ) {
-        return;
-      }
+      text = parsed.text;
+    }
 
-      // Room membership lives in redis for a day, so leaving the tournament -
-      // withdrawing from the free agent pool, or being dropped from a roster -
-      // has to be re-checked here rather than only at join time.
-      if (
-        type === ChatLobbyType.Tournament &&
-        !(await this.canAccessLobby(type, id, player))
-      ) {
-        return;
-      }
+    if (skipCheck === false && !(await this.canPostIn(type, id, player))) {
+      return { accepted: false, code: ChatErrorCode.NotAllowed };
     }
 
     const name = await this.redis.get(
       HasuraService.PLAYER_NAME_CACHE_KEY(player.steam_id),
     );
 
-    const role: e_player_roles_enum = (await this.redis.get(
+    const role = await this.redis.get(
       HasuraService.PLAYER_ROLE_CACHE_KEY(player.steam_id),
-    )) as unknown as e_player_roles_enum;
+    );
 
     const timestamp = new Date();
-    const message = {
+    const message: ChatMessage = {
       // Both the history snapshot sent on join and the live broadcast carry the
       // message, so clients need something stable to recognize it by.
       id: randomUUID(),
-      message: _message,
+      message: text,
       timestamp: timestamp.toISOString(),
+      source,
       from: {
-        role: name ? JSON.parse(role) : player.role,
-        name: name ? JSON.parse(name) : player.name,
-        steam_id: player.steam_id,
+        role: ChatService.cachedOr<e_player_roles_enum>(role, player.role),
+        name: ChatService.cachedOr(name, player.name),
+        steam_id: String(player.steam_id),
         avatar_url: player.avatar_url,
         profile_url: player.profile_url,
       },
@@ -601,12 +628,47 @@ export class ChatService {
       id,
       player,
       message.from.name,
-      _message,
-    ).catch(
-      (error) => {
-        this.logger.warn(`unable to notify ${type}:${id} of a message`, error);
-      },
-    );
+      text,
+    ).catch((error) => {
+      this.logger.warn(`unable to notify ${type}:${id} of a message`, error);
+    });
+
+    return { accepted: true };
+  }
+
+  // Being present in the room is the baseline. That presence lives in redis
+  // for a day, so the rooms whose membership can lapse in the meantime are
+  // re-checked against where it is actually decided: leaving a tournament
+  // (withdrawing from the free agent pool, being dropped from a roster), and
+  // an unfriend, which has to end a conversation that is still open.
+  private async canPostIn(
+    type: ChatLobbyType,
+    id: string,
+    user: User,
+  ): Promise<boolean> {
+    if (!(await this.getUserData(type, id, user.steam_id))) {
+      return false;
+    }
+
+    switch (type) {
+      case ChatLobbyType.Draft:
+        return await this.canSendDraftMessage(id, user);
+      case ChatLobbyType.Tournament:
+      case ChatLobbyType.Direct:
+        return await this.canAccessLobby(type, id, user);
+      default:
+        return true;
+    }
+  }
+
+  // The name and role caches are separate keys with separate lifetimes, so
+  // either can be missing while the other is not.
+  private static cachedOr<T>(cached: string | null, fallback: T): T {
+    if (cached === null) {
+      return fallback;
+    }
+
+    return (JSON.parse(cached) as T) ?? fallback;
   }
 
   // Notifies the whole roster and lets the delivery gate decide who actually
@@ -1198,18 +1260,22 @@ export class ChatService {
       [roomId],
     );
 
-    return rows.reverse().map((row) => ({
-      id: row.id,
-      message: row.message,
-      timestamp: new Date(row.created_at).toISOString(),
-      from: {
-        role: row.role,
-        name: row.name,
-        steam_id: row.steam_id,
-        avatar_url: row.avatar_url,
-        profile_url: row.profile_url,
-      },
-    }));
+    return rows.reverse().map(
+      (row): ChatMessage => ({
+        id: row.id,
+        message: row.message,
+        timestamp: new Date(row.created_at).toISOString(),
+        // Nothing relays from the game into a DM.
+        source: "web",
+        from: {
+          role: row.role,
+          name: row.name,
+          steam_id: row.steam_id,
+          avatar_url: row.avatar_url,
+          profile_url: row.profile_url,
+        },
+      }),
+    );
   }
 
   // Server-side read state, so unread counts survive a reload instead of
@@ -1429,6 +1495,21 @@ export class ChatService {
       .trim();
   }
 
+  // Cut on code points rather than code units, so an emoji at the boundary is
+  // dropped whole instead of leaving half a surrogate pair to be mangled.
+  private static clampForGame(message: string) {
+    const characters = Array.from(message);
+
+    if (characters.length <= ChatService.RCON_MESSAGE_MAX_LENGTH) {
+      return message;
+    }
+
+    return `${characters
+      .slice(0, ChatService.RCON_MESSAGE_MAX_LENGTH - 1)
+      .join("")
+      .trimEnd()}…`;
+  }
+
   public async sendChatToServer(matchId: string, message: string) {
     try {
       const { matches_by_pk } = await this.hasuraService.query({
@@ -1465,7 +1546,7 @@ export class ChatService {
           : "sw_web_chat";
 
       return await rcon.send(
-        `${command} "${ChatService.oneRconArgument(message)}"`,
+        `${command} "${ChatService.clampForGame(ChatService.oneRconArgument(message))}"`,
       );
     } catch (error) {
       this.logger.warn(

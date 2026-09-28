@@ -1,6 +1,8 @@
 import { ChatService } from "./chat.service";
+import { ChatErrorCode } from "./enums/ChatErrorCode";
 import { ChatLobbyType } from "./enums/ChatLobbyTypes";
 import { directRoomId } from "./utilities/directRoomId";
+import { HasuraService } from "../hasura/hasura.service";
 
 const ME = "76561198000000001";
 const FRIEND = "76561198000000002";
@@ -215,6 +217,10 @@ describe("ChatService direct messages", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // clearAllMocks keeps implementations, so a test that seats someone in a
+    // room would otherwise leave them seated for every test after it.
+    redis.hget.mockResolvedValue(null);
+    redis.get.mockResolvedValue(null);
     acceptedFriendships = [[ME, FRIEND]];
     myMatches = ["m-1"];
     tournament = {
@@ -425,6 +431,319 @@ describe("ChatService direct messages", () => {
       expect(await relayed('x" ; quit ; say "')).toBe(
         'css_web_chat "x ; quit ; say"',
       );
+    });
+
+    const argument = (command: string) =>
+      command.slice('css_web_chat "'.length, -1);
+
+    it("relays a line at the limit untouched", async () => {
+      const line = "a".repeat(ChatService.RCON_MESSAGE_MAX_LENGTH);
+
+      expect(argument(await relayed(line))).toBe(line);
+    });
+
+    it("cuts a longer line to the limit, ellipsis included", async () => {
+      const relayedLine = argument(
+        await relayed("a".repeat(ChatService.MAX_MESSAGE_LENGTH)),
+      );
+
+      expect(Array.from(relayedLine)).toHaveLength(
+        ChatService.RCON_MESSAGE_MAX_LENGTH,
+      );
+      expect(relayedLine.endsWith("a…")).toBe(true);
+    });
+
+    it("never splits a character in two", async () => {
+      const relayedLine = argument(await relayed("😀".repeat(300)));
+
+      expect(Array.from(relayedLine)).toHaveLength(
+        ChatService.RCON_MESSAGE_MAX_LENGTH,
+      );
+      expect(relayedLine).toBe(
+        `${"😀".repeat(ChatService.RCON_MESSAGE_MAX_LENGTH - 1)}…`,
+      );
+    });
+  });
+
+  describe("message text", () => {
+    it.each([
+      ["a number", 42],
+      ["null", null],
+      ["undefined", undefined],
+      ["an object", { message: "hi" }],
+      ["an array", ["hi"]],
+      ["empty", ""],
+      ["only whitespace", " \n\t "],
+    ])("refuses %s as invalid", (_, raw) => {
+      expect(ChatService.messageText(raw)).toEqual({
+        error: ChatErrorCode.Invalid,
+      });
+    });
+
+    it("trims what it accepts", () => {
+      expect(ChatService.messageText("  gg wp \n")).toEqual({
+        text: "gg wp",
+      });
+    });
+
+    it("accepts exactly the limit and refuses one more", () => {
+      const limit = "a".repeat(ChatService.MAX_MESSAGE_LENGTH);
+
+      expect(ChatService.messageText(limit)).toEqual({ text: limit });
+      expect(ChatService.messageText(`${limit}a`)).toEqual({
+        error: ChatErrorCode.TooLong,
+      });
+    });
+
+    it("measures after trimming", () => {
+      const limit = "a".repeat(ChatService.MAX_MESSAGE_LENGTH);
+
+      expect(ChatService.messageText(`   ${limit}   `)).toEqual({
+        text: limit,
+      });
+    });
+
+    it("counts UTF-16 code units, as the browser does", () => {
+      const half = ChatService.MAX_MESSAGE_LENGTH / 2;
+
+      expect(ChatService.messageText("😀".repeat(half))).toEqual({
+        text: "😀".repeat(half),
+      });
+      expect(ChatService.messageText("😀".repeat(half + 1))).toEqual({
+        error: ChatErrorCode.TooLong,
+      });
+    });
+  });
+
+  describe("sending", () => {
+    const player = (overrides: Record<string, unknown> = {}) =>
+      ({
+        steam_id: ME,
+        name: "Someone",
+        role: "user",
+        avatar_url: "avatar",
+        profile_url: "profile",
+        ...overrides,
+      }) as any;
+
+    const seatIn = (steamId: string) =>
+      redis.hget.mockResolvedValue(
+        JSON.stringify({ user: { steam_id: steamId } }),
+      );
+
+    const stored = (key: string) =>
+      redis.hset.mock.calls
+        .filter(([hash]) => hash === key)
+        .map(([, , value]) => JSON.parse(value));
+
+    it("stamps a website message with its source and a string steam id", async () => {
+      seatIn(ME);
+
+      await expect(
+        service.sendMessageToChat(
+          ChatLobbyType.Match,
+          "m-1",
+          player(),
+          "hello",
+        ),
+      ).resolves.toEqual({ accepted: true });
+
+      const [message] = stored("chat_match_m-1");
+
+      expect(message).toMatchObject({
+        message: "hello",
+        source: "web",
+        from: { steam_id: ME, name: "Someone", role: "user" },
+      });
+      expect(typeof message.from.steam_id).toBe("string");
+    });
+
+    it("stamps a line from the game, and stores its steam id as a string", async () => {
+      await service.sendMessageToChat(
+        ChatLobbyType.Match,
+        "m-1",
+        player({ steam_id: BigInt(ME) }),
+        "from the server",
+        true,
+        "game",
+      );
+
+      const [message] = stored("chat_match_m-1");
+
+      expect(message.source).toBe("game");
+      expect(message.from.steam_id).toBe(ME);
+    });
+
+    it("refuses a website message over the limit without storing it", async () => {
+      seatIn(ME);
+
+      await expect(
+        service.sendMessageToChat(
+          ChatLobbyType.Match,
+          "m-1",
+          player(),
+          "a".repeat(ChatService.MAX_MESSAGE_LENGTH + 1),
+        ),
+      ).resolves.toEqual({ accepted: false, code: ChatErrorCode.TooLong });
+
+      expect(redis.hset).not.toHaveBeenCalled();
+      expect(redis.publish).not.toHaveBeenCalled();
+    });
+
+    it("does not hold a line from the game to the website limit", async () => {
+      const line = "g".repeat(ChatService.MAX_MESSAGE_LENGTH + 1);
+
+      await expect(
+        service.sendMessageToChat(
+          ChatLobbyType.Match,
+          "m-1",
+          player(),
+          line,
+          true,
+          "game",
+        ),
+      ).resolves.toEqual({ accepted: true });
+
+      expect(stored("chat_match_m-1").at(0)?.message).toBe(line);
+    });
+
+    it("refuses someone who is not in the room", async () => {
+      await expect(
+        service.sendMessageToChat(
+          ChatLobbyType.Match,
+          "m-2",
+          player(),
+          "let me in",
+        ),
+      ).resolves.toEqual({ accepted: false, code: ChatErrorCode.NotAllowed });
+
+      expect(redis.hset).not.toHaveBeenCalled();
+    });
+
+    describe("direct messages", () => {
+      const room = directRoomId(ME, FRIEND);
+
+      const dmInserts = () =>
+        queries.filter(({ sql }) =>
+          sql.includes("INSERT INTO public.direct_messages"),
+        );
+
+      it("delivers to a friend", async () => {
+        seatIn(ME);
+
+        await expect(
+          service.sendMessageToChat(ChatLobbyType.Direct, room, player(), "hi"),
+        ).resolves.toEqual({ accepted: true });
+
+        expect(dmInserts().at(0)?.bindings.slice(1)).toEqual([room, ME, "hi"]);
+
+        const incoming = redis.publish.mock.calls
+          .map(([, payload]) => JSON.parse(payload))
+          .find(({ event }) => event === "direct:incoming");
+
+        expect(incoming.steamId).toBe(FRIEND);
+        expect(incoming.data.message.source).toBe("web");
+      });
+
+      it("stops a conversation the moment the friendship ends", async () => {
+        // Still seated in the room -- presence outlives the unfriend by up to
+        // a day, so it cannot be what decides this.
+        seatIn(ME);
+        acceptedFriendships = [];
+
+        await expect(
+          service.sendMessageToChat(
+            ChatLobbyType.Direct,
+            room,
+            player(),
+            "still there?",
+          ),
+        ).resolves.toEqual({
+          accepted: false,
+          code: ChatErrorCode.NotAllowed,
+        });
+
+        expect(dmInserts()).toHaveLength(0);
+        expect(redis.publish).not.toHaveBeenCalled();
+      });
+
+      it("hands back history stamped as website messages", async () => {
+        postgres.query.mockResolvedValueOnce([
+          {
+            id: "dm-1",
+            message: "old",
+            created_at: new Date("2026-01-01T00:00:00Z"),
+            steam_id: ME,
+            name: "Someone",
+            role: "user",
+            avatar_url: null,
+            profile_url: null,
+          },
+        ]);
+
+        const [message] = await service["getDirectMessages"](room);
+
+        expect(message).toMatchObject({
+          id: "dm-1",
+          source: "web",
+          from: { steam_id: ME },
+        });
+      });
+    });
+
+    describe("who it is from", () => {
+      const cache = (entries: Record<string, unknown>) =>
+        redis.get.mockImplementation(async (key: string) =>
+          key in entries ? JSON.stringify(entries[key]) : null,
+        );
+
+      const from = async () => {
+        await service.sendMessageToChat(
+          ChatLobbyType.Match,
+          "m-1",
+          player({ name: "Fresh Name", role: "user" }),
+          "hi",
+          true,
+        );
+
+        return stored("chat_match_m-1").at(0).from;
+      };
+
+      it("keeps the player's own role when only the name is cached", async () => {
+        cache({ [HasuraService.PLAYER_NAME_CACHE_KEY(ME)]: "Cached Name" });
+
+        expect(await from()).toMatchObject({
+          name: "Cached Name",
+          role: "user",
+        });
+      });
+
+      it("keeps the player's own name when only the role is cached", async () => {
+        cache({ [HasuraService.PLAYER_ROLE_CACHE_KEY(ME)]: "administrator" });
+
+        expect(await from()).toMatchObject({
+          name: "Fresh Name",
+          role: "administrator",
+        });
+      });
+
+      it("prefers both cached values when both are there", async () => {
+        cache({
+          [HasuraService.PLAYER_NAME_CACHE_KEY(ME)]: "Cached Name",
+          [HasuraService.PLAYER_ROLE_CACHE_KEY(ME)]: "match_organizer",
+        });
+
+        expect(await from()).toMatchObject({
+          name: "Cached Name",
+          role: "match_organizer",
+        });
+      });
+
+      it("falls back when the cache holds null", async () => {
+        cache({ [HasuraService.PLAYER_ROLE_CACHE_KEY(ME)]: null });
+
+        expect((await from()).role).toBe("user");
+      });
     });
   });
 
