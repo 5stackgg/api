@@ -479,6 +479,8 @@ BEGIN
   -- Per-match rank history: Wingman (6), Competitive (7/12), Premier (11).
   -- previous_rank is the player's prior rank of the same type (and map, for
   -- the per-map skill groups) so the per-match delta is exact.
+  -- Rush has no Valve skill group, so any rank on its scoreboard belongs to
+  -- another ladder and must not land on this match.
   WITH ranked_players AS (
     SELECT
       (elem->>'steam_id')::bigint              AS steam_id,
@@ -488,6 +490,7 @@ BEGIN
       CASE WHEN (elem->>'rank_type')::int = 11 THEN NULL ELSE v_map_id END AS map_id
     FROM jsonb_array_elements(COALESCE(p_parsed->'players', '[]'::jsonb)) elem
     WHERE (elem->>'rank_type')::int IN (6, 7, 11, 12)
+      AND v_type IS DISTINCT FROM 'Rush'
       AND COALESCE((elem->>'rank')::int, 0) > 0
       AND elem->>'steam_id' IS NOT NULL
       AND EXISTS (
@@ -536,6 +539,7 @@ BEGIN
              (elem->>'rank')::int        AS rank
       FROM jsonb_array_elements(COALESCE(p_parsed->'players', '[]'::jsonb)) elem
       WHERE (elem->>'rank_type')::int = 11
+        AND v_type IS DISTINCT FROM 'Rush'
         AND COALESCE((elem->>'rank')::int, 0) > 0
         AND elem->>'steam_id' IS NOT NULL
     ) pp

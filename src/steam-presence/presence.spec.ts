@@ -91,6 +91,19 @@ describe("parseCs2Presence", () => {
     expect(state.map).toBe("de_dust2");
   });
 
+  it("detects an active rush match", () => {
+    const state = parseCs2Presence({
+      gameid: "730",
+      richPresence: {
+        "game:state": "game",
+        "game:mode": "rush",
+        "game:map": "mg_rush_001",
+      },
+    });
+    expect(state.inMatch).toBe(true);
+    expect(state.map).toBe("rush_001");
+  });
+
   it("treats casual / deathmatch as in-game but not a match we import", () => {
     const casual = parseCs2Presence({
       gameid: "730",

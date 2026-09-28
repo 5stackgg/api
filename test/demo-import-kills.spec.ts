@@ -263,6 +263,100 @@ describe("persist_imported_demo kill ingestion", () => {
     expect(await killRows(ctx.mapId)).toHaveLength(0);
   });
 
+  describe("Valve ranks on a Rush import", () => {
+    const importWithRanks = async (type: string) => {
+      const { matchId } = await fx.bareMatch();
+      const optionsId = await fx.matchOptions({ type, mr: 8 });
+      await postgres.query(
+        "UPDATE matches SET match_options_id = $1 WHERE id = $2",
+        [optionsId, matchId],
+      );
+      // A single-map seed pool (Rush) re-materializes the match's maps.
+      const [map] = await postgres.query<Array<{ id: string }>>(
+        `SELECT id FROM match_maps WHERE match_id = $1 ORDER BY "order" LIMIT 1`,
+        [matchId],
+      );
+      const ctx = { matchId, mapId: map.id };
+      const [player] = await fx.players(1);
+      await importDemo(await demoFor(ctx), {
+        map_name: "rush_001",
+        tick_rate: 64,
+        total_ticks: 2000,
+        round_ticks: [{ round: 1, start_tick: 0, end_tick: 2000 }],
+        players: [
+          {
+            steam_id: player,
+            name: `p-${player}`,
+            rank: 15000,
+            rank_type: 11,
+            previous_rank: 14800,
+          },
+        ],
+        kills: [],
+      });
+
+      const history = await postgres.query<Array<{ rank: number }>>(
+        "SELECT rank FROM player_premier_rank_history WHERE match_id = $1",
+        [ctx.matchId],
+      );
+      const [row] = await postgres.query<
+        Array<{ premier_rank: number | null }>
+      >("SELECT premier_rank FROM players WHERE steam_id = $1", [player]);
+      return { history, premierRank: row.premier_rank };
+    };
+
+    // Rush has no skill group; the scoreboard's Premier rating is not this
+    // match's rank.
+    it("records no rank history and leaves premier_rank alone", async () => {
+      const { history, premierRank } = await importWithRanks("Rush");
+      expect(history).toHaveLength(0);
+      expect(premierRank).toBeNull();
+    });
+
+    it("still records Premier ranks on a non-Rush import", async () => {
+      const { history, premierRank } = await importWithRanks("Competitive");
+      expect(history.map((h) => h.rank)).toEqual([15000]);
+      expect(premierRank).toBe(15000);
+    });
+  });
+
+  // MatchImportService.insertMatchMap clears these before adding the demo's
+  // map; without that, every Rush import is rejected as one map too many.
+  it("materializes a Rush import's map on insert, leaving no room for another", async () => {
+    const optionsId = await fx.matchOptions({ type: "Rush" });
+    const [l1] = await postgres.query<Array<{ id: string }>>(
+      "INSERT INTO match_lineups DEFAULT VALUES RETURNING id",
+    );
+    const [l2] = await postgres.query<Array<{ id: string }>>(
+      "INSERT INTO match_lineups DEFAULT VALUES RETURNING id",
+    );
+    const [match] = await postgres.query<Array<{ id: string }>>(
+      `INSERT INTO matches (source, status, lineup_1_id, lineup_2_id, match_options_id, started_at, ended_at)
+       VALUES ('valve', 'Finished', $1, $2, $3, now(), now()) RETURNING id`,
+      [l1.id, l2.id, optionsId],
+    );
+    const insertMap = () =>
+      postgres.query(
+        `INSERT INTO match_maps (match_id, map_id, "order", status)
+         SELECT $1, id, 0, 'Finished' FROM maps WHERE name = 'rush_001' AND type = 'Rush'`,
+        [match.id],
+      );
+
+    await expect(insertMap()).rejects.toThrow(
+      "Match already has the maximum number of picked maps",
+    );
+
+    await postgres.query("DELETE FROM match_maps WHERE match_id = $1", [
+      match.id,
+    ]);
+    await insertMap();
+    const maps = await postgres.query<Array<{ order: number }>>(
+      `SELECT "order" FROM match_maps WHERE match_id = $1`,
+      [match.id],
+    );
+    expect(maps.map((m) => m.order)).toEqual([0]);
+  });
+
   it("never swaps an imported Rush match's sides", async () => {
     const sides = await postgres.query<
       Array<{ competitive: string; rush: string }>
