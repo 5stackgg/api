@@ -53,6 +53,9 @@ describe("ChatService direct messages", () => {
 
   // Which matches this player belongs to, by id.
   let myMatches: string[];
+  // Matches this player can see but has no part in. Hasura answers
+  // is_organizer with NULL, not false, for a match nobody organizes.
+  let otherMatches: string[];
   // The one tournament the fake knows about, and who is attached to it.
   let tournament: {
     organizers: string[];
@@ -167,7 +170,19 @@ describe("ChatService direct messages", () => {
       }
 
       if (query.matches_by_pk) {
-        return myMatches.includes(query.matches_by_pk.__args.id)
+        const matchId = query.matches_by_pk.__args.id;
+
+        if (otherMatches.includes(matchId)) {
+          return {
+            matches_by_pk: {
+              is_coach: false,
+              is_organizer: null,
+              is_in_lineup: false,
+            },
+          };
+        }
+
+        return myMatches.includes(matchId)
           ? {
               matches_by_pk: {
                 is_coach: false,
@@ -223,6 +238,7 @@ describe("ChatService direct messages", () => {
     redis.get.mockResolvedValue(null);
     acceptedFriendships = [[ME, FRIEND]];
     myMatches = ["m-1"];
+    otherMatches = ["mm-1"];
     tournament = {
       organizers: [STRANGER],
       teamOwners: [],
@@ -250,6 +266,20 @@ describe("ChatService direct messages", () => {
   const joined = () => redis.eval.mock.calls.length > 0;
 
   describe("joining", () => {
+    it("keeps a stranger out of a match nobody organizes", async () => {
+      // Every matchmaking match: is_organizer comes back NULL, and a strict
+      // `=== false` once read that as not-a-refusal.
+      await service.joinMatchLobby(client(ME), ChatLobbyType.Match, "mm-1");
+
+      expect(joined()).toBe(false);
+    });
+
+    it("lets a lineup player into their match", async () => {
+      await service.joinMatchLobby(client(ME), ChatLobbyType.Match, "m-1");
+
+      expect(joined()).toBe(true);
+    });
+
     it("lets accepted friends into their conversation", async () => {
       await service.joinMatchLobby(
         client(ME),
@@ -453,6 +483,19 @@ describe("ChatService direct messages", () => {
       expect(relayedLine.endsWith("a…")).toBe(true);
     });
 
+    it("never cuts a joined emoji or a flag apart", async () => {
+      const family = "👨‍👩‍👧";
+      const flag = "🇸🇪";
+
+      // 5 and 2 code points each, so neither lands exactly on the limit.
+      expect(argument(await relayed(family.repeat(100)))).toBe(
+        `${family.repeat(47)}…`,
+      );
+      expect(argument(await relayed(flag.repeat(200)))).toBe(
+        `${flag.repeat(119)}…`,
+      );
+    });
+
     it("never splits a character in two", async () => {
       const relayedLine = argument(await relayed("😀".repeat(300)));
 
@@ -546,7 +589,7 @@ describe("ChatService direct messages", () => {
           player(),
           "hello",
         ),
-      ).resolves.toEqual({ accepted: true });
+      ).resolves.toEqual({ accepted: true, messageId: expect.any(String) });
 
       const [message] = stored("chat_match_m-1");
 
@@ -602,9 +645,58 @@ describe("ChatService direct messages", () => {
           true,
           "game",
         ),
-      ).resolves.toEqual({ accepted: true });
+      ).resolves.toEqual({ accepted: true, messageId: expect.any(String) });
 
       expect(stored("chat_match_m-1").at(0)?.message).toBe(line);
+    });
+
+    it("answers with the id the message was stored under", async () => {
+      seatIn(ME);
+
+      const result = await service.sendMessageToChat(
+        ChatLobbyType.Match,
+        "m-1",
+        player(),
+        "hello",
+      );
+
+      expect(result).toEqual({
+        accepted: true,
+        messageId: stored("chat_match_m-1").at(0).id,
+      });
+    });
+
+    it("refuses a player no longer on the match, though still seated", async () => {
+      // Presence outlives a lineup change: a player swapped out mid-match
+      // keeps the page, and the room, open.
+      seatIn(ME);
+      myMatches = [];
+
+      await expect(
+        service.sendMessageToChat(
+          ChatLobbyType.Match,
+          "m-1",
+          player(),
+          "still here",
+        ),
+      ).resolves.toEqual({ accepted: false, code: ChatErrorCode.NotAllowed });
+
+      expect(redis.hset).not.toHaveBeenCalled();
+    });
+
+    it("refuses a stranger seated in a match nobody organizes", async () => {
+      seatIn(ME);
+
+      await expect(
+        service.sendMessageToChat(
+          ChatLobbyType.Match,
+          "mm-1",
+          player(),
+          "hello from outside",
+        ),
+      ).resolves.toEqual({ accepted: false, code: ChatErrorCode.NotAllowed });
+
+      expect(redis.hset).not.toHaveBeenCalled();
     });
 
     it("refuses someone who is not in the room", async () => {
@@ -633,7 +725,7 @@ describe("ChatService direct messages", () => {
 
         await expect(
           service.sendMessageToChat(ChatLobbyType.Direct, room, player(), "hi"),
-        ).resolves.toEqual({ accepted: true });
+        ).resolves.toEqual({ accepted: true, messageId: expect.any(String) });
 
         expect(dmInserts().at(0)?.bindings.slice(1)).toEqual([room, ME, "hi"]);
 

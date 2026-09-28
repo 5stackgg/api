@@ -15,7 +15,9 @@ describe("ChatGateway lobby:chat", () => {
 
   beforeEach(() => {
     chat = {
-      sendMessageToChat: jest.fn().mockResolvedValue({ accepted: true }),
+      sendMessageToChat: jest
+        .fn()
+        .mockResolvedValue({ accepted: true, messageId: "msg-1" }),
       sendChatToServer: jest.fn(),
     };
     gateway = new ChatGateway(chat as any);
@@ -258,7 +260,7 @@ describe("ChatGateway lobby:chat", () => {
       );
 
       expect(sent(socket)).toEqual([
-        { event: "chat:ack", data: { requestId: "r-3" } },
+        { event: "chat:ack", data: { requestId: "r-3", messageId: "msg-1" } },
       ]);
     });
 

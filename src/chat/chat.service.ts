@@ -207,10 +207,13 @@ export class ChatService {
           return false;
         }
 
+        // Truthiness, not `=== false`: is_match_organizer is NULL rather than
+        // false for a match with no organizer (every matchmaking match), and a
+        // strict comparison let anyone signed in into those rooms.
         if (
-          matches_by_pk.is_coach === false &&
-          matches_by_pk.is_in_lineup === false &&
-          matches_by_pk.is_organizer === false
+          !matches_by_pk.is_coach &&
+          !matches_by_pk.is_in_lineup &&
+          !matches_by_pk.is_organizer
         ) {
           return false;
         }
@@ -633,14 +636,15 @@ export class ChatService {
       this.logger.warn(`unable to notify ${type}:${id} of a message`, error);
     });
 
-    return { accepted: true };
+    return { accepted: true, messageId: message.id };
   }
 
-  // Being present in the room is the baseline. That presence lives in redis
-  // for a day, so the rooms whose membership can lapse in the meantime are
-  // re-checked against where it is actually decided: leaving a tournament
-  // (withdrawing from the free agent pool, being dropped from a roster), and
-  // an unfriend, which has to end a conversation that is still open.
+  // Presence in the room only says someone joined it once: it lives in redis
+  // for a day, is refreshed by anyone else joining, and the game server seats
+  // whoever connects. Membership lapses underneath it -- a player swapped out
+  // of a live match, a free agent who withdrew, an unfriend -- so every send is
+  // held to the same rule as joining. Draft has its own, stricter once the
+  // match has been drafted.
   private async canPostIn(
     type: ChatLobbyType,
     id: string,
@@ -650,15 +654,11 @@ export class ChatService {
       return false;
     }
 
-    switch (type) {
-      case ChatLobbyType.Draft:
-        return await this.canSendDraftMessage(id, user);
-      case ChatLobbyType.Tournament:
-      case ChatLobbyType.Direct:
-        return await this.canAccessLobby(type, id, user);
-      default:
-        return true;
+    if (type === ChatLobbyType.Draft) {
+      return await this.canSendDraftMessage(id, user);
     }
+
+    return await this.canAccessLobby(type, id, user);
   }
 
   // The name and role caches are separate keys with separate lifetimes, so
@@ -1495,19 +1495,35 @@ export class ChatService {
       .trim();
   }
 
-  // Cut on code points rather than code units, so an emoji at the boundary is
-  // dropped whole instead of leaving half a surrogate pair to be mangled.
-  private static clampForGame(message: string) {
-    const characters = Array.from(message);
+  private static readonly GRAPHEMES = new Intl.Segmenter(undefined, {
+    granularity: "grapheme",
+  });
 
-    if (characters.length <= ChatService.RCON_MESSAGE_MAX_LENGTH) {
+  // Counted in code points, which bounds the bytes an rcon packet has to carry
+  // whatever the script. Cut only between graphemes, so a flag or a joined
+  // emoji at the boundary is dropped whole rather than left in pieces.
+  private static clampForGame(message: string) {
+    const limit = ChatService.RCON_MESSAGE_MAX_LENGTH;
+
+    if (Array.from(message).length <= limit) {
       return message;
     }
 
-    return `${characters
-      .slice(0, ChatService.RCON_MESSAGE_MAX_LENGTH - 1)
-      .join("")
-      .trimEnd()}…`;
+    let clamped = "";
+    let length = 0;
+
+    for (const { segment } of ChatService.GRAPHEMES.segment(message)) {
+      const size = Array.from(segment).length;
+
+      if (length + size > limit - 1) {
+        break;
+      }
+
+      clamped += segment;
+      length += size;
+    }
+
+    return `${clamped.trimEnd()}…`;
   }
 
   public async sendChatToServer(matchId: string, message: string) {

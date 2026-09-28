@@ -135,7 +135,7 @@ export class ChatGateway {
     }
 
     if (requestId) {
-      this.sendAck(client, requestId);
+      this.sendAck(client, requestId, result.messageId);
     }
 
     if (data.type !== ChatLobbyType.Match) {
@@ -174,11 +174,15 @@ export class ChatGateway {
     );
   }
 
-  private sendAck(client: FiveStackWebSocketClient, requestId: string) {
+  private sendAck(
+    client: FiveStackWebSocketClient,
+    requestId: string,
+    messageId: string,
+  ) {
     client.send(
       JSON.stringify({
         event: "chat:ack",
-        data: { requestId },
+        data: { requestId, messageId },
       }),
     );
   }
