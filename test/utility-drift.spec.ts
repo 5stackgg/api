@@ -49,6 +49,7 @@ describe("utility drift scans (SQL-driven)", () => {
     verdicts: (
       request: ParsedDriftRequest,
     ) => Array<ParsedDriftResult> | null = () => [],
+    caveats?: Array<string>,
   ) {
     return {
       drift: jest.fn(async (request: ParsedDriftRequest) => {
@@ -64,7 +65,7 @@ describe("utility drift scans (SQL-driven)", () => {
         }
 
         return {
-          data: { results },
+          data: { results, caveats },
           status: 200,
           error: null as string | null,
         };
@@ -316,6 +317,35 @@ describe("utility drift scans (SQL-driven)", () => {
       expect(types).toContain("HE");
       expect(types).toContain("Smoke");
       expect(types).not.toContain("HighExplosive");
+    });
+
+    // The caveats are the only thing standing between a screen of distances
+    // and someone reading them as landing spots, so they outlive the request.
+    it("keeps the parser's caveats with the scan", async () => {
+      const author = await fx.player();
+      await insertLineup(author);
+
+      const caveats = [
+        "comparison points are simulator output, not real landings",
+        "only one revision publishes grenade clips (from: 0 triangles, to: 950)",
+      ];
+      const drift = service(
+        parserStub(
+          () => [{ index: 0, verdict: "unchanged" as const }],
+          caveats,
+        ),
+      );
+
+      const scan = await drift.startScan(admin(author), {
+        map_name: "de_mirage",
+      });
+      await drift.runScan(scan.scan_id);
+
+      const [row] = await postgres.query<Array<{ caveats: Array<string> }>>(
+        `SELECT caveats FROM utility_drift_scans WHERE id = $1::uuid`,
+        [scan.scan_id],
+      );
+      expect(row.caveats).toEqual(caveats);
     });
 
     it("carries the mesh revisions the scan was started with", async () => {

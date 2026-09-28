@@ -76,4 +76,8 @@ export enum SystemSettingName {
   // is never exposed to any role; see public_settings.yaml.
   WebPushPublicKey = "web_push_public_key",
   WebPushPrivateKey = "web_push_private_key",
+  // Off until the map-assets worker is deployed: a build published before the
+  // CDN can serve it would point latest.json at files nothing can read. Gates
+  // the build a new CS2 version triggers, never the manual action.
+  MapAssetsAutoBuild = "map_assets_auto_build",
 }

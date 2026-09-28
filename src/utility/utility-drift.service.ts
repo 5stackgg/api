@@ -160,9 +160,19 @@ export class UtilityDriftService {
       await this.record(scan.id, batch, answer.data.results ?? []);
       scanned += batch.length;
 
+      // The caveats are the parser's warning label for every number in the
+      // scan (and name a revision pair without grenade clips), so they travel
+      // with the scan rather than being dropped at the boundary.
       await this.postgres.query(
-        `UPDATE public.utility_drift_scans SET scanned = $2::int WHERE id = $1::uuid`,
-        [scan.id, scanned],
+        `UPDATE public.utility_drift_scans
+            SET scanned = $2::int,
+                caveats = COALESCE($3::jsonb, caveats)
+          WHERE id = $1::uuid`,
+        [
+          scan.id,
+          scanned,
+          answer.data.caveats ? JSON.stringify(answer.data.caveats) : null,
+        ],
       );
     }
 

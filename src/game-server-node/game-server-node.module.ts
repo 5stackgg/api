@@ -33,6 +33,7 @@ import { PluginRuntimeModule } from "src/plugin-runtime/plugin-runtime.module";
 import { GamePluginsModule } from "src/game-plugins/game-plugins.module";
 import { BakeShaders } from "./jobs/BakeShaders";
 import { ValidateGamedata } from "./jobs/ValidateGamedata";
+import { MapAssetsModule } from "src/map-assets/map-assets.module";
 
 @Module({
   providers: [
@@ -59,6 +60,7 @@ import { ValidateGamedata } from "./jobs/ValidateGamedata";
     GameStreamerModule,
     PluginRuntimeModule,
     GamePluginsModule,
+    MapAssetsModule,
     BullModule.registerQueue(
       {
         name: GameServerQueues.GameUpdate,

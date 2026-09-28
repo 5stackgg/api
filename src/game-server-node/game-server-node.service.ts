@@ -24,6 +24,7 @@ import { GameServerQueues } from "./enums/GameServerQueues";
 import { NotificationsService } from "src/notifications/notifications.service";
 import { PluginRuntimeService } from "src/plugin-runtime/plugin-runtime.service";
 import { PluginRuntime } from "src/configs/types/GameServersConfig";
+import { MapAssetsService } from "src/map-assets/map-assets.service";
 
 export type GamedataValidationRuntime = PluginRuntime;
 
@@ -73,6 +74,7 @@ export class GameServerNodeService {
     protected readonly loggingService: LoggingService,
     protected readonly notifications: NotificationsService,
     protected readonly pluginRuntimeService: PluginRuntimeService,
+    protected readonly mapAssets: MapAssetsService,
     @InjectQueue(GameServerQueues.ValidateGamedata)
     private readonly validateGamedataQueue: Queue,
   ) {
@@ -347,7 +349,18 @@ export class GameServerNodeService {
       csBulid &&
       game_server_nodes_by_pk.build_id !== csBulid
     ) {
-      await this.queueGamedataValidation(node, csBulid);
+      // Map assets and the gamedata validator both read this node's install,
+      // so when a validation is queued the map-assets build is chained after it
+      // (see ValidateGamedata) rather than run beside it on the same node.
+      const validating = await this.queueGamedataValidation(node, csBulid);
+      if (!validating) {
+        await this.mapAssets.queueBuild(node, csBulid).catch((error) => {
+          this.logger.warn(
+            `[map-assets] unable to queue build ${csBulid}`,
+            error,
+          );
+        });
+      }
     }
 
     if (transitionedFromOffline && game_server_nodes_by_pk.build_id) {
@@ -942,14 +955,14 @@ export class GameServerNodeService {
   private async queueGamedataValidation(
     gameServerNodeId: string,
     buildId: number,
-  ) {
+  ): Promise<boolean> {
     if (process.env.WEB_DOMAIN !== "5stack.gg") {
-      return;
+      return false;
     }
 
     const currentBuild = await this.getCurrentBuild();
     if (buildId !== currentBuild) {
-      return;
+      return false;
     }
 
     const { gamedata_signature_validations } = await this.hasura.query({
@@ -966,7 +979,7 @@ export class GameServerNodeService {
     });
 
     if (gamedata_signature_validations.length > 0) {
-      return;
+      return false;
     }
 
     await this.validateGamedataQueue.add(
@@ -974,6 +987,7 @@ export class GameServerNodeService {
       {
         gameServerNodeId,
         buildId,
+        buildMapAssets: true,
       },
       {
         jobId: `validate.${buildId}.auto`,
@@ -982,6 +996,8 @@ export class GameServerNodeService {
         removeOnFail: true,
       },
     );
+
+    return true;
   }
 
   public async validateGamedata(

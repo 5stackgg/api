@@ -31,6 +31,7 @@ select_permissions:
         - broken
         - unsimulatable
         - max_distance
+        - caveats
         - requested_by_steam_id
         - started_at
         - finished_at
