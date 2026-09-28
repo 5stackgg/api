@@ -14553,6 +14553,10 @@ export interface matches {
     /** An aggregate relationship */
     elo_changes_aggregate: v_player_elo_aggregate
     ended_at: (Scalars['timestamptz'] | null)
+    /** An array relationship */
+    event_links: event_match_links[]
+    /** An aggregate relationship */
+    event_links_aggregate: event_match_links_aggregate
     external_id: (Scalars['String'] | null)
     id: Scalars['uuid']
     /** A computed field, executes function "match_invite_code" */
@@ -25796,6 +25800,8 @@ export interface players {
     losses_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman: (Scalars['Int'] | null)
     /** An array relationship */
@@ -25913,6 +25919,8 @@ export interface players {
     wins_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman: (Scalars['Int'] | null)
     __typename: 'players'
@@ -25956,6 +25964,8 @@ export interface players_avg_fields {
     losses_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman: (Scalars['Int'] | null)
     premier_rank: (Scalars['Float'] | null)
@@ -25969,6 +25979,8 @@ export interface players_avg_fields {
     wins_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman: (Scalars['Int'] | null)
     __typename: 'players_avg_fields'
@@ -26007,6 +26019,8 @@ export interface players_max_fields {
     losses_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman: (Scalars['Int'] | null)
     /** A computed field, executes function "get_player_matchmaking_cooldown" */
@@ -26030,6 +26044,8 @@ export interface players_max_fields {
     wins_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman: (Scalars['Int'] | null)
     __typename: 'players_max_fields'
@@ -26064,6 +26080,8 @@ export interface players_min_fields {
     losses_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman: (Scalars['Int'] | null)
     /** A computed field, executes function "get_player_matchmaking_cooldown" */
@@ -26087,6 +26105,8 @@ export interface players_min_fields {
     wins_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman: (Scalars['Int'] | null)
     __typename: 'players_min_fields'
@@ -26119,6 +26139,8 @@ export interface players_stddev_fields {
     losses_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman: (Scalars['Int'] | null)
     premier_rank: (Scalars['Float'] | null)
@@ -26132,6 +26154,8 @@ export interface players_stddev_fields {
     wins_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman: (Scalars['Int'] | null)
     __typename: 'players_stddev_fields'
@@ -26150,6 +26174,8 @@ export interface players_stddev_pop_fields {
     losses_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman: (Scalars['Int'] | null)
     premier_rank: (Scalars['Float'] | null)
@@ -26163,6 +26189,8 @@ export interface players_stddev_pop_fields {
     wins_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman: (Scalars['Int'] | null)
     __typename: 'players_stddev_pop_fields'
@@ -26181,6 +26209,8 @@ export interface players_stddev_samp_fields {
     losses_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman: (Scalars['Int'] | null)
     premier_rank: (Scalars['Float'] | null)
@@ -26194,6 +26224,8 @@ export interface players_stddev_samp_fields {
     wins_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman: (Scalars['Int'] | null)
     __typename: 'players_stddev_samp_fields'
@@ -26212,6 +26244,8 @@ export interface players_sum_fields {
     losses_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman: (Scalars['Int'] | null)
     premier_rank: (Scalars['Int'] | null)
@@ -26225,6 +26259,8 @@ export interface players_sum_fields {
     wins_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman: (Scalars['Int'] | null)
     __typename: 'players_sum_fields'
@@ -26247,6 +26283,8 @@ export interface players_var_pop_fields {
     losses_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman: (Scalars['Int'] | null)
     premier_rank: (Scalars['Float'] | null)
@@ -26260,6 +26298,8 @@ export interface players_var_pop_fields {
     wins_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman: (Scalars['Int'] | null)
     __typename: 'players_var_pop_fields'
@@ -26278,6 +26318,8 @@ export interface players_var_samp_fields {
     losses_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman: (Scalars['Int'] | null)
     premier_rank: (Scalars['Float'] | null)
@@ -26291,6 +26333,8 @@ export interface players_var_samp_fields {
     wins_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman: (Scalars['Int'] | null)
     __typename: 'players_var_samp_fields'
@@ -26309,6 +26353,8 @@ export interface players_variance_fields {
     losses_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman: (Scalars['Int'] | null)
     premier_rank: (Scalars['Float'] | null)
@@ -26322,6 +26368,8 @@ export interface players_variance_fields {
     wins_competitive: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel: (Scalars['Int'] | null)
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman: (Scalars['Int'] | null)
     __typename: 'players_variance_fields'
@@ -44364,6 +44412,7 @@ export interface v_team_ranks {
     avg_faceit_elo: (Scalars['Int'] | null)
     avg_faceit_level: (Scalars['float8'] | null)
     avg_premier: (Scalars['Int'] | null)
+    avg_rush_elo: (Scalars['Int'] | null)
     avg_wingman_elo: (Scalars['Int'] | null)
     max_elo: (Scalars['Int'] | null)
     min_elo: (Scalars['Int'] | null)
@@ -44407,6 +44456,7 @@ export interface v_team_ranks_avg_fields {
     avg_faceit_elo: (Scalars['Float'] | null)
     avg_faceit_level: (Scalars['Float'] | null)
     avg_premier: (Scalars['Float'] | null)
+    avg_rush_elo: (Scalars['Float'] | null)
     avg_wingman_elo: (Scalars['Float'] | null)
     max_elo: (Scalars['Float'] | null)
     min_elo: (Scalars['Float'] | null)
@@ -44422,6 +44472,7 @@ export interface v_team_ranks_max_fields {
     avg_faceit_elo: (Scalars['Int'] | null)
     avg_faceit_level: (Scalars['float8'] | null)
     avg_premier: (Scalars['Int'] | null)
+    avg_rush_elo: (Scalars['Int'] | null)
     avg_wingman_elo: (Scalars['Int'] | null)
     max_elo: (Scalars['Int'] | null)
     min_elo: (Scalars['Int'] | null)
@@ -44438,6 +44489,7 @@ export interface v_team_ranks_min_fields {
     avg_faceit_elo: (Scalars['Int'] | null)
     avg_faceit_level: (Scalars['float8'] | null)
     avg_premier: (Scalars['Int'] | null)
+    avg_rush_elo: (Scalars['Int'] | null)
     avg_wingman_elo: (Scalars['Int'] | null)
     max_elo: (Scalars['Int'] | null)
     min_elo: (Scalars['Int'] | null)
@@ -44448,7 +44500,7 @@ export interface v_team_ranks_min_fields {
 
 
 /** select columns of table "v_team_ranks" */
-export type v_team_ranks_select_column = 'avg_duel_elo' | 'avg_elo' | 'avg_faceit_elo' | 'avg_faceit_level' | 'avg_premier' | 'avg_wingman_elo' | 'max_elo' | 'min_elo' | 'roster_size' | 'team_id'
+export type v_team_ranks_select_column = 'avg_duel_elo' | 'avg_elo' | 'avg_faceit_elo' | 'avg_faceit_level' | 'avg_premier' | 'avg_rush_elo' | 'avg_wingman_elo' | 'max_elo' | 'min_elo' | 'roster_size' | 'team_id'
 
 
 /** aggregate stddev on columns */
@@ -44458,6 +44510,7 @@ export interface v_team_ranks_stddev_fields {
     avg_faceit_elo: (Scalars['Float'] | null)
     avg_faceit_level: (Scalars['Float'] | null)
     avg_premier: (Scalars['Float'] | null)
+    avg_rush_elo: (Scalars['Float'] | null)
     avg_wingman_elo: (Scalars['Float'] | null)
     max_elo: (Scalars['Float'] | null)
     min_elo: (Scalars['Float'] | null)
@@ -44473,6 +44526,7 @@ export interface v_team_ranks_stddev_pop_fields {
     avg_faceit_elo: (Scalars['Float'] | null)
     avg_faceit_level: (Scalars['Float'] | null)
     avg_premier: (Scalars['Float'] | null)
+    avg_rush_elo: (Scalars['Float'] | null)
     avg_wingman_elo: (Scalars['Float'] | null)
     max_elo: (Scalars['Float'] | null)
     min_elo: (Scalars['Float'] | null)
@@ -44488,6 +44542,7 @@ export interface v_team_ranks_stddev_samp_fields {
     avg_faceit_elo: (Scalars['Float'] | null)
     avg_faceit_level: (Scalars['Float'] | null)
     avg_premier: (Scalars['Float'] | null)
+    avg_rush_elo: (Scalars['Float'] | null)
     avg_wingman_elo: (Scalars['Float'] | null)
     max_elo: (Scalars['Float'] | null)
     min_elo: (Scalars['Float'] | null)
@@ -44503,6 +44558,7 @@ export interface v_team_ranks_sum_fields {
     avg_faceit_elo: (Scalars['Int'] | null)
     avg_faceit_level: (Scalars['float8'] | null)
     avg_premier: (Scalars['Int'] | null)
+    avg_rush_elo: (Scalars['Int'] | null)
     avg_wingman_elo: (Scalars['Int'] | null)
     max_elo: (Scalars['Int'] | null)
     min_elo: (Scalars['Int'] | null)
@@ -44518,6 +44574,7 @@ export interface v_team_ranks_var_pop_fields {
     avg_faceit_elo: (Scalars['Float'] | null)
     avg_faceit_level: (Scalars['Float'] | null)
     avg_premier: (Scalars['Float'] | null)
+    avg_rush_elo: (Scalars['Float'] | null)
     avg_wingman_elo: (Scalars['Float'] | null)
     max_elo: (Scalars['Float'] | null)
     min_elo: (Scalars['Float'] | null)
@@ -44533,6 +44590,7 @@ export interface v_team_ranks_var_samp_fields {
     avg_faceit_elo: (Scalars['Float'] | null)
     avg_faceit_level: (Scalars['Float'] | null)
     avg_premier: (Scalars['Float'] | null)
+    avg_rush_elo: (Scalars['Float'] | null)
     avg_wingman_elo: (Scalars['Float'] | null)
     max_elo: (Scalars['Float'] | null)
     min_elo: (Scalars['Float'] | null)
@@ -44548,6 +44606,7 @@ export interface v_team_ranks_variance_fields {
     avg_faceit_elo: (Scalars['Float'] | null)
     avg_faceit_level: (Scalars['Float'] | null)
     avg_premier: (Scalars['Float'] | null)
+    avg_rush_elo: (Scalars['Float'] | null)
     avg_wingman_elo: (Scalars['Float'] | null)
     max_elo: (Scalars['Float'] | null)
     min_elo: (Scalars['Float'] | null)
@@ -57273,6 +57332,10 @@ export interface event_match_links_aggregateGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface event_match_links_aggregate_bool_exp {count?: (event_match_links_aggregate_bool_exp_count | null)}
+
+export interface event_match_links_aggregate_bool_exp_count {arguments?: (event_match_links_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (event_match_links_bool_exp | null),predicate: Int_comparison_exp}
+
 
 /** aggregate fields of "event_match_links" */
 export interface event_match_links_aggregate_fieldsGenqlSelection{
@@ -57282,6 +57345,16 @@ export interface event_match_links_aggregate_fieldsGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** order by aggregate values of table "event_match_links" */
+export interface event_match_links_aggregate_order_by {count?: (order_by | null),max?: (event_match_links_max_order_by | null),min?: (event_match_links_min_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "event_match_links" */
+export interface event_match_links_arr_rel_insert_input {data: event_match_links_insert_input[],
+/** upsert condition */
+on_conflict?: (event_match_links_on_conflict | null)}
 
 
 /** Boolean expression to filter rows from the table "event_match_links". All fields are combined with a logical 'AND'. */
@@ -57302,6 +57375,10 @@ export interface event_match_links_max_fieldsGenqlSelection{
 }
 
 
+/** order by max() on columns of table "event_match_links" */
+export interface event_match_links_max_order_by {created_at?: (order_by | null),event_id?: (order_by | null),match_id?: (order_by | null)}
+
+
 /** aggregate min on columns */
 export interface event_match_links_min_fieldsGenqlSelection{
     created_at?: boolean | number
@@ -57310,6 +57387,10 @@ export interface event_match_links_min_fieldsGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** order by min() on columns of table "event_match_links" */
+export interface event_match_links_min_order_by {created_at?: (order_by | null),event_id?: (order_by | null),match_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "event_match_links" */
@@ -69373,6 +69454,30 @@ export interface matchesGenqlSelection{
     /** filter the rows returned */
     where?: (v_player_elo_bool_exp | null)} })
     ended_at?: boolean | number
+    /** An array relationship */
+    event_links?: (event_match_linksGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (event_match_links_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (event_match_links_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (event_match_links_bool_exp | null)} })
+    /** An aggregate relationship */
+    event_links_aggregate?: (event_match_links_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (event_match_links_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (event_match_links_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (event_match_links_bool_exp | null)} })
     external_id?: boolean | number
     id?: boolean | number
     /** A computed field, executes function "match_invite_code" */
@@ -69836,7 +69941,7 @@ export interface matches_avg_order_by {organizer_steam_id?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "matches". All fields are combined with a logical 'AND'. */
-export interface matches_bool_exp {_and?: (matches_bool_exp[] | null),_not?: (matches_bool_exp | null),_or?: (matches_bool_exp[] | null),can_assign_server?: (Boolean_comparison_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_check_in?: (Boolean_comparison_exp | null),can_reassign_winner?: (Boolean_comparison_exp | null),can_schedule?: (Boolean_comparison_exp | null),can_start?: (Boolean_comparison_exp | null),can_stream_live?: (Boolean_comparison_exp | null),can_stream_tv?: (Boolean_comparison_exp | null),cancels_at?: (timestamptz_comparison_exp | null),clutches?: (v_match_clutches_bool_exp | null),clutches_aggregate?: (v_match_clutches_aggregate_bool_exp | null),connection_link?: (String_comparison_exp | null),connection_string?: (String_comparison_exp | null),counts_toward_ranking?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_match_map_id?: (uuid_comparison_exp | null),demos?: (match_map_demos_bool_exp | null),demos_aggregate?: (match_map_demos_aggregate_bool_exp | null),draft_games?: (draft_games_bool_exp | null),draft_games_aggregate?: (draft_games_aggregate_bool_exp | null),e_match_status?: (e_match_status_bool_exp | null),e_region?: (server_regions_bool_exp | null),effective_at?: (timestamptz_comparison_exp | null),elo_changes?: (v_player_elo_bool_exp | null),elo_changes_aggregate?: (v_player_elo_aggregate_bool_exp | null),ended_at?: (timestamptz_comparison_exp | null),external_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),is_captain?: (Boolean_comparison_exp | null),is_coach?: (Boolean_comparison_exp | null),is_friend_in_match_lineup?: (Boolean_comparison_exp | null),is_in_lineup?: (Boolean_comparison_exp | null),is_match_server_available?: (Boolean_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),is_server_online?: (Boolean_comparison_exp | null),is_tournament_match?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),lineup_1?: (match_lineups_bool_exp | null),lineup_1_id?: (uuid_comparison_exp | null),lineup_2?: (match_lineups_bool_exp | null),lineup_2_id?: (uuid_comparison_exp | null),lineup_counts?: (json_comparison_exp | null),map_veto_picking_lineup_id?: (uuid_comparison_exp | null),map_veto_picks?: (match_map_veto_picks_bool_exp | null),map_veto_picks_aggregate?: (match_map_veto_picks_aggregate_bool_exp | null),map_veto_type?: (String_comparison_exp | null),match_maps?: (match_maps_bool_exp | null),match_maps_aggregate?: (match_maps_aggregate_bool_exp | null),match_options_id?: (uuid_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),opening_duels?: (v_match_player_opening_duels_bool_exp | null),opening_duels_aggregate?: (v_match_player_opening_duels_aggregate_bool_exp | null),options?: (match_options_bool_exp | null),organizer?: (players_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),password?: (String_comparison_exp | null),player_assists?: (player_assists_bool_exp | null),player_assists_aggregate?: (player_assists_aggregate_bool_exp | null),player_damages?: (player_damages_bool_exp | null),player_damages_aggregate?: (player_damages_aggregate_bool_exp | null),player_flashes?: (player_flashes_bool_exp | null),player_flashes_aggregate?: (player_flashes_aggregate_bool_exp | null),player_kills?: (player_kills_bool_exp | null),player_kills_aggregate?: (player_kills_aggregate_bool_exp | null),player_objectives?: (player_objectives_bool_exp | null),player_objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),player_utility?: (player_utility_bool_exp | null),player_utility_aggregate?: (player_utility_aggregate_bool_exp | null),region?: (String_comparison_exp | null),region_veto_picking_lineup_id?: (uuid_comparison_exp | null),region_veto_picks?: (match_region_veto_picks_bool_exp | null),region_veto_picks_aggregate?: (match_region_veto_picks_aggregate_bool_exp | null),requested_organizer?: (Boolean_comparison_exp | null),scheduled_at?: (timestamptz_comparison_exp | null),server?: (servers_bool_exp | null),server_error?: (String_comparison_exp | null),server_id?: (uuid_comparison_exp | null),server_plugin_runtime?: (String_comparison_exp | null),server_region?: (String_comparison_exp | null),server_type?: (String_comparison_exp | null),share_code?: (String_comparison_exp | null),source?: (String_comparison_exp | null),started_at?: (timestamptz_comparison_exp | null),status?: (e_match_status_enum_comparison_exp | null),streams?: (match_streams_bool_exp | null),streams_aggregate?: (match_streams_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),tournament_brackets?: (tournament_brackets_bool_exp | null),tournament_brackets_aggregate?: (tournament_brackets_aggregate_bool_exp | null),tv_connection_string?: (String_comparison_exp | null),veto_pick_expires_at?: (timestamptz_comparison_exp | null),winner?: (match_lineups_bool_exp | null),winning_lineup_id?: (uuid_comparison_exp | null)}
+export interface matches_bool_exp {_and?: (matches_bool_exp[] | null),_not?: (matches_bool_exp | null),_or?: (matches_bool_exp[] | null),can_assign_server?: (Boolean_comparison_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_check_in?: (Boolean_comparison_exp | null),can_reassign_winner?: (Boolean_comparison_exp | null),can_schedule?: (Boolean_comparison_exp | null),can_start?: (Boolean_comparison_exp | null),can_stream_live?: (Boolean_comparison_exp | null),can_stream_tv?: (Boolean_comparison_exp | null),cancels_at?: (timestamptz_comparison_exp | null),clutches?: (v_match_clutches_bool_exp | null),clutches_aggregate?: (v_match_clutches_aggregate_bool_exp | null),connection_link?: (String_comparison_exp | null),connection_string?: (String_comparison_exp | null),counts_toward_ranking?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_match_map_id?: (uuid_comparison_exp | null),demos?: (match_map_demos_bool_exp | null),demos_aggregate?: (match_map_demos_aggregate_bool_exp | null),draft_games?: (draft_games_bool_exp | null),draft_games_aggregate?: (draft_games_aggregate_bool_exp | null),e_match_status?: (e_match_status_bool_exp | null),e_region?: (server_regions_bool_exp | null),effective_at?: (timestamptz_comparison_exp | null),elo_changes?: (v_player_elo_bool_exp | null),elo_changes_aggregate?: (v_player_elo_aggregate_bool_exp | null),ended_at?: (timestamptz_comparison_exp | null),event_links?: (event_match_links_bool_exp | null),event_links_aggregate?: (event_match_links_aggregate_bool_exp | null),external_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),is_captain?: (Boolean_comparison_exp | null),is_coach?: (Boolean_comparison_exp | null),is_friend_in_match_lineup?: (Boolean_comparison_exp | null),is_in_lineup?: (Boolean_comparison_exp | null),is_match_server_available?: (Boolean_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),is_server_online?: (Boolean_comparison_exp | null),is_tournament_match?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),lineup_1?: (match_lineups_bool_exp | null),lineup_1_id?: (uuid_comparison_exp | null),lineup_2?: (match_lineups_bool_exp | null),lineup_2_id?: (uuid_comparison_exp | null),lineup_counts?: (json_comparison_exp | null),map_veto_picking_lineup_id?: (uuid_comparison_exp | null),map_veto_picks?: (match_map_veto_picks_bool_exp | null),map_veto_picks_aggregate?: (match_map_veto_picks_aggregate_bool_exp | null),map_veto_type?: (String_comparison_exp | null),match_maps?: (match_maps_bool_exp | null),match_maps_aggregate?: (match_maps_aggregate_bool_exp | null),match_options_id?: (uuid_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),opening_duels?: (v_match_player_opening_duels_bool_exp | null),opening_duels_aggregate?: (v_match_player_opening_duels_aggregate_bool_exp | null),options?: (match_options_bool_exp | null),organizer?: (players_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),password?: (String_comparison_exp | null),player_assists?: (player_assists_bool_exp | null),player_assists_aggregate?: (player_assists_aggregate_bool_exp | null),player_damages?: (player_damages_bool_exp | null),player_damages_aggregate?: (player_damages_aggregate_bool_exp | null),player_flashes?: (player_flashes_bool_exp | null),player_flashes_aggregate?: (player_flashes_aggregate_bool_exp | null),player_kills?: (player_kills_bool_exp | null),player_kills_aggregate?: (player_kills_aggregate_bool_exp | null),player_objectives?: (player_objectives_bool_exp | null),player_objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),player_utility?: (player_utility_bool_exp | null),player_utility_aggregate?: (player_utility_aggregate_bool_exp | null),region?: (String_comparison_exp | null),region_veto_picking_lineup_id?: (uuid_comparison_exp | null),region_veto_picks?: (match_region_veto_picks_bool_exp | null),region_veto_picks_aggregate?: (match_region_veto_picks_aggregate_bool_exp | null),requested_organizer?: (Boolean_comparison_exp | null),scheduled_at?: (timestamptz_comparison_exp | null),server?: (servers_bool_exp | null),server_error?: (String_comparison_exp | null),server_id?: (uuid_comparison_exp | null),server_plugin_runtime?: (String_comparison_exp | null),server_region?: (String_comparison_exp | null),server_type?: (String_comparison_exp | null),share_code?: (String_comparison_exp | null),source?: (String_comparison_exp | null),started_at?: (timestamptz_comparison_exp | null),status?: (e_match_status_enum_comparison_exp | null),streams?: (match_streams_bool_exp | null),streams_aggregate?: (match_streams_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),tournament_brackets?: (tournament_brackets_bool_exp | null),tournament_brackets_aggregate?: (tournament_brackets_aggregate_bool_exp | null),tv_connection_string?: (String_comparison_exp | null),veto_pick_expires_at?: (timestamptz_comparison_exp | null),winner?: (match_lineups_bool_exp | null),winning_lineup_id?: (uuid_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "matches" */
@@ -69844,7 +69949,7 @@ export interface matches_inc_input {organizer_steam_id?: (Scalars['bigint'] | nu
 
 
 /** input type for inserting data into table "matches" */
-export interface matches_insert_input {cancels_at?: (Scalars['timestamptz'] | null),clutches?: (v_match_clutches_arr_rel_insert_input | null),counts_toward_ranking?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),demos?: (match_map_demos_arr_rel_insert_input | null),draft_games?: (draft_games_arr_rel_insert_input | null),e_match_status?: (e_match_status_obj_rel_insert_input | null),e_region?: (server_regions_obj_rel_insert_input | null),elo_changes?: (v_player_elo_arr_rel_insert_input | null),ended_at?: (Scalars['timestamptz'] | null),external_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),lineup_1?: (match_lineups_obj_rel_insert_input | null),lineup_1_id?: (Scalars['uuid'] | null),lineup_2?: (match_lineups_obj_rel_insert_input | null),lineup_2_id?: (Scalars['uuid'] | null),map_veto_picks?: (match_map_veto_picks_arr_rel_insert_input | null),match_maps?: (match_maps_arr_rel_insert_input | null),match_options_id?: (Scalars['uuid'] | null),opening_duels?: (v_match_player_opening_duels_arr_rel_insert_input | null),options?: (match_options_obj_rel_insert_input | null),organizer?: (players_obj_rel_insert_input | null),organizer_steam_id?: (Scalars['bigint'] | null),password?: (Scalars['String'] | null),player_assists?: (player_assists_arr_rel_insert_input | null),player_damages?: (player_damages_arr_rel_insert_input | null),player_flashes?: (player_flashes_arr_rel_insert_input | null),player_kills?: (player_kills_arr_rel_insert_input | null),player_objectives?: (player_objectives_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),player_utility?: (player_utility_arr_rel_insert_input | null),region?: (Scalars['String'] | null),region_veto_picks?: (match_region_veto_picks_arr_rel_insert_input | null),scheduled_at?: (Scalars['timestamptz'] | null),server?: (servers_obj_rel_insert_input | null),server_error?: (Scalars['String'] | null),server_id?: (Scalars['uuid'] | null),share_code?: (Scalars['String'] | null),source?: (Scalars['String'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (e_match_status_enum | null),streams?: (match_streams_arr_rel_insert_input | null),tournament_brackets?: (tournament_brackets_arr_rel_insert_input | null),veto_pick_expires_at?: (Scalars['timestamptz'] | null),winner?: (match_lineups_obj_rel_insert_input | null),winning_lineup_id?: (Scalars['uuid'] | null)}
+export interface matches_insert_input {cancels_at?: (Scalars['timestamptz'] | null),clutches?: (v_match_clutches_arr_rel_insert_input | null),counts_toward_ranking?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),demos?: (match_map_demos_arr_rel_insert_input | null),draft_games?: (draft_games_arr_rel_insert_input | null),e_match_status?: (e_match_status_obj_rel_insert_input | null),e_region?: (server_regions_obj_rel_insert_input | null),elo_changes?: (v_player_elo_arr_rel_insert_input | null),ended_at?: (Scalars['timestamptz'] | null),event_links?: (event_match_links_arr_rel_insert_input | null),external_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),lineup_1?: (match_lineups_obj_rel_insert_input | null),lineup_1_id?: (Scalars['uuid'] | null),lineup_2?: (match_lineups_obj_rel_insert_input | null),lineup_2_id?: (Scalars['uuid'] | null),map_veto_picks?: (match_map_veto_picks_arr_rel_insert_input | null),match_maps?: (match_maps_arr_rel_insert_input | null),match_options_id?: (Scalars['uuid'] | null),opening_duels?: (v_match_player_opening_duels_arr_rel_insert_input | null),options?: (match_options_obj_rel_insert_input | null),organizer?: (players_obj_rel_insert_input | null),organizer_steam_id?: (Scalars['bigint'] | null),password?: (Scalars['String'] | null),player_assists?: (player_assists_arr_rel_insert_input | null),player_damages?: (player_damages_arr_rel_insert_input | null),player_flashes?: (player_flashes_arr_rel_insert_input | null),player_kills?: (player_kills_arr_rel_insert_input | null),player_objectives?: (player_objectives_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),player_utility?: (player_utility_arr_rel_insert_input | null),region?: (Scalars['String'] | null),region_veto_picks?: (match_region_veto_picks_arr_rel_insert_input | null),scheduled_at?: (Scalars['timestamptz'] | null),server?: (servers_obj_rel_insert_input | null),server_error?: (Scalars['String'] | null),server_id?: (Scalars['uuid'] | null),share_code?: (Scalars['String'] | null),source?: (Scalars['String'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (e_match_status_enum | null),streams?: (match_streams_arr_rel_insert_input | null),tournament_brackets?: (tournament_brackets_arr_rel_insert_input | null),veto_pick_expires_at?: (Scalars['timestamptz'] | null),winner?: (match_lineups_obj_rel_insert_input | null),winning_lineup_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate max on columns */
@@ -69985,7 +70090,7 @@ export interface matches_on_conflict {constraint: matches_constraint,update_colu
 
 
 /** Ordering options when selecting data from "matches". */
-export interface matches_order_by {can_assign_server?: (order_by | null),can_cancel?: (order_by | null),can_check_in?: (order_by | null),can_reassign_winner?: (order_by | null),can_schedule?: (order_by | null),can_start?: (order_by | null),can_stream_live?: (order_by | null),can_stream_tv?: (order_by | null),cancels_at?: (order_by | null),clutches_aggregate?: (v_match_clutches_aggregate_order_by | null),connection_link?: (order_by | null),connection_string?: (order_by | null),counts_toward_ranking?: (order_by | null),created_at?: (order_by | null),current_match_map_id?: (order_by | null),demos_aggregate?: (match_map_demos_aggregate_order_by | null),draft_games_aggregate?: (draft_games_aggregate_order_by | null),e_match_status?: (e_match_status_order_by | null),e_region?: (server_regions_order_by | null),effective_at?: (order_by | null),elo_changes_aggregate?: (v_player_elo_aggregate_order_by | null),ended_at?: (order_by | null),external_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),is_captain?: (order_by | null),is_coach?: (order_by | null),is_friend_in_match_lineup?: (order_by | null),is_in_lineup?: (order_by | null),is_match_server_available?: (order_by | null),is_organizer?: (order_by | null),is_server_online?: (order_by | null),is_tournament_match?: (order_by | null),label?: (order_by | null),lineup_1?: (match_lineups_order_by | null),lineup_1_id?: (order_by | null),lineup_2?: (match_lineups_order_by | null),lineup_2_id?: (order_by | null),lineup_counts?: (order_by | null),map_veto_picking_lineup_id?: (order_by | null),map_veto_picks_aggregate?: (match_map_veto_picks_aggregate_order_by | null),map_veto_type?: (order_by | null),match_maps_aggregate?: (match_maps_aggregate_order_by | null),match_options_id?: (order_by | null),max_players_per_lineup?: (order_by | null),min_players_per_lineup?: (order_by | null),opening_duels_aggregate?: (v_match_player_opening_duels_aggregate_order_by | null),options?: (match_options_order_by | null),organizer?: (players_order_by | null),organizer_steam_id?: (order_by | null),password?: (order_by | null),player_assists_aggregate?: (player_assists_aggregate_order_by | null),player_damages_aggregate?: (player_damages_aggregate_order_by | null),player_flashes_aggregate?: (player_flashes_aggregate_order_by | null),player_kills_aggregate?: (player_kills_aggregate_order_by | null),player_objectives_aggregate?: (player_objectives_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),player_utility_aggregate?: (player_utility_aggregate_order_by | null),region?: (order_by | null),region_veto_picking_lineup_id?: (order_by | null),region_veto_picks_aggregate?: (match_region_veto_picks_aggregate_order_by | null),requested_organizer?: (order_by | null),scheduled_at?: (order_by | null),server?: (servers_order_by | null),server_error?: (order_by | null),server_id?: (order_by | null),server_plugin_runtime?: (order_by | null),server_region?: (order_by | null),server_type?: (order_by | null),share_code?: (order_by | null),source?: (order_by | null),started_at?: (order_by | null),status?: (order_by | null),streams_aggregate?: (match_streams_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),tournament_brackets_aggregate?: (tournament_brackets_aggregate_order_by | null),tv_connection_string?: (order_by | null),veto_pick_expires_at?: (order_by | null),winner?: (match_lineups_order_by | null),winning_lineup_id?: (order_by | null)}
+export interface matches_order_by {can_assign_server?: (order_by | null),can_cancel?: (order_by | null),can_check_in?: (order_by | null),can_reassign_winner?: (order_by | null),can_schedule?: (order_by | null),can_start?: (order_by | null),can_stream_live?: (order_by | null),can_stream_tv?: (order_by | null),cancels_at?: (order_by | null),clutches_aggregate?: (v_match_clutches_aggregate_order_by | null),connection_link?: (order_by | null),connection_string?: (order_by | null),counts_toward_ranking?: (order_by | null),created_at?: (order_by | null),current_match_map_id?: (order_by | null),demos_aggregate?: (match_map_demos_aggregate_order_by | null),draft_games_aggregate?: (draft_games_aggregate_order_by | null),e_match_status?: (e_match_status_order_by | null),e_region?: (server_regions_order_by | null),effective_at?: (order_by | null),elo_changes_aggregate?: (v_player_elo_aggregate_order_by | null),ended_at?: (order_by | null),event_links_aggregate?: (event_match_links_aggregate_order_by | null),external_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),is_captain?: (order_by | null),is_coach?: (order_by | null),is_friend_in_match_lineup?: (order_by | null),is_in_lineup?: (order_by | null),is_match_server_available?: (order_by | null),is_organizer?: (order_by | null),is_server_online?: (order_by | null),is_tournament_match?: (order_by | null),label?: (order_by | null),lineup_1?: (match_lineups_order_by | null),lineup_1_id?: (order_by | null),lineup_2?: (match_lineups_order_by | null),lineup_2_id?: (order_by | null),lineup_counts?: (order_by | null),map_veto_picking_lineup_id?: (order_by | null),map_veto_picks_aggregate?: (match_map_veto_picks_aggregate_order_by | null),map_veto_type?: (order_by | null),match_maps_aggregate?: (match_maps_aggregate_order_by | null),match_options_id?: (order_by | null),max_players_per_lineup?: (order_by | null),min_players_per_lineup?: (order_by | null),opening_duels_aggregate?: (v_match_player_opening_duels_aggregate_order_by | null),options?: (match_options_order_by | null),organizer?: (players_order_by | null),organizer_steam_id?: (order_by | null),password?: (order_by | null),player_assists_aggregate?: (player_assists_aggregate_order_by | null),player_damages_aggregate?: (player_damages_aggregate_order_by | null),player_flashes_aggregate?: (player_flashes_aggregate_order_by | null),player_kills_aggregate?: (player_kills_aggregate_order_by | null),player_objectives_aggregate?: (player_objectives_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),player_utility_aggregate?: (player_utility_aggregate_order_by | null),region?: (order_by | null),region_veto_picking_lineup_id?: (order_by | null),region_veto_picks_aggregate?: (match_region_veto_picks_aggregate_order_by | null),requested_organizer?: (order_by | null),scheduled_at?: (order_by | null),server?: (servers_order_by | null),server_error?: (order_by | null),server_id?: (order_by | null),server_plugin_runtime?: (order_by | null),server_region?: (order_by | null),server_type?: (order_by | null),share_code?: (order_by | null),source?: (order_by | null),started_at?: (order_by | null),status?: (order_by | null),streams_aggregate?: (match_streams_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),tournament_brackets_aggregate?: (tournament_brackets_aggregate_order_by | null),tv_connection_string?: (order_by | null),veto_pick_expires_at?: (order_by | null),winner?: (match_lineups_order_by | null),winning_lineup_id?: (order_by | null)}
 
 
 /** primary key columns input for table: matches */
@@ -71182,7 +71287,7 @@ export interface mutation_rootGenqlSelection{
     /** filter the rows which have to be deleted */
     where: player_sanctions_bool_exp} })
     /** delete single row from the table: "player_sanctions" */
-    delete_player_sanctions_by_pk?: (player_sanctionsGenqlSelection & { __args: {created_at: Scalars['timestamptz'], id: Scalars['uuid']} })
+    delete_player_sanctions_by_pk?: (player_sanctionsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "player_season_stats" */
     delete_player_season_stats?: (player_season_stats_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -86203,7 +86308,7 @@ export interface player_sanctions_order_by {created_at?: (order_by | null),delet
 
 
 /** primary key columns input for table: player_sanctions */
-export interface player_sanctions_pk_columns_input {created_at: Scalars['timestamptz'],id: Scalars['uuid']}
+export interface player_sanctions_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "player_sanctions" */
@@ -88590,6 +88695,8 @@ export interface playersGenqlSelection{
     losses_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush?: boolean | number
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman?: boolean | number
     /** An array relationship */
@@ -89129,6 +89236,8 @@ export interface playersGenqlSelection{
     wins_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush?: boolean | number
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman?: boolean | number
     __typename?: boolean | number
@@ -89175,6 +89284,8 @@ export interface players_avg_fieldsGenqlSelection{
     losses_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush?: boolean | number
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman?: boolean | number
     premier_rank?: boolean | number
@@ -89188,6 +89299,8 @@ export interface players_avg_fieldsGenqlSelection{
     wins_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush?: boolean | number
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman?: boolean | number
     __typename?: boolean | number
@@ -89196,7 +89309,7 @@ export interface players_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "players". All fields are combined with a logical 'AND'. */
-export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),aim_weapon_stats?: (player_aim_weapon_stats_bool_exp | null),aim_weapon_stats_aggregate?: (player_aim_weapon_stats_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),awards?: (award_recipients_bool_exp | null),awards_aggregate?: (award_recipients_aggregate_bool_exp | null),banned_until?: (timestamptz_comparison_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_lobby_id?: (uuid_comparison_exp | null),custom_avatar_url?: (String_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),days_since_last_ban?: (Int_comparison_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),draft_game_players?: (draft_game_players_bool_exp | null),draft_game_players_aggregate?: (draft_game_players_aggregate_bool_exp | null),elo?: (jsonb_comparison_exp | null),elo_history?: (v_player_elo_bool_exp | null),elo_history_aggregate?: (v_player_elo_aggregate_bool_exp | null),faceit_elo?: (Int_comparison_exp | null),faceit_nickname?: (String_comparison_exp | null),faceit_player_id?: (String_comparison_exp | null),faceit_rank_history?: (player_faceit_rank_history_bool_exp | null),faceit_rank_history_aggregate?: (player_faceit_rank_history_aggregate_bool_exp | null),faceit_skill_level?: (Int_comparison_exp | null),faceit_updated_at?: (timestamptz_comparison_exp | null),faceit_url?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),friends?: (my_friends_bool_exp | null),friends_aggregate?: (my_friends_aggregate_bool_exp | null),game_ban_count?: (Int_comparison_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_admin_sanctioned?: (Boolean_comparison_exp | null),is_banned?: (Boolean_comparison_exp | null),is_gagged?: (Boolean_comparison_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),is_in_draft?: (Boolean_comparison_exp | null),is_in_lobby?: (Boolean_comparison_exp | null),is_muted?: (Boolean_comparison_exp | null),is_registered?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),kills_by_weapons?: (player_kills_by_weapon_bool_exp | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_bool_exp | null),language?: (String_comparison_exp | null),last_read_news_at?: (timestamptz_comparison_exp | null),last_sign_in_at?: (timestamptz_comparison_exp | null),lobby_players?: (lobby_players_bool_exp | null),lobby_players_aggregate?: (lobby_players_aggregate_bool_exp | null),losses?: (Int_comparison_exp | null),losses_competitive?: (Int_comparison_exp | null),losses_duel?: (Int_comparison_exp | null),losses_wingman?: (Int_comparison_exp | null),match_map_hltv?: (v_player_match_map_hltv_bool_exp | null),match_map_hltv_aggregate?: (v_player_match_map_hltv_aggregate_bool_exp | null),match_map_stats?: (player_match_map_stats_bool_exp | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_bool_exp | null),match_stats?: (player_match_stats_v_bool_exp | null),match_stats_aggregate?: (player_match_stats_v_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),name_registered?: (Boolean_comparison_exp | null),notification_timezone?: (String_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),peak_elo?: (jsonb_comparison_exp | null),pending_match_imports?: (pending_match_import_players_bool_exp | null),pending_match_imports_aggregate?: (pending_match_import_players_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),premier_rank?: (Int_comparison_exp | null),premier_rank_history?: (player_premier_rank_history_bool_exp | null),premier_rank_history_aggregate?: (player_premier_rank_history_aggregate_bool_exp | null),premier_rank_updated_at?: (timestamptz_comparison_exp | null),profile_url?: (String_comparison_exp | null),quiet_hours_end?: (time_comparison_exp | null),quiet_hours_start?: (time_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),roster_image_url?: (String_comparison_exp | null),sanctions?: (player_sanctions_bool_exp | null),sanctions_aggregate?: (player_sanctions_aggregate_bool_exp | null),season_stats?: (player_season_stats_bool_exp | null),season_stats_aggregate?: (player_season_stats_aggregate_bool_exp | null),show_match_ready_modal?: (Boolean_comparison_exp | null),stats?: (player_stats_bool_exp | null),steam_bans_checked_at?: (timestamptz_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),total_matches?: (Int_comparison_exp | null),tournament_cooldown?: (timestamptz_comparison_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null),vac_ban_count?: (Int_comparison_exp | null),vac_banned?: (Boolean_comparison_exp | null),weapon_stats?: (player_weapon_stats_v_bool_exp | null),weapon_stats_aggregate?: (player_weapon_stats_v_aggregate_bool_exp | null),wins?: (Int_comparison_exp | null),wins_competitive?: (Int_comparison_exp | null),wins_duel?: (Int_comparison_exp | null),wins_wingman?: (Int_comparison_exp | null)}
+export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),aim_weapon_stats?: (player_aim_weapon_stats_bool_exp | null),aim_weapon_stats_aggregate?: (player_aim_weapon_stats_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),awards?: (award_recipients_bool_exp | null),awards_aggregate?: (award_recipients_aggregate_bool_exp | null),banned_until?: (timestamptz_comparison_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_lobby_id?: (uuid_comparison_exp | null),custom_avatar_url?: (String_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),days_since_last_ban?: (Int_comparison_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),draft_game_players?: (draft_game_players_bool_exp | null),draft_game_players_aggregate?: (draft_game_players_aggregate_bool_exp | null),elo?: (jsonb_comparison_exp | null),elo_history?: (v_player_elo_bool_exp | null),elo_history_aggregate?: (v_player_elo_aggregate_bool_exp | null),faceit_elo?: (Int_comparison_exp | null),faceit_nickname?: (String_comparison_exp | null),faceit_player_id?: (String_comparison_exp | null),faceit_rank_history?: (player_faceit_rank_history_bool_exp | null),faceit_rank_history_aggregate?: (player_faceit_rank_history_aggregate_bool_exp | null),faceit_skill_level?: (Int_comparison_exp | null),faceit_updated_at?: (timestamptz_comparison_exp | null),faceit_url?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),friends?: (my_friends_bool_exp | null),friends_aggregate?: (my_friends_aggregate_bool_exp | null),game_ban_count?: (Int_comparison_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_admin_sanctioned?: (Boolean_comparison_exp | null),is_banned?: (Boolean_comparison_exp | null),is_gagged?: (Boolean_comparison_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),is_in_draft?: (Boolean_comparison_exp | null),is_in_lobby?: (Boolean_comparison_exp | null),is_muted?: (Boolean_comparison_exp | null),is_registered?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),kills_by_weapons?: (player_kills_by_weapon_bool_exp | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_bool_exp | null),language?: (String_comparison_exp | null),last_read_news_at?: (timestamptz_comparison_exp | null),last_sign_in_at?: (timestamptz_comparison_exp | null),lobby_players?: (lobby_players_bool_exp | null),lobby_players_aggregate?: (lobby_players_aggregate_bool_exp | null),losses?: (Int_comparison_exp | null),losses_competitive?: (Int_comparison_exp | null),losses_duel?: (Int_comparison_exp | null),losses_rush?: (Int_comparison_exp | null),losses_wingman?: (Int_comparison_exp | null),match_map_hltv?: (v_player_match_map_hltv_bool_exp | null),match_map_hltv_aggregate?: (v_player_match_map_hltv_aggregate_bool_exp | null),match_map_stats?: (player_match_map_stats_bool_exp | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_bool_exp | null),match_stats?: (player_match_stats_v_bool_exp | null),match_stats_aggregate?: (player_match_stats_v_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),name_registered?: (Boolean_comparison_exp | null),notification_timezone?: (String_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),peak_elo?: (jsonb_comparison_exp | null),pending_match_imports?: (pending_match_import_players_bool_exp | null),pending_match_imports_aggregate?: (pending_match_import_players_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),premier_rank?: (Int_comparison_exp | null),premier_rank_history?: (player_premier_rank_history_bool_exp | null),premier_rank_history_aggregate?: (player_premier_rank_history_aggregate_bool_exp | null),premier_rank_updated_at?: (timestamptz_comparison_exp | null),profile_url?: (String_comparison_exp | null),quiet_hours_end?: (time_comparison_exp | null),quiet_hours_start?: (time_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),roster_image_url?: (String_comparison_exp | null),sanctions?: (player_sanctions_bool_exp | null),sanctions_aggregate?: (player_sanctions_aggregate_bool_exp | null),season_stats?: (player_season_stats_bool_exp | null),season_stats_aggregate?: (player_season_stats_aggregate_bool_exp | null),show_match_ready_modal?: (Boolean_comparison_exp | null),stats?: (player_stats_bool_exp | null),steam_bans_checked_at?: (timestamptz_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),total_matches?: (Int_comparison_exp | null),tournament_cooldown?: (timestamptz_comparison_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null),vac_ban_count?: (Int_comparison_exp | null),vac_banned?: (Boolean_comparison_exp | null),weapon_stats?: (player_weapon_stats_v_bool_exp | null),weapon_stats_aggregate?: (player_weapon_stats_v_aggregate_bool_exp | null),wins?: (Int_comparison_exp | null),wins_competitive?: (Int_comparison_exp | null),wins_duel?: (Int_comparison_exp | null),wins_rush?: (Int_comparison_exp | null),wins_wingman?: (Int_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "players" */
@@ -89235,6 +89348,8 @@ export interface players_max_fieldsGenqlSelection{
     losses_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush?: boolean | number
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman?: boolean | number
     /** A computed field, executes function "get_player_matchmaking_cooldown" */
@@ -89258,6 +89373,8 @@ export interface players_max_fieldsGenqlSelection{
     wins_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush?: boolean | number
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman?: boolean | number
     __typename?: boolean | number
@@ -89293,6 +89410,8 @@ export interface players_min_fieldsGenqlSelection{
     losses_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush?: boolean | number
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman?: boolean | number
     /** A computed field, executes function "get_player_matchmaking_cooldown" */
@@ -89316,6 +89435,8 @@ export interface players_min_fieldsGenqlSelection{
     wins_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush?: boolean | number
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman?: boolean | number
     __typename?: boolean | number
@@ -89345,7 +89466,7 @@ export interface players_on_conflict {constraint: players_constraint,update_colu
 
 
 /** Ordering options when selecting data from "players". */
-export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),aim_weapon_stats_aggregate?: (player_aim_weapon_stats_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),awards_aggregate?: (award_recipients_aggregate_order_by | null),banned_until?: (order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),country?: (order_by | null),created_at?: (order_by | null),current_lobby_id?: (order_by | null),custom_avatar_url?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),days_since_last_ban?: (order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),draft_game_players_aggregate?: (draft_game_players_aggregate_order_by | null),elo?: (order_by | null),elo_history_aggregate?: (v_player_elo_aggregate_order_by | null),faceit_elo?: (order_by | null),faceit_nickname?: (order_by | null),faceit_player_id?: (order_by | null),faceit_rank_history_aggregate?: (player_faceit_rank_history_aggregate_order_by | null),faceit_skill_level?: (order_by | null),faceit_updated_at?: (order_by | null),faceit_url?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),friends_aggregate?: (my_friends_aggregate_order_by | null),game_ban_count?: (order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_admin_sanctioned?: (order_by | null),is_banned?: (order_by | null),is_gagged?: (order_by | null),is_in_another_match?: (order_by | null),is_in_draft?: (order_by | null),is_in_lobby?: (order_by | null),is_muted?: (order_by | null),is_registered?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_order_by | null),language?: (order_by | null),last_read_news_at?: (order_by | null),last_sign_in_at?: (order_by | null),lobby_players_aggregate?: (lobby_players_aggregate_order_by | null),losses?: (order_by | null),losses_competitive?: (order_by | null),losses_duel?: (order_by | null),losses_wingman?: (order_by | null),match_map_hltv_aggregate?: (v_player_match_map_hltv_aggregate_order_by | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_order_by | null),match_stats_aggregate?: (player_match_stats_v_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),name_registered?: (order_by | null),notification_timezone?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),peak_elo?: (order_by | null),pending_match_imports_aggregate?: (pending_match_import_players_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),premier_rank?: (order_by | null),premier_rank_history_aggregate?: (player_premier_rank_history_aggregate_order_by | null),premier_rank_updated_at?: (order_by | null),profile_url?: (order_by | null),quiet_hours_end?: (order_by | null),quiet_hours_start?: (order_by | null),role?: (order_by | null),roster_image_url?: (order_by | null),sanctions_aggregate?: (player_sanctions_aggregate_order_by | null),season_stats_aggregate?: (player_season_stats_aggregate_order_by | null),show_match_ready_modal?: (order_by | null),stats?: (player_stats_order_by | null),steam_bans_checked_at?: (order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),total_matches?: (order_by | null),tournament_cooldown?: (order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null),vac_ban_count?: (order_by | null),vac_banned?: (order_by | null),weapon_stats_aggregate?: (player_weapon_stats_v_aggregate_order_by | null),wins?: (order_by | null),wins_competitive?: (order_by | null),wins_duel?: (order_by | null),wins_wingman?: (order_by | null)}
+export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),aim_weapon_stats_aggregate?: (player_aim_weapon_stats_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),awards_aggregate?: (award_recipients_aggregate_order_by | null),banned_until?: (order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),country?: (order_by | null),created_at?: (order_by | null),current_lobby_id?: (order_by | null),custom_avatar_url?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),days_since_last_ban?: (order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),draft_game_players_aggregate?: (draft_game_players_aggregate_order_by | null),elo?: (order_by | null),elo_history_aggregate?: (v_player_elo_aggregate_order_by | null),faceit_elo?: (order_by | null),faceit_nickname?: (order_by | null),faceit_player_id?: (order_by | null),faceit_rank_history_aggregate?: (player_faceit_rank_history_aggregate_order_by | null),faceit_skill_level?: (order_by | null),faceit_updated_at?: (order_by | null),faceit_url?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),friends_aggregate?: (my_friends_aggregate_order_by | null),game_ban_count?: (order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_admin_sanctioned?: (order_by | null),is_banned?: (order_by | null),is_gagged?: (order_by | null),is_in_another_match?: (order_by | null),is_in_draft?: (order_by | null),is_in_lobby?: (order_by | null),is_muted?: (order_by | null),is_registered?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_order_by | null),language?: (order_by | null),last_read_news_at?: (order_by | null),last_sign_in_at?: (order_by | null),lobby_players_aggregate?: (lobby_players_aggregate_order_by | null),losses?: (order_by | null),losses_competitive?: (order_by | null),losses_duel?: (order_by | null),losses_rush?: (order_by | null),losses_wingman?: (order_by | null),match_map_hltv_aggregate?: (v_player_match_map_hltv_aggregate_order_by | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_order_by | null),match_stats_aggregate?: (player_match_stats_v_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),name_registered?: (order_by | null),notification_timezone?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),peak_elo?: (order_by | null),pending_match_imports_aggregate?: (pending_match_import_players_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),premier_rank?: (order_by | null),premier_rank_history_aggregate?: (player_premier_rank_history_aggregate_order_by | null),premier_rank_updated_at?: (order_by | null),profile_url?: (order_by | null),quiet_hours_end?: (order_by | null),quiet_hours_start?: (order_by | null),role?: (order_by | null),roster_image_url?: (order_by | null),sanctions_aggregate?: (player_sanctions_aggregate_order_by | null),season_stats_aggregate?: (player_season_stats_aggregate_order_by | null),show_match_ready_modal?: (order_by | null),stats?: (player_stats_order_by | null),steam_bans_checked_at?: (order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),total_matches?: (order_by | null),tournament_cooldown?: (order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null),vac_ban_count?: (order_by | null),vac_banned?: (order_by | null),weapon_stats_aggregate?: (player_weapon_stats_v_aggregate_order_by | null),wins?: (order_by | null),wins_competitive?: (order_by | null),wins_duel?: (order_by | null),wins_rush?: (order_by | null),wins_wingman?: (order_by | null)}
 
 
 /** primary key columns input for table: players */
@@ -89368,6 +89489,8 @@ export interface players_stddev_fieldsGenqlSelection{
     losses_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush?: boolean | number
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman?: boolean | number
     premier_rank?: boolean | number
@@ -89381,6 +89504,8 @@ export interface players_stddev_fieldsGenqlSelection{
     wins_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush?: boolean | number
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman?: boolean | number
     __typename?: boolean | number
@@ -89400,6 +89525,8 @@ export interface players_stddev_pop_fieldsGenqlSelection{
     losses_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush?: boolean | number
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman?: boolean | number
     premier_rank?: boolean | number
@@ -89413,6 +89540,8 @@ export interface players_stddev_pop_fieldsGenqlSelection{
     wins_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush?: boolean | number
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman?: boolean | number
     __typename?: boolean | number
@@ -89432,6 +89561,8 @@ export interface players_stddev_samp_fieldsGenqlSelection{
     losses_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush?: boolean | number
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman?: boolean | number
     premier_rank?: boolean | number
@@ -89445,6 +89576,8 @@ export interface players_stddev_samp_fieldsGenqlSelection{
     wins_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush?: boolean | number
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman?: boolean | number
     __typename?: boolean | number
@@ -89476,6 +89609,8 @@ export interface players_sum_fieldsGenqlSelection{
     losses_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush?: boolean | number
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman?: boolean | number
     premier_rank?: boolean | number
@@ -89489,6 +89624,8 @@ export interface players_sum_fieldsGenqlSelection{
     wins_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush?: boolean | number
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman?: boolean | number
     __typename?: boolean | number
@@ -89516,6 +89653,8 @@ export interface players_var_pop_fieldsGenqlSelection{
     losses_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush?: boolean | number
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman?: boolean | number
     premier_rank?: boolean | number
@@ -89529,6 +89668,8 @@ export interface players_var_pop_fieldsGenqlSelection{
     wins_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush?: boolean | number
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman?: boolean | number
     __typename?: boolean | number
@@ -89548,6 +89689,8 @@ export interface players_var_samp_fieldsGenqlSelection{
     losses_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush?: boolean | number
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman?: boolean | number
     premier_rank?: boolean | number
@@ -89561,6 +89704,8 @@ export interface players_var_samp_fieldsGenqlSelection{
     wins_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush?: boolean | number
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman?: boolean | number
     __typename?: boolean | number
@@ -89580,6 +89725,8 @@ export interface players_variance_fieldsGenqlSelection{
     losses_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_losses_duel" */
     losses_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_losses_rush" */
+    losses_rush?: boolean | number
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman?: boolean | number
     premier_rank?: boolean | number
@@ -89593,6 +89740,8 @@ export interface players_variance_fieldsGenqlSelection{
     wins_competitive?: boolean | number
     /** A computed field, executes function "get_total_player_wins_duel" */
     wins_duel?: boolean | number
+    /** A computed field, executes function "get_total_player_wins_rush" */
+    wins_rush?: boolean | number
     /** A computed field, executes function "get_total_player_wins_wingman" */
     wins_wingman?: boolean | number
     __typename?: boolean | number
@@ -93896,7 +94045,7 @@ export interface query_rootGenqlSelection{
     /** filter the rows returned */
     where?: (player_sanctions_bool_exp | null)} })
     /** fetch data from the table: "player_sanctions" using primary key columns */
-    player_sanctions_by_pk?: (player_sanctionsGenqlSelection & { __args: {created_at: Scalars['timestamptz'], id: Scalars['uuid']} })
+    player_sanctions_by_pk?: (player_sanctionsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** An array relationship */
     player_season_stats?: (player_season_statsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -102835,7 +102984,7 @@ export interface subscription_rootGenqlSelection{
     /** filter the rows returned */
     where?: (player_sanctions_bool_exp | null)} })
     /** fetch data from the table: "player_sanctions" using primary key columns */
-    player_sanctions_by_pk?: (player_sanctionsGenqlSelection & { __args: {created_at: Scalars['timestamptz'], id: Scalars['uuid']} })
+    player_sanctions_by_pk?: (player_sanctionsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** fetch data from the table in a streaming manner: "player_sanctions" */
     player_sanctions_stream?: (player_sanctionsGenqlSelection & { __args: {
     /** maximum number of rows returned in a single batch */
@@ -125628,6 +125777,7 @@ export interface v_team_ranksGenqlSelection{
     avg_faceit_elo?: boolean | number
     avg_faceit_level?: boolean | number
     avg_premier?: boolean | number
+    avg_rush_elo?: boolean | number
     avg_wingman_elo?: boolean | number
     max_elo?: boolean | number
     min_elo?: boolean | number
@@ -125674,6 +125824,7 @@ export interface v_team_ranks_avg_fieldsGenqlSelection{
     avg_faceit_elo?: boolean | number
     avg_faceit_level?: boolean | number
     avg_premier?: boolean | number
+    avg_rush_elo?: boolean | number
     avg_wingman_elo?: boolean | number
     max_elo?: boolean | number
     min_elo?: boolean | number
@@ -125684,11 +125835,11 @@ export interface v_team_ranks_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "v_team_ranks". All fields are combined with a logical 'AND'. */
-export interface v_team_ranks_bool_exp {_and?: (v_team_ranks_bool_exp[] | null),_not?: (v_team_ranks_bool_exp | null),_or?: (v_team_ranks_bool_exp[] | null),avg_duel_elo?: (Int_comparison_exp | null),avg_elo?: (Int_comparison_exp | null),avg_faceit_elo?: (Int_comparison_exp | null),avg_faceit_level?: (float8_comparison_exp | null),avg_premier?: (Int_comparison_exp | null),avg_wingman_elo?: (Int_comparison_exp | null),max_elo?: (Int_comparison_exp | null),min_elo?: (Int_comparison_exp | null),roster_size?: (bigint_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null)}
+export interface v_team_ranks_bool_exp {_and?: (v_team_ranks_bool_exp[] | null),_not?: (v_team_ranks_bool_exp | null),_or?: (v_team_ranks_bool_exp[] | null),avg_duel_elo?: (Int_comparison_exp | null),avg_elo?: (Int_comparison_exp | null),avg_faceit_elo?: (Int_comparison_exp | null),avg_faceit_level?: (float8_comparison_exp | null),avg_premier?: (Int_comparison_exp | null),avg_rush_elo?: (Int_comparison_exp | null),avg_wingman_elo?: (Int_comparison_exp | null),max_elo?: (Int_comparison_exp | null),min_elo?: (Int_comparison_exp | null),roster_size?: (bigint_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null)}
 
 
 /** input type for inserting data into table "v_team_ranks" */
-export interface v_team_ranks_insert_input {avg_duel_elo?: (Scalars['Int'] | null),avg_elo?: (Scalars['Int'] | null),avg_faceit_elo?: (Scalars['Int'] | null),avg_faceit_level?: (Scalars['float8'] | null),avg_premier?: (Scalars['Int'] | null),avg_wingman_elo?: (Scalars['Int'] | null),max_elo?: (Scalars['Int'] | null),min_elo?: (Scalars['Int'] | null),roster_size?: (Scalars['bigint'] | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null)}
+export interface v_team_ranks_insert_input {avg_duel_elo?: (Scalars['Int'] | null),avg_elo?: (Scalars['Int'] | null),avg_faceit_elo?: (Scalars['Int'] | null),avg_faceit_level?: (Scalars['float8'] | null),avg_premier?: (Scalars['Int'] | null),avg_rush_elo?: (Scalars['Int'] | null),avg_wingman_elo?: (Scalars['Int'] | null),max_elo?: (Scalars['Int'] | null),min_elo?: (Scalars['Int'] | null),roster_size?: (Scalars['bigint'] | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate max on columns */
@@ -125698,6 +125849,7 @@ export interface v_team_ranks_max_fieldsGenqlSelection{
     avg_faceit_elo?: boolean | number
     avg_faceit_level?: boolean | number
     avg_premier?: boolean | number
+    avg_rush_elo?: boolean | number
     avg_wingman_elo?: boolean | number
     max_elo?: boolean | number
     min_elo?: boolean | number
@@ -125715,6 +125867,7 @@ export interface v_team_ranks_min_fieldsGenqlSelection{
     avg_faceit_elo?: boolean | number
     avg_faceit_level?: boolean | number
     avg_premier?: boolean | number
+    avg_rush_elo?: boolean | number
     avg_wingman_elo?: boolean | number
     max_elo?: boolean | number
     min_elo?: boolean | number
@@ -125730,7 +125883,7 @@ export interface v_team_ranks_obj_rel_insert_input {data: v_team_ranks_insert_in
 
 
 /** Ordering options when selecting data from "v_team_ranks". */
-export interface v_team_ranks_order_by {avg_duel_elo?: (order_by | null),avg_elo?: (order_by | null),avg_faceit_elo?: (order_by | null),avg_faceit_level?: (order_by | null),avg_premier?: (order_by | null),avg_wingman_elo?: (order_by | null),max_elo?: (order_by | null),min_elo?: (order_by | null),roster_size?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null)}
+export interface v_team_ranks_order_by {avg_duel_elo?: (order_by | null),avg_elo?: (order_by | null),avg_faceit_elo?: (order_by | null),avg_faceit_level?: (order_by | null),avg_premier?: (order_by | null),avg_rush_elo?: (order_by | null),avg_wingman_elo?: (order_by | null),max_elo?: (order_by | null),min_elo?: (order_by | null),roster_size?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null)}
 
 
 /** aggregate stddev on columns */
@@ -125740,6 +125893,7 @@ export interface v_team_ranks_stddev_fieldsGenqlSelection{
     avg_faceit_elo?: boolean | number
     avg_faceit_level?: boolean | number
     avg_premier?: boolean | number
+    avg_rush_elo?: boolean | number
     avg_wingman_elo?: boolean | number
     max_elo?: boolean | number
     min_elo?: boolean | number
@@ -125756,6 +125910,7 @@ export interface v_team_ranks_stddev_pop_fieldsGenqlSelection{
     avg_faceit_elo?: boolean | number
     avg_faceit_level?: boolean | number
     avg_premier?: boolean | number
+    avg_rush_elo?: boolean | number
     avg_wingman_elo?: boolean | number
     max_elo?: boolean | number
     min_elo?: boolean | number
@@ -125772,6 +125927,7 @@ export interface v_team_ranks_stddev_samp_fieldsGenqlSelection{
     avg_faceit_elo?: boolean | number
     avg_faceit_level?: boolean | number
     avg_premier?: boolean | number
+    avg_rush_elo?: boolean | number
     avg_wingman_elo?: boolean | number
     max_elo?: boolean | number
     min_elo?: boolean | number
@@ -125790,7 +125946,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface v_team_ranks_stream_cursor_value_input {avg_duel_elo?: (Scalars['Int'] | null),avg_elo?: (Scalars['Int'] | null),avg_faceit_elo?: (Scalars['Int'] | null),avg_faceit_level?: (Scalars['float8'] | null),avg_premier?: (Scalars['Int'] | null),avg_wingman_elo?: (Scalars['Int'] | null),max_elo?: (Scalars['Int'] | null),min_elo?: (Scalars['Int'] | null),roster_size?: (Scalars['bigint'] | null),team_id?: (Scalars['uuid'] | null)}
+export interface v_team_ranks_stream_cursor_value_input {avg_duel_elo?: (Scalars['Int'] | null),avg_elo?: (Scalars['Int'] | null),avg_faceit_elo?: (Scalars['Int'] | null),avg_faceit_level?: (Scalars['float8'] | null),avg_premier?: (Scalars['Int'] | null),avg_rush_elo?: (Scalars['Int'] | null),avg_wingman_elo?: (Scalars['Int'] | null),max_elo?: (Scalars['Int'] | null),min_elo?: (Scalars['Int'] | null),roster_size?: (Scalars['bigint'] | null),team_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate sum on columns */
@@ -125800,6 +125956,7 @@ export interface v_team_ranks_sum_fieldsGenqlSelection{
     avg_faceit_elo?: boolean | number
     avg_faceit_level?: boolean | number
     avg_premier?: boolean | number
+    avg_rush_elo?: boolean | number
     avg_wingman_elo?: boolean | number
     max_elo?: boolean | number
     min_elo?: boolean | number
@@ -125816,6 +125973,7 @@ export interface v_team_ranks_var_pop_fieldsGenqlSelection{
     avg_faceit_elo?: boolean | number
     avg_faceit_level?: boolean | number
     avg_premier?: boolean | number
+    avg_rush_elo?: boolean | number
     avg_wingman_elo?: boolean | number
     max_elo?: boolean | number
     min_elo?: boolean | number
@@ -125832,6 +125990,7 @@ export interface v_team_ranks_var_samp_fieldsGenqlSelection{
     avg_faceit_elo?: boolean | number
     avg_faceit_level?: boolean | number
     avg_premier?: boolean | number
+    avg_rush_elo?: boolean | number
     avg_wingman_elo?: boolean | number
     max_elo?: boolean | number
     min_elo?: boolean | number
@@ -125848,6 +126007,7 @@ export interface v_team_ranks_variance_fieldsGenqlSelection{
     avg_faceit_elo?: boolean | number
     avg_faceit_level?: boolean | number
     avg_premier?: boolean | number
+    avg_rush_elo?: boolean | number
     avg_wingman_elo?: boolean | number
     max_elo?: boolean | number
     min_elo?: boolean | number
@@ -157041,6 +157201,7 @@ export const enumVTeamRanksSelectColumn = {
    avg_faceit_elo: 'avg_faceit_elo' as const,
    avg_faceit_level: 'avg_faceit_level' as const,
    avg_premier: 'avg_premier' as const,
+   avg_rush_elo: 'avg_rush_elo' as const,
    avg_wingman_elo: 'avg_wingman_elo' as const,
    max_elo: 'max_elo' as const,
    min_elo: 'min_elo' as const,
