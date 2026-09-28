@@ -47,6 +47,7 @@ import { SanctionsModule } from "./sanctions/sanctions.module";
 import { K8sModule } from "./k8s/k8s.module";
 import { FileManagerModule } from "./file-manager/file-manager.module";
 import { BrandingModule } from "./branding/branding.module";
+import { BroadcastHudsModule } from "./broadcast-huds/broadcast-huds.module";
 import { AvatarsModule } from "./avatars/avatars.module";
 import { AwardsModule } from "./awards/awards.module";
 import { FixturesModule } from "./fixtures/fixtures.module";
@@ -147,6 +148,7 @@ import { UtilityModule } from "./utility/utility.module";
     K8sModule,
     FileManagerModule,
     BrandingModule,
+    BroadcastHudsModule,
     AvatarsModule,
     AwardsModule,
     FixturesModule,

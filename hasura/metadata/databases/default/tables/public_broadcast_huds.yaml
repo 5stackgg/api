@@ -1,0 +1,69 @@
+table:
+  name: broadcast_huds
+  schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - id
+        - slug
+        - jthud_id
+        - variant
+        - name
+        - author
+        - version
+        - description
+        - source
+        - enabled
+        - thumbnail
+        - preview
+        - page_url
+        - is_signed
+        - created_at
+        - updated_at
+      filter:
+        enabled:
+          _eq: true
+    comment: ""
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - slug
+        - jthud_id
+        - variant
+        - name
+        - author
+        - version
+        - description
+        - source
+        - enabled
+        - storage_key
+        - size_bytes
+        - thumbnail
+        - preview
+        - page_url
+        - hud_json
+        - is_signed
+        - uploaded_by_steam_id
+        - created_at
+        - updated_at
+      filter: {}
+    comment: ""
+update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - name
+        - description
+        - enabled
+      filter: {}
+      check: {}
+    comment: ""
+delete_permissions:
+  - role: administrator
+    permission:
+      filter:
+        source:
+          _eq: imported
+    comment: ""

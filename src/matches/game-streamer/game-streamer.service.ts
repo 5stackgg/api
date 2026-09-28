@@ -19,6 +19,10 @@ import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { SteamConfig } from "../../configs/types/SteamConfig";
 import { resolveInClusterApiBase } from "../clips/clips.constants";
+import {
+  BroadcastHud,
+  BroadcastHudsService,
+} from "src/broadcast-huds/broadcast-huds.service";
 import { LoggingService } from "../../k8s/logging/logging.service";
 import {
   SteamAccountService,
@@ -171,6 +175,7 @@ export class GameStreamerService {
     private readonly demoMetadata: DemoMetadataService,
     private readonly loggingService: LoggingService,
     private readonly steamAccounts: SteamAccountService,
+    private readonly broadcastHuds: BroadcastHudsService,
   ) {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
     this.appConfig = this.config.get<AppConfig>("app");
@@ -288,29 +293,39 @@ export class GameStreamerService {
     return result;
   }
 
-  private async resolveHudMode(): Promise<"horizontal" | "vertical"> {
-    let value: string | undefined;
+  private async resolveHudEnv(): Promise<Array<V1EnvVar>> {
+    let hud: BroadcastHud | null = null;
+    let bundleUrl: string | null = null;
     try {
-      const { settings_by_pk } = await this.hasura.query({
-        settings_by_pk: {
-          __args: { name: "default_hud_mode" },
-          value: true,
-        },
-      });
-      value = settings_by_pk?.value ?? undefined;
+      hud = await this.broadcastHuds.resolveDefault();
+      bundleUrl = hud ? await this.broadcastHuds.bundleUrl(hud) : null;
     } catch (error) {
+      hud = null;
+      bundleUrl = null;
       this.logger.warn(
-        `failed to read default_hud_mode setting: ${(error as Error)?.message ?? error}`,
+        `failed to resolve the default broadcast hud: ${
+          (error as Error)?.message ?? error
+        }`,
       );
     }
-    const candidate = value || process.env.HUD_MODE || "horizontal";
-    if (candidate === "vertical") return "vertical";
-    if (candidate === "horizontal" || candidate === "default")
-      return "horizontal";
-    this.logger.warn(
-      `default_hud_mode="${candidate}" is not one of horizontal|vertical — falling back to "horizontal"`,
-    );
-    return "horizontal";
+
+    // An imported bundle may not declare horizontal/vertical, so it gets an
+    // empty variant; HUD_MODE is what older images read and must stay a layout.
+    const variant = hud
+      ? (hud.variant ?? "")
+      : (process.env.HUD_MODE ?? "horizontal");
+
+    return [
+      { name: "HUD_ID", value: hud?.jthud_id ?? "default" },
+      { name: "HUD_VARIANT", value: variant },
+      { name: "HUD_MODE", value: variant || "horizontal" },
+      ...(hud && bundleUrl
+        ? [
+            { name: "HUD_SLUG", value: hud.slug },
+            { name: "HUD_BUNDLE_URL", value: bundleUrl },
+          ]
+        : []),
+    ];
   }
 
   private async readSetting(name: string): Promise<string | undefined> {
@@ -590,11 +605,26 @@ export class GameStreamerService {
     return { gsi: body?.gsi ?? null };
   }
 
-  public async setLiveHudMode(
-    matchId: string,
-    mode: "default" | "horizontal" | "vertical",
-  ) {
-    return this.callSpec(matchId, "hud-mode", { mode });
+  public async setLiveHud(matchId: string, slug: string) {
+    return this.callSpec(
+      matchId,
+      "hud-mode",
+      await this.hudSwitchPayload(slug),
+    );
+  }
+
+  private async hudSwitchPayload(
+    slug: string,
+  ): Promise<Record<string, unknown>> {
+    const hud = await this.broadcastHuds.resolveEnabled(slug);
+    const bundleUrl = await this.broadcastHuds.bundleUrl(hud);
+
+    return {
+      hudId: hud.jthud_id,
+      variant: hud.variant ?? "",
+      mode: hud.variant ?? "default",
+      ...(bundleUrl ? { slug: hud.slug, bundleUrl } : {}),
+    };
   }
 
   public async refreshLiveHud(matchId: string) {
@@ -800,7 +830,7 @@ export class GameStreamerService {
       { name: "DEMO_URL", value: options.presignedDemoUrl },
       { name: "DEMO_FILE_NAME", value: options.demoFile },
       { name: "DEMO_SESSION_ID", value: sessionId },
-      { name: "HUD_MODE", value: await this.resolveHudMode() },
+      ...(await this.resolveHudEnv()),
       { name: "CLIP_VIDEO_CODEC", value: await this.resolveClipVideoCodec() },
       {
         name: "CLIP_BAKE_BRANDING",
@@ -1028,6 +1058,12 @@ export class GameStreamerService {
     }
 
     this.bumpDemoSessionActivityThrottled(session.id);
+
+    // Never forward a client-built hud-mode body: the pod installs whatever
+    // bundleUrl it is handed.
+    if (action === "hud-mode") {
+      body = await this.hudSwitchPayload(String(body.slug ?? body.mode ?? ""));
+    }
 
     const prefix = SPEC_PROXIED_DEMO_ACTIONS.has(action) ? "spec" : "demo";
     const url = this.getDemoSpecUrl(session.id, action, prefix);
@@ -1614,7 +1650,7 @@ export class GameStreamerService {
 
     const reporterEnv: V1EnvVar[] = [
       { name: "MATCH_PASSWORD", value: match.password },
-      { name: "HUD_MODE", value: await this.resolveHudMode() },
+      ...(await this.resolveHudEnv()),
       { name: "LIVE_VIDEO_CODEC", value: await this.resolveLiveVideoCodec() },
       { name: "CLIP_VIDEO_CODEC", value: await this.resolveClipVideoCodec() },
       {
@@ -2293,7 +2329,7 @@ export class GameStreamerService {
       { name: "DEMO_URL", value: presignedDemoUrl },
       { name: "DEMO_FILE_NAME", value: demo.file as string },
       { name: "STATUS_API_BASE", value: resolveInClusterApiBase() },
-      { name: "HUD_MODE", value: await this.resolveHudMode() },
+      ...(await this.resolveHudEnv()),
       { name: "CLIP_BATCH_MODE", value: "1" },
       { name: "AUTODIRECTOR", value: "0" },
       {

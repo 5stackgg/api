@@ -11,6 +11,11 @@ describe("GameStreamerService", () => {
   let service: GameStreamerService;
   let hasura: { query: jest.Mock; mutation: jest.Mock };
   let logger: { log: jest.Mock; warn: jest.Mock; error: jest.Mock };
+  let broadcastHuds: {
+    resolveDefault: jest.Mock;
+    resolveEnabled: jest.Mock;
+    bundleUrl: jest.Mock;
+  };
 
   const config = {
     get: (key: string) => {
@@ -27,6 +32,11 @@ describe("GameStreamerService", () => {
   beforeEach(() => {
     hasura = { query: jest.fn(), mutation: jest.fn() };
     logger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
+    broadcastHuds = {
+      resolveDefault: jest.fn().mockResolvedValue(null),
+      resolveEnabled: jest.fn(),
+      bundleUrl: jest.fn().mockResolvedValue(null),
+    };
 
     service = new GameStreamerService(
       logger as any,
@@ -37,12 +47,101 @@ describe("GameStreamerService", () => {
       {} as any,
       {} as any,
       {} as any,
+      broadcastHuds as any,
     );
   });
 
   const setOf = () =>
     hasura.mutation.mock.calls[0][0].update_match_demo_sessions_by_pk.__args
       ._set;
+
+  describe("demoControl hud-mode", () => {
+    let fetchMock: jest.SpyInstance;
+
+    const forwardedBody = () =>
+      JSON.parse(fetchMock.mock.calls[0][1].body as string);
+
+    beforeEach(() => {
+      jest
+        .spyOn(service as any, "findDemoSessionCached")
+        .mockResolvedValue({ id: "session-1" });
+      jest
+        .spyOn(service as any, "bumpDemoSessionActivityThrottled")
+        .mockImplementation(() => undefined);
+      jest
+        .spyOn(service as any, "getDemoSpecUrl")
+        .mockReturnValue("http://pod/spec/hud-mode");
+      fetchMock = jest.spyOn(global, "fetch").mockResolvedValue({
+        ok: true,
+        json: async () => ({ ok: true }),
+      } as any);
+    });
+
+    afterEach(() => {
+      fetchMock.mockRestore();
+    });
+
+    it("sends the pod the resolved hud, not the client's payload", async () => {
+      broadcastHuds.resolveEnabled.mockResolvedValue({
+        slug: "my-hud",
+        jthud_id: "my-hud",
+        variant: null,
+        source: "imported",
+        storage_key: "broadcast-huds/my-hud.zip",
+      });
+      broadcastHuds.bundleUrl.mockResolvedValue("https://s3.test/signed");
+
+      await service.demoControl("map-1", "76561198000000000", "hud-mode", {
+        slug: "my-hud",
+        hudId: "elsewhere",
+        bundleUrl: "http://attacker.test/evil.zip",
+      });
+
+      expect(broadcastHuds.resolveEnabled).toHaveBeenCalledWith("my-hud");
+      expect(forwardedBody()).toEqual({
+        hudId: "my-hud",
+        variant: "",
+        mode: "default",
+        slug: "my-hud",
+        bundleUrl: "https://s3.test/signed",
+      });
+    });
+
+    it("refuses a hud-mode payload that names no hud", async () => {
+      broadcastHuds.resolveEnabled.mockRejectedValue(
+        new Error('no enabled broadcast hud named ""'),
+      );
+
+      await expect(
+        service.demoControl("map-1", "76561198000000000", "hud-mode", {
+          hudId: "elsewhere",
+          bundleUrl: "http://attacker.test/evil.zip",
+        }),
+      ).rejects.toThrow(/no enabled broadcast hud/);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("still accepts the legacy layout names", async () => {
+      broadcastHuds.resolveEnabled.mockResolvedValue({
+        slug: "default-vertical",
+        jthud_id: "default",
+        variant: "vertical",
+        source: "builtin",
+        storage_key: null,
+      });
+
+      await service.demoControl("map-1", "76561198000000000", "hud-mode", {
+        mode: "vertical",
+      });
+
+      expect(broadcastHuds.resolveEnabled).toHaveBeenCalledWith("vertical");
+      expect(forwardedBody()).toEqual({
+        hudId: "default",
+        variant: "vertical",
+        mode: "vertical",
+      });
+    });
+  });
 
   describe("reportDemoStatus", () => {
     it("moves the row for a normal status report", async () => {

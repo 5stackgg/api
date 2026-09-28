@@ -2065,10 +2065,7 @@ export class MatchesController {
     if (!isRoleAbove(user.role, "streamer")) {
       throw Error("you must have the streamer role or above");
     }
-    if (mode !== "default" && mode !== "horizontal" && mode !== "vertical") {
-      throw Error("mode must be one of default|horizontal|vertical");
-    }
-    await this.gameStreamer.setLiveHudMode(match_id, mode);
+    await this.gameStreamer.setLiveHud(match_id, mode);
     return { success: true };
   }
 

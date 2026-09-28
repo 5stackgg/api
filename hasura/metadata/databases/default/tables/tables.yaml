@@ -4,6 +4,7 @@
 - "!include public_api_keys.yaml"
 - "!include public_award_recipients.yaml"
 - "!include public_awards.yaml"
+- "!include public_broadcast_huds.yaml"
 - "!include public_chat_read_state.yaml"
 - "!include public_clip_render_jobs.yaml"
 - "!include public_custom_pages.yaml"
