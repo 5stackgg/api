@@ -709,12 +709,7 @@ export class MatchmakeService {
   }
 
   public async removeConfirmationDetails(confirmationId: string) {
-    void this.notifications.retractMatchFound(confirmationId).catch((error) => {
-      this.logger.warn(
-        `unable to retract match found for confirmation ${confirmationId}`,
-        error,
-      );
-    });
+    this.retractMatchFound(confirmationId);
 
     const confirmedKey = `${getMatchmakingConformationCacheKey(confirmationId)}:confirmed`;
     await this.redis.del(confirmedKey);
@@ -722,6 +717,17 @@ export class MatchmakeService {
     await this.redis.del(this.getMatchCreationClaimKey(confirmationId));
 
     await this.redis.del(getMatchmakingConformationCacheKey(confirmationId));
+  }
+
+  private retractMatchFound(confirmationId: string, steamId?: string) {
+    void this.notifications
+      .retractMatchFound(confirmationId, steamId)
+      .catch((error) => {
+        this.logger.warn(
+          `unable to retract match found for confirmation ${confirmationId}`,
+          error,
+        );
+      });
   }
 
   public async getMatchConfirmationDetails(confirmationId: string): Promise<{
@@ -845,6 +851,8 @@ export class MatchmakeService {
       steamId,
       1,
     );
+
+    this.retractMatchFound(confirmationId, steamId);
 
     const { confirmed } =
       await this.getMatchConfirmationDetails(confirmationId);

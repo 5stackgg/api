@@ -19,6 +19,7 @@ import {
   PushNotificationsService,
 } from "./push/push-notifications.service";
 import { inAppKeyForType } from "./preferences/notification-categories";
+import { deliveryPolicyForType } from "./push/notification-delivery";
 
 @Injectable()
 export class NotificationsService {
@@ -423,6 +424,23 @@ export class NotificationsService {
     }
   }
 
+  // Never queued. The broadcast worker runs one job at a time and a news
+  // fan-out can hold it for minutes -- longer than a ready check lasts, and by
+  // the time it got here the rows would have been retracted. Claimed first so
+  // the rows' own trigger events stand down.
+  private async pushUrgent(ids: string[]) {
+    if (ids.length < 2) {
+      return;
+    }
+
+    try {
+      await this.pushNotifications.claimFanOut(ids);
+      await this.pushNotifications.sendForIds(ids);
+    } catch (error) {
+      this.logger.warn("unable to push an urgent notification", error);
+    }
+  }
+
   private async postDiscord(
     webhook: string,
     roleId: string | undefined,
@@ -569,9 +587,15 @@ export class NotificationsService {
         },
       });
 
-      await this.pushFanOut(
-        (insert_notifications?.returning ?? []).map(({ id }) => id as string),
+      const ids = (insert_notifications?.returning ?? []).map(
+        ({ id }) => id as string,
       );
+
+      if (deliveryPolicyForType(type)?.urgent) {
+        await this.pushUrgent(ids);
+      } else {
+        await this.pushFanOut(ids);
+      }
     }
 
     if (NotificationsService.relaysToDiscord(type)) {
@@ -611,14 +635,15 @@ export class NotificationsService {
   }
 
   // Nothing else ever prunes these rows, and deleting them is also what stops a
-  // push still waiting on the event trigger from going out for a ready check
-  // that has already ended.
-  async retractMatchFound(confirmationId: string) {
+  // push that has not gone out yet from reaching a player who already accepted,
+  // or a ready check that has already ended.
+  async retractMatchFound(confirmationId: string, steamId?: string) {
     await this.postgres.query(
       `DELETE FROM public.notifications
         WHERE type = 'MatchFound'
-          AND entity_id = $1`,
-      [confirmationId],
+          AND entity_id = $1
+          AND ($2::bigint IS NULL OR steam_id = $2::bigint)`,
+      [confirmationId, steamId ?? null],
     );
   }
 
@@ -632,7 +657,13 @@ export class NotificationsService {
       [matchId],
     );
 
-    const about = match?.label ? `about ${match.label}` : "about your match";
+    const about = match?.label
+      ? `about ${NotificationsService.escapeHtml(match.label)}`
+      : "about your match";
+
+    // A call abandoned without a hangup is never retracted, so the one before
+    // is cleared here rather than left to pile up.
+    await this.retractAdminCall(matchId, steamId);
 
     return this.notifyPlayers("AdminCall", {
       title: "Admin is calling you",

@@ -176,3 +176,139 @@ describe("CS2 build notices", () => {
     expect(NotificationsService.truncateDiscord("short")).toBe("short");
   });
 });
+
+describe("push-only rings", () => {
+  const logger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
+
+  let hasura: { query: jest.Mock; mutation: jest.Mock };
+  let postgres: { query: jest.Mock };
+  let preferences: { filterInAppRecipients: jest.Mock };
+  let pushNotifications: {
+    filterSubscribed: jest.Mock;
+    claimFanOut: jest.Mock;
+    sendForIds: jest.Mock;
+  };
+  let pushBroadcastQueue: { add: jest.Mock };
+  let service: NotificationsService;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    hasura = {
+      query: jest.fn().mockResolvedValue({ settings_by_pk: null }),
+      mutation: jest.fn(async (mutation: any) => ({
+        insert_notifications: {
+          returning: mutation.insert_notifications.__args.objects.map(
+            (_: unknown, index: number) => ({ id: `row-${index}` }),
+          ),
+        },
+      })),
+    };
+    postgres = { query: jest.fn().mockResolvedValue([]) };
+    preferences = {
+      filterInAppRecipients: jest.fn(async (_type, steamIds) => steamIds),
+    };
+    pushNotifications = {
+      filterSubscribed: jest.fn(async (steamIds: string[]) => steamIds),
+      claimFanOut: jest.fn().mockResolvedValue(undefined),
+      sendForIds: jest.fn().mockResolvedValue(undefined),
+    };
+    pushBroadcastQueue = { add: jest.fn().mockResolvedValue({}) };
+
+    service = new NotificationsService(
+      hasura as any,
+      postgres as any,
+      logger as any,
+      { get: () => ({ webDomain: "https://example.com" }) } as any,
+      preferences as any,
+      pushNotifications as any,
+      { add: jest.fn() } as any,
+      pushBroadcastQueue as any,
+    );
+  });
+
+  const insertedRows = () =>
+    hasura.mutation.mock.calls[0][0].insert_notifications.__args.objects;
+
+  it("writes rings out of the bell without asking the bell's preference", async () => {
+    await service.notifyMatchFound("confirmation-1", ["1", "2"], "Wingman", 30);
+
+    expect(preferences.filterInAppRecipients).not.toHaveBeenCalled();
+    expect(insertedRows().map(({ in_app }: any) => in_app)).toEqual([
+      false,
+      false,
+    ]);
+  });
+
+  // The broadcast worker runs one job at a time; behind a news fan-out a ready
+  // check would expire before its push was ever sent.
+  it("sends a ready check straight away rather than queueing it", async () => {
+    await service.notifyMatchFound("confirmation-1", ["1", "2"], "Wingman", 30);
+
+    expect(pushBroadcastQueue.add).not.toHaveBeenCalled();
+    expect(pushNotifications.claimFanOut).toHaveBeenCalledWith([
+      "row-0",
+      "row-1",
+    ]);
+    expect(pushNotifications.sendForIds).toHaveBeenCalledWith([
+      "row-0",
+      "row-1",
+    ]);
+  });
+
+  it("still queues every other fan-out", async () => {
+    await service.notifyPlayers("ScrimAlertMatch", {
+      title: "Scrim",
+      message: "A team is available",
+      role: "user",
+      entity_id: "alert-1",
+      steamIds: ["1", "2"],
+    });
+
+    expect(pushBroadcastQueue.add).toHaveBeenCalled();
+    expect(pushNotifications.sendForIds).not.toHaveBeenCalled();
+  });
+
+  it("swallows a failed urgent send rather than failing the writer", async () => {
+    pushNotifications.sendForIds.mockRejectedValue(new Error("db away"));
+
+    await expect(
+      service.notifyMatchFound("confirmation-1", ["1", "2"], "Wingman", 30),
+    ).resolves.toBe(2);
+  });
+
+  // A team named after its captain carries whatever that player called
+  // themselves, and the message is read back as HTML for its link and text.
+  it("escapes the match name an admin call is about", async () => {
+    postgres.query.mockImplementation(async (sql: string) =>
+      sql.includes("get_team_name")
+        ? [{ label: `<a href="/settings">Evil</a>'s Team vs Team 2` }]
+        : [],
+    );
+
+    await service.notifyAdminCall("m-1", "1");
+
+    expect(insertedRows()[0].message).toBe(
+      "An admin wants to talk to you about &lt;a href=&quot;/settings&quot;&gt;Evil&lt;/a&gt;&#39;s Team vs Team 2. Open your camera page to answer.",
+    );
+  });
+
+  it("clears the previous ring before writing a new one", async () => {
+    const order: string[] = [];
+    postgres.query.mockImplementation(async (sql: string, bindings: any[]) => {
+      if (sql.includes("DELETE")) {
+        order.push(`retract ${bindings.join(" ")}`);
+      }
+      return [];
+    });
+    const insert = hasura.mutation.getMockImplementation();
+    hasura.mutation.mockImplementation(async (mutation: any) => {
+      order.push("insert");
+      return insert(mutation);
+    });
+
+    await service.notifyAdminCall("m-1", "1");
+
+    expect(order).toEqual(["retract m-1 1", "insert"]);
+  });
+});

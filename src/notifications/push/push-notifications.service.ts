@@ -1411,6 +1411,12 @@ export class PushNotificationsService {
       graphqlUrl: `${this.appConfig.apiDomain}/v1/graphql`,
       urgent: policy.urgent,
       ttl: policy.ttlSeconds,
+      // Absolute, because the worker cannot tell how long the push service
+      // held the message before handing it over.
+      expiresAt:
+        policy.ttlSeconds !== undefined
+          ? new Date(Date.now() + policy.ttlSeconds * 1000).toISOString()
+          : undefined,
     });
 
     const options: webPush.RequestOptions = {

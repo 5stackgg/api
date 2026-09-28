@@ -1057,6 +1057,18 @@ describe("PushNotificationsService", () => {
       const payload = payloadOf(0);
       expect(payload).not.toHaveProperty("urgent");
       expect(payload).not.toHaveProperty("ttl");
+      expect(payload).not.toHaveProperty("expiresAt");
+    });
+
+    it("tells the service worker when the ring stops meaning anything", async () => {
+      const before = Date.now();
+
+      await ring("MatchFound");
+
+      const expiresAt = Date.parse(payloadOf(0).expiresAt);
+
+      expect(expiresAt).toBeGreaterThanOrEqual(before + 30_000);
+      expect(expiresAt).toBeLessThanOrEqual(Date.now() + 30_000);
     });
 
     it("tells the service worker a ready check is ringing", async () => {

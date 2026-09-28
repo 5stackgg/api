@@ -317,12 +317,31 @@ describe("CameraService authorization", () => {
   describe("admin call ring", () => {
     const settle = () => new Promise((resolve) => setImmediate(resolve));
 
-    const adminCalls = async (steamId = player.steam_id) => {
-      postgres.query.mockResolvedValueOnce(scopeRow(null, false));
+    // Answers each query by what it asks: the caller's scope, whether the
+    // target is someone playing this match, and a teammate check.
+    let caller: { lineupId: string | null; allowTeammates: boolean };
+    let targetStatus: string | null;
+
+    beforeEach(() => {
+      caller = { lineupId: null, allowTeammates: false };
+      targetStatus = "Live";
+
+      postgres.query.mockImplementation(async (sql: string) => {
+        if (sql.includes("allow_teammates")) {
+          return scopeRow(caller.lineupId, caller.allowTeammates);
+        }
+        if (sql.includes("SELECT m.status")) {
+          return targetStatus ? [{ status: targetStatus }] : [];
+        }
+        return [{ exists: true }];
+      });
+    });
+
+    const calls = async (by: User = admin, steamId = player.steam_id) => {
       const answer = await service.proxyAdminTalk(
         MATCH_ID,
         steamId,
-        admin,
+        by,
         "offer",
       );
       await settle();
@@ -330,19 +349,17 @@ describe("CameraService authorization", () => {
     };
 
     const playerAnswers = async () => {
-      postgres.query.mockResolvedValueOnce([{ status: "Live" }]);
       await service.proxyPlayerTalk(MATCH_ID, player, "offer");
       await settle();
     };
 
-    const adminHangsUp = async () => {
-      postgres.query.mockResolvedValueOnce(scopeRow(null, false));
+    const hangsUp = async () => {
       await service.hangupAdminTalk(MATCH_ID, player.steam_id, admin);
       await settle();
     };
 
     it("rings the player when an admin starts talking to them", async () => {
-      await adminCalls();
+      await calls();
 
       expect(notifications.notifyAdminCall).toHaveBeenCalledWith(
         MATCH_ID,
@@ -357,24 +374,61 @@ describe("CameraService authorization", () => {
       );
     });
 
-    it("rings once per call, not once per publish", async () => {
-      await adminCalls();
-      await adminCalls();
+    it("rings an organizer's call the same way", async () => {
+      matchAssistant.isOrganizer.mockResolvedValue(true);
+
+      await calls(organizer);
+
+      expect(notifications.notifyAdminCall).toHaveBeenCalledTimes(1);
+    });
+
+    it("rings once, not once per publish", async () => {
+      await calls();
+      await calls();
 
       expect(notifications.notifyAdminCall).toHaveBeenCalledTimes(1);
     });
 
     it("keeps each player's ring separate", async () => {
-      await adminCalls(player.steam_id);
-      await adminCalls(TEAMMATE);
+      await calls(admin, player.steam_id);
+      await calls(admin, TEAMMATE);
 
       expect(notifications.notifyAdminCall).toHaveBeenCalledTimes(2);
+    });
+
+    // An organizer's scope is "all" whoever they name, so the organizer of
+    // one match could otherwise push to any player on the platform.
+    it("never rings someone who is not playing the match", async () => {
+      matchAssistant.isOrganizer.mockResolvedValue(true);
+      targetStatus = null;
+
+      await expect(calls(organizer)).resolves.toBe("answer");
+
+      expect(notifications.notifyAdminCall).not.toHaveBeenCalled();
+      expect(redis.set).not.toHaveBeenCalled();
+    });
+
+    it("never rings about a match that is over", async () => {
+      targetStatus = "Finished";
+
+      await calls();
+
+      expect(notifications.notifyAdminCall).not.toHaveBeenCalled();
+    });
+
+    it("does not ring when a teammate is the one talking", async () => {
+      caller = { lineupId: MY_LINEUP, allowTeammates: true };
+
+      await calls(player, TEAMMATE);
+
+      expect(mediaMtx.proxySdp).toHaveBeenCalled();
+      expect(notifications.notifyAdminCall).not.toHaveBeenCalled();
     });
 
     it("does not ring for a publish MediaMTX refused", async () => {
       mediaMtx.proxySdp.mockRejectedValueOnce(new Error("mediamtx is down"));
 
-      await expect(adminCalls()).rejects.toThrow(/mediamtx/);
+      await expect(calls()).rejects.toThrow(/mediamtx/);
 
       expect(notifications.notifyAdminCall).not.toHaveBeenCalled();
     });
@@ -382,47 +436,57 @@ describe("CameraService authorization", () => {
     it("answers the publish without waiting on the push", async () => {
       notifications.notifyAdminCall.mockReturnValue(new Promise(() => {}));
 
-      await expect(adminCalls()).resolves.toBe("answer");
+      await expect(calls()).resolves.toBe("answer");
     });
 
     it("answers the publish when the push fails", async () => {
       notifications.notifyAdminCall.mockRejectedValue(new Error("no hasura"));
 
-      await expect(adminCalls()).resolves.toBe("answer");
+      await expect(calls()).resolves.toBe("answer");
     });
 
-    it("retracts the ring on hangup and rings the next call again", async () => {
-      await adminCalls();
-      await adminHangsUp();
+    it("retracts the ring on hangup", async () => {
+      await calls();
+      await hangsUp();
 
       expect(notifications.retractAdminCall).toHaveBeenCalledWith(
         MATCH_ID,
         player.steam_id,
       );
+    });
 
-      await adminCalls();
+    // Otherwise publish-then-hang-up in a loop rings as fast as it can be
+    // scripted.
+    it("does not let a hangup re-arm the ring", async () => {
+      await calls();
+      await hangsUp();
+      await calls();
+
+      expect(notifications.notifyAdminCall).toHaveBeenCalledTimes(1);
+    });
+
+    it("rings again once the guard has expired", async () => {
+      await calls();
+      redisKeys.clear();
+      await calls();
 
       expect(notifications.notifyAdminCall).toHaveBeenCalledTimes(2);
     });
 
-    it("retracts the ring when the player picks up, without ringing them again", async () => {
-      await adminCalls();
+    it("retracts the ring when the player picks up", async () => {
+      await calls();
       await playerAnswers();
 
       expect(notifications.retractAdminCall).toHaveBeenCalledWith(
         MATCH_ID,
         player.steam_id,
       );
-
-      await adminCalls();
-
-      expect(notifications.notifyAdminCall).toHaveBeenCalledTimes(1);
     });
 
     it("still hangs up when the retract fails", async () => {
       notifications.retractAdminCall.mockRejectedValue(new Error("no db"));
 
-      await expect(adminHangsUp()).resolves.toBeUndefined();
+      await expect(hangsUp()).resolves.toBeUndefined();
       expect(mediaMtx.kickSessions).toHaveBeenCalled();
     });
   });

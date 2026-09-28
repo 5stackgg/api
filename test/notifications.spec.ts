@@ -354,6 +354,38 @@ describe("notifications (SQL-driven)", () => {
       ]);
     });
 
+    it("retracts only the player who accepted", async () => {
+      const [accepted, waiting] = [await fx.player(), await fx.player()];
+      await subscribed(accepted);
+      await subscribed(waiting);
+
+      await notifications().notifyMatchFound(
+        "confirmation-1",
+        [accepted, waiting],
+        "Competitive",
+        30,
+      );
+
+      await notifications().retractMatchFound("confirmation-1", accepted);
+
+      expect(await rows()).toEqual([
+        { steam_id: waiting, entity_id: "confirmation-1", in_app: false },
+      ]);
+    });
+
+    it("keeps one ring per player per match however often they are called", async () => {
+      const { matchId } = await fx.bareMatch();
+      const called = await fx.player();
+      await subscribed(called);
+
+      await notifications().notifyAdminCall(matchId, called);
+      await notifications().notifyAdminCall(matchId, called);
+
+      expect(await rows()).toEqual([
+        { steam_id: called, entity_id: matchId, in_app: false },
+      ]);
+    });
+
     it("names the match an admin is calling about", async () => {
       const { matchId } = await fx.bareMatch();
       await postgres.query(

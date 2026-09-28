@@ -984,7 +984,45 @@ describe("MatchmakeService", () => {
 
       expect(mockNotifications.retractMatchFound).toHaveBeenCalledWith(
         "confirmation-1",
+        undefined,
       );
+    });
+
+    const pendingConfirmation = () => {
+      const { team1, team2 } = teams();
+
+      mockRedis.hgetall.mockImplementation(async (key: string) =>
+        key.endsWith(":confirmed")
+          ? {}
+          : {
+              type: "Competitive",
+              region: "us-east",
+              lobbyIds: JSON.stringify(["lobby-a", "lobby-b"]),
+              team1: JSON.stringify(team1.players),
+              team2: JSON.stringify(team2.players),
+            },
+      );
+    };
+
+    // The push may not have gone out yet -- it is still on its way to the
+    // player's phone while they accept on the desktop.
+    it("retracts a player's push as soon as they accept", async () => {
+      pendingConfirmation();
+
+      await service.playerConfirmMatchmaking("confirmation-1", "steam-2");
+
+      expect(mockNotifications.retractMatchFound).toHaveBeenCalledWith(
+        "confirmation-1",
+        "steam-2",
+      );
+    });
+
+    it("leaves the push alone for someone who is not in the ready check", async () => {
+      pendingConfirmation();
+
+      await service.playerConfirmMatchmaking("confirmation-1", "steam-99");
+
+      expect(mockNotifications.retractMatchFound).not.toHaveBeenCalled();
     });
 
     it("still removes the confirmation when the retract fails", async () => {

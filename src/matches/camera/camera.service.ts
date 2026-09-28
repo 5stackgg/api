@@ -54,8 +54,10 @@ export type CameraPlayerStatus = {
 
 @Injectable()
 export class CameraService {
-  // One ring per call. An admin's WHIP publish can be retried or renegotiated
-  // mid-call, and each of those arrives here as a fresh publish.
+  // At most one ring per player per match a minute. A retried or renegotiated
+  // publish arrives here as a fresh one, and the guard deliberately outlives a
+  // hangup: clearing it there would let publish-then-hang-up in a loop ring a
+  // player as fast as it could be scripted.
   private static readonly ADMIN_CALL_RING_SECONDS = 60;
 
   private readonly redis: Redis;
@@ -121,8 +123,14 @@ export class CameraService {
   // was surface area for nothing. Coaches count: they stand behind the team
   // during a technical timeout, so "on camera" has to mean them too.
   public async assertCameraPlayer(matchId: string, user: User) {
-    if (!UUID_PATTERN.test(matchId)) {
+    if (!(await this.isCameraParticipant(matchId, user.steam_id))) {
       throw new Error(NOT_AUTHORIZED);
+    }
+  }
+
+  private async isCameraParticipant(matchId: string, steamId: string) {
+    if (!UUID_PATTERN.test(matchId)) {
+      return false;
     }
 
     const [row] = await this.postgres.query<Array<{ status: string }>>(
@@ -144,14 +152,12 @@ export class CameraService {
            )
          )
        LIMIT 1`,
-      [matchId, user.steam_id],
+      [matchId, steamId],
     );
 
     // A finished match is not one you can still publish to, the same way an
     // expired token used to stop working.
-    if (!row || !CAMERA_ACTIVE_MATCH_STATUSES.includes(row.status)) {
-      throw new Error(NOT_AUTHORIZED);
-    }
+    return Boolean(row) && CAMERA_ACTIVE_MATCH_STATUSES.includes(row.status);
   }
 
   // Site admins, or an organizer of this specific match — deliberately not the
@@ -240,7 +246,7 @@ export class CameraService {
     matchId: string,
     steamId: string,
     user: User,
-  ) {
+  ): Promise<CameraScope> {
     if (!STEAM_ID_PATTERN.test(steamId)) {
       throw new Error(NOT_AUTHORIZED);
     }
@@ -248,7 +254,7 @@ export class CameraService {
     const scope = await this.watchScope(matchId, user);
 
     if (scope.kind === "all") {
-      return;
+      return scope;
     }
 
     // Same widening as watchScope: a lineup is its roster and its coach, so a
@@ -273,6 +279,8 @@ export class CameraService {
     if (!row) {
       throw new Error(NOT_AUTHORIZED);
     }
+
+    return scope;
   }
 
   // The broadcast pod has no site session — it authenticates as the match
@@ -362,7 +370,7 @@ export class CameraService {
     user: User,
     sdp: string,
   ) {
-    await this.assertCanWatchPlayer(matchId, steamId, user);
+    const scope = await this.assertCanWatchPlayer(matchId, steamId, user);
 
     const answer = await this.mediaMtx.proxySdp(
       CameraService.talkPathForPlayer(matchId, steamId),
@@ -370,7 +378,11 @@ export class CameraService {
       sdp,
     );
 
-    void this.ringPlayer(matchId, steamId);
+    // "all" is an admin or an organizer. A teammate talking to a teammate is
+    // not an admin calling, and must not be able to push as one.
+    if (scope.kind === "all") {
+      void this.ringPlayer(matchId, steamId);
+    }
 
     return answer;
   }
@@ -384,15 +396,20 @@ export class CameraService {
       sdp,
     );
 
-    // The ring guard is left standing: the player is on the call now, and a
-    // renegotiated publish must not ring them about the call they are on.
-    void this.endRing(matchId, user.steam_id, false);
+    void this.endRing(matchId, user.steam_id);
 
     return answer;
   }
 
   private async ringPlayer(matchId: string, steamId: string) {
     try {
+      // An organizer's scope is "all" without the target ever being checked
+      // against the match, so without this any organizer of any match could
+      // push "Admin is calling you" to any player at all.
+      if (!(await this.isCameraParticipant(matchId, steamId))) {
+        return;
+      }
+
       const claimed = await this.redis.set(
         CameraService.adminCallRingKey(matchId, steamId),
         1,
@@ -414,12 +431,8 @@ export class CameraService {
     }
   }
 
-  private async endRing(matchId: string, steamId: string, hungUp: boolean) {
+  private async endRing(matchId: string, steamId: string) {
     try {
-      if (hungUp) {
-        await this.redis.del(CameraService.adminCallRingKey(matchId, steamId));
-      }
-
       await this.notifications.retractAdminCall(matchId, steamId);
     } catch (error) {
       this.logger.warn(
@@ -456,7 +469,7 @@ export class CameraService {
       CameraService.talkPathForPlayer(matchId, steamId),
     );
 
-    void this.endRing(matchId, steamId, true);
+    void this.endRing(matchId, steamId);
   }
 
   public async hangupPlayerTalk(matchId: string, user: User) {

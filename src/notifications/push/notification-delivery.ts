@@ -15,8 +15,8 @@ export type DeliveryPolicy = {
   // before discarding it. Unset keeps web-push's four-week default.
   ttlSeconds?: number;
   urgency?: "very-low" | "low" | "normal" | "high";
-  // Tells the service worker to ring rather than notify: vibration, and a
-  // notification that stays until it is acted on.
+  // Asks the service worker to ring rather than notify. What ringing means is
+  // the worker's to decide (sw-push.js).
   urgent?: boolean;
   ignoreQuietHours?: boolean;
 };
