@@ -727,18 +727,12 @@ export class ChatService {
 
     void this.to(type, id, "deleted", { id: messageId });
 
-    await this.notifications
-      .retractChatMessage(
-        ChatService.notificationTypeFor(type),
-        `${type}:${id}`,
-        messageId,
-      )
-      .catch((error) => {
-        this.logger.warn(
-          `unable to retract notifications for ${type}:${id} message ${messageId}`,
-          error,
-        );
-      });
+    await this.notifications.retractChatMessage(messageId).catch((error) => {
+      this.logger.warn(
+        `unable to retract notifications for ${type}:${id} message ${messageId}`,
+        error,
+      );
+    });
 
     return { deleted: true };
   }
@@ -869,6 +863,15 @@ export class ChatService {
       entityId,
       targets,
     );
+
+    // A delete that landed while the rows above were being written retracted
+    // nothing, and it removes the message before it retracts.
+    if (
+      type !== ChatLobbyType.Direct &&
+      !(await this.redis.hexists(`chat_${type}_${id}`, messageId))
+    ) {
+      await this.notifications.retractChatMessage(messageId);
+    }
   }
 
   // Match chat is its own notification type, and so its own push category.

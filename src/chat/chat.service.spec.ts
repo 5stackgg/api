@@ -15,6 +15,7 @@ describe("ChatService direct messages", () => {
     hget: jest.fn().mockResolvedValue(null),
     hgetall: jest.fn().mockResolvedValue({}),
     hdel: jest.fn(),
+    hexists: jest.fn().mockResolvedValue(1),
     get: jest.fn().mockResolvedValue(null),
     set: jest.fn(),
     del: jest.fn(),
@@ -249,6 +250,7 @@ describe("ChatService direct messages", () => {
     // room would otherwise leave them seated for every test after it.
     redis.hget.mockResolvedValue(null);
     redis.hgetall.mockResolvedValue({});
+    redis.hexists.mockResolvedValue(1);
     redis.get.mockResolvedValue(null);
     notifications.retractChatMessage.mockResolvedValue(undefined);
     acceptedFriendships = [[ME, FRIEND]];
@@ -1107,29 +1109,7 @@ describe("ChatService direct messages", () => {
         moderator(),
       );
 
-      expect(notifications.retractChatMessage).toHaveBeenCalledWith(
-        "MatchChatMessage",
-        "match:m-1",
-        MESSAGE_ID,
-      );
-    });
-
-    it("retracts under the room's own notification type", async () => {
-      store(ChatLobbyType.Tournament, "t-1");
-      tournament.roster = [ME];
-
-      await service.deleteMessage(
-        ChatLobbyType.Tournament,
-        "t-1",
-        MESSAGE_ID,
-        moderator(),
-      );
-
-      expect(notifications.retractChatMessage).toHaveBeenCalledWith(
-        "ChatMessage",
-        "tournament:t-1",
-        MESSAGE_ID,
-      );
+      expect(notifications.retractChatMessage).toHaveBeenCalledWith(MESSAGE_ID);
     });
 
     it("still deletes when the retraction fails", async () => {
@@ -1235,6 +1215,50 @@ describe("ChatService direct messages", () => {
       ).resolves.toEqual({ deleted: false, code: ChatErrorCode.NotFound });
 
       expect(redis.hget).not.toHaveBeenCalled();
+    });
+
+    describe("while its notifications are still being written", () => {
+      const sayInTournament = async () => {
+        tournament.roster = [ME, FRIEND];
+        redis.hget.mockResolvedValue(
+          JSON.stringify({ user: { steam_id: ME } }),
+        );
+        role = "user";
+
+        const result = await service.sendMessageToChat(
+          ChatLobbyType.Tournament,
+          "t-1",
+          { steam_id: ME, name: "Someone", role: "user" } as any,
+          "hi",
+        );
+
+        await flush();
+        await flush();
+
+        return result.accepted ? result.messageId : undefined;
+      };
+
+      it("retracts them once written if the message was deleted meanwhile", async () => {
+        redis.hexists.mockResolvedValue(0);
+
+        const messageId = await sayInTournament();
+
+        expect(notifications.notifyPlayers).toHaveBeenCalled();
+        expect(redis.hexists).toHaveBeenCalledWith(
+          "chat_tournament_t-1",
+          messageId,
+        );
+        expect(notifications.retractChatMessage).toHaveBeenCalledWith(
+          messageId,
+        );
+      });
+
+      it("leaves them alone while the message is still there", async () => {
+        await sayInTournament();
+
+        expect(notifications.notifyPlayers).toHaveBeenCalled();
+        expect(notifications.retractChatMessage).not.toHaveBeenCalled();
+      });
     });
 
     it("stamps each chat notification with the message it announces", async () => {

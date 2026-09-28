@@ -18,3 +18,7 @@ CREATE TABLE IF NOT EXISTS public.chat_message_deletions (
 
 CREATE INDEX IF NOT EXISTS chat_message_deletions_author_idx
     ON public.chat_message_deletions (author_steam_id, deleted_at DESC);
+
+CREATE INDEX IF NOT EXISTS notifications_message_id_idx
+    ON public.notifications ((data->>'messageId'))
+    WHERE data->>'messageId' IS NOT NULL;

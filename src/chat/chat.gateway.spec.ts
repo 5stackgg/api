@@ -117,7 +117,12 @@ describe("ChatGateway lobby:chat", () => {
       expect(sent(socket)).toEqual([
         {
           event: "chat:error",
-          data: { code: ChatErrorCode.TooLong, max: 2000, requestId: "r-1" },
+          data: {
+            code: ChatErrorCode.TooLong,
+            action: "send",
+            max: 2000,
+            requestId: "r-1",
+          },
         },
       ]);
     });
@@ -135,7 +140,10 @@ describe("ChatGateway lobby:chat", () => {
       );
 
       expect(sent(socket)).toEqual([
-        { event: "chat:error", data: { code: "too_long", max: 2000 } },
+        {
+          event: "chat:error",
+          data: { code: "too_long", action: "send", max: 2000 },
+        },
       ]);
     });
 
@@ -180,7 +188,11 @@ describe("ChatGateway lobby:chat", () => {
       expect(sent(socket)).toEqual([
         {
           event: "chat:error",
-          data: { code: ChatErrorCode.NotAllowed, requestId: "r-2" },
+          data: {
+            code: ChatErrorCode.NotAllowed,
+            action: "send",
+            requestId: "r-2",
+          },
         },
       ]);
     });
@@ -204,7 +216,10 @@ describe("ChatGateway lobby:chat", () => {
 
       expect(chat.sendChatToServer).not.toHaveBeenCalled();
       expect(sent(socket)).toEqual([
-        { event: "chat:error", data: { code: "gagged", requestId: "r-4" } },
+        {
+          event: "chat:error",
+          data: { code: "gagged", action: "send", requestId: "r-4" },
+        },
       ]);
     });
 
@@ -283,7 +298,10 @@ describe("ChatGateway lobby:chat", () => {
       );
 
       expect(sent(socket)).toEqual([
-        { event: "chat:ack", data: { requestId: "r-3", messageId: "msg-1" } },
+        {
+          event: "chat:ack",
+          data: { requestId: "r-3", messageId: "msg-1", action: "send" },
+        },
       ]);
     });
 
@@ -380,7 +398,10 @@ describe("ChatGateway lobby:delete", () => {
     );
 
     expect(sent(socket)).toEqual([
-      { event: "chat:ack", data: { requestId: "r-2", messageId: MESSAGE_ID } },
+      {
+        event: "chat:ack",
+        data: { requestId: "r-2", messageId: MESSAGE_ID, action: "delete" },
+      },
     ]);
   });
 
@@ -412,7 +433,10 @@ describe("ChatGateway lobby:delete", () => {
       );
 
       expect(sent(socket)).toEqual([
-        { event: "chat:error", data: { code, requestId: "r-3" } },
+        {
+          event: "chat:error",
+          data: { code, action: "delete", requestId: "r-3" },
+        },
       ]);
     },
   );
@@ -430,7 +454,10 @@ describe("ChatGateway lobby:delete", () => {
     );
 
     expect(sent(socket)).toEqual([
-      { event: "chat:error", data: { code: "not_allowed" } },
+      {
+        event: "chat:error",
+        data: { code: "not_allowed", action: "delete" },
+      },
     ]);
   });
 });

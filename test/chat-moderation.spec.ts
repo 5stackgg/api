@@ -366,13 +366,17 @@ describe("chat moderation (SQL-driven)", () => {
       await push.sendForNotification({ id, type: "ChatMessage" });
     };
 
-    const deletedAt = async (id: string) =>
+    const notification = async (id: string) =>
       (
-        await postgres.query<Array<{ deleted_at: Date | null }>>(
-          `SELECT deleted_at FROM notifications WHERE id = $1::uuid`,
-          [id],
-        )
-      ).at(0)?.deleted_at;
+        await postgres.query<
+          Array<{ deleted_at: Date | null; message: string }>
+        >(`SELECT deleted_at, message FROM notifications WHERE id = $1::uuid`, [
+          id,
+        ])
+      ).at(0);
+
+    const deletedAt = async (id: string) =>
+      (await notification(id))?.deleted_at;
 
     it("retracts the deleted message's row and no other", async () => {
       const mod = await moderator();
@@ -395,6 +399,85 @@ describe("chat moderation (SQL-driven)", () => {
       expect(await deletedAt(kept)).toBeNull();
     });
 
+    it("takes the text out of the row, so it cannot be read back", async () => {
+      const mod = await moderator();
+      const author = await fx.player("Author");
+      const reader = await fx.player("Reader");
+      const matchId = randomUUID();
+      const target = await post(matchId, author);
+      const id = await chatNotification(reader, `match:${matchId}`, target);
+
+      await chat.deleteMessage(ChatLobbyType.Match, matchId, target, mod);
+
+      expect((await notification(id))?.message).toBe("");
+    });
+
+    it("blanks a row the bell had already collapsed, leaving it retired", async () => {
+      const reader = await fx.player("Reader");
+      const messageId = randomUUID();
+      const id = await chatNotification(reader, "tournament:t-1", messageId);
+      await postgres.query(
+        `UPDATE notifications
+            SET deleted_at = now() - interval '1 hour'
+          WHERE id = $1::uuid`,
+        [id],
+      );
+      const before = await deletedAt(id);
+
+      await notifications.retractChatMessage(messageId);
+
+      expect(await notification(id)).toEqual({
+        deleted_at: before,
+        message: "",
+      });
+    });
+
+    it("retracts a draft lobby's message after it moved into the match", async () => {
+      const mod = await moderator();
+      const author = await fx.player("Author");
+      const reader = await fx.player("Reader");
+      const draftId = randomUUID();
+      const matchId = randomUUID();
+      const target = await post(draftId, author);
+      await redis.rename(`chat_match_${draftId}`, `chat_draft_${draftId}`);
+
+      const id = await chatNotification(
+        reader,
+        `draft:${draftId}`,
+        target,
+        "ChatMessage",
+      );
+
+      await chat.migrateLobbyMessages(
+        ChatLobbyType.Draft,
+        draftId,
+        ChatLobbyType.Match,
+        matchId,
+      );
+
+      await expect(
+        chat.deleteMessage(ChatLobbyType.Match, matchId, target, mod),
+      ).resolves.toEqual({ deleted: true });
+
+      expect(await deletedAt(id)).toBeInstanceOf(Date);
+    });
+
+    it("finds the message's rows through an index", async () => {
+      const plan = await postgres.transaction(async (client) => {
+        await client.query("SET LOCAL enable_seqscan = off");
+
+        const { rows } = await client.query(
+          `EXPLAIN SELECT id FROM notifications
+            WHERE data->>'messageId' = $1`,
+          [randomUUID()],
+        );
+
+        return rows.map((row) => row["QUERY PLAN"]).join("\n");
+      });
+
+      expect(plan).toContain("notifications_message_id_idx");
+    });
+
     it("drops a retracted row from push delivery", async () => {
       const reader = await subscribedReader();
       const messageId = randomUUID();
@@ -405,11 +488,7 @@ describe("chat moderation (SQL-driven)", () => {
         "ChatMessage",
       );
 
-      await notifications.retractChatMessage(
-        "ChatMessage",
-        "tournament:t-1",
-        messageId,
-      );
+      await notifications.retractChatMessage(messageId);
       await deliver(id);
 
       expect(webPush.sendNotification).not.toHaveBeenCalled();
@@ -431,11 +510,7 @@ describe("chat moderation (SQL-driven)", () => {
         "ChatMessage",
       );
 
-      await notifications.retractChatMessage(
-        "ChatMessage",
-        "tournament:t-1",
-        retracted,
-      );
+      await notifications.retractChatMessage(retracted);
       await deliver(kept);
 
       expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
