@@ -9,7 +9,8 @@ BEGIN
         return jsonb_build_object(
             'competitive', get_player_elo_by_type(player, 'Competitive'),
             'wingman', get_player_elo_by_type(player, 'Wingman'),
-            'duel', get_player_elo_by_type(player, 'Duel')
+            'duel', get_player_elo_by_type(player, 'Duel'),
+            'rush', get_player_elo_by_type(player, 'Rush')
         );
     END IF;
 
@@ -19,9 +20,11 @@ BEGIN
         'competitive', get_player_season_elo_by_type(player, 'Competitive', _active_season_id),
         'wingman', get_player_season_elo_by_type(player, 'Wingman', _active_season_id),
         'duel', get_player_season_elo_by_type(player, 'Duel', _active_season_id),
+        'rush', get_player_season_elo_by_type(player, 'Rush', _active_season_id),
         'tournament_competitive', get_player_tournament_elo_by_type(player, 'Competitive'),
         'tournament_wingman', get_player_tournament_elo_by_type(player, 'Wingman'),
-        'tournament_duel', get_player_tournament_elo_by_type(player, 'Duel')
+        'tournament_duel', get_player_tournament_elo_by_type(player, 'Duel'),
+        'tournament_rush', get_player_tournament_elo_by_type(player, 'Rush')
     );
 END;
 $$;

@@ -52,6 +52,10 @@ CREATE OR REPLACE FUNCTION public.get_total_player_wins_duel(player public.playe
     LANGUAGE sql STABLE
     AS $$ SELECT public.get_total_player_wins_by_type(player, 'Duel'); $$;
 
+CREATE OR REPLACE FUNCTION public.get_total_player_wins_rush(player public.players) RETURNS INT
+    LANGUAGE sql STABLE
+    AS $$ SELECT public.get_total_player_wins_by_type(player, 'Rush'); $$;
+
 CREATE OR REPLACE FUNCTION public.get_total_player_losses_competitive(player public.players) RETURNS INT
     LANGUAGE sql STABLE
     AS $$ SELECT public.get_total_player_losses_by_type(player, 'Competitive'); $$;
@@ -63,3 +67,7 @@ CREATE OR REPLACE FUNCTION public.get_total_player_losses_wingman(player public.
 CREATE OR REPLACE FUNCTION public.get_total_player_losses_duel(player public.players) RETURNS INT
     LANGUAGE sql STABLE
     AS $$ SELECT public.get_total_player_losses_by_type(player, 'Duel'); $$;
+
+CREATE OR REPLACE FUNCTION public.get_total_player_losses_rush(player public.players) RETURNS INT
+    LANGUAGE sql STABLE
+    AS $$ SELECT public.get_total_player_losses_by_type(player, 'Rush'); $$;

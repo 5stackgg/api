@@ -80,6 +80,11 @@ export class MatchmakingGateway {
                   _eq: "public.matchmaking_duel",
                 },
               },
+              {
+                name: {
+                  _eq: "public.matchmaking_rush",
+                },
+              },
             ],
           },
         },

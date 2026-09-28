@@ -436,6 +436,7 @@ export class MatchesController {
       Competitive: "",
       Duel: "",
       Wingman: "",
+      Rush: "",
     };
     match.options.cfg_execs = [];
 

@@ -161,6 +161,7 @@ insert_permissions:
             - Competitive
             - Wingman
             - Duel
+            - Rush
             - Premier
             - Faceit
       set:

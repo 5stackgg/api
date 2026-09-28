@@ -7,7 +7,8 @@ BEGIN
     return jsonb_build_object(
         'competitive', get_player_peak_elo_by_type(player, 'Competitive'),
         'wingman', get_player_peak_elo_by_type(player, 'Wingman'),
-        'duel', get_player_peak_elo_by_type(player, 'Duel')
+        'duel', get_player_peak_elo_by_type(player, 'Duel'),
+        'rush', get_player_peak_elo_by_type(player, 'Rush')
     );
 END;
 $$;

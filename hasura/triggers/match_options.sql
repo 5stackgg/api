@@ -17,6 +17,14 @@ DECLARE
 lan_count int;
 region_count int;
 BEGIN
+    IF NEW.type = 'Rush' THEN
+        NEW.best_of := 1;
+        NEW.mr := 8;
+        NEW.overtime := false;
+        NEW.knife_round := false;
+        NEW.map_veto := false;
+    END IF;
+
     SELECT COUNT(DISTINCT region) INTO region_count
         FROM servers where enabled = true and type = 'Ranked';
 
@@ -61,6 +69,15 @@ BEGIN
 
     IF _match_status = 'Finished' OR _match_status = 'Forfeit' OR _match_status = 'Tie' OR _match_status = 'Surrendered' THEN  
         RAISE EXCEPTION 'Cannot change match options after match is finished' USING ERRCODE = '22000';
+    END IF;
+
+    -- Forced before the Live/Veto freeze so a pinned value never reads as a change.
+    IF NEW.type = 'Rush' THEN
+        NEW.best_of := 1;
+        NEW.mr := 8;
+        NEW.overtime := false;
+        NEW.knife_round := false;
+        NEW.map_veto := false;
     END IF;
 
     IF _match_status != 'PickingPlayers' THEN

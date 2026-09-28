@@ -119,7 +119,8 @@ export class Fixtures {
   }
 
   // The install-seeded pool for a match type (Competitive: 7 maps, Wingman: 6,
-  // Duel: 6) — larger than any best_of, so maps stay with the veto.
+  // Duel: 6) — larger than any best_of, so maps stay with the veto. Rush's
+  // pool is its single map, so a Bo1 materializes it straight away.
   async seededPool(type: string): Promise<string> {
     const [pool] = await this.postgres.query<Array<{ id: string }>>(
       "SELECT id FROM map_pools WHERE type = $1 AND seed = true",
@@ -133,7 +134,9 @@ export class Fixtures {
     const mapPoolId =
       over.mapPoolId ??
       (await this.seededPool(
-        type === "Duel" || type === "Wingman" ? type : "Competitive",
+        type === "Duel" || type === "Wingman" || type === "Rush"
+          ? type
+          : "Competitive",
       ));
     const [row] = await this.postgres.query<Array<{ id: string }>>(
       `INSERT INTO match_options

@@ -56,6 +56,7 @@ export class DraftGameService {
     "Competitive",
     "Wingman",
     "Duel",
+    "Rush",
   ];
 
   public static readonly DEFAULT_ELO = 5000;

@@ -417,7 +417,8 @@ export class MatchmakingLobbyService {
    * match on its own (both lineups, split in-house). Anything between those two
    * — or anything above the full match size — cannot be placed.
    *
-   * Duel (2): 1 or 2 · Wingman (4): 1-2 or 4 · Competitive (10): 1-5 or 10
+   * Duel (2): 1 or 2 · Wingman (4): 1-2 or 4 · Rush (6): 1-3 or 6 ·
+   * Competitive (10): 1-5 or 10
    */
   private canPartyQueue(type: e_match_types_enum, partySize: number): boolean {
     const expected = ExpectedPlayers[type];

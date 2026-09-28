@@ -9535,6 +9535,9 @@ enum e_game_cfg_types_enum {
   """Live game configuration"""
   Live
 
+  """Rush game configuration"""
+  Rush
+
   """Wingman game configuration"""
   Wingman
 }
@@ -11573,6 +11576,9 @@ enum e_map_pool_types_enum {
   """1 vs 1"""
   Duel
 
+  """3 vs 3"""
+  Rush
+
   """2 vs 2"""
   Wingman
 }
@@ -12897,6 +12903,9 @@ enum e_match_types_enum {
 
   """Valve Premier matchmaking — 5 vs 5 with CS Rating"""
   Premier
+
+  """Fast-paced 3 vs 3 matches, pushing room by room"""
+  Rush
 
   """Team up with a friend and compete in fast-paced 2v2 matches"""
   Wingman
@@ -19388,6 +19397,17 @@ type event_match_links_aggregate {
   nodes: [event_match_links!]!
 }
 
+input event_match_links_aggregate_bool_exp {
+  count: event_match_links_aggregate_bool_exp_count
+}
+
+input event_match_links_aggregate_bool_exp_count {
+  arguments: [event_match_links_select_column!]
+  distinct: Boolean
+  filter: event_match_links_bool_exp
+  predicate: Int_comparison_exp!
+}
+
 """
 aggregate fields of "event_match_links"
 """
@@ -19395,6 +19415,25 @@ type event_match_links_aggregate_fields {
   count(columns: [event_match_links_select_column!], distinct: Boolean): Int!
   max: event_match_links_max_fields
   min: event_match_links_min_fields
+}
+
+"""
+order by aggregate values of table "event_match_links"
+"""
+input event_match_links_aggregate_order_by {
+  count: order_by
+  max: event_match_links_max_order_by
+  min: event_match_links_min_order_by
+}
+
+"""
+input type for inserting array relation for remote table "event_match_links"
+"""
+input event_match_links_arr_rel_insert_input {
+  data: [event_match_links_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: event_match_links_on_conflict
 }
 
 """
@@ -19439,11 +19478,29 @@ type event_match_links_max_fields {
   match_id: uuid
 }
 
+"""
+order by max() on columns of table "event_match_links"
+"""
+input event_match_links_max_order_by {
+  created_at: order_by
+  event_id: order_by
+  match_id: order_by
+}
+
 """aggregate min on columns"""
 type event_match_links_min_fields {
   created_at: timestamptz
   event_id: uuid
   match_id: uuid
+}
+
+"""
+order by min() on columns of table "event_match_links"
+"""
+input event_match_links_min_order_by {
+  created_at: order_by
+  event_id: order_by
+  match_id: order_by
 }
 
 """
@@ -42424,6 +42481,42 @@ type matches {
     where: v_player_elo_bool_exp
   ): v_player_elo_aggregate!
   ended_at: timestamptz
+
+  """An array relationship"""
+  event_links(
+    """distinct select on columns"""
+    distinct_on: [event_match_links_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [event_match_links_order_by!]
+
+    """filter the rows returned"""
+    where: event_match_links_bool_exp
+  ): [event_match_links!]!
+
+  """An aggregate relationship"""
+  event_links_aggregate(
+    """distinct select on columns"""
+    distinct_on: [event_match_links_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [event_match_links_order_by!]
+
+    """filter the rows returned"""
+    where: event_match_links_bool_exp
+  ): event_match_links_aggregate!
   external_id: String
   id: uuid!
 
@@ -43186,6 +43279,8 @@ input matches_bool_exp {
   elo_changes: v_player_elo_bool_exp
   elo_changes_aggregate: v_player_elo_aggregate_bool_exp
   ended_at: timestamptz_comparison_exp
+  event_links: event_match_links_bool_exp
+  event_links_aggregate: event_match_links_aggregate_bool_exp
   external_id: String_comparison_exp
   id: uuid_comparison_exp
   invite_code: String_comparison_exp
@@ -43310,6 +43405,7 @@ input matches_insert_input {
   e_region: server_regions_obj_rel_insert_input
   elo_changes: v_player_elo_arr_rel_insert_input
   ended_at: timestamptz
+  event_links: event_match_links_arr_rel_insert_input
   external_id: String
   id: uuid
   label: String
@@ -43637,6 +43733,7 @@ input matches_order_by {
   effective_at: order_by
   elo_changes_aggregate: v_player_elo_aggregate_order_by
   ended_at: order_by
+  event_links_aggregate: event_match_links_aggregate_order_by
   external_id: order_by
   id: order_by
   invite_code: order_by
@@ -46253,7 +46350,7 @@ type mutation_root {
   """
   delete single row from the table: "player_sanctions"
   """
-  delete_player_sanctions_by_pk(created_at: timestamptz!, id: uuid!): player_sanctions
+  delete_player_sanctions_by_pk(id: uuid!): player_sanctions
 
   """
   delete data from the table: "player_season_stats"
@@ -74790,7 +74887,7 @@ unique or primary key constraints on table "player_sanctions"
 """
 enum player_sanctions_constraint {
   """
-  unique or primary key constraint on columns "id", "created_at"
+  unique or primary key constraint on columns "id"
   """
   player_sanctions_pkey
 }
@@ -74905,7 +75002,6 @@ input player_sanctions_order_by {
 
 """primary key columns input for table: player_sanctions"""
 input player_sanctions_pk_columns_input {
-  created_at: timestamptz!
   id: uuid!
 }
 
@@ -78813,6 +78909,11 @@ type players {
   losses_duel: Int
 
   """
+  A computed field, executes function "get_total_player_losses_rush"
+  """
+  losses_rush: Int
+
+  """
   A computed field, executes function "get_total_player_losses_wingman"
   """
   losses_wingman: Int
@@ -79634,6 +79735,11 @@ type players {
   wins_duel: Int
 
   """
+  A computed field, executes function "get_total_player_wins_rush"
+  """
+  wins_rush: Int
+
+  """
   A computed field, executes function "get_total_player_wins_wingman"
   """
   wins_wingman: Int
@@ -79687,6 +79793,11 @@ type players_avg_fields {
   losses_duel: Int
 
   """
+  A computed field, executes function "get_total_player_losses_rush"
+  """
+  losses_rush: Int
+
+  """
   A computed field, executes function "get_total_player_losses_wingman"
   """
   losses_wingman: Int
@@ -79713,6 +79824,11 @@ type players_avg_fields {
   A computed field, executes function "get_total_player_wins_duel"
   """
   wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_rush"
+  """
+  wins_rush: Int
 
   """
   A computed field, executes function "get_total_player_wins_wingman"
@@ -79795,6 +79911,7 @@ input players_bool_exp {
   losses: Int_comparison_exp
   losses_competitive: Int_comparison_exp
   losses_duel: Int_comparison_exp
+  losses_rush: Int_comparison_exp
   losses_wingman: Int_comparison_exp
   match_map_hltv: v_player_match_map_hltv_bool_exp
   match_map_hltv_aggregate: v_player_match_map_hltv_aggregate_bool_exp
@@ -79861,6 +79978,7 @@ input players_bool_exp {
   wins: Int_comparison_exp
   wins_competitive: Int_comparison_exp
   wins_duel: Int_comparison_exp
+  wins_rush: Int_comparison_exp
   wins_wingman: Int_comparison_exp
 }
 
@@ -80019,6 +80137,11 @@ type players_max_fields {
   losses_duel: Int
 
   """
+  A computed field, executes function "get_total_player_losses_rush"
+  """
+  losses_rush: Int
+
+  """
   A computed field, executes function "get_total_player_losses_wingman"
   """
   losses_wingman: Int
@@ -80061,6 +80184,11 @@ type players_max_fields {
   A computed field, executes function "get_total_player_wins_duel"
   """
   wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_rush"
+  """
+  wins_rush: Int
 
   """
   A computed field, executes function "get_total_player_wins_wingman"
@@ -80113,6 +80241,11 @@ type players_min_fields {
   losses_duel: Int
 
   """
+  A computed field, executes function "get_total_player_losses_rush"
+  """
+  losses_rush: Int
+
+  """
   A computed field, executes function "get_total_player_losses_wingman"
   """
   losses_wingman: Int
@@ -80155,6 +80288,11 @@ type players_min_fields {
   A computed field, executes function "get_total_player_wins_duel"
   """
   wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_rush"
+  """
+  wins_rush: Int
 
   """
   A computed field, executes function "get_total_player_wins_wingman"
@@ -80243,6 +80381,7 @@ input players_order_by {
   losses: order_by
   losses_competitive: order_by
   losses_duel: order_by
+  losses_rush: order_by
   losses_wingman: order_by
   match_map_hltv_aggregate: v_player_match_map_hltv_aggregate_order_by
   match_map_stats_aggregate: player_match_map_stats_aggregate_order_by
@@ -80289,6 +80428,7 @@ input players_order_by {
   wins: order_by
   wins_competitive: order_by
   wins_duel: order_by
+  wins_rush: order_by
   wins_wingman: order_by
 }
 
@@ -80455,6 +80595,11 @@ type players_stddev_fields {
   losses_duel: Int
 
   """
+  A computed field, executes function "get_total_player_losses_rush"
+  """
+  losses_rush: Int
+
+  """
   A computed field, executes function "get_total_player_losses_wingman"
   """
   losses_wingman: Int
@@ -80481,6 +80626,11 @@ type players_stddev_fields {
   A computed field, executes function "get_total_player_wins_duel"
   """
   wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_rush"
+  """
+  wins_rush: Int
 
   """
   A computed field, executes function "get_total_player_wins_wingman"
@@ -80511,6 +80661,11 @@ type players_stddev_pop_fields {
   losses_duel: Int
 
   """
+  A computed field, executes function "get_total_player_losses_rush"
+  """
+  losses_rush: Int
+
+  """
   A computed field, executes function "get_total_player_losses_wingman"
   """
   losses_wingman: Int
@@ -80537,6 +80692,11 @@ type players_stddev_pop_fields {
   A computed field, executes function "get_total_player_wins_duel"
   """
   wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_rush"
+  """
+  wins_rush: Int
 
   """
   A computed field, executes function "get_total_player_wins_wingman"
@@ -80567,6 +80727,11 @@ type players_stddev_samp_fields {
   losses_duel: Int
 
   """
+  A computed field, executes function "get_total_player_losses_rush"
+  """
+  losses_rush: Int
+
+  """
   A computed field, executes function "get_total_player_losses_wingman"
   """
   losses_wingman: Int
@@ -80593,6 +80758,11 @@ type players_stddev_samp_fields {
   A computed field, executes function "get_total_player_wins_duel"
   """
   wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_rush"
+  """
+  wins_rush: Int
 
   """
   A computed field, executes function "get_total_player_wins_wingman"
@@ -80669,6 +80839,11 @@ type players_sum_fields {
   losses_duel: Int
 
   """
+  A computed field, executes function "get_total_player_losses_rush"
+  """
+  losses_rush: Int
+
+  """
   A computed field, executes function "get_total_player_losses_wingman"
   """
   losses_wingman: Int
@@ -80695,6 +80870,11 @@ type players_sum_fields {
   A computed field, executes function "get_total_player_wins_duel"
   """
   wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_rush"
+  """
+  wins_rush: Int
 
   """
   A computed field, executes function "get_total_player_wins_wingman"
@@ -80834,6 +81014,11 @@ type players_var_pop_fields {
   losses_duel: Int
 
   """
+  A computed field, executes function "get_total_player_losses_rush"
+  """
+  losses_rush: Int
+
+  """
   A computed field, executes function "get_total_player_losses_wingman"
   """
   losses_wingman: Int
@@ -80860,6 +81045,11 @@ type players_var_pop_fields {
   A computed field, executes function "get_total_player_wins_duel"
   """
   wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_rush"
+  """
+  wins_rush: Int
 
   """
   A computed field, executes function "get_total_player_wins_wingman"
@@ -80890,6 +81080,11 @@ type players_var_samp_fields {
   losses_duel: Int
 
   """
+  A computed field, executes function "get_total_player_losses_rush"
+  """
+  losses_rush: Int
+
+  """
   A computed field, executes function "get_total_player_losses_wingman"
   """
   losses_wingman: Int
@@ -80916,6 +81111,11 @@ type players_var_samp_fields {
   A computed field, executes function "get_total_player_wins_duel"
   """
   wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_rush"
+  """
+  wins_rush: Int
 
   """
   A computed field, executes function "get_total_player_wins_wingman"
@@ -80946,6 +81146,11 @@ type players_variance_fields {
   losses_duel: Int
 
   """
+  A computed field, executes function "get_total_player_losses_rush"
+  """
+  losses_rush: Int
+
+  """
   A computed field, executes function "get_total_player_losses_wingman"
   """
   losses_wingman: Int
@@ -80972,6 +81177,11 @@ type players_variance_fields {
   A computed field, executes function "get_total_player_wins_duel"
   """
   wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_rush"
+  """
+  wins_rush: Int
 
   """
   A computed field, executes function "get_total_player_wins_wingman"
@@ -88111,7 +88321,7 @@ type query_root {
   """
   fetch data from the table: "player_sanctions" using primary key columns
   """
-  player_sanctions_by_pk(created_at: timestamptz!, id: uuid!): player_sanctions
+  player_sanctions_by_pk(id: uuid!): player_sanctions
 
   """An array relationship"""
   player_season_stats(
@@ -103439,7 +103649,7 @@ type subscription_root {
   """
   fetch data from the table: "player_sanctions" using primary key columns
   """
-  player_sanctions_by_pk(created_at: timestamptz!, id: uuid!): player_sanctions
+  player_sanctions_by_pk(id: uuid!): player_sanctions
 
   """
   fetch data from the table in a streaming manner: "player_sanctions"
@@ -144090,6 +144300,7 @@ type v_team_ranks {
   avg_faceit_elo: Int
   avg_faceit_level: float8
   avg_premier: Int
+  avg_rush_elo: Int
   avg_wingman_elo: Int
   max_elo: Int
   min_elo: Int
@@ -144132,6 +144343,7 @@ type v_team_ranks_avg_fields {
   avg_faceit_elo: Float
   avg_faceit_level: Float
   avg_premier: Float
+  avg_rush_elo: Float
   avg_wingman_elo: Float
   max_elo: Float
   min_elo: Float
@@ -144150,6 +144362,7 @@ input v_team_ranks_bool_exp {
   avg_faceit_elo: Int_comparison_exp
   avg_faceit_level: float8_comparison_exp
   avg_premier: Int_comparison_exp
+  avg_rush_elo: Int_comparison_exp
   avg_wingman_elo: Int_comparison_exp
   max_elo: Int_comparison_exp
   min_elo: Int_comparison_exp
@@ -144167,6 +144380,7 @@ input v_team_ranks_insert_input {
   avg_faceit_elo: Int
   avg_faceit_level: float8
   avg_premier: Int
+  avg_rush_elo: Int
   avg_wingman_elo: Int
   max_elo: Int
   min_elo: Int
@@ -144182,6 +144396,7 @@ type v_team_ranks_max_fields {
   avg_faceit_elo: Int
   avg_faceit_level: float8
   avg_premier: Int
+  avg_rush_elo: Int
   avg_wingman_elo: Int
   max_elo: Int
   min_elo: Int
@@ -144196,6 +144411,7 @@ type v_team_ranks_min_fields {
   avg_faceit_elo: Int
   avg_faceit_level: float8
   avg_premier: Int
+  avg_rush_elo: Int
   avg_wingman_elo: Int
   max_elo: Int
   min_elo: Int
@@ -144217,6 +144433,7 @@ input v_team_ranks_order_by {
   avg_faceit_elo: order_by
   avg_faceit_level: order_by
   avg_premier: order_by
+  avg_rush_elo: order_by
   avg_wingman_elo: order_by
   max_elo: order_by
   min_elo: order_by
@@ -144245,6 +144462,9 @@ enum v_team_ranks_select_column {
   avg_premier
 
   """column name"""
+  avg_rush_elo
+
+  """column name"""
   avg_wingman_elo
 
   """column name"""
@@ -144267,6 +144487,7 @@ type v_team_ranks_stddev_fields {
   avg_faceit_elo: Float
   avg_faceit_level: Float
   avg_premier: Float
+  avg_rush_elo: Float
   avg_wingman_elo: Float
   max_elo: Float
   min_elo: Float
@@ -144280,6 +144501,7 @@ type v_team_ranks_stddev_pop_fields {
   avg_faceit_elo: Float
   avg_faceit_level: Float
   avg_premier: Float
+  avg_rush_elo: Float
   avg_wingman_elo: Float
   max_elo: Float
   min_elo: Float
@@ -144293,6 +144515,7 @@ type v_team_ranks_stddev_samp_fields {
   avg_faceit_elo: Float
   avg_faceit_level: Float
   avg_premier: Float
+  avg_rush_elo: Float
   avg_wingman_elo: Float
   max_elo: Float
   min_elo: Float
@@ -144317,6 +144540,7 @@ input v_team_ranks_stream_cursor_value_input {
   avg_faceit_elo: Int
   avg_faceit_level: float8
   avg_premier: Int
+  avg_rush_elo: Int
   avg_wingman_elo: Int
   max_elo: Int
   min_elo: Int
@@ -144331,6 +144555,7 @@ type v_team_ranks_sum_fields {
   avg_faceit_elo: Int
   avg_faceit_level: float8
   avg_premier: Int
+  avg_rush_elo: Int
   avg_wingman_elo: Int
   max_elo: Int
   min_elo: Int
@@ -144344,6 +144569,7 @@ type v_team_ranks_var_pop_fields {
   avg_faceit_elo: Float
   avg_faceit_level: Float
   avg_premier: Float
+  avg_rush_elo: Float
   avg_wingman_elo: Float
   max_elo: Float
   min_elo: Float
@@ -144357,6 +144583,7 @@ type v_team_ranks_var_samp_fields {
   avg_faceit_elo: Float
   avg_faceit_level: Float
   avg_premier: Float
+  avg_rush_elo: Float
   avg_wingman_elo: Float
   max_elo: Float
   min_elo: Float
@@ -144370,6 +144597,7 @@ type v_team_ranks_variance_fields {
   avg_faceit_elo: Float
   avg_faceit_level: Float
   avg_premier: Float
+  avg_rush_elo: Float
   avg_wingman_elo: Float
   max_elo: Float
   min_elo: Float

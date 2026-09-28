@@ -5,7 +5,7 @@ WITH round_lineup AS (
     m.lineup_1_id AS match_lineup_id,
     mmr.lineup_1_money AS own_money, mmr.lineup_2_money AS enemy_money,
     public.normalize_side(mmr.lineup_1_side) AS side,
-    (mmr.round IN (1, COALESCE(mo.mr, 12) + 1)) AS is_pistol
+    (mmr.round = 1 OR (mo.type IS DISTINCT FROM 'Rush' AND mmr.round = COALESCE(mo.mr, 12) + 1)) AS is_pistol
   FROM public.match_map_rounds mmr
   JOIN public.match_maps mm ON mm.id = mmr.match_map_id
   JOIN public.matches m ON m.id = mm.match_id
@@ -17,7 +17,7 @@ WITH round_lineup AS (
     m.lineup_2_id,
     mmr.lineup_2_money, mmr.lineup_1_money,
     public.normalize_side(mmr.lineup_2_side),
-    (mmr.round IN (1, COALESCE(mo.mr, 12) + 1))
+    (mmr.round = 1 OR (mo.type IS DISTINCT FROM 'Rush' AND mmr.round = COALESCE(mo.mr, 12) + 1))
   FROM public.match_map_rounds mmr
   JOIN public.match_maps mm ON mm.id = mmr.match_map_id
   JOIN public.matches m ON m.id = mm.match_id

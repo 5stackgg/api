@@ -1,4 +1,6 @@
-CREATE OR REPLACE FUNCTION public._import_lineup_1_side(_round int, _mr int)
+DROP FUNCTION IF EXISTS public._import_lineup_1_side(int, int);
+
+CREATE OR REPLACE FUNCTION public._import_lineup_1_side(_round int, _mr int, _type text)
 RETURNS text
 LANGUAGE plpgsql
 IMMUTABLE
@@ -14,6 +16,10 @@ BEGIN
   -- Mirror of game-server TeamUtility.GetLineupSide (keep in sync).
   -- lineup_1 starts TERRORIST; GetLineupSide is 0-indexed, round_ticks 1-indexed.
   v_r0 := _round - 1;
+
+  IF _type = 'Rush' THEN
+    RETURN 'TERRORIST';
+  END IF;
 
   IF v_r0 < _mr * 2 THEN
     IF v_r0 < _mr THEN
@@ -172,6 +178,7 @@ DECLARE
   v_lineup_1_id       uuid;
   v_lineup_2_id       uuid;
   v_mr                int;
+  v_type              text;
   v_tick_rate         real;
   v_start_time        timestamptz;
   v_winner_lineup_id  uuid;
@@ -189,7 +196,7 @@ BEGIN
     RETURN;
   END IF;
 
-  SELECT mr INTO v_mr FROM public.match_options WHERE id = v_match_options_id;
+  SELECT mr, type INTO v_mr, v_type FROM public.match_options WHERE id = v_match_options_id;
   v_mr := COALESCE(v_mr, 12);
 
   -- Map for this demo — skill-group ranks (Competitive/Wingman) are per map.
@@ -227,8 +234,8 @@ BEGIN
   with_sides AS (
     SELECT
       r.*,
-      public._import_lineup_1_side(r.round, v_mr) AS lineup_1_side,
-      CASE WHEN public._import_lineup_1_side(r.round, v_mr) = 'TERRORIST' THEN 'CT' ELSE 'TERRORIST' END AS lineup_2_side,
+      public._import_lineup_1_side(r.round, v_mr, v_type) AS lineup_1_side,
+      CASE WHEN public._import_lineup_1_side(r.round, v_mr, v_type) = 'TERRORIST' THEN 'CT' ELSE 'TERRORIST' END AS lineup_2_side,
       CASE
         WHEN winner ILIKE 'T%' THEN 'TERRORIST'
         WHEN winner ILIKE 'C%' THEN 'CT'

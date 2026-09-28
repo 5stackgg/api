@@ -371,6 +371,11 @@ computed_fields:
       function:
         name: get_total_player_losses_duel
         schema: public
+  - name: losses_rush
+    definition:
+      function:
+        name: get_total_player_losses_rush
+        schema: public
   - name: losses_wingman
     definition:
       function:
@@ -423,6 +428,11 @@ computed_fields:
       function:
         name: get_total_player_wins_duel
         schema: public
+  - name: wins_rush
+    definition:
+      function:
+        name: get_total_player_wins_rush
+        schema: public
   - name: wins_wingman
     definition:
       function:
@@ -467,6 +477,7 @@ select_permissions:
         - losses
         - losses_competitive
         - losses_duel
+        - losses_rush
         - losses_wingman
         - matchmaking_cooldown
         - peak_elo
@@ -475,6 +486,7 @@ select_permissions:
         - wins
         - wins_competitive
         - wins_duel
+        - wins_rush
         - wins_wingman
       filter: {}
     comment: ""
@@ -521,6 +533,7 @@ select_permissions:
         - losses
         - losses_competitive
         - losses_duel
+        - losses_rush
         - losses_wingman
         - matchmaking_cooldown
         - peak_elo
@@ -529,6 +542,7 @@ select_permissions:
         - wins
         - wins_competitive
         - wins_duel
+        - wins_rush
         - wins_wingman
       filter: {}
     comment: ""
@@ -574,6 +588,7 @@ select_permissions:
         - losses
         - losses_competitive
         - losses_duel
+        - losses_rush
         - losses_wingman
         - matchmaking_cooldown
         - peak_elo
@@ -582,6 +597,7 @@ select_permissions:
         - wins
         - wins_competitive
         - wins_duel
+        - wins_rush
         - wins_wingman
       filter: {}
       allow_aggregations: true

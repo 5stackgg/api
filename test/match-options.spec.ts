@@ -268,6 +268,88 @@ describe("match options locks (SQL-driven)", () => {
     expect(remaining.length).toBe(0);
   });
 
+  // Rush's map script hard-codes first-to-8, the 7-7 decider and its own
+  // sides, and its pool is a single map, so the triggers pin those options
+  // whatever the caller sends.
+  describe("Rush", () => {
+    const rules = async (optionsId: string) => {
+      const [row] = await postgres.query<
+        Array<{
+          best_of: number;
+          mr: number;
+          overtime: boolean;
+          knife_round: boolean;
+          map_veto: boolean;
+        }>
+      >(
+        "SELECT best_of, mr, overtime, knife_round, map_veto FROM match_options WHERE id = $1",
+        [optionsId],
+      );
+      return row;
+    };
+
+    const pinned = {
+      best_of: 1,
+      mr: 8,
+      overtime: false,
+      knife_round: false,
+      map_veto: false,
+    };
+
+    it("pins a single first-to-8 map with no veto, overtime or knife round on insert", async () => {
+      const match = await fx.match({ type: "Rush", mr: 12, bestOf: 3 });
+
+      expect(await rules(match.options_id)).toEqual(pinned);
+    });
+
+    it("keeps the pinned rules through later edits", async () => {
+      const match = await fx.match({ type: "Rush" });
+
+      await updateOptions(
+        match.options_id,
+        "best_of = 3, mr = 15, overtime = true, knife_round = true, map_veto = true",
+      );
+
+      expect(await rules(match.options_id)).toEqual(pinned);
+    });
+
+    it("pins the rules when existing options switch to Rush", async () => {
+      const optionsId = await fx.matchOptions({ mr: 12, bestOf: 3 });
+
+      await updateOptions(optionsId, "type = 'Rush'");
+
+      expect(await rules(optionsId)).toEqual(pinned);
+    });
+
+    it("does not read the pinned rules as a change while Live", async () => {
+      const match = await fx.match({ type: "Rush" });
+      await setMatchStatus(match.id, "Live");
+
+      await updateOptions(
+        match.options_id,
+        "coaches = true, best_of = 3, mr = 12",
+      );
+
+      expect(await rules(match.options_id)).toEqual(pinned);
+    });
+
+    it("sizes each lineup at three players", async () => {
+      const match = await fx.match({ type: "Rush" });
+
+      const [row] = await postgres.query<
+        Array<{ type_min: number; match_min: number; match_max: number }>
+      >(
+        `SELECT get_match_type_min_players('Rush') AS type_min,
+                match_min_players_per_lineup(m) AS match_min,
+                match_max_players_per_lineup(m) AS match_max
+         FROM matches m WHERE m.id = $1`,
+        [match.id],
+      );
+
+      expect(row).toEqual({ type_min: 3, match_min: 3, match_max: 3 });
+    });
+  });
+
   // clone_match_options and update_match_options_best_of both used to carry a
   // hand-maintained column list, and both silently dropped every setting added
   // after they were written (round_restart_delay, halftime_pausematch,

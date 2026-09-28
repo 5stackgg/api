@@ -262,4 +262,27 @@ describe("persist_imported_demo kill ingestion", () => {
 
     expect(await killRows(ctx.mapId)).toHaveLength(0);
   });
+
+  it("never swaps an imported Rush match's sides", async () => {
+    const sides = await postgres.query<
+      Array<{ competitive: string; rush: string }>
+    >(
+      `SELECT public._import_lineup_1_side(r, 8, 'Competitive') AS competitive,
+              public._import_lineup_1_side(r, 8, 'Rush') AS rush
+       FROM unnest(ARRAY[1, 8, 9, 15]) AS r`,
+    );
+
+    expect(sides.map((s) => s.competitive)).toEqual([
+      "TERRORIST",
+      "TERRORIST",
+      "CT",
+      "CT",
+    ]);
+    expect(sides.map((s) => s.rush)).toEqual([
+      "TERRORIST",
+      "TERRORIST",
+      "TERRORIST",
+      "TERRORIST",
+    ]);
+  });
 });
