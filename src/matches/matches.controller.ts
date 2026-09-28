@@ -1610,9 +1610,6 @@ export class MatchesController {
     if (!(await this.seasonsEnabled())) {
       return;
     }
-    if (await this.seasonEloBackfill.isRunning()) {
-      return;
-    }
     await this.enqueueSeasonBackfill(season.id);
   }
 
@@ -1620,9 +1617,6 @@ export class MatchesController {
   public async backfillSeasonElo(data: { season_id: string }) {
     if (!data?.season_id) {
       throw Error("season_id is required");
-    }
-    if (await this.seasonEloBackfill.isRunning()) {
-      return { success: true, running: true };
     }
     await this.enqueueSeasonBackfill(data.season_id);
     return { success: true, running: true };
@@ -1657,8 +1651,12 @@ export class MatchesController {
     return rows?.[0]?.enabled === true;
   }
 
+  // Enqueue even while another season rebuilds: the queue serializes runs and the
+  // per-season jobId dedupes repeats, so a skipped request is simply lost.
   private async enqueueSeasonBackfill(seasonId: string): Promise<void> {
-    await this.seasonEloBackfill.markQueued(seasonId);
+    if (!(await this.seasonEloBackfill.isRunning())) {
+      await this.seasonEloBackfill.markQueued(seasonId);
+    }
     await this.seasonEloBackfillQueue.add(
       BackfillSeasonElo.name,
       { season_id: seasonId },
