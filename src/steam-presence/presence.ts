@@ -5,6 +5,7 @@ export const CS2_APP_ID = 730;
 const MATCHMAKING_MODES = new Set([
   "competitive",
   "premier",
+  "rush",
   "scrimcomp2v2", // wingman
   "scrimcomp5v5",
   "wingman",
@@ -16,7 +17,7 @@ export type Cs2PresenceState = {
   // Player is in ANY active game (deathmatch, casual, custom/5stack, MM, …) as
   // opposed to the main menu / lobby. Drives the "what the bot sees" display.
   inGame: boolean;
-  // Player is in an active matchmaking match we can import (comp/premier/wingman).
+  // Player is in an active matchmaking match we can import (comp/premier/wingman/rush).
   // Narrower than inGame — this is what triggers the history poll.
   inMatch: boolean;
   // Raw `game:mode` (e.g. competitive, premier, scrimcomp2v2, deathmatch, casual,

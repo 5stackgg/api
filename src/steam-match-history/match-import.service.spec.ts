@@ -16,6 +16,8 @@ const detectMatchType = (
     player_count?: number;
     max_rounds?: number;
     game_mode?: number;
+    map_name?: string;
+    server_name?: string;
   } = {},
 ) => detectMatchTypeRaw({ players, ...rules });
 
@@ -113,6 +115,29 @@ describe("MatchImportService.detectMatchType", () => {
     expect(
       detectMatchType(six, { player_count: 6, game_mode: 6, max_rounds: 15 }),
     ).toBe("Rush");
+  });
+
+  it("classifies a rush_ map as Rush when the demo carries no game_mode", () => {
+    // Rush has no skill group, so the scoreboard shows another ladder.
+    const six = Array.from({ length: 6 }, (_, i) => ({
+      steam_id: String(i),
+      name: "x",
+      rank_type: 11,
+    }));
+    expect(
+      detectMatchType(six, { player_count: 6, map_name: "rush_001" }),
+    ).toBe("Rush");
+  });
+
+  it("does not treat the cs_rush hostage map as Rush", () => {
+    const five = Array.from({ length: 5 }, (_, i) => ({
+      steam_id: String(i),
+      name: "x",
+      rank_type: 7,
+    }));
+    expect(
+      detectMatchType(five, { player_count: 10, map_name: "cs_rush" }),
+    ).toBe("Competitive");
   });
 });
 

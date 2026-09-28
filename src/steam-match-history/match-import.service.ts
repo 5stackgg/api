@@ -449,12 +449,12 @@ export class MatchImportService {
   }
 
   private static detectMatchType(parsed: ParsedDemo): MatchType {
-    if (MatchImportService.isFaceitServer(parsed.server_name)) {
-      return "Competitive";
+    if (MatchImportService.isRush(parsed)) {
+      return "Rush";
     }
 
-    if (parsed.game_mode === 6) {
-      return "Rush";
+    if (MatchImportService.isFaceitServer(parsed.server_name)) {
+      return "Competitive";
     }
 
     if (MatchImportService.hasWingmanGameRules(parsed)) {
@@ -503,6 +503,12 @@ export class MatchImportService {
       return "Premier";
     }
     return "Competitive";
+  }
+
+  // Rush has no skill group, so rank_type never identifies it. cs_rush is an
+  // unrelated hostage map, hence the anchored prefix.
+  private static isRush(parsed: ParsedDemo): boolean {
+    return parsed.game_mode === 6 || /^rush_/i.test(parsed.map_name ?? "");
   }
 
   private static hasWingmanGameRules(parsed: ParsedDemo): boolean {
@@ -1091,6 +1097,13 @@ export class MatchImportService {
     if (createdAt) {
       object.created_at = createdAt;
     }
+    // tai_match materializes a single-map seed pool (Rush) the moment the
+    // match is inserted, and check_match_map_count would then reject the
+    // demo's map as one too many for best_of 1.
+    await this.postgres.query(
+      `DELETE FROM public.match_maps WHERE match_id = $1::uuid`,
+      [matchId],
+    );
     const { insert_match_maps_one } = await this.hasura.mutation({
       insert_match_maps_one: {
         __args: { object: object as never },
