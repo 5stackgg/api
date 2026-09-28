@@ -1,4 +1,4 @@
-import { MapAssetsService } from "./map-assets.service";
+import { MapAssetsChanges, MapAssetsService } from "./map-assets.service";
 
 describe("MapAssetsService", () => {
   const originalDomain = process.env.WEB_DOMAIN;
@@ -8,8 +8,8 @@ describe("MapAssetsService", () => {
     autoBuild: string | null;
     current: boolean;
     claimed: boolean;
-    nodeBuild: number | null;
     existing: string | null;
+    previous: { build_id: string; maps: Record<string, unknown> } | null;
   };
 
   let db: Db;
@@ -31,8 +31,8 @@ describe("MapAssetsService", () => {
       autoBuild: "true",
       current: true,
       claimed: true,
-      nodeBuild: 25537370,
       existing: null,
+      previous: null,
     };
     postgres = {
       query: jest.fn(async (sql: string, params: Array<unknown>) => {
@@ -45,8 +45,8 @@ describe("MapAssetsService", () => {
         if (sql.includes("DO NOTHING")) {
           return db.claimed ? [{ build_id: params[0] }] : [];
         }
-        if (sql.includes("FROM public.game_server_nodes")) {
-          return [{ build_id: db.nodeBuild }];
+        if (sql.includes("SELECT build_id, maps")) {
+          return db.previous ? [db.previous] : [];
         }
         if (sql.includes("SELECT status")) {
           return db.existing ? [{ status: db.existing }] : [];
@@ -143,6 +143,15 @@ describe("MapAssetsService", () => {
       ]);
     });
 
+    it("only forces a full rebuild when asked", () => {
+      const forced = MapAssetsService.jobSpec("node.one", "25537370", true);
+
+      expect(forced.spec.template.spec.containers[0].args.at(-1)).toBe(
+        "--force",
+      );
+      expect(container.args).not.toContain("--force");
+    });
+
     it("runs the publisher against that install, writing into /work", () => {
       expect(container.image).toBe("ghcr.io/5stackgg/map-assets:latest");
       expect(container.args).toEqual([
@@ -228,9 +237,14 @@ describe("MapAssetsService", () => {
 
     it("claims the build and queues one job per build", async () => {
       await expect(service.queueBuild("node-1", 25537370)).resolves.toBe(true);
+      const claim = postgres.query.mock.calls.find(([sql]) =>
+        String(sql).includes("DO NOTHING"),
+      );
+      expect(String(claim[0])).toContain("'auto'");
+      expect(claim[1]).toEqual(["25537370", "node-1"]);
       expect(queue.add).toHaveBeenCalledWith(
         "BuildMapAssets",
-        { gameServerNodeId: "node-1", buildId: "25537370" },
+        { gameServerNodeId: "node-1", buildId: "25537370", trigger: "auto" },
         expect.objectContaining({
           jobId: "map-assets.25537370",
           attempts: 1,
@@ -251,56 +265,71 @@ describe("MapAssetsService", () => {
   });
 
   describe("queueManualBuild", () => {
-    it("does nothing off the public instance", async () => {
+    const requester = { steamId: "76561198000000001", name: "Luke" };
+    const queueManual = (force = false) =>
+      service.queueManualBuild("node-1", "25537370", requester, force);
+
+    it("refuses off the public instance", async () => {
       process.env.WEB_DOMAIN = "example.com";
 
-      await expect(service.queueManualBuild("node-1")).resolves.toBe(false);
+      await expect(queueManual()).rejects.toThrow("5stack.gg");
       expect(queue.add).not.toHaveBeenCalled();
     });
 
     it("ignores the automatic-build setting", async () => {
       db.autoBuild = null;
 
-      await expect(service.queueManualBuild("node-1")).resolves.toBe(true);
+      await expect(queueManual()).resolves.toBeUndefined();
       expect(sqlCalls().some((sql) => sql.includes("public.settings"))).toBe(
         false,
       );
     });
 
-    it("needs the node to have reported a build", async () => {
-      db.nodeBuild = null;
-
-      await expect(service.queueManualBuild("node-1")).resolves.toBe(false);
-      expect(queue.add).not.toHaveBeenCalled();
-    });
-
     it.each(["Partial", "Failed", "Pending"])(
-      "retries a %s build",
+      "retries a %s build and records who asked",
       async (status) => {
         db.existing = status;
 
-        await expect(service.queueManualBuild("node-1")).resolves.toBe(true);
-        expect(sqlCalls().at(-1)).toContain("SET status = 'Pending'");
+        await queueManual();
+
+        const claim = postgres.query.mock.calls.at(-1);
+        expect(String(claim[0])).toContain("SET status = 'Pending'");
+        expect(claim[1]).toEqual(["25537370", "node-1", requester.steamId]);
         expect(queue.add).toHaveBeenCalledWith(
           "BuildMapAssets",
-          { gameServerNodeId: "node-1", buildId: "25537370" },
+          {
+            gameServerNodeId: "node-1",
+            buildId: "25537370",
+            trigger: "manual",
+            requestedBy: requester.steamId,
+            requestedByName: "Luke",
+            force: false,
+          },
           expect.objectContaining({ jobId: "map-assets.25537370" }),
         );
       },
     );
 
-    it("leaves a published build alone", async () => {
+    it("refuses to rebuild a published build unless forced", async () => {
       db.existing = "Published";
 
-      await expect(service.queueManualBuild("node-1")).resolves.toBe(false);
+      await expect(queueManual()).rejects.toThrow("already published");
       expect(queue.add).not.toHaveBeenCalled();
+    });
+
+    it("rebuilds a published build when forced", async () => {
+      db.existing = "Published";
+
+      await queueManual(true);
+
+      expect(queue.add.mock.calls[0][1]).toMatchObject({ force: true });
     });
 
     it("does not start a second run while one is queued or running", async () => {
       db.existing = "Building";
       queue.getJob.mockResolvedValueOnce({ id: "map-assets.25537370" });
 
-      await expect(service.queueManualBuild("node-1")).resolves.toBe(false);
+      await expect(queueManual()).rejects.toThrow("already queued");
       expect(queue.getJob).toHaveBeenCalledWith("map-assets.25537370");
       expect(queue.add).not.toHaveBeenCalled();
     });
@@ -308,7 +337,26 @@ describe("MapAssetsService", () => {
     it("recovers a Building row whose job is gone", async () => {
       db.existing = "Building";
 
-      await expect(service.queueManualBuild("node-1")).resolves.toBe(true);
+      await expect(queueManual()).resolves.toBeUndefined();
+    });
+
+    it("puts the previous status back when the job cannot be queued", async () => {
+      db.existing = "Partial";
+      queue.add.mockRejectedValueOnce(new Error("redis down"));
+
+      await expect(queueManual()).rejects.toThrow("redis down");
+      const restore = postgres.query.mock.calls.at(-1);
+      expect(String(restore[0])).toContain("SET status = $2");
+      expect(restore[1]).toEqual(["25537370", "Partial"]);
+    });
+
+    it("drops the row it created when the job cannot be queued", async () => {
+      queue.add.mockRejectedValueOnce(new Error("redis down"));
+
+      await expect(queueManual()).rejects.toThrow("redis down");
+      expect(sqlCalls().at(-1)).toContain(
+        "DELETE FROM public.map_asset_builds",
+      );
     });
   });
 
@@ -364,6 +412,14 @@ describe("MapAssetsService", () => {
         namespace: "5stack",
         body: MapAssetsService.jobSpec("node-1", "25537370"),
       });
+      const changes: MapAssetsChanges = {
+        comparable: false,
+        total: 1,
+        added: [],
+        removed: [],
+        rebuilt: [],
+        unchanged: 0,
+      };
       expect(outcome).toEqual({
         status: "Published",
         manifest: "25537370/manifest.r2.json",
@@ -371,6 +427,11 @@ describe("MapAssetsService", () => {
         failed: [],
         failed_view: [],
         error: null,
+        kept_published: false,
+        previous_build_id: null,
+        changes,
+        started_at: null,
+        finished_at: null,
       });
       expect(finalUpdate().params).toEqual([
         "25537370",
@@ -380,7 +441,69 @@ describe("MapAssetsService", () => {
         "[]",
         "[]",
         null,
+        null,
+        JSON.stringify(changes),
       ]);
+    });
+
+    it("records which node ran the build", async () => {
+      finished({ succeeded: 1 });
+
+      await service.build("node-1", "25537370");
+
+      const [sql, params] = postgres.query.mock.calls.find(([query]) =>
+        String(query).includes("'Building'"),
+      );
+      expect(String(sql)).toContain("game_server_node_id");
+      expect(params).toEqual(["25537370", "node-1"]);
+    });
+
+    it("keeps a published build published when a forced rebuild fails", async () => {
+      db.existing = "Published";
+      loggingService.getJobStatus
+        .mockResolvedValueOnce(undefined)
+        .mockResolvedValueOnce(undefined);
+
+      const outcome = await service.build("node-1", "25537370", true);
+
+      expect(outcome).toMatchObject({ status: "Failed", kept_published: true });
+      expect(finalUpdate().params[1]).toBe("Published");
+    });
+
+    it("forces a full rebuild when asked", async () => {
+      loggingService.getJobStatus
+        .mockResolvedValueOnce(undefined)
+        .mockResolvedValueOnce({ succeeded: 1 });
+
+      await service.build("node-1", "25537370", true);
+
+      expect(batchApi.createNamespacedJob).toHaveBeenCalledWith({
+        namespace: "5stack",
+        body: MapAssetsService.jobSpec("node-1", "25537370", true),
+      });
+    });
+
+    it("compares the published maps with the previous build", async () => {
+      finished({ succeeded: 1 });
+      db.previous = {
+        build_id: "25400000",
+        maps: {
+          de_mirage: {
+            tri: "25400000/de_mirage.tri.gz",
+            callouts: "25000000/de_mirage.callouts.json",
+          },
+        },
+      };
+      files["25537370/manifest.json"] = { version: 1, build: "25537370", maps };
+
+      const outcome = await service.build("node-1", "25537370");
+
+      expect(outcome.previous_build_id).toBe("25400000");
+      expect(outcome.changes).toMatchObject({
+        comparable: true,
+        rebuilt: [{ map: "de_mirage", reason: "assets", assets: ["tri"] }],
+      });
+      expect(finalUpdate().params[7]).toBe("25400000");
     });
 
     it("reads the build's first manifest when latest.json names another build", async () => {
@@ -486,6 +609,95 @@ describe("MapAssetsService", () => {
 
       expect(outcome).toMatchObject({ status: "Failed", error: "forbidden" });
       expect(finalUpdate().sql).toContain("UPDATE public.map_asset_builds");
+    });
+  });
+
+  describe("diffMaps", () => {
+    const entry = (build: string, vpk: string, pipeline = "p1", sha = "a") => ({
+      tri: `${build}/x.tri.gz`,
+      view: `${build}/x.view.bin.gz`,
+      sha256: { tri: `tri-${sha}`, view: `view-${sha}` },
+      source: { vpk_sha256: vpk, pipeline },
+    });
+
+    it("cannot compare without a previous build", () => {
+      expect(
+        MapAssetsService.diffMaps({ de_a: entry("2", "v") }, null),
+      ).toEqual({
+        comparable: false,
+        total: 1,
+        added: [],
+        removed: [],
+        rebuilt: [],
+        unchanged: 0,
+      });
+    });
+
+    it("finds added, removed and unchanged maps", () => {
+      const same = entry("1", "v");
+      const changes = MapAssetsService.diffMaps(
+        { de_same: same, de_new: entry("2", "v") },
+        { de_same: same, de_gone: entry("1", "v") },
+      );
+
+      expect(changes).toEqual({
+        comparable: true,
+        total: 2,
+        added: ["de_new"],
+        removed: ["de_gone"],
+        rebuilt: [],
+        unchanged: 1,
+      });
+    });
+
+    it("says a map changed when its VPK did", () => {
+      const changes = MapAssetsService.diffMaps(
+        { de_a: entry("2", "v2", "p1", "b") },
+        { de_a: entry("1", "v1", "p1", "a") },
+      );
+
+      expect(changes.rebuilt).toEqual([
+        { map: "de_a", reason: "vpk", assets: ["tri", "view"] },
+      ]);
+    });
+
+    it("blames the tooling when only the pipeline changed", () => {
+      const changes = MapAssetsService.diffMaps(
+        { de_a: entry("2", "v", "p2", "b") },
+        { de_a: entry("1", "v", "p1", "a") },
+      );
+
+      expect(changes.rebuilt[0].reason).toBe("pipeline");
+    });
+
+    it("keeps a changed VPK whose output came out identical, with no new files", () => {
+      const before = entry("1", "v1");
+      const changes = MapAssetsService.diffMaps(
+        { de_a: { ...before, source: { vpk_sha256: "v2", pipeline: "p1" } } },
+        { de_a: before },
+      );
+
+      expect(changes.rebuilt).toEqual([
+        { map: "de_a", reason: "vpk", assets: [] },
+      ]);
+      expect(changes.unchanged).toBe(0);
+    });
+
+    it("lists only the assets whose file changed", () => {
+      const before = entry("1", "v1");
+      const changes = MapAssetsService.diffMaps(
+        {
+          de_a: {
+            ...before,
+            tri: "2/x.tri.gz",
+            sha256: { ...before.sha256, tri: "tri-b" },
+            source: { vpk_sha256: "v2", pipeline: "p1" },
+          },
+        },
+        { de_a: before },
+      );
+
+      expect(changes.rebuilt[0].assets).toEqual(["tri"]);
     });
   });
 

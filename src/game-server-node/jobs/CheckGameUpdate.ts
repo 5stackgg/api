@@ -7,6 +7,7 @@ import { GameServerNodeService } from "../game-server-node.service";
 import { HasuraService } from "src/hasura/hasura.service";
 import { NotificationsService } from "src/notifications/notifications.service";
 import { BakeShaders } from "./BakeShaders";
+import { DISCORD_COLORS } from "src/notifications/utilities/constants";
 
 type Depot = {
   systemdefined?: string;
@@ -52,6 +53,9 @@ export class CheckGameUpdate extends WorkerHost {
   }
 
   async process(): Promise<void> {
+    // Read before the prune below, which deletes the previous build's row.
+    const previousBuild = await this.gameServerNodeService.getCurrentBuild();
+
     const data = await this.getGameData();
 
     if (!data) {
@@ -184,17 +188,21 @@ export class CheckGameUpdate extends WorkerHost {
       },
     });
 
-    await this.updateCurrentBuild(data.depots.branches["public"]);
+    await this.updateCurrentBuild(
+      data.depots.branches["public"],
+      previousBuild,
+    );
   }
 
-  private async updateCurrentBuild(publicBranch: Branch) {
+  private async updateCurrentBuild(
+    publicBranch: Branch,
+    previousBuild: number | undefined,
+  ) {
     if (!publicBranch) {
       return;
     }
 
-    const currentBuild = await this.gameServerNodeService.getCurrentBuild();
-
-    if (currentBuild === publicBranch.buildid) {
+    if (previousBuild === publicBranch.buildid) {
       return;
     }
 
@@ -224,14 +232,25 @@ export class CheckGameUpdate extends WorkerHost {
             current: true,
           },
         },
-        version: true,
+        build_id: true,
       },
     });
 
-    void this.notifications.send("GameUpdate", {
-      message: `A CS2 Update (${update_game_versions_by_pk.version === "public" ? publicBranch.buildid.toString() : update_game_versions_by_pk.version}) has been detected. The Game Node Servers that do not have a build pin will update automatically.`,
-      title: "CS2 Update",
-      role: "administrator",
+    if (!update_game_versions_by_pk) {
+      this.logger.warn(
+        `CS2 build ${publicBranch.buildid} has no game version to mark current`,
+      );
+      return;
+    }
+
+    const was = previousBuild
+      ? ` (was <b>${NotificationsService.escapeHtml(String(previousBuild))}</b>)`
+      : "";
+
+    void this.notifications.sendCs2Build(publicBranch.buildid, {
+      title: "CS2 Update Detected",
+      message: `CS2 build <b>${NotificationsService.escapeHtml(String(publicBranch.buildid))}</b> is live${was}. Game server nodes without a build pin will update automatically.`,
+      color: DISCORD_COLORS.GRAY,
     });
 
     await this.gameServerNodeService.updateCs();

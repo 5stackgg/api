@@ -1,6 +1,13 @@
 table:
   name: map_asset_builds
   schema: public
+object_relationships:
+  - name: game_server_node
+    using:
+      foreign_key_constraint_on: game_server_node_id
+  - name: requested_by
+    using:
+      foreign_key_constraint_on: requested_by_steam_id
 select_permissions:
   - role: administrator
     permission:
@@ -16,6 +23,11 @@ select_permissions:
         - error
         - created_at
         - updated_at
+        - game_server_node_id
+        - trigger
+        - requested_by_steam_id
+        - previous_build_id
+        - changes
       filter: {}
       allow_aggregations: true
     comment: ""

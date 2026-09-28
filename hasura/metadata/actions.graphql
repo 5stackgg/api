@@ -86,7 +86,8 @@ type Mutation {
 
 type Mutation {
   buildMapAssets(
-    game_server_node_id: uuid!
+    game_server_node_id: String
+    force: Boolean
   ): SuccessOutput
 }
 
@@ -834,7 +835,7 @@ type Mutation {
 
 type Mutation {
   validateGamedata(
-    game_server_node_id: uuid!
+    game_server_node_id: String
   ): SuccessOutput
 }
 

@@ -34,6 +34,7 @@ import { GamePluginsModule } from "src/game-plugins/game-plugins.module";
 import { BakeShaders } from "./jobs/BakeShaders";
 import { ValidateGamedata } from "./jobs/ValidateGamedata";
 import { MapAssetsModule } from "src/map-assets/map-assets.module";
+import { PostgresModule } from "src/postgres/postgres.module";
 
 @Module({
   providers: [
@@ -61,6 +62,7 @@ import { MapAssetsModule } from "src/map-assets/map-assets.module";
     PluginRuntimeModule,
     GamePluginsModule,
     MapAssetsModule,
+    PostgresModule,
     BullModule.registerQueue(
       {
         name: GameServerQueues.GameUpdate,
