@@ -2518,18 +2518,25 @@ export class MatchesController {
 
   @HasuraAction()
   public async callForOrganizer(data: { user: User; match_id: string }) {
-    const { matches_by_pk: match } = await this.hasura.query(
-      {
-        matches_by_pk: {
-          __args: {
-            id: data.match_id,
+    const { matches_by_pk: match, players_by_pk: requester } =
+      await this.hasura.query(
+        {
+          matches_by_pk: {
+            __args: {
+              id: data.match_id,
+            },
+            is_in_lineup: true,
+            requested_organizer: true,
           },
-          is_in_lineup: true,
-          requested_organizer: true,
+          players_by_pk: {
+            __args: {
+              steam_id: data.user.steam_id,
+            },
+            name: true,
+          },
         },
-      },
-      data.user.steam_id,
-    );
+        data.user.steam_id,
+      );
 
     if (!match || match.requested_organizer) {
       return {
@@ -2542,15 +2549,16 @@ export class MatchesController {
     }
 
     // The requester stays plain text: notificationUrl takes the first href as
-    // where the push lands, and that has to be the match.
-    const requester = NotificationsService.escapeHtml(
-      data.user.name ?? data.user.steam_id,
+    // where the push lands, and that has to be the match. The name is read from
+    // the row because the session keeps whatever it was at sign-in.
+    const requesterName = NotificationsService.escapeHtml(
+      requester?.name ?? data.user.steam_id,
     );
 
     void this.notifications.send(
       "MatchSupport",
       {
-        message: `<b>${requester}</b> requested assistance in match <a href="${this.appConfig.webDomain}/matches/${data.match_id}">${data.match_id}</a>`,
+        message: `<b>${requesterName}</b> requested assistance in match <a href="${this.appConfig.webDomain}/matches/${data.match_id}">${data.match_id}</a>`,
         title: "Match Assistance Required",
         role: "match_organizer",
         entity_id: data.match_id,

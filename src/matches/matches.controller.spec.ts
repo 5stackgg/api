@@ -90,10 +90,19 @@ describe("MatchesController", () => {
   describe("callForOrganizer", () => {
     const matchId = "00000000-0000-0000-0000-000000000001";
 
-    const callForOrganizer = (user: Record<string, unknown>) =>
+    const callForOrganizer = () =>
       controller.callForOrganizer({
         match_id: matchId,
-        user: { steam_id: "76561198000000001", ...user } as any,
+        user: { steam_id: "76561198000000001", name: "signed-in-as" } as any,
+      });
+
+    const respond = (
+      match: Record<string, boolean>,
+      player: { name: string } | null = { name: "keith" },
+    ) =>
+      hasura.query.mockResolvedValue({
+        matches_by_pk: match,
+        players_by_pk: player,
       });
 
     const sent = () => {
@@ -102,13 +111,16 @@ describe("MatchesController", () => {
     };
 
     beforeEach(() => {
-      hasura.query.mockResolvedValue({
-        matches_by_pk: { is_in_lineup: true, requested_organizer: false },
-      });
+      respond({ is_in_lineup: true, requested_organizer: false });
     });
 
     it("names the requester without linking them", async () => {
-      await callForOrganizer({ name: "<b>keith</b>" });
+      respond(
+        { is_in_lineup: true, requested_organizer: false },
+        { name: "<b>keith</b>" },
+      );
+
+      await callForOrganizer();
 
       const notification = sent();
       expect(notification.type).toBe("MatchSupport");
@@ -120,8 +132,17 @@ describe("MatchesController", () => {
       );
     });
 
-    it("falls back to the steam id when the requester has no name", async () => {
-      await callForOrganizer({ name: undefined });
+    it("uses the current name rather than the one the session signed in with", async () => {
+      await callForOrganizer();
+
+      expect(sent().message).toContain("<b>keith</b> requested assistance");
+      expect(sent().message).not.toContain("signed-in-as");
+    });
+
+    it("falls back to the steam id when the player row is missing", async () => {
+      respond({ is_in_lineup: true, requested_organizer: false }, null);
+
+      await callForOrganizer();
 
       expect(sent().message).toContain(
         "<b>76561198000000001</b> requested assistance",
@@ -129,29 +150,25 @@ describe("MatchesController", () => {
     });
 
     it("titles the notification without the old typo", async () => {
-      await callForOrganizer({ name: "keith" });
+      await callForOrganizer();
 
       expect(sent().title).toBe("Match Assistance Required");
       expect(sent().message).not.toContain("Assistanced");
     });
 
     it("rejects someone who is not playing in the match", async () => {
-      hasura.query.mockResolvedValue({
-        matches_by_pk: { is_in_lineup: false, requested_organizer: false },
-      });
+      respond({ is_in_lineup: false, requested_organizer: false });
 
-      await expect(callForOrganizer({ name: "keith" })).rejects.toThrow(
+      await expect(callForOrganizer()).rejects.toThrow(
         "only players in this match can contact support",
       );
       expect(notifications.send).not.toHaveBeenCalled();
     });
 
     it("does not ask twice while a request is still open", async () => {
-      hasura.query.mockResolvedValue({
-        matches_by_pk: { is_in_lineup: true, requested_organizer: true },
-      });
+      respond({ is_in_lineup: true, requested_organizer: true });
 
-      await expect(callForOrganizer({ name: "keith" })).resolves.toEqual({
+      await expect(callForOrganizer()).resolves.toEqual({
         success: true,
       });
       expect(notifications.send).not.toHaveBeenCalled();
