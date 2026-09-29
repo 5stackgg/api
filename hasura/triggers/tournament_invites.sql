@@ -36,6 +36,8 @@ BEGIN
             RAISE EXCEPTION USING ERRCODE = '22000',
                 MESSAGE = 'Registration is closed';
         END IF;
+
+        PERFORM public.assert_not_blocked(NEW.invited_by_player_steam_id, NEW.steam_id);
     END IF;
 
     RETURN NEW;

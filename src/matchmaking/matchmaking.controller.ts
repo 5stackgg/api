@@ -13,7 +13,11 @@ export class MatchmakingController {
 
   @HasuraEvent()
   public async lobby_players(data: HasuraEventData<lobby_players_set_input>) {
-    if (data.new.status === "Invited") {
+    // A pending invite is nobody in the lobby yet, arriving or leaving.
+    if (
+      data.new.status === "Invited" ||
+      (data.op === "DELETE" && data.old.status === "Invited")
+    ) {
       return;
     }
 

@@ -1909,6 +1909,33 @@ describe("utility practice sessions (SQL-driven)", () => {
       expect(notified).toHaveLength(1);
     });
 
+    it("skips a player on either side of a block without failing the rest", async () => {
+      const host = await fx.player();
+      const blockedByHost = await fx.player();
+      const blockedHost = await fx.player();
+      const friend = await fx.player();
+      const sessionId = await insertSession(host, { status: "Ready" });
+      await postgres.query(
+        `INSERT INTO player_blocks (blocker_steam_id, blocked_steam_id)
+         VALUES ($1, $2), ($3, $1)`,
+        [host, blockedByHost, blockedHost],
+      );
+
+      await makeService({}).invite({ steam_id: host } as never, {
+        session_id: sessionId,
+        steam_ids: [blockedByHost, blockedHost, friend],
+      });
+
+      const invited = await postgres.query<Array<{ steam_id: string }>>(
+        `SELECT steam_id::text AS steam_id FROM utility_practice_invites
+          WHERE utility_practice_session_id = $1`,
+        [sessionId],
+      );
+      expect(invited.map((row) => row.steam_id)).toEqual([friend]);
+      expect(notified).toHaveLength(1);
+      expect(notified[0].steamIds).toEqual([friend]);
+    });
+
     // The practice bar in the top nav says a server is booting and when it is
     // up, on every page, for as long as the session lasts -- so somebody who
     // pressed Start and stayed there is already being told, and a bell row a

@@ -277,4 +277,111 @@ describe("hasura table metadata", () => {
 
     expect(problems).toEqual([]);
   });
+
+  // Who blocked you must never be reachable: not by reading the row, not by
+  // walking a relationship to it from a player, and not by rewriting a row
+  // into someone else's name.
+  describe("player_blocks", () => {
+    const blocks = () =>
+      tables.find(({ file }) => file === "public_player_blocks.yaml")!.metadata;
+
+    const relationshipsTo = (metadata: Record<string, any>, table: string) =>
+      [
+        ...(metadata?.object_relationships ?? []),
+        ...(metadata?.array_relationships ?? []),
+      ].filter((relationship: Record<string, any>) => {
+        const using = relationship.using ?? {};
+        return (
+          using.foreign_key_constraint_on?.table?.name === table ||
+          using.manual_configuration?.remote_table?.name === table
+        );
+      });
+
+    it("has no update permission for any role", () => {
+      expect(blocks().update_permissions ?? []).toEqual([]);
+    });
+
+    it("grants select, insert and delete to user alone, for every role to inherit", () => {
+      expect(
+        ["select", "insert", "delete"].map((operation) =>
+          (blocks()[`${operation}_permissions`] ?? []).map(
+            (entry: { role: string }) => entry.role,
+          ),
+        ),
+      ).toEqual([["user"], ["user"], ["user"]]);
+    });
+
+    it("only ever shows a player their own blocks", () => {
+      for (const { role, permission } of blocks().select_permissions ?? []) {
+        expect({ role, filter: permission.filter }).toEqual({
+          role,
+          filter: { blocker_steam_id: { _eq: "X-Hasura-User-Id" } },
+        });
+        expect(permission.columns).not.toContain("blocker_steam_id");
+      }
+
+      for (const { role, permission } of blocks().delete_permissions ?? []) {
+        expect({ role, filter: permission.filter }).toEqual({
+          role,
+          filter: { blocker_steam_id: { _eq: "X-Hasura-User-Id" } },
+        });
+      }
+    });
+
+    it("presets the blocker from the session on every insert", () => {
+      for (const { permission } of blocks().insert_permissions ?? []) {
+        expect(permission.set).toEqual({
+          blocker_steam_id: "x-hasura-user-id",
+        });
+        expect(permission.columns).toEqual(["blocked_steam_id"]);
+      }
+    });
+
+    it("relates only to the blocked player", () => {
+      const own = [
+        ...(blocks().object_relationships ?? []),
+        ...(blocks().array_relationships ?? []),
+      ];
+
+      expect(own.map((relationship) => relationship.name)).toEqual(["blocked"]);
+      expect(own[0].using).toEqual({
+        foreign_key_constraint_on: "blocked_steam_id",
+      });
+    });
+
+    it("is not reachable from any other table", () => {
+      const reverse = tables
+        .filter(({ file }) => file !== "public_player_blocks.yaml")
+        .flatMap(({ file, metadata }) =>
+          relationshipsTo(metadata, "player_blocks").map(
+            (relationship) => `${file}: ${relationship.name}`,
+          ),
+        );
+
+      expect(reverse).toEqual([]);
+    });
+
+    it("exposes none of the block helpers to GraphQL", () => {
+      const helpers = [
+        "has_blocked_player",
+        "is_blocked_either_way",
+        "assert_not_blocked",
+        "assert_session_not_blocked",
+      ];
+
+      const computed = tables.flatMap(({ file, metadata }) =>
+        (metadata?.computed_fields ?? [])
+          .filter((field: Record<string, any>) =>
+            helpers.includes(field.definition?.function?.name),
+          )
+          .map((field: { name: string }) => `${file}: ${field.name}`),
+      );
+
+      const tracked = readdirSync(
+        join(__dirname, "../../hasura/metadata/databases/default/functions"),
+      ).filter((file) => helpers.some((helper) => file.includes(helper)));
+
+      expect([...computed, ...tracked]).toEqual([]);
+    });
+  });
 });
