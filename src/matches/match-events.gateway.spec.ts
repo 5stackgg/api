@@ -115,16 +115,21 @@ function makeGateway(
   const matchLookups = () =>
     hasura.query.mock.calls.filter(([query]) => query.matches_by_pk).length;
 
+  const serverLookups = () =>
+    hasura.query.mock.calls.filter(([query]) => query.servers_by_pk).length;
+
   return {
     gateway,
     cache,
     store,
     hasura,
     matches,
+    servers,
     processor,
     moduleRef,
     logger,
     matchLookups,
+    serverLookups,
   };
 }
 
@@ -142,6 +147,7 @@ function authedSocket(serverId = SERVER_A) {
   const client = socket();
   client.authenticated = true;
   client.serverId = serverId;
+  client.apiPassword = serverId === SERVER_B ? "password-b" : "password-a";
   return client;
 }
 
@@ -910,5 +916,129 @@ describe("MatchEventsGateway match binding", () => {
 
       expect(processor.process).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+describe("MatchEventsGateway revoked credentials", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  async function connected(gateway: MatchEventsGateway) {
+    const client = socket();
+    await connect(gateway, client, basic(SERVER_A, "password-a"));
+    return client;
+  }
+
+  it("terminates an open socket once its server's password is rotated", async () => {
+    const now = jest.spyOn(Date, "now").mockReturnValue(1_000_000);
+    const { gateway, servers, processor } = makeGateway();
+    const client = await connected(gateway);
+
+    await gateway.handleMatchEvent(client, event({ messageId: "m1" }));
+    expect(processor.process).toHaveBeenCalledTimes(1);
+
+    servers[SERVER_A].api_password = "password-rotated";
+    now.mockReturnValue(1_005_001);
+
+    await expect(
+      gateway.handleMatchEvent(client, event({ messageId: "m2" })),
+    ).resolves.toBeUndefined();
+    await expect(
+      gateway.handleMatchEvent(client, event({ messageId: "m3" })),
+    ).resolves.toBeUndefined();
+
+    expect(client.terminate).toHaveBeenCalled();
+    expect(processor.process).toHaveBeenCalledTimes(1);
+  });
+
+  it("terminates an open socket once its server is deleted", async () => {
+    const now = jest.spyOn(Date, "now").mockReturnValue(1_000_000);
+    const { gateway, servers, processor } = makeGateway();
+    const client = await connected(gateway);
+
+    delete servers[SERVER_A];
+    now.mockReturnValue(1_005_001);
+
+    await expect(
+      gateway.handleMatchEvent(client, event()),
+    ).resolves.toBeUndefined();
+
+    expect(client.terminate).toHaveBeenCalledTimes(1);
+    expect(processor.process).not.toHaveBeenCalled();
+  });
+
+  it("needs no signal between pods: each one terminates from the rotated row alone", async () => {
+    const now = jest.spyOn(Date, "now").mockReturnValue(1_000_000);
+    const servers = {
+      [SERVER_A]: { id: SERVER_A, api_password: "password-a" },
+    };
+    const pods = [makeGateway({ servers }), makeGateway({ servers })];
+    const clients = await Promise.all(
+      pods.map(({ gateway }) => connected(gateway)),
+    );
+
+    servers[SERVER_A].api_password = "password-rotated";
+    now.mockReturnValue(1_005_001);
+
+    for (const [index, { gateway, processor }] of pods.entries()) {
+      await gateway.handleMatchEvent(clients[index], event());
+
+      expect(clients[index].terminate).toHaveBeenCalledTimes(1);
+      expect(processor.process).not.toHaveBeenCalled();
+    }
+  });
+
+  it("re-reads an unchanged server only once the ttl runs out and keeps its socket", async () => {
+    const now = jest.spyOn(Date, "now").mockReturnValue(1_000_000);
+    const { gateway, processor, serverLookups } = makeGateway();
+    const client = await connected(gateway);
+
+    await gateway.handleMatchEvent(client, event({ messageId: "m1" }));
+    now.mockReturnValue(1_004_999);
+    await gateway.handleMatchEvent(client, event({ messageId: "m2" }));
+
+    expect(serverLookups()).toBe(1);
+
+    now.mockReturnValue(1_005_001);
+    await gateway.handleMatchEvent(client, event({ messageId: "m3" }));
+
+    expect(serverLookups()).toBe(2);
+    expect(client.terminate).not.toHaveBeenCalled();
+    expect(processor.process).toHaveBeenCalledTimes(3);
+  });
+
+  it("keeps the socket and leaves the event unacked when the re-read fails", async () => {
+    // one Hasura blip must not cut every server off mid-match
+    const now = jest.spyOn(Date, "now").mockReturnValue(1_000_000);
+    let failing = false;
+    const servers = {
+      [SERVER_A]: { id: SERVER_A, api_password: "password-a" },
+    };
+    const { gateway, processor } = makeGateway({
+      serverQuery: async () => {
+        if (failing) {
+          throw new Error("hasura down");
+        }
+        return { servers_by_pk: servers[SERVER_A] };
+      },
+    });
+    const client = await connected(gateway);
+
+    failing = true;
+    now.mockReturnValue(1_005_001);
+
+    await expect(
+      gateway.handleMatchEvent(client, event({ messageId: "m1" })),
+    ).rejects.toThrow("hasura down");
+    expect(client.terminate).not.toHaveBeenCalled();
+    expect(processor.process).not.toHaveBeenCalled();
+
+    failing = false;
+
+    await expect(
+      gateway.handleMatchEvent(client, event({ messageId: "m1" })),
+    ).resolves.toBe("m1");
+    expect(processor.process).toHaveBeenCalledTimes(1);
   });
 });

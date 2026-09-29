@@ -5,6 +5,13 @@ export default class MatchAbandoned extends MatchEventProcessor<{
   steam_id: string;
 }> {
   public async process() {
+    if (!(await this.isLineupMember())) {
+      this.logger.warn(
+        `[${this.matchId}] abandon refused: ${this.data.steam_id} is not in this match's lineups`,
+      );
+      return;
+    }
+
     // The plugin re-arms its disconnect timer per reconnect and per map, so one
     // leave can report itself several times. The cooldown counts rows, so a
     // duplicate would escalate the ban for a single offense.
@@ -31,6 +38,27 @@ export default class MatchAbandoned extends MatchEventProcessor<{
     }
 
     await this.notifyAdmins();
+  }
+
+  // An abandon counts toward the player's matchmaking cooldown everywhere, not
+  // just in this match.
+  private async isLineupMember() {
+    const { match_lineup_players } = await this.hasura.query({
+      match_lineup_players: {
+        __args: {
+          where: {
+            steam_id: { _eq: this.data.steam_id },
+            lineup: {
+              match_id: { _eq: this.matchId },
+            },
+          },
+          limit: 1,
+        },
+        id: true,
+      },
+    });
+
+    return match_lineup_players.length > 0;
   }
 
   // Abandons are issued automatically and carry a cooldown that escalates on

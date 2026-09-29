@@ -26,6 +26,8 @@ export type FiveStackGameServerWebSocketClient = WebSocket.WebSocket & {
   authentication?: Promise<void>;
   authenticated?: boolean;
   serverId?: string;
+  apiPassword?: string;
+  credentialsExpireAt?: number;
   matchBindings?: Map<string, MatchBinding>;
 };
 
@@ -37,6 +39,11 @@ export class MatchEventsGateway {
   // Checking every event instead would add a Hasura round trip to each damage
   // and kill, which arrive many times a second during a round.
   private static readonly BINDING_TTL_MS = 5 * 1000;
+
+  // A server whose api_password is rotated, or that is deleted, loses its socket
+  // on its first event after this runs out. Polled, not pushed: the password
+  // only ever changes in SQL, which no event trigger watches.
+  private static readonly CREDENTIALS_TTL_MS = 5 * 1000;
 
   private static readonly LAST_HOST_TTL_SECONDS = 10 * 60;
 
@@ -105,6 +112,15 @@ export class MatchEventsGateway {
     await client.authentication;
 
     if (!client.authenticated || !client.serverId) {
+      return;
+    }
+
+    if (!(await this.hasCurrentCredentials(client))) {
+      this.logger.warn("game server socket closed: credentials revoked", {
+        serverId: client.serverId,
+      });
+      client.authenticated = false;
+      client.terminate();
       return;
     }
 
@@ -231,10 +247,41 @@ export class MatchEventsGateway {
       }
 
       client.serverId = servers_by_pk.id;
+      client.apiPassword = apiPassword;
+      client.credentialsExpireAt =
+        Date.now() + MatchEventsGateway.CREDENTIALS_TTL_MS;
       client.authenticated = true;
     } catch {
       client.terminate();
     }
+  }
+
+  private async hasCurrentCredentials(
+    client: FiveStackGameServerWebSocketClient,
+  ) {
+    if (client.credentialsExpireAt > Date.now()) {
+      return true;
+    }
+
+    const { servers_by_pk } = await this.hasura.query({
+      servers_by_pk: {
+        __args: {
+          id: client.serverId,
+        },
+        api_password: true,
+      },
+    });
+
+    if (
+      !timingSafeStringEqual(servers_by_pk?.api_password, client.apiPassword)
+    ) {
+      return false;
+    }
+
+    client.credentialsExpireAt =
+      Date.now() + MatchEventsGateway.CREDENTIALS_TTL_MS;
+
+    return true;
   }
 
   // Events wait on the auth lookup, so a stalled one would hold every message
