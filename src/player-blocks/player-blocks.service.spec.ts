@@ -57,9 +57,19 @@ describe("PlayerBlocksService", () => {
       );
 
       const [sql, params] = postgres.query.mock.calls[0];
-      expect(sql).toContain("WHERE blocker_steam_id = $1::bigint");
+      expect(sql).toContain("WHERE pb.blocker_steam_id = $1::bigint");
       expect(sql).not.toContain("blocked_steam_id = $1");
-      expect(params).toEqual(["1"]);
+      expect(params).toEqual(["1", []]);
+    });
+
+    it("hands the exempt roles to the same query", async () => {
+      postgres.query.mockResolvedValue([]);
+
+      await service.blockedBy("1", ["moderator", "administrator"]);
+
+      const [sql, params] = postgres.query.mock.calls[0];
+      expect(sql).toContain("p.role::text <> ALL($2::text[])");
+      expect(params).toEqual(["1", ["moderator", "administrator"]]);
     });
   });
 
@@ -90,10 +100,18 @@ describe("PlayerBlocksService", () => {
       const [sql, params] = postgres.query.mock.calls[0];
       expect(sql).toContain("blocker_steam_id = ANY($1::bigint[])");
       expect(sql).toContain("blocked_steam_id = ANY($2::bigint[])");
-      expect(params).toEqual([
-        ["1", "2", "3"],
-        ["10", "11"],
-      ]);
+      expect(params).toEqual([["1", "2", "3"], ["10", "11"], []]);
+    });
+
+    it("leaves out viewers whose role is exempt, in the same query", async () => {
+      postgres.query.mockResolvedValue([]);
+
+      await service.blockedAmong(["1"], ["10"], ["moderator"]);
+
+      expect(postgres.query).toHaveBeenCalledTimes(1);
+      const [sql, params] = postgres.query.mock.calls[0];
+      expect(sql).toContain("p.role::text <> ALL($3::text[])");
+      expect(params).toEqual([["1"], ["10"], ["moderator"]]);
     });
   });
 

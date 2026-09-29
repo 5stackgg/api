@@ -273,6 +273,11 @@ export class ChatService {
     },
   ];
 
+  // Each update carries the message's whole reaction state, and the per
+  // recipient block lookup can finish out of order, so a room's updates wait
+  // for the one before them rather than letting an older state land last.
+  private readonly reactionBroadcasts = new Map<string, Promise<void>>();
+
   constructor(
     private readonly logger: Logger,
     private readonly rcon: RconService,
@@ -619,13 +624,21 @@ export class ChatService {
   ): Promise<ChatMessage[]> {
     const [messages, blocked] = await Promise.all([
       this.getMessages(type, id),
-      this.playerBlocks.blockedBy(viewer),
+      this.playerBlocks.blockedBy(viewer, ChatService.blockExemptRoles(type)),
     ]);
 
-    return ChatService.withoutAuthors(messages, blocked);
+    return ChatService.withoutBlocked(messages, blocked);
   }
 
-  private static withoutAuthors(
+  // A moderator has to see a group room whole to moderate it. A DM is not
+  // moderated, so a block closes it for them like for anyone.
+  private static blockExemptRoles(
+    type: ChatLobbyType,
+  ): Array<e_player_roles_enum> {
+    return type === ChatLobbyType.Direct ? [] : rolesAtOrAbove("moderator");
+  }
+
+  private static withoutBlocked(
     messages: ChatMessage[],
     blocked: Set<string> | undefined,
   ): ChatMessage[] {
@@ -633,16 +646,44 @@ export class ChatService {
       return messages;
     }
 
-    return messages.filter(
-      (message) => !blocked.has(ChatService.authorSteamId(message)),
+    return messages
+      .filter((message) => !blocked.has(ChatService.authorSteamId(message)))
+      .map((message) => ({
+        ...message,
+        reactions: ChatService.withoutReactors(message.reactions, blocked),
+      }));
+  }
+
+  private static withoutReactors(
+    reactions: ChatReactions | undefined,
+    blocked: Set<string> | undefined,
+  ): ChatReactions {
+    if (!blocked || blocked.size === 0) {
+      return reactions ?? {};
+    }
+
+    return ChatService.orderedReactions(
+      Object.fromEntries(
+        Object.entries(reactions ?? {}).map(([reaction, steamIds]) => [
+          reaction,
+          steamIds.filter((steamId) => !blocked.has(steamId)),
+        ]),
+      ),
     );
   }
 
-  private static authorsOf(messages: ChatMessage[]): string[] {
+  private static reactorsOf(reactions: ChatReactions | undefined): string[] {
+    return [...new Set(Object.values(reactions ?? {}).flat())];
+  }
+
+  private static peopleIn(messages: ChatMessage[]): string[] {
     return [
       ...new Set(
         messages
-          .map((message) => ChatService.authorSteamId(message))
+          .flatMap((message) => [
+            ChatService.authorSteamId(message),
+            ...ChatService.reactorsOf(message.reactions),
+          ])
           .filter((steamId): steamId is string => steamId !== null),
       ),
     ];
@@ -1183,9 +1224,33 @@ export class ChatService {
       return { toggled: false, code: ChatErrorCode.NotFound };
     }
 
-    void this.to(type, id, "reaction", { id: messageId, reactions });
+    void this.broadcastReaction(type, id, messageId, reactions);
 
     return { toggled: true, reactions };
+  }
+
+  private broadcastReaction(
+    type: ChatLobbyType,
+    id: string,
+    messageId: string,
+    reactions: ChatReactions,
+  ): Promise<void> {
+    const room = `${type}:${id}`;
+
+    const broadcast = (this.reactionBroadcasts.get(room) ?? Promise.resolve())
+      .then(() => this.to(type, id, "reaction", { id: messageId, reactions }))
+      .catch((error) => {
+        this.logger.warn(`unable to broadcast a reaction to ${room}`, error);
+      })
+      .finally(() => {
+        if (this.reactionBroadcasts.get(room) === broadcast) {
+          this.reactionBroadcasts.delete(room);
+        }
+      });
+
+    this.reactionBroadcasts.set(room, broadcast);
+
+    return broadcast;
   }
 
   private async withinRate(
@@ -1696,9 +1761,11 @@ export class ChatService {
     const senderSteamId = String(sender.steam_id);
 
     const others = members.filter((steamId) => steamId !== senderSteamId);
-    const hiding = await this.playerBlocks.blockedAmong(others, [
-      senderSteamId,
-    ]);
+    const hiding = await this.playerBlocks.blockedAmong(
+      others,
+      [senderSteamId],
+      ChatService.blockExemptRoles(type),
+    );
     const targets = others.filter((steamId) => !hiding.has(steamId));
 
     if (targets.length === 0) {
@@ -1748,7 +1815,10 @@ export class ChatService {
     id: string,
     messageId: string,
   ) {
-    await this.notifications.retractChatMessageFromBlocked(messageId);
+    await this.notifications.retractChatMessageFromBlocked(
+      messageId,
+      ChatService.blockExemptRoles(type),
+    );
 
     if (type === ChatLobbyType.Direct) {
       const [row] = await this.postgres.query<
@@ -2542,8 +2612,9 @@ export class ChatService {
     }));
   }
 
-  // What someone said never reaches a player who blocked them. History is
-  // per recipient, so it has no way out through here: see resendHistory.
+  // What someone said, and whom they reacted with, never reaches a player who
+  // blocked them. History is per recipient, so it has no way out through
+  // here: see resendHistory.
   public to(
     type: ChatLobbyType,
     id: string,
@@ -2554,7 +2625,13 @@ export class ChatService {
   public to(
     type: ChatLobbyType,
     id: string,
-    event: "deleted" | "reaction" | "list" | "joined" | "left",
+    event: "reaction",
+    data: { id: string; reactions: ChatReactions },
+  ): Promise<void>;
+  public to(
+    type: ChatLobbyType,
+    id: string,
+    event: "deleted" | "list" | "joined" | "left",
     data: Record<string, any>,
   ): Promise<void>;
   public async to(
@@ -2568,20 +2645,32 @@ export class ChatService {
     const eventName = `lobby:${type}:${id}:${event}`;
     const roster = await this.teamRoomRoster(type, id);
 
-    const hiding =
-      author === undefined
-        ? new Map<string, Set<string>>()
-        : await this.playerBlocks.blockedAmong(
-            users.map(({ steamId }) => steamId),
-            [author],
-          );
+    const hiding = await this.playerBlocks.blockedAmong(
+      users.map(({ steamId }) => steamId),
+      event === "reaction"
+        ? ChatService.reactorsOf(data.reactions)
+        : author === undefined
+          ? []
+          : [author],
+      ChatService.blockExemptRoles(type),
+    );
 
     for (const { steamId } of users) {
       if (roster && !roster.has(String(steamId))) {
         continue;
       }
 
-      if (hiding.has(steamId)) {
+      const blocked = hiding.get(steamId);
+
+      if (event === "reaction") {
+        await this.publishTo(steamId, eventName, {
+          ...data,
+          reactions: ChatService.withoutReactors(data.reactions, blocked),
+        });
+        continue;
+      }
+
+      if (blocked) {
         continue;
       }
 
@@ -2597,13 +2686,14 @@ export class ChatService {
     const users = await this.getAllUsersInLobby(type, id);
     const blocked = await this.playerBlocks.blockedAmong(
       users.map(({ steamId }) => steamId),
-      ChatService.authorsOf(messages),
+      ChatService.peopleIn(messages),
+      ChatService.blockExemptRoles(type),
     );
 
     for (const { steamId } of users) {
       await this.publishTo(steamId, `lobby:${type}:${id}:messages`, {
         id,
-        messages: ChatService.withoutAuthors(messages, blocked.get(steamId)),
+        messages: ChatService.withoutBlocked(messages, blocked.get(steamId)),
       });
     }
   }

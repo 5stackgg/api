@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { e_player_roles_enum } from "generated";
 import { PostgresService } from "src/postgres/postgres.service";
 
 @Injectable()
@@ -24,13 +25,18 @@ export class PlayerBlocksService {
   }
 
   // Who `viewer` blocked -- never the reverse, which would expose who blocked
-  // them.
-  public async blockedBy(viewer: string): Promise<Set<string>> {
+  // them. A viewer whose current role is in `exemptRoles` has nothing hidden.
+  public async blockedBy(
+    viewer: string,
+    exemptRoles: Array<e_player_roles_enum> = [],
+  ): Promise<Set<string>> {
     const rows = await this.postgres.query<Array<{ steam_id: string }>>(
-      `SELECT blocked_steam_id::text AS steam_id
-         FROM public.player_blocks
-        WHERE blocker_steam_id = $1::bigint`,
-      [viewer],
+      `SELECT pb.blocked_steam_id::text AS steam_id
+         FROM public.player_blocks pb
+         JOIN public.players p ON p.steam_id = pb.blocker_steam_id
+        WHERE pb.blocker_steam_id = $1::bigint
+          AND p.role::text <> ALL($2::text[])`,
+      [viewer, exemptRoles],
     );
 
     return new Set(rows.map((row) => row.steam_id));
@@ -41,6 +47,7 @@ export class PlayerBlocksService {
   public async blockedAmong(
     viewers: Array<string>,
     authors: Array<string>,
+    exemptRoles: Array<e_player_roles_enum> = [],
   ): Promise<Map<string, Set<string>>> {
     const blocked = new Map<string, Set<string>>();
 
@@ -51,12 +58,14 @@ export class PlayerBlocksService {
     const rows = await this.postgres.query<
       Array<{ viewer: string; author: string }>
     >(
-      `SELECT blocker_steam_id::text AS viewer,
-              blocked_steam_id::text AS author
-         FROM public.player_blocks
-        WHERE blocker_steam_id = ANY($1::bigint[])
-          AND blocked_steam_id = ANY($2::bigint[])`,
-      [viewers, authors],
+      `SELECT pb.blocker_steam_id::text AS viewer,
+              pb.blocked_steam_id::text AS author
+         FROM public.player_blocks pb
+         JOIN public.players p ON p.steam_id = pb.blocker_steam_id
+        WHERE pb.blocker_steam_id = ANY($1::bigint[])
+          AND pb.blocked_steam_id = ANY($2::bigint[])
+          AND p.role::text <> ALL($3::text[])`,
+      [viewers, authors, exemptRoles],
     );
 
     for (const { viewer, author } of rows) {

@@ -320,6 +320,44 @@ describe("chat blocks (SQL-driven)", () => {
     const messageIdOf = (result: Awaited<ReturnType<typeof inMatch>>) =>
       result.accepted ? result.messageId : "";
 
+    const react = async (steamId: string, messageId: string) => {
+      await expect(
+        chat.toggleReaction(
+          ChatLobbyType.Match,
+          matchId,
+          messageId,
+          "heart",
+          player(steamId),
+        ),
+      ).resolves.toMatchObject({ toggled: true });
+      await settle();
+    };
+
+    const lastReactionsSent = (messageId: string) =>
+      Object.fromEntries(
+        delivered(`lobby:match:${matchId}:reaction`)
+          .filter(({ data }) => data.id === messageId)
+          .map(({ steamId, data }) => [steamId, data.reactions]),
+      );
+
+    const reactionsInHistory = async (steamId: string, messageId: string) =>
+      (
+        (await join(
+          ChatLobbyType.Match,
+          matchId,
+          steamId,
+        )) as unknown as Array<{
+          id: string;
+          reactions: Record<string, string[]>;
+        }>
+      ).find(({ id }) => id === messageId)?.reactions;
+
+    const makeModerator = (steamId: string) =>
+      postgres.query(
+        "UPDATE players SET role = 'moderator' WHERE steam_id = $1::bigint",
+        [steamId],
+      );
+
     beforeEach(async () => {
       blocker = await fx.player("Blocker");
       blocked = await fx.player("Blocked");
@@ -364,6 +402,81 @@ describe("chat blocks (SQL-driven)", () => {
       expect(recipientsOf(`lobby:match:${matchId}:chat`, reply)).toEqual(
         [...roster].sort(),
       );
+    });
+
+    it("strips the blocked player's reactions from the blocker's live updates and history, and from nobody else's", async () => {
+      const id = messageIdOf(await inMatch(bystander, "hello"));
+
+      await block(blocker, blocked);
+      await react(blocked, id);
+
+      expect(lastReactionsSent(id)).toEqual({
+        [blocker]: {},
+        [blocked]: { heart: [blocked] },
+        [bystander]: { heart: [blocked] },
+      });
+
+      await react(bystander, id);
+
+      expect(lastReactionsSent(id)).toEqual({
+        [blocker]: { heart: [bystander] },
+        [blocked]: { heart: [blocked, bystander] },
+        [bystander]: { heart: [blocked, bystander] },
+      });
+      expect(await reactionsInHistory(blocker, id)).toEqual({
+        heart: [bystander],
+      });
+      expect(await reactionsInHistory(bystander, id)).toEqual({
+        heart: [blocked, bystander],
+      });
+    });
+
+    it("hides nothing from a moderator who blocked the author, going by the role on the player row", async () => {
+      await makeModerator(blocker);
+      const before = messageIdOf(await inMatch(blocked, "before"));
+
+      await block(blocker, blocked);
+
+      expect(await previews(before)).toEqual({
+        [blocker]: "before",
+        [bystander]: "before",
+      });
+
+      const after = messageIdOf(await inMatch(blocked, "after"));
+
+      expect(recipientsOf(`lobby:match:${matchId}:chat`, after)).toEqual(
+        [...roster].sort(),
+      );
+      expect(await previews(after)).toEqual({
+        [blocker]: "after",
+        [bystander]: "after",
+      });
+
+      await chat.editMessage(
+        ChatLobbyType.Match,
+        matchId,
+        after,
+        player(blocked),
+        "after, edited",
+      );
+      await settle();
+
+      expect(recipientsOf(`lobby:match:${matchId}:edited`, after)).toEqual(
+        [...roster].sort(),
+      );
+
+      await react(blocked, before);
+
+      expect(lastReactionsSent(before)[blocker]).toEqual({
+        heart: [blocked],
+      });
+      expect(await historyOf(ChatLobbyType.Match, matchId, blocker)).toEqual([
+        "before",
+        "after, edited",
+      ]);
+      expect(await reactionsInHistory(blocker, before)).toEqual({
+        heart: [blocked],
+      });
     });
 
     it("keeps an edit to a hidden line from the blocker", async () => {
@@ -476,20 +589,30 @@ describe("chat blocks (SQL-driven)", () => {
 
     it("re-sends a draft's history to each player without what they blocked when it moves into the match", async () => {
       const draftId = randomUUID();
+      const sent: string[] = [];
 
       for (const [steamId, text] of [
         [blocked, "draft from blocked"],
         [bystander, "draft from bystander"],
       ]) {
-        await chat.sendMessageToChat(
+        const result = await chat.sendMessageToChat(
           ChatLobbyType.Draft,
           draftId,
           player(steamId),
           text,
           true,
         );
+        sent.push(result.accepted ? result.messageId : "");
       }
       await settle();
+
+      const lurker = await fx.player("Lurker");
+      await block(blocker, lurker);
+      await redis.hset(
+        `chat_reactions_draft_${draftId}`,
+        sent[1],
+        JSON.stringify({ heart: [lurker, bystander] }),
+      );
 
       await block(blocker, blocked);
 
@@ -514,6 +637,22 @@ describe("chat blocks (SQL-driven)", () => {
         [blocker]: ["draft from bystander"],
         [blocked]: ["draft from blocked", "draft from bystander"],
         [bystander]: ["draft from blocked", "draft from bystander"],
+      });
+
+      const resentReactions = Object.fromEntries(
+        delivered(`lobby:match:${matchId}:messages`).map(
+          ({ steamId, data }) => [
+            steamId,
+            data.messages.find(({ id }: { id: string }) => id === sent[1])
+              ?.reactions,
+          ],
+        ),
+      );
+
+      expect(resentReactions).toEqual({
+        [blocker]: { heart: [bystander] },
+        [blocked]: { heart: [lurker, bystander] },
+        [bystander]: { heart: [lurker, bystander] },
       });
       expect(await historyOf(ChatLobbyType.Match, matchId, blocker)).toEqual([
         "draft from bystander",
@@ -631,6 +770,35 @@ describe("chat blocks (SQL-driven)", () => {
       await block(blocker, blocked);
 
       await refusesEverything();
+    });
+
+    it("refuses both sides and blanks the bell when the blocker is a moderator", async () => {
+      await postgres.query("DELETE FROM chat_read_state");
+      await postgres.query(
+        "UPDATE players SET role = 'moderator' WHERE steam_id = $1::bigint",
+        [blocker],
+      );
+      await block(blocker, blocked);
+
+      await refusesEverything();
+
+      expect(await bell(fromBlocked)).toEqual([
+        { steam_id: blocker, message: "", deleted: true },
+      ]);
+    });
+
+    it("blanks a moderator's row for a DM whose rows were aimed before their block landed", async () => {
+      await postgres.query(
+        "UPDATE players SET role = 'moderator' WHERE steam_id = $1::bigint",
+        [blocker],
+      );
+      beforeBellInsert = () => block(blocker, blocked);
+
+      const racing = await say(ChatLobbyType.Direct, room, blocked, "racing");
+
+      expect(await bell(racing.accepted ? racing.messageId : "")).toEqual([
+        { steam_id: blocker, message: "", deleted: true },
+      ]);
     });
 
     it("refuses both sides on the block alone, while a friendship still reads as accepted", async () => {
