@@ -212,6 +212,7 @@ export class MapAssetsService {
     gameServerNodeId: string,
     buildId: string,
     force = false,
+    maps: Array<string> = [],
   ): V1Job {
     const volume = `serverfiles-${gameServerNodeId.replaceAll(".", "-")}`;
 
@@ -273,6 +274,7 @@ export class MapAssetsService {
                   "--out",
                   "/work",
                   "--publish",
+                  ...(maps.length ? ["--only-maps", maps.join(",")] : []),
                   ...(force ? ["--force"] : []),
                 ],
                 env: [
@@ -758,8 +760,24 @@ export class MapAssetsService {
 
     await this.batchApi.createNamespacedJob({
       namespace: this.namespace,
-      body: MapAssetsService.jobSpec(gameServerNodeId, buildId, force),
+      body: MapAssetsService.jobSpec(
+        gameServerNodeId,
+        buildId,
+        force,
+        await this.knownMaps(),
+      ),
     });
+  }
+
+  // Only maps with a row are built and published. Every instance seeds the
+  // same Valve maps, and custom maps are workshop maps no install carries, so
+  // this instance's table speaks for all of them.
+  private async knownMaps(): Promise<Array<string>> {
+    const rows = await this.postgres.query<Array<{ name: string }>>(
+      `SELECT DISTINCT name FROM public.maps ORDER BY name`,
+    );
+
+    return rows.map(({ name }) => name);
   }
 
   private async waitForJob(
