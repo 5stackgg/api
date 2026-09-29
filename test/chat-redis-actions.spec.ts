@@ -7,6 +7,7 @@ import { PostgresService } from "./../src/postgres/postgres.service";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 import { ChatService } from "./../src/chat/chat.service";
+import { ChatGateway } from "./../src/chat/chat.gateway";
 import { PlayerBlocksService } from "./../src/player-blocks/player-blocks.service";
 import { ChatErrorCode } from "./../src/chat/enums/ChatErrorCode";
 import { ChatLobbyType } from "./../src/chat/enums/ChatLobbyTypes";
@@ -1219,6 +1220,146 @@ describe("chat edits and self deletes (SQL-driven)", () => {
       });
 
       expect(plan).toContain("notifications_message_id_idx");
+    });
+  });
+
+  describe("sending from the web", () => {
+    const LIMIT = 5;
+    const WINDOW_MS = 3_000;
+
+    const settle = () => new Promise((resolve) => setTimeout(resolve, 100));
+
+    const seat = (matchId: string, user: any) =>
+      redis.hset(
+        `chat:match:${matchId}`,
+        user.steam_id,
+        JSON.stringify({ user: { steam_id: user.steam_id } }),
+      );
+
+    const liveMatch = () => {
+      const rcon = { send: jest.fn().mockResolvedValue("") };
+      const connect = jest.fn().mockResolvedValue(rcon);
+      const stub = hasura();
+      const query = stub.query.getMockImplementation();
+      stub.query.mockImplementation(async (request: any) => {
+        const result: any = await query(request);
+        if (request.matches_by_pk) {
+          result.matches_by_pk = {
+            ...result.matches_by_pk,
+            status: "Live",
+            server: { id: randomUUID(), plugin_runtime: "counterstrikesharp" },
+          };
+        }
+        return result;
+      });
+
+      const service = new ChatService(
+        logger as any,
+        { connect } as any,
+        stub as any,
+        postgres,
+        { getConnection: () => redis } as any,
+        notifications,
+        new PlayerBlocksService(postgres),
+      );
+
+      return { gateway: new ChatGateway(service), hasura: stub, rcon, connect };
+    };
+
+    const socket = (user: any) =>
+      ({ user, send: jest.fn(), authentication: Promise.resolve() }) as any;
+
+    const replies = (client: any) =>
+      client.send.mock.calls.map(([raw]: [string]) => JSON.parse(raw));
+
+    it("refuses the sixth message in three seconds before any other work, relays none of it, and takes more once the window passes", async () => {
+      const user = await author();
+      const matchId = randomUUID();
+      await seat(matchId, user);
+      const { gateway, hasura, rcon, connect } = liveMatch();
+      const client = socket(user);
+
+      const send = (n: number) =>
+        gateway.lobby(
+          {
+            id: matchId,
+            type: ChatLobbyType.Match,
+            message: `gg ${n}`,
+            requestId: `r-${n}`,
+          },
+          client,
+        );
+
+      for (let n = 1; n <= LIMIT; n++) {
+        await send(n);
+      }
+      expect(rcon.send).toHaveBeenCalledTimes(LIMIT);
+
+      await settle();
+      const rateKey = `chat:message-rate:${user.steam_id}`;
+      const windowLeft = await redis.pttl(rateKey);
+      const hasuraCalls = hasura.query.mock.calls.length;
+      const postgresQuery = jest.spyOn(postgres, "query");
+
+      await send(LIMIT + 1);
+      await settle();
+
+      expect(await redis.pttl(rateKey)).toBeLessThan(windowLeft);
+
+      expect(replies(client).at(-1)).toEqual({
+        event: "chat:error",
+        data: {
+          code: ChatErrorCode.RateLimited,
+          action: "send",
+          requestId: `r-${LIMIT + 1}`,
+        },
+      });
+      expect(connect).toHaveBeenCalledTimes(LIMIT);
+      expect(rcon.send).toHaveBeenCalledTimes(LIMIT);
+      expect(hasura.query).toHaveBeenCalledTimes(hasuraCalls);
+      expect(postgresQuery).not.toHaveBeenCalled();
+      expect(await redis.hlen(`chat_match_${matchId}`)).toBe(LIMIT);
+
+      const ttl = await redis.pttl(rateKey);
+      expect(ttl).toBeGreaterThan(0);
+      expect(ttl).toBeLessThanOrEqual(WINDOW_MS);
+
+      await new Promise((resolve) => setTimeout(resolve, ttl + 50));
+
+      await send(LIMIT + 2);
+
+      expect(rcon.send).toHaveBeenCalledTimes(LIMIT + 1);
+      expect(replies(client).at(-1)).toMatchObject({
+        event: "chat:ack",
+        data: { action: "send", requestId: `r-${LIMIT + 2}` },
+      });
+    });
+
+    it("limits each player on their own", async () => {
+      const user = await author();
+      const other = {
+        steam_id: await fx.player("Other"),
+        name: "Other",
+        role: "user",
+      };
+      const matchId = randomUUID();
+      await seat(matchId, user);
+      await seat(matchId, other);
+      const { gateway, rcon } = liveMatch();
+
+      for (let n = 1; n <= LIMIT + 1; n++) {
+        await gateway.lobby(
+          { id: matchId, type: ChatLobbyType.Match, message: `gg ${n}` },
+          socket(user),
+        );
+      }
+
+      await gateway.lobby(
+        { id: matchId, type: ChatLobbyType.Match, message: "gl" },
+        socket(other),
+      );
+
+      expect(rcon.send).toHaveBeenCalledTimes(LIMIT + 1);
     });
   });
 });

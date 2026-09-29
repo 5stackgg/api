@@ -14,28 +14,55 @@ import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketCl
   path: "/ws/web",
 })
 export class SignalServerGateway {
+  // The web opens one peer per region it measures; a socket claiming more
+  // than this forgets its oldest.
+  private static readonly MAX_SIGNAL_PEERS = 32;
+
   constructor(
     private readonly hasura: HasuraService,
     @Inject("GAME_SERVER_NODE_CLIENT_SERVICE") private client: ClientProxy,
   ) {}
 
+  // A socket may only signal the peers it offered itself: an offer claims its
+  // peerId on that socket and the node it went to, and a candidate is relayed
+  // only for a peerId that socket claimed, to that same node.
   @SubscribeMessage("offer")
   public async handleOffer(
     @MessageBody()
     data: RegionSignalData,
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
-    const { region, signal, peerId } = data;
+    await client.authentication;
 
-    const server = await this.getRegionServer(region);
-
-    if (!server) {
+    if (
+      !client.user ||
+      typeof data?.region !== "string" ||
+      typeof data.peerId !== "string"
+    ) {
       return;
     }
 
-    client.peerNodes?.add(server.id);
+    const { region, signal, peerId } = data;
 
-    this.client.emit(`offer.${server.id}`, {
+    const node = this.getRegionServer(region).then((server) => server?.id);
+
+    // Claimed before the first await: the candidates that follow an offer on
+    // the same socket have to find it.
+    client.signalPeers.set(peerId, node);
+
+    if (client.signalPeers.size > SignalServerGateway.MAX_SIGNAL_PEERS) {
+      client.signalPeers.delete(client.signalPeers.keys().next().value);
+    }
+
+    const nodeId = await node;
+
+    if (!nodeId) {
+      return;
+    }
+
+    client.peerNodes.add(nodeId);
+
+    this.client.emit(`offer.${nodeId}`, {
       region,
       signal,
       peerId,
@@ -50,16 +77,21 @@ export class SignalServerGateway {
     data: RegionSignalData,
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
-    const { region, signal, peerId } = data;
-    const server = await this.getRegionServer(region);
+    await client.authentication;
 
-    if (!server) {
+    if (!client.user || typeof data?.peerId !== "string") {
       return;
     }
 
-    client.peerNodes?.add(server.id);
+    const { region, signal, peerId } = data;
 
-    this.client.emit(`candidate.${server.id}`, {
+    const nodeId = await client.signalPeers.get(peerId);
+
+    if (!nodeId) {
+      return;
+    }
+
+    this.client.emit(`candidate.${nodeId}`, {
       region,
       signal,
       peerId,

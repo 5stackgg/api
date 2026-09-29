@@ -23,6 +23,8 @@ export class SocketsGateway implements OnGatewayConnection {
       client.send(JSON.stringify({ event: "pong" }));
     }
 
+    await client.authentication;
+
     if (!client.user) {
       return;
     }
@@ -42,6 +44,8 @@ export class SocketsGateway implements OnGatewayConnection {
     @MessageBody() data: { visible?: boolean; focus?: string | null },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ): Promise<void> {
+    await client.authentication;
+
     if (!client.user) {
       return;
     }
@@ -53,10 +57,13 @@ export class SocketsGateway implements OnGatewayConnection {
     );
   }
 
-  public async handleConnection(
+  // Nest binds every /ws/web gateway's message handlers without waiting for
+  // this, so each handler awaits client.authentication before it trusts
+  // client.user.
+  public handleConnection(
     @ConnectedSocket() client: FiveStackWebSocketClient,
     request: Request,
   ) {
-    await this.sockets.setupSocket(client, request);
+    client.authentication = this.sockets.setupSocket(client, request);
   }
 }

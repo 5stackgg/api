@@ -7,6 +7,7 @@ import { HasuraService } from "../hasura/hasura.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { SteamMatchHistoryQueues } from "./enums/SteamMatchHistoryQueues";
 import { ResolveMatchMetadata } from "./jobs/ResolveMatchMetadata";
+import { SteamGcService } from "./steam-gc.service";
 import { decodeShareCode } from "./shareCode";
 
 export type PollResult = {
@@ -23,6 +24,7 @@ export class SteamMatchHistoryService {
   private static readonly POLL_COOLDOWN_SECONDS = 10 * 60;
   private static readonly RATE_LIMITED_COOLDOWN_SECONDS = 60 * 60;
   private static readonly INTER_REQUEST_DELAY_MS = 300;
+  private static readonly SHARE_CODE_IMPORT_COOLDOWN_SECONDS = 30;
   private readonly steamApiKey: string;
 
   constructor(
@@ -33,6 +35,7 @@ export class SteamMatchHistoryService {
     private readonly logger: Logger,
     @InjectQueue(SteamMatchHistoryQueues.ResolveMatchMetadata)
     private readonly resolveQueue: Queue,
+    private readonly steamGc: SteamGcService,
   ) {
     this.steamApiKey = this.config.get("steam.steamApiKey");
   }
@@ -171,6 +174,74 @@ export class SteamMatchHistoryService {
          )`,
       [valveMatchId],
     );
+    return { ok: true };
+  }
+
+  // GetNextMatchSharingCode is the only automatic source of Valve matches; a
+  // match it never hands out can only come in through a code the player
+  // copies from Your Matches.
+  public async importShareCode(
+    steamId: string,
+    input: string,
+  ): Promise<{ ok: boolean; error?: string }> {
+    if (!(await this.isImportingAllowed())) {
+      return { ok: false, error: "external match imports are disabled" };
+    }
+
+    if (!this.steamGc.isAvailable()) {
+      return { ok: false, error: "steam gc not configured" };
+    }
+
+    const shareCode = SteamMatchHistoryService.extractShareCode(input);
+    if (!shareCode) {
+      return { ok: false, error: "invalid share code" };
+    }
+
+    const cooldownKey =
+      SteamMatchHistoryService.shareCodeImportCooldownKey(steamId);
+    const acquired = await this.cache.acquireLock(
+      cooldownKey,
+      SteamMatchHistoryService.SHARE_CODE_IMPORT_COOLDOWN_SECONDS,
+    );
+    if (!acquired) {
+      return {
+        ok: false,
+        error: "wait a few seconds before importing another match",
+      };
+    }
+
+    const valveMatchId = decodeShareCode(shareCode).matchId.toString();
+
+    const imported = await this.postgres.query<Array<{ id: string }>>(
+      `SELECT id FROM public.matches
+        WHERE (source = 'valve' AND external_id = $1)
+           OR share_code = $2
+        LIMIT 1`,
+      [valveMatchId, shareCode],
+    );
+    if (imported.length > 0) {
+      return { ok: false, error: "match already imported" };
+    }
+
+    await this.recordPendingImport(steamId, shareCode);
+
+    const requeued = await this.postgres.query<
+      Array<{ valve_match_id: string }>
+    >(
+      `UPDATE public.pending_match_imports
+         SET status = 'Queued', error = NULL, share_code = $2
+       WHERE valve_match_id = $1::numeric AND status = 'Failed'
+       RETURNING valve_match_id`,
+      [valveMatchId, shareCode],
+    );
+    if (requeued.length > 0) {
+      await this.enqueueResolve(valveMatchId);
+    }
+
+    this.logger.log(
+      `steam-match-history share-code import steam_id=${steamId} valve_match_id=${valveMatchId}`,
+    );
+
     return { ok: true };
   }
 
@@ -490,5 +561,26 @@ export class SteamMatchHistoryService {
 
   private static cooldownKey(steamId: string): string {
     return `steam-match-history:poll-cooldown:v2:${steamId}`;
+  }
+
+  private static shareCodeImportCooldownKey(steamId: string): string {
+    return `steam-match-history:share-code-import-cooldown:${steamId}`;
+  }
+
+  // CS2's "copy share link" wraps the code in a steam://rungame URL.
+  private static extractShareCode(input: string): string | null {
+    const found = (input ?? "").match(
+      /CSGO(?:-[A-Za-z0-9]{5}){5}(?![A-Za-z0-9])/i,
+    );
+    if (!found) {
+      return null;
+    }
+    const shareCode = `CSGO${found[0].slice(4)}`;
+    try {
+      decodeShareCode(shareCode);
+    } catch {
+      return null;
+    }
+    return shareCode;
   }
 }

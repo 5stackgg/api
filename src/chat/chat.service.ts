@@ -133,7 +133,13 @@ export class ChatService {
 
   private static readonly REACTION_RATE_WINDOW_MS = 1_000;
 
-  private static readonly REACTION_RATE_SCRIPT = `
+  // Counted across every room: a web message accepted into a match room is
+  // also an RCON command to its game server.
+  public static readonly MESSAGE_RATE_LIMIT = 5;
+
+  private static readonly MESSAGE_RATE_WINDOW_MS = 3_000;
+
+  private static readonly RATE_SCRIPT = `
     local count = redis.call('INCR', KEYS[1])
     if count == 1 then
       redis.call('PEXPIRE', KEYS[1], ARGV[1])
@@ -870,6 +876,16 @@ export class ChatService {
         return { accepted: false, code: parsed.error };
       }
 
+      if (
+        !(await this.withinRate(
+          `chat:message-rate:${player.steam_id}`,
+          ChatService.MESSAGE_RATE_LIMIT,
+          ChatService.MESSAGE_RATE_WINDOW_MS,
+        ))
+      ) {
+        return { accepted: false, code: ChatErrorCode.RateLimited };
+      }
+
       text = parsed.text;
     }
 
@@ -1172,7 +1188,13 @@ export class ChatService {
       return { toggled: false, code: ChatErrorCode.NotFound };
     }
 
-    if (!(await this.withinReactionRate(user.steam_id))) {
+    if (
+      !(await this.withinRate(
+        `chat:reaction-rate:${user.steam_id}`,
+        ChatService.REACTION_RATE_LIMIT,
+        ChatService.REACTION_RATE_WINDOW_MS,
+      ))
+    ) {
       return { toggled: false, code: ChatErrorCode.RateLimited };
     }
 
@@ -1231,15 +1253,19 @@ export class ChatService {
     return broadcast;
   }
 
-  private async withinReactionRate(steamId: string): Promise<boolean> {
+  private async withinRate(
+    key: string,
+    limit: number,
+    windowMs: number,
+  ): Promise<boolean> {
     const count = await this.redis.eval(
-      ChatService.REACTION_RATE_SCRIPT,
+      ChatService.RATE_SCRIPT,
       1,
-      `chat:reaction-rate:${steamId}`,
-      ChatService.REACTION_RATE_WINDOW_MS,
+      key,
+      windowMs,
     );
 
-    return Number(count) <= ChatService.REACTION_RATE_LIMIT;
+    return Number(count) <= limit;
   }
 
   private async toggleRoomReaction(

@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { Request } from "express";
+import { Request, Response } from "express";
 import session from "express-session";
 import { getCookieOptions } from "../utilities/getCookieOptions";
 import RedisStore from "connect-redis";
@@ -27,6 +27,8 @@ export class SocketsService {
   // Twice the client's ping interval, so a focus survives a missed heartbeat
   // but a closed laptop stops claiming to be reading anything within a round.
   private static readonly FOCUS_TTL_SECONDS = 40;
+
+  private static readonly AUTH_TIMEOUT_MS = 10 * 1000;
 
   constructor(
     private readonly logger: Logger,
@@ -151,81 +153,154 @@ export class SocketsService {
     );
   }
 
+  // Handlers wait on this before they read client.user. It settles with no
+  // I/O between the open check and the close listener, so a socket that closes
+  // during setup is still cleaned up, and it never rejects.
   public async setupSocket(client: FiveStackWebSocketClient, request: Request) {
-    session({
-      rolling: true,
-      resave: false,
-      name: this.appConfig.name,
-      saveUninitialized: false,
-      secret: this.appConfig.encSecret,
-      cookie: getCookieOptions(),
-      store: new RedisStore({
-        prefix: `${this.appConfig.name}:auth:`,
-        client: this.redis,
-      }),
-      // @ts-ignore
-      // luckily in this case the middlewares do not require the response
-      // this is a hack to get the session loaded in a websocket
-    })(request, {}, () => {
-      passport.session()(request, {}, async () => {
-        if (!request.user) {
-          client.close();
+    if (!(await this.authenticate(request))) {
+      client.terminate();
+      return;
+    }
+
+    if (client.readyState !== client.OPEN) {
+      return;
+    }
+
+    client.id = uuidv4();
+    client.user = request.user;
+    client.sessionId = request.session.id;
+    client.node = this.nodeId;
+    client.peerNodes = new Set();
+    client.signalPeers = new Map();
+
+    this.clients.set(client.id, client);
+
+    const registered = this.register(client);
+
+    void registered.then(() => this.welcome(client));
+
+    client.on("close", async () => {
+      this.clients.delete(client.id);
+
+      void this.demoSessionWatcher.clientClosed(client.id);
+
+      for (const nodeId of client.peerNodes) {
+        this.gameServerNodeClient.emit(`peer-close.${nodeId}`, {
+          clientId: client.id,
+        });
+      }
+      client.peerNodes.clear();
+
+      // Registering marks the player online and cancels their offline job, so
+      // it has to be done before this can mark them offline again.
+      await registered;
+
+      await this.redis.del(
+        SocketsService.GET_PLAYER_CLIENT(
+          client.user.steam_id,
+          this.nodeId,
+          client.id,
+        ),
+      );
+
+      await this.setFocus(client.user.steam_id, client.id, null);
+
+      const clients = await this.redis.keys(
+        `${SocketsService.GET_PLAYER_CLIENTS(client.user.steam_id)}:*`,
+      );
+
+      if (clients.length === 0) {
+        await this.redis.del(
+          SocketsService.GET_PLAYER_KEY(client.user.steam_id),
+        );
+
+        await this.sendPeopleOnline();
+
+        void this.matchmaking.markOffline(client.user.steam_id);
+      }
+    });
+  }
+
+  private async register(client: FiveStackWebSocketClient) {
+    try {
+      await this.updateClient(client.user.steam_id, client.id);
+
+      await this.matchmaking.cancelOffline(client.user.steam_id);
+    } catch (error) {
+      this.logger.error(
+        `unable to register web socket for ${client.user.steam_id}`,
+        error,
+      );
+    }
+  }
+
+  private async welcome(client: FiveStackWebSocketClient) {
+    try {
+      await this.sendPeopleOnline();
+      await this.matchmaking.sendRegionStats(client.user);
+      await this.matchmakingLobbyService.sendQueueDetailsToPlayer(
+        client.user.steam_id,
+      );
+    } catch (error) {
+      this.logger.error(
+        `unable to finish setting up web socket for ${client.user.steam_id}`,
+        error,
+      );
+    }
+  }
+
+  // Messages wait on the session load, so a stalled one would hold every
+  // message an unauthenticated socket sends in memory.
+  private async authenticate(request: Request): Promise<boolean> {
+    let timer: NodeJS.Timeout;
+    try {
+      await Promise.race([
+        this.loadSession(request),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(
+            () => reject(new Error("web socket session load timed out")),
+            SocketsService.AUTH_TIMEOUT_MS,
+          );
+        }),
+      ]);
+    } catch (error) {
+      this.logger.warn(`web socket auth failed: ${(error as Error)?.message}`);
+      return false;
+    } finally {
+      clearTimeout(timer);
+    }
+
+    return !!request.user;
+  }
+
+  // Neither middleware touches the response, which is what lets them load a
+  // session for a websocket upgrade.
+  private loadSession(request: Request) {
+    return new Promise<void>((resolve, reject) => {
+      session({
+        rolling: true,
+        resave: false,
+        name: this.appConfig.name,
+        saveUninitialized: false,
+        secret: this.appConfig.encSecret,
+        cookie: getCookieOptions(),
+        store: new RedisStore({
+          prefix: `${this.appConfig.name}:auth:`,
+          client: this.redis,
+        }),
+      })(request, {} as Response, (error?: unknown) => {
+        if (error) {
+          reject(error);
           return;
         }
 
-        client.id = uuidv4();
-        client.user = request.user;
-        client.sessionId = request.session.id;
-        client.node = this.nodeId;
-        client.peerNodes = new Set();
-
-        this.clients.set(client.id, client);
-
-        await this.updateClient(client.user.steam_id, client.id);
-
-        await this.matchmaking.cancelOffline(client.user.steam_id);
-
-        await this.sendPeopleOnline();
-        await this.matchmaking.sendRegionStats(client.user);
-        await this.matchmakingLobbyService.sendQueueDetailsToPlayer(
-          client.user.steam_id,
-        );
-
-        client.on("close", async () => {
-          this.clients.delete(client.id);
-
-          void this.demoSessionWatcher.clientClosed(client.id);
-
-          for (const nodeId of client.peerNodes) {
-            this.gameServerNodeClient.emit(`peer-close.${nodeId}`, {
-              clientId: client.id,
-            });
+        passport.session()(request, {} as Response, (error?: unknown) => {
+          if (error) {
+            reject(error);
+            return;
           }
-          client.peerNodes.clear();
 
-          await this.redis.del(
-            SocketsService.GET_PLAYER_CLIENT(
-              client.user.steam_id,
-              this.nodeId,
-              client.id,
-            ),
-          );
-
-          await this.setFocus(client.user.steam_id, client.id, null);
-
-          const clients = await this.redis.keys(
-            `${SocketsService.GET_PLAYER_CLIENTS(client.user.steam_id)}:*`,
-          );
-
-          if (clients.length === 0) {
-            await this.redis.del(
-              SocketsService.GET_PLAYER_KEY(client.user.steam_id),
-            );
-
-            await this.sendPeopleOnline();
-
-            void this.matchmaking.markOffline(client.user.steam_id);
-          }
+          resolve();
         });
       });
     });

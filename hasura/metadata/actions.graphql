@@ -343,6 +343,12 @@ type Query {
 }
 
 type Mutation {
+  importSteamMatchShareCode(
+    share_code: String!
+  ): PendingMatchImportActionOutput
+}
+
+type Mutation {
   kickServerPlayer(
     serverId: String!
     steam_id: String!

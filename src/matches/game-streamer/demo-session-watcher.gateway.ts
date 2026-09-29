@@ -26,9 +26,12 @@ export class DemoSessionWatcherGateway {
     @ConnectedSocket() client: FiveStackWebSocketClient,
     @MessageBody() body: { match_map_id?: string },
   ) {
-    if (!client.user) return;
+    await client.authentication;
+
     const matchMapId = body?.match_map_id;
-    if (!matchMapId) return;
+    if (!client.user || !matchMapId) {
+      return;
+    }
 
     this.watcher.register(client.id, {
       matchMapId,
@@ -38,11 +41,15 @@ export class DemoSessionWatcherGateway {
   }
 
   @SubscribeMessage("demo-session:unwatch")
-  public onUnwatch(
+  public async onUnwatch(
     @ConnectedSocket() client: FiveStackWebSocketClient,
     @MessageBody() body: { match_map_id?: string },
   ) {
-    if (!client.user || !body?.match_map_id) return;
+    await client.authentication;
+
+    if (!client.user || !body?.match_map_id) {
+      return;
+    }
     this.watcher.unregister(client.id, body.match_map_id, client.user.steam_id);
   }
 
@@ -56,8 +63,14 @@ export class DemoSessionWatcherGateway {
       payload?: Record<string, unknown>;
     },
   ) {
-    if (!client.user || !body?.match_map_id || !body.action) return;
-    if (!DEMO_CONTROL_ACTIONS.has(body.action as DemoControlAction)) return;
+    await client.authentication;
+
+    if (!client.user || !body?.match_map_id || !body.action) {
+      return;
+    }
+    if (!DEMO_CONTROL_ACTIONS.has(body.action as DemoControlAction)) {
+      return;
+    }
     try {
       const result = await this.gameStreamer.demoControl(
         body.match_map_id,
