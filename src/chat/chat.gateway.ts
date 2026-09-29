@@ -7,6 +7,7 @@ import {
 import { ChatService } from "./chat.service";
 import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketClient";
 import { ChatLobbyType } from "./enums/ChatLobbyTypes";
+import { ChatErrorCode } from "./enums/ChatErrorCode";
 import { isRoleAbove } from "@utilities/isRoleAbove";
 
 @WebSocketGateway({
@@ -90,27 +91,52 @@ export class ChatGateway {
     @MessageBody()
     data: {
       id: string;
-      message: string;
+      message: unknown;
       type: ChatLobbyType;
+      requestId?: string;
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
-    if (!data.message) {
+    if (!client.user) {
       return;
     }
 
-    data.message = data.message.trim();
-
-    if (data.message.length === 0) {
+    if (!ChatGateway.isLobbyType(data?.type) || typeof data.id !== "string") {
       return;
     }
 
-    await this.chat.sendMessageToChat(
+    const requestId =
+      typeof data.requestId === "string" ? data.requestId : undefined;
+
+    const parsed = ChatService.messageText(data.message);
+
+    if ("error" in parsed) {
+      if (parsed.error === ChatErrorCode.TooLong) {
+        this.sendError(client, parsed.error, requestId);
+      }
+      return;
+    }
+
+    const result = await this.chat.sendMessageToChat(
       data.type,
       data.id,
       client.user,
-      data.message,
+      parsed.text,
     );
+
+    // Only a message the room accepted may reach the game server: the relay
+    // does no membership check of its own, so relaying regardless would let
+    // any signed-in socket print into any live match.
+    if (result.accepted === false) {
+      if (result.code) {
+        this.sendError(client, result.code, requestId);
+      }
+      return;
+    }
+
+    if (requestId) {
+      this.sendAck(client, requestId, result.messageId);
+    }
 
     if (data.type !== ChatLobbyType.Match) {
       return;
@@ -118,10 +144,46 @@ export class ChatGateway {
 
     await this.chat.sendChatToServer(
       data.id,
-      `${isRoleAbove(client.user.role, "match_organizer") ? `[organizer] ` : ""}${client.user.name}: ${data.message}`.replaceAll(
+      `${isRoleAbove(client.user.role, "match_organizer") ? `[organizer] ` : ""}${client.user.name}: ${parsed.text}`.replaceAll(
         `"`,
         `'`,
       ),
+    );
+  }
+
+  private static isLobbyType(value: unknown): value is ChatLobbyType {
+    return Object.values(ChatLobbyType).includes(value as ChatLobbyType);
+  }
+
+  private sendError(
+    client: FiveStackWebSocketClient,
+    code: ChatErrorCode,
+    requestId?: string,
+  ) {
+    client.send(
+      JSON.stringify({
+        event: "chat:error",
+        data: {
+          code,
+          ...(code === ChatErrorCode.TooLong
+            ? { max: ChatService.MAX_MESSAGE_LENGTH }
+            : {}),
+          ...(requestId ? { requestId } : {}),
+        },
+      }),
+    );
+  }
+
+  private sendAck(
+    client: FiveStackWebSocketClient,
+    requestId: string,
+    messageId: string,
+  ) {
+    client.send(
+      JSON.stringify({
+        event: "chat:ack",
+        data: { requestId, messageId },
+      }),
     );
   }
 }
