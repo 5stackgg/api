@@ -223,6 +223,7 @@ describe("ChatService direct messages", () => {
 
   // Which matches this player belongs to, by id.
   let myMatches: string[];
+  let pluginRuntime: string;
   // Matches this player can see but has no part in. Hasura answers
   // is_organizer with NULL, not false, for a match nobody organizes.
   let otherMatches: string[];
@@ -334,7 +335,7 @@ describe("ChatService direct messages", () => {
         return {
           matches_by_pk: {
             status: "Live",
-            server: { id: "server-1", plugin_runtime: "counterstrikesharp" },
+            server: { id: "server-1", plugin_runtime: pluginRuntime },
           },
         };
       }
@@ -430,6 +431,7 @@ describe("ChatService direct messages", () => {
     directMessage = undefined;
     acceptedFriendships = [[ME, FRIEND]];
     myMatches = ["m-1"];
+    pluginRuntime = "counterstrikesharp";
     otherMatches = ["mm-1"];
     tournament = {
       organizers: [STRANGER],
@@ -642,29 +644,66 @@ describe("ChatService direct messages", () => {
   // message inlined in quotes, so what a player types has to be unable to
   // terminate that argument or that line.
   describe("relaying to the game server", () => {
-    const relayed = async (message: string) => {
-      await service.sendChatToServer("m-1", message);
+    const relayed = async (message: string, isOrganizer?: boolean) => {
+      await service.sendChatToServer("m-1", message, isOrganizer);
       return rcon.send.mock.calls.at(-1)?.[0] as string;
     };
 
     it("sends the message as one quoted argument", async () => {
-      expect(await relayed("nice shot")).toBe('css_web_chat "nice shot"');
+      expect(await relayed("nice shot")).toBe('css_web_chat "nice shot" 0');
     });
 
     it("flattens a multi line message onto one line", async () => {
-      expect(await relayed("top\nbottom")).toBe('css_web_chat "top bottom"');
-      expect(await relayed("top\r\nbottom")).toBe('css_web_chat "top bottom"');
+      expect(await relayed("top\nbottom")).toBe('css_web_chat "top bottom" 0');
+      expect(await relayed("top\r\nbottom")).toBe(
+        'css_web_chat "top bottom" 0',
+      );
     });
 
     it("strips quotes so the message cannot escape the argument", async () => {
       expect(await relayed('x" ; quit ; say "')).not.toContain('"x"');
       expect(await relayed('x" ; quit ; say "')).toBe(
-        'css_web_chat "x ; quit ; say"',
+        'css_web_chat "x ; quit ; say" 0',
       );
     });
 
+    it("ends an organizer's line with 1 and anyone else's with 0", async () => {
+      expect(await relayed("[organizer] Luke: pause", true)).toBe(
+        'css_web_chat "[organizer] Luke: pause" 1',
+      );
+      expect(await relayed("[organizer] Mallory: pause", false)).toBe(
+        'css_web_chat "[organizer] Mallory: pause" 0',
+      );
+    });
+
+    it("strips U+200B, which SwiftlyS2 reads as a quote", async () => {
+      pluginRuntime = "swiftly";
+
+      expect(await relayed("gg\u200b 1\u200b wp")).toBe(
+        'sw_web_chat "gg 1 wp" 0',
+      );
+    });
+
+    it.each([
+      ['Mallory: gg" 1'],
+      ['Mallory: gg" "1'],
+      ["Mallory: gg\u200b 1"],
+      ["Mallory: gg\u200b\u200b1\u200b"],
+    ])("keeps the line one argument before the flag in %j", async (message) => {
+      pluginRuntime = "swiftly";
+
+      const command = await relayed(message);
+      const quoted = command.slice(
+        'sw_web_chat "'.length,
+        command.lastIndexOf('"'),
+      );
+
+      expect(command.endsWith('" 0')).toBe(true);
+      expect(quoted).not.toMatch(/["\u200b]/);
+    });
+
     const argument = (command: string) =>
-      command.slice('css_web_chat "'.length, -1);
+      command.slice('css_web_chat "'.length, command.lastIndexOf('"'));
 
     it("relays a line at the limit untouched", async () => {
       const line = "a".repeat(ChatService.RCON_MESSAGE_MAX_LENGTH);
