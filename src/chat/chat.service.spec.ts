@@ -419,7 +419,9 @@ describe("ChatService direct messages", () => {
     redis.hgetall.mockResolvedValue({});
     redis.hdel.mockResolvedValue(1);
     redis.get.mockResolvedValue(null);
-    redis.eval.mockResolvedValue([1, 1]);
+    redis.eval.mockImplementation(async (script: string) =>
+      script.includes("INCR") ? 1 : [1, 1],
+    );
     notifications.retractChatMessage.mockResolvedValue(undefined);
     notifications.retractChatMessageFromBlocked.mockResolvedValue(undefined);
     notifications.updateChatMessagePreview.mockResolvedValue(undefined);
@@ -1232,6 +1234,82 @@ describe("ChatService direct messages", () => {
     });
   });
 
+  describe("website message rate", () => {
+    let rates: Record<string, number>;
+
+    const player = () =>
+      ({ steam_id: ME, name: "Someone", role: "user" }) as any;
+
+    const send = (source: "web" | "game" = "web") =>
+      service.sendMessageToChat(
+        ChatLobbyType.Match,
+        "m-1",
+        player(),
+        "gg",
+        false,
+        source,
+      );
+
+    const settle = () => new Promise((resolve) => setTimeout(resolve, 10));
+
+    beforeEach(() => {
+      rates = {};
+      redis.hget.mockResolvedValue(JSON.stringify({ user: { steam_id: ME } }));
+      redis.eval.mockImplementation(
+        async (script: string, _keys: number, key: string) => {
+          if (script.includes("INCR")) {
+            rates[key] = (rates[key] ?? 0) + 1;
+            return rates[key];
+          }
+          return [1, 1];
+        },
+      );
+    });
+
+    it("refuses a player's sixth message in a window before any other work", async () => {
+      for (let n = 0; n < 5; n++) {
+        await expect(send()).resolves.toEqual({
+          accepted: true,
+          messageId: expect.any(String),
+        });
+      }
+      await settle();
+      jest.clearAllMocks();
+      queries = [];
+
+      await expect(send()).resolves.toEqual({
+        accepted: false,
+        code: ChatErrorCode.RateLimited,
+      });
+      await settle();
+
+      expect(hasuraService.query).not.toHaveBeenCalled();
+      expect(queries).toEqual([]);
+      expect(redis.hget).not.toHaveBeenCalled();
+      expect(redis.hset).not.toHaveBeenCalled();
+      expect(redis.publish).not.toHaveBeenCalled();
+    });
+
+    it("keys the count to the player, with a three second expiry", async () => {
+      await send();
+
+      const rate = redis.eval.mock.calls.find(([script]) =>
+        script.includes("INCR"),
+      );
+
+      expect(rate.slice(1)).toEqual([1, `chat:message-rate:${ME}`, 3_000]);
+      expect(rate[0]).toContain("PEXPIRE");
+    });
+
+    it("never limits a line relayed from the game", async () => {
+      for (let n = 0; n < 10; n++) {
+        await expect(send("game")).resolves.toMatchObject({ accepted: true });
+      }
+
+      expect(rates).toEqual({});
+    });
+  });
+
   describe("deleting", () => {
     const MESSAGE_ID = "3f0c1d2e-4b5a-4c6d-8e7f-9a0b1c2d3e4f";
 
@@ -1661,6 +1739,10 @@ describe("ChatService direct messages", () => {
           expected: string,
           next: string,
         ) => {
+          if (script.includes("INCR")) {
+            return 1;
+          }
+
           if (!script.includes("HPEXPIRETIME")) {
             return [1, 1];
           }
@@ -3319,7 +3401,9 @@ describe("ChatService direct messages", () => {
         ).resolves.toEqual({ accepted: false, code: ChatErrorCode.NotAllowed });
       }
 
-      expect(redis.eval).not.toHaveBeenCalled();
+      expect(
+        redis.eval.mock.calls.filter(([script]) => !script.includes("INCR")),
+      ).toEqual([]);
       expect(redis.publish).not.toHaveBeenCalled();
     });
 
