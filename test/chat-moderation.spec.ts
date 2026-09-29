@@ -476,6 +476,59 @@ describe("chat moderation (SQL-driven)", () => {
       expect(await deletedAt(id)).toBeInstanceOf(Date);
     });
 
+    it("leaves a message's rows alone when it expired rather than being deleted", async () => {
+      // A 0 TTL drops the field as soon as it is written, and a draft lobby's
+      // history moves out from under it into the match. Neither is a delete.
+      const author = await fx.player("Author");
+      const reader = await fx.player("Reader");
+      const matchId = randomUUID();
+      const messageId = await post(matchId, author);
+      const id = await chatNotification(reader, `match:${matchId}`, messageId);
+      await redis.hdel(`chat_match_${matchId}`, messageId);
+
+      const members = jest
+        .spyOn(chat, "getLobbyMemberSteamIds")
+        .mockResolvedValueOnce([author, reader]);
+      const written = jest
+        .spyOn(notifications, "notifyPlayers")
+        .mockResolvedValueOnce(undefined);
+
+      await chat["notifyLobbyMembers"](
+        ChatLobbyType.Match,
+        matchId,
+        { steam_id: author, name: "Author", role: "user" } as any,
+        "Author",
+        "something awful",
+        messageId,
+      );
+
+      members.mockRestore();
+      written.mockRestore();
+
+      expect(await notification(id)).toEqual({
+        deleted_at: null,
+        message: "something awful",
+      });
+    });
+
+    it("leaves a notification that is not chat alone, whatever its data holds", async () => {
+      const reader = await fx.player("Reader");
+      const messageId = randomUUID();
+      const id = await chatNotification(
+        reader,
+        "tournament:t-1",
+        messageId,
+        "MatchStatusChange",
+      );
+
+      await notifications.retractChatMessage(messageId);
+
+      expect(await notification(id)).toEqual({
+        deleted_at: null,
+        message: "something awful",
+      });
+    });
+
     it("finds the message's rows through an index", async () => {
       const plan = await postgres.transaction(async (client) => {
         await client.query("SET LOCAL enable_seqscan = off");
