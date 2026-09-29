@@ -34,8 +34,11 @@ describe("direct messages (SQL-driven)", () => {
     expire: jest.fn(),
     publish: jest.fn(),
     sendCommand: jest.fn(),
-    eval: jest.fn().mockResolvedValue([1, 1]),
+    eval: jest.fn(),
   };
+
+  const evalReply = async (script: string) =>
+    script.includes("INCR") ? 1 : [1, 1];
 
   beforeAll(async () => {
     db = await bootMigratedDb("DirectMessagesTest");
@@ -87,6 +90,7 @@ describe("direct messages (SQL-driven)", () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    redis.eval.mockImplementation(evalReply);
     await postgres.query("DELETE FROM direct_messages");
     await postgres.query("DELETE FROM direct_conversations");
     await postgres.query("DELETE FROM chat_read_state");
@@ -685,17 +689,13 @@ describe("direct messages (SQL-driven)", () => {
       );
 
     // Reacting is held to the same rule as sending, so both have to be seated
-    // in the room, and the rate limit wants a real count back.
+    // in the room.
     beforeEach(() => {
       redis.hget.mockResolvedValue(JSON.stringify({ user: {} }));
-      redis.eval.mockImplementation(async (script: string) =>
-        script.includes("INCR") ? 1 : [1, 1],
-      );
     });
 
     afterEach(() => {
       redis.hget.mockResolvedValue(null);
-      redis.eval.mockResolvedValue([1, 1]);
     });
 
     it("toggles each player's reactions, oldest first", async () => {
