@@ -2,7 +2,8 @@ import { Controller, Get, Param } from "@nestjs/common";
 import { HasuraAction } from "src/hasura/hasura.controller";
 import { User } from "src/auth/types/User";
 import { isRoleAbove } from "src/utilities/isRoleAbove";
-import { SanctionsService, SanctionType } from "./sanctions.service";
+import { SanctionsService } from "./sanctions.service";
+import { SanctionType } from "./sanction-types";
 
 @Controller("sanctions")
 export class SanctionsController {
@@ -45,9 +46,10 @@ export class SanctionsController {
     serverId?: string | null;
     steam_id: string;
     type: SanctionType;
+    sanction_id?: string | null;
     user: User;
   }) {
-    const { serverId, steam_id, type, user } = data;
+    const { serverId, steam_id, type, sanction_id, user } = data;
 
     if (!user || !isRoleAbove(user.role, "moderator")) {
       throw Error("you are not allowed to remove sanctions");
@@ -57,6 +59,7 @@ export class SanctionsController {
       serverId,
       steamId: steam_id,
       type,
+      sanctionId: sanction_id,
     });
   }
 

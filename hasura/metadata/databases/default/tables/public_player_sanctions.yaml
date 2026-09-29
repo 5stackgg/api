@@ -23,8 +23,45 @@ select_permissions:
         - remove_sanction_date
         - id
       filter:
+        _and:
+          - deleted_at:
+              _is_null: true
+          - type:
+              _neq: warning
+    comment: ""
+  - role: moderator
+    permission:
+      columns:
+        - player_steam_id
+        - sanctioned_by_steam_id
+        - reason
+        - type
+        - created_at
+        - remove_sanction_date
+        - id
+      filter:
         deleted_at:
           _is_null: true
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - player_steam_id
+        - sanctioned_by_steam_id
+        - reason
+        - type
+        - created_at
+        - remove_sanction_date
+        - id
+      filter:
+        _and:
+          - deleted_at:
+              _is_null: true
+          - _or:
+              - type:
+                  _neq: warning
+              - player_steam_id:
+                  _eq: X-Hasura-User-Id
     comment: ""
 update_permissions:
   - role: moderator
@@ -32,8 +69,11 @@ update_permissions:
       columns:
         - remove_sanction_date
       filter:
-        deleted_at:
-          _is_null: true
+        _and:
+          - deleted_at:
+              _is_null: true
+          - type:
+              _neq: warning
       check: null
     comment: ""
 event_triggers:

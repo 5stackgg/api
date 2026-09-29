@@ -13718,6 +13718,9 @@ enum e_notification_types_enum {
   """A player you recently played with received a sanction"""
   PlayerSanctioned
 
+  """A moderator issued you a warning"""
+  PlayerWarning
+
   """A team matching your scrim alert is available"""
   ScrimAlertMatch
 
@@ -15192,6 +15195,9 @@ enum e_sanction_types_enum {
 
   """Player muted and gagged"""
   silence
+
+  """Informational note on the player's record; never enforced, never expires"""
+  warning
 }
 
 """
@@ -53059,7 +53065,7 @@ type mutation_root {
   uninstallGamePlugin(force: Boolean, slug: String!): SuccessOutput
   unlinkDiscord: SuccessOutput
   unlinkSteamMatchHistory: SuccessOutput
-  unsanctionServerPlayer(serverId: String, steam_id: String!, type: String!): SanctionResult!
+  unsanctionServerPlayer(sanction_id: uuid, serverId: String, steam_id: String!, type: String!): SanctionResult!
 
   """Owner-only patch for clip title / visibility / target_steam_id."""
   updateClip(clip_id: uuid!, target_steam_id: String, title: String, visibility: String): SuccessOutput

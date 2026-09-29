@@ -198564,6 +198564,9 @@ export default {
             "unsanctionServerPlayer": [
                 71,
                 {
+                    "sanction_id": [
+                        6739
+                    ],
                     "serverId": [
                         85
                     ],

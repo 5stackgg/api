@@ -17,3 +17,18 @@ $$;
 
 DROP TRIGGER IF EXISTS tau_player_sanctions ON public.player_sanctions;
 CREATE TRIGGER tau_player_sanctions AFTER UPDATE ON public.player_sanctions FOR EACH ROW EXECUTE FUNCTION public.tau_player_sanctions();
+
+CREATE OR REPLACE FUNCTION public.tbiu_player_sanctions() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NEW.type = 'warning' THEN
+        NEW.remove_sanction_date := NULL;
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tbiu_player_sanctions ON public.player_sanctions;
+CREATE TRIGGER tbiu_player_sanctions BEFORE INSERT OR UPDATE ON public.player_sanctions FOR EACH ROW EXECUTE FUNCTION public.tbiu_player_sanctions();

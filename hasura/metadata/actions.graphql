@@ -810,6 +810,7 @@ type Mutation {
     serverId: String
     steam_id: String!
     type: String!
+    sanction_id: uuid
   ): SanctionResult!
 }
 

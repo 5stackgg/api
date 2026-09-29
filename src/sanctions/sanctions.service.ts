@@ -3,8 +3,7 @@ import { HasuraService } from "src/hasura/hasura.service";
 import { PostgresService } from "src/postgres/postgres.service";
 import { RconService } from "src/rcon/rcon.service";
 import { DedicatedServersService } from "src/dedicated-servers/dedicated-servers.service";
-
-export type SanctionType = "ban" | "mute" | "gag" | "silence";
+import { SanctionType, SERVER_ENFORCED_SANCTION_TYPES } from "./sanction-types";
 
 @Injectable()
 export class SanctionsService {
@@ -21,6 +20,7 @@ export class SanctionsService {
     "mute",
     "gag",
     "silence",
+    "warning",
   ];
 
   public async getActiveServerSanctions(serverId: string): Promise<
@@ -37,7 +37,9 @@ export class SanctionsService {
       `SELECT player_steam_id::text AS player_steam_id, type
          FROM public.player_sanctions
         WHERE deleted_at IS NULL
+          AND type = ANY($1::text[])
           AND (remove_sanction_date IS NULL OR remove_sanction_date > now())`,
+      [SERVER_ENFORCED_SANCTION_TYPES],
     );
 
     const byPlayer: Record<
@@ -82,6 +84,10 @@ export class SanctionsService {
 
     if (!SanctionsService.SANCTION_TYPES.includes(type)) {
       throw Error(`invalid sanction type ${type}`);
+    }
+
+    if (type === "warning") {
+      return await this.warnPlayer(steamId, reason, sanctionedBySteamId);
     }
 
     let onServer:
@@ -139,33 +145,60 @@ export class SanctionsService {
     serverId?: string | null;
     steamId: string;
     type: SanctionType;
+    sanctionId?: string | null;
   }): Promise<{ id: string | null; enforced: boolean; message: string }> {
-    const { serverId, steamId, type } = params;
+    const { serverId, steamId, type, sanctionId } = params;
 
     if (!SanctionsService.SANCTION_TYPES.includes(type)) {
       throw Error(`invalid sanction type ${type}`);
     }
 
-    await this.postgres.query(
-      `UPDATE public.player_sanctions
-          SET deleted_at = now()
-        WHERE player_steam_id = $1::bigint
-          AND type = $2
-          AND deleted_at IS NULL`,
-      [steamId, type],
-    );
+    // Removal by type clears every active row of that type, which for warnings
+    // would wipe the player's whole record to retract one of them.
+    if (type === "warning" && !sanctionId) {
+      throw Error("a warning is removed by its sanction id");
+    }
+
+    let removedId: string | null = null;
+
+    if (sanctionId) {
+      const removed = await this.postgres.query<Array<{ id: string }>>(
+        `UPDATE public.player_sanctions
+            SET deleted_at = now()
+          WHERE id = $1::uuid
+            AND player_steam_id = $2::bigint
+            AND type = $3
+            AND deleted_at IS NULL
+          RETURNING id`,
+        [sanctionId, steamId, type],
+      );
+      removedId = removed.at(0)?.id ?? null;
+
+      if (!removedId) {
+        throw Error("sanction not found");
+      }
+    } else {
+      await this.postgres.query(
+        `UPDATE public.player_sanctions
+            SET deleted_at = now()
+          WHERE player_steam_id = $1::bigint
+            AND type = $2
+            AND deleted_at IS NULL`,
+        [steamId, type],
+      );
+    }
 
     let enforced = false;
-    let message = "sanction removed";
+    let message = type === "warning" ? "warning removed" : "sanction removed";
 
-    if (serverId) {
+    if (serverId && SERVER_ENFORCED_SANCTION_TYPES.includes(type)) {
       const result = await this.syncServer(serverId, null);
       enforced = result.enforced;
       message = result.message;
     }
 
     return {
-      id: null,
+      id: removedId,
       enforced,
       message,
     };
@@ -207,6 +240,40 @@ export class SanctionsService {
     } finally {
       await this.rconService.disconnect(serverId);
     }
+  }
+
+  private async warnPlayer(
+    steamId: string,
+    reason: string | null | undefined,
+    sanctionedBySteamId: string,
+  ): Promise<{ id: string | null; enforced: boolean; message: string }> {
+    const trimmedReason = reason?.trim();
+    if (!trimmedReason) {
+      throw Error("a reason is required for a warning");
+    }
+
+    await this.ensurePlayer(steamId);
+
+    const { insert_player_sanctions_one } = await this.hasura.mutation({
+      insert_player_sanctions_one: {
+        __args: {
+          object: {
+            type: "warning",
+            player_steam_id: steamId,
+            sanctioned_by_steam_id: sanctionedBySteamId,
+            reason: trimmedReason,
+            remove_sanction_date: null,
+          },
+        },
+        id: true,
+      },
+    });
+
+    return {
+      id: insert_player_sanctions_one?.id ?? null,
+      enforced: false,
+      message: "warning saved",
+    };
   }
 
   private async ensurePlayer(steamId: string, name?: string): Promise<void> {

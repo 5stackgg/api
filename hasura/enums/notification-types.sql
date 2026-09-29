@@ -50,6 +50,7 @@ INSERT INTO e_notification_types ("value", "description") VALUES
     ('UtilityPracticeReady', 'Your utility practice server is ready'),
     ('UtilityDriftScanFinished', 'A utility drift scan finished'),
     ('TournamentPartySignup', 'Your lobby was signed up for a tournament as a free agent party'),
+    ('PlayerWarning', 'A moderator issued you a warning'),
     ('MatchFound', 'A match was found and is waiting for you to ready up'),
     ('AdminCall', 'An admin is calling you')
 ON CONFLICT("value") DO UPDATE

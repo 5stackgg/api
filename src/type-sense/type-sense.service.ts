@@ -12,6 +12,7 @@ import {
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { PostgresService } from "../postgres/postgres.service";
+import { SERVER_ENFORCED_SANCTION_TYPES } from "../sanctions/sanction-types";
 import { RefreshAllPlayersJob } from "./jobs/RefreshAllPlayers";
 import { roleRank } from "../utilities/isRoleAbove";
 
@@ -537,6 +538,13 @@ export class TypeSenseService {
           deaths: true,
         },
         sanctions_aggregate: {
+          __args: {
+            where: {
+              type: {
+                _in: SERVER_ENFORCED_SANCTION_TYPES,
+              },
+            },
+          },
           aggregate: {
             count: true,
           },

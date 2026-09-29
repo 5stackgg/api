@@ -559,6 +559,12 @@ describe("notifications (SQL-driven)", () => {
       expect(posted).toEqual([]);
     });
 
+    it("keeps a warning between the player and staff", async () => {
+      await notify("PlayerWarning", "toxic in voice");
+
+      expect(posted).toEqual([]);
+    });
+
     it.each(["MatchFound", "AdminCall"])(
       "keeps a %s ring out of the staff channel",
       async (type) => {
