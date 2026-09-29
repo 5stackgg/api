@@ -45,6 +45,14 @@ export class MatchmakingGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+    await client.authentication;
+
+    const user = client.user;
+
+    if (!user) {
+      return;
+    }
+
     const { settings } = await this.hasura.query({
       settings: {
         __args: {
@@ -122,20 +130,12 @@ export class MatchmakingGateway {
 
     if (
       matchmakingMinRole &&
-      !isRoleAbove(
-        client.user.role,
-        matchmakingMinRole.value as e_player_roles_enum,
-      )
+      !isRoleAbove(user.role, matchmakingMinRole.value as e_player_roles_enum)
     ) {
       throw new JoinQueueError("You do not have permission to join this queue");
     }
 
     let lobby: PlayerLobby | undefined;
-    const user = client.user;
-
-    if (!user) {
-      return;
-    }
 
     const { server_regions } = await this.hasura.query({
       server_regions: {
@@ -283,6 +283,8 @@ export class MatchmakingGateway {
 
   @SubscribeMessage("matchmaking:leave")
   async leaveQueue(@ConnectedSocket() client: FiveStackWebSocketClient) {
+    await client.authentication;
+
     const user = client.user;
 
     if (!user) {
@@ -310,6 +312,8 @@ export class MatchmakingGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+    await client.authentication;
+
     const user = client.user;
     if (!user) {
       return;

@@ -23,6 +23,8 @@ export class RconGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+    await client.authentication;
+
     if (
       !client.user ||
       !(await this.rconService.canAccessServer(data.serverId, client.user))

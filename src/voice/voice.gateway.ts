@@ -30,6 +30,8 @@ export class VoiceGateway {
     data: { channelId?: string; kind?: "mic" | "cam"; claimed?: boolean },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+    await client.authentication;
+
     if (
       !client.user ||
       !data?.channelId ||
@@ -59,6 +61,8 @@ export class VoiceGateway {
     @MessageBody() data: { channelId?: string; speaking?: boolean },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+    await client.authentication;
+
     if (!client.user || !data?.channelId) {
       return;
     }
