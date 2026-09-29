@@ -14,6 +14,7 @@ import { Queue } from "bullmq";
 import { PostgresService } from "../postgres/postgres.service";
 import { SERVER_ENFORCED_SANCTION_TYPES } from "../sanctions/sanction-types";
 import { RefreshAllPlayersJob } from "./jobs/RefreshAllPlayers";
+import { roleRank } from "../utilities/isRoleAbove";
 
 // One publicly visible lineup, as the global search bar needs it. Only ever
 // produced by searchableUtilityLineups, which is the one place the visibility
@@ -164,6 +165,13 @@ export class TypeSenseService {
         index: true,
       },
       { name: "role", type: "string", optional: true, index: true },
+      {
+        name: "role_rank",
+        type: "int32",
+        optional: true,
+        sort: true,
+        index: true,
+      },
       { name: "kills", type: "int32", optional: true },
       { name: "deaths", type: "int32", optional: true },
       { name: "wins", type: "int32", optional: true },
@@ -621,6 +629,7 @@ export class TypeSenseService {
         Object.assign({}, player, elo, {
           id: steamId,
           steam_id: steamId,
+          role_rank: roleRank(player.role),
           is_registered: isRegistered,
           elo: TypeSenseService.primaryElo(
             elo.elo_competitive,

@@ -19,6 +19,7 @@ import {
   PushNotificationsService,
 } from "./push/push-notifications.service";
 import { inAppKeyForType } from "./preferences/notification-categories";
+import { deliveryPolicyForType } from "./push/notification-delivery";
 
 @Injectable()
 export class NotificationsService {
@@ -452,6 +453,23 @@ export class NotificationsService {
     }
   }
 
+  // Never queued. The broadcast worker runs one job at a time and a news
+  // fan-out can hold it for minutes -- longer than a ready check lasts, and by
+  // the time it got here the rows would have been retracted. Claimed first so
+  // the rows' own trigger events stand down.
+  private async pushUrgent(ids: string[]) {
+    if (ids.length < 2) {
+      return;
+    }
+
+    try {
+      await this.pushNotifications.claimFanOut(ids);
+      await this.pushNotifications.sendForIds(ids);
+    } catch (error) {
+      this.logger.warn("unable to push an urgent notification", error);
+    }
+  }
+
   private async postDiscord(
     webhook: string,
     roleId: string | undefined,
@@ -532,6 +550,9 @@ export class NotificationsService {
       // thread this belongs to, what that thread is called, whose avatar to
       // show. Read by the delivery gate, never by the bell.
       data?: NotificationData;
+      // false writes push-only rows: only for recipients with somewhere to be
+      // pushed to, and never shown in the bell.
+      inApp?: boolean;
     },
     actions?: Array<{
       label: string;
@@ -556,7 +577,9 @@ export class NotificationsService {
     // row could only ever be dead weight.
     const recipients = Array.from(new Set(notification.steamIds));
     const inApp = new Set(
-      await this.preferences.filterInAppRecipients(type, recipients),
+      notification.inApp === false
+        ? []
+        : await this.preferences.filterInAppRecipients(type, recipients),
     );
     const pushable = new Set(
       await this.pushNotifications.filterSubscribed(
@@ -593,9 +616,15 @@ export class NotificationsService {
         },
       });
 
-      await this.pushFanOut(
-        (insert_notifications?.returning ?? []).map(({ id }) => id as string),
+      const ids = (insert_notifications?.returning ?? []).map(
+        ({ id }) => id as string,
       );
+
+      if (deliveryPolicyForType(type)?.urgent) {
+        await this.pushUrgent(ids);
+      } else {
+        await this.pushFanOut(ids);
+      }
     }
 
     if (NotificationsService.relaysToDiscord(type)) {
@@ -614,6 +643,75 @@ export class NotificationsService {
     // fall back on, and the caller logging the wrong one sends whoever is
     // debugging "why was nobody told" after a delivery bug that is not there.
     return steamIds.length;
+  }
+
+  // Push-only: the ready check itself is on the player's screen over the
+  // matchmaking socket already, so the bell would only ever show a stale copy.
+  async notifyMatchFound(
+    confirmationId: string,
+    steamIds: string[],
+    matchTypeLabel: string,
+    seconds: number,
+  ) {
+    return this.notifyPlayers("MatchFound", {
+      title: "Match found",
+      message: `Your ${matchTypeLabel} match is ready — accept within ${seconds}s`,
+      role: "user",
+      entity_id: confirmationId,
+      steamIds,
+      inApp: false,
+    });
+  }
+
+  // Nothing else ever prunes these rows, and deleting them is also what stops a
+  // push that has not gone out yet from reaching a player who already accepted,
+  // or a ready check that has already ended.
+  async retractMatchFound(confirmationId: string, steamId?: string) {
+    await this.postgres.query(
+      `DELETE FROM public.notifications
+        WHERE type = 'MatchFound'
+          AND entity_id = $1
+          AND ($2::bigint IS NULL OR steam_id = $2::bigint)`,
+      [confirmationId, steamId ?? null],
+    );
+  }
+
+  async notifyAdminCall(matchId: string, steamId: string) {
+    const [match] = await this.postgres.query<Array<{ label: string | null }>>(
+      `SELECT public.get_team_name(l1) || ' vs ' || public.get_team_name(l2) AS label
+         FROM public.matches m
+         JOIN public.match_lineups l1 ON l1.id = m.lineup_1_id
+         JOIN public.match_lineups l2 ON l2.id = m.lineup_2_id
+        WHERE m.id = $1::uuid`,
+      [matchId],
+    );
+
+    const about = match?.label
+      ? `about ${NotificationsService.escapeHtml(match.label)}`
+      : "about your match";
+
+    // A call abandoned without a hangup is never retracted, so the one before
+    // is cleared here rather than left to pile up.
+    await this.retractAdminCall(matchId, steamId);
+
+    return this.notifyPlayers("AdminCall", {
+      title: "Admin is calling you",
+      message: `An admin wants to talk to you ${about}. Open your camera page to answer.`,
+      role: "user",
+      entity_id: matchId,
+      steamIds: [steamId],
+      inApp: false,
+    });
+  }
+
+  async retractAdminCall(matchId: string, steamId: string) {
+    await this.postgres.query(
+      `DELETE FROM public.notifications
+        WHERE type = 'AdminCall'
+          AND entity_id = $1
+          AND steam_id = $2::bigint`,
+      [matchId, steamId],
+    );
   }
 
   // Retracts alerts that describe a condition rather than an event.

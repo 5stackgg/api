@@ -26,6 +26,7 @@ import { DrainSteamBans } from "./jobs/DrainSteamBans";
 import { PollSteamMatchHistoryForUser } from "./jobs/PollSteamMatchHistoryForUser";
 import { ResolveMatchMetadata } from "./jobs/ResolveMatchMetadata";
 import { ParseImportedDemo } from "./jobs/ParseImportedDemo";
+import { ReconcilePendingMatchImports } from "./jobs/ReconcilePendingMatchImports";
 import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
 
 @Module({
@@ -38,6 +39,9 @@ import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
     }),
     BullModule.registerQueue({
       name: SteamMatchHistoryQueues.ParseImportedDemo,
+    }),
+    BullModule.registerQueue({
+      name: SteamMatchHistoryQueues.ReconcilePendingMatchImports,
     }),
     BullModule.registerQueue({
       name: SteamMatchHistoryQueues.ProcessUploadedDemo,
@@ -73,6 +77,10 @@ import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
     }),
     BullBoardModule.forFeature({
       name: SteamMatchHistoryQueues.ParseImportedDemo,
+      adapter: BullMQAdapter,
+    }),
+    BullBoardModule.forFeature({
+      name: SteamMatchHistoryQueues.ReconcilePendingMatchImports,
       adapter: BullMQAdapter,
     }),
     BullBoardModule.forFeature({
@@ -100,6 +108,7 @@ import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
     PollSteamMatchHistoryForUser,
     ResolveMatchMetadata,
     ParseImportedDemo,
+    ReconcilePendingMatchImports,
     ProcessUploadedDemo,
     ...getQueuesProcessors("SteamMatchHistory"),
     loggerFactory(),
@@ -111,6 +120,8 @@ export class SteamMatchHistoryModule {
   constructor(
     @InjectQueue(SteamMatchHistoryQueues.PollAllSteamMatchHistory)
     queue: Queue,
+    @InjectQueue(SteamMatchHistoryQueues.ReconcilePendingMatchImports)
+    reconcileQueue: Queue,
   ) {
     if (process.env.RUN_MIGRATIONS) {
       return;
@@ -122,6 +133,16 @@ export class SteamMatchHistoryModule {
       {
         repeat: {
           pattern: "0 * * * *",
+        },
+      },
+    );
+
+    void reconcileQueue.add(
+      ReconcilePendingMatchImports.name,
+      {},
+      {
+        repeat: {
+          pattern: "*/15 * * * *",
         },
       },
     );

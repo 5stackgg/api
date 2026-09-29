@@ -1,0 +1,85 @@
+import { PlayerBlocksService } from "./player-blocks.service";
+
+describe("PlayerBlocksService", () => {
+  let postgres: { query: jest.Mock };
+  let service: PlayerBlocksService;
+
+  beforeEach(() => {
+    postgres = { query: jest.fn() };
+    service = new PlayerBlocksService(postgres as never);
+  });
+
+  describe("isBlockedEitherWay", () => {
+    it("asks the shared SQL function about the pair", async () => {
+      postgres.query.mockResolvedValue([{ blocked: true }]);
+
+      await expect(service.isBlockedEitherWay("1", "2")).resolves.toBe(true);
+      expect(postgres.query).toHaveBeenCalledWith(
+        expect.stringContaining(
+          "public.is_blocked_either_way($1::bigint, $2::bigint)",
+        ),
+        ["1", "2"],
+      );
+    });
+
+    it("treats anything but a true answer as not blocked", async () => {
+      postgres.query.mockResolvedValue([{ blocked: false }]);
+      await expect(service.isBlockedEitherWay("1", "2")).resolves.toBe(false);
+
+      postgres.query.mockResolvedValue([]);
+      await expect(service.isBlockedEitherWay("1", "2")).resolves.toBe(false);
+    });
+  });
+
+  describe("hasBlocked", () => {
+    it("is directional: blocker first, blocked second", async () => {
+      postgres.query.mockResolvedValue([{ blocked: true }]);
+
+      await expect(service.hasBlocked("1", "2")).resolves.toBe(true);
+      expect(postgres.query).toHaveBeenCalledWith(
+        expect.stringContaining(
+          "public.has_blocked_player($1::bigint, $2::bigint)",
+        ),
+        ["1", "2"],
+      );
+    });
+  });
+
+  describe("blockedBy", () => {
+    it("returns only the players the viewer blocked", async () => {
+      postgres.query.mockResolvedValue([
+        { steam_id: "10" },
+        { steam_id: "11" },
+      ]);
+
+      await expect(service.blockedBy("1")).resolves.toEqual(
+        new Set(["10", "11"]),
+      );
+
+      const [sql, params] = postgres.query.mock.calls[0];
+      expect(sql).toContain("WHERE blocker_steam_id = $1::bigint");
+      expect(sql).not.toContain("blocked_steam_id = $1");
+      expect(params).toEqual(["1"]);
+    });
+  });
+
+  describe("filterUnblocked", () => {
+    it("never queries for an empty candidate list", async () => {
+      await expect(service.filterUnblocked("1", [])).resolves.toEqual([]);
+      expect(postgres.query).not.toHaveBeenCalled();
+    });
+
+    it("keeps the candidates the database did not drop, in the order given", async () => {
+      postgres.query.mockResolvedValue([{ steam_id: "3" }, { steam_id: "5" }]);
+
+      await expect(
+        service.filterUnblocked("1", ["3", "4", "5"]),
+      ).resolves.toEqual(["3", "5"]);
+
+      const [sql, params] = postgres.query.mock.calls[0];
+      expect(sql).toContain("NOT public.is_blocked_either_way($1::bigint");
+      expect(sql).toContain("ORDER BY candidate.position");
+      expect(params).toEqual(["1", ["3", "4", "5"]]);
+    });
+  });
+});

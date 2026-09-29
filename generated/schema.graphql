@@ -13616,6 +13616,9 @@ enum e_notification_types_constraint {
 }
 
 enum e_notification_types_enum {
+  """An admin is calling you"""
+  AdminCall
+
   """You received an award"""
   AwardGranted
 
@@ -13672,6 +13675,9 @@ enum e_notification_types_enum {
 
   """A new message in a match's chat"""
   MatchChatMessage
+
+  """A match was found and is waiting for you to ready up"""
+  MatchFound
 
   """A Valve match you played was imported to 5stack"""
   MatchImported

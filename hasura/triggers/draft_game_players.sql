@@ -20,6 +20,8 @@ BEGIN
         RETURN NEW;
     END IF;
 
+    PERFORM public.assert_session_not_blocked(NEW.steam_id, 'match_organizer');
+
     SELECT count(*) INTO accepted_count
     FROM public.draft_game_players
     WHERE draft_game_id = NEW.draft_game_id AND status = 'Accepted';
@@ -84,8 +86,13 @@ BEGIN
         RETURN OLD;
     END IF;
 
-    -- leaving once the draft has started tears the whole draft down
+    -- leaving once the draft has started tears the whole draft down; a pending
+    -- invite going away (declined, or cleared by a block) was never a seat
     IF game.status <> 'Open' THEN
+        IF OLD.status = 'Invited' THEN
+            RETURN OLD;
+        END IF;
+
         DELETE FROM public.draft_games WHERE id = game.id;
         RETURN OLD;
     END IF;

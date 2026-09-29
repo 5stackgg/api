@@ -1005,6 +1005,140 @@ describe("PushNotificationsService", () => {
     });
   });
 
+  describe("urgent pushes", () => {
+    const payloadOf = (call: number) =>
+      JSON.parse((webPush.sendNotification as jest.Mock).mock.calls[call][1]);
+
+    const rings: Record<string, Record<string, any>> = {
+      MatchFound: {
+        type: "MatchFound",
+        title: "Match found",
+        message: "Your Competitive match is ready — accept within 30s",
+        entity_id: "confirmation-1",
+      },
+      AdminCall: {
+        type: "AdminCall",
+        title: "Admin is calling you",
+        message:
+          "An admin wants to talk to you about Ancients vs Ratz. Open your camera page to answer.",
+        entity_id: "m-1",
+      },
+    };
+
+    const ring = async (type: string) => {
+      notificationRow = notification(rings[type]);
+      recipients = ["76561100000000001"];
+
+      await service.sendForNotification({ id: notificationRow.id, type });
+    };
+
+    it.each(["MatchFound", "AdminCall"])(
+      "has the push service deliver %s at once or not at all",
+      async (type) => {
+        await ring(type);
+
+        expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
+        expect(
+          (webPush.sendNotification as jest.Mock).mock.calls[0][2],
+        ).toEqual({ TTL: 30, urgency: "high" });
+      },
+    );
+
+    it("sends every other type with the push service's defaults", async () => {
+      await service.sendForNotification({
+        id: notificationRow.id,
+        type: "MatchStatusChange",
+      });
+
+      expect(
+        (webPush.sendNotification as jest.Mock).mock.calls[0],
+      ).toHaveLength(2);
+
+      const payload = payloadOf(0);
+      expect(payload).not.toHaveProperty("urgent");
+      expect(payload).not.toHaveProperty("ttl");
+      expect(payload).not.toHaveProperty("expiresAt");
+    });
+
+    it("tells the service worker when the ring stops meaning anything", async () => {
+      const before = Date.now();
+
+      await ring("MatchFound");
+
+      const expiresAt = Date.parse(payloadOf(0).expiresAt);
+
+      expect(expiresAt).toBeGreaterThanOrEqual(before + 30_000);
+      expect(expiresAt).toBeLessThanOrEqual(Date.now() + 30_000);
+    });
+
+    it("tells the service worker a ready check is ringing", async () => {
+      await ring("MatchFound");
+
+      expect(payloadOf(0)).toMatchObject({
+        title: "Match found",
+        body: "Your Competitive match is ready — accept within 30s",
+        url: "/play",
+        tag: "MatchFound:confirmation-1",
+        renotify: true,
+        urgent: true,
+        ttl: 30,
+        actions: [],
+      });
+    });
+
+    it("sends a call to the camera page it is answered from", async () => {
+      await ring("AdminCall");
+
+      expect(payloadOf(0)).toMatchObject({
+        title: "Admin is calling you",
+        url: "/matches/m-1/camera",
+        tag: "AdminCall:m-1",
+        urgent: true,
+        ttl: 30,
+        actions: [],
+      });
+    });
+
+    it.each(["MatchFound", "AdminCall"])(
+      "rings %s through quiet hours",
+      async (type) => {
+        quietSeconds = 6 * 60 * 60;
+
+        await ring(type);
+
+        expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
+        expect(pushDeliveryQueue.add).not.toHaveBeenCalled();
+        expect(redis.set).not.toHaveBeenCalled();
+      },
+    );
+
+    it("does not re-hold a ring a closing window finds in quiet hours", async () => {
+      const held = ["id-a"];
+      redis.multi.mockReturnValueOnce(chainableMulti([[null, held]]));
+
+      notificationRow = notification({ ...rings.MatchFound, id: "id-a" });
+      bundled = [
+        {
+          ...notificationRow,
+          steam_id: "76561100000000001",
+          quiet_seconds: 3600,
+          subscription_id: "sub-1",
+          endpoint: subscription("sub-1").endpoint,
+          p256dh: "p256dh",
+          auth: "auth",
+        },
+      ];
+
+      await service.sendPending(
+        "76561100000000001",
+        "MatchFound:confirmation-1",
+      );
+
+      expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
+      expect(pushDeliveryQueue.add).not.toHaveBeenCalled();
+    });
+  });
+
   it("batches the fan-out types", () => {
     expect(PushNotificationsService.isBatched("NewsPublished")).toBe(true);
     expect(PushNotificationsService.isBatched("TournamentCreated")).toBe(true);
@@ -1195,6 +1329,32 @@ describe("notificationUrl", () => {
         webDomain,
       ),
     ).toBe("/game-server-nodes");
+  });
+
+  it("opens the play page for a ready check", () => {
+    expect(
+      notificationUrl(
+        {
+          type: "MatchFound",
+          message: "Your Competitive match is ready",
+          entity_id: "confirmation-1",
+        },
+        webDomain,
+      ),
+    ).toBe("/play");
+  });
+
+  it("opens the camera page for an admin call", () => {
+    expect(
+      notificationUrl(
+        {
+          type: "AdminCall",
+          message: "An admin wants to talk",
+          entity_id: "m-1",
+        },
+        webDomain,
+      ),
+    ).toBe("/matches/m-1/camera");
   });
 
   it("still needs an entity_id for a route built from one", () => {

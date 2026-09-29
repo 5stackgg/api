@@ -1,3 +1,5 @@
+import { readFileSync } from "fs";
+import { join } from "path";
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { Fixtures } from "./utils/fixtures";
 import {
@@ -213,6 +215,288 @@ describe("teams, rosters and lineup membership (SQL-driven)", () => {
         [teamId],
       );
       expect(roster).toHaveLength(0);
+    });
+
+    describe("ownership", () => {
+      const addMember = async (
+        teamId: string,
+        owner: string,
+        steamId: string,
+        role: "Admin" | "Member" = "Member",
+      ) => {
+        await asUser(owner, "admin", (query) =>
+          query(
+            "INSERT INTO team_roster (team_id, player_steam_id) VALUES ($1, $2)",
+            [teamId, steamId],
+          ),
+        );
+        if (role !== "Member") {
+          await postgres.query(
+            "UPDATE team_roster SET role = $1 WHERE team_id = $2 AND player_steam_id = $3",
+            [role, teamId, steamId],
+          );
+        }
+      };
+
+      const getTeamOwner = async (teamId: string) => {
+        const [team] = await postgres.query<Array<{ owner_steam_id: string }>>(
+          "SELECT owner_steam_id FROM teams WHERE id = $1",
+          [teamId],
+        );
+        return team.owner_steam_id;
+      };
+
+      it("rejects a roster Admin making themselves owner", async () => {
+        const owner = await seedPlayer();
+        const admin = await seedPlayer();
+        const teamId = await createTeam(owner);
+        await addMember(teamId, owner, admin, "Admin");
+
+        await expect(
+          asUser(admin, "user", (query) =>
+            query("UPDATE teams SET owner_steam_id = $1 WHERE id = $2", [
+              admin,
+              teamId,
+            ]),
+          ),
+        ).rejects.toThrow(/only the team owner/i);
+
+        expect(await getTeamOwner(teamId)).toBe(owner);
+      });
+
+      it("lets the owner hand the team to a member, who becomes an Admin", async () => {
+        const owner = await seedPlayer();
+        const member = await seedPlayer();
+        const teamId = await createTeam(owner);
+        await addMember(teamId, owner, member);
+
+        await asUser(owner, "user", (query) =>
+          query("UPDATE teams SET owner_steam_id = $1 WHERE id = $2", [
+            member,
+            teamId,
+          ]),
+        );
+
+        expect(await getTeamOwner(teamId)).toBe(member);
+        expect((await rosterRow(teamId, member))?.role).toBe("Admin");
+        expect((await rosterRow(teamId, owner))?.role).toBe("Admin");
+      });
+
+      it("rejects handing the team to someone off the roster", async () => {
+        const owner = await seedPlayer();
+        const outsider = await seedPlayer();
+        const teamId = await createTeam(owner);
+
+        await expect(
+          asUser(owner, "user", (query) =>
+            query("UPDATE teams SET owner_steam_id = $1 WHERE id = $2", [
+              outsider,
+              teamId,
+            ]),
+          ),
+        ).rejects.toThrow(/must be a team member/i);
+
+        expect(await getTeamOwner(teamId)).toBe(owner);
+      });
+
+      it.each(["tournament_organizer", "administrator"])(
+        "lets a %s transfer ownership",
+        async (role) => {
+          const owner = await seedPlayer();
+          const member = await seedPlayer();
+          const staff = await seedPlayer();
+          const teamId = await createTeam(owner);
+          await addMember(teamId, owner, member);
+
+          await asUser(staff, role, (query) =>
+            query("UPDATE teams SET owner_steam_id = $1 WHERE id = $2", [
+              member,
+              teamId,
+            ]),
+          );
+
+          expect(await getTeamOwner(teamId)).toBe(member);
+          expect((await rosterRow(teamId, member))?.role).toBe("Admin");
+        },
+      );
+
+      it("rejects a roster Admin demoting the owner", async () => {
+        const owner = await seedPlayer();
+        const admin = await seedPlayer();
+        const teamId = await createTeam(owner);
+        await addMember(teamId, owner, admin, "Admin");
+
+        await expect(
+          asUser(admin, "user", (query) =>
+            query(
+              "UPDATE team_roster SET role = 'Member' WHERE team_id = $1 AND player_steam_id = $2",
+              [teamId, owner],
+            ),
+          ),
+        ).rejects.toThrow(/owner must stay an Admin/i);
+
+        expect((await rosterRow(teamId, owner))?.role).toBe("Admin");
+      });
+
+      it("holds staff and internal writes to the owner staying an Admin", async () => {
+        const owner = await seedPlayer();
+        const organizer = await seedPlayer();
+        const teamId = await createTeam(owner);
+        const demoteOwner =
+          "UPDATE team_roster SET role = 'Member' WHERE team_id = $1 AND player_steam_id = $2";
+
+        await expect(
+          asUser(organizer, "tournament_organizer", (query) =>
+            query(demoteOwner, [teamId, owner]),
+          ),
+        ).rejects.toThrow(/owner must stay an Admin/i);
+        await expect(
+          postgres.query(demoteOwner, [teamId, owner]),
+        ).rejects.toThrow(/owner must stay an Admin/i);
+
+        expect((await rosterRow(teamId, owner))?.role).toBe("Admin");
+      });
+
+      it("lets the new owner demote the old one after a transfer", async () => {
+        const owner = await seedPlayer();
+        const heir = await seedPlayer();
+        const teamId = await createTeam(owner);
+        await addMember(teamId, owner, heir);
+
+        await asUser(owner, "user", (query) =>
+          query("UPDATE teams SET owner_steam_id = $1 WHERE id = $2", [
+            heir,
+            teamId,
+          ]),
+        );
+        await asUser(heir, "user", (query) =>
+          query(
+            "UPDATE team_roster SET role = 'Member' WHERE team_id = $1 AND player_steam_id = $2",
+            [teamId, owner],
+          ),
+        );
+
+        expect((await rosterRow(teamId, owner))?.role).toBe("Member");
+      });
+
+      it("lets the old owner step down to Member in the same mutation as the transfer", async () => {
+        const owner = await seedPlayer();
+        const heir = await seedPlayer();
+        const teamId = await createTeam(owner);
+        await addMember(teamId, owner, heir);
+
+        await asUser(owner, "user", async (query) => {
+          await query("UPDATE teams SET owner_steam_id = $1 WHERE id = $2", [
+            heir,
+            teamId,
+          ]);
+          await query(
+            "UPDATE team_roster SET role = 'Member' WHERE team_id = $1 AND player_steam_id = $2",
+            [teamId, owner],
+          );
+        });
+
+        expect((await rosterRow(teamId, owner))?.role).toBe("Member");
+        expect((await rosterRow(teamId, heir))?.role).toBe("Admin");
+      });
+
+      it("lets a roster Admin demote another Admin", async () => {
+        const owner = await seedPlayer();
+        const admin = await seedPlayer();
+        const otherAdmin = await seedPlayer();
+        const teamId = await createTeam(owner);
+        await addMember(teamId, owner, admin, "Admin");
+        await addMember(teamId, owner, otherAdmin, "Admin");
+
+        await asUser(admin, "user", (query) =>
+          query(
+            "UPDATE team_roster SET role = 'Member' WHERE team_id = $1 AND player_steam_id = $2",
+            [teamId, otherAdmin],
+          ),
+        );
+
+        expect((await rosterRow(teamId, otherAdmin))?.role).toBe("Member");
+      });
+
+      it("lets a roster Admin rename the team", async () => {
+        const owner = await seedPlayer();
+        const admin = await seedPlayer();
+        const teamId = await createTeam(owner);
+        await addMember(teamId, owner, admin, "Admin");
+
+        await asUser(admin, "user", (query) =>
+          query(
+            "UPDATE teams SET name = 'Renamed', short_name = 'RNM', owner_steam_id = $1 WHERE id = $2",
+            [owner, teamId],
+          ),
+        );
+
+        const [team] = await postgres.query<Array<{ name: string }>>(
+          "SELECT name FROM teams WHERE id = $1",
+          [teamId],
+        );
+        expect(team.name).toBe("Renamed");
+        expect(await getTeamOwner(teamId)).toBe(owner);
+      });
+
+      it("lets roles change on a roster that is already over the starter cap", async () => {
+        const owner = await seedPlayer();
+        const teamId = await createTeam(owner);
+        const starters = await fx.players(5);
+        await asUser(owner, "admin", async (query) => {
+          await query(
+            "SELECT set_config('fivestack.rebalancing', 'true', true)",
+          );
+          for (const steamId of starters) {
+            await query(
+              "INSERT INTO team_roster (team_id, player_steam_id, status) VALUES ($1, $2, 'Starter')",
+              [teamId, steamId],
+            );
+          }
+        });
+
+        await asUser(owner, "user", (query) =>
+          query(
+            "UPDATE team_roster SET role = 'Admin' WHERE team_id = $1 AND player_steam_id = $2",
+            [teamId, starters[0]],
+          ),
+        );
+
+        expect((await rosterRow(teamId, starters[0]))?.role).toBe("Admin");
+      });
+
+      it("backfills owners demoted before the guard existed back to Admin", async () => {
+        const owner = await seedPlayer();
+        const member = await seedPlayer();
+        const teamId = await createTeam(owner);
+        await addMember(teamId, owner, member);
+        await postgres.transaction(async (client) => {
+          await client.query(
+            "ALTER TABLE team_roster DISABLE TRIGGER tbu_team_roster",
+          );
+          await client.query(
+            "UPDATE team_roster SET role = 'Member' WHERE team_id = $1 AND player_steam_id = $2",
+            [teamId, owner],
+          );
+          await client.query(
+            "ALTER TABLE team_roster ENABLE TRIGGER tbu_team_roster",
+          );
+        });
+        expect((await rosterRow(teamId, owner))?.role).toBe("Member");
+
+        await postgres.query(
+          readFileSync(
+            join(
+              __dirname,
+              "../hasura/migrations/default/1888000000000_team_owner_roster_admin/up.sql",
+            ),
+            "utf8",
+          ),
+        );
+
+        expect((await rosterRow(teamId, owner))?.role).toBe("Admin");
+        expect((await rosterRow(teamId, member))?.role).toBe("Member");
+      });
     });
   });
 

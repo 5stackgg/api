@@ -30,3 +30,7 @@ export function rolesAtOrAbove(
 
   return index === -1 ? [] : roleOrder.slice(index);
 }
+
+export function roleRank(role: e_player_roles_enum | null | undefined): number {
+  return Math.max(0, roleOrder.indexOf(role));
+}

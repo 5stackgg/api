@@ -16,6 +16,7 @@ import { HasuraService } from "../hasura/hasura.service";
 import { MatchAssistantService } from "../matches/match-assistant/match-assistant.service";
 import { MatchmakingLobbyService } from "./matchmaking-lobby.service";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { MatchmakingQueues } from "./enums/MatchmakingQueues";
 import { FakeRedis } from "./testing/fakeRedis";
 import {
@@ -134,6 +135,13 @@ describe("matchmaking (end to end)", () => {
         {
           provide: RedisManagerService,
           useValue: { getConnection: () => redis },
+        },
+        {
+          provide: NotificationsService,
+          useValue: {
+            notifyMatchFound: jest.fn().mockResolvedValue(0),
+            retractMatchFound: jest.fn().mockResolvedValue(undefined),
+          },
         },
         {
           provide: `BullQueue_${MatchmakingQueues.Matchmaking}`,

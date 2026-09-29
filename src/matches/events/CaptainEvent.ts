@@ -35,6 +35,9 @@ export default class CaptainEvent extends MatchEventProcessor<{
             [lineup_player.steam_id ? "steam_id" : "discord_id"]: {
               _eq: lineup_player.steam_id || lineup_player.discord_id,
             },
+            match_lineup_id: {
+              _in: [match.lineup_1_id, match.lineup_2_id],
+            },
           },
           _set: {
             captain: this.data.claim,

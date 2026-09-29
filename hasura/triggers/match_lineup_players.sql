@@ -56,6 +56,13 @@ BEGIN
         IF is_banned((SELECT p FROM players p WHERE steam_id = NEW.steam_id)) THEN
             RAISE EXCEPTION 'Player is Currently Banned' USING ERRCODE = '22000';
         END IF;
+
+        -- Depth 1 is a row the session wrote itself. Lineups filled from team
+        -- rosters or tournament brackets arrive from other triggers and are
+        -- team-level, not one player adding another.
+        IF pg_trigger_depth() = 1 THEN
+            PERFORM public.assert_session_not_blocked(NEW.steam_id, 'match_organizer');
+        END IF;
     END IF;
 
     IF TG_OP = 'DELETE' THEN

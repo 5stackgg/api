@@ -149,6 +149,7 @@
 - "!include public_player_performance_v.yaml"
 - "!include public_player_match_performance_v.yaml"
 - "!include public_player_assists.yaml"
+- "!include public_player_blocks.yaml"
 - "!include public_player_damages.yaml"
 - "!include public_player_elo.yaml"
 - "!include public_player_flashes.yaml"
