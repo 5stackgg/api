@@ -2,6 +2,7 @@ import { User } from "../auth/types/User";
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { HasuraService } from "../hasura/hasura.service";
+import { PlayerBlocksService } from "../player-blocks/player-blocks.service";
 
 @Injectable()
 export class FriendsService {
@@ -10,6 +11,7 @@ export class FriendsService {
   constructor(
     private readonly config: ConfigService,
     private readonly hasura: HasuraService,
+    private readonly playerBlocks: PlayerBlocksService,
   ) {
     this.steamApiKey = this.config.get("steam.steamApiKey");
   }
@@ -40,14 +42,20 @@ export class FriendsService {
       },
     });
 
-    for (const player of players) {
+    // One blocked friend would otherwise abort the loop for everyone after it.
+    const unblocked = await this.playerBlocks.filterUnblocked(
+      user.steam_id,
+      players.map((player) => String(player.steam_id)),
+    );
+
+    for (const steamId of unblocked) {
       await this.hasura.mutation({
         insert_friends: {
           __args: {
             objects: [
               {
                 player_steam_id: user.steam_id,
-                other_player_steam_id: player.steam_id,
+                other_player_steam_id: steamId,
                 status: "Accepted",
               },
             ],

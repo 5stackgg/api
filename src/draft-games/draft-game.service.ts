@@ -21,6 +21,7 @@ import { DraftGame } from "./types/DraftGame";
 import { DraftGameError } from "./types/DraftGameError";
 import { DraftGameQueues } from "./enums/DraftGameQueues";
 import { DraftService } from "./draft.service";
+import { PlayerBlocksService } from "src/player-blocks/player-blocks.service";
 
 export interface CreateDraftGameSettings {
   type: e_match_types_enum;
@@ -69,6 +70,7 @@ export class DraftGameService {
     private readonly draftService: DraftService,
     @InjectQueue(DraftGameQueues.DraftGames) private queue: Queue,
     private readonly notifications: NotificationsService,
+    private readonly playerBlocks: PlayerBlocksService,
   ) {}
 
   public static lockKey(draftGameId: string): string {
@@ -209,7 +211,7 @@ export class DraftGameService {
         await this.seedDraftPlayers(
           inserted.id,
           user.steam_id,
-          settings.roster || [],
+          await this.withoutBlockedPlayers(user, settings.roster || []),
           settings.type,
         );
       } else if (hostJoins) {
@@ -572,6 +574,26 @@ export class DraftGameService {
     }
   }
 
+  // The roster is whatever the client sent, and seeding writes it straight in
+  // as Accepted, so it is held to the same block as adding one player.
+  private async withoutBlockedPlayers(
+    user: User,
+    roster: Array<DraftRosterEntry>,
+  ): Promise<Array<DraftRosterEntry>> {
+    if (isRoleAbove(user.role, "match_organizer") || roster.length === 0) {
+      return roster;
+    }
+
+    const allowed = new Set(
+      await this.playerBlocks.filterUnblocked(
+        user.steam_id,
+        roster.map((entry) => String(entry.steam_id)),
+      ),
+    );
+
+    return roster.filter((entry) => allowed.has(String(entry.steam_id)));
+  }
+
   private async reseedDraftPlayers(
     draftGameId: string,
     hostSteamId: string,
@@ -820,6 +842,13 @@ export class DraftGameService {
 
       if (draftGame.players.find((player) => player.steam_id === steamId)) {
         return;
+      }
+
+      if (
+        !isRoleAbove(user.role, "match_organizer") &&
+        (await this.playerBlocks.isBlockedEitherWay(user.steam_id, steamId))
+      ) {
+        throw new DraftGameError("player_blocked");
       }
 
       if (lineup != null && ![1, 2].includes(lineup)) {
@@ -1277,7 +1306,7 @@ export class DraftGameService {
         await this.reseedDraftPlayers(
           draftGameId,
           draftGame.host_steam_id,
-          settings.roster,
+          await this.withoutBlockedPlayers(user, settings.roster),
           settings.type || draftGame.type,
         );
       }

@@ -115,12 +115,11 @@ export class NotificationsService {
       .replace(/'/g, "&#39;");
   }
 
-  private static readonly SANCTION_VERBS: Record<string, string> = {
-    ban: "banned",
-    mute: "muted",
-    gag: "gagged",
-    silence: "silenced",
-  };
+  public playerProfileLink(steamId: string, name: string): string {
+    return `<a href="${this.appConfig.webDomain}/players/${encodeURIComponent(
+      steamId,
+    )}">${NotificationsService.escapeHtml(name)}</a>`;
+  }
 
   async notifyMatchPlayersOfSanction(sanction: {
     sanctionId: string;
@@ -128,6 +127,12 @@ export class NotificationsService {
     type: string;
     reason?: string | null;
   }): Promise<void> {
+    // A mute or gag is chat moderation, and "was muted" sent to six months of
+    // team-mates reads as a ban to every one of them.
+    if (sanction.type !== "ban") {
+      return;
+    }
+
     const recipients = await this.postgres.query<Array<{ steam_id: string }>>(
       `SELECT DISTINCT other_p.steam_id::text AS steam_id
          FROM public.matches m
@@ -155,19 +160,12 @@ export class NotificationsService {
     });
     const name = players_by_pk?.name ?? `Player ${sanction.steamId}`;
 
-    const verb =
-      NotificationsService.SANCTION_VERBS[sanction.type] ?? "sanctioned";
-    const safeName = NotificationsService.escapeHtml(name);
-    const profileUrl = `${this.appConfig.webDomain}/players/${encodeURIComponent(
-      sanction.steamId,
-    )}`;
-    const reasonSuffix =
-      sanction.type === "ban" && sanction.reason
-        ? ` (${NotificationsService.escapeHtml(sanction.reason)})`
-        : "";
+    const reasonSuffix = sanction.reason
+      ? ` (${NotificationsService.escapeHtml(sanction.reason)})`
+      : "";
     const message =
       `A player you recently played with, ` +
-      `<a href="${profileUrl}">${safeName}</a>, was ${verb}.${reasonSuffix}`;
+      `${this.playerProfileLink(sanction.steamId, name)}, was banned.${reasonSuffix}`;
 
     // Through notifyPlayers rather than the raw insert this used to be. Six
     // months of team-mates is routinely hundreds of rows and the event trigger

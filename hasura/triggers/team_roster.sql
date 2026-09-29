@@ -55,6 +55,32 @@ $$;
 DROP TRIGGER IF EXISTS tbd_team_roster ON public.team_roster;
 CREATE TRIGGER tbd_team_roster BEFORE DELETE ON public.team_roster FOR EACH ROW EXECUTE FUNCTION public.tbd_team_roster();
 
+-- Same reasoning as tbd_team_roster: the roster update permission is granted by
+-- the Admin role, so an owner demoted by another Admin could no longer manage
+-- their own team. Staff are held to it too; ownership moves first.
+CREATE OR REPLACE FUNCTION public.tbu_team_roster() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NEW.role IS DISTINCT FROM OLD.role
+        AND NEW.role <> 'Admin'
+        AND EXISTS (
+            SELECT 1
+            FROM teams t
+            WHERE t.id = NEW.team_id
+              AND t.owner_steam_id = NEW.player_steam_id
+        ) THEN
+        RAISE EXCEPTION USING ERRCODE = '22000',
+            MESSAGE = 'The team owner must stay an Admin; transfer ownership first';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tbu_team_roster ON public.team_roster;
+CREATE TRIGGER tbu_team_roster BEFORE UPDATE ON public.team_roster FOR EACH ROW EXECUTE FUNCTION public.tbu_team_roster();
+
 CREATE OR REPLACE FUNCTION public.tad_team_roster() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
@@ -125,6 +151,16 @@ DECLARE
     _max int;
 BEGIN
     IF current_setting('fivestack.rebalancing', true) = 'true' THEN
+        RETURN NEW;
+    END IF;
+
+    -- The caps count rows by status alone (coaches included), so an update that
+    -- keeps the row's status and team cannot change any tier's count. Skipping
+    -- it keeps role and coach edits working on a roster that is already over a
+    -- cap, e.g. after team_max_subs() was lowered.
+    IF TG_OP = 'UPDATE'
+        AND NEW.status IS NOT DISTINCT FROM OLD.status
+        AND NEW.team_id = OLD.team_id THEN
         RETURN NEW;
     END IF;
 

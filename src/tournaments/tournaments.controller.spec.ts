@@ -258,7 +258,7 @@ describe("TournamentsController registration and check-in actions", () => {
             tournament_id: "tournament-1",
             tournament_team_id: "team-1",
           }),
-        ).rejects.toThrow(/captain/i);
+        ).rejects.toThrow(/only the team captain or a team admin/i);
       });
     });
 

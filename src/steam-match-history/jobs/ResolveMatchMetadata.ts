@@ -30,8 +30,22 @@ export class ResolveMatchMetadata extends WorkerHost {
   }
 
   async process(job: Job<ResolveMatchMetadataPayload>): Promise<void> {
-    const { valve_match_id } = job.data;
+    try {
+      await this.resolve(job.data.valve_match_id);
+    } catch (error) {
+      const lastAttempt =
+        (job.attemptsMade ?? 0) >= (job.opts.attempts ?? 1) - 1;
+      if (lastAttempt) {
+        await this.markFailed(
+          job.data.valve_match_id,
+          (error as Error)?.message ?? String(error),
+        );
+      }
+      throw error;
+    }
+  }
 
+  private async resolve(valve_match_id: string): Promise<void> {
     const rows = await this.postgres.query<
       Array<{
         share_code: string;

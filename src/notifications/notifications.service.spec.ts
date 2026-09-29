@@ -312,3 +312,82 @@ describe("push-only rings", () => {
     expect(order).toEqual(["retract m-1 1", "insert"]);
   });
 });
+
+describe("NotificationsService", () => {
+  const webDomain = "https://5stack.test";
+  let service: NotificationsService;
+  let postgres: { query: jest.Mock };
+  let hasura: { query: jest.Mock; mutation: jest.Mock };
+  let notifyPlayers: jest.SpyInstance;
+
+  const sanction = (type: string) => ({
+    sanctionId: "sanction-1",
+    steamId: "76561198000000001",
+    type,
+    reason: "cheating",
+  });
+
+  beforeEach(() => {
+    postgres = {
+      query: jest.fn().mockResolvedValue([{ steam_id: "76561198000000002" }]),
+    };
+    hasura = {
+      query: jest.fn().mockResolvedValue({ players_by_pk: { name: "keith" } }),
+      mutation: jest.fn().mockResolvedValue({}),
+    };
+
+    service = new NotificationsService(
+      hasura as any,
+      postgres as any,
+      { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
+      { get: jest.fn(() => ({ webDomain })) } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    );
+
+    notifyPlayers = jest.spyOn(service, "notifyPlayers").mockResolvedValue(1);
+  });
+
+  describe("playerProfileLink", () => {
+    it("links to the absolute profile url", () => {
+      expect(service.playerProfileLink("76561198000000001", "keith")).toBe(
+        `<a href="${webDomain}/players/76561198000000001">keith</a>`,
+      );
+    });
+
+    it("escapes the name and encodes the steam id", () => {
+      expect(
+        service.playerProfileLink('1"><x', `<img src=x onerror="alert('1')">`),
+      ).toBe(
+        `<a href="${webDomain}/players/1%22%3E%3Cx">` +
+          `&lt;img src=x onerror=&quot;alert(&#39;1&#39;)&quot;&gt;</a>`,
+      );
+    });
+  });
+
+  describe("notifyMatchPlayersOfSanction", () => {
+    it.each(["mute", "gag", "silence"])(
+      "keeps a %s between the player and staff",
+      async (type) => {
+        await service.notifyMatchPlayersOfSanction(sanction(type));
+
+        expect(postgres.query).not.toHaveBeenCalled();
+        expect(notifyPlayers).not.toHaveBeenCalled();
+      },
+    );
+
+    it("tells recent team-mates about a ban", async () => {
+      await service.notifyMatchPlayersOfSanction(sanction("ban"));
+
+      expect(notifyPlayers).toHaveBeenCalledTimes(1);
+      const [type, notification] = notifyPlayers.mock.calls[0];
+      expect(type).toBe("PlayerSanctioned");
+      expect(notification.steamIds).toEqual(["76561198000000002"]);
+      expect(notification.message).toContain(
+        `<a href="${webDomain}/players/76561198000000001">keith</a>, was banned. (cheating)`,
+      );
+    });
+  });
+});

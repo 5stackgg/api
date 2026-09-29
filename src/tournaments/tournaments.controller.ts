@@ -566,7 +566,9 @@ export class TournamentsController {
       }
       default: {
         if (!team.can_manage && !team.is_captain) {
-          throw Error("only the team captain can check this team in");
+          throw Error(
+            "only the team captain or a team admin can check this team in",
+          );
         }
         break;
       }

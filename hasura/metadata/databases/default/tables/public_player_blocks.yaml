@@ -1,0 +1,33 @@
+table:
+  name: player_blocks
+  schema: public
+object_relationships:
+  - name: blocked
+    using:
+      foreign_key_constraint_on: blocked_steam_id
+insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      set:
+        blocker_steam_id: x-hasura-user-id
+      columns:
+        - blocked_steam_id
+    comment: A player only ever blocks on their own behalf. No update permission, so re-blocking is made a no-op by tbi_player_blocks rather than by on_conflict
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - blocked_steam_id
+        - created_at
+      filter:
+        blocker_steam_id:
+          _eq: X-Hasura-User-Id
+    comment: Only the players you blocked, never who blocked you. There is deliberately no blocker relationship and no reverse relationship on players
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        blocker_steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ""

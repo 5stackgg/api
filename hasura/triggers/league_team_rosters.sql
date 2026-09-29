@@ -100,6 +100,19 @@ BEGIN
         END IF;
     END IF;
 
+    -- The roster takes any player with no invite, so somebody from outside the
+    -- team is a force-add rather than a lineup pick.
+    IF NOT EXISTS (
+        SELECT 1
+        FROM public.league_team_seasons lts
+        JOIN public.league_teams lt ON lt.id = lts.league_team_id
+        JOIN public.team_roster tr ON tr.team_id = lt.team_id
+        WHERE lts.id = NEW.league_team_season_id
+          AND tr.player_steam_id = NEW.player_steam_id
+    ) THEN
+        PERFORM public.assert_session_not_blocked(NEW.player_steam_id, 'administrator');
+    END IF;
+
     -- Starter / substitute lineup caps.
     PERFORM public.assert_league_lineup_capacity(
         NEW.league_team_season_id, NEW.player_steam_id, NEW.status
