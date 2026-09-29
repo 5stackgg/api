@@ -5,6 +5,7 @@ import {
   KubeConfig,
   CoreV1Api,
   BatchV1Api,
+  V1Job,
   V1Pod,
 } from "@kubernetes/client-node";
 import { GameServersConfig } from "src/configs/types/GameServersConfig";
@@ -141,6 +142,15 @@ export class GameServerNodeService {
     this.coreApi = kc.makeApiClient(CoreV1Api);
     this.batchApi = kc.makeApiClient(BatchV1Api);
   }
+
+  // long enough to read a failed update's logs; the monitor deletes succeeded jobs itself
+  private static readonly UPDATE_JOB_TTL_S = 24 * 60 * 60;
+
+  // a k8s log follow can stall without ever ending, so stop waiting on it and re-check the job
+  private static readonly UPDATE_LOG_IDLE_MS = 60 * 1000;
+
+  private static readonly UPDATE_RESULT_RECORDED_ANNOTATION =
+    "5stack.gg/update-result-recorded";
 
   public static GET_UPDATE_JOB_NAME(gameServerNodeId: string, game = "cs2") {
     const sanitized = gameServerNodeId.replaceAll(".", "-");
@@ -528,12 +538,27 @@ export class GameServerNodeService {
       gameServerNodeId,
       game,
     );
-    const pod = await this.loggingService.getJobPod(jobName);
+    const existingJob = await this.loggingService.getJob(jobName);
 
-    if (pod) {
-      // an update job is already running: just make sure it's monitored
+    if (existingJob && !GameServerNodeService.updateJobResult(existingJob)) {
       void this.monitorUpdateStatus(gameServerNodeId, game);
       return;
+    }
+
+    if (existingJob) {
+      await this.batchApi
+        .deleteNamespacedJob({
+          name: jobName,
+          namespace: this.namespace,
+          propagationPolicy: "Background",
+          gracePeriodSeconds: 0,
+          body: { preconditions: { uid: existingJob.metadata.uid } },
+        })
+        .catch((error) => {
+          if (error.code?.toString() !== "404") {
+            throw error;
+          }
+        });
     }
 
     const sanitizedGameServerNodeId = gameServerNodeId.replaceAll(".", "-");
@@ -676,12 +701,17 @@ export class GameServerNodeService {
               },
             },
             backoffLimit: 1,
-            ttlSecondsAfterFinished: 30,
+            ttlSecondsAfterFinished: GameServerNodeService.UPDATE_JOB_TTL_S,
           },
         },
       });
 
-      await this.setUpdateStatus(gameServerNodeId, "Initializing");
+      await this.postgres.query(
+        `UPDATE game_server_nodes
+            SET update_status = 'Initializing', update_failed_at = NULL
+          WHERE id = $1`,
+        [gameServerNodeId],
+      );
 
       void this.monitorUpdateStatus(gameServerNodeId, game);
     } catch (error) {
@@ -747,13 +777,36 @@ export class GameServerNodeService {
       game,
     );
 
-    let lastWrittenStatus: string | null | undefined;
-    const writeStatus = async (status: string | null) => {
-      if (status === lastWrittenStatus) {
-        return;
+    // progress lines arrive in bursts (every re-attach replays the log tail), so
+    // only the latest status is written, one write at a time: an older write
+    // can never land after a newer or terminal one
+    let latestStatus: string | null | undefined;
+    let writtenStatus: string | null | undefined;
+    let flushing = false;
+    let statusWrites = Promise.resolve();
+    const writeStatus = (status: string | null) => {
+      latestStatus = status;
+      if (flushing || latestStatus === writtenStatus) {
+        return statusWrites;
       }
-      lastWrittenStatus = status;
-      await this.setUpdateStatus(gameServerNodeId, status);
+      flushing = true;
+      statusWrites = (async () => {
+        await Promise.resolve();
+        while (latestStatus !== writtenStatus) {
+          const next = latestStatus;
+          try {
+            await this.setUpdateStatus(gameServerNodeId, next);
+          } catch (error) {
+            this.logger.warn(
+              `[${gameServerNodeId}] unable to write update status`,
+              error,
+            );
+          }
+          writtenStatus = next;
+        }
+        flushing = false;
+      })();
+      return statusWrites;
     };
 
     try {
@@ -766,19 +819,12 @@ export class GameServerNodeService {
           return;
         }
 
-        if (job?.status?.succeeded) {
-          await writeStatus(null);
-          return;
-        }
-
-        if (job?.status?.failed && !job?.status?.active) {
-          this.logger.warn(`[${gameServerNodeId}] ${game} update job failed`);
-          await writeStatus(null);
-          void this.notifications.send("GameUpdate", {
-            message: `The ${game === "csgo" ? "CSGO" : "CS2"} update failed on node ${gameServerNodeId}. Check the update logs for details.`,
-            title: "Game Update Failed",
-            role: "administrator",
-          });
+        const result = GameServerNodeService.updateJobResult(job);
+        if (result) {
+          await statusWrites;
+          if (!GameServerNodeService.isUpdateResultRecorded(job)) {
+            await this.recordUpdateResult(gameServerNodeId, game, job, result);
+          }
           return;
         }
 
@@ -880,14 +926,19 @@ export class GameServerNodeService {
 
     await new Promise<void>((resolve) => {
       let settled = false;
+      const idle = setTimeout(() => {
+        stream.destroy();
+      }, GameServerNodeService.UPDATE_LOG_IDLE_MS);
       const settle = () => {
         if (!settled) {
           settled = true;
+          clearTimeout(idle);
           resolve();
         }
       };
 
       stream.on("data", (data: Buffer) => {
+        idle.refresh();
         // a chunk may contain several concatenated JSON objects
         for (const piece of data.toString().split(/(?<=})\s*(?={")/)) {
           let log: string | undefined;
@@ -916,9 +967,10 @@ export class GameServerNodeService {
   }
 
   /**
-   * Periodic safety net: attaches a monitor to any update job that is running
-   * without one (e.g. after an API restart), and clears stale update_status
-   * values whose job no longer exists.
+   * Periodic safety net: attaches a monitor to any update job that is running,
+   * or finished without its result recorded (e.g. after an API restart), and
+   * clears a stale update_status when no such job is left. Failed jobs are
+   * kept for their logs, so one whose result is recorded counts as gone.
    */
   public async reconcileUpdateStatuses(): Promise<void> {
     const { game_server_nodes } = await this.hasura.query({
@@ -947,7 +999,11 @@ export class GameServerNodeService {
           const job = await this.loggingService.getJob(jobName);
           const pod = await this.loggingService.getJobPod(jobName);
 
-          if (job || pod) {
+          const settled =
+            GameServerNodeService.updateJobResult(job) &&
+            GameServerNodeService.isUpdateResultRecorded(job);
+
+          if ((job || pod) && !settled) {
             hasUpdateJob = true;
             void this.monitorUpdateStatus(node.id, game);
           }
@@ -989,6 +1045,113 @@ export class GameServerNodeService {
         },
         update_status: true,
       },
+    });
+  }
+
+  // the Failed condition, not status.failed: with backoffLimit 1 a first failed
+  // pod leaves active at 0 for a moment before the retry pod is created
+  public static updateJobResult(
+    job?: V1Job | null,
+  ): "Succeeded" | "Failed" | null {
+    if (job?.status?.succeeded) {
+      return "Succeeded";
+    }
+    if (
+      job?.status?.conditions?.some(
+        ({ type, status }) => type === "Failed" && status === "True",
+      )
+    ) {
+      return "Failed";
+    }
+    return null;
+  }
+
+  public static isUpdateResultRecorded(job?: V1Job | null): boolean {
+    return (
+      job?.metadata?.annotations?.[
+        GameServerNodeService.UPDATE_RESULT_RECORDED_ANNOTATION
+      ] === "true"
+    );
+  }
+
+  // update_status is one column shared by the cs2 and csgo jobs, so whether a
+  // job's result was recorded lives on the job itself; the uid test makes the
+  // claim fail on a retry job that has since reused the name
+  private async claimUpdateResult(job: V1Job): Promise<boolean> {
+    try {
+      await this.batchApi.patchNamespacedJob({
+        name: job.metadata.name,
+        namespace: this.namespace,
+        body: [
+          { op: "test", path: "/metadata/uid", value: job.metadata.uid },
+          {
+            op: "add",
+            path: "/metadata/annotations",
+            value: {
+              ...job.metadata.annotations,
+              [GameServerNodeService.UPDATE_RESULT_RECORDED_ANNOTATION]: "true",
+            },
+          },
+        ],
+      });
+      return true;
+    } catch (error) {
+      this.logger.warn(
+        `[${job.metadata.name}] unable to claim the update result`,
+        error,
+      );
+      return false;
+    }
+  }
+
+  private async recordUpdateResult(
+    gameServerNodeId: string,
+    game: string,
+    job: V1Job,
+    result: "Succeeded" | "Failed",
+  ): Promise<void> {
+    if (!(await this.claimUpdateResult(job))) {
+      return;
+    }
+
+    if (result === "Succeeded") {
+      await this.postgres.query(
+        `UPDATE game_server_nodes
+            SET update_status = NULL, update_failed_at = NULL
+          WHERE id = $1`,
+        [gameServerNodeId],
+      );
+
+      await this.batchApi
+        .deleteNamespacedJob({
+          name: job.metadata.name,
+          namespace: this.namespace,
+          propagationPolicy: "Background",
+          body: { preconditions: { uid: job.metadata.uid } },
+        })
+        .catch((error) => {
+          if (error.code?.toString() !== "404") {
+            this.logger.warn(
+              `[${gameServerNodeId}] unable to delete finished ${game} update job`,
+              error,
+            );
+          }
+        });
+      return;
+    }
+
+    await this.postgres.query(
+      `UPDATE game_server_nodes
+          SET update_status = NULL, update_failed_at = now()
+        WHERE id = $1`,
+      [gameServerNodeId],
+    );
+
+    this.logger.warn(`[${gameServerNodeId}] ${game} update job failed`);
+    void this.notifications.send("GameUpdate", {
+      message: `The ${game === "csgo" ? "CSGO" : "CS2"} update failed on node ${gameServerNodeId}. Check the update logs for details.`,
+      title: "Game Update Failed",
+      role: "administrator",
     });
   }
 
