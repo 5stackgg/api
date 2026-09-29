@@ -46,11 +46,13 @@ export class SystemGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
-    let { service, previous, tailLines, since } = data;
+    await client.authentication;
 
-    if (!isRoleAbove(client.user.role, "administrator")) {
+    if (!client.user || !isRoleAbove(client.user.role, "administrator")) {
       return;
     }
+
+    let { service, previous, tailLines, since } = data;
 
     // m- = match jobs, gs- = game-streamer jobs; both read by job-name label.
     const isJob =

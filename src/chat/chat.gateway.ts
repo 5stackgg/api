@@ -26,6 +26,8 @@ export class ChatGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+    await client.authentication;
+
     if (!client.user) {
       return;
     }
@@ -42,6 +44,8 @@ export class ChatGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+    await client.authentication;
+
     if (!client.user) {
       return;
     }
@@ -58,6 +62,8 @@ export class ChatGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+    await client.authentication;
+
     if (!client.user) {
       return;
     }
@@ -98,6 +104,8 @@ export class ChatGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+    await client.authentication;
+
     if (!client.user) {
       return;
     }
@@ -163,6 +171,8 @@ export class ChatGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+    await client.authentication;
+
     if (!client.user) {
       return;
     }
@@ -207,6 +217,8 @@ export class ChatGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+    await client.authentication;
+
     if (!client.user) {
       return;
     }
@@ -264,6 +276,8 @@ export class ChatGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+    await client.authentication;
+
     if (!client.user) {
       return;
     }
