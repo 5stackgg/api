@@ -36,11 +36,29 @@ describe("ChatService direct messages", () => {
   let acceptedFriendships: Array<[string, string]>;
   let role: string;
   let queries: Array<{ sql: string; bindings: any[] }>;
+  let gagged: boolean;
+  let audited: boolean;
   const postgres = {
     query: jest.fn(async (sql: string, bindings: any[]): Promise<any[]> => {
       queries.push({ sql, bindings });
+
+      if (sql.includes("public.is_gagged")) {
+        return [{ gagged }];
+      }
+
+      if (sql.includes("SELECT 1 FROM public.chat_message_deletions")) {
+        return [{ deleted: audited }];
+      }
+
       return [];
     }),
+  };
+
+  const notifications = {
+    notifyPlayers: jest.fn(),
+    collapseOlderUnread: jest.fn(),
+    markConversationRead: jest.fn(),
+    retractChatMessage: jest.fn().mockResolvedValue(undefined),
   };
 
   const client = (steamId: string) =>
@@ -235,7 +253,9 @@ describe("ChatService direct messages", () => {
     // clearAllMocks keeps implementations, so a test that seats someone in a
     // room would otherwise leave them seated for every test after it.
     redis.hget.mockResolvedValue(null);
+    redis.hgetall.mockResolvedValue({});
     redis.get.mockResolvedValue(null);
+    notifications.retractChatMessage.mockResolvedValue(undefined);
     acceptedFriendships = [[ME, FRIEND]];
     myMatches = ["m-1"];
     otherMatches = ["mm-1"];
@@ -248,6 +268,8 @@ describe("ChatService direct messages", () => {
     staff = [];
     role = "user";
     queries = [];
+    gagged = false;
+    audited = false;
     rcon.send.mockResolvedValue(undefined);
     rcon.connect.mockResolvedValue(rcon);
 
@@ -257,7 +279,7 @@ describe("ChatService direct messages", () => {
       hasuraService as any,
       postgres as any,
       { getConnection: () => redis } as any,
-      { notifyPlayers: jest.fn(), markConversationRead: jest.fn() } as any,
+      notifications as any,
     );
   });
 
@@ -836,6 +858,436 @@ describe("ChatService direct messages", () => {
 
         expect((await from()).role).toBe("user");
       });
+    });
+  });
+
+  describe("gag", () => {
+    const player = () =>
+      ({ steam_id: ME, name: "Someone", role: "user" }) as any;
+
+    const groupRooms = [
+      ChatLobbyType.Match,
+      ChatLobbyType.MatchTeam,
+      ChatLobbyType.MatchMaking,
+      ChatLobbyType.Tournament,
+      ChatLobbyType.Draft,
+      ChatLobbyType.Organizer,
+      ChatLobbyType.Team,
+    ];
+
+    beforeEach(() => {
+      gagged = true;
+    });
+
+    it.each(groupRooms)(
+      "keeps a gagged player's website message out of a %s room",
+      async (type) => {
+        await expect(
+          service.sendMessageToChat(type, "x", player(), "hello", true),
+        ).resolves.toEqual({ accepted: false, code: ChatErrorCode.Gagged });
+
+        expect(redis.hset).not.toHaveBeenCalled();
+        expect(redis.publish).not.toHaveBeenCalled();
+        expect(notifications.notifyPlayers).not.toHaveBeenCalled();
+      },
+    );
+
+    it("refuses a gagged player in a room they belong to", async () => {
+      redis.hget.mockResolvedValue(JSON.stringify({ user: { steam_id: ME } }));
+
+      await expect(
+        service.sendMessageToChat(ChatLobbyType.Match, "m-1", player(), "hi"),
+      ).resolves.toEqual({ accepted: false, code: ChatErrorCode.Gagged });
+
+      const [check] = queries.filter(({ sql }) =>
+        sql.includes("public.is_gagged"),
+      );
+
+      expect(check.bindings).toEqual([ME]);
+    });
+
+    it("answers not_allowed rather than gagged for a room they are not in", async () => {
+      await expect(
+        service.sendMessageToChat(ChatLobbyType.Match, "m-2", player(), "hi"),
+      ).resolves.toEqual({ accepted: false, code: ChatErrorCode.NotAllowed });
+    });
+
+    it("leaves a gagged player's direct messages alone", async () => {
+      redis.hget.mockResolvedValue(JSON.stringify({ user: { steam_id: ME } }));
+
+      await expect(
+        service.sendMessageToChat(
+          ChatLobbyType.Direct,
+          directRoomId(ME, FRIEND),
+          player(),
+          "hi",
+        ),
+      ).resolves.toEqual({ accepted: true, messageId: expect.any(String) });
+
+      expect(queries.some(({ sql }) => sql.includes("public.is_gagged"))).toBe(
+        false,
+      );
+    });
+
+    it("leaves a line relayed from the game to the game server's gag", async () => {
+      await expect(
+        service.sendMessageToChat(
+          ChatLobbyType.Match,
+          "m-1",
+          player(),
+          "from the server",
+          true,
+          "game",
+        ),
+      ).resolves.toEqual({ accepted: true, messageId: expect.any(String) });
+    });
+
+    it("lets a player post once the gag is lifted", async () => {
+      gagged = false;
+
+      await expect(
+        service.sendMessageToChat(
+          ChatLobbyType.Tournament,
+          "t-1",
+          player(),
+          "back",
+          true,
+        ),
+      ).resolves.toEqual({ accepted: true, messageId: expect.any(String) });
+    });
+  });
+
+  describe("deleting", () => {
+    const MESSAGE_ID = "3f0c1d2e-4b5a-4c6d-8e7f-9a0b1c2d3e4f";
+
+    const moderator = (overrides: Record<string, unknown> = {}) =>
+      ({ steam_id: ME, name: "Mod", role: "moderator", ...overrides }) as any;
+
+    let stored: Record<string, Record<string, string>>;
+
+    const store = (
+      type: ChatLobbyType,
+      id: string,
+      message: Record<string, unknown> = {},
+    ) => {
+      stored[`chat_${type}_${id}`] = {
+        ...stored[`chat_${type}_${id}`],
+        [MESSAGE_ID]: JSON.stringify({
+          id: MESSAGE_ID,
+          message: "something awful",
+          timestamp: "2025-01-01T00:00:00.000Z",
+          source: "web",
+          from: { role: "user", name: "Author", steam_id: FRIEND },
+          ...message,
+        }),
+      };
+    };
+
+    const audits = () =>
+      queries.filter(({ sql }) =>
+        sql.includes("INSERT INTO public.chat_message_deletions"),
+      );
+
+    const flush = () => new Promise((resolve) => setImmediate(resolve));
+
+    beforeEach(() => {
+      role = "moderator";
+      stored = {};
+      redis.hget.mockImplementation(
+        async (key: string, field: string) => stored[key]?.[field] ?? null,
+      );
+    });
+
+    it("lets a moderator remove a message from a room they are in, however old", async () => {
+      store(ChatLobbyType.Match, "m-1");
+      redis.hgetall.mockImplementation(async (key: string) =>
+        key === "chat:match:m-1"
+          ? { [FRIEND]: JSON.stringify({ user: { steam_id: FRIEND } }) }
+          : {},
+      );
+
+      await expect(
+        service.deleteMessage(
+          ChatLobbyType.Match,
+          "m-1",
+          MESSAGE_ID,
+          moderator(),
+        ),
+      ).resolves.toEqual({ deleted: true });
+
+      expect(redis.hdel).toHaveBeenCalledWith("chat_match_m-1", MESSAGE_ID);
+
+      await flush();
+
+      const broadcast = redis.publish.mock.calls
+        .map(([, payload]) => JSON.parse(payload))
+        .find(({ event }) => event === "lobby:match:m-1:deleted");
+
+      expect(broadcast).toEqual({
+        steamId: FRIEND,
+        event: "lobby:match:m-1:deleted",
+        data: { id: MESSAGE_ID },
+      });
+    });
+
+    it("keeps the evidence of what was removed", async () => {
+      store(ChatLobbyType.Match, "m-1");
+
+      await service.deleteMessage(
+        ChatLobbyType.Match,
+        "m-1",
+        MESSAGE_ID,
+        moderator(),
+      );
+
+      expect(audits().at(0)?.bindings).toEqual([
+        MESSAGE_ID,
+        "match",
+        "m-1",
+        FRIEND,
+        "something awful",
+        "2025-01-01T00:00:00.000Z",
+        "web",
+        ME,
+      ]);
+    });
+
+    it("writes the audit row before the message is removed", async () => {
+      store(ChatLobbyType.Match, "m-1");
+
+      await service.deleteMessage(
+        ChatLobbyType.Match,
+        "m-1",
+        MESSAGE_ID,
+        moderator(),
+      );
+
+      const auditCall = postgres.query.mock.calls.findIndex(([sql]) =>
+        sql.includes("INSERT INTO public.chat_message_deletions"),
+      );
+
+      expect(postgres.query.mock.invocationCallOrder[auditCall]).toBeLessThan(
+        redis.hdel.mock.invocationCallOrder[0],
+      );
+    });
+
+    it("leaves the message in place when the audit row cannot be written", async () => {
+      store(ChatLobbyType.Match, "m-1");
+      postgres.query.mockRejectedValueOnce(new Error("database down"));
+
+      await expect(
+        service.deleteMessage(
+          ChatLobbyType.Match,
+          "m-1",
+          MESSAGE_ID,
+          moderator(),
+        ),
+      ).rejects.toThrow("database down");
+
+      expect(redis.hdel).not.toHaveBeenCalled();
+      expect(notifications.retractChatMessage).not.toHaveBeenCalled();
+    });
+
+    it("records no author for a steam id stored as a number", async () => {
+      store(ChatLobbyType.Match, "m-1", {
+        from: { role: "user", name: "Author", steam_id: 76561198000000002 },
+      });
+
+      await service.deleteMessage(
+        ChatLobbyType.Match,
+        "m-1",
+        MESSAGE_ID,
+        moderator(),
+      );
+
+      expect(audits().at(0)?.bindings[3]).toBeNull();
+    });
+
+    it("retracts the message's notifications", async () => {
+      store(ChatLobbyType.Match, "m-1");
+
+      await service.deleteMessage(
+        ChatLobbyType.Match,
+        "m-1",
+        MESSAGE_ID,
+        moderator(),
+      );
+
+      expect(notifications.retractChatMessage).toHaveBeenCalledWith(MESSAGE_ID);
+    });
+
+    it("still deletes when the retraction fails", async () => {
+      store(ChatLobbyType.Match, "m-1");
+      notifications.retractChatMessage.mockRejectedValue(new Error("nope"));
+
+      await expect(
+        service.deleteMessage(
+          ChatLobbyType.Match,
+          "m-1",
+          MESSAGE_ID,
+          moderator(),
+        ),
+      ).resolves.toEqual({ deleted: true });
+    });
+
+    it("refuses a streamer", async () => {
+      role = "streamer";
+      store(ChatLobbyType.Match, "m-1");
+
+      await expect(
+        service.deleteMessage(
+          ChatLobbyType.Match,
+          "m-1",
+          MESSAGE_ID,
+          moderator({ role: "streamer" }),
+        ),
+      ).resolves.toEqual({ deleted: false, code: ChatErrorCode.NotAllowed });
+
+      expect(audits()).toHaveLength(0);
+      expect(redis.hdel).not.toHaveBeenCalled();
+    });
+
+    it("goes by the role on record, not the one the socket signed in with", async () => {
+      role = "user";
+      store(ChatLobbyType.Match, "m-1");
+
+      await expect(
+        service.deleteMessage(
+          ChatLobbyType.Match,
+          "m-1",
+          MESSAGE_ID,
+          moderator({ role: "administrator" }),
+        ),
+      ).resolves.toEqual({ deleted: false, code: ChatErrorCode.NotAllowed });
+
+      expect(redis.hdel).not.toHaveBeenCalled();
+    });
+
+    it("refuses a moderator in a room they cannot get into", async () => {
+      store(ChatLobbyType.Match, "m-2");
+
+      await expect(
+        service.deleteMessage(
+          ChatLobbyType.Match,
+          "m-2",
+          MESSAGE_ID,
+          moderator(),
+        ),
+      ).resolves.toEqual({ deleted: false, code: ChatErrorCode.NotAllowed });
+
+      expect(redis.hdel).not.toHaveBeenCalled();
+    });
+
+    it("refuses anyone in a direct conversation", async () => {
+      role = "administrator";
+
+      await expect(
+        service.deleteMessage(
+          ChatLobbyType.Direct,
+          directRoomId(ME, FRIEND),
+          MESSAGE_ID,
+          moderator({ role: "administrator" }),
+        ),
+      ).resolves.toEqual({ deleted: false, code: ChatErrorCode.NotAllowed });
+
+      expect(redis.hget).not.toHaveBeenCalled();
+      expect(queries).toHaveLength(0);
+    });
+
+    it("answers not_found for a message that is not there", async () => {
+      await expect(
+        service.deleteMessage(
+          ChatLobbyType.Match,
+          "m-1",
+          MESSAGE_ID,
+          moderator(),
+        ),
+      ).resolves.toEqual({ deleted: false, code: ChatErrorCode.NotFound });
+
+      expect(audits()).toHaveLength(0);
+      expect(redis.hdel).not.toHaveBeenCalled();
+    });
+
+    it("answers not_found for an id that could never be a message", async () => {
+      await expect(
+        service.deleteMessage(
+          ChatLobbyType.Match,
+          "m-1",
+          "not-a-uuid",
+          moderator(),
+        ),
+      ).resolves.toEqual({ deleted: false, code: ChatErrorCode.NotFound });
+
+      expect(redis.hget).not.toHaveBeenCalled();
+    });
+
+    describe("while its notifications are still being written", () => {
+      const sayInTournament = async () => {
+        tournament.roster = [ME, FRIEND];
+        redis.hget.mockResolvedValue(
+          JSON.stringify({ user: { steam_id: ME } }),
+        );
+        role = "user";
+
+        const result = await service.sendMessageToChat(
+          ChatLobbyType.Tournament,
+          "t-1",
+          { steam_id: ME, name: "Someone", role: "user" } as any,
+          "hi",
+        );
+
+        await flush();
+        await flush();
+
+        return result.accepted ? result.messageId : undefined;
+      };
+
+      it("retracts them once written if the message was deleted meanwhile", async () => {
+        audited = true;
+
+        const messageId = await sayInTournament();
+
+        expect(notifications.notifyPlayers).toHaveBeenCalled();
+        expect(
+          queries.find(({ sql }) =>
+            sql.includes("SELECT 1 FROM public.chat_message_deletions"),
+          )?.bindings,
+        ).toEqual([messageId]);
+        expect(notifications.retractChatMessage).toHaveBeenCalledWith(
+          messageId,
+        );
+      });
+
+      it("leaves them alone when nothing deleted the message", async () => {
+        await sayInTournament();
+
+        expect(notifications.notifyPlayers).toHaveBeenCalled();
+        expect(notifications.retractChatMessage).not.toHaveBeenCalled();
+      });
+    });
+
+    it("stamps each chat notification with the message it announces", async () => {
+      redis.hget.mockResolvedValue(JSON.stringify({ user: { steam_id: ME } }));
+      role = "user";
+
+      const result = await service.sendMessageToChat(
+        ChatLobbyType.Direct,
+        directRoomId(ME, FRIEND),
+        { steam_id: ME, name: "Someone", role: "user" } as any,
+        "hi",
+      );
+
+      await flush();
+
+      expect(result.accepted).toBe(true);
+      expect(notifications.notifyPlayers).toHaveBeenCalledWith(
+        "ChatMessage",
+        expect.objectContaining({
+          data: expect.objectContaining({
+            messageId: result.accepted ? result.messageId : undefined,
+          }),
+        }),
+      );
     });
   });
 

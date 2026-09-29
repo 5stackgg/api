@@ -1,0 +1,45 @@
+table:
+  name: chat_message_deletions
+  schema: public
+object_relationships:
+  - name: author
+    using:
+      foreign_key_constraint_on: author_steam_id
+  - name: deleted_by
+    using:
+      foreign_key_constraint_on: deleted_by_steam_id
+select_permissions:
+  - role: match_organizer
+    permission:
+      columns:
+        - id
+        - message_id
+        - room_type
+        - room_id
+        - author_steam_id
+        - message
+        - message_created_at
+        - source
+        - deleted_by_steam_id
+        - deleted_at
+      filter: {}
+      allow_aggregations: true
+    comment: Evidence of moderated website chat. Written only by the API.
+  - role: moderator
+    permission:
+      columns:
+        - id
+        - message_id
+        - room_type
+        - room_id
+        - author_steam_id
+        - message
+        - message_created_at
+        - source
+        - deleted_by_steam_id
+        - deleted_at
+      filter:
+        room_type:
+          _neq: organizers
+      allow_aggregations: true
+    comment: The organizers' room is closed to moderators, and so is its evidence.

@@ -4,4 +4,6 @@ export enum ChatErrorCode {
   TooLong = "too_long",
   NotAllowed = "not_allowed",
   Invalid = "invalid",
+  Gagged = "gagged",
+  NotFound = "not_found",
 }

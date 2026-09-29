@@ -41,6 +41,7 @@ export type NotificationData = {
   icon?: string | null;
   image?: string | null;
   senderSteamId?: string;
+  messageId?: string;
 };
 
 // The bell's buttons, as written by NotificationsService.send / notifyPlayers.

@@ -769,6 +769,26 @@ export class NotificationsService {
     );
   }
 
+  // By message id alone: a draft lobby's history moves into the match room with
+  // its ids intact, while its rows keep the draft's type and entity.
+  //
+  // Soft-deleting is also what stops a push still waiting in a bundling window,
+  // since chat delivery skips deleted rows. The text goes too, because a
+  // recipient can read and restore their own deleted rows. Rows
+  // collapseOlderUnread already retired stay retired, even when the one that
+  // superseded them goes.
+  async retractChatMessage(messageId: string) {
+    await this.postgres.query(
+      `UPDATE public.notifications
+          SET deleted_at = COALESCE(deleted_at, now()),
+              message = ''
+        WHERE data->>'messageId' = $1
+          AND type IN ('ChatMessage', 'MatchChatMessage')
+          AND (deleted_at IS NULL OR message <> '')`,
+      [messageId],
+    );
+  }
+
   // Opening a conversation should clear its badge everywhere, not just in the
   // tab that was open.
   async markConversationRead(

@@ -8,6 +8,7 @@ import { ChatService } from "./chat.service";
 import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketClient";
 import { ChatLobbyType } from "./enums/ChatLobbyTypes";
 import { ChatErrorCode } from "./enums/ChatErrorCode";
+import { ChatAction } from "./types/ChatAction";
 import { isRoleAbove } from "@utilities/isRoleAbove";
 
 @WebSocketGateway({
@@ -112,7 +113,7 @@ export class ChatGateway {
 
     if ("error" in parsed) {
       if (parsed.error === ChatErrorCode.TooLong) {
-        this.sendError(client, parsed.error, requestId);
+        this.sendError(client, "send", parsed.error, requestId);
       }
       return;
     }
@@ -129,13 +130,13 @@ export class ChatGateway {
     // any signed-in socket print into any live match.
     if (result.accepted === false) {
       if (result.code) {
-        this.sendError(client, result.code, requestId);
+        this.sendError(client, "send", result.code, requestId);
       }
       return;
     }
 
     if (requestId) {
-      this.sendAck(client, requestId, result.messageId);
+      this.sendAck(client, "send", requestId, result.messageId);
     }
 
     if (data.type !== ChatLobbyType.Match) {
@@ -151,12 +152,56 @@ export class ChatGateway {
     );
   }
 
+  @SubscribeMessage("lobby:delete")
+  async deleteMessage(
+    @MessageBody()
+    data: {
+      id: string;
+      type: ChatLobbyType;
+      messageId: string;
+      requestId?: string;
+    },
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+  ) {
+    if (!client.user) {
+      return;
+    }
+
+    if (
+      !ChatGateway.isLobbyType(data?.type) ||
+      typeof data.id !== "string" ||
+      typeof data.messageId !== "string"
+    ) {
+      return;
+    }
+
+    const requestId =
+      typeof data.requestId === "string" ? data.requestId : undefined;
+
+    const result = await this.chat.deleteMessage(
+      data.type,
+      data.id,
+      data.messageId,
+      client.user,
+    );
+
+    if (result.deleted === false) {
+      this.sendError(client, "delete", result.code, requestId);
+      return;
+    }
+
+    if (requestId) {
+      this.sendAck(client, "delete", requestId, data.messageId);
+    }
+  }
+
   private static isLobbyType(value: unknown): value is ChatLobbyType {
     return Object.values(ChatLobbyType).includes(value as ChatLobbyType);
   }
 
   private sendError(
     client: FiveStackWebSocketClient,
+    action: ChatAction,
     code: ChatErrorCode,
     requestId?: string,
   ) {
@@ -165,6 +210,7 @@ export class ChatGateway {
         event: "chat:error",
         data: {
           code,
+          action,
           ...(code === ChatErrorCode.TooLong
             ? { max: ChatService.MAX_MESSAGE_LENGTH }
             : {}),
@@ -176,13 +222,14 @@ export class ChatGateway {
 
   private sendAck(
     client: FiveStackWebSocketClient,
+    action: ChatAction,
     requestId: string,
     messageId: string,
   ) {
     client.send(
       JSON.stringify({
         event: "chat:ack",
-        data: { requestId, messageId },
+        data: { requestId, messageId, action },
       }),
     );
   }
