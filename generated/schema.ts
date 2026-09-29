@@ -2199,6 +2199,319 @@ export interface broadcast_huds_variance_fields {
 }
 
 
+/** columns and relationships of "chat_message_deletions" */
+export interface chat_message_deletions {
+    /** An object relationship */
+    author: (players | null)
+    author_steam_id: (Scalars['bigint'] | null)
+    deleted_at: Scalars['timestamptz']
+    /** An object relationship */
+    deleted_by: (players | null)
+    deleted_by_steam_id: (Scalars['bigint'] | null)
+    id: Scalars['uuid']
+    message: Scalars['String']
+    message_created_at: (Scalars['timestamptz'] | null)
+    message_id: Scalars['uuid']
+    room_id: Scalars['String']
+    room_type: Scalars['String']
+    source: (Scalars['String'] | null)
+    __typename: 'chat_message_deletions'
+}
+
+
+/** aggregated selection of "chat_message_deletions" */
+export interface chat_message_deletions_aggregate {
+    aggregate: (chat_message_deletions_aggregate_fields | null)
+    nodes: chat_message_deletions[]
+    __typename: 'chat_message_deletions_aggregate'
+}
+
+
+/** aggregate fields of "chat_message_deletions" */
+export interface chat_message_deletions_aggregate_fields {
+    avg: (chat_message_deletions_avg_fields | null)
+    count: Scalars['Int']
+    max: (chat_message_deletions_max_fields | null)
+    min: (chat_message_deletions_min_fields | null)
+    stddev: (chat_message_deletions_stddev_fields | null)
+    stddev_pop: (chat_message_deletions_stddev_pop_fields | null)
+    stddev_samp: (chat_message_deletions_stddev_samp_fields | null)
+    sum: (chat_message_deletions_sum_fields | null)
+    var_pop: (chat_message_deletions_var_pop_fields | null)
+    var_samp: (chat_message_deletions_var_samp_fields | null)
+    variance: (chat_message_deletions_variance_fields | null)
+    __typename: 'chat_message_deletions_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface chat_message_deletions_avg_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    deleted_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_message_deletions_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "chat_message_deletions" */
+export type chat_message_deletions_constraint = 'chat_message_deletions_message_id_room_type_room_id_key' | 'chat_message_deletions_pkey'
+
+
+/** aggregate max on columns */
+export interface chat_message_deletions_max_fields {
+    author_steam_id: (Scalars['bigint'] | null)
+    deleted_at: (Scalars['timestamptz'] | null)
+    deleted_by_steam_id: (Scalars['bigint'] | null)
+    id: (Scalars['uuid'] | null)
+    message: (Scalars['String'] | null)
+    message_created_at: (Scalars['timestamptz'] | null)
+    message_id: (Scalars['uuid'] | null)
+    room_id: (Scalars['String'] | null)
+    room_type: (Scalars['String'] | null)
+    source: (Scalars['String'] | null)
+    __typename: 'chat_message_deletions_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface chat_message_deletions_min_fields {
+    author_steam_id: (Scalars['bigint'] | null)
+    deleted_at: (Scalars['timestamptz'] | null)
+    deleted_by_steam_id: (Scalars['bigint'] | null)
+    id: (Scalars['uuid'] | null)
+    message: (Scalars['String'] | null)
+    message_created_at: (Scalars['timestamptz'] | null)
+    message_id: (Scalars['uuid'] | null)
+    room_id: (Scalars['String'] | null)
+    room_type: (Scalars['String'] | null)
+    source: (Scalars['String'] | null)
+    __typename: 'chat_message_deletions_min_fields'
+}
+
+
+/** response of any mutation on the table "chat_message_deletions" */
+export interface chat_message_deletions_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: chat_message_deletions[]
+    __typename: 'chat_message_deletions_mutation_response'
+}
+
+
+/** select columns of table "chat_message_deletions" */
+export type chat_message_deletions_select_column = 'author_steam_id' | 'deleted_at' | 'deleted_by_steam_id' | 'id' | 'message' | 'message_created_at' | 'message_id' | 'room_id' | 'room_type' | 'source'
+
+
+/** aggregate stddev on columns */
+export interface chat_message_deletions_stddev_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    deleted_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_message_deletions_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface chat_message_deletions_stddev_pop_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    deleted_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_message_deletions_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface chat_message_deletions_stddev_samp_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    deleted_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_message_deletions_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface chat_message_deletions_sum_fields {
+    author_steam_id: (Scalars['bigint'] | null)
+    deleted_by_steam_id: (Scalars['bigint'] | null)
+    __typename: 'chat_message_deletions_sum_fields'
+}
+
+
+/** update columns of table "chat_message_deletions" */
+export type chat_message_deletions_update_column = 'author_steam_id' | 'deleted_at' | 'deleted_by_steam_id' | 'id' | 'message' | 'message_created_at' | 'message_id' | 'room_id' | 'room_type' | 'source'
+
+
+/** aggregate var_pop on columns */
+export interface chat_message_deletions_var_pop_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    deleted_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_message_deletions_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface chat_message_deletions_var_samp_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    deleted_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_message_deletions_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface chat_message_deletions_variance_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    deleted_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_message_deletions_variance_fields'
+}
+
+
+/** columns and relationships of "chat_message_edits" */
+export interface chat_message_edits {
+    /** An object relationship */
+    author: (players | null)
+    author_steam_id: (Scalars['bigint'] | null)
+    edited_at: Scalars['timestamptz']
+    id: Scalars['uuid']
+    message_created_at: (Scalars['timestamptz'] | null)
+    message_id: Scalars['uuid']
+    new_message: Scalars['String']
+    previous_message: Scalars['String']
+    room_id: Scalars['String']
+    room_type: Scalars['String']
+    __typename: 'chat_message_edits'
+}
+
+
+/** aggregated selection of "chat_message_edits" */
+export interface chat_message_edits_aggregate {
+    aggregate: (chat_message_edits_aggregate_fields | null)
+    nodes: chat_message_edits[]
+    __typename: 'chat_message_edits_aggregate'
+}
+
+
+/** aggregate fields of "chat_message_edits" */
+export interface chat_message_edits_aggregate_fields {
+    avg: (chat_message_edits_avg_fields | null)
+    count: Scalars['Int']
+    max: (chat_message_edits_max_fields | null)
+    min: (chat_message_edits_min_fields | null)
+    stddev: (chat_message_edits_stddev_fields | null)
+    stddev_pop: (chat_message_edits_stddev_pop_fields | null)
+    stddev_samp: (chat_message_edits_stddev_samp_fields | null)
+    sum: (chat_message_edits_sum_fields | null)
+    var_pop: (chat_message_edits_var_pop_fields | null)
+    var_samp: (chat_message_edits_var_samp_fields | null)
+    variance: (chat_message_edits_variance_fields | null)
+    __typename: 'chat_message_edits_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface chat_message_edits_avg_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_message_edits_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "chat_message_edits" */
+export type chat_message_edits_constraint = 'chat_message_edits_pkey'
+
+
+/** aggregate max on columns */
+export interface chat_message_edits_max_fields {
+    author_steam_id: (Scalars['bigint'] | null)
+    edited_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    message_created_at: (Scalars['timestamptz'] | null)
+    message_id: (Scalars['uuid'] | null)
+    new_message: (Scalars['String'] | null)
+    previous_message: (Scalars['String'] | null)
+    room_id: (Scalars['String'] | null)
+    room_type: (Scalars['String'] | null)
+    __typename: 'chat_message_edits_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface chat_message_edits_min_fields {
+    author_steam_id: (Scalars['bigint'] | null)
+    edited_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    message_created_at: (Scalars['timestamptz'] | null)
+    message_id: (Scalars['uuid'] | null)
+    new_message: (Scalars['String'] | null)
+    previous_message: (Scalars['String'] | null)
+    room_id: (Scalars['String'] | null)
+    room_type: (Scalars['String'] | null)
+    __typename: 'chat_message_edits_min_fields'
+}
+
+
+/** response of any mutation on the table "chat_message_edits" */
+export interface chat_message_edits_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: chat_message_edits[]
+    __typename: 'chat_message_edits_mutation_response'
+}
+
+
+/** select columns of table "chat_message_edits" */
+export type chat_message_edits_select_column = 'author_steam_id' | 'edited_at' | 'id' | 'message_created_at' | 'message_id' | 'new_message' | 'previous_message' | 'room_id' | 'room_type'
+
+
+/** aggregate stddev on columns */
+export interface chat_message_edits_stddev_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_message_edits_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface chat_message_edits_stddev_pop_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_message_edits_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface chat_message_edits_stddev_samp_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_message_edits_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface chat_message_edits_sum_fields {
+    author_steam_id: (Scalars['bigint'] | null)
+    __typename: 'chat_message_edits_sum_fields'
+}
+
+
+/** update columns of table "chat_message_edits" */
+export type chat_message_edits_update_column = 'author_steam_id' | 'edited_at' | 'id' | 'message_created_at' | 'message_id' | 'new_message' | 'previous_message' | 'room_id' | 'room_type'
+
+
+/** aggregate var_pop on columns */
+export interface chat_message_edits_var_pop_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_message_edits_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface chat_message_edits_var_samp_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_message_edits_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface chat_message_edits_variance_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_message_edits_variance_fields'
+}
+
+
 /** columns and relationships of "chat_read_state" */
 export interface chat_read_state {
     last_read_at: Scalars['timestamptz']
@@ -2975,9 +3288,143 @@ export interface direct_conversations_variance_fields {
 }
 
 
+/** columns and relationships of "direct_message_reactions" */
+export interface direct_message_reactions {
+    created_at: Scalars['timestamptz']
+    message_id: Scalars['uuid']
+    reaction: Scalars['String']
+    steam_id: Scalars['bigint']
+    __typename: 'direct_message_reactions'
+}
+
+
+/** aggregated selection of "direct_message_reactions" */
+export interface direct_message_reactions_aggregate {
+    aggregate: (direct_message_reactions_aggregate_fields | null)
+    nodes: direct_message_reactions[]
+    __typename: 'direct_message_reactions_aggregate'
+}
+
+
+/** aggregate fields of "direct_message_reactions" */
+export interface direct_message_reactions_aggregate_fields {
+    avg: (direct_message_reactions_avg_fields | null)
+    count: Scalars['Int']
+    max: (direct_message_reactions_max_fields | null)
+    min: (direct_message_reactions_min_fields | null)
+    stddev: (direct_message_reactions_stddev_fields | null)
+    stddev_pop: (direct_message_reactions_stddev_pop_fields | null)
+    stddev_samp: (direct_message_reactions_stddev_samp_fields | null)
+    sum: (direct_message_reactions_sum_fields | null)
+    var_pop: (direct_message_reactions_var_pop_fields | null)
+    var_samp: (direct_message_reactions_var_samp_fields | null)
+    variance: (direct_message_reactions_variance_fields | null)
+    __typename: 'direct_message_reactions_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface direct_message_reactions_avg_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'direct_message_reactions_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "direct_message_reactions" */
+export type direct_message_reactions_constraint = 'direct_message_reactions_pkey'
+
+
+/** aggregate max on columns */
+export interface direct_message_reactions_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    message_id: (Scalars['uuid'] | null)
+    reaction: (Scalars['String'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'direct_message_reactions_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface direct_message_reactions_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    message_id: (Scalars['uuid'] | null)
+    reaction: (Scalars['String'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'direct_message_reactions_min_fields'
+}
+
+
+/** response of any mutation on the table "direct_message_reactions" */
+export interface direct_message_reactions_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: direct_message_reactions[]
+    __typename: 'direct_message_reactions_mutation_response'
+}
+
+
+/** select columns of table "direct_message_reactions" */
+export type direct_message_reactions_select_column = 'created_at' | 'message_id' | 'reaction' | 'steam_id'
+
+
+/** aggregate stddev on columns */
+export interface direct_message_reactions_stddev_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'direct_message_reactions_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface direct_message_reactions_stddev_pop_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'direct_message_reactions_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface direct_message_reactions_stddev_samp_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'direct_message_reactions_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface direct_message_reactions_sum_fields {
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'direct_message_reactions_sum_fields'
+}
+
+
+/** update columns of table "direct_message_reactions" */
+export type direct_message_reactions_update_column = 'created_at' | 'message_id' | 'reaction' | 'steam_id'
+
+
+/** aggregate var_pop on columns */
+export interface direct_message_reactions_var_pop_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'direct_message_reactions_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface direct_message_reactions_var_samp_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'direct_message_reactions_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface direct_message_reactions_variance_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'direct_message_reactions_variance_fields'
+}
+
+
 /** columns and relationships of "direct_messages" */
 export interface direct_messages {
     created_at: Scalars['timestamptz']
+    edited_at: (Scalars['timestamptz'] | null)
     from_steam_id: Scalars['bigint']
     id: Scalars['uuid']
     message: Scalars['String']
@@ -3027,6 +3474,7 @@ export type direct_messages_constraint = 'direct_messages_pkey'
 /** aggregate max on columns */
 export interface direct_messages_max_fields {
     created_at: (Scalars['timestamptz'] | null)
+    edited_at: (Scalars['timestamptz'] | null)
     from_steam_id: (Scalars['bigint'] | null)
     id: (Scalars['uuid'] | null)
     message: (Scalars['String'] | null)
@@ -3039,6 +3487,7 @@ export interface direct_messages_max_fields {
 /** aggregate min on columns */
 export interface direct_messages_min_fields {
     created_at: (Scalars['timestamptz'] | null)
+    edited_at: (Scalars['timestamptz'] | null)
     from_steam_id: (Scalars['bigint'] | null)
     id: (Scalars['uuid'] | null)
     message: (Scalars['String'] | null)
@@ -3059,7 +3508,7 @@ export interface direct_messages_mutation_response {
 
 
 /** select columns of table "direct_messages" */
-export type direct_messages_select_column = 'created_at' | 'from_steam_id' | 'id' | 'message' | 'room_id' | 'seq'
+export type direct_messages_select_column = 'created_at' | 'edited_at' | 'from_steam_id' | 'id' | 'message' | 'room_id' | 'seq'
 
 
 /** aggregate stddev on columns */
@@ -3095,7 +3544,7 @@ export interface direct_messages_sum_fields {
 
 
 /** update columns of table "direct_messages" */
-export type direct_messages_update_column = 'created_at' | 'from_steam_id' | 'id' | 'message' | 'room_id' | 'seq'
+export type direct_messages_update_column = 'created_at' | 'edited_at' | 'from_steam_id' | 'id' | 'message' | 'room_id' | 'seq'
 
 
 /** aggregate var_pop on columns */
@@ -9662,6 +10111,7 @@ export interface game_server_nodes {
     token: (Scalars['String'] | null)
     /** A computed field, executes function "total_node_server_count" */
     total_server_count: (Scalars['Int'] | null)
+    update_failed_at: (Scalars['timestamptz'] | null)
     update_status: (Scalars['String'] | null)
     /** An object relationship */
     version: (game_versions | null)
@@ -9748,6 +10198,7 @@ export interface game_server_nodes_max_fields {
     token: (Scalars['String'] | null)
     /** A computed field, executes function "total_node_server_count" */
     total_server_count: (Scalars['Int'] | null)
+    update_failed_at: (Scalars['timestamptz'] | null)
     update_status: (Scalars['String'] | null)
     __typename: 'game_server_nodes_max_fields'
 }
@@ -9781,6 +10232,7 @@ export interface game_server_nodes_min_fields {
     token: (Scalars['String'] | null)
     /** A computed field, executes function "total_node_server_count" */
     total_server_count: (Scalars['Int'] | null)
+    update_failed_at: (Scalars['timestamptz'] | null)
     update_status: (Scalars['String'] | null)
     __typename: 'game_server_nodes_min_fields'
 }
@@ -9797,7 +10249,7 @@ export interface game_server_nodes_mutation_response {
 
 
 /** select columns of table "game_server_nodes" */
-export type game_server_nodes_select_column = 'build_id' | 'cpu_cores_per_socket' | 'cpu_frequency_info' | 'cpu_governor_info' | 'cpu_sockets' | 'cpu_threads_per_core' | 'cpu_warnings' | 'cs2_launch_options' | 'cs2_video_settings' | 'csgo_build_id' | 'demo_network_limiter' | 'disk_available_gb' | 'disk_used_percent' | 'enabled' | 'enabled_for_match_making' | 'end_port_range' | 'gpu' | 'gpu_demos_enabled' | 'gpu_info' | 'gpu_rendering_enabled' | 'gpu_streaming_enabled' | 'id' | 'label' | 'lan_ip' | 'node_ip' | 'offline_at' | 'pin_build_id' | 'pin_plugin_runtime' | 'pin_plugin_version' | 'plugins_synced_at' | 'public_ip' | 'region' | 'shader_bake_progress' | 'shader_bake_progress_stage' | 'shader_bake_status' | 'shader_bake_status_history' | 'start_port_range' | 'status' | 'supports_cpu_pinning' | 'supports_low_latency' | 'token' | 'update_status'
+export type game_server_nodes_select_column = 'build_id' | 'cpu_cores_per_socket' | 'cpu_frequency_info' | 'cpu_governor_info' | 'cpu_sockets' | 'cpu_threads_per_core' | 'cpu_warnings' | 'cs2_launch_options' | 'cs2_video_settings' | 'csgo_build_id' | 'demo_network_limiter' | 'disk_available_gb' | 'disk_used_percent' | 'enabled' | 'enabled_for_match_making' | 'end_port_range' | 'gpu' | 'gpu_demos_enabled' | 'gpu_info' | 'gpu_rendering_enabled' | 'gpu_streaming_enabled' | 'id' | 'label' | 'lan_ip' | 'node_ip' | 'offline_at' | 'pin_build_id' | 'pin_plugin_runtime' | 'pin_plugin_version' | 'plugins_synced_at' | 'public_ip' | 'region' | 'shader_bake_progress' | 'shader_bake_progress_stage' | 'shader_bake_status' | 'shader_bake_status_history' | 'start_port_range' | 'status' | 'supports_cpu_pinning' | 'supports_low_latency' | 'token' | 'update_failed_at' | 'update_status'
 
 
 /** select "game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns" columns of table "game_server_nodes" */
@@ -9897,7 +10349,7 @@ export interface game_server_nodes_sum_fields {
 
 
 /** update columns of table "game_server_nodes" */
-export type game_server_nodes_update_column = 'build_id' | 'cpu_cores_per_socket' | 'cpu_frequency_info' | 'cpu_governor_info' | 'cpu_sockets' | 'cpu_threads_per_core' | 'cpu_warnings' | 'cs2_launch_options' | 'cs2_video_settings' | 'csgo_build_id' | 'demo_network_limiter' | 'disk_available_gb' | 'disk_used_percent' | 'enabled' | 'enabled_for_match_making' | 'end_port_range' | 'gpu' | 'gpu_demos_enabled' | 'gpu_info' | 'gpu_rendering_enabled' | 'gpu_streaming_enabled' | 'id' | 'label' | 'lan_ip' | 'node_ip' | 'offline_at' | 'pin_build_id' | 'pin_plugin_runtime' | 'pin_plugin_version' | 'plugins_synced_at' | 'public_ip' | 'region' | 'shader_bake_progress' | 'shader_bake_progress_stage' | 'shader_bake_status' | 'shader_bake_status_history' | 'start_port_range' | 'status' | 'supports_cpu_pinning' | 'supports_low_latency' | 'token' | 'update_status'
+export type game_server_nodes_update_column = 'build_id' | 'cpu_cores_per_socket' | 'cpu_frequency_info' | 'cpu_governor_info' | 'cpu_sockets' | 'cpu_threads_per_core' | 'cpu_warnings' | 'cs2_launch_options' | 'cs2_video_settings' | 'csgo_build_id' | 'demo_network_limiter' | 'disk_available_gb' | 'disk_used_percent' | 'enabled' | 'enabled_for_match_making' | 'end_port_range' | 'gpu' | 'gpu_demos_enabled' | 'gpu_info' | 'gpu_rendering_enabled' | 'gpu_streaming_enabled' | 'id' | 'label' | 'lan_ip' | 'node_ip' | 'offline_at' | 'pin_build_id' | 'pin_plugin_runtime' | 'pin_plugin_version' | 'plugins_synced_at' | 'public_ip' | 'region' | 'shader_bake_progress' | 'shader_bake_progress_stage' | 'shader_bake_status' | 'shader_bake_status_history' | 'start_port_range' | 'status' | 'supports_cpu_pinning' | 'supports_low_latency' | 'token' | 'update_failed_at' | 'update_status'
 
 
 /** aggregate var_pop on columns */
@@ -10106,12 +10558,22 @@ export interface game_versions_variance_fields {
 export interface gamedata_signature_validations {
     branch: Scalars['String']
     build_id: Scalars['Int']
+    changes: (Scalars['jsonb'] | null)
     /** An object relationship */
-    game_version: game_versions
+    game_server_node: (game_server_nodes | null)
+    game_server_node_id: (Scalars['String'] | null)
+    /** An object relationship */
+    game_version: (game_versions | null)
     id: Scalars['uuid']
+    previous_build_id: (Scalars['Int'] | null)
+    /** An object relationship */
+    requested_by: (players | null)
+    requested_by_steam_id: (Scalars['bigint'] | null)
     results: (Scalars['jsonb'] | null)
+    started_at: (Scalars['timestamptz'] | null)
     status: Scalars['String']
-    validated_at: Scalars['timestamptz']
+    trigger: (Scalars['String'] | null)
+    validated_at: (Scalars['timestamptz'] | null)
     __typename: 'gamedata_signature_validations'
 }
 
@@ -10144,6 +10606,8 @@ export interface gamedata_signature_validations_aggregate_fields {
 /** aggregate avg on columns */
 export interface gamedata_signature_validations_avg_fields {
     build_id: (Scalars['Float'] | null)
+    previous_build_id: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
     __typename: 'gamedata_signature_validations_avg_fields'
 }
 
@@ -10156,8 +10620,13 @@ export type gamedata_signature_validations_constraint = 'gamedata_signature_vali
 export interface gamedata_signature_validations_max_fields {
     branch: (Scalars['String'] | null)
     build_id: (Scalars['Int'] | null)
+    game_server_node_id: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
+    previous_build_id: (Scalars['Int'] | null)
+    requested_by_steam_id: (Scalars['bigint'] | null)
+    started_at: (Scalars['timestamptz'] | null)
     status: (Scalars['String'] | null)
+    trigger: (Scalars['String'] | null)
     validated_at: (Scalars['timestamptz'] | null)
     __typename: 'gamedata_signature_validations_max_fields'
 }
@@ -10167,8 +10636,13 @@ export interface gamedata_signature_validations_max_fields {
 export interface gamedata_signature_validations_min_fields {
     branch: (Scalars['String'] | null)
     build_id: (Scalars['Int'] | null)
+    game_server_node_id: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
+    previous_build_id: (Scalars['Int'] | null)
+    requested_by_steam_id: (Scalars['bigint'] | null)
+    started_at: (Scalars['timestamptz'] | null)
     status: (Scalars['String'] | null)
+    trigger: (Scalars['String'] | null)
     validated_at: (Scalars['timestamptz'] | null)
     __typename: 'gamedata_signature_validations_min_fields'
 }
@@ -10185,12 +10659,14 @@ export interface gamedata_signature_validations_mutation_response {
 
 
 /** select columns of table "gamedata_signature_validations" */
-export type gamedata_signature_validations_select_column = 'branch' | 'build_id' | 'id' | 'results' | 'status' | 'validated_at'
+export type gamedata_signature_validations_select_column = 'branch' | 'build_id' | 'changes' | 'game_server_node_id' | 'id' | 'previous_build_id' | 'requested_by_steam_id' | 'results' | 'started_at' | 'status' | 'trigger' | 'validated_at'
 
 
 /** aggregate stddev on columns */
 export interface gamedata_signature_validations_stddev_fields {
     build_id: (Scalars['Float'] | null)
+    previous_build_id: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
     __typename: 'gamedata_signature_validations_stddev_fields'
 }
 
@@ -10198,6 +10674,8 @@ export interface gamedata_signature_validations_stddev_fields {
 /** aggregate stddev_pop on columns */
 export interface gamedata_signature_validations_stddev_pop_fields {
     build_id: (Scalars['Float'] | null)
+    previous_build_id: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
     __typename: 'gamedata_signature_validations_stddev_pop_fields'
 }
 
@@ -10205,6 +10683,8 @@ export interface gamedata_signature_validations_stddev_pop_fields {
 /** aggregate stddev_samp on columns */
 export interface gamedata_signature_validations_stddev_samp_fields {
     build_id: (Scalars['Float'] | null)
+    previous_build_id: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
     __typename: 'gamedata_signature_validations_stddev_samp_fields'
 }
 
@@ -10212,17 +10692,21 @@ export interface gamedata_signature_validations_stddev_samp_fields {
 /** aggregate sum on columns */
 export interface gamedata_signature_validations_sum_fields {
     build_id: (Scalars['Int'] | null)
+    previous_build_id: (Scalars['Int'] | null)
+    requested_by_steam_id: (Scalars['bigint'] | null)
     __typename: 'gamedata_signature_validations_sum_fields'
 }
 
 
 /** update columns of table "gamedata_signature_validations" */
-export type gamedata_signature_validations_update_column = 'branch' | 'build_id' | 'id' | 'results' | 'status' | 'validated_at'
+export type gamedata_signature_validations_update_column = 'branch' | 'build_id' | 'changes' | 'game_server_node_id' | 'id' | 'previous_build_id' | 'requested_by_steam_id' | 'results' | 'started_at' | 'status' | 'trigger' | 'validated_at'
 
 
 /** aggregate var_pop on columns */
 export interface gamedata_signature_validations_var_pop_fields {
     build_id: (Scalars['Float'] | null)
+    previous_build_id: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
     __typename: 'gamedata_signature_validations_var_pop_fields'
 }
 
@@ -10230,6 +10714,8 @@ export interface gamedata_signature_validations_var_pop_fields {
 /** aggregate var_samp on columns */
 export interface gamedata_signature_validations_var_samp_fields {
     build_id: (Scalars['Float'] | null)
+    previous_build_id: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
     __typename: 'gamedata_signature_validations_var_samp_fields'
 }
 
@@ -10237,6 +10723,8 @@ export interface gamedata_signature_validations_var_samp_fields {
 /** aggregate variance on columns */
 export interface gamedata_signature_validations_variance_fields {
     build_id: (Scalars['Float'] | null)
+    previous_build_id: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
     __typename: 'gamedata_signature_validations_variance_fields'
 }
 
@@ -12243,15 +12731,24 @@ export interface lobby_players_variance_fields {
 /** columns and relationships of "map_asset_builds" */
 export interface map_asset_builds {
     build_id: Scalars['String']
+    changes: (Scalars['jsonb'] | null)
     created_at: Scalars['timestamptz']
     error: (Scalars['String'] | null)
     failed: (Scalars['jsonb'] | null)
     failed_view: (Scalars['jsonb'] | null)
     finished_at: (Scalars['timestamptz'] | null)
+    /** An object relationship */
+    game_server_node: (game_server_nodes | null)
+    game_server_node_id: (Scalars['String'] | null)
     manifest: (Scalars['String'] | null)
     maps: (Scalars['jsonb'] | null)
+    previous_build_id: (Scalars['String'] | null)
+    /** An object relationship */
+    requested_by: (players | null)
+    requested_by_steam_id: (Scalars['bigint'] | null)
     started_at: (Scalars['timestamptz'] | null)
     status: Scalars['String']
+    trigger: (Scalars['String'] | null)
     updated_at: Scalars['timestamptz']
     __typename: 'map_asset_builds'
 }
@@ -12267,10 +12764,25 @@ export interface map_asset_builds_aggregate {
 
 /** aggregate fields of "map_asset_builds" */
 export interface map_asset_builds_aggregate_fields {
+    avg: (map_asset_builds_avg_fields | null)
     count: Scalars['Int']
     max: (map_asset_builds_max_fields | null)
     min: (map_asset_builds_min_fields | null)
+    stddev: (map_asset_builds_stddev_fields | null)
+    stddev_pop: (map_asset_builds_stddev_pop_fields | null)
+    stddev_samp: (map_asset_builds_stddev_samp_fields | null)
+    sum: (map_asset_builds_sum_fields | null)
+    var_pop: (map_asset_builds_var_pop_fields | null)
+    var_samp: (map_asset_builds_var_samp_fields | null)
+    variance: (map_asset_builds_variance_fields | null)
     __typename: 'map_asset_builds_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface map_asset_builds_avg_fields {
+    requested_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'map_asset_builds_avg_fields'
 }
 
 
@@ -12284,9 +12796,13 @@ export interface map_asset_builds_max_fields {
     created_at: (Scalars['timestamptz'] | null)
     error: (Scalars['String'] | null)
     finished_at: (Scalars['timestamptz'] | null)
+    game_server_node_id: (Scalars['String'] | null)
     manifest: (Scalars['String'] | null)
+    previous_build_id: (Scalars['String'] | null)
+    requested_by_steam_id: (Scalars['bigint'] | null)
     started_at: (Scalars['timestamptz'] | null)
     status: (Scalars['String'] | null)
+    trigger: (Scalars['String'] | null)
     updated_at: (Scalars['timestamptz'] | null)
     __typename: 'map_asset_builds_max_fields'
 }
@@ -12298,9 +12814,13 @@ export interface map_asset_builds_min_fields {
     created_at: (Scalars['timestamptz'] | null)
     error: (Scalars['String'] | null)
     finished_at: (Scalars['timestamptz'] | null)
+    game_server_node_id: (Scalars['String'] | null)
     manifest: (Scalars['String'] | null)
+    previous_build_id: (Scalars['String'] | null)
+    requested_by_steam_id: (Scalars['bigint'] | null)
     started_at: (Scalars['timestamptz'] | null)
     status: (Scalars['String'] | null)
+    trigger: (Scalars['String'] | null)
     updated_at: (Scalars['timestamptz'] | null)
     __typename: 'map_asset_builds_min_fields'
 }
@@ -12317,11 +12837,60 @@ export interface map_asset_builds_mutation_response {
 
 
 /** select columns of table "map_asset_builds" */
-export type map_asset_builds_select_column = 'build_id' | 'created_at' | 'error' | 'failed' | 'failed_view' | 'finished_at' | 'manifest' | 'maps' | 'started_at' | 'status' | 'updated_at'
+export type map_asset_builds_select_column = 'build_id' | 'changes' | 'created_at' | 'error' | 'failed' | 'failed_view' | 'finished_at' | 'game_server_node_id' | 'manifest' | 'maps' | 'previous_build_id' | 'requested_by_steam_id' | 'started_at' | 'status' | 'trigger' | 'updated_at'
+
+
+/** aggregate stddev on columns */
+export interface map_asset_builds_stddev_fields {
+    requested_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'map_asset_builds_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface map_asset_builds_stddev_pop_fields {
+    requested_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'map_asset_builds_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface map_asset_builds_stddev_samp_fields {
+    requested_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'map_asset_builds_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface map_asset_builds_sum_fields {
+    requested_by_steam_id: (Scalars['bigint'] | null)
+    __typename: 'map_asset_builds_sum_fields'
+}
 
 
 /** update columns of table "map_asset_builds" */
-export type map_asset_builds_update_column = 'build_id' | 'created_at' | 'error' | 'failed' | 'failed_view' | 'finished_at' | 'manifest' | 'maps' | 'started_at' | 'status' | 'updated_at'
+export type map_asset_builds_update_column = 'build_id' | 'changes' | 'created_at' | 'error' | 'failed' | 'failed_view' | 'finished_at' | 'game_server_node_id' | 'manifest' | 'maps' | 'previous_build_id' | 'requested_by_steam_id' | 'started_at' | 'status' | 'trigger' | 'updated_at'
+
+
+/** aggregate var_pop on columns */
+export interface map_asset_builds_var_pop_fields {
+    requested_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'map_asset_builds_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface map_asset_builds_var_samp_fields {
+    requested_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'map_asset_builds_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface map_asset_builds_variance_fields {
+    requested_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'map_asset_builds_variance_fields'
+}
 
 
 /** columns and relationships of "map_callouts" */
@@ -15296,7 +15865,7 @@ export interface mutation_root {
     backfillUtilityLaunchSeeds: (UtilityLaunchSeedBackfillOutput | null)
     /** Launch a Vulkan shader pre-bake Job on a GPU node */
     bakeShaders: (SuccessOutput | null)
-    /** Build and publish map assets from a node's CS2 install (5stack.gg only) */
+    /** Build and publish map assets for the current CS2 build on a chosen or automatically picked node (5stack.gg only) */
     buildMapAssets: (SuccessOutput | null)
     /** callForOrganizer */
     callForOrganizer: (SuccessOutput | null)
@@ -15393,6 +15962,14 @@ export interface mutation_root {
     delete_broadcast_huds: (broadcast_huds_mutation_response | null)
     /** delete single row from the table: "broadcast_huds" */
     delete_broadcast_huds_by_pk: (broadcast_huds | null)
+    /** delete data from the table: "chat_message_deletions" */
+    delete_chat_message_deletions: (chat_message_deletions_mutation_response | null)
+    /** delete single row from the table: "chat_message_deletions" */
+    delete_chat_message_deletions_by_pk: (chat_message_deletions | null)
+    /** delete data from the table: "chat_message_edits" */
+    delete_chat_message_edits: (chat_message_edits_mutation_response | null)
+    /** delete single row from the table: "chat_message_edits" */
+    delete_chat_message_edits_by_pk: (chat_message_edits | null)
     /** delete data from the table: "chat_read_state" */
     delete_chat_read_state: (chat_read_state_mutation_response | null)
     /** delete single row from the table: "chat_read_state" */
@@ -15413,6 +15990,10 @@ export interface mutation_root {
     delete_direct_conversations: (direct_conversations_mutation_response | null)
     /** delete single row from the table: "direct_conversations" */
     delete_direct_conversations_by_pk: (direct_conversations | null)
+    /** delete data from the table: "direct_message_reactions" */
+    delete_direct_message_reactions: (direct_message_reactions_mutation_response | null)
+    /** delete single row from the table: "direct_message_reactions" */
+    delete_direct_message_reactions_by_pk: (direct_message_reactions | null)
     /** delete data from the table: "direct_messages" */
     delete_direct_messages: (direct_messages_mutation_response | null)
     /** delete single row from the table: "direct_messages" */
@@ -15889,6 +16470,10 @@ export interface mutation_root {
     delete_player_assists: (player_assists_mutation_response | null)
     /** delete single row from the table: "player_assists" */
     delete_player_assists_by_pk: (player_assists | null)
+    /** delete data from the table: "player_blocks" */
+    delete_player_blocks: (player_blocks_mutation_response | null)
+    /** delete single row from the table: "player_blocks" */
+    delete_player_blocks_by_pk: (player_blocks | null)
     /** delete data from the table: "player_damages" */
     delete_player_damages: (player_damages_mutation_response | null)
     /** delete single row from the table: "player_damages" */
@@ -16201,6 +16786,7 @@ export interface mutation_root {
     getTestUploadLink: GetTestUploadResponse
     /** Grant an award to a player or team */
     grantAward: (AwardRecipient | null)
+    importSteamMatchShareCode: (PendingMatchImportActionOutput | null)
     /** Seed the utility library from an operator-supplied payload */
     importUtilityLineups: (UtilityImportOutput | null)
     /** insert data into the table: "_map_pool" */
@@ -16227,6 +16813,14 @@ export interface mutation_root {
     insert_broadcast_huds: (broadcast_huds_mutation_response | null)
     /** insert a single row into the table: "broadcast_huds" */
     insert_broadcast_huds_one: (broadcast_huds | null)
+    /** insert data into the table: "chat_message_deletions" */
+    insert_chat_message_deletions: (chat_message_deletions_mutation_response | null)
+    /** insert a single row into the table: "chat_message_deletions" */
+    insert_chat_message_deletions_one: (chat_message_deletions | null)
+    /** insert data into the table: "chat_message_edits" */
+    insert_chat_message_edits: (chat_message_edits_mutation_response | null)
+    /** insert a single row into the table: "chat_message_edits" */
+    insert_chat_message_edits_one: (chat_message_edits | null)
     /** insert data into the table: "chat_read_state" */
     insert_chat_read_state: (chat_read_state_mutation_response | null)
     /** insert a single row into the table: "chat_read_state" */
@@ -16247,6 +16841,10 @@ export interface mutation_root {
     insert_direct_conversations: (direct_conversations_mutation_response | null)
     /** insert a single row into the table: "direct_conversations" */
     insert_direct_conversations_one: (direct_conversations | null)
+    /** insert data into the table: "direct_message_reactions" */
+    insert_direct_message_reactions: (direct_message_reactions_mutation_response | null)
+    /** insert a single row into the table: "direct_message_reactions" */
+    insert_direct_message_reactions_one: (direct_message_reactions | null)
     /** insert data into the table: "direct_messages" */
     insert_direct_messages: (direct_messages_mutation_response | null)
     /** insert a single row into the table: "direct_messages" */
@@ -16727,6 +17325,10 @@ export interface mutation_root {
     insert_player_assists: (player_assists_mutation_response | null)
     /** insert a single row into the table: "player_assists" */
     insert_player_assists_one: (player_assists | null)
+    /** insert data into the table: "player_blocks" */
+    insert_player_blocks: (player_blocks_mutation_response | null)
+    /** insert a single row into the table: "player_blocks" */
+    insert_player_blocks_one: (player_blocks | null)
     /** insert data into the table: "player_damages" */
     insert_player_damages: (player_damages_mutation_response | null)
     /** insert a single row into the table: "player_damages" */
@@ -17267,6 +17869,18 @@ export interface mutation_root {
     update_broadcast_huds_by_pk: (broadcast_huds | null)
     /** update multiples rows of table: "broadcast_huds" */
     update_broadcast_huds_many: ((broadcast_huds_mutation_response | null)[] | null)
+    /** update data of the table: "chat_message_deletions" */
+    update_chat_message_deletions: (chat_message_deletions_mutation_response | null)
+    /** update single row of the table: "chat_message_deletions" */
+    update_chat_message_deletions_by_pk: (chat_message_deletions | null)
+    /** update multiples rows of table: "chat_message_deletions" */
+    update_chat_message_deletions_many: ((chat_message_deletions_mutation_response | null)[] | null)
+    /** update data of the table: "chat_message_edits" */
+    update_chat_message_edits: (chat_message_edits_mutation_response | null)
+    /** update single row of the table: "chat_message_edits" */
+    update_chat_message_edits_by_pk: (chat_message_edits | null)
+    /** update multiples rows of table: "chat_message_edits" */
+    update_chat_message_edits_many: ((chat_message_edits_mutation_response | null)[] | null)
     /** update data of the table: "chat_read_state" */
     update_chat_read_state: (chat_read_state_mutation_response | null)
     /** update single row of the table: "chat_read_state" */
@@ -17297,6 +17911,12 @@ export interface mutation_root {
     update_direct_conversations_by_pk: (direct_conversations | null)
     /** update multiples rows of table: "direct_conversations" */
     update_direct_conversations_many: ((direct_conversations_mutation_response | null)[] | null)
+    /** update data of the table: "direct_message_reactions" */
+    update_direct_message_reactions: (direct_message_reactions_mutation_response | null)
+    /** update single row of the table: "direct_message_reactions" */
+    update_direct_message_reactions_by_pk: (direct_message_reactions | null)
+    /** update multiples rows of table: "direct_message_reactions" */
+    update_direct_message_reactions_many: ((direct_message_reactions_mutation_response | null)[] | null)
     /** update data of the table: "direct_messages" */
     update_direct_messages: (direct_messages_mutation_response | null)
     /** update single row of the table: "direct_messages" */
@@ -18013,6 +18633,12 @@ export interface mutation_root {
     update_player_assists_by_pk: (player_assists | null)
     /** update multiples rows of table: "player_assists" */
     update_player_assists_many: ((player_assists_mutation_response | null)[] | null)
+    /** update data of the table: "player_blocks" */
+    update_player_blocks: (player_blocks_mutation_response | null)
+    /** update single row of the table: "player_blocks" */
+    update_player_blocks_by_pk: (player_blocks | null)
+    /** update multiples rows of table: "player_blocks" */
+    update_player_blocks_many: ((player_blocks_mutation_response | null)[] | null)
     /** update data of the table: "player_damages" */
     update_player_damages: (player_damages_mutation_response | null)
     /** update single row of the table: "player_damages" */
@@ -18465,7 +19091,7 @@ export interface mutation_root {
     update_v_team_stage_results_by_pk: (v_team_stage_results | null)
     /** update multiples rows of table: "v_team_stage_results" */
     update_v_team_stage_results_many: ((v_team_stage_results_mutation_response | null)[] | null)
-    /** Validate CS2 gamedata signatures/offsets on a node (5stack.gg test instance only) */
+    /** Validate CS2 gamedata for the current build on a chosen or automatically picked node (5stack.gg only) */
     validateGamedata: (SuccessOutput | null)
     /** Spawn a per-user game-streamer pod to play back a finished match's demo */
     watchDemo: (WatchDemoOutput | null)
@@ -20225,6 +20851,146 @@ export interface player_assists_variance_fields {
     attacker_steam_id: (Scalars['Float'] | null)
     round: (Scalars['Float'] | null)
     __typename: 'player_assists_variance_fields'
+}
+
+
+/** columns and relationships of "player_blocks" */
+export interface player_blocks {
+    /** An object relationship */
+    blocked: players
+    blocked_steam_id: Scalars['bigint']
+    blocker_steam_id: Scalars['bigint']
+    created_at: Scalars['timestamptz']
+    __typename: 'player_blocks'
+}
+
+
+/** aggregated selection of "player_blocks" */
+export interface player_blocks_aggregate {
+    aggregate: (player_blocks_aggregate_fields | null)
+    nodes: player_blocks[]
+    __typename: 'player_blocks_aggregate'
+}
+
+
+/** aggregate fields of "player_blocks" */
+export interface player_blocks_aggregate_fields {
+    avg: (player_blocks_avg_fields | null)
+    count: Scalars['Int']
+    max: (player_blocks_max_fields | null)
+    min: (player_blocks_min_fields | null)
+    stddev: (player_blocks_stddev_fields | null)
+    stddev_pop: (player_blocks_stddev_pop_fields | null)
+    stddev_samp: (player_blocks_stddev_samp_fields | null)
+    sum: (player_blocks_sum_fields | null)
+    var_pop: (player_blocks_var_pop_fields | null)
+    var_samp: (player_blocks_var_samp_fields | null)
+    variance: (player_blocks_variance_fields | null)
+    __typename: 'player_blocks_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface player_blocks_avg_fields {
+    blocked_steam_id: (Scalars['Float'] | null)
+    blocker_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_blocks_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "player_blocks" */
+export type player_blocks_constraint = 'player_blocks_pkey'
+
+
+/** aggregate max on columns */
+export interface player_blocks_max_fields {
+    blocked_steam_id: (Scalars['bigint'] | null)
+    blocker_steam_id: (Scalars['bigint'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    __typename: 'player_blocks_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface player_blocks_min_fields {
+    blocked_steam_id: (Scalars['bigint'] | null)
+    blocker_steam_id: (Scalars['bigint'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    __typename: 'player_blocks_min_fields'
+}
+
+
+/** response of any mutation on the table "player_blocks" */
+export interface player_blocks_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: player_blocks[]
+    __typename: 'player_blocks_mutation_response'
+}
+
+
+/** select columns of table "player_blocks" */
+export type player_blocks_select_column = 'blocked_steam_id' | 'blocker_steam_id' | 'created_at'
+
+
+/** aggregate stddev on columns */
+export interface player_blocks_stddev_fields {
+    blocked_steam_id: (Scalars['Float'] | null)
+    blocker_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_blocks_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_blocks_stddev_pop_fields {
+    blocked_steam_id: (Scalars['Float'] | null)
+    blocker_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_blocks_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_blocks_stddev_samp_fields {
+    blocked_steam_id: (Scalars['Float'] | null)
+    blocker_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_blocks_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface player_blocks_sum_fields {
+    blocked_steam_id: (Scalars['bigint'] | null)
+    blocker_steam_id: (Scalars['bigint'] | null)
+    __typename: 'player_blocks_sum_fields'
+}
+
+
+/** update columns of table "player_blocks" */
+export type player_blocks_update_column = 'blocked_steam_id' | 'blocker_steam_id' | 'created_at'
+
+
+/** aggregate var_pop on columns */
+export interface player_blocks_var_pop_fields {
+    blocked_steam_id: (Scalars['Float'] | null)
+    blocker_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_blocks_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface player_blocks_var_samp_fields {
+    blocked_steam_id: (Scalars['Float'] | null)
+    blocker_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_blocks_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface player_blocks_variance_fields {
+    blocked_steam_id: (Scalars['Float'] | null)
+    blocker_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_blocks_variance_fields'
 }
 
 
@@ -26993,6 +27759,18 @@ export interface query_root {
     broadcast_huds_aggregate: broadcast_huds_aggregate
     /** fetch data from the table: "broadcast_huds" using primary key columns */
     broadcast_huds_by_pk: (broadcast_huds | null)
+    /** fetch data from the table: "chat_message_deletions" */
+    chat_message_deletions: chat_message_deletions[]
+    /** fetch aggregated fields from the table: "chat_message_deletions" */
+    chat_message_deletions_aggregate: chat_message_deletions_aggregate
+    /** fetch data from the table: "chat_message_deletions" using primary key columns */
+    chat_message_deletions_by_pk: (chat_message_deletions | null)
+    /** fetch data from the table: "chat_message_edits" */
+    chat_message_edits: chat_message_edits[]
+    /** fetch aggregated fields from the table: "chat_message_edits" */
+    chat_message_edits_aggregate: chat_message_edits_aggregate
+    /** fetch data from the table: "chat_message_edits" using primary key columns */
+    chat_message_edits_by_pk: (chat_message_edits | null)
     /** fetch data from the table: "chat_read_state" */
     chat_read_state: chat_read_state[]
     /** fetch aggregated fields from the table: "chat_read_state" */
@@ -27028,6 +27806,12 @@ export interface query_root {
     direct_conversations_aggregate: direct_conversations_aggregate
     /** fetch data from the table: "direct_conversations" using primary key columns */
     direct_conversations_by_pk: (direct_conversations | null)
+    /** fetch data from the table: "direct_message_reactions" */
+    direct_message_reactions: direct_message_reactions[]
+    /** fetch aggregated fields from the table: "direct_message_reactions" */
+    direct_message_reactions_aggregate: direct_message_reactions_aggregate
+    /** fetch data from the table: "direct_message_reactions" using primary key columns */
+    direct_message_reactions_by_pk: (direct_message_reactions | null)
     /** fetch data from the table: "direct_messages" */
     direct_messages: direct_messages[]
     /** fetch aggregated fields from the table: "direct_messages" */
@@ -27808,6 +28592,12 @@ export interface query_root {
     player_assists_aggregate: player_assists_aggregate
     /** fetch data from the table: "player_assists" using primary key columns */
     player_assists_by_pk: (player_assists | null)
+    /** fetch data from the table: "player_blocks" */
+    player_blocks: player_blocks[]
+    /** fetch aggregated fields from the table: "player_blocks" */
+    player_blocks_aggregate: player_blocks_aggregate
+    /** fetch data from the table: "player_blocks" using primary key columns */
+    player_blocks_by_pk: (player_blocks | null)
     /** fetch data from the table: "player_career_stats_v" */
     player_career_stats_v: player_career_stats_v[]
     /** fetch aggregated fields from the table: "player_career_stats_v" */
@@ -29398,6 +30188,22 @@ export interface subscription_root {
     broadcast_huds_by_pk: (broadcast_huds | null)
     /** fetch data from the table in a streaming manner: "broadcast_huds" */
     broadcast_huds_stream: broadcast_huds[]
+    /** fetch data from the table: "chat_message_deletions" */
+    chat_message_deletions: chat_message_deletions[]
+    /** fetch aggregated fields from the table: "chat_message_deletions" */
+    chat_message_deletions_aggregate: chat_message_deletions_aggregate
+    /** fetch data from the table: "chat_message_deletions" using primary key columns */
+    chat_message_deletions_by_pk: (chat_message_deletions | null)
+    /** fetch data from the table in a streaming manner: "chat_message_deletions" */
+    chat_message_deletions_stream: chat_message_deletions[]
+    /** fetch data from the table: "chat_message_edits" */
+    chat_message_edits: chat_message_edits[]
+    /** fetch aggregated fields from the table: "chat_message_edits" */
+    chat_message_edits_aggregate: chat_message_edits_aggregate
+    /** fetch data from the table: "chat_message_edits" using primary key columns */
+    chat_message_edits_by_pk: (chat_message_edits | null)
+    /** fetch data from the table in a streaming manner: "chat_message_edits" */
+    chat_message_edits_stream: chat_message_edits[]
     /** fetch data from the table: "chat_read_state" */
     chat_read_state: chat_read_state[]
     /** fetch aggregated fields from the table: "chat_read_state" */
@@ -29438,6 +30244,14 @@ export interface subscription_root {
     direct_conversations_by_pk: (direct_conversations | null)
     /** fetch data from the table in a streaming manner: "direct_conversations" */
     direct_conversations_stream: direct_conversations[]
+    /** fetch data from the table: "direct_message_reactions" */
+    direct_message_reactions: direct_message_reactions[]
+    /** fetch aggregated fields from the table: "direct_message_reactions" */
+    direct_message_reactions_aggregate: direct_message_reactions_aggregate
+    /** fetch data from the table: "direct_message_reactions" using primary key columns */
+    direct_message_reactions_by_pk: (direct_message_reactions | null)
+    /** fetch data from the table in a streaming manner: "direct_message_reactions" */
+    direct_message_reactions_stream: direct_message_reactions[]
     /** fetch data from the table: "direct_messages" */
     direct_messages: direct_messages[]
     /** fetch aggregated fields from the table: "direct_messages" */
@@ -30414,6 +31228,14 @@ export interface subscription_root {
     player_assists_by_pk: (player_assists | null)
     /** fetch data from the table in a streaming manner: "player_assists" */
     player_assists_stream: player_assists[]
+    /** fetch data from the table: "player_blocks" */
+    player_blocks: player_blocks[]
+    /** fetch aggregated fields from the table: "player_blocks" */
+    player_blocks_aggregate: player_blocks_aggregate
+    /** fetch data from the table: "player_blocks" using primary key columns */
+    player_blocks_by_pk: (player_blocks | null)
+    /** fetch data from the table in a streaming manner: "player_blocks" */
+    player_blocks_stream: player_blocks[]
     /** fetch data from the table: "player_career_stats_v" */
     player_career_stats_v: player_career_stats_v[]
     /** fetch aggregated fields from the table: "player_career_stats_v" */
@@ -46017,7 +46839,7 @@ export interface ClipOverlayInput {end_ms: Scalars['Int'],payload?: (Scalars['js
 
 export interface ClipSegmentInput {end_tick: Scalars['Int'],pov_steam_id?: (Scalars['String'] | null),start_tick: Scalars['Int']}
 
-export interface ClipSpecInput {audio?: (ClipAudioInput | null),destination: Scalars['String'],match_map_id: Scalars['uuid'],output: ClipOutputInput,overlays?: (ClipOverlayInput[] | null),segments: ClipSegmentInput[],title?: (Scalars['String'] | null)}
+export interface ClipSpecInput {audio?: (ClipAudioInput | null),destination: Scalars['String'],match_map_id: Scalars['uuid'],output?: (ClipOutputInput | null),overlays?: (ClipOverlayInput[] | null),segments: ClipSegmentInput[],title?: (Scalars['String'] | null)}
 
 export interface ConnectionByStateGenqlSelection{
     count?: boolean | number
@@ -48793,6 +49615,419 @@ export interface broadcast_huds_variance_fieldsGenqlSelection{
 export interface bytea_comparison_exp {_eq?: (Scalars['bytea'] | null),_gt?: (Scalars['bytea'] | null),_gte?: (Scalars['bytea'] | null),_in?: (Scalars['bytea'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['bytea'] | null),_lte?: (Scalars['bytea'] | null),_neq?: (Scalars['bytea'] | null),_nin?: (Scalars['bytea'][] | null)}
 
 
+/** columns and relationships of "chat_message_deletions" */
+export interface chat_message_deletionsGenqlSelection{
+    /** An object relationship */
+    author?: playersGenqlSelection
+    author_steam_id?: boolean | number
+    deleted_at?: boolean | number
+    /** An object relationship */
+    deleted_by?: playersGenqlSelection
+    deleted_by_steam_id?: boolean | number
+    id?: boolean | number
+    message?: boolean | number
+    message_created_at?: boolean | number
+    message_id?: boolean | number
+    room_id?: boolean | number
+    room_type?: boolean | number
+    source?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "chat_message_deletions" */
+export interface chat_message_deletions_aggregateGenqlSelection{
+    aggregate?: chat_message_deletions_aggregate_fieldsGenqlSelection
+    nodes?: chat_message_deletionsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "chat_message_deletions" */
+export interface chat_message_deletions_aggregate_fieldsGenqlSelection{
+    avg?: chat_message_deletions_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (chat_message_deletions_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: chat_message_deletions_max_fieldsGenqlSelection
+    min?: chat_message_deletions_min_fieldsGenqlSelection
+    stddev?: chat_message_deletions_stddev_fieldsGenqlSelection
+    stddev_pop?: chat_message_deletions_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: chat_message_deletions_stddev_samp_fieldsGenqlSelection
+    sum?: chat_message_deletions_sum_fieldsGenqlSelection
+    var_pop?: chat_message_deletions_var_pop_fieldsGenqlSelection
+    var_samp?: chat_message_deletions_var_samp_fieldsGenqlSelection
+    variance?: chat_message_deletions_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface chat_message_deletions_avg_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    deleted_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "chat_message_deletions". All fields are combined with a logical 'AND'. */
+export interface chat_message_deletions_bool_exp {_and?: (chat_message_deletions_bool_exp[] | null),_not?: (chat_message_deletions_bool_exp | null),_or?: (chat_message_deletions_bool_exp[] | null),author?: (players_bool_exp | null),author_steam_id?: (bigint_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),deleted_by?: (players_bool_exp | null),deleted_by_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),message?: (String_comparison_exp | null),message_created_at?: (timestamptz_comparison_exp | null),message_id?: (uuid_comparison_exp | null),room_id?: (String_comparison_exp | null),room_type?: (String_comparison_exp | null),source?: (String_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "chat_message_deletions" */
+export interface chat_message_deletions_inc_input {author_steam_id?: (Scalars['bigint'] | null),deleted_by_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "chat_message_deletions" */
+export interface chat_message_deletions_insert_input {author?: (players_obj_rel_insert_input | null),author_steam_id?: (Scalars['bigint'] | null),deleted_at?: (Scalars['timestamptz'] | null),deleted_by?: (players_obj_rel_insert_input | null),deleted_by_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),message?: (Scalars['String'] | null),message_created_at?: (Scalars['timestamptz'] | null),message_id?: (Scalars['uuid'] | null),room_id?: (Scalars['String'] | null),room_type?: (Scalars['String'] | null),source?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface chat_message_deletions_max_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    deleted_at?: boolean | number
+    deleted_by_steam_id?: boolean | number
+    id?: boolean | number
+    message?: boolean | number
+    message_created_at?: boolean | number
+    message_id?: boolean | number
+    room_id?: boolean | number
+    room_type?: boolean | number
+    source?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface chat_message_deletions_min_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    deleted_at?: boolean | number
+    deleted_by_steam_id?: boolean | number
+    id?: boolean | number
+    message?: boolean | number
+    message_created_at?: boolean | number
+    message_id?: boolean | number
+    room_id?: boolean | number
+    room_type?: boolean | number
+    source?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "chat_message_deletions" */
+export interface chat_message_deletions_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: chat_message_deletionsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "chat_message_deletions" */
+export interface chat_message_deletions_on_conflict {constraint: chat_message_deletions_constraint,update_columns?: chat_message_deletions_update_column[],where?: (chat_message_deletions_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "chat_message_deletions". */
+export interface chat_message_deletions_order_by {author?: (players_order_by | null),author_steam_id?: (order_by | null),deleted_at?: (order_by | null),deleted_by?: (players_order_by | null),deleted_by_steam_id?: (order_by | null),id?: (order_by | null),message?: (order_by | null),message_created_at?: (order_by | null),message_id?: (order_by | null),room_id?: (order_by | null),room_type?: (order_by | null),source?: (order_by | null)}
+
+
+/** primary key columns input for table: chat_message_deletions */
+export interface chat_message_deletions_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "chat_message_deletions" */
+export interface chat_message_deletions_set_input {author_steam_id?: (Scalars['bigint'] | null),deleted_at?: (Scalars['timestamptz'] | null),deleted_by_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),message?: (Scalars['String'] | null),message_created_at?: (Scalars['timestamptz'] | null),message_id?: (Scalars['uuid'] | null),room_id?: (Scalars['String'] | null),room_type?: (Scalars['String'] | null),source?: (Scalars['String'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface chat_message_deletions_stddev_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    deleted_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface chat_message_deletions_stddev_pop_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    deleted_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface chat_message_deletions_stddev_samp_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    deleted_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "chat_message_deletions" */
+export interface chat_message_deletions_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: chat_message_deletions_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface chat_message_deletions_stream_cursor_value_input {author_steam_id?: (Scalars['bigint'] | null),deleted_at?: (Scalars['timestamptz'] | null),deleted_by_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),message?: (Scalars['String'] | null),message_created_at?: (Scalars['timestamptz'] | null),message_id?: (Scalars['uuid'] | null),room_id?: (Scalars['String'] | null),room_type?: (Scalars['String'] | null),source?: (Scalars['String'] | null)}
+
+
+/** aggregate sum on columns */
+export interface chat_message_deletions_sum_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    deleted_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface chat_message_deletions_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (chat_message_deletions_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (chat_message_deletions_set_input | null),
+/** filter the rows which have to be updated */
+where: chat_message_deletions_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface chat_message_deletions_var_pop_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    deleted_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface chat_message_deletions_var_samp_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    deleted_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface chat_message_deletions_variance_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    deleted_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** columns and relationships of "chat_message_edits" */
+export interface chat_message_editsGenqlSelection{
+    /** An object relationship */
+    author?: playersGenqlSelection
+    author_steam_id?: boolean | number
+    edited_at?: boolean | number
+    id?: boolean | number
+    message_created_at?: boolean | number
+    message_id?: boolean | number
+    new_message?: boolean | number
+    previous_message?: boolean | number
+    room_id?: boolean | number
+    room_type?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "chat_message_edits" */
+export interface chat_message_edits_aggregateGenqlSelection{
+    aggregate?: chat_message_edits_aggregate_fieldsGenqlSelection
+    nodes?: chat_message_editsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "chat_message_edits" */
+export interface chat_message_edits_aggregate_fieldsGenqlSelection{
+    avg?: chat_message_edits_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (chat_message_edits_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: chat_message_edits_max_fieldsGenqlSelection
+    min?: chat_message_edits_min_fieldsGenqlSelection
+    stddev?: chat_message_edits_stddev_fieldsGenqlSelection
+    stddev_pop?: chat_message_edits_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: chat_message_edits_stddev_samp_fieldsGenqlSelection
+    sum?: chat_message_edits_sum_fieldsGenqlSelection
+    var_pop?: chat_message_edits_var_pop_fieldsGenqlSelection
+    var_samp?: chat_message_edits_var_samp_fieldsGenqlSelection
+    variance?: chat_message_edits_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface chat_message_edits_avg_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "chat_message_edits". All fields are combined with a logical 'AND'. */
+export interface chat_message_edits_bool_exp {_and?: (chat_message_edits_bool_exp[] | null),_not?: (chat_message_edits_bool_exp | null),_or?: (chat_message_edits_bool_exp[] | null),author?: (players_bool_exp | null),author_steam_id?: (bigint_comparison_exp | null),edited_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),message_created_at?: (timestamptz_comparison_exp | null),message_id?: (uuid_comparison_exp | null),new_message?: (String_comparison_exp | null),previous_message?: (String_comparison_exp | null),room_id?: (String_comparison_exp | null),room_type?: (String_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "chat_message_edits" */
+export interface chat_message_edits_inc_input {author_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "chat_message_edits" */
+export interface chat_message_edits_insert_input {author?: (players_obj_rel_insert_input | null),author_steam_id?: (Scalars['bigint'] | null),edited_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),message_created_at?: (Scalars['timestamptz'] | null),message_id?: (Scalars['uuid'] | null),new_message?: (Scalars['String'] | null),previous_message?: (Scalars['String'] | null),room_id?: (Scalars['String'] | null),room_type?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface chat_message_edits_max_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    edited_at?: boolean | number
+    id?: boolean | number
+    message_created_at?: boolean | number
+    message_id?: boolean | number
+    new_message?: boolean | number
+    previous_message?: boolean | number
+    room_id?: boolean | number
+    room_type?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface chat_message_edits_min_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    edited_at?: boolean | number
+    id?: boolean | number
+    message_created_at?: boolean | number
+    message_id?: boolean | number
+    new_message?: boolean | number
+    previous_message?: boolean | number
+    room_id?: boolean | number
+    room_type?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "chat_message_edits" */
+export interface chat_message_edits_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: chat_message_editsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "chat_message_edits" */
+export interface chat_message_edits_on_conflict {constraint: chat_message_edits_constraint,update_columns?: chat_message_edits_update_column[],where?: (chat_message_edits_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "chat_message_edits". */
+export interface chat_message_edits_order_by {author?: (players_order_by | null),author_steam_id?: (order_by | null),edited_at?: (order_by | null),id?: (order_by | null),message_created_at?: (order_by | null),message_id?: (order_by | null),new_message?: (order_by | null),previous_message?: (order_by | null),room_id?: (order_by | null),room_type?: (order_by | null)}
+
+
+/** primary key columns input for table: chat_message_edits */
+export interface chat_message_edits_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "chat_message_edits" */
+export interface chat_message_edits_set_input {author_steam_id?: (Scalars['bigint'] | null),edited_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),message_created_at?: (Scalars['timestamptz'] | null),message_id?: (Scalars['uuid'] | null),new_message?: (Scalars['String'] | null),previous_message?: (Scalars['String'] | null),room_id?: (Scalars['String'] | null),room_type?: (Scalars['String'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface chat_message_edits_stddev_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface chat_message_edits_stddev_pop_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface chat_message_edits_stddev_samp_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "chat_message_edits" */
+export interface chat_message_edits_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: chat_message_edits_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface chat_message_edits_stream_cursor_value_input {author_steam_id?: (Scalars['bigint'] | null),edited_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),message_created_at?: (Scalars['timestamptz'] | null),message_id?: (Scalars['uuid'] | null),new_message?: (Scalars['String'] | null),previous_message?: (Scalars['String'] | null),room_id?: (Scalars['String'] | null),room_type?: (Scalars['String'] | null)}
+
+
+/** aggregate sum on columns */
+export interface chat_message_edits_sum_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface chat_message_edits_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (chat_message_edits_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (chat_message_edits_set_input | null),
+/** filter the rows which have to be updated */
+where: chat_message_edits_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface chat_message_edits_var_pop_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface chat_message_edits_var_samp_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface chat_message_edits_variance_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
 /** columns and relationships of "chat_read_state" */
 export interface chat_read_stateGenqlSelection{
     last_read_at?: boolean | number
@@ -49933,9 +51168,193 @@ export interface direct_conversations_variance_fieldsGenqlSelection{
 }
 
 
+/** columns and relationships of "direct_message_reactions" */
+export interface direct_message_reactionsGenqlSelection{
+    created_at?: boolean | number
+    message_id?: boolean | number
+    reaction?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "direct_message_reactions" */
+export interface direct_message_reactions_aggregateGenqlSelection{
+    aggregate?: direct_message_reactions_aggregate_fieldsGenqlSelection
+    nodes?: direct_message_reactionsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "direct_message_reactions" */
+export interface direct_message_reactions_aggregate_fieldsGenqlSelection{
+    avg?: direct_message_reactions_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (direct_message_reactions_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: direct_message_reactions_max_fieldsGenqlSelection
+    min?: direct_message_reactions_min_fieldsGenqlSelection
+    stddev?: direct_message_reactions_stddev_fieldsGenqlSelection
+    stddev_pop?: direct_message_reactions_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: direct_message_reactions_stddev_samp_fieldsGenqlSelection
+    sum?: direct_message_reactions_sum_fieldsGenqlSelection
+    var_pop?: direct_message_reactions_var_pop_fieldsGenqlSelection
+    var_samp?: direct_message_reactions_var_samp_fieldsGenqlSelection
+    variance?: direct_message_reactions_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface direct_message_reactions_avg_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "direct_message_reactions". All fields are combined with a logical 'AND'. */
+export interface direct_message_reactions_bool_exp {_and?: (direct_message_reactions_bool_exp[] | null),_not?: (direct_message_reactions_bool_exp | null),_or?: (direct_message_reactions_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),message_id?: (uuid_comparison_exp | null),reaction?: (String_comparison_exp | null),steam_id?: (bigint_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "direct_message_reactions" */
+export interface direct_message_reactions_inc_input {steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "direct_message_reactions" */
+export interface direct_message_reactions_insert_input {created_at?: (Scalars['timestamptz'] | null),message_id?: (Scalars['uuid'] | null),reaction?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate max on columns */
+export interface direct_message_reactions_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    message_id?: boolean | number
+    reaction?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface direct_message_reactions_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    message_id?: boolean | number
+    reaction?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "direct_message_reactions" */
+export interface direct_message_reactions_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: direct_message_reactionsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "direct_message_reactions" */
+export interface direct_message_reactions_on_conflict {constraint: direct_message_reactions_constraint,update_columns?: direct_message_reactions_update_column[],where?: (direct_message_reactions_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "direct_message_reactions". */
+export interface direct_message_reactions_order_by {created_at?: (order_by | null),message_id?: (order_by | null),reaction?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** primary key columns input for table: direct_message_reactions */
+export interface direct_message_reactions_pk_columns_input {message_id: Scalars['uuid'],reaction: Scalars['String'],steam_id: Scalars['bigint']}
+
+
+/** input type for updating data in table "direct_message_reactions" */
+export interface direct_message_reactions_set_input {created_at?: (Scalars['timestamptz'] | null),message_id?: (Scalars['uuid'] | null),reaction?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface direct_message_reactions_stddev_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface direct_message_reactions_stddev_pop_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface direct_message_reactions_stddev_samp_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "direct_message_reactions" */
+export interface direct_message_reactions_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: direct_message_reactions_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface direct_message_reactions_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),message_id?: (Scalars['uuid'] | null),reaction?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate sum on columns */
+export interface direct_message_reactions_sum_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface direct_message_reactions_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (direct_message_reactions_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (direct_message_reactions_set_input | null),
+/** filter the rows which have to be updated */
+where: direct_message_reactions_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface direct_message_reactions_var_pop_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface direct_message_reactions_var_samp_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface direct_message_reactions_variance_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
 /** columns and relationships of "direct_messages" */
 export interface direct_messagesGenqlSelection{
     created_at?: boolean | number
+    edited_at?: boolean | number
     from_steam_id?: boolean | number
     id?: boolean | number
     message?: boolean | number
@@ -49983,7 +51402,7 @@ export interface direct_messages_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "direct_messages". All fields are combined with a logical 'AND'. */
-export interface direct_messages_bool_exp {_and?: (direct_messages_bool_exp[] | null),_not?: (direct_messages_bool_exp | null),_or?: (direct_messages_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),from_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),message?: (String_comparison_exp | null),room_id?: (String_comparison_exp | null),seq?: (bigint_comparison_exp | null)}
+export interface direct_messages_bool_exp {_and?: (direct_messages_bool_exp[] | null),_not?: (direct_messages_bool_exp | null),_or?: (direct_messages_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),edited_at?: (timestamptz_comparison_exp | null),from_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),message?: (String_comparison_exp | null),room_id?: (String_comparison_exp | null),seq?: (bigint_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "direct_messages" */
@@ -49991,12 +51410,13 @@ export interface direct_messages_inc_input {from_steam_id?: (Scalars['bigint'] |
 
 
 /** input type for inserting data into table "direct_messages" */
-export interface direct_messages_insert_input {created_at?: (Scalars['timestamptz'] | null),from_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),message?: (Scalars['String'] | null),room_id?: (Scalars['String'] | null),seq?: (Scalars['bigint'] | null)}
+export interface direct_messages_insert_input {created_at?: (Scalars['timestamptz'] | null),edited_at?: (Scalars['timestamptz'] | null),from_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),message?: (Scalars['String'] | null),room_id?: (Scalars['String'] | null),seq?: (Scalars['bigint'] | null)}
 
 
 /** aggregate max on columns */
 export interface direct_messages_max_fieldsGenqlSelection{
     created_at?: boolean | number
+    edited_at?: boolean | number
     from_steam_id?: boolean | number
     id?: boolean | number
     message?: boolean | number
@@ -50010,6 +51430,7 @@ export interface direct_messages_max_fieldsGenqlSelection{
 /** aggregate min on columns */
 export interface direct_messages_min_fieldsGenqlSelection{
     created_at?: boolean | number
+    edited_at?: boolean | number
     from_steam_id?: boolean | number
     id?: boolean | number
     message?: boolean | number
@@ -50036,7 +51457,7 @@ export interface direct_messages_on_conflict {constraint: direct_messages_constr
 
 
 /** Ordering options when selecting data from "direct_messages". */
-export interface direct_messages_order_by {created_at?: (order_by | null),from_steam_id?: (order_by | null),id?: (order_by | null),message?: (order_by | null),room_id?: (order_by | null),seq?: (order_by | null)}
+export interface direct_messages_order_by {created_at?: (order_by | null),edited_at?: (order_by | null),from_steam_id?: (order_by | null),id?: (order_by | null),message?: (order_by | null),room_id?: (order_by | null),seq?: (order_by | null)}
 
 
 /** primary key columns input for table: direct_messages */
@@ -50044,7 +51465,7 @@ export interface direct_messages_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "direct_messages" */
-export interface direct_messages_set_input {created_at?: (Scalars['timestamptz'] | null),from_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),message?: (Scalars['String'] | null),room_id?: (Scalars['String'] | null),seq?: (Scalars['bigint'] | null)}
+export interface direct_messages_set_input {created_at?: (Scalars['timestamptz'] | null),edited_at?: (Scalars['timestamptz'] | null),from_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),message?: (Scalars['String'] | null),room_id?: (Scalars['String'] | null),seq?: (Scalars['bigint'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -50083,7 +51504,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface direct_messages_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),from_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),message?: (Scalars['String'] | null),room_id?: (Scalars['String'] | null),seq?: (Scalars['bigint'] | null)}
+export interface direct_messages_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),edited_at?: (Scalars['timestamptz'] | null),from_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),message?: (Scalars['String'] | null),room_id?: (Scalars['String'] | null),seq?: (Scalars['bigint'] | null)}
 
 
 /** aggregate sum on columns */
@@ -61362,6 +62783,7 @@ export interface game_server_nodesGenqlSelection{
     token?: boolean | number
     /** A computed field, executes function "total_node_server_count" */
     total_server_count?: boolean | number
+    update_failed_at?: boolean | number
     update_status?: boolean | number
     /** An object relationship */
     version?: game_versionsGenqlSelection
@@ -61447,7 +62869,7 @@ export interface game_server_nodes_avg_order_by {build_id?: (order_by | null),cp
 
 
 /** Boolean expression to filter rows from the table "game_server_nodes". All fields are combined with a logical 'AND'. */
-export interface game_server_nodes_bool_exp {_and?: (game_server_nodes_bool_exp[] | null),_not?: (game_server_nodes_bool_exp | null),_or?: (game_server_nodes_bool_exp[] | null),available_server_count?: (Int_comparison_exp | null),build_id?: (Int_comparison_exp | null),cpu_cores_per_socket?: (Int_comparison_exp | null),cpu_frequency_info?: (jsonb_comparison_exp | null),cpu_governor_info?: (jsonb_comparison_exp | null),cpu_sockets?: (Int_comparison_exp | null),cpu_threads_per_core?: (Int_comparison_exp | null),cpu_warnings?: (jsonb_comparison_exp | null),cs2_launch_options?: (jsonb_comparison_exp | null),cs2_video_settings?: (jsonb_comparison_exp | null),csgo_build_id?: (Int_comparison_exp | null),demo_network_limiter?: (Int_comparison_exp | null),disk_available_gb?: (Int_comparison_exp | null),disk_used_percent?: (Int_comparison_exp | null),e_region?: (server_regions_bool_exp | null),e_status?: (e_game_server_node_statuses_bool_exp | null),enabled?: (Boolean_comparison_exp | null),enabled_for_match_making?: (Boolean_comparison_exp | null),end_port_range?: (Int_comparison_exp | null),gpu?: (Boolean_comparison_exp | null),gpu_demos_enabled?: (Boolean_comparison_exp | null),gpu_info?: (jsonb_comparison_exp | null),gpu_rendering_enabled?: (Boolean_comparison_exp | null),gpu_streaming_enabled?: (Boolean_comparison_exp | null),id?: (String_comparison_exp | null),label?: (String_comparison_exp | null),lan_ip?: (inet_comparison_exp | null),node_ip?: (inet_comparison_exp | null),offline_at?: (timestamptz_comparison_exp | null),pin_build_id?: (Int_comparison_exp | null),pin_plugin_runtime?: (String_comparison_exp | null),pin_plugin_version?: (String_comparison_exp | null),pinned_version?: (game_versions_bool_exp | null),plugin_supported?: (Boolean_comparison_exp | null),plugins?: (game_server_node_plugins_bool_exp | null),plugins_aggregate?: (game_server_node_plugins_aggregate_bool_exp | null),plugins_synced_at?: (timestamptz_comparison_exp | null),public_ip?: (inet_comparison_exp | null),region?: (String_comparison_exp | null),servers?: (servers_bool_exp | null),servers_aggregate?: (servers_aggregate_bool_exp | null),shader_bake_progress?: (numeric_comparison_exp | null),shader_bake_progress_stage?: (String_comparison_exp | null),shader_bake_status?: (String_comparison_exp | null),shader_bake_status_history?: (jsonb_comparison_exp | null),start_port_range?: (Int_comparison_exp | null),status?: (e_game_server_node_statuses_enum_comparison_exp | null),supports_cpu_pinning?: (Boolean_comparison_exp | null),supports_low_latency?: (Boolean_comparison_exp | null),token?: (String_comparison_exp | null),total_server_count?: (Int_comparison_exp | null),update_status?: (String_comparison_exp | null),version?: (game_versions_bool_exp | null)}
+export interface game_server_nodes_bool_exp {_and?: (game_server_nodes_bool_exp[] | null),_not?: (game_server_nodes_bool_exp | null),_or?: (game_server_nodes_bool_exp[] | null),available_server_count?: (Int_comparison_exp | null),build_id?: (Int_comparison_exp | null),cpu_cores_per_socket?: (Int_comparison_exp | null),cpu_frequency_info?: (jsonb_comparison_exp | null),cpu_governor_info?: (jsonb_comparison_exp | null),cpu_sockets?: (Int_comparison_exp | null),cpu_threads_per_core?: (Int_comparison_exp | null),cpu_warnings?: (jsonb_comparison_exp | null),cs2_launch_options?: (jsonb_comparison_exp | null),cs2_video_settings?: (jsonb_comparison_exp | null),csgo_build_id?: (Int_comparison_exp | null),demo_network_limiter?: (Int_comparison_exp | null),disk_available_gb?: (Int_comparison_exp | null),disk_used_percent?: (Int_comparison_exp | null),e_region?: (server_regions_bool_exp | null),e_status?: (e_game_server_node_statuses_bool_exp | null),enabled?: (Boolean_comparison_exp | null),enabled_for_match_making?: (Boolean_comparison_exp | null),end_port_range?: (Int_comparison_exp | null),gpu?: (Boolean_comparison_exp | null),gpu_demos_enabled?: (Boolean_comparison_exp | null),gpu_info?: (jsonb_comparison_exp | null),gpu_rendering_enabled?: (Boolean_comparison_exp | null),gpu_streaming_enabled?: (Boolean_comparison_exp | null),id?: (String_comparison_exp | null),label?: (String_comparison_exp | null),lan_ip?: (inet_comparison_exp | null),node_ip?: (inet_comparison_exp | null),offline_at?: (timestamptz_comparison_exp | null),pin_build_id?: (Int_comparison_exp | null),pin_plugin_runtime?: (String_comparison_exp | null),pin_plugin_version?: (String_comparison_exp | null),pinned_version?: (game_versions_bool_exp | null),plugin_supported?: (Boolean_comparison_exp | null),plugins?: (game_server_node_plugins_bool_exp | null),plugins_aggregate?: (game_server_node_plugins_aggregate_bool_exp | null),plugins_synced_at?: (timestamptz_comparison_exp | null),public_ip?: (inet_comparison_exp | null),region?: (String_comparison_exp | null),servers?: (servers_bool_exp | null),servers_aggregate?: (servers_aggregate_bool_exp | null),shader_bake_progress?: (numeric_comparison_exp | null),shader_bake_progress_stage?: (String_comparison_exp | null),shader_bake_status?: (String_comparison_exp | null),shader_bake_status_history?: (jsonb_comparison_exp | null),start_port_range?: (Int_comparison_exp | null),status?: (e_game_server_node_statuses_enum_comparison_exp | null),supports_cpu_pinning?: (Boolean_comparison_exp | null),supports_low_latency?: (Boolean_comparison_exp | null),token?: (String_comparison_exp | null),total_server_count?: (Int_comparison_exp | null),update_failed_at?: (timestamptz_comparison_exp | null),update_status?: (String_comparison_exp | null),version?: (game_versions_bool_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -61467,7 +62889,7 @@ export interface game_server_nodes_inc_input {build_id?: (Scalars['Int'] | null)
 
 
 /** input type for inserting data into table "game_server_nodes" */
-export interface game_server_nodes_insert_input {build_id?: (Scalars['Int'] | null),cpu_cores_per_socket?: (Scalars['Int'] | null),cpu_frequency_info?: (Scalars['jsonb'] | null),cpu_governor_info?: (Scalars['jsonb'] | null),cpu_sockets?: (Scalars['Int'] | null),cpu_threads_per_core?: (Scalars['Int'] | null),cpu_warnings?: (Scalars['jsonb'] | null),cs2_launch_options?: (Scalars['jsonb'] | null),cs2_video_settings?: (Scalars['jsonb'] | null),csgo_build_id?: (Scalars['Int'] | null),demo_network_limiter?: (Scalars['Int'] | null),disk_available_gb?: (Scalars['Int'] | null),disk_used_percent?: (Scalars['Int'] | null),e_region?: (server_regions_obj_rel_insert_input | null),e_status?: (e_game_server_node_statuses_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),enabled_for_match_making?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),gpu?: (Scalars['Boolean'] | null),gpu_demos_enabled?: (Scalars['Boolean'] | null),gpu_info?: (Scalars['jsonb'] | null),gpu_rendering_enabled?: (Scalars['Boolean'] | null),gpu_streaming_enabled?: (Scalars['Boolean'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),offline_at?: (Scalars['timestamptz'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_runtime?: (Scalars['String'] | null),pin_plugin_version?: (Scalars['String'] | null),pinned_version?: (game_versions_obj_rel_insert_input | null),plugins?: (game_server_node_plugins_arr_rel_insert_input | null),plugins_synced_at?: (Scalars['timestamptz'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),servers?: (servers_arr_rel_insert_input | null),shader_bake_progress?: (Scalars['numeric'] | null),shader_bake_progress_stage?: (Scalars['String'] | null),shader_bake_status?: (Scalars['String'] | null),shader_bake_status_history?: (Scalars['jsonb'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null),version?: (game_versions_obj_rel_insert_input | null)}
+export interface game_server_nodes_insert_input {build_id?: (Scalars['Int'] | null),cpu_cores_per_socket?: (Scalars['Int'] | null),cpu_frequency_info?: (Scalars['jsonb'] | null),cpu_governor_info?: (Scalars['jsonb'] | null),cpu_sockets?: (Scalars['Int'] | null),cpu_threads_per_core?: (Scalars['Int'] | null),cpu_warnings?: (Scalars['jsonb'] | null),cs2_launch_options?: (Scalars['jsonb'] | null),cs2_video_settings?: (Scalars['jsonb'] | null),csgo_build_id?: (Scalars['Int'] | null),demo_network_limiter?: (Scalars['Int'] | null),disk_available_gb?: (Scalars['Int'] | null),disk_used_percent?: (Scalars['Int'] | null),e_region?: (server_regions_obj_rel_insert_input | null),e_status?: (e_game_server_node_statuses_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),enabled_for_match_making?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),gpu?: (Scalars['Boolean'] | null),gpu_demos_enabled?: (Scalars['Boolean'] | null),gpu_info?: (Scalars['jsonb'] | null),gpu_rendering_enabled?: (Scalars['Boolean'] | null),gpu_streaming_enabled?: (Scalars['Boolean'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),offline_at?: (Scalars['timestamptz'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_runtime?: (Scalars['String'] | null),pin_plugin_version?: (Scalars['String'] | null),pinned_version?: (game_versions_obj_rel_insert_input | null),plugins?: (game_server_node_plugins_arr_rel_insert_input | null),plugins_synced_at?: (Scalars['timestamptz'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),servers?: (servers_arr_rel_insert_input | null),shader_bake_progress?: (Scalars['numeric'] | null),shader_bake_progress_stage?: (Scalars['String'] | null),shader_bake_status?: (Scalars['String'] | null),shader_bake_status_history?: (Scalars['jsonb'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_failed_at?: (Scalars['timestamptz'] | null),update_status?: (Scalars['String'] | null),version?: (game_versions_obj_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
@@ -61498,6 +62920,7 @@ export interface game_server_nodes_max_fieldsGenqlSelection{
     token?: boolean | number
     /** A computed field, executes function "total_node_server_count" */
     total_server_count?: boolean | number
+    update_failed_at?: boolean | number
     update_status?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -61505,7 +62928,7 @@ export interface game_server_nodes_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "game_server_nodes" */
-export interface game_server_nodes_max_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_sockets?: (order_by | null),cpu_threads_per_core?: (order_by | null),csgo_build_id?: (order_by | null),demo_network_limiter?: (order_by | null),disk_available_gb?: (order_by | null),disk_used_percent?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),label?: (order_by | null),offline_at?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_runtime?: (order_by | null),pin_plugin_version?: (order_by | null),plugins_synced_at?: (order_by | null),region?: (order_by | null),shader_bake_progress?: (order_by | null),shader_bake_progress_stage?: (order_by | null),shader_bake_status?: (order_by | null),start_port_range?: (order_by | null),token?: (order_by | null),update_status?: (order_by | null)}
+export interface game_server_nodes_max_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_sockets?: (order_by | null),cpu_threads_per_core?: (order_by | null),csgo_build_id?: (order_by | null),demo_network_limiter?: (order_by | null),disk_available_gb?: (order_by | null),disk_used_percent?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),label?: (order_by | null),offline_at?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_runtime?: (order_by | null),pin_plugin_version?: (order_by | null),plugins_synced_at?: (order_by | null),region?: (order_by | null),shader_bake_progress?: (order_by | null),shader_bake_progress_stage?: (order_by | null),shader_bake_status?: (order_by | null),start_port_range?: (order_by | null),token?: (order_by | null),update_failed_at?: (order_by | null),update_status?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -61536,6 +62959,7 @@ export interface game_server_nodes_min_fieldsGenqlSelection{
     token?: boolean | number
     /** A computed field, executes function "total_node_server_count" */
     total_server_count?: boolean | number
+    update_failed_at?: boolean | number
     update_status?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -61543,7 +62967,7 @@ export interface game_server_nodes_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "game_server_nodes" */
-export interface game_server_nodes_min_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_sockets?: (order_by | null),cpu_threads_per_core?: (order_by | null),csgo_build_id?: (order_by | null),demo_network_limiter?: (order_by | null),disk_available_gb?: (order_by | null),disk_used_percent?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),label?: (order_by | null),offline_at?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_runtime?: (order_by | null),pin_plugin_version?: (order_by | null),plugins_synced_at?: (order_by | null),region?: (order_by | null),shader_bake_progress?: (order_by | null),shader_bake_progress_stage?: (order_by | null),shader_bake_status?: (order_by | null),start_port_range?: (order_by | null),token?: (order_by | null),update_status?: (order_by | null)}
+export interface game_server_nodes_min_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_sockets?: (order_by | null),cpu_threads_per_core?: (order_by | null),csgo_build_id?: (order_by | null),demo_network_limiter?: (order_by | null),disk_available_gb?: (order_by | null),disk_used_percent?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),label?: (order_by | null),offline_at?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_runtime?: (order_by | null),pin_plugin_version?: (order_by | null),plugins_synced_at?: (order_by | null),region?: (order_by | null),shader_bake_progress?: (order_by | null),shader_bake_progress_stage?: (order_by | null),shader_bake_status?: (order_by | null),start_port_range?: (order_by | null),token?: (order_by | null),update_failed_at?: (order_by | null),update_status?: (order_by | null)}
 
 
 /** response of any mutation on the table "game_server_nodes" */
@@ -61568,7 +62992,7 @@ export interface game_server_nodes_on_conflict {constraint: game_server_nodes_co
 
 
 /** Ordering options when selecting data from "game_server_nodes". */
-export interface game_server_nodes_order_by {available_server_count?: (order_by | null),build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_frequency_info?: (order_by | null),cpu_governor_info?: (order_by | null),cpu_sockets?: (order_by | null),cpu_threads_per_core?: (order_by | null),cpu_warnings?: (order_by | null),cs2_launch_options?: (order_by | null),cs2_video_settings?: (order_by | null),csgo_build_id?: (order_by | null),demo_network_limiter?: (order_by | null),disk_available_gb?: (order_by | null),disk_used_percent?: (order_by | null),e_region?: (server_regions_order_by | null),e_status?: (e_game_server_node_statuses_order_by | null),enabled?: (order_by | null),enabled_for_match_making?: (order_by | null),end_port_range?: (order_by | null),gpu?: (order_by | null),gpu_demos_enabled?: (order_by | null),gpu_info?: (order_by | null),gpu_rendering_enabled?: (order_by | null),gpu_streaming_enabled?: (order_by | null),id?: (order_by | null),label?: (order_by | null),lan_ip?: (order_by | null),node_ip?: (order_by | null),offline_at?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_runtime?: (order_by | null),pin_plugin_version?: (order_by | null),pinned_version?: (game_versions_order_by | null),plugin_supported?: (order_by | null),plugins_aggregate?: (game_server_node_plugins_aggregate_order_by | null),plugins_synced_at?: (order_by | null),public_ip?: (order_by | null),region?: (order_by | null),servers_aggregate?: (servers_aggregate_order_by | null),shader_bake_progress?: (order_by | null),shader_bake_progress_stage?: (order_by | null),shader_bake_status?: (order_by | null),shader_bake_status_history?: (order_by | null),start_port_range?: (order_by | null),status?: (order_by | null),supports_cpu_pinning?: (order_by | null),supports_low_latency?: (order_by | null),token?: (order_by | null),total_server_count?: (order_by | null),update_status?: (order_by | null),version?: (game_versions_order_by | null)}
+export interface game_server_nodes_order_by {available_server_count?: (order_by | null),build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_frequency_info?: (order_by | null),cpu_governor_info?: (order_by | null),cpu_sockets?: (order_by | null),cpu_threads_per_core?: (order_by | null),cpu_warnings?: (order_by | null),cs2_launch_options?: (order_by | null),cs2_video_settings?: (order_by | null),csgo_build_id?: (order_by | null),demo_network_limiter?: (order_by | null),disk_available_gb?: (order_by | null),disk_used_percent?: (order_by | null),e_region?: (server_regions_order_by | null),e_status?: (e_game_server_node_statuses_order_by | null),enabled?: (order_by | null),enabled_for_match_making?: (order_by | null),end_port_range?: (order_by | null),gpu?: (order_by | null),gpu_demos_enabled?: (order_by | null),gpu_info?: (order_by | null),gpu_rendering_enabled?: (order_by | null),gpu_streaming_enabled?: (order_by | null),id?: (order_by | null),label?: (order_by | null),lan_ip?: (order_by | null),node_ip?: (order_by | null),offline_at?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_runtime?: (order_by | null),pin_plugin_version?: (order_by | null),pinned_version?: (game_versions_order_by | null),plugin_supported?: (order_by | null),plugins_aggregate?: (game_server_node_plugins_aggregate_order_by | null),plugins_synced_at?: (order_by | null),public_ip?: (order_by | null),region?: (order_by | null),servers_aggregate?: (servers_aggregate_order_by | null),shader_bake_progress?: (order_by | null),shader_bake_progress_stage?: (order_by | null),shader_bake_status?: (order_by | null),shader_bake_status_history?: (order_by | null),start_port_range?: (order_by | null),status?: (order_by | null),supports_cpu_pinning?: (order_by | null),supports_low_latency?: (order_by | null),token?: (order_by | null),total_server_count?: (order_by | null),update_failed_at?: (order_by | null),update_status?: (order_by | null),version?: (game_versions_order_by | null)}
 
 
 /** primary key columns input for table: game_server_nodes */
@@ -61580,7 +63004,7 @@ export interface game_server_nodes_prepend_input {cpu_frequency_info?: (Scalars[
 
 
 /** input type for updating data in table "game_server_nodes" */
-export interface game_server_nodes_set_input {build_id?: (Scalars['Int'] | null),cpu_cores_per_socket?: (Scalars['Int'] | null),cpu_frequency_info?: (Scalars['jsonb'] | null),cpu_governor_info?: (Scalars['jsonb'] | null),cpu_sockets?: (Scalars['Int'] | null),cpu_threads_per_core?: (Scalars['Int'] | null),cpu_warnings?: (Scalars['jsonb'] | null),cs2_launch_options?: (Scalars['jsonb'] | null),cs2_video_settings?: (Scalars['jsonb'] | null),csgo_build_id?: (Scalars['Int'] | null),demo_network_limiter?: (Scalars['Int'] | null),disk_available_gb?: (Scalars['Int'] | null),disk_used_percent?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),enabled_for_match_making?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),gpu?: (Scalars['Boolean'] | null),gpu_demos_enabled?: (Scalars['Boolean'] | null),gpu_info?: (Scalars['jsonb'] | null),gpu_rendering_enabled?: (Scalars['Boolean'] | null),gpu_streaming_enabled?: (Scalars['Boolean'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),offline_at?: (Scalars['timestamptz'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_runtime?: (Scalars['String'] | null),pin_plugin_version?: (Scalars['String'] | null),plugins_synced_at?: (Scalars['timestamptz'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),shader_bake_progress?: (Scalars['numeric'] | null),shader_bake_progress_stage?: (Scalars['String'] | null),shader_bake_status?: (Scalars['String'] | null),shader_bake_status_history?: (Scalars['jsonb'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null)}
+export interface game_server_nodes_set_input {build_id?: (Scalars['Int'] | null),cpu_cores_per_socket?: (Scalars['Int'] | null),cpu_frequency_info?: (Scalars['jsonb'] | null),cpu_governor_info?: (Scalars['jsonb'] | null),cpu_sockets?: (Scalars['Int'] | null),cpu_threads_per_core?: (Scalars['Int'] | null),cpu_warnings?: (Scalars['jsonb'] | null),cs2_launch_options?: (Scalars['jsonb'] | null),cs2_video_settings?: (Scalars['jsonb'] | null),csgo_build_id?: (Scalars['Int'] | null),demo_network_limiter?: (Scalars['Int'] | null),disk_available_gb?: (Scalars['Int'] | null),disk_used_percent?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),enabled_for_match_making?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),gpu?: (Scalars['Boolean'] | null),gpu_demos_enabled?: (Scalars['Boolean'] | null),gpu_info?: (Scalars['jsonb'] | null),gpu_rendering_enabled?: (Scalars['Boolean'] | null),gpu_streaming_enabled?: (Scalars['Boolean'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),offline_at?: (Scalars['timestamptz'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_runtime?: (Scalars['String'] | null),pin_plugin_version?: (Scalars['String'] | null),plugins_synced_at?: (Scalars['timestamptz'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),shader_bake_progress?: (Scalars['numeric'] | null),shader_bake_progress_stage?: (Scalars['String'] | null),shader_bake_status?: (Scalars['String'] | null),shader_bake_status_history?: (Scalars['jsonb'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_failed_at?: (Scalars['timestamptz'] | null),update_status?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -61673,7 +63097,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface game_server_nodes_stream_cursor_value_input {build_id?: (Scalars['Int'] | null),cpu_cores_per_socket?: (Scalars['Int'] | null),cpu_frequency_info?: (Scalars['jsonb'] | null),cpu_governor_info?: (Scalars['jsonb'] | null),cpu_sockets?: (Scalars['Int'] | null),cpu_threads_per_core?: (Scalars['Int'] | null),cpu_warnings?: (Scalars['jsonb'] | null),cs2_launch_options?: (Scalars['jsonb'] | null),cs2_video_settings?: (Scalars['jsonb'] | null),csgo_build_id?: (Scalars['Int'] | null),demo_network_limiter?: (Scalars['Int'] | null),disk_available_gb?: (Scalars['Int'] | null),disk_used_percent?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),enabled_for_match_making?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),gpu?: (Scalars['Boolean'] | null),gpu_demos_enabled?: (Scalars['Boolean'] | null),gpu_info?: (Scalars['jsonb'] | null),gpu_rendering_enabled?: (Scalars['Boolean'] | null),gpu_streaming_enabled?: (Scalars['Boolean'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),offline_at?: (Scalars['timestamptz'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_runtime?: (Scalars['String'] | null),pin_plugin_version?: (Scalars['String'] | null),plugins_synced_at?: (Scalars['timestamptz'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),shader_bake_progress?: (Scalars['numeric'] | null),shader_bake_progress_stage?: (Scalars['String'] | null),shader_bake_status?: (Scalars['String'] | null),shader_bake_status_history?: (Scalars['jsonb'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null)}
+export interface game_server_nodes_stream_cursor_value_input {build_id?: (Scalars['Int'] | null),cpu_cores_per_socket?: (Scalars['Int'] | null),cpu_frequency_info?: (Scalars['jsonb'] | null),cpu_governor_info?: (Scalars['jsonb'] | null),cpu_sockets?: (Scalars['Int'] | null),cpu_threads_per_core?: (Scalars['Int'] | null),cpu_warnings?: (Scalars['jsonb'] | null),cs2_launch_options?: (Scalars['jsonb'] | null),cs2_video_settings?: (Scalars['jsonb'] | null),csgo_build_id?: (Scalars['Int'] | null),demo_network_limiter?: (Scalars['Int'] | null),disk_available_gb?: (Scalars['Int'] | null),disk_used_percent?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),enabled_for_match_making?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),gpu?: (Scalars['Boolean'] | null),gpu_demos_enabled?: (Scalars['Boolean'] | null),gpu_info?: (Scalars['jsonb'] | null),gpu_rendering_enabled?: (Scalars['Boolean'] | null),gpu_streaming_enabled?: (Scalars['Boolean'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),offline_at?: (Scalars['timestamptz'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_runtime?: (Scalars['String'] | null),pin_plugin_version?: (Scalars['String'] | null),plugins_synced_at?: (Scalars['timestamptz'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),shader_bake_progress?: (Scalars['numeric'] | null),shader_bake_progress_stage?: (Scalars['String'] | null),shader_bake_status?: (Scalars['String'] | null),shader_bake_status_history?: (Scalars['jsonb'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_failed_at?: (Scalars['timestamptz'] | null),update_status?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -62030,13 +63454,25 @@ export interface game_versions_variance_fieldsGenqlSelection{
 export interface gamedata_signature_validationsGenqlSelection{
     branch?: boolean | number
     build_id?: boolean | number
+    changes?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
+    /** An object relationship */
+    game_server_node?: game_server_nodesGenqlSelection
+    game_server_node_id?: boolean | number
     /** An object relationship */
     game_version?: game_versionsGenqlSelection
     id?: boolean | number
+    previous_build_id?: boolean | number
+    /** An object relationship */
+    requested_by?: playersGenqlSelection
+    requested_by_steam_id?: boolean | number
     results?: { __args: {
     /** JSON select path */
     path?: (Scalars['String'] | null)} } | boolean | number
+    started_at?: boolean | number
     status?: boolean | number
+    trigger?: boolean | number
     validated_at?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -62071,47 +63507,54 @@ export interface gamedata_signature_validations_aggregate_fieldsGenqlSelection{
 
 
 /** append existing jsonb value of filtered columns with new jsonb value */
-export interface gamedata_signature_validations_append_input {results?: (Scalars['jsonb'] | null)}
+export interface gamedata_signature_validations_append_input {changes?: (Scalars['jsonb'] | null),results?: (Scalars['jsonb'] | null)}
 
 
 /** aggregate avg on columns */
 export interface gamedata_signature_validations_avg_fieldsGenqlSelection{
     build_id?: boolean | number
+    previous_build_id?: boolean | number
+    requested_by_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** Boolean expression to filter rows from the table "gamedata_signature_validations". All fields are combined with a logical 'AND'. */
-export interface gamedata_signature_validations_bool_exp {_and?: (gamedata_signature_validations_bool_exp[] | null),_not?: (gamedata_signature_validations_bool_exp | null),_or?: (gamedata_signature_validations_bool_exp[] | null),branch?: (String_comparison_exp | null),build_id?: (Int_comparison_exp | null),game_version?: (game_versions_bool_exp | null),id?: (uuid_comparison_exp | null),results?: (jsonb_comparison_exp | null),status?: (String_comparison_exp | null),validated_at?: (timestamptz_comparison_exp | null)}
+export interface gamedata_signature_validations_bool_exp {_and?: (gamedata_signature_validations_bool_exp[] | null),_not?: (gamedata_signature_validations_bool_exp | null),_or?: (gamedata_signature_validations_bool_exp[] | null),branch?: (String_comparison_exp | null),build_id?: (Int_comparison_exp | null),changes?: (jsonb_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),game_version?: (game_versions_bool_exp | null),id?: (uuid_comparison_exp | null),previous_build_id?: (Int_comparison_exp | null),requested_by?: (players_bool_exp | null),requested_by_steam_id?: (bigint_comparison_exp | null),results?: (jsonb_comparison_exp | null),started_at?: (timestamptz_comparison_exp | null),status?: (String_comparison_exp | null),trigger?: (String_comparison_exp | null),validated_at?: (timestamptz_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
-export interface gamedata_signature_validations_delete_at_path_input {results?: (Scalars['String'][] | null)}
+export interface gamedata_signature_validations_delete_at_path_input {changes?: (Scalars['String'][] | null),results?: (Scalars['String'][] | null)}
 
 
 /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
-export interface gamedata_signature_validations_delete_elem_input {results?: (Scalars['Int'] | null)}
+export interface gamedata_signature_validations_delete_elem_input {changes?: (Scalars['Int'] | null),results?: (Scalars['Int'] | null)}
 
 
 /** delete key/value pair or string element. key/value pairs are matched based on their key value */
-export interface gamedata_signature_validations_delete_key_input {results?: (Scalars['String'] | null)}
+export interface gamedata_signature_validations_delete_key_input {changes?: (Scalars['String'] | null),results?: (Scalars['String'] | null)}
 
 
 /** input type for incrementing numeric columns in table "gamedata_signature_validations" */
-export interface gamedata_signature_validations_inc_input {build_id?: (Scalars['Int'] | null)}
+export interface gamedata_signature_validations_inc_input {build_id?: (Scalars['Int'] | null),previous_build_id?: (Scalars['Int'] | null),requested_by_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "gamedata_signature_validations" */
-export interface gamedata_signature_validations_insert_input {branch?: (Scalars['String'] | null),build_id?: (Scalars['Int'] | null),game_version?: (game_versions_obj_rel_insert_input | null),id?: (Scalars['uuid'] | null),results?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),validated_at?: (Scalars['timestamptz'] | null)}
+export interface gamedata_signature_validations_insert_input {branch?: (Scalars['String'] | null),build_id?: (Scalars['Int'] | null),changes?: (Scalars['jsonb'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),game_version?: (game_versions_obj_rel_insert_input | null),id?: (Scalars['uuid'] | null),previous_build_id?: (Scalars['Int'] | null),requested_by?: (players_obj_rel_insert_input | null),requested_by_steam_id?: (Scalars['bigint'] | null),results?: (Scalars['jsonb'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),trigger?: (Scalars['String'] | null),validated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate max on columns */
 export interface gamedata_signature_validations_max_fieldsGenqlSelection{
     branch?: boolean | number
     build_id?: boolean | number
+    game_server_node_id?: boolean | number
     id?: boolean | number
+    previous_build_id?: boolean | number
+    requested_by_steam_id?: boolean | number
+    started_at?: boolean | number
     status?: boolean | number
+    trigger?: boolean | number
     validated_at?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -62122,8 +63565,13 @@ export interface gamedata_signature_validations_max_fieldsGenqlSelection{
 export interface gamedata_signature_validations_min_fieldsGenqlSelection{
     branch?: boolean | number
     build_id?: boolean | number
+    game_server_node_id?: boolean | number
     id?: boolean | number
+    previous_build_id?: boolean | number
+    requested_by_steam_id?: boolean | number
+    started_at?: boolean | number
     status?: boolean | number
+    trigger?: boolean | number
     validated_at?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -62146,7 +63594,7 @@ export interface gamedata_signature_validations_on_conflict {constraint: gamedat
 
 
 /** Ordering options when selecting data from "gamedata_signature_validations". */
-export interface gamedata_signature_validations_order_by {branch?: (order_by | null),build_id?: (order_by | null),game_version?: (game_versions_order_by | null),id?: (order_by | null),results?: (order_by | null),status?: (order_by | null),validated_at?: (order_by | null)}
+export interface gamedata_signature_validations_order_by {branch?: (order_by | null),build_id?: (order_by | null),changes?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),game_version?: (game_versions_order_by | null),id?: (order_by | null),previous_build_id?: (order_by | null),requested_by?: (players_order_by | null),requested_by_steam_id?: (order_by | null),results?: (order_by | null),started_at?: (order_by | null),status?: (order_by | null),trigger?: (order_by | null),validated_at?: (order_by | null)}
 
 
 /** primary key columns input for table: gamedata_signature_validations */
@@ -62154,16 +63602,18 @@ export interface gamedata_signature_validations_pk_columns_input {id: Scalars['u
 
 
 /** prepend existing jsonb value of filtered columns with new jsonb value */
-export interface gamedata_signature_validations_prepend_input {results?: (Scalars['jsonb'] | null)}
+export interface gamedata_signature_validations_prepend_input {changes?: (Scalars['jsonb'] | null),results?: (Scalars['jsonb'] | null)}
 
 
 /** input type for updating data in table "gamedata_signature_validations" */
-export interface gamedata_signature_validations_set_input {branch?: (Scalars['String'] | null),build_id?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),results?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),validated_at?: (Scalars['timestamptz'] | null)}
+export interface gamedata_signature_validations_set_input {branch?: (Scalars['String'] | null),build_id?: (Scalars['Int'] | null),changes?: (Scalars['jsonb'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),previous_build_id?: (Scalars['Int'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),results?: (Scalars['jsonb'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),trigger?: (Scalars['String'] | null),validated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate stddev on columns */
 export interface gamedata_signature_validations_stddev_fieldsGenqlSelection{
     build_id?: boolean | number
+    previous_build_id?: boolean | number
+    requested_by_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -62172,6 +63622,8 @@ export interface gamedata_signature_validations_stddev_fieldsGenqlSelection{
 /** aggregate stddev_pop on columns */
 export interface gamedata_signature_validations_stddev_pop_fieldsGenqlSelection{
     build_id?: boolean | number
+    previous_build_id?: boolean | number
+    requested_by_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -62180,6 +63632,8 @@ export interface gamedata_signature_validations_stddev_pop_fieldsGenqlSelection{
 /** aggregate stddev_samp on columns */
 export interface gamedata_signature_validations_stddev_samp_fieldsGenqlSelection{
     build_id?: boolean | number
+    previous_build_id?: boolean | number
+    requested_by_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -62194,12 +63648,14 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface gamedata_signature_validations_stream_cursor_value_input {branch?: (Scalars['String'] | null),build_id?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),results?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),validated_at?: (Scalars['timestamptz'] | null)}
+export interface gamedata_signature_validations_stream_cursor_value_input {branch?: (Scalars['String'] | null),build_id?: (Scalars['Int'] | null),changes?: (Scalars['jsonb'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),previous_build_id?: (Scalars['Int'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),results?: (Scalars['jsonb'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),trigger?: (Scalars['String'] | null),validated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate sum on columns */
 export interface gamedata_signature_validations_sum_fieldsGenqlSelection{
     build_id?: boolean | number
+    previous_build_id?: boolean | number
+    requested_by_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -62226,6 +63682,8 @@ where: gamedata_signature_validations_bool_exp}
 /** aggregate var_pop on columns */
 export interface gamedata_signature_validations_var_pop_fieldsGenqlSelection{
     build_id?: boolean | number
+    previous_build_id?: boolean | number
+    requested_by_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -62234,6 +63692,8 @@ export interface gamedata_signature_validations_var_pop_fieldsGenqlSelection{
 /** aggregate var_samp on columns */
 export interface gamedata_signature_validations_var_samp_fieldsGenqlSelection{
     build_id?: boolean | number
+    previous_build_id?: boolean | number
+    requested_by_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -62242,6 +63702,8 @@ export interface gamedata_signature_validations_var_samp_fieldsGenqlSelection{
 /** aggregate variance on columns */
 export interface gamedata_signature_validations_variance_fieldsGenqlSelection{
     build_id?: boolean | number
+    previous_build_id?: boolean | number
+    requested_by_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -65653,6 +67115,9 @@ export interface lobby_players_variance_order_by {invited_by_steam_id?: (order_b
 /** columns and relationships of "map_asset_builds" */
 export interface map_asset_buildsGenqlSelection{
     build_id?: boolean | number
+    changes?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
     created_at?: boolean | number
     error?: boolean | number
     failed?: { __args: {
@@ -65662,12 +67127,20 @@ export interface map_asset_buildsGenqlSelection{
     /** JSON select path */
     path?: (Scalars['String'] | null)} } | boolean | number
     finished_at?: boolean | number
+    /** An object relationship */
+    game_server_node?: game_server_nodesGenqlSelection
+    game_server_node_id?: boolean | number
     manifest?: boolean | number
     maps?: { __args: {
     /** JSON select path */
     path?: (Scalars['String'] | null)} } | boolean | number
+    previous_build_id?: boolean | number
+    /** An object relationship */
+    requested_by?: playersGenqlSelection
+    requested_by_steam_id?: boolean | number
     started_at?: boolean | number
     status?: boolean | number
+    trigger?: boolean | number
     updated_at?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -65685,36 +67158,56 @@ export interface map_asset_builds_aggregateGenqlSelection{
 
 /** aggregate fields of "map_asset_builds" */
 export interface map_asset_builds_aggregate_fieldsGenqlSelection{
+    avg?: map_asset_builds_avg_fieldsGenqlSelection
     count?: { __args: {columns?: (map_asset_builds_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
     max?: map_asset_builds_max_fieldsGenqlSelection
     min?: map_asset_builds_min_fieldsGenqlSelection
+    stddev?: map_asset_builds_stddev_fieldsGenqlSelection
+    stddev_pop?: map_asset_builds_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: map_asset_builds_stddev_samp_fieldsGenqlSelection
+    sum?: map_asset_builds_sum_fieldsGenqlSelection
+    var_pop?: map_asset_builds_var_pop_fieldsGenqlSelection
+    var_samp?: map_asset_builds_var_samp_fieldsGenqlSelection
+    variance?: map_asset_builds_variance_fieldsGenqlSelection
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** append existing jsonb value of filtered columns with new jsonb value */
-export interface map_asset_builds_append_input {failed?: (Scalars['jsonb'] | null),failed_view?: (Scalars['jsonb'] | null),maps?: (Scalars['jsonb'] | null)}
+export interface map_asset_builds_append_input {changes?: (Scalars['jsonb'] | null),failed?: (Scalars['jsonb'] | null),failed_view?: (Scalars['jsonb'] | null),maps?: (Scalars['jsonb'] | null)}
+
+
+/** aggregate avg on columns */
+export interface map_asset_builds_avg_fieldsGenqlSelection{
+    requested_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
 
 
 /** Boolean expression to filter rows from the table "map_asset_builds". All fields are combined with a logical 'AND'. */
-export interface map_asset_builds_bool_exp {_and?: (map_asset_builds_bool_exp[] | null),_not?: (map_asset_builds_bool_exp | null),_or?: (map_asset_builds_bool_exp[] | null),build_id?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),error?: (String_comparison_exp | null),failed?: (jsonb_comparison_exp | null),failed_view?: (jsonb_comparison_exp | null),finished_at?: (timestamptz_comparison_exp | null),manifest?: (String_comparison_exp | null),maps?: (jsonb_comparison_exp | null),started_at?: (timestamptz_comparison_exp | null),status?: (String_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
+export interface map_asset_builds_bool_exp {_and?: (map_asset_builds_bool_exp[] | null),_not?: (map_asset_builds_bool_exp | null),_or?: (map_asset_builds_bool_exp[] | null),build_id?: (String_comparison_exp | null),changes?: (jsonb_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),error?: (String_comparison_exp | null),failed?: (jsonb_comparison_exp | null),failed_view?: (jsonb_comparison_exp | null),finished_at?: (timestamptz_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),manifest?: (String_comparison_exp | null),maps?: (jsonb_comparison_exp | null),previous_build_id?: (String_comparison_exp | null),requested_by?: (players_bool_exp | null),requested_by_steam_id?: (bigint_comparison_exp | null),started_at?: (timestamptz_comparison_exp | null),status?: (String_comparison_exp | null),trigger?: (String_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
-export interface map_asset_builds_delete_at_path_input {failed?: (Scalars['String'][] | null),failed_view?: (Scalars['String'][] | null),maps?: (Scalars['String'][] | null)}
+export interface map_asset_builds_delete_at_path_input {changes?: (Scalars['String'][] | null),failed?: (Scalars['String'][] | null),failed_view?: (Scalars['String'][] | null),maps?: (Scalars['String'][] | null)}
 
 
 /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
-export interface map_asset_builds_delete_elem_input {failed?: (Scalars['Int'] | null),failed_view?: (Scalars['Int'] | null),maps?: (Scalars['Int'] | null)}
+export interface map_asset_builds_delete_elem_input {changes?: (Scalars['Int'] | null),failed?: (Scalars['Int'] | null),failed_view?: (Scalars['Int'] | null),maps?: (Scalars['Int'] | null)}
 
 
 /** delete key/value pair or string element. key/value pairs are matched based on their key value */
-export interface map_asset_builds_delete_key_input {failed?: (Scalars['String'] | null),failed_view?: (Scalars['String'] | null),maps?: (Scalars['String'] | null)}
+export interface map_asset_builds_delete_key_input {changes?: (Scalars['String'] | null),failed?: (Scalars['String'] | null),failed_view?: (Scalars['String'] | null),maps?: (Scalars['String'] | null)}
+
+
+/** input type for incrementing numeric columns in table "map_asset_builds" */
+export interface map_asset_builds_inc_input {requested_by_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "map_asset_builds" */
-export interface map_asset_builds_insert_input {build_id?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),error?: (Scalars['String'] | null),failed?: (Scalars['jsonb'] | null),failed_view?: (Scalars['jsonb'] | null),finished_at?: (Scalars['timestamptz'] | null),manifest?: (Scalars['String'] | null),maps?: (Scalars['jsonb'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface map_asset_builds_insert_input {build_id?: (Scalars['String'] | null),changes?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),error?: (Scalars['String'] | null),failed?: (Scalars['jsonb'] | null),failed_view?: (Scalars['jsonb'] | null),finished_at?: (Scalars['timestamptz'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),manifest?: (Scalars['String'] | null),maps?: (Scalars['jsonb'] | null),previous_build_id?: (Scalars['String'] | null),requested_by?: (players_obj_rel_insert_input | null),requested_by_steam_id?: (Scalars['bigint'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),trigger?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate max on columns */
@@ -65723,9 +67216,13 @@ export interface map_asset_builds_max_fieldsGenqlSelection{
     created_at?: boolean | number
     error?: boolean | number
     finished_at?: boolean | number
+    game_server_node_id?: boolean | number
     manifest?: boolean | number
+    previous_build_id?: boolean | number
+    requested_by_steam_id?: boolean | number
     started_at?: boolean | number
     status?: boolean | number
+    trigger?: boolean | number
     updated_at?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -65738,9 +67235,13 @@ export interface map_asset_builds_min_fieldsGenqlSelection{
     created_at?: boolean | number
     error?: boolean | number
     finished_at?: boolean | number
+    game_server_node_id?: boolean | number
     manifest?: boolean | number
+    previous_build_id?: boolean | number
+    requested_by_steam_id?: boolean | number
     started_at?: boolean | number
     status?: boolean | number
+    trigger?: boolean | number
     updated_at?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -65763,7 +67264,7 @@ export interface map_asset_builds_on_conflict {constraint: map_asset_builds_cons
 
 
 /** Ordering options when selecting data from "map_asset_builds". */
-export interface map_asset_builds_order_by {build_id?: (order_by | null),created_at?: (order_by | null),error?: (order_by | null),failed?: (order_by | null),failed_view?: (order_by | null),finished_at?: (order_by | null),manifest?: (order_by | null),maps?: (order_by | null),started_at?: (order_by | null),status?: (order_by | null),updated_at?: (order_by | null)}
+export interface map_asset_builds_order_by {build_id?: (order_by | null),changes?: (order_by | null),created_at?: (order_by | null),error?: (order_by | null),failed?: (order_by | null),failed_view?: (order_by | null),finished_at?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),manifest?: (order_by | null),maps?: (order_by | null),previous_build_id?: (order_by | null),requested_by?: (players_order_by | null),requested_by_steam_id?: (order_by | null),started_at?: (order_by | null),status?: (order_by | null),trigger?: (order_by | null),updated_at?: (order_by | null)}
 
 
 /** primary key columns input for table: map_asset_builds */
@@ -65771,11 +67272,35 @@ export interface map_asset_builds_pk_columns_input {build_id: Scalars['String']}
 
 
 /** prepend existing jsonb value of filtered columns with new jsonb value */
-export interface map_asset_builds_prepend_input {failed?: (Scalars['jsonb'] | null),failed_view?: (Scalars['jsonb'] | null),maps?: (Scalars['jsonb'] | null)}
+export interface map_asset_builds_prepend_input {changes?: (Scalars['jsonb'] | null),failed?: (Scalars['jsonb'] | null),failed_view?: (Scalars['jsonb'] | null),maps?: (Scalars['jsonb'] | null)}
 
 
 /** input type for updating data in table "map_asset_builds" */
-export interface map_asset_builds_set_input {build_id?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),error?: (Scalars['String'] | null),failed?: (Scalars['jsonb'] | null),failed_view?: (Scalars['jsonb'] | null),finished_at?: (Scalars['timestamptz'] | null),manifest?: (Scalars['String'] | null),maps?: (Scalars['jsonb'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface map_asset_builds_set_input {build_id?: (Scalars['String'] | null),changes?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),error?: (Scalars['String'] | null),failed?: (Scalars['jsonb'] | null),failed_view?: (Scalars['jsonb'] | null),finished_at?: (Scalars['timestamptz'] | null),game_server_node_id?: (Scalars['String'] | null),manifest?: (Scalars['String'] | null),maps?: (Scalars['jsonb'] | null),previous_build_id?: (Scalars['String'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),trigger?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface map_asset_builds_stddev_fieldsGenqlSelection{
+    requested_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface map_asset_builds_stddev_pop_fieldsGenqlSelection{
+    requested_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface map_asset_builds_stddev_samp_fieldsGenqlSelection{
+    requested_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
 
 
 /** Streaming cursor of the table "map_asset_builds" */
@@ -65787,7 +67312,15 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface map_asset_builds_stream_cursor_value_input {build_id?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),error?: (Scalars['String'] | null),failed?: (Scalars['jsonb'] | null),failed_view?: (Scalars['jsonb'] | null),finished_at?: (Scalars['timestamptz'] | null),manifest?: (Scalars['String'] | null),maps?: (Scalars['jsonb'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface map_asset_builds_stream_cursor_value_input {build_id?: (Scalars['String'] | null),changes?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),error?: (Scalars['String'] | null),failed?: (Scalars['jsonb'] | null),failed_view?: (Scalars['jsonb'] | null),finished_at?: (Scalars['timestamptz'] | null),game_server_node_id?: (Scalars['String'] | null),manifest?: (Scalars['String'] | null),maps?: (Scalars['jsonb'] | null),previous_build_id?: (Scalars['String'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),trigger?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate sum on columns */
+export interface map_asset_builds_sum_fieldsGenqlSelection{
+    requested_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
 
 export interface map_asset_builds_updates {
 /** append existing jsonb value of filtered columns with new jsonb value */
@@ -65798,12 +67331,38 @@ _delete_at_path?: (map_asset_builds_delete_at_path_input | null),
 _delete_elem?: (map_asset_builds_delete_elem_input | null),
 /** delete key/value pair or string element. key/value pairs are matched based on their key value */
 _delete_key?: (map_asset_builds_delete_key_input | null),
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (map_asset_builds_inc_input | null),
 /** prepend existing jsonb value of filtered columns with new jsonb value */
 _prepend?: (map_asset_builds_prepend_input | null),
 /** sets the columns of the filtered rows to the given values */
 _set?: (map_asset_builds_set_input | null),
 /** filter the rows which have to be updated */
 where: map_asset_builds_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface map_asset_builds_var_pop_fieldsGenqlSelection{
+    requested_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface map_asset_builds_var_samp_fieldsGenqlSelection{
+    requested_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface map_asset_builds_variance_fieldsGenqlSelection{
+    requested_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
 
 
 /** columns and relationships of "map_callouts" */
@@ -71130,8 +72689,8 @@ export interface mutation_rootGenqlSelection{
     backfillUtilityLaunchSeeds?: (UtilityLaunchSeedBackfillOutputGenqlSelection & { __args?: {limit?: (Scalars['Int'] | null)} })
     /** Launch a Vulkan shader pre-bake Job on a GPU node */
     bakeShaders?: (SuccessOutputGenqlSelection & { __args: {game_server_node_id: Scalars['uuid']} })
-    /** Build and publish map assets from a node's CS2 install (5stack.gg only) */
-    buildMapAssets?: (SuccessOutputGenqlSelection & { __args: {game_server_node_id: Scalars['uuid']} })
+    /** Build and publish map assets for the current CS2 build on a chosen or automatically picked node (5stack.gg only) */
+    buildMapAssets?: (SuccessOutputGenqlSelection & { __args?: {force?: (Scalars['Boolean'] | null), game_server_node_id?: (Scalars['String'] | null)} })
     /** callForOrganizer */
     callForOrganizer?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
     /** Request cancellation of the in-progress season ELO backfill (admin only). Stops after the current match. */
@@ -71251,6 +72810,18 @@ export interface mutation_rootGenqlSelection{
     where: broadcast_huds_bool_exp} })
     /** delete single row from the table: "broadcast_huds" */
     delete_broadcast_huds_by_pk?: (broadcast_hudsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "chat_message_deletions" */
+    delete_chat_message_deletions?: (chat_message_deletions_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: chat_message_deletions_bool_exp} })
+    /** delete single row from the table: "chat_message_deletions" */
+    delete_chat_message_deletions_by_pk?: (chat_message_deletionsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "chat_message_edits" */
+    delete_chat_message_edits?: (chat_message_edits_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: chat_message_edits_bool_exp} })
+    /** delete single row from the table: "chat_message_edits" */
+    delete_chat_message_edits_by_pk?: (chat_message_editsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "chat_read_state" */
     delete_chat_read_state?: (chat_read_state_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -71281,6 +72852,12 @@ export interface mutation_rootGenqlSelection{
     where: direct_conversations_bool_exp} })
     /** delete single row from the table: "direct_conversations" */
     delete_direct_conversations_by_pk?: (direct_conversationsGenqlSelection & { __args: {room_id: Scalars['String'], steam_id: Scalars['bigint']} })
+    /** delete data from the table: "direct_message_reactions" */
+    delete_direct_message_reactions?: (direct_message_reactions_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: direct_message_reactions_bool_exp} })
+    /** delete single row from the table: "direct_message_reactions" */
+    delete_direct_message_reactions_by_pk?: (direct_message_reactionsGenqlSelection & { __args: {message_id: Scalars['uuid'], reaction: Scalars['String'], steam_id: Scalars['bigint']} })
     /** delete data from the table: "direct_messages" */
     delete_direct_messages?: (direct_messages_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -71997,6 +73574,12 @@ export interface mutation_rootGenqlSelection{
     where: player_assists_bool_exp} })
     /** delete single row from the table: "player_assists" */
     delete_player_assists_by_pk?: (player_assistsGenqlSelection & { __args: {attacked_steam_id: Scalars['bigint'], attacker_steam_id: Scalars['bigint'], match_map_id: Scalars['uuid'], time: Scalars['timestamptz']} })
+    /** delete data from the table: "player_blocks" */
+    delete_player_blocks?: (player_blocks_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: player_blocks_bool_exp} })
+    /** delete single row from the table: "player_blocks" */
+    delete_player_blocks_by_pk?: (player_blocksGenqlSelection & { __args: {blocked_steam_id: Scalars['bigint'], blocker_steam_id: Scalars['bigint']} })
     /** delete data from the table: "player_damages" */
     delete_player_damages?: (player_damages_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -72465,6 +74048,7 @@ export interface mutation_rootGenqlSelection{
     getTestUploadLink?: GetTestUploadResponseGenqlSelection
     /** Grant an award to a player or team */
     grantAward?: (AwardRecipientGenqlSelection & { __args: {award_id: Scalars['uuid'], event_id?: (Scalars['uuid'] | null), league_season_id?: (Scalars['uuid'] | null), note?: (Scalars['String'] | null), player_steam_id?: (Scalars['String'] | null), season_id?: (Scalars['uuid'] | null), team_id?: (Scalars['uuid'] | null), tournament_id?: (Scalars['uuid'] | null)} })
+    importSteamMatchShareCode?: (PendingMatchImportActionOutputGenqlSelection & { __args: {share_code: Scalars['String']} })
     /** Seed the utility library from an operator-supplied payload */
     importUtilityLineups?: (UtilityImportOutputGenqlSelection & { __args: {dry_run?: (Scalars['Boolean'] | null), payload: Scalars['jsonb']} })
     /** insert data into the table: "_map_pool" */
@@ -72539,6 +74123,30 @@ export interface mutation_rootGenqlSelection{
     object: broadcast_huds_insert_input, 
     /** upsert condition */
     on_conflict?: (broadcast_huds_on_conflict | null)} })
+    /** insert data into the table: "chat_message_deletions" */
+    insert_chat_message_deletions?: (chat_message_deletions_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: chat_message_deletions_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (chat_message_deletions_on_conflict | null)} })
+    /** insert a single row into the table: "chat_message_deletions" */
+    insert_chat_message_deletions_one?: (chat_message_deletionsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: chat_message_deletions_insert_input, 
+    /** upsert condition */
+    on_conflict?: (chat_message_deletions_on_conflict | null)} })
+    /** insert data into the table: "chat_message_edits" */
+    insert_chat_message_edits?: (chat_message_edits_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: chat_message_edits_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (chat_message_edits_on_conflict | null)} })
+    /** insert a single row into the table: "chat_message_edits" */
+    insert_chat_message_edits_one?: (chat_message_editsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: chat_message_edits_insert_input, 
+    /** upsert condition */
+    on_conflict?: (chat_message_edits_on_conflict | null)} })
     /** insert data into the table: "chat_read_state" */
     insert_chat_read_state?: (chat_read_state_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -72599,6 +74207,18 @@ export interface mutation_rootGenqlSelection{
     object: direct_conversations_insert_input, 
     /** upsert condition */
     on_conflict?: (direct_conversations_on_conflict | null)} })
+    /** insert data into the table: "direct_message_reactions" */
+    insert_direct_message_reactions?: (direct_message_reactions_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: direct_message_reactions_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (direct_message_reactions_on_conflict | null)} })
+    /** insert a single row into the table: "direct_message_reactions" */
+    insert_direct_message_reactions_one?: (direct_message_reactionsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: direct_message_reactions_insert_input, 
+    /** upsert condition */
+    on_conflict?: (direct_message_reactions_on_conflict | null)} })
     /** insert data into the table: "direct_messages" */
     insert_direct_messages?: (direct_messages_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -74031,6 +75651,18 @@ export interface mutation_rootGenqlSelection{
     object: player_assists_insert_input, 
     /** upsert condition */
     on_conflict?: (player_assists_on_conflict | null)} })
+    /** insert data into the table: "player_blocks" */
+    insert_player_blocks?: (player_blocks_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: player_blocks_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (player_blocks_on_conflict | null)} })
+    /** insert a single row into the table: "player_blocks" */
+    insert_player_blocks_one?: (player_blocksGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: player_blocks_insert_input, 
+    /** upsert condition */
+    on_conflict?: (player_blocks_on_conflict | null)} })
     /** insert data into the table: "player_damages" */
     insert_player_damages?: (player_damages_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -75315,6 +76947,42 @@ export interface mutation_rootGenqlSelection{
     update_broadcast_huds_many?: (broadcast_huds_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: broadcast_huds_updates[]} })
+    /** update data of the table: "chat_message_deletions" */
+    update_chat_message_deletions?: (chat_message_deletions_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (chat_message_deletions_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (chat_message_deletions_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: chat_message_deletions_bool_exp} })
+    /** update single row of the table: "chat_message_deletions" */
+    update_chat_message_deletions_by_pk?: (chat_message_deletionsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (chat_message_deletions_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (chat_message_deletions_set_input | null), pk_columns: chat_message_deletions_pk_columns_input} })
+    /** update multiples rows of table: "chat_message_deletions" */
+    update_chat_message_deletions_many?: (chat_message_deletions_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: chat_message_deletions_updates[]} })
+    /** update data of the table: "chat_message_edits" */
+    update_chat_message_edits?: (chat_message_edits_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (chat_message_edits_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (chat_message_edits_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: chat_message_edits_bool_exp} })
+    /** update single row of the table: "chat_message_edits" */
+    update_chat_message_edits_by_pk?: (chat_message_editsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (chat_message_edits_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (chat_message_edits_set_input | null), pk_columns: chat_message_edits_pk_columns_input} })
+    /** update multiples rows of table: "chat_message_edits" */
+    update_chat_message_edits_many?: (chat_message_edits_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: chat_message_edits_updates[]} })
     /** update data of the table: "chat_read_state" */
     update_chat_read_state?: (chat_read_state_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -75445,6 +77113,24 @@ export interface mutation_rootGenqlSelection{
     update_direct_conversations_many?: (direct_conversations_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: direct_conversations_updates[]} })
+    /** update data of the table: "direct_message_reactions" */
+    update_direct_message_reactions?: (direct_message_reactions_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (direct_message_reactions_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (direct_message_reactions_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: direct_message_reactions_bool_exp} })
+    /** update single row of the table: "direct_message_reactions" */
+    update_direct_message_reactions_by_pk?: (direct_message_reactionsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (direct_message_reactions_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (direct_message_reactions_set_input | null), pk_columns: direct_message_reactions_pk_columns_input} })
+    /** update multiples rows of table: "direct_message_reactions" */
+    update_direct_message_reactions_many?: (direct_message_reactions_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: direct_message_reactions_updates[]} })
     /** update data of the table: "direct_messages" */
     update_direct_messages?: (direct_messages_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -76975,6 +78661,8 @@ export interface mutation_rootGenqlSelection{
     _delete_elem?: (map_asset_builds_delete_elem_input | null), 
     /** delete key/value pair or string element. key/value pairs are matched based on their key value */
     _delete_key?: (map_asset_builds_delete_key_input | null), 
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (map_asset_builds_inc_input | null), 
     /** prepend existing jsonb value of filtered columns with new jsonb value */
     _prepend?: (map_asset_builds_prepend_input | null), 
     /** sets the columns of the filtered rows to the given values */
@@ -76991,6 +78679,8 @@ export interface mutation_rootGenqlSelection{
     _delete_elem?: (map_asset_builds_delete_elem_input | null), 
     /** delete key/value pair or string element. key/value pairs are matched based on their key value */
     _delete_key?: (map_asset_builds_delete_key_input | null), 
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (map_asset_builds_inc_input | null), 
     /** prepend existing jsonb value of filtered columns with new jsonb value */
     _prepend?: (map_asset_builds_prepend_input | null), 
     /** sets the columns of the filtered rows to the given values */
@@ -77543,6 +79233,24 @@ export interface mutation_rootGenqlSelection{
     update_player_assists_many?: (player_assists_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: player_assists_updates[]} })
+    /** update data of the table: "player_blocks" */
+    update_player_blocks?: (player_blocks_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (player_blocks_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (player_blocks_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: player_blocks_bool_exp} })
+    /** update single row of the table: "player_blocks" */
+    update_player_blocks_by_pk?: (player_blocksGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (player_blocks_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (player_blocks_set_input | null), pk_columns: player_blocks_pk_columns_input} })
+    /** update multiples rows of table: "player_blocks" */
+    update_player_blocks_many?: (player_blocks_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: player_blocks_updates[]} })
     /** update data of the table: "player_damages" */
     update_player_damages?: (player_damages_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -78991,8 +80699,8 @@ export interface mutation_rootGenqlSelection{
     update_v_team_stage_results_many?: (v_team_stage_results_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: v_team_stage_results_updates[]} })
-    /** Validate CS2 gamedata signatures/offsets on a node (5stack.gg test instance only) */
-    validateGamedata?: (SuccessOutputGenqlSelection & { __args: {game_server_node_id: Scalars['uuid']} })
+    /** Validate CS2 gamedata for the current build on a chosen or automatically picked node (5stack.gg only) */
+    validateGamedata?: (SuccessOutputGenqlSelection & { __args?: {game_server_node_id?: (Scalars['String'] | null)} })
     /** Spawn a per-user game-streamer pod to play back a finished match's demo */
     watchDemo?: (WatchDemoOutputGenqlSelection & { __args: {match_map_demo_id?: (Scalars['uuid'] | null), match_map_id: Scalars['uuid']} })
     /** Write content to file on game server */
@@ -81553,6 +83261,196 @@ export interface player_assists_variance_fieldsGenqlSelection{
 
 /** order by variance() on columns of table "player_assists" */
 export interface player_assists_variance_order_by {attacked_steam_id?: (order_by | null),attacker_steam_id?: (order_by | null),round?: (order_by | null)}
+
+
+/** columns and relationships of "player_blocks" */
+export interface player_blocksGenqlSelection{
+    /** An object relationship */
+    blocked?: playersGenqlSelection
+    blocked_steam_id?: boolean | number
+    blocker_steam_id?: boolean | number
+    created_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "player_blocks" */
+export interface player_blocks_aggregateGenqlSelection{
+    aggregate?: player_blocks_aggregate_fieldsGenqlSelection
+    nodes?: player_blocksGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "player_blocks" */
+export interface player_blocks_aggregate_fieldsGenqlSelection{
+    avg?: player_blocks_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (player_blocks_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: player_blocks_max_fieldsGenqlSelection
+    min?: player_blocks_min_fieldsGenqlSelection
+    stddev?: player_blocks_stddev_fieldsGenqlSelection
+    stddev_pop?: player_blocks_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: player_blocks_stddev_samp_fieldsGenqlSelection
+    sum?: player_blocks_sum_fieldsGenqlSelection
+    var_pop?: player_blocks_var_pop_fieldsGenqlSelection
+    var_samp?: player_blocks_var_samp_fieldsGenqlSelection
+    variance?: player_blocks_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface player_blocks_avg_fieldsGenqlSelection{
+    blocked_steam_id?: boolean | number
+    blocker_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "player_blocks". All fields are combined with a logical 'AND'. */
+export interface player_blocks_bool_exp {_and?: (player_blocks_bool_exp[] | null),_not?: (player_blocks_bool_exp | null),_or?: (player_blocks_bool_exp[] | null),blocked?: (players_bool_exp | null),blocked_steam_id?: (bigint_comparison_exp | null),blocker_steam_id?: (bigint_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "player_blocks" */
+export interface player_blocks_inc_input {blocked_steam_id?: (Scalars['bigint'] | null),blocker_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "player_blocks" */
+export interface player_blocks_insert_input {blocked?: (players_obj_rel_insert_input | null),blocked_steam_id?: (Scalars['bigint'] | null),blocker_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate max on columns */
+export interface player_blocks_max_fieldsGenqlSelection{
+    blocked_steam_id?: boolean | number
+    blocker_steam_id?: boolean | number
+    created_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface player_blocks_min_fieldsGenqlSelection{
+    blocked_steam_id?: boolean | number
+    blocker_steam_id?: boolean | number
+    created_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "player_blocks" */
+export interface player_blocks_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: player_blocksGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "player_blocks" */
+export interface player_blocks_on_conflict {constraint: player_blocks_constraint,update_columns?: player_blocks_update_column[],where?: (player_blocks_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "player_blocks". */
+export interface player_blocks_order_by {blocked?: (players_order_by | null),blocked_steam_id?: (order_by | null),blocker_steam_id?: (order_by | null),created_at?: (order_by | null)}
+
+
+/** primary key columns input for table: player_blocks */
+export interface player_blocks_pk_columns_input {blocked_steam_id: Scalars['bigint'],blocker_steam_id: Scalars['bigint']}
+
+
+/** input type for updating data in table "player_blocks" */
+export interface player_blocks_set_input {blocked_steam_id?: (Scalars['bigint'] | null),blocker_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface player_blocks_stddev_fieldsGenqlSelection{
+    blocked_steam_id?: boolean | number
+    blocker_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_blocks_stddev_pop_fieldsGenqlSelection{
+    blocked_steam_id?: boolean | number
+    blocker_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_blocks_stddev_samp_fieldsGenqlSelection{
+    blocked_steam_id?: boolean | number
+    blocker_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "player_blocks" */
+export interface player_blocks_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: player_blocks_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface player_blocks_stream_cursor_value_input {blocked_steam_id?: (Scalars['bigint'] | null),blocker_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate sum on columns */
+export interface player_blocks_sum_fieldsGenqlSelection{
+    blocked_steam_id?: boolean | number
+    blocker_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface player_blocks_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (player_blocks_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (player_blocks_set_input | null),
+/** filter the rows which have to be updated */
+where: player_blocks_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface player_blocks_var_pop_fieldsGenqlSelection{
+    blocked_steam_id?: boolean | number
+    blocker_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface player_blocks_var_samp_fieldsGenqlSelection{
+    blocked_steam_id?: boolean | number
+    blocker_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface player_blocks_variance_fieldsGenqlSelection{
+    blocked_steam_id?: boolean | number
+    blocker_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
 
 
 /** columns and relationships of "player_career_stats_v" */
@@ -91173,6 +93071,58 @@ export interface query_rootGenqlSelection{
     where?: (broadcast_huds_bool_exp | null)} })
     /** fetch data from the table: "broadcast_huds" using primary key columns */
     broadcast_huds_by_pk?: (broadcast_hudsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "chat_message_deletions" */
+    chat_message_deletions?: (chat_message_deletionsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (chat_message_deletions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (chat_message_deletions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (chat_message_deletions_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "chat_message_deletions" */
+    chat_message_deletions_aggregate?: (chat_message_deletions_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (chat_message_deletions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (chat_message_deletions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (chat_message_deletions_bool_exp | null)} })
+    /** fetch data from the table: "chat_message_deletions" using primary key columns */
+    chat_message_deletions_by_pk?: (chat_message_deletionsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "chat_message_edits" */
+    chat_message_edits?: (chat_message_editsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (chat_message_edits_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (chat_message_edits_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (chat_message_edits_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "chat_message_edits" */
+    chat_message_edits_aggregate?: (chat_message_edits_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (chat_message_edits_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (chat_message_edits_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (chat_message_edits_bool_exp | null)} })
+    /** fetch data from the table: "chat_message_edits" using primary key columns */
+    chat_message_edits_by_pk?: (chat_message_editsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** fetch data from the table: "chat_read_state" */
     chat_read_state?: (chat_read_stateGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -91308,6 +93258,32 @@ export interface query_rootGenqlSelection{
     where?: (direct_conversations_bool_exp | null)} })
     /** fetch data from the table: "direct_conversations" using primary key columns */
     direct_conversations_by_pk?: (direct_conversationsGenqlSelection & { __args: {room_id: Scalars['String'], steam_id: Scalars['bigint']} })
+    /** fetch data from the table: "direct_message_reactions" */
+    direct_message_reactions?: (direct_message_reactionsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (direct_message_reactions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (direct_message_reactions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (direct_message_reactions_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "direct_message_reactions" */
+    direct_message_reactions_aggregate?: (direct_message_reactions_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (direct_message_reactions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (direct_message_reactions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (direct_message_reactions_bool_exp | null)} })
+    /** fetch data from the table: "direct_message_reactions" using primary key columns */
+    direct_message_reactions_by_pk?: (direct_message_reactionsGenqlSelection & { __args: {message_id: Scalars['uuid'], reaction: Scalars['String'], steam_id: Scalars['bigint']} })
     /** fetch data from the table: "direct_messages" */
     direct_messages?: (direct_messagesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -94608,6 +96584,32 @@ export interface query_rootGenqlSelection{
     where?: (player_assists_bool_exp | null)} })
     /** fetch data from the table: "player_assists" using primary key columns */
     player_assists_by_pk?: (player_assistsGenqlSelection & { __args: {attacked_steam_id: Scalars['bigint'], attacker_steam_id: Scalars['bigint'], match_map_id: Scalars['uuid'], time: Scalars['timestamptz']} })
+    /** fetch data from the table: "player_blocks" */
+    player_blocks?: (player_blocksGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_blocks_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_blocks_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_blocks_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_blocks" */
+    player_blocks_aggregate?: (player_blocks_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_blocks_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_blocks_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_blocks_bool_exp | null)} })
+    /** fetch data from the table: "player_blocks" using primary key columns */
+    player_blocks_by_pk?: (player_blocksGenqlSelection & { __args: {blocked_steam_id: Scalars['bigint'], blocker_steam_id: Scalars['bigint']} })
     /** fetch data from the table: "player_career_stats_v" */
     player_career_stats_v?: (player_career_stats_vGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -99117,6 +101119,74 @@ export interface subscription_rootGenqlSelection{
     cursor: (broadcast_huds_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (broadcast_huds_bool_exp | null)} })
+    /** fetch data from the table: "chat_message_deletions" */
+    chat_message_deletions?: (chat_message_deletionsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (chat_message_deletions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (chat_message_deletions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (chat_message_deletions_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "chat_message_deletions" */
+    chat_message_deletions_aggregate?: (chat_message_deletions_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (chat_message_deletions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (chat_message_deletions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (chat_message_deletions_bool_exp | null)} })
+    /** fetch data from the table: "chat_message_deletions" using primary key columns */
+    chat_message_deletions_by_pk?: (chat_message_deletionsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "chat_message_deletions" */
+    chat_message_deletions_stream?: (chat_message_deletionsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (chat_message_deletions_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (chat_message_deletions_bool_exp | null)} })
+    /** fetch data from the table: "chat_message_edits" */
+    chat_message_edits?: (chat_message_editsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (chat_message_edits_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (chat_message_edits_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (chat_message_edits_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "chat_message_edits" */
+    chat_message_edits_aggregate?: (chat_message_edits_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (chat_message_edits_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (chat_message_edits_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (chat_message_edits_bool_exp | null)} })
+    /** fetch data from the table: "chat_message_edits" using primary key columns */
+    chat_message_edits_by_pk?: (chat_message_editsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "chat_message_edits" */
+    chat_message_edits_stream?: (chat_message_editsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (chat_message_edits_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (chat_message_edits_bool_exp | null)} })
     /** fetch data from the table: "chat_read_state" */
     chat_read_state?: (chat_read_stateGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -99287,6 +101357,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (direct_conversations_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (direct_conversations_bool_exp | null)} })
+    /** fetch data from the table: "direct_message_reactions" */
+    direct_message_reactions?: (direct_message_reactionsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (direct_message_reactions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (direct_message_reactions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (direct_message_reactions_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "direct_message_reactions" */
+    direct_message_reactions_aggregate?: (direct_message_reactions_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (direct_message_reactions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (direct_message_reactions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (direct_message_reactions_bool_exp | null)} })
+    /** fetch data from the table: "direct_message_reactions" using primary key columns */
+    direct_message_reactions_by_pk?: (direct_message_reactionsGenqlSelection & { __args: {message_id: Scalars['uuid'], reaction: Scalars['String'], steam_id: Scalars['bigint']} })
+    /** fetch data from the table in a streaming manner: "direct_message_reactions" */
+    direct_message_reactions_stream?: (direct_message_reactionsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (direct_message_reactions_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (direct_message_reactions_bool_exp | null)} })
     /** fetch data from the table: "direct_messages" */
     direct_messages?: (direct_messagesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -103503,6 +105607,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (player_assists_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (player_assists_bool_exp | null)} })
+    /** fetch data from the table: "player_blocks" */
+    player_blocks?: (player_blocksGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_blocks_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_blocks_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_blocks_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_blocks" */
+    player_blocks_aggregate?: (player_blocks_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_blocks_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_blocks_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_blocks_bool_exp | null)} })
+    /** fetch data from the table: "player_blocks" using primary key columns */
+    player_blocks_by_pk?: (player_blocksGenqlSelection & { __args: {blocked_steam_id: Scalars['bigint'], blocker_steam_id: Scalars['bigint']} })
+    /** fetch data from the table in a streaming manner: "player_blocks" */
+    player_blocks_stream?: (player_blocksGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (player_blocks_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (player_blocks_bool_exp | null)} })
     /** fetch data from the table: "player_career_stats_v" */
     player_career_stats_v?: (player_career_stats_vGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -130034,6 +132172,230 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const chat_message_deletions_possibleTypes: string[] = ['chat_message_deletions']
+    export const ischat_message_deletions = (obj?: { __typename?: any } | null): obj is chat_message_deletions => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_deletions"')
+      return chat_message_deletions_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_deletions_aggregate_possibleTypes: string[] = ['chat_message_deletions_aggregate']
+    export const ischat_message_deletions_aggregate = (obj?: { __typename?: any } | null): obj is chat_message_deletions_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_deletions_aggregate"')
+      return chat_message_deletions_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_deletions_aggregate_fields_possibleTypes: string[] = ['chat_message_deletions_aggregate_fields']
+    export const ischat_message_deletions_aggregate_fields = (obj?: { __typename?: any } | null): obj is chat_message_deletions_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_deletions_aggregate_fields"')
+      return chat_message_deletions_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_deletions_avg_fields_possibleTypes: string[] = ['chat_message_deletions_avg_fields']
+    export const ischat_message_deletions_avg_fields = (obj?: { __typename?: any } | null): obj is chat_message_deletions_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_deletions_avg_fields"')
+      return chat_message_deletions_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_deletions_max_fields_possibleTypes: string[] = ['chat_message_deletions_max_fields']
+    export const ischat_message_deletions_max_fields = (obj?: { __typename?: any } | null): obj is chat_message_deletions_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_deletions_max_fields"')
+      return chat_message_deletions_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_deletions_min_fields_possibleTypes: string[] = ['chat_message_deletions_min_fields']
+    export const ischat_message_deletions_min_fields = (obj?: { __typename?: any } | null): obj is chat_message_deletions_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_deletions_min_fields"')
+      return chat_message_deletions_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_deletions_mutation_response_possibleTypes: string[] = ['chat_message_deletions_mutation_response']
+    export const ischat_message_deletions_mutation_response = (obj?: { __typename?: any } | null): obj is chat_message_deletions_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_deletions_mutation_response"')
+      return chat_message_deletions_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_deletions_stddev_fields_possibleTypes: string[] = ['chat_message_deletions_stddev_fields']
+    export const ischat_message_deletions_stddev_fields = (obj?: { __typename?: any } | null): obj is chat_message_deletions_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_deletions_stddev_fields"')
+      return chat_message_deletions_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_deletions_stddev_pop_fields_possibleTypes: string[] = ['chat_message_deletions_stddev_pop_fields']
+    export const ischat_message_deletions_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is chat_message_deletions_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_deletions_stddev_pop_fields"')
+      return chat_message_deletions_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_deletions_stddev_samp_fields_possibleTypes: string[] = ['chat_message_deletions_stddev_samp_fields']
+    export const ischat_message_deletions_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is chat_message_deletions_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_deletions_stddev_samp_fields"')
+      return chat_message_deletions_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_deletions_sum_fields_possibleTypes: string[] = ['chat_message_deletions_sum_fields']
+    export const ischat_message_deletions_sum_fields = (obj?: { __typename?: any } | null): obj is chat_message_deletions_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_deletions_sum_fields"')
+      return chat_message_deletions_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_deletions_var_pop_fields_possibleTypes: string[] = ['chat_message_deletions_var_pop_fields']
+    export const ischat_message_deletions_var_pop_fields = (obj?: { __typename?: any } | null): obj is chat_message_deletions_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_deletions_var_pop_fields"')
+      return chat_message_deletions_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_deletions_var_samp_fields_possibleTypes: string[] = ['chat_message_deletions_var_samp_fields']
+    export const ischat_message_deletions_var_samp_fields = (obj?: { __typename?: any } | null): obj is chat_message_deletions_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_deletions_var_samp_fields"')
+      return chat_message_deletions_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_deletions_variance_fields_possibleTypes: string[] = ['chat_message_deletions_variance_fields']
+    export const ischat_message_deletions_variance_fields = (obj?: { __typename?: any } | null): obj is chat_message_deletions_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_deletions_variance_fields"')
+      return chat_message_deletions_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_edits_possibleTypes: string[] = ['chat_message_edits']
+    export const ischat_message_edits = (obj?: { __typename?: any } | null): obj is chat_message_edits => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_edits"')
+      return chat_message_edits_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_edits_aggregate_possibleTypes: string[] = ['chat_message_edits_aggregate']
+    export const ischat_message_edits_aggregate = (obj?: { __typename?: any } | null): obj is chat_message_edits_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_edits_aggregate"')
+      return chat_message_edits_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_edits_aggregate_fields_possibleTypes: string[] = ['chat_message_edits_aggregate_fields']
+    export const ischat_message_edits_aggregate_fields = (obj?: { __typename?: any } | null): obj is chat_message_edits_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_edits_aggregate_fields"')
+      return chat_message_edits_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_edits_avg_fields_possibleTypes: string[] = ['chat_message_edits_avg_fields']
+    export const ischat_message_edits_avg_fields = (obj?: { __typename?: any } | null): obj is chat_message_edits_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_edits_avg_fields"')
+      return chat_message_edits_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_edits_max_fields_possibleTypes: string[] = ['chat_message_edits_max_fields']
+    export const ischat_message_edits_max_fields = (obj?: { __typename?: any } | null): obj is chat_message_edits_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_edits_max_fields"')
+      return chat_message_edits_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_edits_min_fields_possibleTypes: string[] = ['chat_message_edits_min_fields']
+    export const ischat_message_edits_min_fields = (obj?: { __typename?: any } | null): obj is chat_message_edits_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_edits_min_fields"')
+      return chat_message_edits_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_edits_mutation_response_possibleTypes: string[] = ['chat_message_edits_mutation_response']
+    export const ischat_message_edits_mutation_response = (obj?: { __typename?: any } | null): obj is chat_message_edits_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_edits_mutation_response"')
+      return chat_message_edits_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_edits_stddev_fields_possibleTypes: string[] = ['chat_message_edits_stddev_fields']
+    export const ischat_message_edits_stddev_fields = (obj?: { __typename?: any } | null): obj is chat_message_edits_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_edits_stddev_fields"')
+      return chat_message_edits_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_edits_stddev_pop_fields_possibleTypes: string[] = ['chat_message_edits_stddev_pop_fields']
+    export const ischat_message_edits_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is chat_message_edits_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_edits_stddev_pop_fields"')
+      return chat_message_edits_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_edits_stddev_samp_fields_possibleTypes: string[] = ['chat_message_edits_stddev_samp_fields']
+    export const ischat_message_edits_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is chat_message_edits_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_edits_stddev_samp_fields"')
+      return chat_message_edits_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_edits_sum_fields_possibleTypes: string[] = ['chat_message_edits_sum_fields']
+    export const ischat_message_edits_sum_fields = (obj?: { __typename?: any } | null): obj is chat_message_edits_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_edits_sum_fields"')
+      return chat_message_edits_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_edits_var_pop_fields_possibleTypes: string[] = ['chat_message_edits_var_pop_fields']
+    export const ischat_message_edits_var_pop_fields = (obj?: { __typename?: any } | null): obj is chat_message_edits_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_edits_var_pop_fields"')
+      return chat_message_edits_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_edits_var_samp_fields_possibleTypes: string[] = ['chat_message_edits_var_samp_fields']
+    export const ischat_message_edits_var_samp_fields = (obj?: { __typename?: any } | null): obj is chat_message_edits_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_edits_var_samp_fields"')
+      return chat_message_edits_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_message_edits_variance_fields_possibleTypes: string[] = ['chat_message_edits_variance_fields']
+    export const ischat_message_edits_variance_fields = (obj?: { __typename?: any } | null): obj is chat_message_edits_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_message_edits_variance_fields"')
+      return chat_message_edits_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const chat_read_state_possibleTypes: string[] = ['chat_read_state']
     export const ischat_read_state = (obj?: { __typename?: any } | null): obj is chat_read_state => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ischat_read_state"')
@@ -130590,6 +132952,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isdirect_conversations_variance_fields = (obj?: { __typename?: any } | null): obj is direct_conversations_variance_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_conversations_variance_fields"')
       return direct_conversations_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_message_reactions_possibleTypes: string[] = ['direct_message_reactions']
+    export const isdirect_message_reactions = (obj?: { __typename?: any } | null): obj is direct_message_reactions => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_message_reactions"')
+      return direct_message_reactions_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_message_reactions_aggregate_possibleTypes: string[] = ['direct_message_reactions_aggregate']
+    export const isdirect_message_reactions_aggregate = (obj?: { __typename?: any } | null): obj is direct_message_reactions_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_message_reactions_aggregate"')
+      return direct_message_reactions_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_message_reactions_aggregate_fields_possibleTypes: string[] = ['direct_message_reactions_aggregate_fields']
+    export const isdirect_message_reactions_aggregate_fields = (obj?: { __typename?: any } | null): obj is direct_message_reactions_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_message_reactions_aggregate_fields"')
+      return direct_message_reactions_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_message_reactions_avg_fields_possibleTypes: string[] = ['direct_message_reactions_avg_fields']
+    export const isdirect_message_reactions_avg_fields = (obj?: { __typename?: any } | null): obj is direct_message_reactions_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_message_reactions_avg_fields"')
+      return direct_message_reactions_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_message_reactions_max_fields_possibleTypes: string[] = ['direct_message_reactions_max_fields']
+    export const isdirect_message_reactions_max_fields = (obj?: { __typename?: any } | null): obj is direct_message_reactions_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_message_reactions_max_fields"')
+      return direct_message_reactions_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_message_reactions_min_fields_possibleTypes: string[] = ['direct_message_reactions_min_fields']
+    export const isdirect_message_reactions_min_fields = (obj?: { __typename?: any } | null): obj is direct_message_reactions_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_message_reactions_min_fields"')
+      return direct_message_reactions_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_message_reactions_mutation_response_possibleTypes: string[] = ['direct_message_reactions_mutation_response']
+    export const isdirect_message_reactions_mutation_response = (obj?: { __typename?: any } | null): obj is direct_message_reactions_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_message_reactions_mutation_response"')
+      return direct_message_reactions_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_message_reactions_stddev_fields_possibleTypes: string[] = ['direct_message_reactions_stddev_fields']
+    export const isdirect_message_reactions_stddev_fields = (obj?: { __typename?: any } | null): obj is direct_message_reactions_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_message_reactions_stddev_fields"')
+      return direct_message_reactions_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_message_reactions_stddev_pop_fields_possibleTypes: string[] = ['direct_message_reactions_stddev_pop_fields']
+    export const isdirect_message_reactions_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is direct_message_reactions_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_message_reactions_stddev_pop_fields"')
+      return direct_message_reactions_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_message_reactions_stddev_samp_fields_possibleTypes: string[] = ['direct_message_reactions_stddev_samp_fields']
+    export const isdirect_message_reactions_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is direct_message_reactions_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_message_reactions_stddev_samp_fields"')
+      return direct_message_reactions_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_message_reactions_sum_fields_possibleTypes: string[] = ['direct_message_reactions_sum_fields']
+    export const isdirect_message_reactions_sum_fields = (obj?: { __typename?: any } | null): obj is direct_message_reactions_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_message_reactions_sum_fields"')
+      return direct_message_reactions_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_message_reactions_var_pop_fields_possibleTypes: string[] = ['direct_message_reactions_var_pop_fields']
+    export const isdirect_message_reactions_var_pop_fields = (obj?: { __typename?: any } | null): obj is direct_message_reactions_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_message_reactions_var_pop_fields"')
+      return direct_message_reactions_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_message_reactions_var_samp_fields_possibleTypes: string[] = ['direct_message_reactions_var_samp_fields']
+    export const isdirect_message_reactions_var_samp_fields = (obj?: { __typename?: any } | null): obj is direct_message_reactions_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_message_reactions_var_samp_fields"')
+      return direct_message_reactions_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_message_reactions_variance_fields_possibleTypes: string[] = ['direct_message_reactions_variance_fields']
+    export const isdirect_message_reactions_variance_fields = (obj?: { __typename?: any } | null): obj is direct_message_reactions_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_message_reactions_variance_fields"')
+      return direct_message_reactions_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -136810,6 +139284,14 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const map_asset_builds_avg_fields_possibleTypes: string[] = ['map_asset_builds_avg_fields']
+    export const ismap_asset_builds_avg_fields = (obj?: { __typename?: any } | null): obj is map_asset_builds_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismap_asset_builds_avg_fields"')
+      return map_asset_builds_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const map_asset_builds_max_fields_possibleTypes: string[] = ['map_asset_builds_max_fields']
     export const ismap_asset_builds_max_fields = (obj?: { __typename?: any } | null): obj is map_asset_builds_max_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ismap_asset_builds_max_fields"')
@@ -136830,6 +139312,62 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const ismap_asset_builds_mutation_response = (obj?: { __typename?: any } | null): obj is map_asset_builds_mutation_response => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ismap_asset_builds_mutation_response"')
       return map_asset_builds_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const map_asset_builds_stddev_fields_possibleTypes: string[] = ['map_asset_builds_stddev_fields']
+    export const ismap_asset_builds_stddev_fields = (obj?: { __typename?: any } | null): obj is map_asset_builds_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismap_asset_builds_stddev_fields"')
+      return map_asset_builds_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const map_asset_builds_stddev_pop_fields_possibleTypes: string[] = ['map_asset_builds_stddev_pop_fields']
+    export const ismap_asset_builds_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is map_asset_builds_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismap_asset_builds_stddev_pop_fields"')
+      return map_asset_builds_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const map_asset_builds_stddev_samp_fields_possibleTypes: string[] = ['map_asset_builds_stddev_samp_fields']
+    export const ismap_asset_builds_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is map_asset_builds_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismap_asset_builds_stddev_samp_fields"')
+      return map_asset_builds_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const map_asset_builds_sum_fields_possibleTypes: string[] = ['map_asset_builds_sum_fields']
+    export const ismap_asset_builds_sum_fields = (obj?: { __typename?: any } | null): obj is map_asset_builds_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismap_asset_builds_sum_fields"')
+      return map_asset_builds_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const map_asset_builds_var_pop_fields_possibleTypes: string[] = ['map_asset_builds_var_pop_fields']
+    export const ismap_asset_builds_var_pop_fields = (obj?: { __typename?: any } | null): obj is map_asset_builds_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismap_asset_builds_var_pop_fields"')
+      return map_asset_builds_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const map_asset_builds_var_samp_fields_possibleTypes: string[] = ['map_asset_builds_var_samp_fields']
+    export const ismap_asset_builds_var_samp_fields = (obj?: { __typename?: any } | null): obj is map_asset_builds_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismap_asset_builds_var_samp_fields"')
+      return map_asset_builds_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const map_asset_builds_variance_fields_possibleTypes: string[] = ['map_asset_builds_variance_fields']
+    export const ismap_asset_builds_variance_fields = (obj?: { __typename?: any } | null): obj is map_asset_builds_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismap_asset_builds_variance_fields"')
+      return map_asset_builds_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -139302,6 +141840,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isplayer_assists_variance_fields = (obj?: { __typename?: any } | null): obj is player_assists_variance_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_assists_variance_fields"')
       return player_assists_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_blocks_possibleTypes: string[] = ['player_blocks']
+    export const isplayer_blocks = (obj?: { __typename?: any } | null): obj is player_blocks => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_blocks"')
+      return player_blocks_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_blocks_aggregate_possibleTypes: string[] = ['player_blocks_aggregate']
+    export const isplayer_blocks_aggregate = (obj?: { __typename?: any } | null): obj is player_blocks_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_blocks_aggregate"')
+      return player_blocks_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_blocks_aggregate_fields_possibleTypes: string[] = ['player_blocks_aggregate_fields']
+    export const isplayer_blocks_aggregate_fields = (obj?: { __typename?: any } | null): obj is player_blocks_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_blocks_aggregate_fields"')
+      return player_blocks_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_blocks_avg_fields_possibleTypes: string[] = ['player_blocks_avg_fields']
+    export const isplayer_blocks_avg_fields = (obj?: { __typename?: any } | null): obj is player_blocks_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_blocks_avg_fields"')
+      return player_blocks_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_blocks_max_fields_possibleTypes: string[] = ['player_blocks_max_fields']
+    export const isplayer_blocks_max_fields = (obj?: { __typename?: any } | null): obj is player_blocks_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_blocks_max_fields"')
+      return player_blocks_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_blocks_min_fields_possibleTypes: string[] = ['player_blocks_min_fields']
+    export const isplayer_blocks_min_fields = (obj?: { __typename?: any } | null): obj is player_blocks_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_blocks_min_fields"')
+      return player_blocks_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_blocks_mutation_response_possibleTypes: string[] = ['player_blocks_mutation_response']
+    export const isplayer_blocks_mutation_response = (obj?: { __typename?: any } | null): obj is player_blocks_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_blocks_mutation_response"')
+      return player_blocks_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_blocks_stddev_fields_possibleTypes: string[] = ['player_blocks_stddev_fields']
+    export const isplayer_blocks_stddev_fields = (obj?: { __typename?: any } | null): obj is player_blocks_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_blocks_stddev_fields"')
+      return player_blocks_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_blocks_stddev_pop_fields_possibleTypes: string[] = ['player_blocks_stddev_pop_fields']
+    export const isplayer_blocks_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is player_blocks_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_blocks_stddev_pop_fields"')
+      return player_blocks_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_blocks_stddev_samp_fields_possibleTypes: string[] = ['player_blocks_stddev_samp_fields']
+    export const isplayer_blocks_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is player_blocks_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_blocks_stddev_samp_fields"')
+      return player_blocks_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_blocks_sum_fields_possibleTypes: string[] = ['player_blocks_sum_fields']
+    export const isplayer_blocks_sum_fields = (obj?: { __typename?: any } | null): obj is player_blocks_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_blocks_sum_fields"')
+      return player_blocks_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_blocks_var_pop_fields_possibleTypes: string[] = ['player_blocks_var_pop_fields']
+    export const isplayer_blocks_var_pop_fields = (obj?: { __typename?: any } | null): obj is player_blocks_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_blocks_var_pop_fields"')
+      return player_blocks_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_blocks_var_samp_fields_possibleTypes: string[] = ['player_blocks_var_samp_fields']
+    export const isplayer_blocks_var_samp_fields = (obj?: { __typename?: any } | null): obj is player_blocks_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_blocks_var_samp_fields"')
+      return player_blocks_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_blocks_variance_fields_possibleTypes: string[] = ['player_blocks_variance_fields']
+    export const isplayer_blocks_variance_fields = (obj?: { __typename?: any } | null): obj is player_blocks_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_blocks_variance_fields"')
+      return player_blocks_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -151229,6 +153879,65 @@ export const enumBroadcastHudsUpdateColumn = {
    version: 'version' as const
 }
 
+export const enumChatMessageDeletionsConstraint = {
+   chat_message_deletions_message_id_room_type_room_id_key: 'chat_message_deletions_message_id_room_type_room_id_key' as const,
+   chat_message_deletions_pkey: 'chat_message_deletions_pkey' as const
+}
+
+export const enumChatMessageDeletionsSelectColumn = {
+   author_steam_id: 'author_steam_id' as const,
+   deleted_at: 'deleted_at' as const,
+   deleted_by_steam_id: 'deleted_by_steam_id' as const,
+   id: 'id' as const,
+   message: 'message' as const,
+   message_created_at: 'message_created_at' as const,
+   message_id: 'message_id' as const,
+   room_id: 'room_id' as const,
+   room_type: 'room_type' as const,
+   source: 'source' as const
+}
+
+export const enumChatMessageDeletionsUpdateColumn = {
+   author_steam_id: 'author_steam_id' as const,
+   deleted_at: 'deleted_at' as const,
+   deleted_by_steam_id: 'deleted_by_steam_id' as const,
+   id: 'id' as const,
+   message: 'message' as const,
+   message_created_at: 'message_created_at' as const,
+   message_id: 'message_id' as const,
+   room_id: 'room_id' as const,
+   room_type: 'room_type' as const,
+   source: 'source' as const
+}
+
+export const enumChatMessageEditsConstraint = {
+   chat_message_edits_pkey: 'chat_message_edits_pkey' as const
+}
+
+export const enumChatMessageEditsSelectColumn = {
+   author_steam_id: 'author_steam_id' as const,
+   edited_at: 'edited_at' as const,
+   id: 'id' as const,
+   message_created_at: 'message_created_at' as const,
+   message_id: 'message_id' as const,
+   new_message: 'new_message' as const,
+   previous_message: 'previous_message' as const,
+   room_id: 'room_id' as const,
+   room_type: 'room_type' as const
+}
+
+export const enumChatMessageEditsUpdateColumn = {
+   author_steam_id: 'author_steam_id' as const,
+   edited_at: 'edited_at' as const,
+   id: 'id' as const,
+   message_created_at: 'message_created_at' as const,
+   message_id: 'message_id' as const,
+   new_message: 'new_message' as const,
+   previous_message: 'previous_message' as const,
+   room_id: 'room_id' as const,
+   room_type: 'room_type' as const
+}
+
 export const enumChatReadStateConstraint = {
    chat_read_state_pkey: 'chat_read_state_pkey' as const
 }
@@ -151389,12 +154098,31 @@ export const enumDirectConversationsUpdateColumn = {
    steam_id: 'steam_id' as const
 }
 
+export const enumDirectMessageReactionsConstraint = {
+   direct_message_reactions_pkey: 'direct_message_reactions_pkey' as const
+}
+
+export const enumDirectMessageReactionsSelectColumn = {
+   created_at: 'created_at' as const,
+   message_id: 'message_id' as const,
+   reaction: 'reaction' as const,
+   steam_id: 'steam_id' as const
+}
+
+export const enumDirectMessageReactionsUpdateColumn = {
+   created_at: 'created_at' as const,
+   message_id: 'message_id' as const,
+   reaction: 'reaction' as const,
+   steam_id: 'steam_id' as const
+}
+
 export const enumDirectMessagesConstraint = {
    direct_messages_pkey: 'direct_messages_pkey' as const
 }
 
 export const enumDirectMessagesSelectColumn = {
    created_at: 'created_at' as const,
+   edited_at: 'edited_at' as const,
    from_steam_id: 'from_steam_id' as const,
    id: 'id' as const,
    message: 'message' as const,
@@ -151404,6 +154132,7 @@ export const enumDirectMessagesSelectColumn = {
 
 export const enumDirectMessagesUpdateColumn = {
    created_at: 'created_at' as const,
+   edited_at: 'edited_at' as const,
    from_steam_id: 'from_steam_id' as const,
    id: 'id' as const,
    message: 'message' as const,
@@ -153309,6 +156038,7 @@ export const enumGameServerNodesSelectColumn = {
    supports_cpu_pinning: 'supports_cpu_pinning' as const,
    supports_low_latency: 'supports_low_latency' as const,
    token: 'token' as const,
+   update_failed_at: 'update_failed_at' as const,
    update_status: 'update_status' as const
 }
 
@@ -153376,6 +156106,7 @@ export const enumGameServerNodesUpdateColumn = {
    supports_cpu_pinning: 'supports_cpu_pinning' as const,
    supports_low_latency: 'supports_low_latency' as const,
    token: 'token' as const,
+   update_failed_at: 'update_failed_at' as const,
    update_status: 'update_status' as const
 }
 
@@ -153412,18 +156143,30 @@ export const enumGamedataSignatureValidationsConstraint = {
 export const enumGamedataSignatureValidationsSelectColumn = {
    branch: 'branch' as const,
    build_id: 'build_id' as const,
+   changes: 'changes' as const,
+   game_server_node_id: 'game_server_node_id' as const,
    id: 'id' as const,
+   previous_build_id: 'previous_build_id' as const,
+   requested_by_steam_id: 'requested_by_steam_id' as const,
    results: 'results' as const,
+   started_at: 'started_at' as const,
    status: 'status' as const,
+   trigger: 'trigger' as const,
    validated_at: 'validated_at' as const
 }
 
 export const enumGamedataSignatureValidationsUpdateColumn = {
    branch: 'branch' as const,
    build_id: 'build_id' as const,
+   changes: 'changes' as const,
+   game_server_node_id: 'game_server_node_id' as const,
    id: 'id' as const,
+   previous_build_id: 'previous_build_id' as const,
+   requested_by_steam_id: 'requested_by_steam_id' as const,
    results: 'results' as const,
+   started_at: 'started_at' as const,
    status: 'status' as const,
+   trigger: 'trigger' as const,
    validated_at: 'validated_at' as const
 }
 
@@ -153790,29 +156533,39 @@ export const enumMapAssetBuildsConstraint = {
 
 export const enumMapAssetBuildsSelectColumn = {
    build_id: 'build_id' as const,
+   changes: 'changes' as const,
    created_at: 'created_at' as const,
    error: 'error' as const,
    failed: 'failed' as const,
    failed_view: 'failed_view' as const,
    finished_at: 'finished_at' as const,
+   game_server_node_id: 'game_server_node_id' as const,
    manifest: 'manifest' as const,
    maps: 'maps' as const,
+   previous_build_id: 'previous_build_id' as const,
+   requested_by_steam_id: 'requested_by_steam_id' as const,
    started_at: 'started_at' as const,
    status: 'status' as const,
+   trigger: 'trigger' as const,
    updated_at: 'updated_at' as const
 }
 
 export const enumMapAssetBuildsUpdateColumn = {
    build_id: 'build_id' as const,
+   changes: 'changes' as const,
    created_at: 'created_at' as const,
    error: 'error' as const,
    failed: 'failed' as const,
    failed_view: 'failed_view' as const,
    finished_at: 'finished_at' as const,
+   game_server_node_id: 'game_server_node_id' as const,
    manifest: 'manifest' as const,
    maps: 'maps' as const,
+   previous_build_id: 'previous_build_id' as const,
+   requested_by_steam_id: 'requested_by_steam_id' as const,
    started_at: 'started_at' as const,
    status: 'status' as const,
+   trigger: 'trigger' as const,
    updated_at: 'updated_at' as const
 }
 
@@ -154834,6 +157587,22 @@ export const enumPlayerAssistsUpdateColumn = {
    match_map_id: 'match_map_id' as const,
    round: 'round' as const,
    time: 'time' as const
+}
+
+export const enumPlayerBlocksConstraint = {
+   player_blocks_pkey: 'player_blocks_pkey' as const
+}
+
+export const enumPlayerBlocksSelectColumn = {
+   blocked_steam_id: 'blocked_steam_id' as const,
+   blocker_steam_id: 'blocker_steam_id' as const,
+   created_at: 'created_at' as const
+}
+
+export const enumPlayerBlocksUpdateColumn = {
+   blocked_steam_id: 'blocked_steam_id' as const,
+   blocker_steam_id: 'blocker_steam_id' as const,
+   created_at: 'created_at' as const
 }
 
 export const enumPlayerCareerStatsVSelectColumn = {
