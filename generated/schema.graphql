@@ -125,7 +125,7 @@ input ClipSpecInput {
   audio: ClipAudioInput
   destination: String!
   match_map_id: uuid!
-  output: ClipOutputInput!
+  output: ClipOutputInput
   overlays: [ClipOverlayInput!]
   segments: [ClipSegmentInput!]!
   title: String
@@ -3848,6 +3848,666 @@ input bytea_comparison_exp {
 }
 
 """
+columns and relationships of "chat_message_deletions"
+"""
+type chat_message_deletions {
+  """An object relationship"""
+  author: players
+  author_steam_id: bigint
+  deleted_at: timestamptz!
+
+  """An object relationship"""
+  deleted_by: players
+  deleted_by_steam_id: bigint
+  id: uuid!
+  message: String!
+  message_created_at: timestamptz
+  message_id: uuid!
+  room_id: String!
+  room_type: String!
+  source: String
+}
+
+"""
+aggregated selection of "chat_message_deletions"
+"""
+type chat_message_deletions_aggregate {
+  aggregate: chat_message_deletions_aggregate_fields
+  nodes: [chat_message_deletions!]!
+}
+
+"""
+aggregate fields of "chat_message_deletions"
+"""
+type chat_message_deletions_aggregate_fields {
+  avg: chat_message_deletions_avg_fields
+  count(columns: [chat_message_deletions_select_column!], distinct: Boolean): Int!
+  max: chat_message_deletions_max_fields
+  min: chat_message_deletions_min_fields
+  stddev: chat_message_deletions_stddev_fields
+  stddev_pop: chat_message_deletions_stddev_pop_fields
+  stddev_samp: chat_message_deletions_stddev_samp_fields
+  sum: chat_message_deletions_sum_fields
+  var_pop: chat_message_deletions_var_pop_fields
+  var_samp: chat_message_deletions_var_samp_fields
+  variance: chat_message_deletions_variance_fields
+}
+
+"""aggregate avg on columns"""
+type chat_message_deletions_avg_fields {
+  author_steam_id: Float
+  deleted_by_steam_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "chat_message_deletions". All fields are combined with a logical 'AND'.
+"""
+input chat_message_deletions_bool_exp {
+  _and: [chat_message_deletions_bool_exp!]
+  _not: chat_message_deletions_bool_exp
+  _or: [chat_message_deletions_bool_exp!]
+  author: players_bool_exp
+  author_steam_id: bigint_comparison_exp
+  deleted_at: timestamptz_comparison_exp
+  deleted_by: players_bool_exp
+  deleted_by_steam_id: bigint_comparison_exp
+  id: uuid_comparison_exp
+  message: String_comparison_exp
+  message_created_at: timestamptz_comparison_exp
+  message_id: uuid_comparison_exp
+  room_id: String_comparison_exp
+  room_type: String_comparison_exp
+  source: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "chat_message_deletions"
+"""
+enum chat_message_deletions_constraint {
+  """
+  unique or primary key constraint on columns "room_type", "message_id", "room_id"
+  """
+  chat_message_deletions_message_id_room_type_room_id_key
+
+  """
+  unique or primary key constraint on columns "id"
+  """
+  chat_message_deletions_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "chat_message_deletions"
+"""
+input chat_message_deletions_inc_input {
+  author_steam_id: bigint
+  deleted_by_steam_id: bigint
+}
+
+"""
+input type for inserting data into table "chat_message_deletions"
+"""
+input chat_message_deletions_insert_input {
+  author: players_obj_rel_insert_input
+  author_steam_id: bigint
+  deleted_at: timestamptz
+  deleted_by: players_obj_rel_insert_input
+  deleted_by_steam_id: bigint
+  id: uuid
+  message: String
+  message_created_at: timestamptz
+  message_id: uuid
+  room_id: String
+  room_type: String
+  source: String
+}
+
+"""aggregate max on columns"""
+type chat_message_deletions_max_fields {
+  author_steam_id: bigint
+  deleted_at: timestamptz
+  deleted_by_steam_id: bigint
+  id: uuid
+  message: String
+  message_created_at: timestamptz
+  message_id: uuid
+  room_id: String
+  room_type: String
+  source: String
+}
+
+"""aggregate min on columns"""
+type chat_message_deletions_min_fields {
+  author_steam_id: bigint
+  deleted_at: timestamptz
+  deleted_by_steam_id: bigint
+  id: uuid
+  message: String
+  message_created_at: timestamptz
+  message_id: uuid
+  room_id: String
+  room_type: String
+  source: String
+}
+
+"""
+response of any mutation on the table "chat_message_deletions"
+"""
+type chat_message_deletions_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [chat_message_deletions!]!
+}
+
+"""
+on_conflict condition type for table "chat_message_deletions"
+"""
+input chat_message_deletions_on_conflict {
+  constraint: chat_message_deletions_constraint!
+  update_columns: [chat_message_deletions_update_column!]! = []
+  where: chat_message_deletions_bool_exp
+}
+
+"""Ordering options when selecting data from "chat_message_deletions"."""
+input chat_message_deletions_order_by {
+  author: players_order_by
+  author_steam_id: order_by
+  deleted_at: order_by
+  deleted_by: players_order_by
+  deleted_by_steam_id: order_by
+  id: order_by
+  message: order_by
+  message_created_at: order_by
+  message_id: order_by
+  room_id: order_by
+  room_type: order_by
+  source: order_by
+}
+
+"""primary key columns input for table: chat_message_deletions"""
+input chat_message_deletions_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "chat_message_deletions"
+"""
+enum chat_message_deletions_select_column {
+  """column name"""
+  author_steam_id
+
+  """column name"""
+  deleted_at
+
+  """column name"""
+  deleted_by_steam_id
+
+  """column name"""
+  id
+
+  """column name"""
+  message
+
+  """column name"""
+  message_created_at
+
+  """column name"""
+  message_id
+
+  """column name"""
+  room_id
+
+  """column name"""
+  room_type
+
+  """column name"""
+  source
+}
+
+"""
+input type for updating data in table "chat_message_deletions"
+"""
+input chat_message_deletions_set_input {
+  author_steam_id: bigint
+  deleted_at: timestamptz
+  deleted_by_steam_id: bigint
+  id: uuid
+  message: String
+  message_created_at: timestamptz
+  message_id: uuid
+  room_id: String
+  room_type: String
+  source: String
+}
+
+"""aggregate stddev on columns"""
+type chat_message_deletions_stddev_fields {
+  author_steam_id: Float
+  deleted_by_steam_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type chat_message_deletions_stddev_pop_fields {
+  author_steam_id: Float
+  deleted_by_steam_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type chat_message_deletions_stddev_samp_fields {
+  author_steam_id: Float
+  deleted_by_steam_id: Float
+}
+
+"""
+Streaming cursor of the table "chat_message_deletions"
+"""
+input chat_message_deletions_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: chat_message_deletions_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input chat_message_deletions_stream_cursor_value_input {
+  author_steam_id: bigint
+  deleted_at: timestamptz
+  deleted_by_steam_id: bigint
+  id: uuid
+  message: String
+  message_created_at: timestamptz
+  message_id: uuid
+  room_id: String
+  room_type: String
+  source: String
+}
+
+"""aggregate sum on columns"""
+type chat_message_deletions_sum_fields {
+  author_steam_id: bigint
+  deleted_by_steam_id: bigint
+}
+
+"""
+update columns of table "chat_message_deletions"
+"""
+enum chat_message_deletions_update_column {
+  """column name"""
+  author_steam_id
+
+  """column name"""
+  deleted_at
+
+  """column name"""
+  deleted_by_steam_id
+
+  """column name"""
+  id
+
+  """column name"""
+  message
+
+  """column name"""
+  message_created_at
+
+  """column name"""
+  message_id
+
+  """column name"""
+  room_id
+
+  """column name"""
+  room_type
+
+  """column name"""
+  source
+}
+
+input chat_message_deletions_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: chat_message_deletions_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: chat_message_deletions_set_input
+
+  """filter the rows which have to be updated"""
+  where: chat_message_deletions_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type chat_message_deletions_var_pop_fields {
+  author_steam_id: Float
+  deleted_by_steam_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type chat_message_deletions_var_samp_fields {
+  author_steam_id: Float
+  deleted_by_steam_id: Float
+}
+
+"""aggregate variance on columns"""
+type chat_message_deletions_variance_fields {
+  author_steam_id: Float
+  deleted_by_steam_id: Float
+}
+
+"""
+columns and relationships of "chat_message_edits"
+"""
+type chat_message_edits {
+  """An object relationship"""
+  author: players
+  author_steam_id: bigint
+  edited_at: timestamptz!
+  id: uuid!
+  message_created_at: timestamptz
+  message_id: uuid!
+  new_message: String!
+  previous_message: String!
+  room_id: String!
+  room_type: String!
+}
+
+"""
+aggregated selection of "chat_message_edits"
+"""
+type chat_message_edits_aggregate {
+  aggregate: chat_message_edits_aggregate_fields
+  nodes: [chat_message_edits!]!
+}
+
+"""
+aggregate fields of "chat_message_edits"
+"""
+type chat_message_edits_aggregate_fields {
+  avg: chat_message_edits_avg_fields
+  count(columns: [chat_message_edits_select_column!], distinct: Boolean): Int!
+  max: chat_message_edits_max_fields
+  min: chat_message_edits_min_fields
+  stddev: chat_message_edits_stddev_fields
+  stddev_pop: chat_message_edits_stddev_pop_fields
+  stddev_samp: chat_message_edits_stddev_samp_fields
+  sum: chat_message_edits_sum_fields
+  var_pop: chat_message_edits_var_pop_fields
+  var_samp: chat_message_edits_var_samp_fields
+  variance: chat_message_edits_variance_fields
+}
+
+"""aggregate avg on columns"""
+type chat_message_edits_avg_fields {
+  author_steam_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "chat_message_edits". All fields are combined with a logical 'AND'.
+"""
+input chat_message_edits_bool_exp {
+  _and: [chat_message_edits_bool_exp!]
+  _not: chat_message_edits_bool_exp
+  _or: [chat_message_edits_bool_exp!]
+  author: players_bool_exp
+  author_steam_id: bigint_comparison_exp
+  edited_at: timestamptz_comparison_exp
+  id: uuid_comparison_exp
+  message_created_at: timestamptz_comparison_exp
+  message_id: uuid_comparison_exp
+  new_message: String_comparison_exp
+  previous_message: String_comparison_exp
+  room_id: String_comparison_exp
+  room_type: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "chat_message_edits"
+"""
+enum chat_message_edits_constraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  chat_message_edits_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "chat_message_edits"
+"""
+input chat_message_edits_inc_input {
+  author_steam_id: bigint
+}
+
+"""
+input type for inserting data into table "chat_message_edits"
+"""
+input chat_message_edits_insert_input {
+  author: players_obj_rel_insert_input
+  author_steam_id: bigint
+  edited_at: timestamptz
+  id: uuid
+  message_created_at: timestamptz
+  message_id: uuid
+  new_message: String
+  previous_message: String
+  room_id: String
+  room_type: String
+}
+
+"""aggregate max on columns"""
+type chat_message_edits_max_fields {
+  author_steam_id: bigint
+  edited_at: timestamptz
+  id: uuid
+  message_created_at: timestamptz
+  message_id: uuid
+  new_message: String
+  previous_message: String
+  room_id: String
+  room_type: String
+}
+
+"""aggregate min on columns"""
+type chat_message_edits_min_fields {
+  author_steam_id: bigint
+  edited_at: timestamptz
+  id: uuid
+  message_created_at: timestamptz
+  message_id: uuid
+  new_message: String
+  previous_message: String
+  room_id: String
+  room_type: String
+}
+
+"""
+response of any mutation on the table "chat_message_edits"
+"""
+type chat_message_edits_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [chat_message_edits!]!
+}
+
+"""
+on_conflict condition type for table "chat_message_edits"
+"""
+input chat_message_edits_on_conflict {
+  constraint: chat_message_edits_constraint!
+  update_columns: [chat_message_edits_update_column!]! = []
+  where: chat_message_edits_bool_exp
+}
+
+"""Ordering options when selecting data from "chat_message_edits"."""
+input chat_message_edits_order_by {
+  author: players_order_by
+  author_steam_id: order_by
+  edited_at: order_by
+  id: order_by
+  message_created_at: order_by
+  message_id: order_by
+  new_message: order_by
+  previous_message: order_by
+  room_id: order_by
+  room_type: order_by
+}
+
+"""primary key columns input for table: chat_message_edits"""
+input chat_message_edits_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "chat_message_edits"
+"""
+enum chat_message_edits_select_column {
+  """column name"""
+  author_steam_id
+
+  """column name"""
+  edited_at
+
+  """column name"""
+  id
+
+  """column name"""
+  message_created_at
+
+  """column name"""
+  message_id
+
+  """column name"""
+  new_message
+
+  """column name"""
+  previous_message
+
+  """column name"""
+  room_id
+
+  """column name"""
+  room_type
+}
+
+"""
+input type for updating data in table "chat_message_edits"
+"""
+input chat_message_edits_set_input {
+  author_steam_id: bigint
+  edited_at: timestamptz
+  id: uuid
+  message_created_at: timestamptz
+  message_id: uuid
+  new_message: String
+  previous_message: String
+  room_id: String
+  room_type: String
+}
+
+"""aggregate stddev on columns"""
+type chat_message_edits_stddev_fields {
+  author_steam_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type chat_message_edits_stddev_pop_fields {
+  author_steam_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type chat_message_edits_stddev_samp_fields {
+  author_steam_id: Float
+}
+
+"""
+Streaming cursor of the table "chat_message_edits"
+"""
+input chat_message_edits_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: chat_message_edits_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input chat_message_edits_stream_cursor_value_input {
+  author_steam_id: bigint
+  edited_at: timestamptz
+  id: uuid
+  message_created_at: timestamptz
+  message_id: uuid
+  new_message: String
+  previous_message: String
+  room_id: String
+  room_type: String
+}
+
+"""aggregate sum on columns"""
+type chat_message_edits_sum_fields {
+  author_steam_id: bigint
+}
+
+"""
+update columns of table "chat_message_edits"
+"""
+enum chat_message_edits_update_column {
+  """column name"""
+  author_steam_id
+
+  """column name"""
+  edited_at
+
+  """column name"""
+  id
+
+  """column name"""
+  message_created_at
+
+  """column name"""
+  message_id
+
+  """column name"""
+  new_message
+
+  """column name"""
+  previous_message
+
+  """column name"""
+  room_id
+
+  """column name"""
+  room_type
+}
+
+input chat_message_edits_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: chat_message_edits_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: chat_message_edits_set_input
+
+  """filter the rows which have to be updated"""
+  where: chat_message_edits_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type chat_message_edits_var_pop_fields {
+  author_steam_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type chat_message_edits_var_samp_fields {
+  author_steam_id: Float
+}
+
+"""aggregate variance on columns"""
+type chat_message_edits_variance_fields {
+  author_steam_id: Float
+}
+
+"""
 columns and relationships of "chat_read_state"
 """
 type chat_read_state {
@@ -5786,10 +6446,251 @@ type direct_conversations_variance_fields {
 }
 
 """
+columns and relationships of "direct_message_reactions"
+"""
+type direct_message_reactions {
+  created_at: timestamptz!
+  message_id: uuid!
+  reaction: String!
+  steam_id: bigint!
+}
+
+"""
+aggregated selection of "direct_message_reactions"
+"""
+type direct_message_reactions_aggregate {
+  aggregate: direct_message_reactions_aggregate_fields
+  nodes: [direct_message_reactions!]!
+}
+
+"""
+aggregate fields of "direct_message_reactions"
+"""
+type direct_message_reactions_aggregate_fields {
+  avg: direct_message_reactions_avg_fields
+  count(columns: [direct_message_reactions_select_column!], distinct: Boolean): Int!
+  max: direct_message_reactions_max_fields
+  min: direct_message_reactions_min_fields
+  stddev: direct_message_reactions_stddev_fields
+  stddev_pop: direct_message_reactions_stddev_pop_fields
+  stddev_samp: direct_message_reactions_stddev_samp_fields
+  sum: direct_message_reactions_sum_fields
+  var_pop: direct_message_reactions_var_pop_fields
+  var_samp: direct_message_reactions_var_samp_fields
+  variance: direct_message_reactions_variance_fields
+}
+
+"""aggregate avg on columns"""
+type direct_message_reactions_avg_fields {
+  steam_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "direct_message_reactions". All fields are combined with a logical 'AND'.
+"""
+input direct_message_reactions_bool_exp {
+  _and: [direct_message_reactions_bool_exp!]
+  _not: direct_message_reactions_bool_exp
+  _or: [direct_message_reactions_bool_exp!]
+  created_at: timestamptz_comparison_exp
+  message_id: uuid_comparison_exp
+  reaction: String_comparison_exp
+  steam_id: bigint_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "direct_message_reactions"
+"""
+enum direct_message_reactions_constraint {
+  """
+  unique or primary key constraint on columns "reaction", "steam_id", "message_id"
+  """
+  direct_message_reactions_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "direct_message_reactions"
+"""
+input direct_message_reactions_inc_input {
+  steam_id: bigint
+}
+
+"""
+input type for inserting data into table "direct_message_reactions"
+"""
+input direct_message_reactions_insert_input {
+  created_at: timestamptz
+  message_id: uuid
+  reaction: String
+  steam_id: bigint
+}
+
+"""aggregate max on columns"""
+type direct_message_reactions_max_fields {
+  created_at: timestamptz
+  message_id: uuid
+  reaction: String
+  steam_id: bigint
+}
+
+"""aggregate min on columns"""
+type direct_message_reactions_min_fields {
+  created_at: timestamptz
+  message_id: uuid
+  reaction: String
+  steam_id: bigint
+}
+
+"""
+response of any mutation on the table "direct_message_reactions"
+"""
+type direct_message_reactions_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [direct_message_reactions!]!
+}
+
+"""
+on_conflict condition type for table "direct_message_reactions"
+"""
+input direct_message_reactions_on_conflict {
+  constraint: direct_message_reactions_constraint!
+  update_columns: [direct_message_reactions_update_column!]! = []
+  where: direct_message_reactions_bool_exp
+}
+
+"""Ordering options when selecting data from "direct_message_reactions"."""
+input direct_message_reactions_order_by {
+  created_at: order_by
+  message_id: order_by
+  reaction: order_by
+  steam_id: order_by
+}
+
+"""primary key columns input for table: direct_message_reactions"""
+input direct_message_reactions_pk_columns_input {
+  message_id: uuid!
+  reaction: String!
+  steam_id: bigint!
+}
+
+"""
+select columns of table "direct_message_reactions"
+"""
+enum direct_message_reactions_select_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  message_id
+
+  """column name"""
+  reaction
+
+  """column name"""
+  steam_id
+}
+
+"""
+input type for updating data in table "direct_message_reactions"
+"""
+input direct_message_reactions_set_input {
+  created_at: timestamptz
+  message_id: uuid
+  reaction: String
+  steam_id: bigint
+}
+
+"""aggregate stddev on columns"""
+type direct_message_reactions_stddev_fields {
+  steam_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type direct_message_reactions_stddev_pop_fields {
+  steam_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type direct_message_reactions_stddev_samp_fields {
+  steam_id: Float
+}
+
+"""
+Streaming cursor of the table "direct_message_reactions"
+"""
+input direct_message_reactions_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: direct_message_reactions_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input direct_message_reactions_stream_cursor_value_input {
+  created_at: timestamptz
+  message_id: uuid
+  reaction: String
+  steam_id: bigint
+}
+
+"""aggregate sum on columns"""
+type direct_message_reactions_sum_fields {
+  steam_id: bigint
+}
+
+"""
+update columns of table "direct_message_reactions"
+"""
+enum direct_message_reactions_update_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  message_id
+
+  """column name"""
+  reaction
+
+  """column name"""
+  steam_id
+}
+
+input direct_message_reactions_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: direct_message_reactions_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: direct_message_reactions_set_input
+
+  """filter the rows which have to be updated"""
+  where: direct_message_reactions_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type direct_message_reactions_var_pop_fields {
+  steam_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type direct_message_reactions_var_samp_fields {
+  steam_id: Float
+}
+
+"""aggregate variance on columns"""
+type direct_message_reactions_variance_fields {
+  steam_id: Float
+}
+
+"""
 columns and relationships of "direct_messages"
 """
 type direct_messages {
   created_at: timestamptz!
+  edited_at: timestamptz
   from_steam_id: bigint!
   id: uuid!
   message: String!
@@ -5836,6 +6737,7 @@ input direct_messages_bool_exp {
   _not: direct_messages_bool_exp
   _or: [direct_messages_bool_exp!]
   created_at: timestamptz_comparison_exp
+  edited_at: timestamptz_comparison_exp
   from_steam_id: bigint_comparison_exp
   id: uuid_comparison_exp
   message: String_comparison_exp
@@ -5866,6 +6768,7 @@ input type for inserting data into table "direct_messages"
 """
 input direct_messages_insert_input {
   created_at: timestamptz
+  edited_at: timestamptz
   from_steam_id: bigint
   id: uuid
   message: String
@@ -5876,6 +6779,7 @@ input direct_messages_insert_input {
 """aggregate max on columns"""
 type direct_messages_max_fields {
   created_at: timestamptz
+  edited_at: timestamptz
   from_steam_id: bigint
   id: uuid
   message: String
@@ -5886,6 +6790,7 @@ type direct_messages_max_fields {
 """aggregate min on columns"""
 type direct_messages_min_fields {
   created_at: timestamptz
+  edited_at: timestamptz
   from_steam_id: bigint
   id: uuid
   message: String
@@ -5916,6 +6821,7 @@ input direct_messages_on_conflict {
 """Ordering options when selecting data from "direct_messages"."""
 input direct_messages_order_by {
   created_at: order_by
+  edited_at: order_by
   from_steam_id: order_by
   id: order_by
   message: order_by
@@ -5934,6 +6840,9 @@ select columns of table "direct_messages"
 enum direct_messages_select_column {
   """column name"""
   created_at
+
+  """column name"""
+  edited_at
 
   """column name"""
   from_steam_id
@@ -5956,6 +6865,7 @@ input type for updating data in table "direct_messages"
 """
 input direct_messages_set_input {
   created_at: timestamptz
+  edited_at: timestamptz
   from_steam_id: bigint
   id: uuid
   message: String
@@ -5995,6 +6905,7 @@ input direct_messages_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input direct_messages_stream_cursor_value_input {
   created_at: timestamptz
+  edited_at: timestamptz
   from_steam_id: bigint
   id: uuid
   message: String
@@ -6014,6 +6925,9 @@ update columns of table "direct_messages"
 enum direct_messages_update_column {
   """column name"""
   created_at
+
+  """column name"""
+  edited_at
 
   """column name"""
   from_steam_id
@@ -15187,7 +16101,7 @@ enum e_sanction_types_enum {
   """Player is not able to participate in any activity"""
   ban
 
-  """Player cannot use text chat in game"""
+  """Player cannot use text chat in game or in website lobby chat"""
   gag
 
   """Player cannot use voice chat in game"""
@@ -15196,7 +16110,9 @@ enum e_sanction_types_enum {
   """Player muted and gagged"""
   silence
 
-  """Informational note on the player's record; never enforced, never expires"""
+  """
+  Informational note on the player's record; never enforced, never expires
+  """
   warning
 }
 
@@ -26049,6 +26965,7 @@ type game_server_nodes {
   A computed field, executes function "total_node_server_count"
   """
   total_server_count: Int
+  update_failed_at: timestamptz
   update_status: String
 
   """An object relationship"""
@@ -26246,6 +27163,7 @@ input game_server_nodes_bool_exp {
   supports_low_latency: Boolean_comparison_exp
   token: String_comparison_exp
   total_server_count: Int_comparison_exp
+  update_failed_at: timestamptz_comparison_exp
   update_status: String_comparison_exp
   version: game_versions_bool_exp
 }
@@ -26367,6 +27285,7 @@ input game_server_nodes_insert_input {
   supports_cpu_pinning: Boolean
   supports_low_latency: Boolean
   token: String
+  update_failed_at: timestamptz
   update_status: String
   version: game_versions_obj_rel_insert_input
 }
@@ -26404,6 +27323,7 @@ type game_server_nodes_max_fields {
   A computed field, executes function "total_node_server_count"
   """
   total_server_count: Int
+  update_failed_at: timestamptz
   update_status: String
 }
 
@@ -26433,6 +27353,7 @@ input game_server_nodes_max_order_by {
   shader_bake_status: order_by
   start_port_range: order_by
   token: order_by
+  update_failed_at: order_by
   update_status: order_by
 }
 
@@ -26469,6 +27390,7 @@ type game_server_nodes_min_fields {
   A computed field, executes function "total_node_server_count"
   """
   total_server_count: Int
+  update_failed_at: timestamptz
   update_status: String
 }
 
@@ -26498,6 +27420,7 @@ input game_server_nodes_min_order_by {
   shader_bake_status: order_by
   start_port_range: order_by
   token: order_by
+  update_failed_at: order_by
   update_status: order_by
 }
 
@@ -26582,6 +27505,7 @@ input game_server_nodes_order_by {
   supports_low_latency: order_by
   token: order_by
   total_server_count: order_by
+  update_failed_at: order_by
   update_status: order_by
   version: game_versions_order_by
 }
@@ -26730,6 +27654,9 @@ enum game_server_nodes_select_column {
   token
 
   """column name"""
+  update_failed_at
+
+  """column name"""
   update_status
 }
 
@@ -26836,6 +27763,7 @@ input game_server_nodes_set_input {
   supports_cpu_pinning: Boolean
   supports_low_latency: Boolean
   token: String
+  update_failed_at: timestamptz
   update_status: String
 }
 
@@ -27022,6 +27950,7 @@ input game_server_nodes_stream_cursor_value_input {
   supports_cpu_pinning: Boolean
   supports_low_latency: Boolean
   token: String
+  update_failed_at: timestamptz
   update_status: String
 }
 
@@ -27194,6 +28123,9 @@ enum game_server_nodes_update_column {
 
   """column name"""
   token
+
+  """column name"""
+  update_failed_at
 
   """column name"""
   update_status
@@ -27710,16 +28642,31 @@ columns and relationships of "gamedata_signature_validations"
 type gamedata_signature_validations {
   branch: String!
   build_id: Int!
+  changes(
+    """JSON select path"""
+    path: String
+  ): jsonb
 
   """An object relationship"""
-  game_version: game_versions!
+  game_server_node: game_server_nodes
+  game_server_node_id: String
+
+  """An object relationship"""
+  game_version: game_versions
   id: uuid!
+  previous_build_id: Int
+
+  """An object relationship"""
+  requested_by: players
+  requested_by_steam_id: bigint
   results(
     """JSON select path"""
     path: String
   ): jsonb
+  started_at: timestamptz
   status: String!
-  validated_at: timestamptz!
+  trigger: String
+  validated_at: timestamptz
 }
 
 """
@@ -27749,12 +28696,15 @@ type gamedata_signature_validations_aggregate_fields {
 
 """append existing jsonb value of filtered columns with new jsonb value"""
 input gamedata_signature_validations_append_input {
+  changes: jsonb
   results: jsonb
 }
 
 """aggregate avg on columns"""
 type gamedata_signature_validations_avg_fields {
   build_id: Float
+  previous_build_id: Float
+  requested_by_steam_id: Float
 }
 
 """
@@ -27766,10 +28716,18 @@ input gamedata_signature_validations_bool_exp {
   _or: [gamedata_signature_validations_bool_exp!]
   branch: String_comparison_exp
   build_id: Int_comparison_exp
+  changes: jsonb_comparison_exp
+  game_server_node: game_server_nodes_bool_exp
+  game_server_node_id: String_comparison_exp
   game_version: game_versions_bool_exp
   id: uuid_comparison_exp
+  previous_build_id: Int_comparison_exp
+  requested_by: players_bool_exp
+  requested_by_steam_id: bigint_comparison_exp
   results: jsonb_comparison_exp
+  started_at: timestamptz_comparison_exp
   status: String_comparison_exp
+  trigger: String_comparison_exp
   validated_at: timestamptz_comparison_exp
 }
 
@@ -27792,6 +28750,7 @@ enum gamedata_signature_validations_constraint {
 delete the field or element with specified path (for JSON arrays, negative integers count from the end)
 """
 input gamedata_signature_validations_delete_at_path_input {
+  changes: [String!]
   results: [String!]
 }
 
@@ -27799,6 +28758,7 @@ input gamedata_signature_validations_delete_at_path_input {
 delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
 """
 input gamedata_signature_validations_delete_elem_input {
+  changes: Int
   results: Int
 }
 
@@ -27806,6 +28766,7 @@ input gamedata_signature_validations_delete_elem_input {
 delete key/value pair or string element. key/value pairs are matched based on their key value
 """
 input gamedata_signature_validations_delete_key_input {
+  changes: String
   results: String
 }
 
@@ -27814,6 +28775,8 @@ input type for incrementing numeric columns in table "gamedata_signature_validat
 """
 input gamedata_signature_validations_inc_input {
   build_id: Int
+  previous_build_id: Int
+  requested_by_steam_id: bigint
 }
 
 """
@@ -27822,10 +28785,18 @@ input type for inserting data into table "gamedata_signature_validations"
 input gamedata_signature_validations_insert_input {
   branch: String
   build_id: Int
+  changes: jsonb
+  game_server_node: game_server_nodes_obj_rel_insert_input
+  game_server_node_id: String
   game_version: game_versions_obj_rel_insert_input
   id: uuid
+  previous_build_id: Int
+  requested_by: players_obj_rel_insert_input
+  requested_by_steam_id: bigint
   results: jsonb
+  started_at: timestamptz
   status: String
+  trigger: String
   validated_at: timestamptz
 }
 
@@ -27833,8 +28804,13 @@ input gamedata_signature_validations_insert_input {
 type gamedata_signature_validations_max_fields {
   branch: String
   build_id: Int
+  game_server_node_id: String
   id: uuid
+  previous_build_id: Int
+  requested_by_steam_id: bigint
+  started_at: timestamptz
   status: String
+  trigger: String
   validated_at: timestamptz
 }
 
@@ -27842,8 +28818,13 @@ type gamedata_signature_validations_max_fields {
 type gamedata_signature_validations_min_fields {
   branch: String
   build_id: Int
+  game_server_node_id: String
   id: uuid
+  previous_build_id: Int
+  requested_by_steam_id: bigint
+  started_at: timestamptz
   status: String
+  trigger: String
   validated_at: timestamptz
 }
 
@@ -27873,10 +28854,18 @@ Ordering options when selecting data from "gamedata_signature_validations".
 input gamedata_signature_validations_order_by {
   branch: order_by
   build_id: order_by
+  changes: order_by
+  game_server_node: game_server_nodes_order_by
+  game_server_node_id: order_by
   game_version: game_versions_order_by
   id: order_by
+  previous_build_id: order_by
+  requested_by: players_order_by
+  requested_by_steam_id: order_by
   results: order_by
+  started_at: order_by
   status: order_by
+  trigger: order_by
   validated_at: order_by
 }
 
@@ -27887,6 +28876,7 @@ input gamedata_signature_validations_pk_columns_input {
 
 """prepend existing jsonb value of filtered columns with new jsonb value"""
 input gamedata_signature_validations_prepend_input {
+  changes: jsonb
   results: jsonb
 }
 
@@ -27901,13 +28891,31 @@ enum gamedata_signature_validations_select_column {
   build_id
 
   """column name"""
+  changes
+
+  """column name"""
+  game_server_node_id
+
+  """column name"""
   id
+
+  """column name"""
+  previous_build_id
+
+  """column name"""
+  requested_by_steam_id
 
   """column name"""
   results
 
   """column name"""
+  started_at
+
+  """column name"""
   status
+
+  """column name"""
+  trigger
 
   """column name"""
   validated_at
@@ -27919,25 +28927,37 @@ input type for updating data in table "gamedata_signature_validations"
 input gamedata_signature_validations_set_input {
   branch: String
   build_id: Int
+  changes: jsonb
+  game_server_node_id: String
   id: uuid
+  previous_build_id: Int
+  requested_by_steam_id: bigint
   results: jsonb
+  started_at: timestamptz
   status: String
+  trigger: String
   validated_at: timestamptz
 }
 
 """aggregate stddev on columns"""
 type gamedata_signature_validations_stddev_fields {
   build_id: Float
+  previous_build_id: Float
+  requested_by_steam_id: Float
 }
 
 """aggregate stddev_pop on columns"""
 type gamedata_signature_validations_stddev_pop_fields {
   build_id: Float
+  previous_build_id: Float
+  requested_by_steam_id: Float
 }
 
 """aggregate stddev_samp on columns"""
 type gamedata_signature_validations_stddev_samp_fields {
   build_id: Float
+  previous_build_id: Float
+  requested_by_steam_id: Float
 }
 
 """
@@ -27955,15 +28975,23 @@ input gamedata_signature_validations_stream_cursor_input {
 input gamedata_signature_validations_stream_cursor_value_input {
   branch: String
   build_id: Int
+  changes: jsonb
+  game_server_node_id: String
   id: uuid
+  previous_build_id: Int
+  requested_by_steam_id: bigint
   results: jsonb
+  started_at: timestamptz
   status: String
+  trigger: String
   validated_at: timestamptz
 }
 
 """aggregate sum on columns"""
 type gamedata_signature_validations_sum_fields {
   build_id: Int
+  previous_build_id: Int
+  requested_by_steam_id: bigint
 }
 
 """
@@ -27977,13 +29005,31 @@ enum gamedata_signature_validations_update_column {
   build_id
 
   """column name"""
+  changes
+
+  """column name"""
+  game_server_node_id
+
+  """column name"""
   id
+
+  """column name"""
+  previous_build_id
+
+  """column name"""
+  requested_by_steam_id
 
   """column name"""
   results
 
   """column name"""
+  started_at
+
+  """column name"""
   status
+
+  """column name"""
+  trigger
 
   """column name"""
   validated_at
@@ -28024,16 +29070,22 @@ input gamedata_signature_validations_updates {
 """aggregate var_pop on columns"""
 type gamedata_signature_validations_var_pop_fields {
   build_id: Float
+  previous_build_id: Float
+  requested_by_steam_id: Float
 }
 
 """aggregate var_samp on columns"""
 type gamedata_signature_validations_var_samp_fields {
   build_id: Float
+  previous_build_id: Float
+  requested_by_steam_id: Float
 }
 
 """aggregate variance on columns"""
 type gamedata_signature_validations_variance_fields {
   build_id: Float
+  previous_build_id: Float
+  requested_by_steam_id: Float
 }
 
 input get_event_leaderboard_args {
@@ -34004,6 +35056,10 @@ columns and relationships of "map_asset_builds"
 """
 type map_asset_builds {
   build_id: String!
+  changes(
+    """JSON select path"""
+    path: String
+  ): jsonb
   created_at: timestamptz!
   error: String
   failed(
@@ -34015,13 +35071,23 @@ type map_asset_builds {
     path: String
   ): jsonb
   finished_at: timestamptz
+
+  """An object relationship"""
+  game_server_node: game_server_nodes
+  game_server_node_id: String
   manifest: String
   maps(
     """JSON select path"""
     path: String
   ): jsonb
+  previous_build_id: String
+
+  """An object relationship"""
+  requested_by: players
+  requested_by_steam_id: bigint
   started_at: timestamptz
   status: String!
+  trigger: String
   updated_at: timestamptz!
 }
 
@@ -34037,16 +35103,30 @@ type map_asset_builds_aggregate {
 aggregate fields of "map_asset_builds"
 """
 type map_asset_builds_aggregate_fields {
+  avg: map_asset_builds_avg_fields
   count(columns: [map_asset_builds_select_column!], distinct: Boolean): Int!
   max: map_asset_builds_max_fields
   min: map_asset_builds_min_fields
+  stddev: map_asset_builds_stddev_fields
+  stddev_pop: map_asset_builds_stddev_pop_fields
+  stddev_samp: map_asset_builds_stddev_samp_fields
+  sum: map_asset_builds_sum_fields
+  var_pop: map_asset_builds_var_pop_fields
+  var_samp: map_asset_builds_var_samp_fields
+  variance: map_asset_builds_variance_fields
 }
 
 """append existing jsonb value of filtered columns with new jsonb value"""
 input map_asset_builds_append_input {
+  changes: jsonb
   failed: jsonb
   failed_view: jsonb
   maps: jsonb
+}
+
+"""aggregate avg on columns"""
+type map_asset_builds_avg_fields {
+  requested_by_steam_id: Float
 }
 
 """
@@ -34057,15 +35137,22 @@ input map_asset_builds_bool_exp {
   _not: map_asset_builds_bool_exp
   _or: [map_asset_builds_bool_exp!]
   build_id: String_comparison_exp
+  changes: jsonb_comparison_exp
   created_at: timestamptz_comparison_exp
   error: String_comparison_exp
   failed: jsonb_comparison_exp
   failed_view: jsonb_comparison_exp
   finished_at: timestamptz_comparison_exp
+  game_server_node: game_server_nodes_bool_exp
+  game_server_node_id: String_comparison_exp
   manifest: String_comparison_exp
   maps: jsonb_comparison_exp
+  previous_build_id: String_comparison_exp
+  requested_by: players_bool_exp
+  requested_by_steam_id: bigint_comparison_exp
   started_at: timestamptz_comparison_exp
   status: String_comparison_exp
+  trigger: String_comparison_exp
   updated_at: timestamptz_comparison_exp
 }
 
@@ -34083,6 +35170,7 @@ enum map_asset_builds_constraint {
 delete the field or element with specified path (for JSON arrays, negative integers count from the end)
 """
 input map_asset_builds_delete_at_path_input {
+  changes: [String!]
   failed: [String!]
   failed_view: [String!]
   maps: [String!]
@@ -34092,6 +35180,7 @@ input map_asset_builds_delete_at_path_input {
 delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
 """
 input map_asset_builds_delete_elem_input {
+  changes: Int
   failed: Int
   failed_view: Int
   maps: Int
@@ -34101,9 +35190,17 @@ input map_asset_builds_delete_elem_input {
 delete key/value pair or string element. key/value pairs are matched based on their key value
 """
 input map_asset_builds_delete_key_input {
+  changes: String
   failed: String
   failed_view: String
   maps: String
+}
+
+"""
+input type for incrementing numeric columns in table "map_asset_builds"
+"""
+input map_asset_builds_inc_input {
+  requested_by_steam_id: bigint
 }
 
 """
@@ -34111,15 +35208,22 @@ input type for inserting data into table "map_asset_builds"
 """
 input map_asset_builds_insert_input {
   build_id: String
+  changes: jsonb
   created_at: timestamptz
   error: String
   failed: jsonb
   failed_view: jsonb
   finished_at: timestamptz
+  game_server_node: game_server_nodes_obj_rel_insert_input
+  game_server_node_id: String
   manifest: String
   maps: jsonb
+  previous_build_id: String
+  requested_by: players_obj_rel_insert_input
+  requested_by_steam_id: bigint
   started_at: timestamptz
   status: String
+  trigger: String
   updated_at: timestamptz
 }
 
@@ -34129,9 +35233,13 @@ type map_asset_builds_max_fields {
   created_at: timestamptz
   error: String
   finished_at: timestamptz
+  game_server_node_id: String
   manifest: String
+  previous_build_id: String
+  requested_by_steam_id: bigint
   started_at: timestamptz
   status: String
+  trigger: String
   updated_at: timestamptz
 }
 
@@ -34141,9 +35249,13 @@ type map_asset_builds_min_fields {
   created_at: timestamptz
   error: String
   finished_at: timestamptz
+  game_server_node_id: String
   manifest: String
+  previous_build_id: String
+  requested_by_steam_id: bigint
   started_at: timestamptz
   status: String
+  trigger: String
   updated_at: timestamptz
 }
 
@@ -34170,15 +35282,22 @@ input map_asset_builds_on_conflict {
 """Ordering options when selecting data from "map_asset_builds"."""
 input map_asset_builds_order_by {
   build_id: order_by
+  changes: order_by
   created_at: order_by
   error: order_by
   failed: order_by
   failed_view: order_by
   finished_at: order_by
+  game_server_node: game_server_nodes_order_by
+  game_server_node_id: order_by
   manifest: order_by
   maps: order_by
+  previous_build_id: order_by
+  requested_by: players_order_by
+  requested_by_steam_id: order_by
   started_at: order_by
   status: order_by
+  trigger: order_by
   updated_at: order_by
 }
 
@@ -34189,6 +35308,7 @@ input map_asset_builds_pk_columns_input {
 
 """prepend existing jsonb value of filtered columns with new jsonb value"""
 input map_asset_builds_prepend_input {
+  changes: jsonb
   failed: jsonb
   failed_view: jsonb
   maps: jsonb
@@ -34200,6 +35320,9 @@ select columns of table "map_asset_builds"
 enum map_asset_builds_select_column {
   """column name"""
   build_id
+
+  """column name"""
+  changes
 
   """column name"""
   created_at
@@ -34217,16 +35340,28 @@ enum map_asset_builds_select_column {
   finished_at
 
   """column name"""
+  game_server_node_id
+
+  """column name"""
   manifest
 
   """column name"""
   maps
 
   """column name"""
+  previous_build_id
+
+  """column name"""
+  requested_by_steam_id
+
+  """column name"""
   started_at
 
   """column name"""
   status
+
+  """column name"""
+  trigger
 
   """column name"""
   updated_at
@@ -34237,16 +35372,36 @@ input type for updating data in table "map_asset_builds"
 """
 input map_asset_builds_set_input {
   build_id: String
+  changes: jsonb
   created_at: timestamptz
   error: String
   failed: jsonb
   failed_view: jsonb
   finished_at: timestamptz
+  game_server_node_id: String
   manifest: String
   maps: jsonb
+  previous_build_id: String
+  requested_by_steam_id: bigint
   started_at: timestamptz
   status: String
+  trigger: String
   updated_at: timestamptz
+}
+
+"""aggregate stddev on columns"""
+type map_asset_builds_stddev_fields {
+  requested_by_steam_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type map_asset_builds_stddev_pop_fields {
+  requested_by_steam_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type map_asset_builds_stddev_samp_fields {
+  requested_by_steam_id: Float
 }
 
 """
@@ -34263,16 +35418,26 @@ input map_asset_builds_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input map_asset_builds_stream_cursor_value_input {
   build_id: String
+  changes: jsonb
   created_at: timestamptz
   error: String
   failed: jsonb
   failed_view: jsonb
   finished_at: timestamptz
+  game_server_node_id: String
   manifest: String
   maps: jsonb
+  previous_build_id: String
+  requested_by_steam_id: bigint
   started_at: timestamptz
   status: String
+  trigger: String
   updated_at: timestamptz
+}
+
+"""aggregate sum on columns"""
+type map_asset_builds_sum_fields {
+  requested_by_steam_id: bigint
 }
 
 """
@@ -34281,6 +35446,9 @@ update columns of table "map_asset_builds"
 enum map_asset_builds_update_column {
   """column name"""
   build_id
+
+  """column name"""
+  changes
 
   """column name"""
   created_at
@@ -34298,16 +35466,28 @@ enum map_asset_builds_update_column {
   finished_at
 
   """column name"""
+  game_server_node_id
+
+  """column name"""
   manifest
 
   """column name"""
   maps
 
   """column name"""
+  previous_build_id
+
+  """column name"""
+  requested_by_steam_id
+
+  """column name"""
   started_at
 
   """column name"""
   status
+
+  """column name"""
+  trigger
 
   """column name"""
   updated_at
@@ -34332,6 +35512,9 @@ input map_asset_builds_updates {
   """
   _delete_key: map_asset_builds_delete_key_input
 
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: map_asset_builds_inc_input
+
   """prepend existing jsonb value of filtered columns with new jsonb value"""
   _prepend: map_asset_builds_prepend_input
 
@@ -34340,6 +35523,21 @@ input map_asset_builds_updates {
 
   """filter the rows which have to be updated"""
   where: map_asset_builds_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type map_asset_builds_var_pop_fields {
+  requested_by_steam_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type map_asset_builds_var_samp_fields {
+  requested_by_steam_id: Float
+}
+
+"""aggregate variance on columns"""
+type map_asset_builds_variance_fields {
+  requested_by_steam_id: Float
 }
 
 """
@@ -45286,9 +46484,9 @@ type mutation_root {
   bakeShaders(game_server_node_id: uuid!): SuccessOutput
 
   """
-  Build and publish map assets from a node's CS2 install (5stack.gg only)
+  Build and publish map assets for the current CS2 build on a chosen or automatically picked node (5stack.gg only)
   """
-  buildMapAssets(game_server_node_id: uuid!): SuccessOutput
+  buildMapAssets(force: Boolean, game_server_node_id: String): SuccessOutput
 
   """callForOrganizer"""
   callForOrganizer(match_id: String!): SuccessOutput
@@ -45515,6 +46713,32 @@ type mutation_root {
   delete_broadcast_huds_by_pk(id: uuid!): broadcast_huds
 
   """
+  delete data from the table: "chat_message_deletions"
+  """
+  delete_chat_message_deletions(
+    """filter the rows which have to be deleted"""
+    where: chat_message_deletions_bool_exp!
+  ): chat_message_deletions_mutation_response
+
+  """
+  delete single row from the table: "chat_message_deletions"
+  """
+  delete_chat_message_deletions_by_pk(id: uuid!): chat_message_deletions
+
+  """
+  delete data from the table: "chat_message_edits"
+  """
+  delete_chat_message_edits(
+    """filter the rows which have to be deleted"""
+    where: chat_message_edits_bool_exp!
+  ): chat_message_edits_mutation_response
+
+  """
+  delete single row from the table: "chat_message_edits"
+  """
+  delete_chat_message_edits_by_pk(id: uuid!): chat_message_edits
+
+  """
   delete data from the table: "chat_read_state"
   """
   delete_chat_read_state(
@@ -45578,6 +46802,19 @@ type mutation_root {
   delete single row from the table: "direct_conversations"
   """
   delete_direct_conversations_by_pk(room_id: String!, steam_id: bigint!): direct_conversations
+
+  """
+  delete data from the table: "direct_message_reactions"
+  """
+  delete_direct_message_reactions(
+    """filter the rows which have to be deleted"""
+    where: direct_message_reactions_bool_exp!
+  ): direct_message_reactions_mutation_response
+
+  """
+  delete single row from the table: "direct_message_reactions"
+  """
+  delete_direct_message_reactions_by_pk(message_id: uuid!, reaction: String!, steam_id: bigint!): direct_message_reactions
 
   """
   delete data from the table: "direct_messages"
@@ -47130,6 +48367,19 @@ type mutation_root {
   delete_player_assists_by_pk(attacked_steam_id: bigint!, attacker_steam_id: bigint!, match_map_id: uuid!, time: timestamptz!): player_assists
 
   """
+  delete data from the table: "player_blocks"
+  """
+  delete_player_blocks(
+    """filter the rows which have to be deleted"""
+    where: player_blocks_bool_exp!
+  ): player_blocks_mutation_response
+
+  """
+  delete single row from the table: "player_blocks"
+  """
+  delete_player_blocks_by_pk(blocked_steam_id: bigint!, blocker_steam_id: bigint!): player_blocks
+
+  """
   delete data from the table: "player_damages"
   """
   delete_player_damages(
@@ -48126,6 +49376,7 @@ type mutation_root {
 
   """Grant an award to a player or team"""
   grantAward(award_id: uuid!, event_id: uuid, league_season_id: uuid, note: String, player_steam_id: String, season_id: uuid, team_id: uuid, tournament_id: uuid): AwardRecipient
+  importSteamMatchShareCode(share_code: String!): PendingMatchImportActionOutput
 
   """Seed the utility library from an operator-supplied payload"""
   importUtilityLineups(dry_run: Boolean, payload: jsonb!): UtilityImportOutput
@@ -48263,6 +49514,50 @@ type mutation_root {
   ): broadcast_huds
 
   """
+  insert data into the table: "chat_message_deletions"
+  """
+  insert_chat_message_deletions(
+    """the rows to be inserted"""
+    objects: [chat_message_deletions_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: chat_message_deletions_on_conflict
+  ): chat_message_deletions_mutation_response
+
+  """
+  insert a single row into the table: "chat_message_deletions"
+  """
+  insert_chat_message_deletions_one(
+    """the row to be inserted"""
+    object: chat_message_deletions_insert_input!
+
+    """upsert condition"""
+    on_conflict: chat_message_deletions_on_conflict
+  ): chat_message_deletions
+
+  """
+  insert data into the table: "chat_message_edits"
+  """
+  insert_chat_message_edits(
+    """the rows to be inserted"""
+    objects: [chat_message_edits_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: chat_message_edits_on_conflict
+  ): chat_message_edits_mutation_response
+
+  """
+  insert a single row into the table: "chat_message_edits"
+  """
+  insert_chat_message_edits_one(
+    """the row to be inserted"""
+    object: chat_message_edits_insert_input!
+
+    """upsert condition"""
+    on_conflict: chat_message_edits_on_conflict
+  ): chat_message_edits
+
+  """
   insert data into the table: "chat_read_state"
   """
   insert_chat_read_state(
@@ -48371,6 +49666,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: direct_conversations_on_conflict
   ): direct_conversations
+
+  """
+  insert data into the table: "direct_message_reactions"
+  """
+  insert_direct_message_reactions(
+    """the rows to be inserted"""
+    objects: [direct_message_reactions_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: direct_message_reactions_on_conflict
+  ): direct_message_reactions_mutation_response
+
+  """
+  insert a single row into the table: "direct_message_reactions"
+  """
+  insert_direct_message_reactions_one(
+    """the row to be inserted"""
+    object: direct_message_reactions_insert_input!
+
+    """upsert condition"""
+    on_conflict: direct_message_reactions_on_conflict
+  ): direct_message_reactions
 
   """
   insert data into the table: "direct_messages"
@@ -51001,6 +52318,28 @@ type mutation_root {
   ): player_assists
 
   """
+  insert data into the table: "player_blocks"
+  """
+  insert_player_blocks(
+    """the rows to be inserted"""
+    objects: [player_blocks_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: player_blocks_on_conflict
+  ): player_blocks_mutation_response
+
+  """
+  insert a single row into the table: "player_blocks"
+  """
+  insert_player_blocks_one(
+    """the row to be inserted"""
+    object: player_blocks_insert_input!
+
+    """upsert condition"""
+    on_conflict: player_blocks_on_conflict
+  ): player_blocks
+
+  """
   insert data into the table: "player_damages"
   """
   insert_player_damages(
@@ -53316,6 +54655,74 @@ type mutation_root {
   ): [broadcast_huds_mutation_response]
 
   """
+  update data of the table: "chat_message_deletions"
+  """
+  update_chat_message_deletions(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: chat_message_deletions_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: chat_message_deletions_set_input
+
+    """filter the rows which have to be updated"""
+    where: chat_message_deletions_bool_exp!
+  ): chat_message_deletions_mutation_response
+
+  """
+  update single row of the table: "chat_message_deletions"
+  """
+  update_chat_message_deletions_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: chat_message_deletions_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: chat_message_deletions_set_input
+    pk_columns: chat_message_deletions_pk_columns_input!
+  ): chat_message_deletions
+
+  """
+  update multiples rows of table: "chat_message_deletions"
+  """
+  update_chat_message_deletions_many(
+    """updates to execute, in order"""
+    updates: [chat_message_deletions_updates!]!
+  ): [chat_message_deletions_mutation_response]
+
+  """
+  update data of the table: "chat_message_edits"
+  """
+  update_chat_message_edits(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: chat_message_edits_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: chat_message_edits_set_input
+
+    """filter the rows which have to be updated"""
+    where: chat_message_edits_bool_exp!
+  ): chat_message_edits_mutation_response
+
+  """
+  update single row of the table: "chat_message_edits"
+  """
+  update_chat_message_edits_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: chat_message_edits_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: chat_message_edits_set_input
+    pk_columns: chat_message_edits_pk_columns_input!
+  ): chat_message_edits
+
+  """
+  update multiples rows of table: "chat_message_edits"
+  """
+  update_chat_message_edits_many(
+    """updates to execute, in order"""
+    updates: [chat_message_edits_updates!]!
+  ): [chat_message_edits_mutation_response]
+
+  """
   update data of the table: "chat_read_state"
   """
   update_chat_read_state(
@@ -53568,6 +54975,40 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [direct_conversations_updates!]!
   ): [direct_conversations_mutation_response]
+
+  """
+  update data of the table: "direct_message_reactions"
+  """
+  update_direct_message_reactions(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: direct_message_reactions_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: direct_message_reactions_set_input
+
+    """filter the rows which have to be updated"""
+    where: direct_message_reactions_bool_exp!
+  ): direct_message_reactions_mutation_response
+
+  """
+  update single row of the table: "direct_message_reactions"
+  """
+  update_direct_message_reactions_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: direct_message_reactions_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: direct_message_reactions_set_input
+    pk_columns: direct_message_reactions_pk_columns_input!
+  ): direct_message_reactions
+
+  """
+  update multiples rows of table: "direct_message_reactions"
+  """
+  update_direct_message_reactions_many(
+    """updates to execute, in order"""
+    updates: [direct_message_reactions_updates!]!
+  ): [direct_message_reactions_mutation_response]
 
   """
   update data of the table: "direct_messages"
@@ -56591,6 +58032,9 @@ type mutation_root {
     """
     _delete_key: map_asset_builds_delete_key_input
 
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: map_asset_builds_inc_input
+
     """prepend existing jsonb value of filtered columns with new jsonb value"""
     _prepend: map_asset_builds_prepend_input
 
@@ -56622,6 +58066,9 @@ type mutation_root {
     delete key/value pair or string element. key/value pairs are matched based on their key value
     """
     _delete_key: map_asset_builds_delete_key_input
+
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: map_asset_builds_inc_input
 
     """prepend existing jsonb value of filtered columns with new jsonb value"""
     _prepend: map_asset_builds_prepend_input
@@ -57699,6 +59146,40 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [player_assists_updates!]!
   ): [player_assists_mutation_response]
+
+  """
+  update data of the table: "player_blocks"
+  """
+  update_player_blocks(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_blocks_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_blocks_set_input
+
+    """filter the rows which have to be updated"""
+    where: player_blocks_bool_exp!
+  ): player_blocks_mutation_response
+
+  """
+  update single row of the table: "player_blocks"
+  """
+  update_player_blocks_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_blocks_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_blocks_set_input
+    pk_columns: player_blocks_pk_columns_input!
+  ): player_blocks
+
+  """
+  update multiples rows of table: "player_blocks"
+  """
+  update_player_blocks_many(
+    """updates to execute, in order"""
+    updates: [player_blocks_updates!]!
+  ): [player_blocks_mutation_response]
 
   """
   update data of the table: "player_damages"
@@ -60467,9 +61948,9 @@ type mutation_root {
   ): [v_team_stage_results_mutation_response]
 
   """
-  Validate CS2 gamedata signatures/offsets on a node (5stack.gg test instance only)
+  Validate CS2 gamedata for the current build on a chosen or automatically picked node (5stack.gg only)
   """
-  validateGamedata(game_server_node_id: uuid!): SuccessOutput
+  validateGamedata(game_server_node_id: String): SuccessOutput
 
   """
   Spawn a per-user game-streamer pod to play back a finished match's demo
@@ -65164,6 +66645,245 @@ input player_assists_variance_order_by {
   attacked_steam_id: order_by
   attacker_steam_id: order_by
   round: order_by
+}
+
+"""
+columns and relationships of "player_blocks"
+"""
+type player_blocks {
+  """An object relationship"""
+  blocked: players!
+  blocked_steam_id: bigint!
+  blocker_steam_id: bigint!
+  created_at: timestamptz!
+}
+
+"""
+aggregated selection of "player_blocks"
+"""
+type player_blocks_aggregate {
+  aggregate: player_blocks_aggregate_fields
+  nodes: [player_blocks!]!
+}
+
+"""
+aggregate fields of "player_blocks"
+"""
+type player_blocks_aggregate_fields {
+  avg: player_blocks_avg_fields
+  count(columns: [player_blocks_select_column!], distinct: Boolean): Int!
+  max: player_blocks_max_fields
+  min: player_blocks_min_fields
+  stddev: player_blocks_stddev_fields
+  stddev_pop: player_blocks_stddev_pop_fields
+  stddev_samp: player_blocks_stddev_samp_fields
+  sum: player_blocks_sum_fields
+  var_pop: player_blocks_var_pop_fields
+  var_samp: player_blocks_var_samp_fields
+  variance: player_blocks_variance_fields
+}
+
+"""aggregate avg on columns"""
+type player_blocks_avg_fields {
+  blocked_steam_id: Float
+  blocker_steam_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "player_blocks". All fields are combined with a logical 'AND'.
+"""
+input player_blocks_bool_exp {
+  _and: [player_blocks_bool_exp!]
+  _not: player_blocks_bool_exp
+  _or: [player_blocks_bool_exp!]
+  blocked: players_bool_exp
+  blocked_steam_id: bigint_comparison_exp
+  blocker_steam_id: bigint_comparison_exp
+  created_at: timestamptz_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "player_blocks"
+"""
+enum player_blocks_constraint {
+  """
+  unique or primary key constraint on columns "blocker_steam_id", "blocked_steam_id"
+  """
+  player_blocks_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "player_blocks"
+"""
+input player_blocks_inc_input {
+  blocked_steam_id: bigint
+  blocker_steam_id: bigint
+}
+
+"""
+input type for inserting data into table "player_blocks"
+"""
+input player_blocks_insert_input {
+  blocked: players_obj_rel_insert_input
+  blocked_steam_id: bigint
+  blocker_steam_id: bigint
+  created_at: timestamptz
+}
+
+"""aggregate max on columns"""
+type player_blocks_max_fields {
+  blocked_steam_id: bigint
+  blocker_steam_id: bigint
+  created_at: timestamptz
+}
+
+"""aggregate min on columns"""
+type player_blocks_min_fields {
+  blocked_steam_id: bigint
+  blocker_steam_id: bigint
+  created_at: timestamptz
+}
+
+"""
+response of any mutation on the table "player_blocks"
+"""
+type player_blocks_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [player_blocks!]!
+}
+
+"""
+on_conflict condition type for table "player_blocks"
+"""
+input player_blocks_on_conflict {
+  constraint: player_blocks_constraint!
+  update_columns: [player_blocks_update_column!]! = []
+  where: player_blocks_bool_exp
+}
+
+"""Ordering options when selecting data from "player_blocks"."""
+input player_blocks_order_by {
+  blocked: players_order_by
+  blocked_steam_id: order_by
+  blocker_steam_id: order_by
+  created_at: order_by
+}
+
+"""primary key columns input for table: player_blocks"""
+input player_blocks_pk_columns_input {
+  blocked_steam_id: bigint!
+  blocker_steam_id: bigint!
+}
+
+"""
+select columns of table "player_blocks"
+"""
+enum player_blocks_select_column {
+  """column name"""
+  blocked_steam_id
+
+  """column name"""
+  blocker_steam_id
+
+  """column name"""
+  created_at
+}
+
+"""
+input type for updating data in table "player_blocks"
+"""
+input player_blocks_set_input {
+  blocked_steam_id: bigint
+  blocker_steam_id: bigint
+  created_at: timestamptz
+}
+
+"""aggregate stddev on columns"""
+type player_blocks_stddev_fields {
+  blocked_steam_id: Float
+  blocker_steam_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type player_blocks_stddev_pop_fields {
+  blocked_steam_id: Float
+  blocker_steam_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type player_blocks_stddev_samp_fields {
+  blocked_steam_id: Float
+  blocker_steam_id: Float
+}
+
+"""
+Streaming cursor of the table "player_blocks"
+"""
+input player_blocks_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: player_blocks_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input player_blocks_stream_cursor_value_input {
+  blocked_steam_id: bigint
+  blocker_steam_id: bigint
+  created_at: timestamptz
+}
+
+"""aggregate sum on columns"""
+type player_blocks_sum_fields {
+  blocked_steam_id: bigint
+  blocker_steam_id: bigint
+}
+
+"""
+update columns of table "player_blocks"
+"""
+enum player_blocks_update_column {
+  """column name"""
+  blocked_steam_id
+
+  """column name"""
+  blocker_steam_id
+
+  """column name"""
+  created_at
+}
+
+input player_blocks_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: player_blocks_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: player_blocks_set_input
+
+  """filter the rows which have to be updated"""
+  where: player_blocks_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type player_blocks_var_pop_fields {
+  blocked_steam_id: Float
+  blocker_steam_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type player_blocks_var_samp_fields {
+  blocked_steam_id: Float
+  blocker_steam_id: Float
+}
+
+"""aggregate variance on columns"""
+type player_blocks_variance_fields {
+  blocked_steam_id: Float
+  blocker_steam_id: Float
 }
 
 """
@@ -83136,6 +84856,96 @@ type query_root {
   broadcast_huds_by_pk(id: uuid!): broadcast_huds
 
   """
+  fetch data from the table: "chat_message_deletions"
+  """
+  chat_message_deletions(
+    """distinct select on columns"""
+    distinct_on: [chat_message_deletions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [chat_message_deletions_order_by!]
+
+    """filter the rows returned"""
+    where: chat_message_deletions_bool_exp
+  ): [chat_message_deletions!]!
+
+  """
+  fetch aggregated fields from the table: "chat_message_deletions"
+  """
+  chat_message_deletions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [chat_message_deletions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [chat_message_deletions_order_by!]
+
+    """filter the rows returned"""
+    where: chat_message_deletions_bool_exp
+  ): chat_message_deletions_aggregate!
+
+  """
+  fetch data from the table: "chat_message_deletions" using primary key columns
+  """
+  chat_message_deletions_by_pk(id: uuid!): chat_message_deletions
+
+  """
+  fetch data from the table: "chat_message_edits"
+  """
+  chat_message_edits(
+    """distinct select on columns"""
+    distinct_on: [chat_message_edits_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [chat_message_edits_order_by!]
+
+    """filter the rows returned"""
+    where: chat_message_edits_bool_exp
+  ): [chat_message_edits!]!
+
+  """
+  fetch aggregated fields from the table: "chat_message_edits"
+  """
+  chat_message_edits_aggregate(
+    """distinct select on columns"""
+    distinct_on: [chat_message_edits_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [chat_message_edits_order_by!]
+
+    """filter the rows returned"""
+    where: chat_message_edits_bool_exp
+  ): chat_message_edits_aggregate!
+
+  """
+  fetch data from the table: "chat_message_edits" using primary key columns
+  """
+  chat_message_edits_by_pk(id: uuid!): chat_message_edits
+
+  """
   fetch data from the table: "chat_read_state"
   """
   chat_read_state(
@@ -83356,6 +85166,51 @@ type query_root {
   fetch data from the table: "direct_conversations" using primary key columns
   """
   direct_conversations_by_pk(room_id: String!, steam_id: bigint!): direct_conversations
+
+  """
+  fetch data from the table: "direct_message_reactions"
+  """
+  direct_message_reactions(
+    """distinct select on columns"""
+    distinct_on: [direct_message_reactions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [direct_message_reactions_order_by!]
+
+    """filter the rows returned"""
+    where: direct_message_reactions_bool_exp
+  ): [direct_message_reactions!]!
+
+  """
+  fetch aggregated fields from the table: "direct_message_reactions"
+  """
+  direct_message_reactions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [direct_message_reactions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [direct_message_reactions_order_by!]
+
+    """filter the rows returned"""
+    where: direct_message_reactions_bool_exp
+  ): direct_message_reactions_aggregate!
+
+  """
+  fetch data from the table: "direct_message_reactions" using primary key columns
+  """
+  direct_message_reactions_by_pk(message_id: uuid!, reaction: String!, steam_id: bigint!): direct_message_reactions
 
   """
   fetch data from the table: "direct_messages"
@@ -88932,6 +90787,49 @@ type query_root {
 
   """fetch data from the table: "player_assists" using primary key columns"""
   player_assists_by_pk(attacked_steam_id: bigint!, attacker_steam_id: bigint!, match_map_id: uuid!, time: timestamptz!): player_assists
+
+  """
+  fetch data from the table: "player_blocks"
+  """
+  player_blocks(
+    """distinct select on columns"""
+    distinct_on: [player_blocks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_blocks_order_by!]
+
+    """filter the rows returned"""
+    where: player_blocks_bool_exp
+  ): [player_blocks!]!
+
+  """
+  fetch aggregated fields from the table: "player_blocks"
+  """
+  player_blocks_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_blocks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_blocks_order_by!]
+
+    """filter the rows returned"""
+    where: player_blocks_bool_exp
+  ): player_blocks_aggregate!
+
+  """fetch data from the table: "player_blocks" using primary key columns"""
+  player_blocks_by_pk(blocked_steam_id: bigint!, blocker_steam_id: bigint!): player_blocks
 
   """
   fetch data from the table: "player_career_stats_v"
@@ -96709,6 +98607,124 @@ type subscription_root {
   ): [broadcast_huds!]!
 
   """
+  fetch data from the table: "chat_message_deletions"
+  """
+  chat_message_deletions(
+    """distinct select on columns"""
+    distinct_on: [chat_message_deletions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [chat_message_deletions_order_by!]
+
+    """filter the rows returned"""
+    where: chat_message_deletions_bool_exp
+  ): [chat_message_deletions!]!
+
+  """
+  fetch aggregated fields from the table: "chat_message_deletions"
+  """
+  chat_message_deletions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [chat_message_deletions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [chat_message_deletions_order_by!]
+
+    """filter the rows returned"""
+    where: chat_message_deletions_bool_exp
+  ): chat_message_deletions_aggregate!
+
+  """
+  fetch data from the table: "chat_message_deletions" using primary key columns
+  """
+  chat_message_deletions_by_pk(id: uuid!): chat_message_deletions
+
+  """
+  fetch data from the table in a streaming manner: "chat_message_deletions"
+  """
+  chat_message_deletions_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [chat_message_deletions_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: chat_message_deletions_bool_exp
+  ): [chat_message_deletions!]!
+
+  """
+  fetch data from the table: "chat_message_edits"
+  """
+  chat_message_edits(
+    """distinct select on columns"""
+    distinct_on: [chat_message_edits_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [chat_message_edits_order_by!]
+
+    """filter the rows returned"""
+    where: chat_message_edits_bool_exp
+  ): [chat_message_edits!]!
+
+  """
+  fetch aggregated fields from the table: "chat_message_edits"
+  """
+  chat_message_edits_aggregate(
+    """distinct select on columns"""
+    distinct_on: [chat_message_edits_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [chat_message_edits_order_by!]
+
+    """filter the rows returned"""
+    where: chat_message_edits_bool_exp
+  ): chat_message_edits_aggregate!
+
+  """
+  fetch data from the table: "chat_message_edits" using primary key columns
+  """
+  chat_message_edits_by_pk(id: uuid!): chat_message_edits
+
+  """
+  fetch data from the table in a streaming manner: "chat_message_edits"
+  """
+  chat_message_edits_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [chat_message_edits_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: chat_message_edits_bool_exp
+  ): [chat_message_edits!]!
+
+  """
   fetch data from the table: "chat_read_state"
   """
   chat_read_state(
@@ -96992,6 +99008,65 @@ type subscription_root {
     """filter the rows returned"""
     where: direct_conversations_bool_exp
   ): [direct_conversations!]!
+
+  """
+  fetch data from the table: "direct_message_reactions"
+  """
+  direct_message_reactions(
+    """distinct select on columns"""
+    distinct_on: [direct_message_reactions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [direct_message_reactions_order_by!]
+
+    """filter the rows returned"""
+    where: direct_message_reactions_bool_exp
+  ): [direct_message_reactions!]!
+
+  """
+  fetch aggregated fields from the table: "direct_message_reactions"
+  """
+  direct_message_reactions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [direct_message_reactions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [direct_message_reactions_order_by!]
+
+    """filter the rows returned"""
+    where: direct_message_reactions_bool_exp
+  ): direct_message_reactions_aggregate!
+
+  """
+  fetch data from the table: "direct_message_reactions" using primary key columns
+  """
+  direct_message_reactions_by_pk(message_id: uuid!, reaction: String!, steam_id: bigint!): direct_message_reactions
+
+  """
+  fetch data from the table in a streaming manner: "direct_message_reactions"
+  """
+  direct_message_reactions_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [direct_message_reactions_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: direct_message_reactions_bool_exp
+  ): [direct_message_reactions!]!
 
   """
   fetch data from the table: "direct_messages"
@@ -104180,6 +106255,63 @@ type subscription_root {
     """filter the rows returned"""
     where: player_assists_bool_exp
   ): [player_assists!]!
+
+  """
+  fetch data from the table: "player_blocks"
+  """
+  player_blocks(
+    """distinct select on columns"""
+    distinct_on: [player_blocks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_blocks_order_by!]
+
+    """filter the rows returned"""
+    where: player_blocks_bool_exp
+  ): [player_blocks!]!
+
+  """
+  fetch aggregated fields from the table: "player_blocks"
+  """
+  player_blocks_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_blocks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_blocks_order_by!]
+
+    """filter the rows returned"""
+    where: player_blocks_bool_exp
+  ): player_blocks_aggregate!
+
+  """fetch data from the table: "player_blocks" using primary key columns"""
+  player_blocks_by_pk(blocked_steam_id: bigint!, blocker_steam_id: bigint!): player_blocks
+
+  """
+  fetch data from the table in a streaming manner: "player_blocks"
+  """
+  player_blocks_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [player_blocks_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: player_blocks_bool_exp
+  ): [player_blocks!]!
 
   """
   fetch data from the table: "player_career_stats_v"
