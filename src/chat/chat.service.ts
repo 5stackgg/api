@@ -267,6 +267,11 @@ export class ChatService {
     },
   ];
 
+  // Each update carries the message's whole reaction state, and the per
+  // recipient block lookup can finish out of order, so a room's updates wait
+  // for the one before them rather than letting an older state land last.
+  private readonly reactionBroadcasts = new Map<string, Promise<void>>();
+
   constructor(
     private readonly logger: Logger,
     private readonly rcon: RconService,
@@ -1197,16 +1202,33 @@ export class ChatService {
       return { toggled: false, code: ChatErrorCode.NotFound };
     }
 
-    void this.to(type, id, "reaction", { id: messageId, reactions }).catch(
-      (error) => {
-        this.logger.warn(
-          `unable to broadcast a reaction to ${type}:${id}`,
-          error,
-        );
-      },
-    );
+    void this.broadcastReaction(type, id, messageId, reactions);
 
     return { toggled: true, reactions };
+  }
+
+  private broadcastReaction(
+    type: ChatLobbyType,
+    id: string,
+    messageId: string,
+    reactions: ChatReactions,
+  ): Promise<void> {
+    const room = `${type}:${id}`;
+
+    const broadcast = (this.reactionBroadcasts.get(room) ?? Promise.resolve())
+      .then(() => this.to(type, id, "reaction", { id: messageId, reactions }))
+      .catch((error) => {
+        this.logger.warn(`unable to broadcast a reaction to ${room}`, error);
+      })
+      .finally(() => {
+        if (this.reactionBroadcasts.get(room) === broadcast) {
+          this.reactionBroadcasts.delete(room);
+        }
+      });
+
+    this.reactionBroadcasts.set(room, broadcast);
+
+    return broadcast;
   }
 
   private async withinReactionRate(steamId: string): Promise<boolean> {

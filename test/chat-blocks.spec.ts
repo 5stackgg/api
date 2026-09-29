@@ -606,10 +606,12 @@ describe("chat blocks (SQL-driven)", () => {
       }
       await settle();
 
+      const lurker = await fx.player("Lurker");
+      await block(blocker, lurker);
       await redis.hset(
         `chat_reactions_draft_${draftId}`,
         sent[1],
-        JSON.stringify({ heart: [blocked, bystander] }),
+        JSON.stringify({ heart: [lurker, bystander] }),
       );
 
       await block(blocker, blocked);
@@ -649,8 +651,8 @@ describe("chat blocks (SQL-driven)", () => {
 
       expect(resentReactions).toEqual({
         [blocker]: { heart: [bystander] },
-        [blocked]: { heart: [blocked, bystander] },
-        [bystander]: { heart: [blocked, bystander] },
+        [blocked]: { heart: [lurker, bystander] },
+        [bystander]: { heart: [lurker, bystander] },
       });
       expect(await historyOf(ChatLobbyType.Match, matchId, blocker)).toEqual([
         "draft from bystander",
@@ -781,6 +783,20 @@ describe("chat blocks (SQL-driven)", () => {
       await refusesEverything();
 
       expect(await bell(fromBlocked)).toEqual([
+        { steam_id: blocker, message: "", deleted: true },
+      ]);
+    });
+
+    it("blanks a moderator's row for a DM whose rows were aimed before their block landed", async () => {
+      await postgres.query(
+        "UPDATE players SET role = 'moderator' WHERE steam_id = $1::bigint",
+        [blocker],
+      );
+      beforeBellInsert = () => block(blocker, blocked);
+
+      const racing = await say(ChatLobbyType.Direct, room, blocked, "racing");
+
+      expect(await bell(racing.accepted ? racing.messageId : "")).toEqual([
         { steam_id: blocker, message: "", deleted: true },
       ]);
     });

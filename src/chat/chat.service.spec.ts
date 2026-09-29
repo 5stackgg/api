@@ -3584,6 +3584,47 @@ describe("ChatService direct messages", () => {
         );
       });
 
+      it("publishes a room's reaction updates in the order they were applied", async () => {
+        const id = say(FRIEND, "hello", MESSAGE_ID);
+        const states = [{ heart: [ME] }, { heart: [ME, STRANGER] }];
+        redis.eval.mockImplementation(async (script: string) => {
+          if (script.includes("cjson")) {
+            return JSON.stringify(states.shift());
+          }
+          return 1;
+        });
+        let releaseFirst = () => undefined;
+        playerBlocks.blockedAmong.mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              releaseFirst = () => resolve(new Map());
+            }),
+        );
+
+        for (const reactor of [ME, STRANGER]) {
+          await service.toggleReaction(
+            ChatLobbyType.Match,
+            "m-1",
+            id,
+            "heart",
+            as(reactor),
+          );
+        }
+        await flush();
+        releaseFirst();
+        await flush();
+        await flush();
+
+        expect(
+          published()
+            .filter(
+              ({ event, steamId }) =>
+                event === "lobby:match:m-1:reaction" && steamId === FRIEND,
+            )
+            .map(({ data }) => data.reactions),
+        ).toEqual([{ heart: [ME] }, { heart: [ME, STRANGER] }]);
+      });
+
       it("strips a blocked reactor from the blocker's reaction update only", async () => {
         blocks = [[ME, STRANGER]];
         const id = say(FRIEND, "hello", MESSAGE_ID);
