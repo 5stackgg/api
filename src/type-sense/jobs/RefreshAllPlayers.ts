@@ -1,4 +1,5 @@
 import { WorkerHost } from "@nestjs/bullmq";
+import { Job } from "bullmq";
 import { TypesenseQueues } from "../enums/TypesenseQueues";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { PlayerReindexService } from "../player-reindex.service";
@@ -9,7 +10,7 @@ export class RefreshAllPlayersJob extends WorkerHost {
     super();
   }
 
-  async process(): Promise<void> {
-    await this.reindex.runReindexAll();
+  async process(job: Job): Promise<void> {
+    await this.reindex.runReindexAll(`${job.id}:${job.timestamp}`);
   }
 }

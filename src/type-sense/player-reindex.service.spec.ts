@@ -1,4 +1,5 @@
 import { PlayerReindexService } from "./player-reindex.service";
+import { RefreshAllPlayersJob } from "./jobs/RefreshAllPlayers";
 
 describe("PlayerReindexService indexed-schema marker", () => {
   let cache: Record<string, jest.Mock>;
@@ -12,6 +13,7 @@ describe("PlayerReindexService indexed-schema marker", () => {
       forget: jest.fn().mockResolvedValue(undefined),
       put: jest.fn().mockResolvedValue(true),
       get: jest.fn().mockResolvedValue(undefined),
+      getRaw: jest.fn().mockResolvedValue(null),
     };
     typeSense = {
       updatePlayer: jest.fn().mockResolvedValue({}),
@@ -36,6 +38,39 @@ describe("PlayerReindexService indexed-schema marker", () => {
 
     expect(typeSense.updatePlayer).toHaveBeenCalledTimes(2);
     expect(typeSense.markPlayersIndexed).toHaveBeenCalledTimes(1);
+  });
+
+  it("takes over the lock a stalled run of the same job left behind", async () => {
+    cache.acquireLock.mockResolvedValue(false);
+    cache.getRaw.mockResolvedValue("RefreshAllPlayersJob:1700000000000");
+
+    await service.runReindexAll("RefreshAllPlayersJob:1700000000000");
+
+    expect(typeSense.updatePlayer).toHaveBeenCalledTimes(2);
+    expect(typeSense.markPlayersIndexed).toHaveBeenCalledTimes(1);
+  });
+
+  it("skips while a different run holds the lock", async () => {
+    cache.acquireLock.mockResolvedValue(false);
+    cache.getRaw.mockResolvedValue("RefreshAllPlayersJob:1600000000000");
+
+    await service.runReindexAll("RefreshAllPlayersJob:1700000000000");
+
+    expect(typeSense.updatePlayer).not.toHaveBeenCalled();
+    expect(cache.forget).not.toHaveBeenCalledWith("player-reindex:lock");
+  });
+
+  it("locks under the job's id and creation time, which a stalled retry keeps", async () => {
+    const reindex = { runReindexAll: jest.fn().mockResolvedValue(undefined) };
+
+    await new RefreshAllPlayersJob(reindex as any).process({
+      id: "RefreshAllPlayersJob",
+      timestamp: 1700000000000,
+    } as any);
+
+    expect(reindex.runReindexAll).toHaveBeenCalledWith(
+      "RefreshAllPlayersJob:1700000000000",
+    );
   });
 
   it("does not record the schema when a player failed", async () => {

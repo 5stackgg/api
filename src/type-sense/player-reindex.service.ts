@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { Inject, Injectable, Logger, forwardRef } from "@nestjs/common";
 import { PostgresService } from "../postgres/postgres.service";
 import { CacheService } from "../cache/cache.service";
@@ -86,11 +87,11 @@ export class PlayerReindexService {
     );
   }
 
-  public async runReindexAll(): Promise<void> {
+  public async runReindexAll(runId: string = randomUUID()): Promise<void> {
     // Hard single-execution guarantee: only the holder of this lock runs.
     // Any other queued/stacked job (from rapid clicks, elo completion, fixtures,
     // multiple pods) no-ops instead of running a duplicate.
-    if (!(await this.cache.acquireLock(LOCK_KEY, RUNNING_TTL_SECONDS))) {
+    if (!(await this.acquireRunLock(runId))) {
       this.logger.warn("[player-reindex] already running, skipping duplicate");
       return;
     }
@@ -152,6 +153,16 @@ export class PlayerReindexService {
 
       await this.notifyComplete(status);
     }
+  }
+
+  // BullMQ only hands a job out again once the worker running it stopped
+  // renewing it, so a lock still naming the same job belongs to a dead run.
+  private async acquireRunLock(runId: string): Promise<boolean> {
+    if (await this.cache.acquireLock(LOCK_KEY, RUNNING_TTL_SECONDS, runId)) {
+      return true;
+    }
+
+    return (await this.cache.getRaw(LOCK_KEY)) === runId;
   }
 
   private async notifyComplete(status: ReindexStatus): Promise<void> {

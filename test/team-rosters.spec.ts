@@ -498,7 +498,7 @@ describe("teams, rosters and lineup membership (SQL-driven)", () => {
         expect((await rosterRow(teamId, member))?.role).toBe("Member");
       });
 
-      it("puts owners who left before the guard existed back on the roster as a benched Admin", async () => {
+      it("puts owners who left before the guard existed back on the roster as a benched Admin, and drops them as captain", async () => {
         const runRejoin = async () =>
           postgres.query(
             readFileSync(
@@ -533,24 +533,28 @@ describe("teams, rosters and lineup membership (SQL-driven)", () => {
           await client.query(
             "ALTER TABLE team_roster ENABLE TRIGGER tbd_team_roster",
           );
-        });
-        const players = await fx.players(7);
-        await asUser(players[0], "admin", async (query) => {
-          await query(
-            "SELECT set_config('fivestack.rebalancing', 'true', true)",
+          await client.query("ALTER TABLE teams DISABLE TRIGGER tbu_teams");
+          await client.query(
+            "UPDATE teams SET captain_steam_id = owner_steam_id WHERE id = $1",
+            [teamId],
           );
-          for (const [index, steamId] of players.entries()) {
-            await query(
-              "INSERT INTO team_roster (team_id, player_steam_id, status) VALUES ($1, $2, $3)",
-              [teamId, steamId, index < 5 ? "Starter" : "Substitute"],
-            );
-          }
+          await client.query("ALTER TABLE teams ENABLE TRIGGER tbu_teams");
         });
+        const starters = await fx.players(4);
+        for (const steamId of starters) {
+          await asUser(starters[0], "admin", (query) =>
+            query(
+              "INSERT INTO team_roster (team_id, player_steam_id, status) VALUES ($1, $2, 'Starter')",
+              [teamId, steamId],
+            ),
+          );
+        }
 
         const otherOwner = await seedPlayer();
         const otherTeamId = await createTeam(otherOwner);
 
         expect(await rosterManagers(teamId, owner)).toHaveLength(0);
+        expect(await getTeamCaptain(teamId)).toBe(owner);
 
         await runRejoin();
         await runRejoin();
@@ -566,14 +570,15 @@ describe("teams, rosters and lineup membership (SQL-driven)", () => {
           status: "Benched",
           coach: false,
         });
+        expect(await getTeamCaptain(teamId)).toBeNull();
         expect(await statusCounts(teamId)).toEqual([
           { status: "Benched", count: 1 },
-          { status: "Starter", count: 5 },
-          { status: "Substitute", count: 2 },
+          { status: "Starter", count: 4 },
         ]);
         expect(await statusCounts(otherTeamId)).toEqual([
           { status: "Starter", count: 1 },
         ]);
+        expect(await getTeamCaptain(otherTeamId)).toBe(otherOwner);
       });
     });
   });

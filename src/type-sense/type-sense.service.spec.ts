@@ -64,6 +64,7 @@ describe("TypeSenseService player role rank", () => {
     await service.createPlayerCollection();
 
     reindexQueue.add.mockClear();
+    cache.forget.mockClear();
 
     return create.mock.calls[0][0].fields;
   }
@@ -107,6 +108,7 @@ describe("TypeSenseService player role rank", () => {
       .filter((field) => field.name !== "role_rank")
       .map(asTypesenseReturnsIt);
     const { players, create } = playersCollection(existing);
+    cache.get.mockResolvedValue(TypeSenseService.playerSchemaVersion());
 
     await service.createPlayerCollection();
 
