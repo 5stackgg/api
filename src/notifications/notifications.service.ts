@@ -789,6 +789,22 @@ export class NotificationsService {
     );
   }
 
+  // Read and collapsed rows too: the bell keeps read rows on show, and a
+  // recipient can restore a collapsed one, so either would otherwise keep the
+  // text the author took back. A preview is never empty, which is what tells a
+  // row retractChatMessage blanked apart -- an edit racing a delete must not
+  // write text back into it.
+  async updateChatMessagePreview(messageId: string, preview: string) {
+    await this.postgres.query(
+      `UPDATE public.notifications
+          SET message = $2
+        WHERE data->>'messageId' = $1
+          AND type IN ('ChatMessage', 'MatchChatMessage')
+          AND message <> ''`,
+      [messageId, preview],
+    );
+  }
+
   // Opening a conversation should clear its badge everywhere, not just in the
   // tab that was open.
   async markConversationRead(

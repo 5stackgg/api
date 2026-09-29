@@ -8,6 +8,8 @@ export interface ChatMessage {
   timestamp: string;
   // Absent on messages stored before it was recorded.
   source?: ChatMessageSource;
+  // ISO 8601, present once the author has edited the message.
+  edited_at?: string;
   from: {
     role: e_player_roles_enum;
     name: string;

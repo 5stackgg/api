@@ -195,6 +195,63 @@ export class ChatGateway {
     }
   }
 
+  @SubscribeMessage("lobby:edit")
+  async editMessage(
+    @MessageBody()
+    data: {
+      id: string;
+      type: ChatLobbyType;
+      messageId: string;
+      message: unknown;
+      requestId?: string;
+    },
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+  ) {
+    if (!client.user) {
+      return;
+    }
+
+    if (
+      !ChatGateway.isLobbyType(data?.type) ||
+      typeof data.id !== "string" ||
+      typeof data.messageId !== "string"
+    ) {
+      return;
+    }
+
+    const requestId =
+      typeof data.requestId === "string" ? data.requestId : undefined;
+
+    const parsed = ChatService.messageText(data.message);
+
+    // Unlike a send, clearing the box is an ordinary thing to do to an edit,
+    // so the client is told rather than left waiting.
+    if ("error" in parsed) {
+      this.sendError(client, "edit", parsed.error, requestId);
+      return;
+    }
+
+    const result = await this.chat.editMessage(
+      data.type,
+      data.id,
+      data.messageId,
+      client.user,
+      parsed.text,
+    );
+
+    if (result.edited === false) {
+      this.sendError(client, "edit", result.code, requestId);
+      return;
+    }
+
+    if (requestId) {
+      this.sendAck(client, "edit", requestId, data.messageId, {
+        message: result.message,
+        edited_at: result.edited_at,
+      });
+    }
+  }
+
   private static isLobbyType(value: unknown): value is ChatLobbyType {
     return Object.values(ChatLobbyType).includes(value as ChatLobbyType);
   }
@@ -225,11 +282,12 @@ export class ChatGateway {
     action: ChatAction,
     requestId: string,
     messageId: string,
+    extra: Record<string, string> = {},
   ) {
     client.send(
       JSON.stringify({
         event: "chat:ack",
-        data: { requestId, messageId, action },
+        data: { ...extra, requestId, messageId, action },
       }),
     );
   }

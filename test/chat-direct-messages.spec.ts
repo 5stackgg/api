@@ -1,8 +1,12 @@
+import { readFileSync } from "fs";
+import { join } from "path";
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 import { ChatService } from "./../src/chat/chat.service";
+import { ChatErrorCode } from "./../src/chat/enums/ChatErrorCode";
 import { ChatLobbyType } from "./../src/chat/enums/ChatLobbyTypes";
+import { NotificationsService } from "./../src/notifications/notifications.service";
 import { PruneDirectMessages } from "./../src/chat/jobs/PruneDirectMessages";
 import { directRoomId } from "./../src/chat/utilities/directRoomId";
 
@@ -14,6 +18,7 @@ describe("direct messages (SQL-driven)", () => {
   let postgres: PostgresService;
   let fx: Fixtures;
   let chat: ChatService;
+  let bell: NotificationsService;
 
   const logger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
 
@@ -36,6 +41,17 @@ describe("direct messages (SQL-driven)", () => {
     postgres = db.postgres;
     fx = new Fixtures(postgres, 76561199400000000n);
 
+    bell = new NotificationsService(
+      {} as any,
+      postgres,
+      logger as any,
+      { get: () => ({ webDomain: "https://example.com" }) } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    );
+
     chat = new ChatService(
       logger as any,
       {} as any,
@@ -49,7 +65,15 @@ describe("direct messages (SQL-driven)", () => {
       } as any,
       postgres,
       { getConnection: () => redis } as any,
-      { notifyPlayers: jest.fn(), markConversationRead: jest.fn() } as any,
+      {
+        notifyPlayers: jest.fn(),
+        markConversationRead: jest.fn(),
+        collapseOlderUnread: jest.fn(),
+        retractChatMessage: (messageId: string) =>
+          bell.retractChatMessage(messageId),
+        updateChatMessagePreview: (messageId: string, preview: string) =>
+          bell.updateChatMessagePreview(messageId, preview),
+      } as any,
     );
   }, 600_000);
 
@@ -389,6 +413,277 @@ describe("direct messages (SQL-driven)", () => {
         `SELECT count(*)::text AS count FROM direct_messages`,
       );
       expect(row.count).toBe("1");
+    });
+  });
+
+  describe("editing and deleting your own messages", () => {
+    const sent = async (roomId: string, from: string, message = "typo") => {
+      const result = await say(roomId, from, message);
+      return result.accepted ? result.messageId : "";
+    };
+
+    const stored = async (id: string) =>
+      (
+        await postgres.query<
+          Array<{ message: string; created_at: Date; edited_at: Date | null }>
+        >(
+          `SELECT message, created_at, edited_at FROM direct_messages
+            WHERE id = $1::uuid`,
+          [id],
+        )
+      ).at(0);
+
+    const age = (id: string, minutes: number) =>
+      postgres.query(
+        `UPDATE direct_messages
+            SET created_at = created_at - make_interval(mins => $2::int)
+          WHERE id = $1::uuid`,
+        [id, minutes],
+      );
+
+    const bellRow = async (steamId: string, messageId: string) => {
+      const [row] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO notifications
+                (type, title, message, role, steam_id, entity_id, data)
+              VALUES ('ChatMessage', 'Someone', 'typo', 'user', $1::bigint,
+                      'direct:' || $1, jsonb_build_object('messageId', $2::text))
+           RETURNING id::text AS id`,
+        [steamId, messageId],
+      );
+      return row.id;
+    };
+
+    const notification = async (id: string) =>
+      (
+        await postgres.query<
+          Array<{ message: string; deleted_at: Date | null }>
+        >(`SELECT message, deleted_at FROM notifications WHERE id = $1::uuid`, [
+          id,
+        ])
+      ).at(0);
+
+    const as = (steamId: string) => ({ steam_id: steamId }) as any;
+
+    it("stamps edited_at and leaves created_at alone", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+      const id = await sent(room, me);
+      const before = await stored(id);
+
+      const result = await chat.editMessage(
+        ChatLobbyType.Direct,
+        room,
+        id,
+        as(me),
+        "  fixed  ",
+      );
+      const after = await stored(id);
+
+      expect(before.edited_at).toBeNull();
+      expect(after.message).toBe("fixed");
+      expect(after.created_at).toEqual(before.created_at);
+      expect(result).toEqual({
+        edited: true,
+        message: "fixed",
+        edited_at: after.edited_at.toISOString(),
+      });
+
+      const [{ count }] = await postgres.query<Array<{ count: string }>>(
+        `SELECT count(*)::text AS count FROM chat_message_edits`,
+      );
+      expect(count).toBe("0");
+    });
+
+    it("shows the edit in history after a reload", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+      const edited = await sent(room, me);
+      await sent(room, friend, "untouched");
+
+      await chat.editMessage(
+        ChatLobbyType.Direct,
+        room,
+        edited,
+        as(me),
+        "fixed",
+      );
+
+      const [first, second] = await chat["getDirectMessages"](room);
+
+      expect(first).toMatchObject({
+        id: edited,
+        message: "fixed",
+        edited_at: (await stored(edited)).edited_at.toISOString(),
+      });
+      expect(second).not.toHaveProperty("edited_at");
+    });
+
+    it("refuses an edit or a delete once the message is older than the window", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+      const id = await sent(room, me);
+      await age(id, 11);
+
+      await expect(
+        chat.editMessage(ChatLobbyType.Direct, room, id, as(me), "fixed"),
+      ).resolves.toEqual({ edited: false, code: ChatErrorCode.WindowClosed });
+      await expect(
+        chat.deleteMessage(ChatLobbyType.Direct, room, id, as(me)),
+      ).resolves.toEqual({ deleted: false, code: ChatErrorCode.WindowClosed });
+
+      expect((await stored(id))?.message).toBe("typo");
+    });
+
+    it("refuses the other party", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+      const id = await sent(room, me);
+
+      await expect(
+        chat.editMessage(ChatLobbyType.Direct, room, id, as(friend), "mine"),
+      ).resolves.toEqual({ edited: false, code: ChatErrorCode.NotAllowed });
+      await expect(
+        chat.deleteMessage(ChatLobbyType.Direct, room, id, as(friend)),
+      ).resolves.toEqual({ deleted: false, code: ChatErrorCode.NotAllowed });
+
+      expect((await stored(id))?.message).toBe("typo");
+    });
+
+    it("answers not_found for a message from another conversation", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const other = await fx.player();
+      const id = await sent(directRoomId(me, other), me);
+
+      await expect(
+        chat.editMessage(
+          ChatLobbyType.Direct,
+          directRoomId(me, friend),
+          id,
+          as(me),
+          "fixed",
+        ),
+      ).resolves.toEqual({ edited: false, code: ChatErrorCode.NotFound });
+    });
+
+    it("shows the edit on the recipient's unread bell row", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+      const id = await sent(room, me);
+      const row = await bellRow(friend, id);
+
+      await chat.editMessage(ChatLobbyType.Direct, room, id, as(me), "fixed");
+
+      expect(await notification(row)).toEqual({
+        message: "fixed",
+        deleted_at: null,
+      });
+    });
+
+    it("deletes within the window and retracts the recipient's bell row", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+      const id = await sent(room, me);
+      const row = await bellRow(friend, id);
+
+      await expect(
+        chat.deleteMessage(ChatLobbyType.Direct, room, id, as(me)),
+      ).resolves.toEqual({ deleted: true });
+
+      expect(await stored(id)).toBeUndefined();
+      expect(await notification(row)).toEqual({
+        message: "",
+        deleted_at: expect.any(Date),
+      });
+
+      const [{ count }] = await postgres.query<Array<{ count: string }>>(
+        `SELECT count(*)::text AS count FROM chat_message_deletions`,
+      );
+      expect(count).toBe("0");
+    });
+
+    it("takes a conversation off both rails once its only message is deleted", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+      const id = await sent(room, me);
+
+      await chat.deleteMessage(ChatLobbyType.Direct, room, id, as(me));
+
+      expect(await chat.getDirectConversations(as(friend))).toEqual([]);
+      expect(await chat.getDirectConversations(as(me))).toEqual([]);
+    });
+
+    it("keeps a conversation that still has messages", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+      await sent(room, friend, "hello");
+      const id = await sent(room, me);
+
+      await chat.deleteMessage(ChatLobbyType.Direct, room, id, as(me));
+
+      expect(
+        (await chat.getDirectConversations(as(friend))).map(
+          ({ roomId }) => roomId,
+        ),
+      ).toEqual([room]);
+    });
+
+    it("answers not_found once it is gone", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+      const id = await sent(room, me);
+
+      await chat.deleteMessage(ChatLobbyType.Direct, room, id, as(me));
+
+      await expect(
+        chat.deleteMessage(ChatLobbyType.Direct, room, id, as(me)),
+      ).resolves.toEqual({ deleted: false, code: ChatErrorCode.NotFound });
+      await expect(
+        chat.editMessage(ChatLobbyType.Direct, room, id, as(me), "fixed"),
+      ).resolves.toEqual({ edited: false, code: ChatErrorCode.NotFound });
+    });
+  });
+
+  describe("the edited_at migration", () => {
+    const migration = (file: string) =>
+      readFileSync(
+        join(
+          __dirname,
+          "../hasura/migrations/default/1888000000200_direct_messages_edited_at",
+          file,
+        ),
+        "utf8",
+      );
+
+    const hasColumn = async () =>
+      (
+        await postgres.query<Array<{ column_name: string }>>(
+          `SELECT column_name FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'direct_messages'
+              AND column_name = 'edited_at'`,
+        )
+      ).length === 1;
+
+    it("re-applies cleanly and rolls back", async () => {
+      await postgres.query(migration("up.sql"));
+      await postgres.query(migration("up.sql"));
+      expect(await hasColumn()).toBe(true);
+
+      await postgres.query(migration("down.sql"));
+      expect(await hasColumn()).toBe(false);
+
+      await postgres.query(migration("up.sql"));
+      expect(await hasColumn()).toBe(true);
     });
   });
 });

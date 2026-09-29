@@ -6,6 +6,7 @@
 - "!include public_awards.yaml"
 - "!include public_broadcast_huds.yaml"
 - "!include public_chat_message_deletions.yaml"
+- "!include public_chat_message_edits.yaml"
 - "!include public_chat_read_state.yaml"
 - "!include public_clip_render_jobs.yaml"
 - "!include public_custom_pages.yaml"
