@@ -726,15 +726,20 @@ describe("direct messages (SQL-driven)", () => {
       const me = await fx.player();
       const friend = await fx.player();
       const room = directRoomId(me, friend);
-      const even = await sent(room, friend, "even");
-      const odd = await sent(room, friend, "odd");
 
-      await Promise.all([
-        ...Array.from({ length: 6 }, () => react(room, even, me)),
-        ...Array.from({ length: 5 }, () => react(room, odd, me)),
-      ]);
+      // One round loses the race without the row lock only some of the time.
+      for (let round = 0; round < 8; round++) {
+        await postgres.query("DELETE FROM direct_message_reactions");
+        const even = await sent(room, friend, "even");
+        const odd = await sent(room, friend, "odd");
 
-      expect(await rows()).toEqual([{ message_id: odd }]);
+        await Promise.all([
+          ...Array.from({ length: 6 }, () => react(room, even, me)),
+          ...Array.from({ length: 5 }, () => react(room, odd, me)),
+        ]);
+
+        expect(await rows()).toEqual([{ message_id: odd }]);
+      }
     });
 
     it("counts both parties toggling every reaction at once exactly", async () => {
