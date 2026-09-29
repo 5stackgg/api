@@ -254,6 +254,18 @@ export class HasuraService {
       "delete from settings where name = 'public.utility_practice_daily_limit'",
     );
 
+    // Renamed to `public.` by migration 1889000000300; an admin still on the
+    // old web app writes the unprefixed names again, which the api ignores.
+    await this.postgresService.query(
+      "delete from settings where name in ('clip_fps', 'clip_resolution')",
+    );
+
+    // The light-mode branding palette was retired; only `public.color_dark_*`
+    // is applied, but installs themed before that still carry the old rows.
+    await this.postgresService.query(
+      "delete from settings where starts_with(name, 'public.color_') and not starts_with(name, 'public.color_dark_')",
+    );
+
     await this.postgresService.query(
       "insert into settings (name, value) values ('public.utility_practice_reserved_servers', '2') on conflict (name) do nothing",
     );

@@ -19,6 +19,7 @@ import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { SteamConfig } from "../../configs/types/SteamConfig";
 import { resolveInClusterApiBase } from "../clips/clips.constants";
+import { SystemSettingName } from "../../system/enums/SystemSettingName";
 import {
   BroadcastHud,
   BroadcastHudsService,
@@ -371,16 +372,32 @@ export class GameStreamerService {
 
   public async resolveClipFps(): Promise<30 | 60> {
     const value =
-      (await this.readSetting("clip_fps")) ?? process.env.CLIP_FPS ?? "60";
+      (await this.readSetting(SystemSettingName.ClipFps)) ??
+      process.env.CLIP_FPS ??
+      "60";
     return value === "30" ? 30 : 60;
   }
 
   public async resolveClipResolution(): Promise<"720p" | "1080p"> {
     const value =
-      (await this.readSetting("clip_resolution")) ??
+      (await this.readSetting(SystemSettingName.ClipResolution)) ??
       process.env.CLIP_RESOLUTION ??
       "1080p";
     return value === "720p" ? "720p" : "1080p";
+  }
+
+  // The render dialogs offer a per-clip resolution but no fps choice, so the
+  // operator's fps is final whatever the client sends.
+  public async resolveClipOutput(
+    resolution?: string,
+  ): Promise<{ resolution: "720p" | "1080p"; fps: 30 | 60 }> {
+    return {
+      resolution:
+        resolution === "720p" || resolution === "1080p"
+          ? resolution
+          : await this.resolveClipResolution(),
+      fps: await this.resolveClipFps(),
+    };
   }
 
   public static GetLiveJobId(matchId: string) {

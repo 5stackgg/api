@@ -236,12 +236,20 @@ export class SystemService {
 
     hasUpdates.push(...(await this.getOutdated()));
 
+    const value = JSON.stringify(hasUpdates);
+
+    // Runs every minute, and every settings write fires the event trigger that
+    // re-applies the match_options column defaults with ALTER TABLE.
+    if (value === (await this.getSetting(SystemSettingName.Updates, ""))) {
+      return;
+    }
+
     await this.hasura.mutation({
       insert_settings_one: {
         __args: {
           object: {
             name: SystemSettingName.Updates,
-            value: JSON.stringify(hasUpdates),
+            value,
           },
           on_conflict: {
             constraint: "settings_pkey",

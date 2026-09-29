@@ -6,11 +6,14 @@ jest.mock("@kubernetes/client-node", () => ({
 }));
 
 import { MatchesController } from "./matches.controller";
+import { GameStreamerService } from "./game-streamer/game-streamer.service";
 
 // Positional, in constructor order; anything a test does not reach stays {}.
 const controllerWith = (deps: {
   hasura?: unknown;
   matchAssistant?: unknown;
+  gameStreamer?: unknown;
+  clips?: unknown;
   gameModes?: unknown;
 }) => {
   const args: any[] = Array.from({ length: 30 }, () => ({}));
@@ -18,6 +21,8 @@ const controllerWith = (deps: {
   args[1] = deps.hasura ?? {};
   args[3] = { get: jest.fn(() => ({})) };
   args[5] = deps.matchAssistant ?? {};
+  args[21] = deps.gameStreamer ?? {};
+  args[23] = deps.clips ?? {};
   args[29] = deps.gameModes ?? {};
 
   return new (MatchesController as any)(...args) as MatchesController;
@@ -255,6 +260,123 @@ describe("MatchesController", () => {
       // the plugin only relays say_team when this is present, and its
       // deserializer rejects the whole payload if it arrives as a string
       expect((await payload()).relay_team_chat).toBe(true);
+    });
+  });
+
+  describe("clip output", () => {
+    let clips: {
+      buildPresetSpec: jest.Mock;
+      createClipRender: jest.Mock;
+      queueClipFromPreset: jest.Mock;
+    };
+    let controller: MatchesController;
+
+    const streamer = { role: "streamer", steam_id: "76561198000000001" };
+    const admin = { role: "administrator", steam_id: "76561198000000002" };
+
+    const operatorSettings: Record<string, string> = {
+      "public.clip_fps": "30",
+      "public.clip_resolution": "720p",
+    };
+
+    const preset = (extra: Record<string, unknown> = {}) =>
+      controller.createClipFromPreset({
+        match_map_id: "map-1",
+        target_steam_id: "76561198000000009",
+        preset: "multikills",
+        user: streamer as any,
+        ...extra,
+      } as any);
+
+    const presetOutput = () => clips.buildPresetSpec.mock.calls[0][3];
+
+    beforeEach(() => {
+      const hasura = {
+        query: jest.fn(
+          async (query: { settings_by_pk?: { __args: { name: string } } }) => {
+            const value = operatorSettings[query.settings_by_pk?.__args.name];
+            return { settings_by_pk: value === undefined ? null : { value } };
+          },
+        ),
+      };
+
+      const gameStreamer = new GameStreamerService(
+        { warn: jest.fn() } as any,
+        { get: jest.fn(() => ({})) } as any,
+        hasura as any,
+        {} as any,
+        { getConnection: jest.fn() } as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+      );
+
+      clips = {
+        buildPresetSpec: jest.fn(async () => ({ match_map_id: "map-1" })),
+        createClipRender: jest.fn(async () => ({ jobId: "job-1" })),
+        queueClipFromPreset: jest.fn(async () => ({ jobId: "job-2" })),
+      };
+
+      controller = controllerWith({ hasura, gameStreamer, clips });
+    });
+
+    it("renders a preset at the operator's settings when the client sends none", async () => {
+      await preset();
+
+      expect(presetOutput()).toEqual({ resolution: "720p", fps: 30 });
+    });
+
+    it("keeps the operator's fps when the client sends its own", async () => {
+      await preset({ fps: 60 });
+
+      expect(presetOutput()).toEqual({ resolution: "720p", fps: 30 });
+    });
+
+    it("honours a resolution picked in the render dialog", async () => {
+      await preset({ resolution: "1080p", fps: 60 });
+
+      expect(presetOutput()).toEqual({ resolution: "1080p", fps: 30 });
+    });
+
+    it("falls back to the operator's resolution for one the dialog does not offer", async () => {
+      await preset({ resolution: "4k" });
+
+      expect(presetOutput()).toEqual({ resolution: "720p", fps: 30 });
+    });
+
+    it("queues a highlight at the operator's fps", async () => {
+      await controller.queueClipFromPreset({
+        match_map_id: "map-1",
+        target_steam_id: "76561198000000009",
+        preset: "best_round",
+        resolution: "1080p",
+        fps: 60,
+        user: admin,
+      } as any);
+
+      expect(clips.queueClipFromPreset.mock.calls[0][1].output).toEqual({
+        resolution: "1080p",
+        fps: 30,
+      });
+    });
+
+    it("renders an edited clip at the operator's fps", async () => {
+      await controller.createClipRender({
+        spec: {
+          match_map_id: "map-1",
+          segments: [{ start_tick: 1, end_tick: 2 }],
+          output: { format: "mp4", resolution: "1080p", fps: 60 },
+          destination: "library",
+        },
+        user: streamer as any,
+      });
+
+      expect(clips.createClipRender.mock.calls[0][1].output).toEqual({
+        format: "mp4",
+        resolution: "1080p",
+        fps: 30,
+      });
     });
   });
 });

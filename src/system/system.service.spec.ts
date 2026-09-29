@@ -108,3 +108,80 @@ describe("SystemService.isReservedDeployment", () => {
     },
   );
 });
+
+describe("SystemService.setVersions", () => {
+  let hasura: { mutation: jest.Mock };
+  let postgres: { query: jest.Mock };
+  let system: SystemService;
+
+  const outdated = {
+    service: "api",
+    pod: "api-7d9f",
+    currentVersion: "sha256:old",
+    newVersion: "sha256:new",
+  };
+
+  const run = async (stored: string | undefined, current: unknown[]) => {
+    postgres.query.mockResolvedValue(
+      stored === undefined ? [] : [{ value: stored }],
+    );
+    jest.spyOn(system, "getPanelVersion").mockResolvedValue("abc123");
+    jest
+      .spyOn(system as any, "getLatestPanelVersion")
+      .mockResolvedValue("abc123");
+    jest.spyOn(system, "getOutdated").mockResolvedValue(current as any);
+
+    await system.setVersions();
+  };
+
+  const written = () =>
+    hasura.mutation.mock.calls[0][0].insert_settings_one.__args.object;
+
+  beforeEach(() => {
+    hasura = { mutation: jest.fn().mockResolvedValue({}) };
+    postgres = { query: jest.fn() };
+    system = new SystemService(
+      {} as any,
+      hasura as any,
+      {} as any,
+      { warn: jest.fn(), log: jest.fn() } as any,
+      postgres as any,
+    );
+  });
+
+  it("does not write when there is still nothing to update", async () => {
+    await run("[]", []);
+
+    expect(hasura.mutation).not.toHaveBeenCalled();
+  });
+
+  it("does not write an update it already reported", async () => {
+    await run(JSON.stringify([outdated]), [outdated]);
+
+    expect(hasura.mutation).not.toHaveBeenCalled();
+  });
+
+  it("writes when an update appears", async () => {
+    await run("[]", [outdated]);
+
+    expect(hasura.mutation).toHaveBeenCalledTimes(1);
+    expect(written()).toEqual({
+      name: "updates",
+      value: JSON.stringify([outdated]),
+    });
+  });
+
+  it("writes when a reported update is applied", async () => {
+    await run(JSON.stringify([outdated]), []);
+
+    expect(hasura.mutation).toHaveBeenCalledTimes(1);
+    expect(written()).toEqual({ name: "updates", value: "[]" });
+  });
+
+  it("writes the first report on a fresh install", async () => {
+    await run(undefined, []);
+
+    expect(hasura.mutation).toHaveBeenCalledTimes(1);
+    expect(written()).toEqual({ name: "updates", value: "[]" });
+  });
+});
