@@ -1945,7 +1945,10 @@ export class MatchesController {
   }
 
   @HasuraAction()
-  public async createClipRender(data: { spec: ClipSpec; user: User }) {
+  public async createClipRender(data: {
+    spec: Omit<ClipSpec, "output">;
+    user: User;
+  }) {
     const { spec, user } = data;
     if (!isRoleAbove(user.role, "streamer")) {
       throw Error("clip rendering requires the streamer role or above");
@@ -1953,10 +1956,13 @@ export class MatchesController {
     if (!spec || !spec.match_map_id) {
       throw Error("invalid clip spec");
     }
-    if (spec.output) {
-      spec.output.fps = await this.gameStreamer.resolveClipFps();
-    }
-    const { jobId } = await this.clips.createClipRender(user.steam_id, spec);
+    const { jobId } = await this.clips.createClipRender(user.steam_id, {
+      ...spec,
+      output: {
+        format: "mp4",
+        ...(await this.gameStreamer.resolveClipOutput()),
+      },
+    });
     return {
       success: true,
       job_id: jobId,
@@ -2081,7 +2087,6 @@ export class MatchesController {
     match_map_id: string;
     target_steam_id: string;
     preset: "knife" | "multikills" | "best_round" | "recap";
-    resolution?: string;
     title?: string;
     target_name?: string;
     user: User;
@@ -2094,7 +2099,7 @@ export class MatchesController {
       data.match_map_id,
       data.target_steam_id,
       data.preset,
-      await this.gameStreamer.resolveClipOutput(data.resolution),
+      await this.gameStreamer.resolveClipOutput(),
       data.title,
       data.target_name,
     );
@@ -2107,7 +2112,6 @@ export class MatchesController {
     match_map_id: string;
     target_steam_id: string;
     preset: "knife" | "multikills" | "best_round" | "recap";
-    resolution?: string;
     title?: string;
     target_name?: string;
     user: User;
@@ -2120,7 +2124,7 @@ export class MatchesController {
       matchMapId: data.match_map_id,
       targetSteamId: data.target_steam_id,
       preset: data.preset,
-      output: await this.gameStreamer.resolveClipOutput(data.resolution),
+      output: await this.gameStreamer.resolveClipOutput(),
       title: data.title,
       targetName: data.target_name,
     });

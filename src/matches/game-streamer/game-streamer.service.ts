@@ -386,16 +386,12 @@ export class GameStreamerService {
     return value === "720p" ? "720p" : "1080p";
   }
 
-  // The render dialogs offer a per-clip resolution but no fps choice, so the
-  // operator's fps is final whatever the client sends.
-  public async resolveClipOutput(
-    resolution?: string,
-  ): Promise<{ resolution: "720p" | "1080p"; fps: 30 | 60 }> {
+  public async resolveClipOutput(): Promise<{
+    resolution: "720p" | "1080p";
+    fps: 30 | 60;
+  }> {
     return {
-      resolution:
-        resolution === "720p" || resolution === "1080p"
-          ? resolution
-          : await this.resolveClipResolution(),
+      resolution: await this.resolveClipResolution(),
       fps: await this.resolveClipFps(),
     };
   }

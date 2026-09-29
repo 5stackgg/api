@@ -899,7 +899,7 @@ input ClipSpecInput {
   segments: [ClipSegmentInput!]!
   overlays: [ClipOverlayInput!]
   audio: ClipAudioInput
-  output: ClipOutputInput!
+  output: ClipOutputInput
   destination: String!
   title: String
 }
