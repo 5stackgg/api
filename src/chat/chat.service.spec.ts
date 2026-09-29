@@ -3339,6 +3339,27 @@ describe("ChatService direct messages", () => {
           [FRIEND, STRANGER],
         );
       });
+
+      it("logs a re-send whose block lookup fails instead of leaving it unhandled", async () => {
+        say(FRIEND, "from friend");
+        redis.eval.mockResolvedValueOnce(1);
+        playerBlocks.blockedAmong.mockRejectedValueOnce(
+          new Error("pool timeout"),
+        );
+
+        await service.migrateLobbyMessages(
+          ChatLobbyType.Draft,
+          "d-1",
+          ChatLobbyType.Match,
+          "m-1",
+        );
+        await flush();
+
+        expect(logger.warn).toHaveBeenCalledWith(
+          "unable to re-send history to match:m-1",
+          expect.any(Error),
+        );
+      });
     });
 
     describe("live", () => {
@@ -3386,6 +3407,39 @@ describe("ChatService direct messages", () => {
 
         expect(recipientsOf("lobby:match:m-1:edited")).toEqual(
           [FRIEND, STRANGER].sort(),
+        );
+      });
+
+      it("logs a line or edit whose broadcast fails instead of leaving it unhandled", async () => {
+        jest.spyOn(service, "to").mockRejectedValue(new Error("pool timeout"));
+
+        const sent = await service.sendMessageToChat(
+          ChatLobbyType.Match,
+          "m-1",
+          as(FRIEND),
+          "hello",
+        );
+        await flush();
+
+        await expect(
+          service.editMessage(
+            ChatLobbyType.Match,
+            "m-1",
+            sent.accepted ? sent.messageId : "",
+            as(FRIEND),
+            "hello again",
+          ),
+        ).resolves.toMatchObject({ edited: true });
+        await flush();
+
+        expect(sent).toMatchObject({ accepted: true });
+        expect(logger.warn).toHaveBeenCalledWith(
+          "unable to broadcast a message to match:m-1",
+          expect.any(Error),
+        );
+        expect(logger.warn).toHaveBeenCalledWith(
+          "unable to broadcast an edit to match:m-1",
+          expect.any(Error),
         );
       });
 
