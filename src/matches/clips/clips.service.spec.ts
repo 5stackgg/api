@@ -10,13 +10,19 @@ import { ClipsService } from "./clips.service";
 describe("ClipsService", () => {
   let service: ClipsService;
   let hasura: { query: jest.Mock; mutation: jest.Mock };
-  let gameStreamer: { killBatchHighlightsPod: jest.Mock };
+  let gameStreamer: {
+    killBatchHighlightsPod: jest.Mock;
+    resolveClipOutput: jest.Mock;
+  };
   let batchQueue: { getJobs: jest.Mock; add: jest.Mock };
   let logger: { log: jest.Mock; warn: jest.Mock; error: jest.Mock };
 
   beforeEach(() => {
     hasura = { query: jest.fn(), mutation: jest.fn() };
-    gameStreamer = { killBatchHighlightsPod: jest.fn() };
+    gameStreamer = {
+      killBatchHighlightsPod: jest.fn(),
+      resolveClipOutput: jest.fn(),
+    };
     batchQueue = { getJobs: jest.fn().mockResolvedValue([]), add: jest.fn() };
     logger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
 
@@ -31,6 +37,39 @@ describe("ClipsService", () => {
       batchQueue as any,
       { notifyPlayers: jest.fn() } as any,
     );
+  });
+
+  describe("auto highlight output", () => {
+    it("renders at the operator's fps and resolution", async () => {
+      gameStreamer.resolveClipOutput.mockResolvedValue({
+        resolution: "720p",
+        fps: 30,
+      });
+      const buildPresetSpec = jest
+        .spyOn(service, "buildPresetSpec")
+        .mockResolvedValue({
+          match_map_id: "map-1",
+          segments: [{ start_tick: 100, end_tick: 400 }],
+          output: { format: "mp4", resolution: "720p", fps: 30 },
+          destination: "library",
+          title: "Best Round",
+        });
+
+      await (service as any).buildAutoClipSpecForTarget(
+        "map-1",
+        "76561198000000009",
+        "demo-1",
+        [{ tick: 200, weapon: "ak47" }],
+        [{ start_tick: 0, end_tick: 500 }],
+        { minKills: 1, alwaysKnife: false },
+        { defaultVisibility: "private" },
+      );
+
+      expect(buildPresetSpec.mock.calls[0][3]).toEqual({
+        resolution: "720p",
+        fps: 30,
+      });
+    });
   });
 
   describe("pauseClipRenderBatch", () => {

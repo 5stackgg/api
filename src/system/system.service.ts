@@ -238,8 +238,8 @@ export class SystemService {
 
     const value = JSON.stringify(hasUpdates);
 
-    // Runs every minute; an unconditional write fires the settings event
-    // trigger and re-sends the settings subscription to every admin browser.
+    // Runs every minute, and every settings write fires the event trigger that
+    // re-applies the match_options column defaults with ALTER TABLE.
     if (value === (await this.getSetting(SystemSettingName.Updates, ""))) {
       return;
     }

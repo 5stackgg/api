@@ -3213,7 +3213,7 @@ export class ClipsService {
 
     if (!qualifiesBestRound && !hasKnife) return null;
 
-    const output = { resolution: "1080p", fps: 60 } as const;
+    const output = await this.gameStreamer.resolveClipOutput();
 
     const base = qualifiesBestRound
       ? await this.buildPresetSpec(

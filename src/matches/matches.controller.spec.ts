@@ -274,7 +274,6 @@ describe("MatchesController", () => {
     const streamer = { role: "streamer", steam_id: "76561198000000001" };
     const admin = { role: "administrator", steam_id: "76561198000000002" };
 
-    // Rows as a non-administrator's session can read them: `public.` only.
     const operatorSettings: Record<string, string> = {
       "public.clip_fps": "30",
       "public.clip_resolution": "720p",

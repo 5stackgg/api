@@ -1,16 +1,3 @@
-jest.mock("@kubernetes/client-node", () => ({
-  CoreV1Api: class CoreV1Api {},
-  AppsV1Api: class AppsV1Api {},
-  KubeConfig: class KubeConfig {
-    loadFromDefault() {}
-    makeApiClient() {
-      return {};
-    }
-  },
-  setHeaderOptions: jest.fn(),
-  PatchStrategy: {},
-}));
-
 import { SystemService } from "./system.service";
 
 describe("SystemService.parseImageRef", () => {

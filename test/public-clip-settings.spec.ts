@@ -2,14 +2,12 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 
-// Non-administrators can only read `public.` settings, so the clip dialog never
-// saw an operator's clip_fps/clip_resolution and sent 60fps/1080p instead.
 describe("public clip settings migration", () => {
   let db: SqlTestDb;
 
   const migration = join(
     __dirname,
-    "../hasura/migrations/default/1889000000200_public_clip_settings",
+    "../hasura/migrations/default/1889000000300_public_clip_settings",
   );
   const up = readFileSync(join(migration, "up.sql"), "utf8");
   const down = readFileSync(join(migration, "down.sql"), "utf8");
@@ -64,9 +62,9 @@ describe("public clip settings migration", () => {
     });
   });
 
-  it("keeps a public value that already exists and drops the old row", async () => {
-    await set("clip_fps", "60");
-    await set("public.clip_fps", "30");
+  it("keeps the operator's value over form defaults saved under the new name", async () => {
+    await set("clip_fps", "30");
+    await set("public.clip_fps", "60");
 
     await db.postgres.query(up);
 
@@ -84,6 +82,18 @@ describe("public clip settings migration", () => {
       "public.clip_fps": "30",
       "public.clip_resolution": "720p",
     });
+  });
+
+  it("drops unprefixed rows an old web app writes after the rename", async () => {
+    await set("public.clip_fps", "30");
+    await set("clip_fps", "60");
+    await set("clip_resolution", "1080p");
+
+    await (
+      db.hasura as unknown as { updateSettings(): Promise<void> }
+    ).updateSettings();
+
+    expect(await rows()).toEqual({ "public.clip_fps": "30" });
   });
 
   it("restores the old names on down", async () => {
