@@ -245,10 +245,11 @@ describe("ChatGateway lobby:chat", () => {
       expect(chat.sendChatToServer).toHaveBeenCalledWith(
         "m-1",
         "Luke: say 'gg'",
+        false,
       );
     });
 
-    it("marks an organizer's relayed message", async () => {
+    it("marks an organizer's relayed message, by flag and by tag", async () => {
       await gateway.lobby(
         { id: "m-1", type: ChatLobbyType.Match, message: "pause please" },
         client({ steam_id: "1", name: "Luke", role: "administrator" }),
@@ -257,6 +258,20 @@ describe("ChatGateway lobby:chat", () => {
       expect(chat.sendChatToServer).toHaveBeenCalledWith(
         "m-1",
         "[organizer] Luke: pause please",
+        true,
+      );
+    });
+
+    it("never flags a player who named themselves [organizer]", async () => {
+      await gateway.lobby(
+        { id: "m-1", type: ChatLobbyType.Match, message: "pause please" },
+        client({ steam_id: "1", name: "[organizer] Mallory", role: "user" }),
+      );
+
+      expect(chat.sendChatToServer).toHaveBeenCalledWith(
+        "m-1",
+        "[organizer] Mallory: pause please",
+        false,
       );
     });
 

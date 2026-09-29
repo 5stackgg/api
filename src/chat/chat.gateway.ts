@@ -151,12 +151,16 @@ export class ChatGateway {
       return;
     }
 
+    const isOrganizer = isRoleAbove(client.user.role, "match_organizer");
+
+    // The tag stays in the line for plugins that predate the flag.
     await this.chat.sendChatToServer(
       data.id,
-      `${isRoleAbove(client.user.role, "match_organizer") ? `[organizer] ` : ""}${client.user.name}: ${parsed.text}`.replaceAll(
+      `${isOrganizer ? `[organizer] ` : ""}${client.user.name}: ${parsed.text}`.replaceAll(
         `"`,
         `'`,
       ),
+      isOrganizer,
     );
   }
 
