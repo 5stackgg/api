@@ -1784,18 +1784,21 @@ export class ChatService {
 
   // Match chat is its own notification type, and so its own push category.
   //
-  // Every line typed in-game is relayed into the match room by
-  // ChatMessageEvent, so a live match fires this per lineup member per line --
-  // and the player it reaches is the one already reading those lines in the
-  // game. Sharing a category with direct messages meant the only way to stop
-  // that was to mute DMs too.
+  // Every line typed in-game is relayed -- all chat into the match room by
+  // ChatMessageEvent, team chat into the lineup's team room by
+  // TeamChatMessageEvent -- so a live match fires this per lineup member per
+  // line, and the player it reaches is the one already reading those lines in
+  // the game. Sharing a category with direct messages meant the only way to
+  // stop that was to mute DMs too.
   //
   // The insert, the bell collapse and the read-clear all have to agree on the
   // type or the collapse stops collapsing and the badge never clears.
   public static notificationTypeFor(
     type: ChatLobbyType,
   ): e_notification_types_enum {
-    return type === ChatLobbyType.Match ? "MatchChatMessage" : "ChatMessage";
+    return type === ChatLobbyType.Match || type === ChatLobbyType.MatchTeam
+      ? "MatchChatMessage"
+      : "ChatMessage";
   }
 
   // What to call this room when a push has to name it -- "3 new messages from
@@ -2537,6 +2540,7 @@ export class ChatService {
   ): Promise<void> {
     const users = await this.getAllUsersInLobby(type, id);
     const eventName = `lobby:${type}:${id}:${event}`;
+    const roster = await this.teamRoomRoster(type, id);
 
     const hiding =
       author === undefined
@@ -2547,6 +2551,10 @@ export class ChatService {
           );
 
     for (const { steamId } of users) {
+      if (roster && !roster.has(String(steamId))) {
+        continue;
+      }
+
       if (hiding.has(steamId)) {
         continue;
       }
@@ -2583,6 +2591,21 @@ export class ChatService {
       "send-message-to-steam-id",
       JSON.stringify({ steamId, event, data }),
     );
+  }
+
+  // Presence outlives membership (see canPostIn), and a team room is the one
+  // whose lines the rest of the match must never see: a player moved to the
+  // other lineup, or benched, would otherwise keep receiving them until their
+  // presence expired.
+  private async teamRoomRoster(
+    type: ChatLobbyType,
+    id: string,
+  ): Promise<Set<string> | null> {
+    if (type !== ChatLobbyType.MatchTeam) {
+      return null;
+    }
+
+    return new Set(await this.getLobbyMemberSteamIds(type, id));
   }
 
   public async removeFromLobby(

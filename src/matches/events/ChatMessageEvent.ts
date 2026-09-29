@@ -4,8 +4,16 @@ import MatchEventProcessor from "./abstracts/MatchEventProcessor";
 export default class ChatMessageEvent extends MatchEventProcessor<{
   player: string;
   message: string;
+  teamOnly?: unknown;
+  lineupId?: unknown;
 }> {
   public async process() {
+    const room = await this.room();
+
+    if (!room) {
+      return;
+    }
+
     const { players_by_pk } = await this.hasura.query({
       players_by_pk: {
         __args: {
@@ -26,12 +34,29 @@ export default class ChatMessageEvent extends MatchEventProcessor<{
     }
 
     await this.chat.sendMessageToChat(
-      ChatLobbyType.Match,
-      this.matchId,
+      room.type,
+      room.id,
       players_by_pk,
       this.data.message,
       true,
       "game",
     );
+  }
+
+  // Team lines travel as teamChat so an api that predates them drops them as
+  // an unknown event. One that still carries team fields here comes from a
+  // plugin on the old contract, and the match room holds the other team too.
+  protected async room(): Promise<{ type: ChatLobbyType; id: string } | null> {
+    const { teamOnly, lineupId, player } = this.data;
+
+    if (teamOnly !== undefined || lineupId !== undefined) {
+      this.logger.warn(
+        `[${this.matchId}] dropping chat from ${player}: team fields on the all chat event`,
+        { teamOnly, lineupId },
+      );
+      return null;
+    }
+
+    return { type: ChatLobbyType.Match, id: this.matchId };
   }
 }

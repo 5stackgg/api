@@ -356,6 +356,7 @@ export class MatchesController {
     const match = matches_by_pk as typeof matches_by_pk & {
       is_lan: boolean;
       is_draft_match: boolean;
+      relay_team_chat: boolean;
       options: typeof matches_by_pk.options & {
         use_playcast: boolean;
         show_elo_ranks: boolean;
@@ -395,6 +396,11 @@ export class MatchesController {
 
     match.is_draft_match = match.draft_games.length > 0;
     delete match.draft_games;
+
+    // The plugin relays say_team only when this is present, so an api that
+    // cannot route team chat never receives any. A JSON boolean: the plugin's
+    // deserializer rejects the whole payload over a string.
+    match.relay_team_chat = true;
 
     const fivestackRanksSettingName = match.is_tournament_match
       ? "fivestack_ranks_tournaments"
