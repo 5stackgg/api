@@ -19,6 +19,7 @@ import { HasuraService } from "../hasura/hasura.service";
 import { MatchAssistantService } from "../matches/match-assistant/match-assistant.service";
 import { MatchmakingLobbyService } from "./matchmaking-lobby.service";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { MatchmakingQueues } from "./enums/MatchmakingQueues";
 
 type ConfirmationTeams = { team1: MatchmakingTeam; team2: MatchmakingTeam };
@@ -31,6 +32,10 @@ describe("MatchmakeService", () => {
   let mockMatchmakingLobbyService: jest.Mocked<MatchmakingLobbyService>;
   let mockRedisManager: jest.Mocked<RedisManagerService>;
   let mockQueue: jest.Mocked<Queue>;
+  let mockNotifications: {
+    notifyMatchFound: jest.Mock;
+    retractMatchFound: jest.Mock;
+  };
   let logger: Logger;
 
   beforeEach(async () => {
@@ -81,6 +86,11 @@ describe("MatchmakeService", () => {
       remove: jest.fn(),
     } as any;
 
+    mockNotifications = {
+      notifyMatchFound: jest.fn().mockResolvedValue(10),
+      retractMatchFound: jest.fn().mockResolvedValue(undefined),
+    };
+
     logger = new Logger("Test");
 
     const module: TestingModule = await Test.createTestingModule({
@@ -105,6 +115,10 @@ describe("MatchmakeService", () => {
         {
           provide: RedisManagerService,
           useValue: mockRedisManager,
+        },
+        {
+          provide: NotificationsService,
+          useValue: mockNotifications,
         },
         {
           provide: `BullQueue_${MatchmakingQueues.Matchmaking}`,
@@ -882,6 +896,149 @@ describe("MatchmakeService", () => {
       expect(lobbies).toEqual(snapshot);
 
       createMatchConfirmationSpy.mockRestore();
+    });
+  });
+
+  describe("match found push", () => {
+    const teams = (): ConfirmationTeams => ({
+      team1: {
+        lobbies: ["lobby-a"],
+        players: [
+          { steam_id: "steam-1", rank: 1000 },
+          { steam_id: "steam-2", rank: 1000 },
+        ],
+        avgRank: 1000,
+      },
+      team2: {
+        lobbies: ["lobby-b"],
+        players: [
+          { steam_id: "steam-3", rank: 1000 },
+          { steam_id: "steam-4", rank: 1000 },
+        ],
+        avgRank: 1000,
+      },
+    });
+
+    it("pushes every player in the confirmation", async () => {
+      await (service as any).createMatchConfirmation(
+        "us-east",
+        "Wingman",
+        teams(),
+      );
+
+      expect(mockNotifications.notifyMatchFound).toHaveBeenCalledTimes(1);
+
+      const [confirmationId, steamIds, label, seconds] =
+        mockNotifications.notifyMatchFound.mock.calls[0];
+
+      expect(steamIds).toEqual(["steam-1", "steam-2", "steam-3", "steam-4"]);
+      expect(label).toBe("Wingman");
+      expect(seconds).toBe(30);
+      expect(
+        mockMatchmakingLobbyService.setMatchConformationIdForLobby,
+      ).toHaveBeenCalledWith("lobby-a", confirmationId);
+    });
+
+    it("still starts the ready check when the push fails", async () => {
+      mockNotifications.notifyMatchFound.mockRejectedValue(
+        new Error("hasura is down"),
+      );
+
+      await expect(
+        (service as any).createMatchConfirmation(
+          "us-east",
+          "Competitive",
+          teams(),
+        ),
+      ).resolves.toBeUndefined();
+
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        "CancelMatchMaking",
+        expect.anything(),
+        expect.objectContaining({ delay: 30 * 1000 }),
+      );
+    });
+
+    it("does not hold the ready check up on the push", async () => {
+      mockNotifications.notifyMatchFound.mockReturnValue(
+        new Promise(() => {}),
+      );
+
+      await (service as any).createMatchConfirmation(
+        "us-east",
+        "Competitive",
+        teams(),
+      );
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        "CancelMatchMaking",
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
+    it("retracts the push when the confirmation is removed", async () => {
+      await service.removeConfirmationDetails("confirmation-1");
+
+      expect(mockNotifications.retractMatchFound).toHaveBeenCalledWith(
+        "confirmation-1",
+        undefined,
+      );
+    });
+
+    const pendingConfirmation = () => {
+      const { team1, team2 } = teams();
+
+      mockRedis.hgetall.mockImplementation(async (key: string) =>
+        key.endsWith(":confirmed")
+          ? {}
+          : {
+              type: "Competitive",
+              region: "us-east",
+              lobbyIds: JSON.stringify(["lobby-a", "lobby-b"]),
+              team1: JSON.stringify(team1.players),
+              team2: JSON.stringify(team2.players),
+            },
+      );
+    };
+
+    // The push may not have gone out yet -- it is still on its way to the
+    // player's phone while they accept on the desktop.
+    it("retracts a player's push as soon as they accept", async () => {
+      pendingConfirmation();
+
+      await service.playerConfirmMatchmaking("confirmation-1", "steam-2");
+
+      expect(mockNotifications.retractMatchFound).toHaveBeenCalledWith(
+        "confirmation-1",
+        "steam-2",
+      );
+    });
+
+    it("leaves the push alone for someone who is not in the ready check", async () => {
+      pendingConfirmation();
+
+      await service.playerConfirmMatchmaking("confirmation-1", "steam-99");
+
+      expect(mockNotifications.retractMatchFound).not.toHaveBeenCalled();
+    });
+
+    it("still removes the confirmation when the retract fails", async () => {
+      mockNotifications.retractMatchFound.mockRejectedValue(
+        new Error("postgres is down"),
+      );
+
+      await expect(
+        service.removeConfirmationDetails("confirmation-1"),
+      ).resolves.toBeUndefined();
+
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(mockRedis.del).toHaveBeenCalledWith(
+        expect.stringContaining("confirmation-1"),
+      );
     });
   });
 

@@ -632,7 +632,7 @@ export class PushNotificationsService {
       // seconds before quiet hours began closes inside them, and delivering on
       // that is exactly the buzz the hold exists to prevent -- so it is held
       // again, now against the rest of the night.
-      if (delivery.quietSeconds > 0) {
+      if (delivery.quietSeconds > 0 && !policy.ignoreQuietHours) {
         const claim = await this.claimWindow(
           steamId,
           thread,
@@ -856,7 +856,7 @@ export class PushNotificationsService {
       // Asleep. Hold everything until the window closes and let the trailing
       // job deliver it as one summary -- which is the same machinery bundling
       // already uses, just with a much longer window.
-      if (delivery.quietSeconds > 0) {
+      if (delivery.quietSeconds > 0 && !policy.ignoreQuietHours) {
         const claim = await this.claimWindow(
           delivery.steamId,
           thread,
@@ -1187,6 +1187,13 @@ export class PushNotificationsService {
       return [];
     }
 
+    // Both are answered in the app and nowhere else -- a ready check over the
+    // matchmaking socket, a call on the camera page -- and their rows never
+    // reach the bell, so a Dismiss would only mark an invisible row read.
+    if (newest.type === "MatchFound" || newest.type === "AdminCall") {
+      return [];
+    }
+
     // A bundle describes several things at once; the only honest button is
     // the one that applies to all of them. Selected by thread rather than by
     // id: a bundle is every row in one thread (see threadKeyFor), and the id
@@ -1363,6 +1370,8 @@ export class PushNotificationsService {
 
     const newest = notifications.at(-1);
     const thread = threadKeyFor(newest);
+    const policy =
+      deliveryPolicyForType(newest.type) ?? DEFAULT_DELIVERY_POLICY;
 
     const { title, body } =
       count <= 1
@@ -1400,7 +1409,22 @@ export class PushNotificationsService {
       unread: await this.unreadCount(steamId),
       actions,
       graphqlUrl: `${this.appConfig.apiDomain}/v1/graphql`,
+      urgent: policy.urgent,
+      ttl: policy.ttlSeconds,
+      // Absolute, because the worker cannot tell how long the push service
+      // held the message before handing it over.
+      expiresAt:
+        policy.ttlSeconds !== undefined
+          ? new Date(Date.now() + policy.ttlSeconds * 1000).toISOString()
+          : undefined,
     });
+
+    const options: webPush.RequestOptions = {
+      ...(policy.ttlSeconds !== undefined ? { TTL: policy.ttlSeconds } : {}),
+      ...(policy.urgency ? { urgency: policy.urgency } : {}),
+    };
+    const sendOptions: [] | [webPush.RequestOptions] =
+      Object.keys(options).length > 0 ? [options] : [];
 
     const delivered: string[] = [];
     const expired: string[] = [];
@@ -1431,6 +1455,7 @@ export class PushNotificationsService {
                 },
               },
               payload,
+              ...sendOptions,
             );
             delivered.push(subscription.id);
           } catch (error) {

@@ -14,6 +14,12 @@ const PATH_BY_TYPE: Record<string, (entityId: string) => string> = {
   MatchStatusChange: (id) => `/matches/${id}`,
   MatchImported: (id) => `/matches/${id}`,
   MatchSupport: (id) => `/matches/${id}`,
+  // The ready-check dialog is mounted globally in app.vue, so any page will
+  // do; this is the one a player queued from.
+  MatchFound: () => `/play`,
+  // The talk-back only plays on the player's camera page, which picks the call
+  // up on its own once the admin is publishing.
+  AdminCall: (id) => `/matches/${id}/camera`,
   MatchAbandoned: (id) => `/matches/${id}`,
   TournamentCreated: (id) => `/tournaments/${id}`,
   TournamentReminder: (id) => `/tournaments/${id.split(":")[0]}`,
