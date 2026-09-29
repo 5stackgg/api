@@ -637,3 +637,150 @@ describe("ChatGateway lobby:edit", () => {
     expect(chat.sendChatToServer).not.toHaveBeenCalled();
   });
 });
+
+describe("ChatGateway lobby:react", () => {
+  const MESSAGE_ID = "3f0c1d2e-4b5a-4c6d-8e7f-9a0b1c2d3e4f";
+
+  let chat: { toggleReaction: jest.Mock; sendChatToServer: jest.Mock };
+  let gateway: ChatGateway;
+
+  const client = (user: any = { steam_id: "1", name: "Luke", role: "user" }) =>
+    ({ id: "client-1", user, send: jest.fn() }) as any;
+
+  const sent = (socket: { send: jest.Mock }) =>
+    socket.send.mock.calls.map(([raw]) => JSON.parse(raw));
+
+  const reaction = (overrides: Record<string, unknown> = {}) => ({
+    id: "m-1",
+    type: ChatLobbyType.Match,
+    messageId: MESSAGE_ID,
+    reaction: "heart",
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    chat = {
+      toggleReaction: jest.fn().mockResolvedValue({
+        toggled: true,
+        reactions: { heart: ["1"] },
+      }),
+      sendChatToServer: jest.fn(),
+    };
+    gateway = new ChatGateway(chat as any);
+  });
+
+  it("ignores a socket that has not signed in", async () => {
+    const socket = client(null);
+
+    await gateway.react(reaction({ requestId: "r-1" }) as any, socket);
+
+    expect(chat.toggleReaction).not.toHaveBeenCalled();
+    expect(socket.send).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["an unknown lobby type", { type: "global" }],
+    ["a room id that is not a string", { id: 1 }],
+    ["a missing message id", { messageId: undefined }],
+  ])("ignores %s", async (_, overrides) => {
+    const socket = client();
+
+    await gateway.react(reaction(overrides) as any, socket);
+
+    expect(chat.toggleReaction).not.toHaveBeenCalled();
+    expect(socket.send).not.toHaveBeenCalled();
+  });
+
+  it("ignores a missing payload", async () => {
+    await gateway.react(undefined as any, client());
+
+    expect(chat.toggleReaction).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["not on the list", "party"],
+    ["not a string", 5],
+    ["missing", undefined],
+  ])(
+    "answers a reaction that is %s with invalid, without asking the service",
+    async (_, value) => {
+      const socket = client();
+
+      await gateway.react(
+        reaction({ reaction: value, requestId: "r-2" }) as any,
+        socket,
+      );
+
+      expect(chat.toggleReaction).not.toHaveBeenCalled();
+      expect(sent(socket)).toEqual([
+        {
+          event: "chat:error",
+          data: {
+            code: ChatErrorCode.Invalid,
+            action: "react",
+            requestId: "r-2",
+          },
+        },
+      ]);
+    },
+  );
+
+  it("asks the service to toggle as the signed in player", async () => {
+    await gateway.react(reaction({ reaction: "laugh" }) as any, client());
+
+    expect(chat.toggleReaction).toHaveBeenCalledWith(
+      ChatLobbyType.Match,
+      "m-1",
+      MESSAGE_ID,
+      "laugh",
+      expect.objectContaining({ steam_id: "1" }),
+    );
+  });
+
+  it("acks a toggle under the requestId it came with", async () => {
+    const socket = client();
+
+    await gateway.react(reaction({ requestId: "r-3" }) as any, socket);
+
+    expect(sent(socket)).toEqual([
+      {
+        event: "chat:ack",
+        data: { requestId: "r-3", messageId: MESSAGE_ID, action: "react" },
+      },
+    ]);
+  });
+
+  it("stays quiet for a toggle without a requestId", async () => {
+    const socket = client();
+
+    await gateway.react(reaction() as any, socket);
+
+    expect(socket.send).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ChatErrorCode.RateLimited,
+    ChatErrorCode.NotAllowed,
+    ChatErrorCode.NotFound,
+    ChatErrorCode.Gagged,
+  ])("reports %s under the requestId it came with", async (code) => {
+    chat.toggleReaction.mockResolvedValue({ toggled: false, code });
+    const socket = client();
+
+    await gateway.react(reaction({ requestId: "r-4" }) as any, socket);
+
+    expect(sent(socket)).toEqual([
+      {
+        event: "chat:error",
+        data: { code, action: "react", requestId: "r-4" },
+      },
+    ]);
+  });
+
+  it("never relays a reaction to the game server", async () => {
+    await gateway.react(reaction() as any, client());
+
+    expect(chat.toggleReaction).toHaveBeenCalled();
+    expect(chat.sendChatToServer).not.toHaveBeenCalled();
+  });
+});

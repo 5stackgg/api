@@ -653,6 +653,241 @@ describe("direct messages (SQL-driven)", () => {
     });
   });
 
+  describe("reactions", () => {
+    const as = (steamId: string) => ({ steam_id: steamId }) as any;
+
+    const sent = async (roomId: string, from: string, message = "gg") => {
+      const result = await say(roomId, from, message);
+      return result.accepted ? result.messageId : "";
+    };
+
+    const react = (
+      roomId: string,
+      id: string,
+      steamId: string,
+      reaction = "heart",
+    ) =>
+      chat.toggleReaction(
+        ChatLobbyType.Direct,
+        roomId,
+        id,
+        reaction,
+        as(steamId),
+      );
+
+    const rows = () =>
+      postgres.query<Array<{ message_id: string }>>(
+        `SELECT message_id::text AS message_id FROM direct_message_reactions`,
+      );
+
+    // Reacting is held to the same rule as sending, so both have to be seated
+    // in the room, and the rate limit wants a real count back.
+    beforeEach(() => {
+      redis.hget.mockResolvedValue(JSON.stringify({ user: {} }));
+      redis.eval.mockImplementation(async (script: string) =>
+        script.includes("INCR") ? 1 : [1, 1],
+      );
+    });
+
+    afterEach(() => {
+      redis.hget.mockResolvedValue(null);
+      redis.eval.mockResolvedValue([1, 1]);
+    });
+
+    it("toggles each player's reactions, oldest first", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+      const id = await sent(room, friend);
+
+      await expect(react(room, id, me)).resolves.toEqual({
+        toggled: true,
+        reactions: { heart: [me] },
+      });
+      await react(room, id, friend);
+      await expect(react(room, id, me, "laugh")).resolves.toEqual({
+        toggled: true,
+        reactions: { heart: [me, friend], laugh: [me] },
+      });
+      await expect(react(room, id, me)).resolves.toEqual({
+        toggled: true,
+        reactions: { heart: [friend], laugh: [me] },
+      });
+      await react(room, id, friend);
+      await expect(react(room, id, me, "laugh")).resolves.toEqual({
+        toggled: true,
+        reactions: {},
+      });
+
+      expect(await rows()).toEqual([]);
+    });
+
+    it("cancels one player's racing toggles out in pairs", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+
+      // One round loses the race without the row lock only some of the time.
+      for (let round = 0; round < 8; round++) {
+        await postgres.query("DELETE FROM direct_message_reactions");
+        const even = await sent(room, friend, "even");
+        const odd = await sent(room, friend, "odd");
+
+        await Promise.all([
+          ...Array.from({ length: 6 }, () => react(room, even, me)),
+          ...Array.from({ length: 5 }, () => react(room, odd, me)),
+        ]);
+
+        expect(await rows()).toEqual([{ message_id: odd }]);
+      }
+    });
+
+    it("counts both parties toggling every reaction at once exactly", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+      const id = await sent(room, friend);
+
+      const results = await Promise.all(
+        [me, friend].flatMap((steamId) =>
+          ChatService.REACTIONS.map((reaction) =>
+            react(room, id, steamId, reaction),
+          ),
+        ),
+      );
+
+      expect(results.every((result) => result.toggled)).toBe(true);
+
+      const [message] = await chat["getMessages"](ChatLobbyType.Direct, room);
+
+      expect(Object.keys(message.reactions)).toEqual([
+        ...ChatService.REACTIONS,
+      ]);
+      for (const reaction of ChatService.REACTIONS) {
+        expect([...message.reactions[reaction]].sort()).toEqual(
+          [me, friend].sort(),
+        );
+      }
+    });
+
+    it("hands back reactions with the conversation's history", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+      const reacted = await sent(room, friend, "first");
+      const quiet = await sent(room, me, "second");
+
+      await react(room, reacted, me, "fire");
+
+      const history = await chat["getMessages"](ChatLobbyType.Direct, room);
+
+      expect(history.map(({ id, reactions }) => ({ id, reactions }))).toEqual([
+        { id: reacted, reactions: { fire: [me] } },
+        { id: quiet, reactions: {} },
+      ]);
+    });
+
+    it("answers not_found for a message from another conversation, and writes nothing", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const other = await fx.player();
+      const room = directRoomId(me, friend);
+      const elsewhere = await sent(directRoomId(friend, other), friend);
+
+      await expect(react(room, elsewhere, me)).resolves.toEqual({
+        toggled: false,
+        code: ChatErrorCode.NotFound,
+      });
+      expect(await rows()).toEqual([]);
+    });
+
+    it("goes with the message when its author deletes it", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+      const id = await sent(room, friend);
+      const kept = await sent(room, me);
+
+      await react(room, id, me);
+      await react(room, kept, friend);
+      await chat.deleteMessage(ChatLobbyType.Direct, room, id, as(friend));
+
+      expect(await rows()).toEqual([{ message_id: kept }]);
+    });
+
+    it("goes with the message when retention sweeps it", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+      const id = await sent(room, friend);
+
+      await react(room, id, me);
+      await postgres.query(
+        `UPDATE direct_messages SET created_at = now() - interval '400 days'`,
+      );
+
+      await new PruneDirectMessages(logger as any, postgres).process({} as any);
+
+      expect(await rows()).toEqual([]);
+    });
+
+    it("goes with the player who reacted", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+      const id = await sent(room, friend);
+
+      await react(room, id, me);
+      await postgres.query(`DELETE FROM players WHERE steam_id = $1::bigint`, [
+        me,
+      ]);
+
+      expect(await rows()).toEqual([]);
+    });
+
+    describe("the migration", () => {
+      const migration = (file: string) =>
+        readFileSync(
+          join(
+            __dirname,
+            "../hasura/migrations/default/1888000000300_direct_message_reactions",
+            file,
+          ),
+          "utf8",
+        );
+
+      const table = async () =>
+        (
+          await postgres.query<Array<{ table: string | null }>>(
+            `SELECT to_regclass('public.direct_message_reactions')::text AS table`,
+          )
+        )[0].table;
+
+      it("re-applies cleanly and rolls back", async () => {
+        await postgres.query(migration("up.sql"));
+        await postgres.query(migration("up.sql"));
+        expect(await table()).toBe("direct_message_reactions");
+
+        const indexes = await postgres.query<Array<{ indexname: string }>>(
+          `SELECT indexname FROM pg_indexes
+            WHERE schemaname = 'public'
+              AND tablename = 'direct_message_reactions'
+            ORDER BY indexname`,
+        );
+        expect(indexes.map(({ indexname }) => indexname)).toEqual([
+          "direct_message_reactions_pkey",
+          "direct_message_reactions_steam_id_idx",
+        ]);
+
+        await postgres.query(migration("down.sql"));
+        expect(await table()).toBeNull();
+
+        await postgres.query(migration("up.sql"));
+        expect(await table()).toBe("direct_message_reactions");
+      });
+    });
+  });
+
   describe("the edited_at migration", () => {
     const migration = (file: string) =>
       readFileSync(
