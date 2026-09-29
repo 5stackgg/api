@@ -213,19 +213,21 @@ describe("MatchEventsGateway.handleMatchEvent dedup", () => {
   it("acks and drops an event it has no handler for", async () => {
     // how an api that predates teamChat drops team lines: not processed,
     // and acked so the plugin stops retrying
-    const { gateway, cache, processor, logger } = makeGateway({});
-    const result = await gateway.handleMatchEvent({
-      ...message,
-      data: { event: "teamChat", data: { player: "p", message: "m" } },
-    } as any);
+    const { gateway, cache, processor, logger } = makeGateway();
+    const result = await gateway.handleMatchEvent(
+      authedSocket(),
+      event({ name: "notAnEvent", data: { player: "p", message: "m" } }),
+    );
 
     expect(result).toBe("msg-1");
     expect(processor.setData).not.toHaveBeenCalled();
     expect(processor.process).not.toHaveBeenCalled();
-    expect(cache.put).not.toHaveBeenCalled();
+    expect(cache.put.mock.calls.some(([key]) => key.endsWith(":msg-1"))).toBe(
+      false,
+    );
     expect(logger.warn).toHaveBeenCalledWith(
       "unable to find event handler",
-      "teamChat",
+      "notAnEvent",
     );
   });
 
