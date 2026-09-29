@@ -199,25 +199,25 @@ export class SteamMatchHistoryService {
 
     const cooldownKey =
       SteamMatchHistoryService.shareCodeImportCooldownKey(steamId);
-    if (await this.cache.has(cooldownKey)) {
+    const acquired = await this.cache.acquireLock(
+      cooldownKey,
+      SteamMatchHistoryService.SHARE_CODE_IMPORT_COOLDOWN_SECONDS,
+    );
+    if (!acquired) {
       return {
         ok: false,
         error: "wait a few seconds before importing another match",
       };
     }
-    await this.cache.put(
-      cooldownKey,
-      true,
-      SteamMatchHistoryService.SHARE_CODE_IMPORT_COOLDOWN_SECONDS,
-    );
 
     const valveMatchId = decodeShareCode(shareCode).matchId.toString();
 
     const imported = await this.postgres.query<Array<{ id: string }>>(
       `SELECT id FROM public.matches
-        WHERE source = 'valve' AND external_id = $1
+        WHERE (source = 'valve' AND external_id = $1)
+           OR share_code = $2
         LIMIT 1`,
-      [valveMatchId],
+      [valveMatchId, shareCode],
     );
     if (imported.length > 0) {
       return { ok: false, error: "match already imported" };
@@ -229,10 +229,10 @@ export class SteamMatchHistoryService {
       Array<{ valve_match_id: string }>
     >(
       `UPDATE public.pending_match_imports
-         SET status = 'Queued', error = NULL
+         SET status = 'Queued', error = NULL, share_code = $2
        WHERE valve_match_id = $1::numeric AND status = 'Failed'
        RETURNING valve_match_id`,
-      [valveMatchId],
+      [valveMatchId, shareCode],
     );
     if (requeued.length > 0) {
       await this.enqueueResolve(valveMatchId);
@@ -569,7 +569,9 @@ export class SteamMatchHistoryService {
 
   // CS2's "copy share link" wraps the code in a steam://rungame URL.
   private static extractShareCode(input: string): string | null {
-    const found = (input ?? "").match(/CSGO(?:-[A-Za-z0-9]{5}){5}/i);
+    const found = (input ?? "").match(
+      /CSGO(?:-[A-Za-z0-9]{5}){5}(?![A-Za-z0-9])/i,
+    );
     if (!found) {
       return null;
     }

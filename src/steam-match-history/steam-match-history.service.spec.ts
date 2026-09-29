@@ -44,9 +44,19 @@ const build = (
       return [];
     }),
   };
+  const held = new Set<string>();
   const cache = {
-    has: jest.fn(async () => onCooldown),
-    put: jest.fn(async (): Promise<void> => undefined),
+    has: jest.fn(async (key: string) => onCooldown || held.has(key)),
+    put: jest.fn(async (key: string): Promise<void> => {
+      held.add(key);
+    }),
+    acquireLock: jest.fn(async (key: string) => {
+      if (onCooldown || held.has(key)) {
+        return false;
+      }
+      held.add(key);
+      return true;
+    }),
   };
   const resolveQueue = {
     remove: jest.fn(async (): Promise<void> => undefined),
@@ -129,6 +139,16 @@ describe("SteamMatchHistoryService.importShareCode", () => {
       error: "invalid share code",
     });
     expect(cache.put).not.toHaveBeenCalled();
+    expect(cache.acquireLock).not.toHaveBeenCalled();
+    expect(resolveQueue.add).not.toHaveBeenCalled();
+  });
+
+  it("rejects a code with extra characters on its last group", async () => {
+    const { service, resolveQueue } = build();
+
+    await expect(
+      service.importShareCode(STEAM_ID, `${SHARE_CODE}X`),
+    ).resolves.toEqual({ ok: false, error: "invalid share code" });
     expect(resolveQueue.add).not.toHaveBeenCalled();
   });
 
@@ -162,6 +182,18 @@ describe("SteamMatchHistoryService.importShareCode", () => {
     expect(resolveQueue.add).not.toHaveBeenCalled();
   });
 
+  it("lets only one of two simultaneous pastes from a player through", async () => {
+    const { service, resolveQueue } = build();
+
+    const results = await Promise.all([
+      service.importShareCode(STEAM_ID, SHARE_CODE),
+      service.importShareCode(STEAM_ID, SHARE_CODE),
+    ]);
+
+    expect(results.filter((result) => result.ok)).toHaveLength(1);
+    expect(resolveQueue.add).toHaveBeenCalledTimes(1);
+  });
+
   it("reports a match that is already imported instead of queueing it", async () => {
     const { service, calls, resolveQueue } = build({ alreadyImported: true });
 
@@ -171,9 +203,9 @@ describe("SteamMatchHistoryService.importShareCode", () => {
     const lookup = calls.find((call) =>
       call.sql.includes("FROM public.matches"),
     );
-    expect(lookup?.params).toEqual([VALVE_MATCH_ID]);
+    expect(lookup?.params).toEqual([VALVE_MATCH_ID, SHARE_CODE]);
     expect(
-      calls.some((call) => call.sql.includes("pending_match_imports ")),
+      calls.some((call) => call.sql.includes("pending_match_import")),
     ).toBe(false);
     expect(resolveQueue.add).not.toHaveBeenCalled();
   });

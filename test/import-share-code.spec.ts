@@ -52,6 +52,13 @@ describe("import a Valve match from a pasted share code", () => {
         put: async (key: string, value: unknown) => {
           cache.set(key, value);
         },
+        acquireLock: async (key: string) => {
+          if (cache.has(key)) {
+            return false;
+          }
+          cache.set(key, true);
+          return true;
+        },
       } as never,
       { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as never,
       resolveQueue as never,
@@ -80,11 +87,15 @@ describe("import a Valve match from a pasted share code", () => {
     return rows.map((row) => row.steam_id);
   };
 
-  const seedPending = async (status: string, requester: string) => {
+  const seedPending = async (
+    status: string,
+    requester: string,
+    shareCode = SHARE_CODE,
+  ) => {
     await postgres.query(
       `INSERT INTO pending_match_imports (valve_match_id, share_code, status, error)
        VALUES ($1::numeric, $2, $3, CASE WHEN $3 = 'Failed' THEN 'gc timed out' END)`,
-      [VALVE_MATCH_ID, SHARE_CODE, status],
+      [VALVE_MATCH_ID, shareCode, status],
     );
     await postgres.query(
       `INSERT INTO pending_match_import_players (valve_match_id, steam_id)
@@ -146,6 +157,40 @@ describe("import a Valve match from a pasted share code", () => {
     });
     await expect(requesters()).resolves.toEqual([first, second].sort());
     expect(resolveQueue.add).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries a failed import with the code just pasted, not the one that failed", async () => {
+    const [first, second] = await fx.players(2);
+    await seedPending("Failed", first, "CSGO-ehdrj-2EkxQ-8Tqrn-bmDBE-3VeuA");
+    const { service } = build();
+
+    await expect(service.importShareCode(second, SHARE_CODE)).resolves.toEqual({
+      ok: true,
+    });
+
+    await expect(pending()).resolves.toMatchObject({
+      share_code: SHARE_CODE,
+      status: "Queued",
+    });
+  });
+
+  it("refuses a match that came in another way but already carries this share code", async () => {
+    const player = await fx.player();
+    const { matchId } = await fx.bareMatch();
+    await postgres.query(
+      `UPDATE matches
+          SET source = 'valve', external_id = 'uploaded-demo', share_code = $2
+        WHERE id = $1`,
+      [matchId, SHARE_CODE],
+    );
+    const { service, resolveQueue } = build();
+
+    await expect(service.importShareCode(player, SHARE_CODE)).resolves.toEqual({
+      ok: false,
+      error: "match already imported",
+    });
+    await expect(pending()).resolves.toBeNull();
+    expect(resolveQueue.add).not.toHaveBeenCalled();
   });
 
   it("leaves an import in flight alone but records the requester", async () => {
