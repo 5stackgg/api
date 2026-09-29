@@ -6,12 +6,18 @@ describe("MatchAbandoned", () => {
   let hasura: { query: jest.Mock; mutation: jest.Mock };
   let notifications: { send: jest.Mock };
   let affectedRows: number;
+  let lineupMembers: Array<{ id: string }>;
 
   beforeEach(() => {
     affectedRows = 1;
+    lineupMembers = [{ id: "lineup-player-1" }];
 
     hasura = {
-      query: jest.fn(async () => ({ players_by_pk: { name: "keith" } })),
+      query: jest.fn(async (query) =>
+        query.match_lineup_players
+          ? { match_lineup_players: lineupMembers }
+          : { players_by_pk: { name: "keith" } },
+      ),
       mutation: jest.fn(async () => ({
         insert_abandoned_matches: { affected_rows: affectedRows },
       })),
@@ -63,5 +69,30 @@ describe("MatchAbandoned", () => {
     await processor.process();
 
     expect(notifications.send).not.toHaveBeenCalled();
+  });
+
+  it("refuses an abandon for a player outside this match's lineups", async () => {
+    // an abandon row counts toward the player's matchmaking cooldown on every
+    // match, so a server must not be able to file one against anyone else
+    lineupMembers = [];
+
+    await expect(processor.process()).resolves.toBeUndefined();
+
+    expect(hasura.mutation).not.toHaveBeenCalled();
+    expect(notifications.send).not.toHaveBeenCalled();
+    expect(hasura.query).toHaveBeenCalledWith({
+      match_lineup_players: {
+        __args: {
+          where: {
+            steam_id: { _eq: "76561198000000001" },
+            lineup: {
+              match_id: { _eq: "11111111-1111-1111-1111-111111111111" },
+            },
+          },
+          limit: 1,
+        },
+        id: true,
+      },
+    });
   });
 });

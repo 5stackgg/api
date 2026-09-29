@@ -28,12 +28,23 @@ export default class CaptainEvent extends MatchEventProcessor<{
       return;
     }
 
+    const id = lineup_player.steam_id || lineup_player.discord_id;
+
+    // Hasura rejects a null comparison, and a thrown event is never acked, so
+    // the plugin would resend it forever.
+    if (!id) {
+      this.logger.warn(
+        `[${this.matchId}] captain event dropped: placeholder ${lineup_player.placeholder_name} has no steam or discord id`,
+      );
+      return;
+    }
+
     await this.hasura.mutation({
       update_match_lineup_players: {
         __args: {
           where: {
             [lineup_player.steam_id ? "steam_id" : "discord_id"]: {
-              _eq: lineup_player.steam_id || lineup_player.discord_id,
+              _eq: id,
             },
             match_lineup_id: {
               _in: [match.lineup_1_id, match.lineup_2_id],
