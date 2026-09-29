@@ -1,3 +1,5 @@
+import { readFileSync } from "fs";
+import { join } from "path";
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { Fixtures } from "./utils/fixtures";
 import {
@@ -461,6 +463,39 @@ describe("teams, rosters and lineup membership (SQL-driven)", () => {
         );
 
         expect((await rosterRow(teamId, starters[0]))?.role).toBe("Admin");
+      });
+
+      it("backfills owners demoted before the guard existed back to Admin", async () => {
+        const owner = await seedPlayer();
+        const member = await seedPlayer();
+        const teamId = await createTeam(owner);
+        await addMember(teamId, owner, member);
+        await postgres.transaction(async (client) => {
+          await client.query(
+            "ALTER TABLE team_roster DISABLE TRIGGER tbu_team_roster",
+          );
+          await client.query(
+            "UPDATE team_roster SET role = 'Member' WHERE team_id = $1 AND player_steam_id = $2",
+            [teamId, owner],
+          );
+          await client.query(
+            "ALTER TABLE team_roster ENABLE TRIGGER tbu_team_roster",
+          );
+        });
+        expect((await rosterRow(teamId, owner))?.role).toBe("Member");
+
+        await postgres.query(
+          readFileSync(
+            join(
+              __dirname,
+              "../hasura/migrations/default/1888000000000_team_owner_roster_admin/up.sql",
+            ),
+            "utf8",
+          ),
+        );
+
+        expect((await rosterRow(teamId, owner))?.role).toBe("Admin");
+        expect((await rosterRow(teamId, member))?.role).toBe("Member");
       });
     });
   });
