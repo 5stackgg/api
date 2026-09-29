@@ -281,6 +281,29 @@ export class SteamMatchHistoryController {
   }
 
   @HasuraAction()
+  public async importSteamMatchShareCode(data: {
+    user: User;
+    share_code: string;
+  }): Promise<{ success: boolean; error?: string }> {
+    if (!data.user?.steam_id) {
+      throw new ForbiddenException("authentication required");
+    }
+    if (!data.share_code) {
+      throw new BadRequestException("share_code required");
+    }
+
+    this.logger.log(
+      `action importSteamMatchShareCode steam_id=${data.user.steam_id}`,
+    );
+
+    const result = await this.steamMatchHistory.importShareCode(
+      data.user.steam_id,
+      data.share_code,
+    );
+    return { success: result.ok, error: result.error };
+  }
+
+  @HasuraAction()
   public async retryPendingMatchImport(data: {
     user: User;
     valve_match_id: string;
