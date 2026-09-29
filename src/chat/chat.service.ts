@@ -15,9 +15,10 @@ import {
 import { isRoleAbove, rolesAtOrAbove } from "src/utilities/isRoleAbove";
 import { NotificationsService } from "src/notifications/notifications.service";
 import { PostgresService } from "src/postgres/postgres.service";
+import { PlayerBlocksService } from "src/player-blocks/player-blocks.service";
 import { chatThreadKey } from "src/notifications/push/notification-delivery";
 import { SystemSettingName } from "src/system/enums/SystemSettingName";
-import { parseDirectRoomId } from "./utilities/directRoomId";
+import { directRoomId, parseDirectRoomId } from "./utilities/directRoomId";
 import { ChatErrorCode } from "./enums/ChatErrorCode";
 import { ChatMessage, ChatMessageSource } from "./types/ChatMessage";
 import { ChatSendResult } from "./types/ChatSendResult";
@@ -273,6 +274,7 @@ export class ChatService {
     private readonly postgres: PostgresService,
     private readonly redisManager: RedisManagerService,
     private readonly notifications: NotificationsService,
+    private readonly playerBlocks: PlayerBlocksService,
   ) {
     this.redis = this.redisManager.getConnection();
   }
@@ -308,6 +310,10 @@ export class ChatService {
       client.id,
     );
 
+    client.on("close", () => {
+      void this.removeFromLobby(type, id, client);
+    });
+
     if (added === 1 && count === 1) {
       void this.to(type, id, "joined", {
         user: {
@@ -336,14 +342,10 @@ export class ChatService {
         event: `lobby:${type}:${id}:messages`,
         data: {
           id,
-          messages: await this.getMessages(type, id),
+          messages: await this.historyFor(type, id, String(user.steam_id)),
         },
       }),
     );
-
-    client.on("close", () => {
-      void this.removeFromLobby(type, id, client);
-    });
   }
 
   // Who is allowed in a room at all.
@@ -539,6 +541,13 @@ export class ChatService {
           return false;
         }
 
+        // Anything else names the same pair under a room id that nothing
+        // keyed on the canonical one -- the block trigger, the rail's filter
+        // -- would ever match.
+        if (id !== directRoomId(parties[0], parties[1])) {
+          return false;
+        }
+
         // Being one of the two parties is not on its own an authorization:
         // anyone can build the id for any pair of steam ids, since it is just
         // their sorted pair. The friendship is the only thing standing between
@@ -576,6 +585,15 @@ export class ChatService {
           return false;
         }
 
+        if (
+          await this.playerBlocks.isBlockedEitherWay(
+            String(user.steam_id),
+            otherSteamId,
+          )
+        ) {
+          return false;
+        }
+
         break;
       }
       default:
@@ -584,6 +602,44 @@ export class ChatService {
     }
 
     return true;
+  }
+
+  // Hiding is one-directional: what the viewer blocked is left out, what
+  // blocked the viewer is not, so nothing here tells anyone they were blocked.
+  private async historyFor(
+    type: ChatLobbyType,
+    id: string,
+    viewer: string,
+  ): Promise<ChatMessage[]> {
+    const [messages, blocked] = await Promise.all([
+      this.getMessages(type, id),
+      this.playerBlocks.blockedBy(viewer),
+    ]);
+
+    return ChatService.withoutAuthors(messages, blocked);
+  }
+
+  private static withoutAuthors(
+    messages: ChatMessage[],
+    blocked: Set<string> | undefined,
+  ): ChatMessage[] {
+    if (!blocked || blocked.size === 0) {
+      return messages;
+    }
+
+    return messages.filter(
+      (message) => !blocked.has(ChatService.authorSteamId(message)),
+    );
+  }
+
+  private static authorsOf(messages: ChatMessage[]): string[] {
+    return [
+      ...new Set(
+        messages
+          .map((message) => ChatService.authorSteamId(message))
+          .filter((steamId): steamId is string => steamId !== null),
+      ),
+    ];
   }
 
   // A room's history, from whichever store holds it. DMs are durable and live
@@ -817,7 +873,9 @@ export class ChatService {
     };
 
     if (type === ChatLobbyType.Direct) {
-      await this.storeDirectMessage(id, message);
+      if (!(await this.storeDirectMessage(id, message))) {
+        return { accepted: false, code: ChatErrorCode.NotAllowed };
+      }
     } else {
       const messageKey = `chat_${type}_${id}`;
       // Keyed by id and not `${steam_id}:${now}`, which silently dropped a
@@ -838,7 +896,14 @@ export class ChatService {
 
     const outgoing: ChatMessage = { ...message, reactions: {} };
 
-    void this.to(type, id, "chat", outgoing);
+    void this.to(type, id, "chat", outgoing, message.from.steam_id).catch(
+      (error) => {
+        this.logger.warn(
+          `unable to broadcast a message to ${type}:${id}`,
+          error,
+        );
+      },
+    );
 
     if (type === ChatLobbyType.Direct) {
       void this.deliverDirectMessage(id, player, outgoing);
@@ -1263,7 +1328,14 @@ export class ChatService {
       );
 
       if (swapped === 1) {
-        return await this.announceEdit(type, id, messageId, text, editedAt);
+        return await this.announceEdit(
+          type,
+          id,
+          messageId,
+          String(user.steam_id),
+          text,
+          editedAt,
+        );
       }
 
       await this.discardEdit(auditId);
@@ -1315,6 +1387,7 @@ export class ChatService {
       ChatLobbyType.Direct,
       roomId,
       messageId,
+      String(user.steam_id),
       row.message,
       new Date(row.edited_at).toISOString(),
     );
@@ -1419,13 +1492,22 @@ export class ChatService {
     type: ChatLobbyType,
     id: string,
     messageId: string,
+    author: string,
     text: string,
     editedAt: string,
   ): Promise<ChatEditResult> {
-    void this.to(type, id, "edited", {
-      id: messageId,
-      message: text,
-      edited_at: editedAt,
+    void this.to(
+      type,
+      id,
+      "edited",
+      {
+        id: messageId,
+        message: text,
+        edited_at: editedAt,
+      },
+      author,
+    ).catch((error) => {
+      this.logger.warn(`unable to broadcast an edit to ${type}:${id}`, error);
     });
 
     await this.notifications
@@ -1587,7 +1669,11 @@ export class ChatService {
     const members = await this.getLobbyMemberSteamIds(type, id);
     const senderSteamId = String(sender.steam_id);
 
-    const targets = members.filter((steamId) => steamId !== senderSteamId);
+    const others = members.filter((steamId) => steamId !== senderSteamId);
+    const hiding = await this.playerBlocks.blockedAmong(others, [
+      senderSteamId,
+    ]);
+    const targets = others.filter((steamId) => !hiding.has(steamId));
 
     if (targets.length === 0) {
       return;
@@ -1636,6 +1722,8 @@ export class ChatService {
     id: string,
     messageId: string,
   ) {
+    await this.notifications.retractChatMessageFromBlocked(messageId);
+
     if (type === ChatLobbyType.Direct) {
       const [row] = await this.postgres.query<
         Array<{ message: string; edited_at: Date | null }>
@@ -2041,6 +2129,12 @@ export class ChatService {
         continue;
       }
 
+      if (
+        await this.playerBlocks.hasBlocked(steamId, String(sender.steam_id))
+      ) {
+        continue;
+      }
+
       await this.redis.publish(
         "send-message-to-steam-id",
         JSON.stringify({
@@ -2070,21 +2164,32 @@ export class ChatService {
   // milliseconds ahead leaves a just-read message looking unread -- forever,
   // and pushing every time. The websocket broadcast keeps the pod's timestamp;
   // clients dedupe on the message id, not on when it claims to have happened.
+  //
+  // A block committed after the send's access check still stops the insert,
+  // and with it the rail, the delivery and the notification.
   private async storeDirectMessage(
     roomId: string,
     message: { id: string; message: string; from: User },
-  ) {
+  ): Promise<boolean> {
     const parties = parseDirectRoomId(roomId);
 
     if (!parties) {
-      return;
+      return false;
     }
 
-    await this.postgres.query(
+    const stored = await this.postgres.query<Array<{ id: string }>>(
       `INSERT INTO public.direct_messages (id, room_id, from_steam_id, message)
-            VALUES ($1::uuid, $2, $3::bigint, $4)`,
+            SELECT $1::uuid, $2, $3::bigint, $4
+             WHERE NOT public.is_blocked_either_way(
+                     split_part($2, ':', 1)::bigint,
+                     split_part($2, ':', 2)::bigint)
+         RETURNING id::text AS id`,
       [message.id, roomId, message.from.steam_id, message.message],
     );
+
+    if (stored.length === 0) {
+      return false;
+    }
 
     // A message puts the conversation back on the bar, even if it was removed
     // from it -- someone writing to you is exactly when you want to see them
@@ -2110,6 +2215,8 @@ export class ChatService {
     );
 
     await this.enforceDirectBarLimit(parties);
+
+    return true;
   }
 
   // How many conversations the rail holds. Past this the quietest one drops
@@ -2341,6 +2448,17 @@ export class ChatService {
           AND other.steam_id <> dc.steam_id
     LEFT JOIN public.players peer ON peer.steam_id = other.steam_id
         WHERE dc.steam_id = $1::bigint
+          -- Only the blocker's rail: the other side's stays as it was, so it
+          -- does not tell them. The room id is directRoomId()'s.
+          AND NOT EXISTS (
+            SELECT 1
+              FROM public.player_blocks pb
+             WHERE pb.blocker_steam_id = dc.steam_id
+               AND dc.room_id =
+                   LEAST(pb.blocker_steam_id, pb.blocked_steam_id)::text
+                   || ':' ||
+                   GREATEST(pb.blocker_steam_id, pb.blocked_steam_id)::text
+          )
         -- The rail's own order. last_message_at only breaks ties between rows
         -- that have never been arranged relative to each other.
         ORDER BY dc.position ASC, dc.last_message_at DESC
@@ -2395,33 +2513,76 @@ export class ChatService {
     }));
   }
 
+  // What someone said never reaches a player who blocked them. History is
+  // per recipient, so it has no way out through here: see resendHistory.
+  public to(
+    type: ChatLobbyType,
+    id: string,
+    event: "chat" | "edited",
+    data: Record<string, any>,
+    author: string,
+  ): Promise<void>;
+  public to(
+    type: ChatLobbyType,
+    id: string,
+    event: "deleted" | "reaction" | "list" | "joined" | "left",
+    data: Record<string, any>,
+  ): Promise<void>;
   public async to(
     type: ChatLobbyType,
     id: string,
-    event:
-      | "chat"
-      | "edited"
-      | "deleted"
-      | "reaction"
-      | "list"
-      | "messages"
-      | "joined"
-      | "left",
+    event: string,
     data: Record<string, any>,
-  ) {
+    author?: string,
+  ): Promise<void> {
     const users = await this.getAllUsersInLobby(type, id);
     const eventName = `lobby:${type}:${id}:${event}`;
 
+    const hiding =
+      author === undefined
+        ? new Map<string, Set<string>>()
+        : await this.playerBlocks.blockedAmong(
+            users.map(({ steamId }) => steamId),
+            [author],
+          );
+
     for (const { steamId } of users) {
-      await this.redis.publish(
-        "send-message-to-steam-id",
-        JSON.stringify({
-          steamId,
-          event: eventName,
-          data,
-        }),
-      );
+      if (hiding.has(steamId)) {
+        continue;
+      }
+
+      await this.publishTo(steamId, eventName, data);
     }
+  }
+
+  private async resendHistory(
+    type: ChatLobbyType,
+    id: string,
+    messages: ChatMessage[],
+  ) {
+    const users = await this.getAllUsersInLobby(type, id);
+    const blocked = await this.playerBlocks.blockedAmong(
+      users.map(({ steamId }) => steamId),
+      ChatService.authorsOf(messages),
+    );
+
+    for (const { steamId } of users) {
+      await this.publishTo(steamId, `lobby:${type}:${id}:messages`, {
+        id,
+        messages: ChatService.withoutAuthors(messages, blocked.get(steamId)),
+      });
+    }
+  }
+
+  private async publishTo(
+    steamId: string,
+    event: string,
+    data: Record<string, any>,
+  ) {
+    await this.redis.publish(
+      "send-message-to-steam-id",
+      JSON.stringify({ steamId, event, data }),
+    );
   }
 
   public async removeFromLobby(
@@ -2749,6 +2910,8 @@ export class ChatService {
 
     const messages = await this.getRoomMessages(toType, toId);
 
-    void this.to(toType, toId, "messages", { id: toId, messages });
+    void this.resendHistory(toType, toId, messages).catch((error) => {
+      this.logger.warn(`unable to re-send history to ${toType}:${toId}`, error);
+    });
   }
 }

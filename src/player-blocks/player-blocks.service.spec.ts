@@ -63,6 +63,40 @@ describe("PlayerBlocksService", () => {
     });
   });
 
+  describe("blockedAmong", () => {
+    it("never queries without viewers or authors", async () => {
+      await expect(service.blockedAmong([], ["2"])).resolves.toEqual(new Map());
+      await expect(service.blockedAmong(["1"], [])).resolves.toEqual(new Map());
+      expect(postgres.query).not.toHaveBeenCalled();
+    });
+
+    it("maps each viewer to the authors that viewer blocked, in one query", async () => {
+      postgres.query.mockResolvedValue([
+        { viewer: "1", author: "10" },
+        { viewer: "1", author: "11" },
+        { viewer: "2", author: "10" },
+      ]);
+
+      await expect(
+        service.blockedAmong(["1", "2", "3"], ["10", "11"]),
+      ).resolves.toEqual(
+        new Map([
+          ["1", new Set(["10", "11"])],
+          ["2", new Set(["10"])],
+        ]),
+      );
+
+      expect(postgres.query).toHaveBeenCalledTimes(1);
+      const [sql, params] = postgres.query.mock.calls[0];
+      expect(sql).toContain("blocker_steam_id = ANY($1::bigint[])");
+      expect(sql).toContain("blocked_steam_id = ANY($2::bigint[])");
+      expect(params).toEqual([
+        ["1", "2", "3"],
+        ["10", "11"],
+      ]);
+    });
+  });
+
   describe("filterUnblocked", () => {
     it("never queries for an empty candidate list", async () => {
       await expect(service.filterUnblocked("1", [])).resolves.toEqual([]);

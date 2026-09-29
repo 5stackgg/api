@@ -8,6 +8,7 @@ import { PostgresService } from "./../src/postgres/postgres.service";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 import { ChatService } from "./../src/chat/chat.service";
+import { PlayerBlocksService } from "./../src/player-blocks/player-blocks.service";
 import { ChatErrorCode } from "./../src/chat/enums/ChatErrorCode";
 import { ChatLobbyType } from "./../src/chat/enums/ChatLobbyTypes";
 import { NotificationsService } from "./../src/notifications/notifications.service";
@@ -155,6 +156,7 @@ describe("chat moderation (SQL-driven)", () => {
       postgres,
       { getConnection: () => redis } as any,
       notifications,
+      new PlayerBlocksService(postgres),
     );
   }, 600_000);
 

@@ -13,6 +13,7 @@ import { loggerFactory } from "src/utilities/LoggerFactory";
 import { getQueuesProcessors } from "src/utilities/QueueProcessors";
 import { ChatController } from "./chat.controller";
 import { NotificationsModule } from "src/notifications/notifications.module";
+import { PlayerBlocksModule } from "src/player-blocks/player-blocks.module";
 import { ChatQueues } from "./enums/ChatQueues";
 import { PruneDirectMessages } from "./jobs/PruneDirectMessages";
 import { BackfillDirectMessages } from "./jobs/BackfillDirectMessages";
@@ -24,6 +25,7 @@ import { BackfillDirectMessages } from "./jobs/BackfillDirectMessages";
     PostgresModule,
     forwardRef(() => RconModule),
     NotificationsModule,
+    PlayerBlocksModule,
     BullModule.registerQueue({
       name: ChatQueues.ChatMaintenance,
     }),

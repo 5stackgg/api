@@ -906,6 +906,12 @@ describe("player blocks (SQL-driven)", () => {
       expect(await service.hasBlocked(b, a)).toBe(false);
       expect(await service.blockedBy(a)).toEqual(new Set([b]));
       expect(await service.filterUnblocked(a, [c, b, d, a])).toEqual([d, a]);
+      expect(await service.blockedAmong([a, b, c, d], [a, b])).toEqual(
+        new Map([
+          [a, new Set([b])],
+          [c, new Set([a])],
+        ]),
+      );
     });
   });
 
