@@ -792,7 +792,10 @@ export class NotificationsService {
   // For a recipient who blocked the sender after the rows were aimed but
   // before they were written, which the block's own cleanup ran too early to
   // see. Blanked the way retractChatMessage blanks, for the same reasons.
-  async retractChatMessageFromBlocked(messageId: string) {
+  async retractChatMessageFromBlocked(
+    messageId: string,
+    exemptRoles: Array<e_player_roles_enum> = [],
+  ) {
     await this.postgres.query(
       `UPDATE public.notifications n
           SET deleted_at = COALESCE(n.deleted_at, now()),
@@ -803,10 +806,12 @@ export class NotificationsService {
           AND EXISTS (
             SELECT 1
               FROM public.player_blocks pb
+              JOIN public.players p ON p.steam_id = pb.blocker_steam_id
              WHERE pb.blocker_steam_id = n.steam_id
                AND pb.blocked_steam_id::text = n.data->>'senderSteamId'
+               AND p.role::text <> ALL($2::text[])
           )`,
-      [messageId],
+      [messageId, exemptRoles],
     );
   }
 

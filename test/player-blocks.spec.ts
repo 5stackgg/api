@@ -2,6 +2,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { PlayerBlocksService } from "./../src/player-blocks/player-blocks.service";
+import { rolesAtOrAbove } from "./../src/utilities/isRoleAbove";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, runAsUser, SqlTestDb } from "./utils/sql-test-db";
 
@@ -910,6 +911,30 @@ describe("player blocks (SQL-driven)", () => {
         new Map([
           [a, new Set([b])],
           [c, new Set([a])],
+        ]),
+      );
+    });
+
+    it("hides nothing from a viewer whose role on the player row is exempt", async () => {
+      const service = new PlayerBlocksService(postgres);
+      const [a, b, c] = await fx.players(3);
+      await block(a, b);
+      await block(c, b);
+      await postgres.query(
+        "UPDATE players SET role = 'moderator' WHERE steam_id = $1::bigint",
+        [c],
+      );
+      const exempt = rolesAtOrAbove("moderator");
+
+      expect(await service.blockedBy(c, exempt)).toEqual(new Set());
+      expect(await service.blockedBy(a, exempt)).toEqual(new Set([b]));
+      expect(await service.blockedAmong([a, c], [b], exempt)).toEqual(
+        new Map([[a, new Set([b])]]),
+      );
+      expect(await service.blockedAmong([a, c], [b])).toEqual(
+        new Map([
+          [a, new Set([b])],
+          [c, new Set([b])],
         ]),
       );
     });

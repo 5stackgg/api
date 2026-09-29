@@ -3,10 +3,12 @@ import { ChatErrorCode } from "./enums/ChatErrorCode";
 import { ChatLobbyType } from "./enums/ChatLobbyTypes";
 import { directRoomId } from "./utilities/directRoomId";
 import { HasuraService } from "../hasura/hasura.service";
+import { rolesAtOrAbove } from "../utilities/isRoleAbove";
 
 const ME = "76561198000000001";
 const FRIEND = "76561198000000002";
 const STRANGER = "76561198000000003";
+const MODERATORS = rolesAtOrAbove("moderator");
 
 describe("ChatService direct messages", () => {
   const logger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
@@ -3409,7 +3411,7 @@ describe("ChatService direct messages", () => {
           "from stranger",
           "from me",
         ]);
-        expect(playerBlocks.blockedBy).toHaveBeenCalledWith(ME);
+        expect(playerBlocks.blockedBy).toHaveBeenCalledWith(ME, MODERATORS);
       });
 
       it("hides nothing from the player a block is aimed at", async () => {
@@ -3451,6 +3453,7 @@ describe("ChatService direct messages", () => {
         expect(playerBlocks.blockedAmong).toHaveBeenCalledWith(
           [ME, FRIEND, STRANGER],
           [FRIEND, STRANGER],
+          MODERATORS,
         );
       });
 
@@ -3506,6 +3509,7 @@ describe("ChatService direct messages", () => {
         expect(playerBlocks.blockedAmong).toHaveBeenCalledWith(
           [ME, FRIEND, STRANGER],
           [FRIEND],
+          MODERATORS,
         );
 
         await expect(
@@ -3554,6 +3558,60 @@ describe("ChatService direct messages", () => {
         expect(logger.warn).toHaveBeenCalledWith(
           "unable to broadcast an edit to match:m-1",
           expect.any(Error),
+        );
+      });
+
+      it("logs a reaction whose block lookup fails instead of leaving it unhandled", async () => {
+        const id = say(FRIEND, "hello", MESSAGE_ID);
+        playerBlocks.blockedAmong.mockRejectedValueOnce(
+          new Error("pool timeout"),
+        );
+
+        await expect(
+          service.toggleReaction(
+            ChatLobbyType.Match,
+            "m-1",
+            id,
+            "heart",
+            as(ME),
+          ),
+        ).resolves.toMatchObject({ toggled: true });
+        await flush();
+
+        expect(logger.warn).toHaveBeenCalledWith(
+          "unable to broadcast a reaction to match:m-1",
+          expect.any(Error),
+        );
+      });
+
+      it("strips a blocked reactor from the blocker's reaction update only", async () => {
+        blocks = [[ME, STRANGER]];
+        const id = say(FRIEND, "hello", MESSAGE_ID);
+
+        await service.toggleReaction(
+          ChatLobbyType.Match,
+          "m-1",
+          id,
+          "heart",
+          as(FRIEND),
+        );
+        await flush();
+
+        const sent = Object.fromEntries(
+          published()
+            .filter(({ event }) => event === "lobby:match:m-1:reaction")
+            .map(({ steamId, data }) => [steamId, data.reactions]),
+        );
+
+        expect(sent).toEqual({
+          [ME]: {},
+          [FRIEND]: { heart: [STRANGER] },
+          [STRANGER]: { heart: [STRANGER] },
+        });
+        expect(playerBlocks.blockedAmong).toHaveBeenCalledWith(
+          [ME, FRIEND, STRANGER],
+          [STRANGER],
+          MODERATORS,
         );
       });
 
@@ -3651,6 +3709,7 @@ describe("ChatService direct messages", () => {
         expect(playerBlocks.blockedAmong).toHaveBeenCalledWith(
           [STRANGER, ME],
           [FRIEND],
+          MODERATORS,
         );
         expect(notifications.notifyPlayers).not.toHaveBeenCalled();
         expect(logger.warn).not.toHaveBeenCalled();
@@ -3661,7 +3720,7 @@ describe("ChatService direct messages", () => {
 
         expect(
           notifications.retractChatMessageFromBlocked,
-        ).toHaveBeenCalledWith(messageId);
+        ).toHaveBeenCalledWith(messageId, MODERATORS);
         expect(
           notifications.retractChatMessageFromBlocked.mock
             .invocationCallOrder[0],
