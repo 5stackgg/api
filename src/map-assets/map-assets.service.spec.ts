@@ -10,6 +10,7 @@ describe("MapAssetsService", () => {
     claimed: boolean;
     existing: string | null;
     previous: { build_id: string; maps: Record<string, unknown> } | null;
+    maps: Array<string>;
   };
 
   let db: Db;
@@ -33,6 +34,7 @@ describe("MapAssetsService", () => {
       claimed: true,
       existing: null,
       previous: null,
+      maps: [],
     };
     postgres = {
       query: jest.fn(async (sql: string, params: Array<unknown>) => {
@@ -44,6 +46,9 @@ describe("MapAssetsService", () => {
         }
         if (sql.includes("DO NOTHING")) {
           return db.claimed ? [{ build_id: params[0] }] : [];
+        }
+        if (sql.includes("FROM public.maps")) {
+          return db.maps.map((name) => ({ name }));
         }
         if (sql.includes("SELECT build_id, maps")) {
           return db.previous ? [db.previous] : [];
@@ -141,6 +146,21 @@ describe("MapAssetsService", () => {
         { name: "work", emptyDir: { sizeLimit: "4Gi" } },
         { name: "tmp", emptyDir: { sizeLimit: "8Gi" } },
       ]);
+    });
+
+    it("narrows the build to the maps it is given", () => {
+      const narrowed = MapAssetsService.jobSpec("node.one", "25537370", true, [
+        "de_ancient",
+        "de_mirage",
+      ]);
+      const args = narrowed.spec.template.spec.containers[0].args;
+
+      expect(args.slice(args.indexOf("--only-maps"))).toEqual([
+        "--only-maps",
+        "de_ancient,de_mirage",
+        "--force",
+      ]);
+      expect(container.args).not.toContain("--only-maps");
     });
 
     it("only forces a full rebuild when asked", () => {
@@ -444,6 +464,21 @@ describe("MapAssetsService", () => {
         null,
         JSON.stringify(changes),
       ]);
+    });
+
+    it("only builds the maps in the maps table", async () => {
+      finished({ succeeded: 1 });
+      db.maps = ["de_ancient", "de_mirage"];
+
+      await service.build("node-1", "25537370");
+
+      expect(batchApi.createNamespacedJob).toHaveBeenCalledWith({
+        namespace: "5stack",
+        body: MapAssetsService.jobSpec("node-1", "25537370", false, [
+          "de_ancient",
+          "de_mirage",
+        ]),
+      });
     });
 
     it("records which node ran the build", async () => {
