@@ -29,6 +29,7 @@ describe("utility lineup search index (SQL-driven)", () => {
       null as never,
       null as never,
       postgres,
+      null as never,
     );
   }, 600_000);
 

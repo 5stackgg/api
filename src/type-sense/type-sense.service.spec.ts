@@ -14,12 +14,18 @@ describe("TypeSenseService player role rank", () => {
   let hasura: { query: jest.Mock };
   let matchAssistant: { sendServerMatchId: jest.Mock };
   let reindexQueue: { add: jest.Mock };
+  let cache: { get: jest.Mock; put: jest.Mock; forget: jest.Mock };
   let service: TypeSenseService;
 
   beforeEach(() => {
     hasura = { query: jest.fn() };
     matchAssistant = { sendServerMatchId: jest.fn() };
     reindexQueue = { add: jest.fn().mockResolvedValue({}) };
+    cache = {
+      get: jest.fn().mockResolvedValue(undefined),
+      put: jest.fn().mockResolvedValue(true),
+      forget: jest.fn().mockResolvedValue(undefined),
+    };
 
     service = new TypeSenseService(
       { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
@@ -29,6 +35,7 @@ describe("TypeSenseService player role rank", () => {
       reindexQueue as any,
       { add: jest.fn() } as any,
       { query: jest.fn() } as any,
+      cache as any,
     );
   });
 
@@ -57,6 +64,7 @@ describe("TypeSenseService player role rank", () => {
     await service.createPlayerCollection();
 
     reindexQueue.add.mockClear();
+    cache.forget.mockClear();
 
     return create.mock.calls[0][0].fields;
   }
@@ -100,6 +108,7 @@ describe("TypeSenseService player role rank", () => {
       .filter((field) => field.name !== "role_rank")
       .map(asTypesenseReturnsIt);
     const { players, create } = playersCollection(existing);
+    cache.get.mockResolvedValue(TypeSenseService.playerSchemaVersion());
 
     await service.createPlayerCollection();
 
@@ -110,9 +119,45 @@ describe("TypeSenseService player role rank", () => {
     expectPlayerRefreshQueued();
   });
 
+  it("re-queues the player refresh on a later boot when the one queued with role_rank never finished", async () => {
+    const existing = (await declaredFields()).map(asTypesenseReturnsIt);
+    const { players } = playersCollection(existing);
+
+    await service.createPlayerCollection();
+
+    expect(players.update).not.toHaveBeenCalled();
+    expect(reindexQueue.add).toHaveBeenCalledTimes(1);
+    expectPlayerRefreshQueued();
+  });
+
+  it("forgets the indexed schema whenever it queues a refresh", async () => {
+    const existing = (await declaredFields()).map(asTypesenseReturnsIt);
+    playersCollection(existing);
+    cache.get.mockResolvedValue("an older schema");
+
+    await service.createPlayerCollection();
+
+    expect(cache.forget).toHaveBeenCalledWith(
+      "typesense:players:indexed-schema",
+    );
+    expect(cache.forget.mock.invocationCallOrder[0]).toBeLessThan(
+      reindexQueue.add.mock.invocationCallOrder[0],
+    );
+  });
+
+  it("records the current schema once a refresh finishes", async () => {
+    await service.markPlayersIndexed();
+
+    expect(cache.put).toHaveBeenCalledWith(
+      "typesense:players:indexed-schema",
+      TypeSenseService.playerSchemaVersion(),
+    );
+  });
+
   it("leaves a collection that already has role_rank alone", async () => {
     const existing = (await declaredFields()).map(asTypesenseReturnsIt);
     const { players } = playersCollection(existing);
+    cache.get.mockResolvedValue(TypeSenseService.playerSchemaVersion());
 
     await service.createPlayerCollection();
 

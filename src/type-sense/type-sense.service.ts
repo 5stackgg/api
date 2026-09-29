@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { Inject, Injectable, Logger, forwardRef } from "@nestjs/common";
 import { Client } from "typesense";
 import { HasuraService } from "../hasura/hasura.service";
@@ -15,6 +16,7 @@ import { PostgresService } from "../postgres/postgres.service";
 import { SERVER_ENFORCED_SANCTION_TYPES } from "../sanctions/sanction-types";
 import { RefreshAllPlayersJob } from "./jobs/RefreshAllPlayers";
 import { roleRank } from "../utilities/isRoleAbove";
+import { CacheService } from "../cache/cache.service";
 
 // One publicly visible lineup, as the global search bar needs it. Only ever
 // produced by searchableUtilityLineups, which is the one place the visibility
@@ -42,6 +44,11 @@ export class TypeSenseService {
   // rebuilt in pages of this size rather than held in memory in one go.
   public static readonly UTILITY_LINEUP_PAGE = 500;
 
+  // A queued full refresh can be lost (pod killed, rolling deploy), so only a
+  // run that finished records the schema its documents were written under.
+  private static readonly PLAYERS_INDEXED_SCHEMA_KEY =
+    "typesense:players:indexed-schema";
+
   constructor(
     private readonly logger: Logger,
     private readonly config: ConfigService,
@@ -52,6 +59,7 @@ export class TypeSenseService {
     @InjectQueue(TypesenseQueues.UtilityLineupReindex)
     private utilityReindexQueue: Queue,
     private readonly postgres: PostgresService,
+    private readonly cache: CacheService,
   ) {}
 
   public async setup() {
@@ -79,8 +87,8 @@ export class TypeSenseService {
     }
   }
 
-  public async createPlayerCollection() {
-    const fields: CollectionFieldSchema[] = [
+  private static playerFields(): CollectionFieldSchema[] {
+    return [
       {
         name: "name",
         type: "string",
@@ -209,6 +217,16 @@ export class TypeSenseService {
       },
       { name: "profile_url", type: "string", optional: true, index: false },
     ];
+  }
+
+  public static playerSchemaVersion(): string {
+    return createHash("sha1")
+      .update(JSON.stringify(TypeSenseService.playerFields()))
+      .digest("hex");
+  }
+
+  public async createPlayerCollection() {
+    const fields = TypeSenseService.playerFields();
 
     const exists = await this.client.collections("players").exists();
 
@@ -218,15 +236,7 @@ export class TypeSenseService {
         fields,
         default_sorting_field: "name",
       } as any);
-      await this.reindexQueue.add(
-        RefreshAllPlayersJob.name,
-        {},
-        {
-          jobId: RefreshAllPlayersJob.name,
-          removeOnComplete: true,
-          removeOnFail: true,
-        },
-      );
+      await this.queuePlayerRefresh();
 
       return;
     }
@@ -265,19 +275,38 @@ export class TypeSenseService {
       await this.client.collections("players").update({
         fields: fieldUpdates as CollectionFieldSchema[],
       });
-
-      if (needsRefresh) {
-        await this.reindexQueue.add(
-          RefreshAllPlayersJob.name,
-          {},
-          {
-            jobId: RefreshAllPlayersJob.name,
-            removeOnComplete: true,
-            removeOnFail: true,
-          },
-        );
-      }
     }
+
+    if (needsRefresh || !(await this.playersIndexedAtCurrentSchema())) {
+      await this.queuePlayerRefresh();
+    }
+  }
+
+  public async markPlayersIndexed() {
+    await this.cache.put(
+      TypeSenseService.PLAYERS_INDEXED_SCHEMA_KEY,
+      TypeSenseService.playerSchemaVersion(),
+    );
+  }
+
+  private async playersIndexedAtCurrentSchema(): Promise<boolean> {
+    return (
+      (await this.cache.get(TypeSenseService.PLAYERS_INDEXED_SCHEMA_KEY)) ===
+      TypeSenseService.playerSchemaVersion()
+    );
+  }
+
+  private async queuePlayerRefresh() {
+    await this.cache.forget(TypeSenseService.PLAYERS_INDEXED_SCHEMA_KEY);
+    await this.reindexQueue.add(
+      RefreshAllPlayersJob.name,
+      {},
+      {
+        jobId: RefreshAllPlayersJob.name,
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    );
   }
 
   // Typesense: `index` defaults to true; `sort` defaults to true for numeric

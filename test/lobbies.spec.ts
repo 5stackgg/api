@@ -108,6 +108,69 @@ describe("lobbies (SQL-driven)", () => {
     expect(players[0].captain).toBe(true);
   });
 
+  it("a non-captain member leaving does not crown a second captain", async () => {
+    const creator = await seedPlayer();
+    const mateA = await seedPlayer();
+    const mateB = await seedPlayer();
+    const lobbyId = await createLobby(creator);
+    for (const mate of [mateA, mateB]) {
+      await invite(lobbyId, mate);
+      await accept(lobbyId, mate);
+    }
+
+    await leave(lobbyId, mateA);
+
+    const captains = (await lobbyPlayers(lobbyId))
+      .filter((p) => p.captain)
+      .map((p) => p.steam_id);
+    expect(captains).toEqual([creator]);
+  });
+
+  it("the captain leaving while a member's leave is still open promotes someone who stays", async () => {
+    const creator = await seedPlayer();
+    const leaving = await seedPlayer();
+    const staying = await seedPlayer();
+    const lobbyId = await createLobby(creator);
+    for (const mate of [leaving, staying]) {
+      await invite(lobbyId, mate);
+      await accept(lobbyId, mate);
+    }
+
+    const blockedOrDone = async (pending: Promise<unknown>) => {
+      let done = false;
+      pending.then(
+        () => (done = true),
+        () => (done = true),
+      );
+      while (!done) {
+        const [{ waiting }] = await postgres.query<Array<{ waiting: number }>>(
+          `SELECT count(*)::int AS waiting FROM pg_stat_activity
+            WHERE datname = current_database() AND wait_event_type = 'Lock'`,
+        );
+        if (waiting > 0) {
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+    };
+
+    let captainLeft: Promise<unknown> = Promise.resolve();
+    await postgres.transaction(async (client) => {
+      await client.query(
+        "DELETE FROM lobby_players WHERE lobby_id = $1 AND steam_id = $2",
+        [lobbyId, leaving],
+      );
+      captainLeft = leave(lobbyId, creator);
+      await blockedOrDone(captainLeft);
+    });
+    await captainLeft;
+
+    const captains = (await lobbyPlayers(lobbyId))
+      .filter((p) => p.captain)
+      .map((p) => p.steam_id);
+    expect(captains).toEqual([staying]);
+  });
+
   it("the last accepted player leaving dissolves the lobby", async () => {
     const creator = await seedPlayer();
     const lobbyId = await createLobby(creator);

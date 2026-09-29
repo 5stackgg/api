@@ -85,9 +85,13 @@ export class CacheService {
   // that took it; everyone else gets false until it expires or is released.
   // Refresh the TTL by calling again while held is NOT possible (NX) — use
   // refreshLock for that. Release with forget(key).
-  public async acquireLock(key: string, seconds: number): Promise<boolean> {
+  public async acquireLock(
+    key: string,
+    seconds: number,
+    value = "1",
+  ): Promise<boolean> {
     try {
-      const result = await this.connection.set(key, "1", "EX", seconds, "NX");
+      const result = await this.connection.set(key, value, "EX", seconds, "NX");
       return result === "OK";
     } catch (error) {
       this.logger.error("unable to acquire lock in redis", error);

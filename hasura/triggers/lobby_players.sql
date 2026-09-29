@@ -54,7 +54,15 @@ BEGIN
 
     IF remaining_players = 0 THEN
         DELETE FROM lobbies WHERE id = OLD.lobby_id;
-    ELSE
+    ELSIF NOT EXISTS (
+        SELECT 1
+        FROM lobby_players
+        WHERE lobby_id = OLD.lobby_id
+        AND status = 'Accepted'
+        AND captain = TRUE
+    ) THEN
+        -- A member whose own leave is still uncommitted is locked; picking them
+        -- would promote nobody once that leave commits.
         UPDATE lobby_players SET captain = TRUE
         WHERE lobby_id = OLD.lobby_id
         AND steam_id = (
@@ -65,6 +73,7 @@ BEGIN
             AND captain = FALSE
             ORDER BY steam_id
             FETCH FIRST 1 ROW ONLY
+            FOR UPDATE SKIP LOCKED
         );
     END IF;
 
