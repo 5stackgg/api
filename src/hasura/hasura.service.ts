@@ -254,10 +254,10 @@ export class HasuraService {
       "delete from settings where name = 'public.utility_practice_daily_limit'",
     );
 
-    // Renamed to `public.` by migration 1889000000300; an admin still on the
-    // old web app writes the unprefixed names again, which the api ignores.
+    // Admin-only settings: a web app from before migration 1889000000400 still
+    // saves them under `public.`, which every role can read.
     await this.postgresService.query(
-      "delete from settings where name in ('clip_fps', 'clip_resolution')",
+      "delete from settings where name in ('public.clip_fps', 'public.clip_resolution')",
     );
 
     // The light-mode branding palette was retired; only `public.color_dark_*`

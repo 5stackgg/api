@@ -72,8 +72,8 @@ export enum SystemSettingName {
   GamePluginRegistryUrl = "game_plugin_registry_url",
   DefaultBroadcastHud = "public.default_broadcast_hud",
   DefaultHudMode = "default_hud_mode",
-  ClipFps = "public.clip_fps",
-  ClipResolution = "public.clip_resolution",
+  ClipFps = "clip_fps",
+  ClipResolution = "clip_resolution",
   // VAPID identifies this panel to the browser push services. The keypair is
   // self-generated -- there is no vendor to register with -- so it is stored
   // here rather than demanding an env var of every operator. The private half

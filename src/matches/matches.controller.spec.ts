@@ -274,10 +274,7 @@ describe("MatchesController", () => {
     const streamer = { role: "streamer", steam_id: "76561198000000001" };
     const admin = { role: "administrator", steam_id: "76561198000000002" };
 
-    const operatorSettings: Record<string, string> = {
-      "public.clip_fps": "30",
-      "public.clip_resolution": "720p",
-    };
+    let operatorSettings: Record<string, string>;
 
     const preset = (extra: Record<string, unknown> = {}) =>
       controller.createClipFromPreset({
@@ -291,6 +288,8 @@ describe("MatchesController", () => {
     const presetOutput = () => clips.buildPresetSpec.mock.calls[0][3];
 
     beforeEach(() => {
+      operatorSettings = { clip_fps: "30", clip_resolution: "720p" };
+
       const hasura = {
         query: jest.fn(
           async (query: { settings_by_pk?: { __args: { name: string } } }) => {
@@ -327,25 +326,32 @@ describe("MatchesController", () => {
       expect(presetOutput()).toEqual({ resolution: "720p", fps: 30 });
     });
 
-    it("keeps the operator's fps when the client sends its own", async () => {
-      await preset({ fps: 60 });
+    it("ignores clip settings saved under the `public.` names", async () => {
+      operatorSettings = {
+        "public.clip_fps": "30",
+        "public.clip_resolution": "720p",
+      };
 
-      expect(presetOutput()).toEqual({ resolution: "720p", fps: 30 });
+      await preset();
+
+      expect(presetOutput()).toEqual({ resolution: "1080p", fps: 60 });
     });
 
-    it("honours a resolution picked in the render dialog", async () => {
+    it("ignores the fps and resolution a client sends with a preset", async () => {
       await preset({ resolution: "1080p", fps: 60 });
 
-      expect(presetOutput()).toEqual({ resolution: "1080p", fps: 30 });
-    });
-
-    it("falls back to the operator's resolution for one the dialog does not offer", async () => {
-      await preset({ resolution: "4k" });
-
       expect(presetOutput()).toEqual({ resolution: "720p", fps: 30 });
     });
 
-    it("queues a highlight at the operator's fps", async () => {
+    it("keeps the operator's 1080p/60 over a client's 720p/30", async () => {
+      operatorSettings = { clip_fps: "60", clip_resolution: "1080p" };
+
+      await preset({ resolution: "720p", fps: 30 });
+
+      expect(presetOutput()).toEqual({ resolution: "1080p", fps: 60 });
+    });
+
+    it("queues a highlight at the operator's settings whatever the client sends", async () => {
       await controller.queueClipFromPreset({
         match_map_id: "map-1",
         target_steam_id: "76561198000000009",
@@ -356,25 +362,40 @@ describe("MatchesController", () => {
       } as any);
 
       expect(clips.queueClipFromPreset.mock.calls[0][1].output).toEqual({
-        resolution: "1080p",
+        resolution: "720p",
         fps: 30,
       });
     });
 
-    it("renders an edited clip at the operator's fps", async () => {
-      await controller.createClipRender({
+    const renderEdited = (extra: Record<string, unknown> = {}) =>
+      controller.createClipRender({
         spec: {
           match_map_id: "map-1",
           segments: [{ start_tick: 1, end_tick: 2 }],
-          output: { format: "mp4", resolution: "1080p", fps: 60 },
           destination: "library",
+          ...extra,
         },
         user: streamer as any,
       });
 
+    it("replaces the output a client sends with an edited clip", async () => {
+      await renderEdited({
+        output: { format: "mp4", resolution: "1080p", fps: 60 },
+      });
+
       expect(clips.createClipRender.mock.calls[0][1].output).toEqual({
         format: "mp4",
-        resolution: "1080p",
+        resolution: "720p",
+        fps: 30,
+      });
+    });
+
+    it("renders an edited clip sent without an output at the operator's settings", async () => {
+      await renderEdited();
+
+      expect(clips.createClipRender.mock.calls[0][1].output).toEqual({
+        format: "mp4",
+        resolution: "720p",
         fps: 30,
       });
     });
