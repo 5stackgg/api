@@ -108,6 +108,24 @@ describe("lobbies (SQL-driven)", () => {
     expect(players[0].captain).toBe(true);
   });
 
+  it("a non-captain member leaving does not crown a second captain", async () => {
+    const creator = await seedPlayer();
+    const mateA = await seedPlayer();
+    const mateB = await seedPlayer();
+    const lobbyId = await createLobby(creator);
+    for (const mate of [mateA, mateB]) {
+      await invite(lobbyId, mate);
+      await accept(lobbyId, mate);
+    }
+
+    await leave(lobbyId, mateA);
+
+    const captains = (await lobbyPlayers(lobbyId))
+      .filter((p) => p.captain)
+      .map((p) => p.steam_id);
+    expect(captains).toEqual([creator]);
+  });
+
   it("the last accepted player leaving dissolves the lobby", async () => {
     const creator = await seedPlayer();
     const lobbyId = await createLobby(creator);

@@ -54,7 +54,13 @@ BEGIN
 
     IF remaining_players = 0 THEN
         DELETE FROM lobbies WHERE id = OLD.lobby_id;
-    ELSE
+    ELSIF OLD.captain AND NOT EXISTS (
+        SELECT 1
+        FROM lobby_players
+        WHERE lobby_id = OLD.lobby_id
+        AND status = 'Accepted'
+        AND captain = TRUE
+    ) THEN
         UPDATE lobby_players SET captain = TRUE
         WHERE lobby_id = OLD.lobby_id
         AND steam_id = (

@@ -17,6 +17,7 @@ describe("TypeSenseService player sanctions count", () => {
       { add: jest.fn() } as any,
       { add: jest.fn() } as any,
       { query: jest.fn() } as any,
+      {} as any,
     );
 
     (service as any).client = {

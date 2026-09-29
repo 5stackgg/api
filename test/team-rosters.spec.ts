@@ -497,6 +497,84 @@ describe("teams, rosters and lineup membership (SQL-driven)", () => {
         expect((await rosterRow(teamId, owner))?.role).toBe("Admin");
         expect((await rosterRow(teamId, member))?.role).toBe("Member");
       });
+
+      it("puts owners who left before the guard existed back on the roster as a benched Admin", async () => {
+        const runRejoin = async () =>
+          postgres.query(
+            readFileSync(
+              join(
+                __dirname,
+                "../hasura/migrations/default/1889000000200_team_owner_roster_rejoin/up.sql",
+              ),
+              "utf8",
+            ),
+          );
+        const rosterManagers = async (teamId: string, steam: string) =>
+          postgres.query<Array<unknown>>(
+            "SELECT 1 FROM team_roster WHERE team_id = $1 AND player_steam_id = $2 AND role = 'Admin'",
+            [teamId, steam],
+          );
+        const statusCounts = async (teamId: string) =>
+          postgres.query<Array<{ status: string; count: number }>>(
+            "SELECT status, COUNT(*)::int AS count FROM team_roster WHERE team_id = $1 GROUP BY status ORDER BY status",
+            [teamId],
+          );
+
+        const owner = await seedPlayer();
+        const teamId = await createTeam(owner);
+        await postgres.transaction(async (client) => {
+          await client.query(
+            "ALTER TABLE team_roster DISABLE TRIGGER tbd_team_roster",
+          );
+          await client.query(
+            "DELETE FROM team_roster WHERE team_id = $1 AND player_steam_id = $2",
+            [teamId, owner],
+          );
+          await client.query(
+            "ALTER TABLE team_roster ENABLE TRIGGER tbd_team_roster",
+          );
+        });
+        const players = await fx.players(7);
+        await asUser(players[0], "admin", async (query) => {
+          await query(
+            "SELECT set_config('fivestack.rebalancing', 'true', true)",
+          );
+          for (const [index, steamId] of players.entries()) {
+            await query(
+              "INSERT INTO team_roster (team_id, player_steam_id, status) VALUES ($1, $2, $3)",
+              [teamId, steamId, index < 5 ? "Starter" : "Substitute"],
+            );
+          }
+        });
+
+        const otherOwner = await seedPlayer();
+        const otherTeamId = await createTeam(otherOwner);
+
+        expect(await rosterManagers(teamId, owner)).toHaveLength(0);
+
+        await runRejoin();
+        await runRejoin();
+
+        const [rejoined] = await postgres.query<
+          Array<{ role: string; status: string; coach: boolean }>
+        >(
+          "SELECT role, status, coach FROM team_roster WHERE team_id = $1 AND player_steam_id = $2",
+          [teamId, owner],
+        );
+        expect(rejoined).toEqual({
+          role: "Admin",
+          status: "Benched",
+          coach: false,
+        });
+        expect(await statusCounts(teamId)).toEqual([
+          { status: "Benched", count: 1 },
+          { status: "Starter", count: 5 },
+          { status: "Substitute", count: 2 },
+        ]);
+        expect(await statusCounts(otherTeamId)).toEqual([
+          { status: "Starter", count: 1 },
+        ]);
+      });
     });
   });
 

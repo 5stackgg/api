@@ -135,6 +135,10 @@ export class PlayerReindexService {
         await this.saveStatus(status, RUNNING_TTL_SECONDS);
         await this.cache.refreshLock(LOCK_KEY, RUNNING_TTL_SECONDS);
       }
+
+      if (!status.canceled && status.failed === 0) {
+        await this.typeSense.markPlayersIndexed();
+      }
     } finally {
       status.running = false;
       status.current_steam_id = null;
