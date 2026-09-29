@@ -254,6 +254,12 @@ export class HasuraService {
       "delete from settings where name = 'public.utility_practice_daily_limit'",
     );
 
+    // The light-mode branding palette was retired; only `public.color_dark_*`
+    // is applied, but installs themed before that still carry the old rows.
+    await this.postgresService.query(
+      "delete from settings where starts_with(name, 'public.color_') and not starts_with(name, 'public.color_dark_')",
+    );
+
     await this.postgresService.query(
       "insert into settings (name, value) values ('public.utility_practice_reserved_servers', '2') on conflict (name) do nothing",
     );

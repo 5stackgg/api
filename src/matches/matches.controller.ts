@@ -1953,6 +1953,9 @@ export class MatchesController {
     if (!spec || !spec.match_map_id) {
       throw Error("invalid clip spec");
     }
+    if (spec.output) {
+      spec.output.fps = await this.gameStreamer.resolveClipFps();
+    }
     const { jobId } = await this.clips.createClipRender(user.steam_id, spec);
     return {
       success: true,
@@ -2078,8 +2081,7 @@ export class MatchesController {
     match_map_id: string;
     target_steam_id: string;
     preset: "knife" | "multikills" | "best_round" | "recap";
-    resolution?: "720p" | "1080p";
-    fps?: 30 | 60;
+    resolution?: string;
     title?: string;
     target_name?: string;
     user: User;
@@ -2092,11 +2094,7 @@ export class MatchesController {
       data.match_map_id,
       data.target_steam_id,
       data.preset,
-      {
-        resolution:
-          data.resolution ?? (await this.gameStreamer.resolveClipResolution()),
-        fps: data.fps ?? (await this.gameStreamer.resolveClipFps()),
-      },
+      await this.gameStreamer.resolveClipOutput(data.resolution),
       data.title,
       data.target_name,
     );
@@ -2109,8 +2107,7 @@ export class MatchesController {
     match_map_id: string;
     target_steam_id: string;
     preset: "knife" | "multikills" | "best_round" | "recap";
-    resolution?: "720p" | "1080p";
-    fps?: 30 | 60;
+    resolution?: string;
     title?: string;
     target_name?: string;
     user: User;
@@ -2123,11 +2120,7 @@ export class MatchesController {
       matchMapId: data.match_map_id,
       targetSteamId: data.target_steam_id,
       preset: data.preset,
-      output: {
-        resolution:
-          data.resolution ?? (await this.gameStreamer.resolveClipResolution()),
-        fps: data.fps ?? (await this.gameStreamer.resolveClipFps()),
-      },
+      output: await this.gameStreamer.resolveClipOutput(data.resolution),
       title: data.title,
       targetName: data.target_name,
     });

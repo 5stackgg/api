@@ -236,12 +236,20 @@ export class SystemService {
 
     hasUpdates.push(...(await this.getOutdated()));
 
+    const value = JSON.stringify(hasUpdates);
+
+    // Runs every minute; an unconditional write fires the settings event
+    // trigger and re-sends the settings subscription to every admin browser.
+    if (value === (await this.getSetting(SystemSettingName.Updates, ""))) {
+      return;
+    }
+
     await this.hasura.mutation({
       insert_settings_one: {
         __args: {
           object: {
             name: SystemSettingName.Updates,
-            value: JSON.stringify(hasUpdates),
+            value,
           },
           on_conflict: {
             constraint: "settings_pkey",
