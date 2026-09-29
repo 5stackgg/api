@@ -390,6 +390,67 @@ describe("chat edits and self deletes (SQL-driven)", () => {
     ).resolves.toEqual({ edited: false, code: ChatErrorCode.NotFound });
   });
 
+  describe("an action in the draft room while it moves into the match", () => {
+    // Runs the action the first time the move writes into the match room from
+    // outside redis, which is the gap a move made of separate calls leaves.
+    const midMove = <T>(action: () => Promise<T>) => {
+      let running: Promise<T> | undefined;
+      const write = redis.hset.bind(redis) as (
+        ...args: any[]
+      ) => Promise<number>;
+
+      jest.spyOn(redis, "hset").mockImplementation((async (...args: any[]) => {
+        running ??= action();
+        await running;
+        return write(...args);
+      }) as any);
+
+      return () => (running ??= action());
+    };
+
+    const move = (draftId: string, matchId: string) =>
+      chat.migrateLobbyMessages(
+        ChatLobbyType.Draft,
+        draftId,
+        ChatLobbyType.Match,
+        matchId,
+      );
+
+    it("never brings back a message the author deleted", async () => {
+      const user = await author();
+      const draftId = randomUUID();
+      const matchId = randomUUID();
+      const id = randomUUID();
+      await redis.hset(`chat_draft_${draftId}`, id, written(id, user));
+
+      const deleting = midMove(() =>
+        chat.deleteMessage(ChatLobbyType.Draft, draftId, id, user),
+      );
+      await move(draftId, matchId);
+      const { deleted } = await deleting();
+
+      expect(await redis.hexists(key(matchId), id)).toBe(deleted ? 0 : 1);
+    });
+
+    it("never loses an edit the author was told had applied", async () => {
+      const user = await author();
+      const draftId = randomUUID();
+      const matchId = randomUUID();
+      const id = randomUUID();
+      await redis.hset(`chat_draft_${draftId}`, id, written(id, user));
+
+      const editing = midMove(() =>
+        chat.editMessage(ChatLobbyType.Draft, draftId, id, user, "fixed"),
+      );
+      await move(draftId, matchId);
+      const { edited } = await editing();
+
+      expect(JSON.parse(await redis.hget(key(matchId), id)).message).toBe(
+        edited ? "fixed" : "typo",
+      );
+    });
+  });
+
   it("audits an author deleting their own message", async () => {
     const user = await author();
     const matchId = randomUUID();
