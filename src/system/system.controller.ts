@@ -313,7 +313,7 @@ export class SystemController {
     await this.notifications.send(
       "NameChangeRequest",
       {
-        message: `Player ${NotificationsService.escapeHtml(player.name)} has requested to change their name to ${NotificationsService.escapeHtml(name)}`,
+        message: `Player ${this.notifications.playerProfileLink(steamId, player.name)} has requested to change their name to ${NotificationsService.escapeHtml(name)}`,
         title: "Name Change Request",
         role: "administrator",
         entity_id: steamId,

@@ -137,6 +137,18 @@ describe("hasura table metadata", () => {
     expect(problems).toEqual([]);
   });
 
+  // A player row is the account itself: every match, stat and sanction hangs
+  // off it, so removing one is not a match organizer's call.
+  it("only lets an administrator delete a player", () => {
+    const players = tables.find(({ file }) => file === "public_players.yaml");
+
+    expect(
+      (players?.metadata?.delete_permissions ?? []).map(
+        (entry: { role: string }) => entry.role,
+      ),
+    ).toEqual(["administrator"]);
+  });
+
   it("never lists the same name as both a column and a computed field", () => {
     const problems: Array<string> = [];
 

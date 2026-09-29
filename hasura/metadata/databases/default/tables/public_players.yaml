@@ -633,7 +633,7 @@ update_permissions:
           _eq: X-Hasura-User-Id
     comment: ""
 delete_permissions:
-  - role: match_organizer
+  - role: administrator
     permission:
       filter: {}
     comment: ""
