@@ -449,3 +449,59 @@ describe("NotificationsService", () => {
     });
   });
 });
+
+describe("latestTitle", () => {
+  it("reads the newest matching alert for the entity, dismissed ones included", async () => {
+    const hasura = {
+      query: jest
+        .fn()
+        .mockResolvedValue({ notifications: [{ title: "Region Offline" }] }),
+    };
+    const service = new NotificationsService(
+      hasura as any,
+      {} as any,
+      { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
+      { get: () => ({ webDomain: "https://5stack.gg" }) } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    );
+
+    await expect(
+      service.latestTitle("GameNodeStatus", "us-east", [
+        "Region Offline",
+        "Region Online",
+      ]),
+    ).resolves.toBe("Region Offline");
+
+    expect(hasura.query.mock.calls[0][0].notifications.__args).toEqual({
+      where: {
+        type: { _eq: "GameNodeStatus" },
+        entity_id: { _eq: "us-east" },
+        title: { _in: ["Region Offline", "Region Online"] },
+      },
+      order_by: [{ created_at: "desc" }],
+      limit: 1,
+    });
+  });
+
+  it("is null when the entity has never alerted", async () => {
+    const service = new NotificationsService(
+      { query: jest.fn().mockResolvedValue({ notifications: [] }) } as any,
+      {} as any,
+      { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
+      { get: () => ({ webDomain: "https://5stack.gg" }) } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    );
+
+    await expect(
+      service.latestTitle("GameNodeStatus", "node-1", [
+        "Game Server Node Offline",
+      ]),
+    ).resolves.toBeNull();
+  });
+});

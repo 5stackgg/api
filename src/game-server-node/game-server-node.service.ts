@@ -100,6 +100,15 @@ export type BuildNodeCandidate = {
   enabled_for_match_making: boolean | null;
 };
 
+export type NodeWorkloads = {
+  enabled: boolean | null;
+  enabled_for_match_making: boolean | null;
+  gpu_streaming_enabled: boolean | null;
+  gpu_demos_enabled: boolean | null;
+  gpu_rendering_enabled: boolean | null;
+  servers: Array<unknown>;
+};
+
 @Injectable()
 export class GameServerNodeService {
   private redis: Redis;
@@ -279,6 +288,7 @@ export class GameServerNodeService {
         status: true,
         label: true,
         offline_at: true,
+        ...GameServerNodeService.inServiceSelection,
         lan_ip: true,
         node_ip: true,
         build_id: true,
@@ -320,24 +330,20 @@ export class GameServerNodeService {
       status === "Online" &&
       (storedStatus === "Offline" || storedStatus === "Setup")
     ) {
-      const { update_game_server_nodes } = await this.hasura.mutation({
-        update_game_server_nodes: {
-          __args: {
-            where: {
-              id: { _eq: node },
-              status: { _in: ["Offline", "Setup"] },
-            },
-            _set: {
-              status: "Online",
-              offline_at: null,
-            },
-          },
-          affected_rows: true,
-        },
-      });
+      const cameUp = await this.postgres.query<Array<{ id: string }>>(
+        `UPDATE public.game_server_nodes
+            SET status = CASE
+                  WHEN accepting_new_matches THEN 'Online'
+                  ELSE 'NotAcceptingNewMatches'
+                END,
+                offline_at = NULL
+          WHERE id = $1
+            AND status IN ('Offline', 'Setup')
+          RETURNING id`,
+        [node],
+      );
       transitionedFromOffline =
-        storedStatus === "Offline" &&
-        update_game_server_nodes.affected_rows === 1;
+        storedStatus === "Offline" && cameUp.length === 1;
     }
 
     if (
@@ -431,7 +437,37 @@ export class GameServerNodeService {
 
     const previousStatus = transitionedFromOffline ? "Offline" : storedStatus;
 
-    return { previousStatus, label, offlineAt, transitionedFromOffline };
+    return {
+      previousStatus,
+      label,
+      offlineAt,
+      transitionedFromOffline,
+      inService: GameServerNodeService.isInService(game_server_nodes_by_pk),
+    };
+  }
+
+  // Kept apart from status, which reads Offline while a node is down: a node
+  // told to stop accepting matches has to come back that way, and toggling one
+  // that is down must not mark it Online.
+  public async setAcceptingNewMatches(
+    nodeId: string,
+    accepting: boolean,
+  ): Promise<boolean> {
+    const updated = await this.postgres.query<Array<{ id: string }>>(
+      `UPDATE public.game_server_nodes
+          SET accepting_new_matches = $2::boolean,
+              status = CASE
+                WHEN status NOT IN ('Online', 'NotAcceptingNewMatches') THEN status
+                WHEN $2::boolean THEN 'Online'
+                ELSE 'NotAcceptingNewMatches'
+              END
+        WHERE id = $1
+          AND status <> 'Setup'
+        RETURNING id`,
+      [nodeId, accepting],
+    );
+
+    return updated.length === 1;
   }
 
   public async updateIdLabel(nodeId: string) {
@@ -1606,6 +1642,45 @@ export class GameServerNodeService {
 
     return false;
   }
+
+  // Status alerts are only worth raising for a node something depends on.
+  // Disabling a node or switching it to GPU mode leaves its dedicated servers
+  // running, so hosting an enabled one keeps it in service regardless. `servers`
+  // is expected to hold only enabled dedicated servers.
+  public static isInService(node: NodeWorkloads): boolean {
+    if (node.servers.length > 0) {
+      return true;
+    }
+
+    if (!node.enabled) {
+      return false;
+    }
+
+    return Boolean(
+      node.enabled_for_match_making ||
+      node.gpu_streaming_enabled ||
+      node.gpu_demos_enabled ||
+      node.gpu_rendering_enabled,
+    );
+  }
+
+  public static readonly inServiceSelection = {
+    enabled: true,
+    enabled_for_match_making: true,
+    gpu_streaming_enabled: true,
+    gpu_demos_enabled: true,
+    gpu_rendering_enabled: true,
+    servers: {
+      __args: {
+        where: {
+          is_dedicated: { _eq: true },
+          enabled: { _eq: true },
+        },
+        limit: 1,
+      },
+      id: true,
+    },
+  } as const;
 
   // Why a node cannot run a build job, or null when it can. Both jobs mount
   // the node's own install, so it has to be online and on the build itself.

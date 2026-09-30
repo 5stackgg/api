@@ -61,6 +61,7 @@ select_permissions:
   - role: administrator
     permission:
       columns:
+        - accepting_new_matches
         - build_id
         - cpu_cores_per_socket
         - cpu_frequency_info

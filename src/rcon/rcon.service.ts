@@ -9,6 +9,7 @@ import { RedisManagerService } from "../redis/redis-manager/redis-manager.servic
 import { CacheService } from "../cache/cache.service";
 import { User } from "../auth/types/User";
 import { isRoleAbove } from "../utilities/isRoleAbove";
+import { MarkDedicatedServerOffline } from "../game-server-node/jobs/MarkDedicatedServerOffline";
 
 @Injectable()
 export class RconService {
@@ -93,8 +94,10 @@ export class RconService {
         },
         host: true,
         port: true,
+        type: true,
         label: true,
         region: true,
+        enabled: true,
         is_dedicated: true,
         rcon_status: true,
         rcon_password: true,
@@ -210,17 +213,29 @@ export class RconService {
           },
         });
 
-        void this.notifications.send(
-          "DedicatedServerRconStatus",
-          {
-            message: `Dedicated Server (${NotificationsService.escapeHtml(server.label || serverId)}) is not able to connect to the RCON.`,
-            title: "Dedicated Server RCON Error",
-            role: "administrator",
-            entity_id: serverId,
-          },
-          undefined,
-          DISCORD_COLORS.RED,
-        );
+        // Every other dedicated server is watched by PingDedicatedServers, which
+        // only reports one that stays unreachable. A server restarted on purpose
+        // is still booting.
+        if (
+          server.enabled &&
+          server.type === "Ranked" &&
+          (await MarkDedicatedServerOffline.restartGraceRemaining(
+            this.redisManager.getConnection(),
+            serverId,
+          )) === 0
+        ) {
+          void this.notifications.send(
+            "DedicatedServerRconStatus",
+            {
+              message: `Dedicated Server (${NotificationsService.escapeHtml(server.label || serverId)}) is not able to connect to the RCON.`,
+              title: "Dedicated Server RCON Error",
+              role: "administrator",
+              entity_id: serverId,
+            },
+            undefined,
+            DISCORD_COLORS.RED,
+          );
+        }
       }
       return;
     }

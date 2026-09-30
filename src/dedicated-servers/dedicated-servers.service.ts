@@ -13,10 +13,28 @@ import { SystemService } from "src/system/system.service";
 import { PluginRuntimeService } from "src/plugin-runtime/plugin-runtime.service";
 import { GameModesService } from "../game-plugins/game-modes.service";
 import { MapRotationService } from "../game-plugins/map-rotation.service";
+import { NotificationsService } from "src/notifications/notifications.service";
+import { DISCORD_COLORS } from "src/notifications/utilities/constants";
+import { MarkDedicatedServerOffline } from "src/game-server-node/jobs/MarkDedicatedServerOffline";
+
+type UnreachableStreak = {
+  since: number;
+  last: number;
+  reported: boolean;
+};
 
 @Injectable()
 export class DedicatedServersService {
   private static readonly rebuilds = new Map<string, Promise<boolean>>();
+
+  // One failed RCON ping says little: a node dying under the server is only
+  // marked Offline up to 90s later, and a restart takes a while to boot. A
+  // server is reported once it has stayed unreachable this long.
+  public static readonly UNREACHABLE_ALERT_AFTER_MS = 2 * 60 * 1000;
+
+  private static readonly UNREACHABLE_GAP_MS = 90 * 1000;
+
+  private static readonly UNREACHABLE_KEY = "dedicated-servers:unreachable";
 
   private appConfig: AppConfig;
   private gameServerConfig: GameServersConfig;
@@ -38,6 +56,7 @@ export class DedicatedServersService {
     private readonly pluginRuntimeService: PluginRuntimeService,
     private readonly gameModesService: GameModesService,
     private readonly mapRotationService: MapRotationService,
+    private readonly notifications: NotificationsService,
   ) {
     this.redis = this.redisManager.getConnection();
 
@@ -472,6 +491,10 @@ export class DedicatedServersService {
     const rebuild = previous
       .catch(() => false)
       .then(async () => {
+        if (start) {
+          await this.expectRestart(serverId);
+        }
+
         await this.removeDedicatedServer(serverId);
 
         return start ? await this.setupDedicatedServer(serverId) : true;
@@ -504,6 +527,7 @@ export class DedicatedServersService {
       }
     } finally {
       await this.redis.hdel("dedicated-servers:stats", serverId);
+      await this.redis.hdel(DedicatedServersService.UNREACHABLE_KEY, serverId);
 
       await this.hasura.mutation({
         update_servers_by_pk: {
@@ -804,6 +828,7 @@ export class DedicatedServersService {
       servers_by_pk: {
         __args: { id: serverId },
         game: true,
+        label: true,
         enabled: true,
         connected: true,
         steam_relay: true,
@@ -835,15 +860,6 @@ export class DedicatedServersService {
       return;
     }
 
-    if (!server.connected) {
-      await this.hasura.mutation({
-        update_servers_by_pk: {
-          __args: { pk_columns: { id: serverId }, _set: { connected: true } },
-          id: true,
-        },
-      });
-    }
-
     // TODO - fix steam relay for csgo
     const steamRelayeEnabled =
       server.game === "csgo" ? false : server.server_region?.steam_relay;
@@ -854,7 +870,22 @@ export class DedicatedServersService {
     );
 
     if (!statusInfo) {
+      await this.recordUnreachable(serverId, server);
       return;
+    }
+
+    await this.redis.hdel(DedicatedServersService.UNREACHABLE_KEY, serverId);
+
+    if (!server.connected) {
+      await this.hasura.mutation({
+        update_servers_by_pk: {
+          __args: {
+            pk_columns: { id: serverId },
+            _set: { connected: true, offline_at: null },
+          },
+          id: true,
+        },
+      });
     }
 
     const { steamId, clients_human, map } = statusInfo;
@@ -889,7 +920,87 @@ export class DedicatedServersService {
     await this.RconService.disconnect(serverId);
   }
 
+  public async expectRestart(serverId: string): Promise<void> {
+    await MarkDedicatedServerOffline.expectRestart(this.redis, serverId);
+  }
+
+  private async recordUnreachable(
+    serverId: string,
+    server: { label: string; enabled: boolean; connected: boolean },
+  ): Promise<void> {
+    const now = Date.now();
+    const previous: UnreachableStreak | null = JSON.parse(
+      (await this.redis.hget(
+        DedicatedServersService.UNREACHABLE_KEY,
+        serverId,
+      )) ?? "null",
+    );
+
+    // Pings run every minute. A longer gap means nothing was watching, not that
+    // the server stayed down the whole time.
+    const streak: UnreachableStreak =
+      previous &&
+      now - previous.last <= DedicatedServersService.UNREACHABLE_GAP_MS
+        ? { ...previous, last: now }
+        : { since: now, last: now, reported: false };
+
+    await this.redis.hset(
+      DedicatedServersService.UNREACHABLE_KEY,
+      serverId,
+      JSON.stringify(streak),
+    );
+
+    if (
+      now - streak.since <
+      DedicatedServersService.UNREACHABLE_ALERT_AFTER_MS
+    ) {
+      return;
+    }
+
+    if (server.connected) {
+      await this.hasura.mutation({
+        update_servers_by_pk: {
+          __args: {
+            pk_columns: { id: serverId },
+            _set: { connected: false, offline_at: new Date().toISOString() },
+          },
+          id: true,
+        },
+      });
+    }
+
+    if (
+      streak.reported ||
+      !server.enabled ||
+      (await MarkDedicatedServerOffline.restartGraceRemaining(
+        this.redis,
+        serverId,
+      )) > 0
+    ) {
+      return;
+    }
+
+    await this.notifications.send(
+      "DedicatedServerRconStatus",
+      {
+        message: `Dedicated Server (${NotificationsService.escapeHtml(server.label || serverId)}) is not able to connect to the RCON.`,
+        title: "Dedicated Server RCON Error",
+        role: "administrator",
+        entity_id: serverId,
+      },
+      undefined,
+      DISCORD_COLORS.RED,
+    );
+
+    await this.redis.hset(
+      DedicatedServersService.UNREACHABLE_KEY,
+      serverId,
+      JSON.stringify({ ...streak, reported: true }),
+    );
+  }
+
   public async restartDedicatedServer(serverId: string): Promise<void> {
+    await this.expectRestart(serverId);
     await this.systemService.restartDeployment(
       this.getDedicatedServerDeploymentName(serverId),
       this.namespace,

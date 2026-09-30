@@ -18,6 +18,7 @@ import { SystemModule } from "src/system/system.module";
 import { PluginRuntimeModule } from "src/plugin-runtime/plugin-runtime.module";
 import { GamePluginsModule } from "../game-plugins/game-plugins.module";
 import { PostgresModule } from "../postgres/postgres.module";
+import { NotificationsModule } from "../notifications/notifications.module";
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { PostgresModule } from "../postgres/postgres.module";
     PluginRuntimeModule,
     GamePluginsModule,
     PostgresModule,
+    NotificationsModule,
   ],
   providers: [
     DedicatedServersService,

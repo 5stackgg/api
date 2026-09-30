@@ -15,6 +15,9 @@ export class MarkGameServerNodeOnline extends WorkerHost {
     super();
   }
 
+  // "Back online" only ever closes an offline alert. A node that went down
+  // unannounced (disabled, out of service) comes back unannounced, and a node
+  // reconnecting in a healthy region says nothing about the region.
   async process(
     job: Job<{
       node: string;
@@ -22,40 +25,52 @@ export class MarkGameServerNodeOnline extends WorkerHost {
       offlineAt?: string;
     }>,
   ): Promise<void> {
-    const nodeLabel = NotificationsService.escapeHtml(
-      job.data.label || job.data.node,
-    );
-    let message = `Game Server Node (${nodeLabel}) is back Online.`;
-
-    if (job.data.offlineAt) {
-      const offlineDuration = Math.round(
-        (Date.now() - new Date(job.data.offlineAt).getTime()) / 60000,
-      );
-      if (offlineDuration > 0) {
-        message += ` Was offline for ${offlineDuration} minute${offlineDuration !== 1 ? "s" : ""}.`;
-      }
-    }
-
-    await this.notifications.send(
-      "GameNodeStatus",
-      {
-        message,
-        title: "Game Server Node Online",
-        role: "administrator",
-        entity_id: job.data.node,
-      },
-      undefined,
-      DISCORD_COLORS.GREEN,
-    );
-
-    const { game_server_nodes_by_pk } = await this.hasura.query({
+    const { game_server_nodes_by_pk: node } = await this.hasura.query({
       game_server_nodes_by_pk: {
         __args: { id: job.data.node },
         region: true,
       },
     });
 
-    const region = game_server_nodes_by_pk?.region;
+    if (!node) {
+      return;
+    }
+
+    const lastNodeAlert = await this.notifications.latestTitle(
+      "GameNodeStatus",
+      job.data.node,
+      ["Game Server Node Offline", "Game Server Node Online"],
+    );
+
+    if (lastNodeAlert === "Game Server Node Offline") {
+      const nodeLabel = NotificationsService.escapeHtml(
+        job.data.label || job.data.node,
+      );
+      let message = `Game Server Node (${nodeLabel}) is back Online.`;
+
+      if (job.data.offlineAt) {
+        const offlineDuration = Math.round(
+          (Date.now() - new Date(job.data.offlineAt).getTime()) / 60000,
+        );
+        if (offlineDuration > 0) {
+          message += ` Was offline for ${offlineDuration} minute${offlineDuration !== 1 ? "s" : ""}.`;
+        }
+      }
+
+      await this.notifications.send(
+        "GameNodeStatus",
+        {
+          message,
+          title: "Game Server Node Online",
+          role: "administrator",
+          entity_id: job.data.node,
+        },
+        undefined,
+        DISCORD_COLORS.GREEN,
+      );
+    }
+
+    const region = node.region;
     if (!region) {
       return;
     }
@@ -74,6 +89,16 @@ export class MarkGameServerNodeOnline extends WorkerHost {
       server_regions_by_pk.status === "Offline" ||
       server_regions_by_pk.status === "Disabled"
     ) {
+      return;
+    }
+
+    const lastRegionAlert = await this.notifications.latestTitle(
+      "GameNodeStatus",
+      region,
+      ["Region Offline", "Region Online"],
+    );
+
+    if (lastRegionAlert !== "Region Offline") {
       return;
     }
 
