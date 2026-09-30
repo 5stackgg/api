@@ -2699,6 +2699,9 @@ describe("ChatService direct messages", () => {
 
     it("accepts every reaction on the list", async () => {
       for (const reaction of ChatService.REACTIONS) {
+        // The list is longer than a second's allowance; the limit has its own
+        // tests.
+        rates = {};
         await expect(react(reaction)).resolves.toMatchObject({
           toggled: true,
         });
@@ -2711,6 +2714,24 @@ describe("ChatService direct messages", () => {
         "fire",
         "wow",
         "sad",
+        "thumbsdown",
+        "skull",
+        "sob",
+        "rofl",
+        "angry",
+        "thinking",
+        "eyes",
+        "hundred",
+        "target",
+        "clap",
+        "pray",
+        "handshake",
+        "tada",
+        "cool",
+        "salute",
+        "muscle",
+        "goat",
+        "clown",
       ]);
     });
 
