@@ -282,9 +282,7 @@ export class DedicatedServersService {
                         name: "EXTRA_GAME_PARAMS",
                         value: [
                           `-maxplayers ${server.type === "Ranked" ? 16 : server.max_players}`,
-                          startMap?.workshop_map_id
-                            ? null
-                            : `+map ${startMap?.name ?? "de_dust2"}`,
+                          `+map ${startMap && !startMap.workshop_map_id ? startMap.name : "de_dust2"}`,
                           `+game_type ${this.getGameType(server.type)}`,
                           `+game_mode ${this.getGameMode(server.type)}`,
                           `+sv_skirmish_id ${this.getWarGameType(server.type)}`,
@@ -292,8 +290,9 @@ export class DedicatedServersService {
                             ? `+sv_password ${server.connect_password}`
                             : null,
                           gameMode?.extraGameParams,
-                          // Runs in command-line order, unlike +map, so it
-                          // goes after game_type/game_mode have been set.
+                          // CS2 only logs on to Steam once a level is loaded, so
+                          // on its own this leaves the server idle with no map;
+                          // after the stock +map it downloads and replaces it.
                           startMap?.workshop_map_id
                             ? `+host_workshop_map ${startMap.workshop_map_id}`
                             : null,
