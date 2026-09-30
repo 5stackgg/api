@@ -72,6 +72,131 @@ describe("ClipsService", () => {
     });
   });
 
+  describe("auto highlight kill count", () => {
+    const rounds = [
+      { start_tick: 0, freeze_end_tick: 100, end_tick: 2000 },
+      { start_tick: 3000, freeze_end_tick: 3100, end_tick: 6000 },
+    ];
+    const roundKills = [1000, 1100, 1200, 1300].map((tick) => ({
+      tick,
+      weapon: "ak47",
+    }));
+    const laterKnife = { tick: 5000, weapon: "knife_karambit" };
+
+    function mockPresetSpecs() {
+      gameStreamer.resolveClipOutput.mockResolvedValue({
+        resolution: "1080p",
+        fps: 60,
+      });
+      jest
+        .spyOn(service, "buildPresetSpec")
+        .mockImplementation(async (_mapId, _sid, preset) =>
+          preset === "best_round"
+            ? {
+                match_map_id: "map-1",
+                segments: [
+                  { start_tick: 808, end_tick: 1428, kill_tick: 1300 },
+                ],
+                output: { format: "mp4", resolution: "1080p", fps: 60 },
+                destination: "library",
+                title: "Player — Best Round (4K)",
+                round: 1,
+                kills_count: 4,
+              }
+            : {
+                match_map_id: "map-1",
+                segments: [
+                  { start_tick: 4808, end_tick: 5128, kill_tick: 5000 },
+                ],
+                output: { format: "mp4", resolution: "1080p", fps: 60 },
+                destination: "library",
+                title: "Player — 1 Knife Kill",
+                round: 2,
+                kills_count: 1,
+              },
+        );
+    }
+
+    it("counts only the best round's kills when a knife kill from another round is appended", async () => {
+      mockPresetSpecs();
+
+      const spec = await (service as any).buildAutoClipSpecForTarget(
+        "map-1",
+        "76561198000000009",
+        "demo-1",
+        [...roundKills, laterKnife],
+        rounds,
+        { minKills: 3, alwaysKnife: true },
+        { defaultVisibility: "private" },
+      );
+
+      expect(spec.segments).toHaveLength(2);
+      expect(spec.title).toBe("Player — Best Round (4K) + 1 Knife Kill");
+      expect(spec.kills_count).toBe(4);
+    });
+
+    it("stores the spec's kill count instead of every kill in the footage", async () => {
+      hasura.query.mockResolvedValueOnce({
+        match_map_demos: [
+          {
+            kills: [...roundKills, laterKnife].map((k) => ({
+              ...k,
+              killer: "76561198000000009",
+              victim: "76561198000000001",
+            })),
+          },
+        ],
+      });
+
+      const count = await (service as any).countKillsForSpec(
+        "map-1",
+        {
+          match_map_id: "map-1",
+          segments: [
+            { start_tick: 808, end_tick: 1428 },
+            { start_tick: 4808, end_tick: 5128 },
+          ],
+          output: { format: "mp4", resolution: "1080p", fps: 60 },
+          destination: "library",
+          kills_count: 4,
+        },
+        "76561198000000009",
+      );
+
+      expect(count).toBe(4);
+    });
+
+    it("still counts the footage for specs without a kill count", async () => {
+      hasura.query.mockResolvedValueOnce({
+        match_map_demos: [
+          {
+            kills: [...roundKills, laterKnife].map((k) => ({
+              ...k,
+              killer: "76561198000000009",
+              victim: "76561198000000001",
+            })),
+          },
+        ],
+      });
+
+      const count = await (service as any).countKillsForSpec(
+        "map-1",
+        {
+          match_map_id: "map-1",
+          segments: [
+            { start_tick: 808, end_tick: 1428 },
+            { start_tick: 4808, end_tick: 5128 },
+          ],
+          output: { format: "mp4", resolution: "1080p", fps: 60 },
+          destination: "library",
+        },
+        "76561198000000009",
+      );
+
+      expect(count).toBe(5);
+    });
+  });
+
   describe("pauseClipRenderBatch", () => {
     it("resets in-flight rows to queued+paused with node cleared", async () => {
       hasura.query.mockResolvedValueOnce({
