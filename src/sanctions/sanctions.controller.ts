@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from "@nestjs/common";
+import { Body, Controller, HttpCode, Param, Post } from "@nestjs/common";
 import { HasuraAction } from "src/hasura/hasura.controller";
 import { User } from "src/auth/types/User";
 import { isRoleAbove } from "src/utilities/isRoleAbove";
@@ -9,10 +9,25 @@ import { SanctionType } from "./sanction-types";
 export class SanctionsController {
   constructor(private readonly sanctionsService: SanctionsService) {}
 
-  @Get("server/:serverId")
-  public async serverSanctions(@Param("serverId") serverId: string) {
+  // Polled by the game-server Player Management plugin; the call doubles as
+  // its heartbeat.
+  @Post("server/:serverId")
+  @HttpCode(200)
+  public async syncServerSanctions(
+    @Param("serverId") serverId: string,
+    @Body()
+    body: {
+      steam_ids?: unknown;
+      plugin_version?: unknown;
+      plugin_runtime?: unknown;
+    },
+  ) {
     return {
-      sanctions: await this.sanctionsService.getActiveServerSanctions(serverId),
+      sanctions: await this.sanctionsService.syncServerSanctions(serverId, {
+        steamIds: body?.steam_ids,
+        pluginVersion: body?.plugin_version,
+        pluginRuntime: body?.plugin_runtime,
+      }),
     };
   }
 

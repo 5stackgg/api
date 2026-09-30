@@ -101,6 +101,9 @@ select_permissions:
         - map_rotation_shuffle
         - max_players
         - offline_at
+        - player_management_runtime
+        - player_management_seen_at
+        - player_management_version
         - plugin_runtime
         - plugin_version
         - port
@@ -162,6 +165,9 @@ select_permissions:
         - label
         - map_rotation_shuffle
         - max_players
+        - player_management_runtime
+        - player_management_seen_at
+        - player_management_version
         - plugin_runtime
         - plugin_version
         - port

@@ -15,6 +15,13 @@ export class SanctionsService {
     private readonly dedicatedServersService: DedicatedServersService,
   ) {}
 
+  private static readonly MAX_SYNC_STEAM_IDS = 256;
+
+  private static readonly PLAYER_MANAGEMENT_RUNTIMES = [
+    "swiftlys2",
+    "counterstrikesharp",
+  ];
+
   private static readonly SANCTION_TYPES: SanctionType[] = [
     "ban",
     "mute",
@@ -23,52 +30,71 @@ export class SanctionsService {
     "warning",
   ];
 
-  public async getActiveServerSanctions(serverId: string): Promise<
+  public async syncServerSanctions(
+    serverId: string,
+    params: {
+      steamIds?: unknown;
+      pluginVersion?: unknown;
+      pluginRuntime?: unknown;
+    },
+  ): Promise<
     Array<{
       steam_id: string;
-      is_banned: boolean;
-      is_muted: boolean;
-      is_gagged: boolean;
+      type: SanctionType;
+      reason: string | null;
+      expires_at: string | null;
     }>
   > {
-    const player_sanctions = await this.postgres.query<
-      Array<{ player_steam_id: string; type: string }>
+    await this.recordPlayerManagement(
+      serverId,
+      params.pluginVersion,
+      params.pluginRuntime,
+    );
+
+    // Anything past 18 digits can overflow the bigint cast and fail the whole
+    // query; a real SteamID64 is 17.
+    const steamIds = Array.isArray(params.steamIds)
+      ? [
+          ...new Set(
+            params.steamIds
+              .map((steamId) => String(steamId))
+              .filter((steamId) => /^\d{1,18}$/.test(steamId)),
+          ),
+        ].slice(0, SanctionsService.MAX_SYNC_STEAM_IDS)
+      : [];
+
+    if (steamIds.length === 0) {
+      return [];
+    }
+
+    const sanctions = await this.postgres.query<
+      Array<{
+        steam_id: string;
+        type: SanctionType;
+        reason: string | null;
+        expires_at: Date | null;
+      }>
     >(
-      `SELECT player_steam_id::text AS player_steam_id, type
+      `SELECT player_steam_id::text AS steam_id,
+              type,
+              reason,
+              remove_sanction_date AS expires_at
          FROM public.player_sanctions
         WHERE deleted_at IS NULL
           AND type = ANY($1::text[])
+          AND player_steam_id = ANY($2::bigint[])
           AND (remove_sanction_date IS NULL OR remove_sanction_date > now())`,
-      [SERVER_ENFORCED_SANCTION_TYPES],
+      [SERVER_ENFORCED_SANCTION_TYPES, steamIds],
     );
 
-    const byPlayer: Record<
-      string,
-      { steam_id: string; is_banned: boolean; is_muted: boolean; is_gagged: boolean }
-    > = {};
-
-    for (const sanction of player_sanctions) {
-      const steamId = `${sanction.player_steam_id}`;
-      const entry = (byPlayer[steamId] = byPlayer[steamId] || {
-        steam_id: steamId,
-        is_banned: false,
-        is_muted: false,
-        is_gagged: false,
-      });
-
-      if (sanction.type === "ban") {
-        entry.is_banned = true;
-      } else if (sanction.type === "mute") {
-        entry.is_muted = true;
-      } else if (sanction.type === "gag") {
-        entry.is_gagged = true;
-      } else if (sanction.type === "silence") {
-        entry.is_muted = true;
-        entry.is_gagged = true;
-      }
-    }
-
-    return Object.values(byPlayer);
+    return sanctions.map((sanction) => ({
+      steam_id: sanction.steam_id,
+      type: sanction.type,
+      reason: sanction.reason ?? null,
+      expires_at: sanction.expires_at
+        ? new Date(sanction.expires_at).toISOString()
+        : null,
+    }));
   }
 
   public async sanctionServerPlayer(params: {
@@ -296,8 +322,54 @@ export class SanctionsService {
     });
   }
 
-  private async hasLiveMatch(serverId: string): Promise<boolean> {
-    const { matches } = await this.hasura.query({
+  // The plugin syncs every 30 seconds and this throttles the write to one a
+  // minute, so the panel should treat a heartbeat older than a few minutes as
+  // the plugin being gone.
+  private async recordPlayerManagement(
+    serverId: string,
+    version: unknown,
+    runtime: unknown,
+  ): Promise<void> {
+    let pluginVersion =
+      typeof version === "string" && version.trim()
+        ? version.trim().slice(0, 64)
+        : null;
+
+    if (pluginVersion === "__RELEASE_VERSION__") {
+      pluginVersion = "dev";
+    }
+
+    const pluginRuntime =
+      typeof runtime === "string" &&
+      SanctionsService.PLAYER_MANAGEMENT_RUNTIMES.includes(runtime)
+        ? runtime
+        : null;
+
+    try {
+      await this.postgres.query(
+        `UPDATE public.servers
+            SET player_management_version = $2,
+                player_management_runtime = $3,
+                player_management_seen_at = now()
+          WHERE id = $1::uuid
+            AND (player_management_seen_at IS NULL
+                 OR player_management_seen_at < now() - interval '60 seconds'
+                 OR player_management_version IS DISTINCT FROM $2
+                 OR player_management_runtime IS DISTINCT FROM $3)`,
+        [serverId, pluginVersion, pluginRuntime],
+      );
+    } catch (error) {
+      this.logger.warn(
+        `unable to record the player management heartbeat for ${serverId}`,
+        error,
+      );
+    }
+  }
+
+  private async syncTarget(
+    serverId: string,
+  ): Promise<"match" | "player-management" | null> {
+    const { matches, servers_by_pk } = await this.hasura.query({
       matches: {
         __args: {
           where: {
@@ -312,9 +384,28 @@ export class SanctionsService {
         },
         id: true,
       },
+      servers_by_pk: {
+        __args: {
+          id: serverId,
+        },
+        is_dedicated: true,
+        type: true,
+      },
     });
 
-    return matches.length > 0;
+    if (matches.length > 0) {
+      return "match";
+    }
+
+    if (
+      servers_by_pk?.is_dedicated &&
+      servers_by_pk.type !== "Ranked" &&
+      servers_by_pk.type !== "Practice"
+    ) {
+      return "player-management";
+    }
+
+    return null;
   }
 
   private async syncServer(
@@ -334,23 +425,53 @@ export class SanctionsService {
         await rcon.send(`kickid ${kickUserid} Banned`);
       }
 
-      // The plugins carry mute/gag/ban as flags on the match payload, so a
-      // match refresh is what actually re-applies them live. A server with no
-      // match has no command to push sanctions to yet.
-      if (!(await this.hasLiveMatch(serverId))) {
+      const kicked = kickUserid !== null;
+      const target = await this.syncTarget(serverId);
+
+      // A match server's plugin carries mute/gag/ban as flags on the match
+      // payload, so a match refresh is what actually re-applies them live.
+      if (target === "match") {
+        await rcon.send("get_match");
+
         return {
-          enforced: kickUserid !== null,
-          message: kickUserid
-            ? "sanction saved and player kicked; server has no match to sync"
-            : "sanction saved; server has no match to sync",
+          enforced: true,
+          message: "sanction saved and synced to server",
         };
       }
 
-      await rcon.send("get_match");
+      if (target === "player-management") {
+        // The plugin's reply is the contract here (PlayerManagementReport in
+        // game-server): an unknown command means it is not loaded at all.
+        const reply = await rcon.send("player_management_refresh");
+
+        if (reply.includes("PlayerManagement: syncing")) {
+          return {
+            enforced: true,
+            message: "sanction saved and synced to server",
+          };
+        }
+
+        if (reply.includes("PlayerManagement:")) {
+          return {
+            enforced: kicked,
+            message:
+              "sanction saved; the Player Management plugin on this server is not configured",
+          };
+        }
+
+        return {
+          enforced: kicked,
+          message: kicked
+            ? "sanction saved and player kicked; the Player Management plugin is not installed on this server"
+            : "sanction saved; the Player Management plugin is not installed on this server",
+        };
+      }
 
       return {
-        enforced: true,
-        message: "sanction saved and synced to server",
+        enforced: kicked,
+        message: kicked
+          ? "sanction saved and player kicked; server has no match to sync"
+          : "sanction saved; server has no match to sync",
       };
     } catch (error) {
       this.logger.warn(`failed to sync sanctions to ${serverId}`, error);
