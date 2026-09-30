@@ -736,6 +736,54 @@ describe("game mode resolution (SQL-driven)", () => {
       ]);
     });
 
+    // A mode can carry its own MapChooser settings at the same path; the
+    // rotation adds its keys instead of wiping the mode's.
+    it("merges the rotation's config over the mode's config for the same file", async () => {
+      await postgres.query(`UPDATE servers SET type = 'Custom' WHERE id = $1`, [
+        publicServer,
+      ]);
+      await postgres.query(
+        `UPDATE game_plugins SET config_path = $1 WHERE slug = 'map-chooser'`,
+        ["addons/{runtime}/configs/plugins/MapChooser/config.jsonc"],
+      );
+      const [mode] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO game_modes (slug, name) VALUES ('prophunt', 'Prophunt') RETURNING id`,
+      );
+      await postgres.query(
+        `INSERT INTO game_mode_plugins (game_mode_id, plugin_slug, config)
+         VALUES ($1, 'map-chooser', $2)`,
+        [
+          mode.id,
+          JSON.stringify({
+            MapChooser: {
+              Rtv: { VotePercentage: 50 },
+              Cycle: { Enabled: false, RandomOrder: false },
+            },
+          }),
+        ],
+      );
+      await postgres.query(
+        `UPDATE servers SET game_mode_id = $1 WHERE id = $2`,
+        [mode.id, publicServer],
+      );
+      await rotate(publicServer, [
+        await workshopMap("rotation-mirage", "Prophunt Mirage", "3615968422"),
+      ]);
+
+      const resolved = await service.resolveForServer(publicServer);
+
+      expect(
+        files(resolved?.pluginConfigs ?? null)[
+          "addons/swiftlys2/configs/plugins/MapChooser/config.jsonc"
+        ],
+      ).toEqual({
+        MapChooser: {
+          Rtv: { VotePercentage: 50 },
+          Cycle: { Enabled: true, RandomOrder: true },
+        },
+      });
+    });
+
     it("drops a deleted map from the rotation", async () => {
       const mirage = await workshopMap(
         "rotation-mirage",

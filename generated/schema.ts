@@ -301,6 +301,21 @@ export interface HypertableInfo {
     __typename: 'HypertableInfo'
 }
 
+export interface ImportWorkshopCollectionOutput {
+    maps: ImportedWorkshopMap[]
+    skipped: Scalars['Int']
+    __typename: 'ImportWorkshopCollectionOutput'
+}
+
+export interface ImportedWorkshopMap {
+    id: Scalars['uuid']
+    label: (Scalars['String'] | null)
+    name: Scalars['String']
+    poster: (Scalars['String'] | null)
+    workshop_map_id: Scalars['String']
+    __typename: 'ImportedWorkshopMap'
+}
+
 export interface IndexIOStat {
     idx_blks_hit: Scalars['Int']
     idx_blks_read: Scalars['Int']
@@ -9739,6 +9754,7 @@ export interface game_plugins {
     /** A computed field, executes function "game_plugin_installed_node_count" */
     installed_node_count: (Scalars['Int'] | null)
     kind: e_game_plugin_kinds_enum
+    map_rotation: (Scalars['jsonb'] | null)
     name: Scalars['String']
     /** An array relationship */
     node_installs: game_server_node_plugins[]
@@ -9862,7 +9878,7 @@ export interface game_plugins_mutation_response {
 
 
 /** select columns of table "game_plugins" */
-export type game_plugins_select_column = 'author' | 'config_path' | 'config_schema' | 'cvars' | 'description' | 'homepage' | 'hot_swappable' | 'kind' | 'name' | 'pairs_with' | 'panel' | 'requires_server_guidelines_disabled' | 'requires_service' | 'slug' | 'source' | 'synced_at' | 'tags' | 'verified' | 'wiring'
+export type game_plugins_select_column = 'author' | 'config_path' | 'config_schema' | 'cvars' | 'description' | 'homepage' | 'hot_swappable' | 'kind' | 'map_rotation' | 'name' | 'pairs_with' | 'panel' | 'requires_server_guidelines_disabled' | 'requires_service' | 'slug' | 'source' | 'synced_at' | 'tags' | 'verified' | 'wiring'
 
 
 /** aggregate stddev on columns */
@@ -9906,7 +9922,7 @@ export interface game_plugins_sum_fields {
 
 
 /** update columns of table "game_plugins" */
-export type game_plugins_update_column = 'author' | 'config_path' | 'config_schema' | 'cvars' | 'description' | 'homepage' | 'hot_swappable' | 'kind' | 'name' | 'pairs_with' | 'panel' | 'requires_server_guidelines_disabled' | 'requires_service' | 'slug' | 'source' | 'synced_at' | 'tags' | 'verified' | 'wiring'
+export type game_plugins_update_column = 'author' | 'config_path' | 'config_schema' | 'cvars' | 'description' | 'homepage' | 'hot_swappable' | 'kind' | 'map_rotation' | 'name' | 'pairs_with' | 'panel' | 'requires_server_guidelines_disabled' | 'requires_service' | 'slug' | 'source' | 'synced_at' | 'tags' | 'verified' | 'wiring'
 
 
 /** aggregate var_pop on columns */
@@ -16558,6 +16574,14 @@ export interface mutation_root {
     delete_seasons: (seasons_mutation_response | null)
     /** delete single row from the table: "seasons" */
     delete_seasons_by_pk: (seasons | null)
+    /** delete data from the table: "server_map_rotation" */
+    delete_server_map_rotation: (server_map_rotation_mutation_response | null)
+    /** delete single row from the table: "server_map_rotation" */
+    delete_server_map_rotation_by_pk: (server_map_rotation | null)
+    /** delete data from the table: "server_plugins" */
+    delete_server_plugins: (server_plugins_mutation_response | null)
+    /** delete single row from the table: "server_plugins" */
+    delete_server_plugins_by_pk: (server_plugins | null)
     /** delete data from the table: "server_regions" */
     delete_server_regions: (server_regions_mutation_response | null)
     /** delete single row from the table: "server_regions" */
@@ -16789,6 +16813,8 @@ export interface mutation_root {
     importSteamMatchShareCode: (PendingMatchImportActionOutput | null)
     /** Seed the utility library from an operator-supplied payload */
     importUtilityLineups: (UtilityImportOutput | null)
+    /** Add every map in a Steam workshop collection to the map catalog */
+    importWorkshopCollection: (ImportWorkshopCollectionOutput | null)
     /** insert data into the table: "_map_pool" */
     insert__map_pool: (_map_pool_mutation_response | null)
     /** insert a single row into the table: "_map_pool" */
@@ -17417,6 +17443,14 @@ export interface mutation_root {
     insert_seasons: (seasons_mutation_response | null)
     /** insert a single row into the table: "seasons" */
     insert_seasons_one: (seasons | null)
+    /** insert data into the table: "server_map_rotation" */
+    insert_server_map_rotation: (server_map_rotation_mutation_response | null)
+    /** insert a single row into the table: "server_map_rotation" */
+    insert_server_map_rotation_one: (server_map_rotation | null)
+    /** insert data into the table: "server_plugins" */
+    insert_server_plugins: (server_plugins_mutation_response | null)
+    /** insert a single row into the table: "server_plugins" */
+    insert_server_plugins_one: (server_plugins | null)
     /** insert data into the table: "server_regions" */
     insert_server_regions: (server_regions_mutation_response | null)
     /** insert a single row into the table: "server_regions" */
@@ -17780,6 +17814,10 @@ export interface mutation_root {
     setMatchWinner: (SuccessOutput | null)
     /** Publish or unpublish a news post. Caller role is verified against public.post_news_role. */
     setNewsPostStatus: (NewsPost | null)
+    /** Replace a dedicated server's map rotation and restart it */
+    setServerMapRotation: (SuccessOutput | null)
+    /** Replace a dedicated server's per-server plugin overrides and restart it */
+    setServerPlugins: (SuccessOutput | null)
     /** Map a tournament placement to an award */
     setTournamentAward: (TournamentAward | null)
     setUtilityPracticeAccess: (SuccessOutput | null)
@@ -18767,6 +18805,18 @@ export interface mutation_root {
     update_seasons_by_pk: (seasons | null)
     /** update multiples rows of table: "seasons" */
     update_seasons_many: ((seasons_mutation_response | null)[] | null)
+    /** update data of the table: "server_map_rotation" */
+    update_server_map_rotation: (server_map_rotation_mutation_response | null)
+    /** update single row of the table: "server_map_rotation" */
+    update_server_map_rotation_by_pk: (server_map_rotation | null)
+    /** update multiples rows of table: "server_map_rotation" */
+    update_server_map_rotation_many: ((server_map_rotation_mutation_response | null)[] | null)
+    /** update data of the table: "server_plugins" */
+    update_server_plugins: (server_plugins_mutation_response | null)
+    /** update single row of the table: "server_plugins" */
+    update_server_plugins_by_pk: (server_plugins | null)
+    /** update multiples rows of table: "server_plugins" */
+    update_server_plugins_many: ((server_plugins_mutation_response | null)[] | null)
     /** update data of the table: "server_regions" */
     update_server_regions: (server_regions_mutation_response | null)
     /** update single row of the table: "server_regions" */
@@ -28748,6 +28798,18 @@ export interface query_root {
     seasons_aggregate: seasons_aggregate
     /** fetch data from the table: "seasons" using primary key columns */
     seasons_by_pk: (seasons | null)
+    /** fetch data from the table: "server_map_rotation" */
+    server_map_rotation: server_map_rotation[]
+    /** fetch aggregated fields from the table: "server_map_rotation" */
+    server_map_rotation_aggregate: server_map_rotation_aggregate
+    /** fetch data from the table: "server_map_rotation" using primary key columns */
+    server_map_rotation_by_pk: (server_map_rotation | null)
+    /** fetch data from the table: "server_plugins" */
+    server_plugins: server_plugins[]
+    /** fetch aggregated fields from the table: "server_plugins" */
+    server_plugins_aggregate: server_plugins_aggregate
+    /** fetch data from the table: "server_plugins" using primary key columns */
+    server_plugins_by_pk: (server_plugins | null)
     /** fetch data from the table: "server_regions" */
     server_regions: server_regions[]
     /** fetch aggregated fields from the table: "server_regions" */
@@ -29411,6 +29473,216 @@ export interface seasons_variance_fields {
 }
 
 
+/** columns and relationships of "server_map_rotation" */
+export interface server_map_rotation {
+    /** An object relationship */
+    map: maps
+    map_id: Scalars['uuid']
+    position: Scalars['Int']
+    /** An object relationship */
+    server: servers
+    server_id: Scalars['uuid']
+    __typename: 'server_map_rotation'
+}
+
+
+/** aggregated selection of "server_map_rotation" */
+export interface server_map_rotation_aggregate {
+    aggregate: (server_map_rotation_aggregate_fields | null)
+    nodes: server_map_rotation[]
+    __typename: 'server_map_rotation_aggregate'
+}
+
+
+/** aggregate fields of "server_map_rotation" */
+export interface server_map_rotation_aggregate_fields {
+    avg: (server_map_rotation_avg_fields | null)
+    count: Scalars['Int']
+    max: (server_map_rotation_max_fields | null)
+    min: (server_map_rotation_min_fields | null)
+    stddev: (server_map_rotation_stddev_fields | null)
+    stddev_pop: (server_map_rotation_stddev_pop_fields | null)
+    stddev_samp: (server_map_rotation_stddev_samp_fields | null)
+    sum: (server_map_rotation_sum_fields | null)
+    var_pop: (server_map_rotation_var_pop_fields | null)
+    var_samp: (server_map_rotation_var_samp_fields | null)
+    variance: (server_map_rotation_variance_fields | null)
+    __typename: 'server_map_rotation_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface server_map_rotation_avg_fields {
+    position: (Scalars['Float'] | null)
+    __typename: 'server_map_rotation_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "server_map_rotation" */
+export type server_map_rotation_constraint = 'server_map_rotation_pkey'
+
+
+/** aggregate max on columns */
+export interface server_map_rotation_max_fields {
+    map_id: (Scalars['uuid'] | null)
+    position: (Scalars['Int'] | null)
+    server_id: (Scalars['uuid'] | null)
+    __typename: 'server_map_rotation_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface server_map_rotation_min_fields {
+    map_id: (Scalars['uuid'] | null)
+    position: (Scalars['Int'] | null)
+    server_id: (Scalars['uuid'] | null)
+    __typename: 'server_map_rotation_min_fields'
+}
+
+
+/** response of any mutation on the table "server_map_rotation" */
+export interface server_map_rotation_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: server_map_rotation[]
+    __typename: 'server_map_rotation_mutation_response'
+}
+
+
+/** select columns of table "server_map_rotation" */
+export type server_map_rotation_select_column = 'map_id' | 'position' | 'server_id'
+
+
+/** aggregate stddev on columns */
+export interface server_map_rotation_stddev_fields {
+    position: (Scalars['Float'] | null)
+    __typename: 'server_map_rotation_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface server_map_rotation_stddev_pop_fields {
+    position: (Scalars['Float'] | null)
+    __typename: 'server_map_rotation_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface server_map_rotation_stddev_samp_fields {
+    position: (Scalars['Float'] | null)
+    __typename: 'server_map_rotation_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface server_map_rotation_sum_fields {
+    position: (Scalars['Int'] | null)
+    __typename: 'server_map_rotation_sum_fields'
+}
+
+
+/** update columns of table "server_map_rotation" */
+export type server_map_rotation_update_column = 'map_id' | 'position' | 'server_id'
+
+
+/** aggregate var_pop on columns */
+export interface server_map_rotation_var_pop_fields {
+    position: (Scalars['Float'] | null)
+    __typename: 'server_map_rotation_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface server_map_rotation_var_samp_fields {
+    position: (Scalars['Float'] | null)
+    __typename: 'server_map_rotation_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface server_map_rotation_variance_fields {
+    position: (Scalars['Float'] | null)
+    __typename: 'server_map_rotation_variance_fields'
+}
+
+
+/** columns and relationships of "server_plugins" */
+export interface server_plugins {
+    enabled: Scalars['Boolean']
+    /** An object relationship */
+    install: game_plugin_installs
+    plugin_slug: Scalars['String']
+    /** An object relationship */
+    server: servers
+    server_id: Scalars['uuid']
+    __typename: 'server_plugins'
+}
+
+
+/** aggregated selection of "server_plugins" */
+export interface server_plugins_aggregate {
+    aggregate: (server_plugins_aggregate_fields | null)
+    nodes: server_plugins[]
+    __typename: 'server_plugins_aggregate'
+}
+
+
+/** aggregate fields of "server_plugins" */
+export interface server_plugins_aggregate_fields {
+    count: Scalars['Int']
+    max: (server_plugins_max_fields | null)
+    min: (server_plugins_min_fields | null)
+    __typename: 'server_plugins_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "server_plugins" */
+export type server_plugins_constraint = 'server_plugins_pkey'
+
+
+/** aggregate max on columns */
+export interface server_plugins_max_fields {
+    plugin_slug: (Scalars['String'] | null)
+    server_id: (Scalars['uuid'] | null)
+    __typename: 'server_plugins_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface server_plugins_min_fields {
+    plugin_slug: (Scalars['String'] | null)
+    server_id: (Scalars['uuid'] | null)
+    __typename: 'server_plugins_min_fields'
+}
+
+
+/** response of any mutation on the table "server_plugins" */
+export interface server_plugins_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: server_plugins[]
+    __typename: 'server_plugins_mutation_response'
+}
+
+
+/** select columns of table "server_plugins" */
+export type server_plugins_select_column = 'enabled' | 'plugin_slug' | 'server_id'
+
+
+/** select "server_plugins_aggregate_bool_exp_bool_and_arguments_columns" columns of table "server_plugins" */
+export type server_plugins_select_column_server_plugins_aggregate_bool_exp_bool_and_arguments_columns = 'enabled'
+
+
+/** select "server_plugins_aggregate_bool_exp_bool_or_arguments_columns" columns of table "server_plugins" */
+export type server_plugins_select_column_server_plugins_aggregate_bool_exp_bool_or_arguments_columns = 'enabled'
+
+
+/** update columns of table "server_plugins" */
+export type server_plugins_update_column = 'enabled' | 'plugin_slug' | 'server_id'
+
+
 /** columns and relationships of "server_regions" */
 export interface server_regions {
     /** A computed field, executes function "available_region_server_count" */
@@ -29615,11 +29887,20 @@ export interface servers {
     label: Scalars['String']
     loaded_plugins: (Scalars['jsonb'] | null)
     /** An array relationship */
+    map_rotation: server_map_rotation[]
+    /** An aggregate relationship */
+    map_rotation_aggregate: server_map_rotation_aggregate
+    map_rotation_shuffle: Scalars['Boolean']
+    /** An array relationship */
     matches: matches[]
     /** An aggregate relationship */
     matches_aggregate: matches_aggregate
     max_players: (Scalars['Int'] | null)
     offline_at: (Scalars['timestamptz'] | null)
+    /** An array relationship */
+    plugin_overrides: server_plugins[]
+    /** An aggregate relationship */
+    plugin_overrides_aggregate: server_plugins_aggregate
     plugin_runtime: (e_plugin_runtimes_enum | null)
     plugin_version: (Scalars['String'] | null)
     plugins_checked_at: (Scalars['timestamptz'] | null)
@@ -29747,15 +30028,15 @@ export interface servers_mutation_response {
 
 
 /** select columns of table "servers" */
-export type servers_select_column = 'api_password' | 'boot_status' | 'boot_status_detail' | 'connect_password' | 'connected' | 'enabled' | 'game' | 'game_mode_id' | 'game_server_node_id' | 'host' | 'id' | 'is_dedicated' | 'label' | 'loaded_plugins' | 'max_players' | 'offline_at' | 'plugin_runtime' | 'plugin_version' | 'plugins_checked_at' | 'port' | 'rcon_password' | 'rcon_status' | 'region' | 'reserved_by_match_id' | 'steam_relay' | 'tv_port' | 'type' | 'updated_at'
+export type servers_select_column = 'api_password' | 'boot_status' | 'boot_status_detail' | 'connect_password' | 'connected' | 'enabled' | 'game' | 'game_mode_id' | 'game_server_node_id' | 'host' | 'id' | 'is_dedicated' | 'label' | 'loaded_plugins' | 'map_rotation_shuffle' | 'max_players' | 'offline_at' | 'plugin_runtime' | 'plugin_version' | 'plugins_checked_at' | 'port' | 'rcon_password' | 'rcon_status' | 'region' | 'reserved_by_match_id' | 'steam_relay' | 'tv_port' | 'type' | 'updated_at'
 
 
 /** select "servers_aggregate_bool_exp_bool_and_arguments_columns" columns of table "servers" */
-export type servers_select_column_servers_aggregate_bool_exp_bool_and_arguments_columns = 'connected' | 'enabled' | 'is_dedicated' | 'rcon_status'
+export type servers_select_column_servers_aggregate_bool_exp_bool_and_arguments_columns = 'connected' | 'enabled' | 'is_dedicated' | 'map_rotation_shuffle' | 'rcon_status'
 
 
 /** select "servers_aggregate_bool_exp_bool_or_arguments_columns" columns of table "servers" */
-export type servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_columns = 'connected' | 'enabled' | 'is_dedicated' | 'rcon_status'
+export type servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_columns = 'connected' | 'enabled' | 'is_dedicated' | 'map_rotation_shuffle' | 'rcon_status'
 
 
 /** aggregate stddev on columns */
@@ -29795,7 +30076,7 @@ export interface servers_sum_fields {
 
 
 /** update columns of table "servers" */
-export type servers_update_column = 'api_password' | 'boot_status' | 'boot_status_detail' | 'connect_password' | 'connected' | 'enabled' | 'game' | 'game_mode_id' | 'game_server_node_id' | 'host' | 'id' | 'is_dedicated' | 'label' | 'loaded_plugins' | 'max_players' | 'offline_at' | 'plugin_runtime' | 'plugin_version' | 'plugins_checked_at' | 'port' | 'rcon_password' | 'rcon_status' | 'region' | 'reserved_by_match_id' | 'steam_relay' | 'tv_port' | 'type' | 'updated_at'
+export type servers_update_column = 'api_password' | 'boot_status' | 'boot_status_detail' | 'connect_password' | 'connected' | 'enabled' | 'game' | 'game_mode_id' | 'game_server_node_id' | 'host' | 'id' | 'is_dedicated' | 'label' | 'loaded_plugins' | 'map_rotation_shuffle' | 'max_players' | 'offline_at' | 'plugin_runtime' | 'plugin_version' | 'plugins_checked_at' | 'port' | 'rcon_password' | 'rcon_status' | 'region' | 'reserved_by_match_id' | 'steam_relay' | 'tv_port' | 'type' | 'updated_at'
 
 
 /** aggregate var_pop on columns */
@@ -31438,6 +31719,22 @@ export interface subscription_root {
     seasons_by_pk: (seasons | null)
     /** fetch data from the table in a streaming manner: "seasons" */
     seasons_stream: seasons[]
+    /** fetch data from the table: "server_map_rotation" */
+    server_map_rotation: server_map_rotation[]
+    /** fetch aggregated fields from the table: "server_map_rotation" */
+    server_map_rotation_aggregate: server_map_rotation_aggregate
+    /** fetch data from the table: "server_map_rotation" using primary key columns */
+    server_map_rotation_by_pk: (server_map_rotation | null)
+    /** fetch data from the table in a streaming manner: "server_map_rotation" */
+    server_map_rotation_stream: server_map_rotation[]
+    /** fetch data from the table: "server_plugins" */
+    server_plugins: server_plugins[]
+    /** fetch aggregated fields from the table: "server_plugins" */
+    server_plugins_aggregate: server_plugins_aggregate
+    /** fetch data from the table: "server_plugins" using primary key columns */
+    server_plugins_by_pk: (server_plugins | null)
+    /** fetch data from the table in a streaming manner: "server_plugins" */
+    server_plugins_stream: server_plugins[]
     /** fetch data from the table: "server_regions" */
     server_regions: server_regions[]
     /** fetch aggregated fields from the table: "server_regions" */
@@ -47075,6 +47372,23 @@ export interface HypertableInfoGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface ImportWorkshopCollectionOutputGenqlSelection{
+    maps?: ImportedWorkshopMapGenqlSelection
+    skipped?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface ImportedWorkshopMapGenqlSelection{
+    id?: boolean | number
+    label?: boolean | number
+    name?: boolean | number
+    poster?: boolean | number
+    workshop_map_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface IndexIOStatGenqlSelection{
     idx_blks_hit?: boolean | number
     idx_blks_read?: boolean | number
@@ -47425,6 +47739,8 @@ export interface ServerPlayerGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+export interface ServerPluginInput {enabled: Scalars['Boolean'],slug: Scalars['String']}
 
 export interface SetupGameServeOutputGenqlSelection{
     gameServerId?: boolean | number
@@ -61848,6 +62164,12 @@ export interface game_plugin_installs_mutation_responseGenqlSelection{
 }
 
 
+/** input type for inserting object relation for remote table "game_plugin_installs" */
+export interface game_plugin_installs_obj_rel_insert_input {data: game_plugin_installs_insert_input,
+/** upsert condition */
+on_conflict?: (game_plugin_installs_on_conflict | null)}
+
+
 /** on_conflict condition type for table "game_plugin_installs" */
 export interface game_plugin_installs_on_conflict {constraint: game_plugin_installs_constraint,update_columns?: game_plugin_installs_update_column[],where?: (game_plugin_installs_bool_exp | null)}
 
@@ -62179,6 +62501,9 @@ export interface game_pluginsGenqlSelection{
     /** A computed field, executes function "game_plugin_installed_node_count" */
     installed_node_count?: boolean | number
     kind?: boolean | number
+    map_rotation?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
     name?: boolean | number
     /** An array relationship */
     node_installs?: (game_server_node_pluginsGenqlSelection & { __args?: {
@@ -62277,7 +62602,7 @@ export interface game_plugins_aggregate_fieldsGenqlSelection{
 
 
 /** append existing jsonb value of filtered columns with new jsonb value */
-export interface game_plugins_append_input {config_schema?: (Scalars['jsonb'] | null),panel?: (Scalars['jsonb'] | null),wiring?: (Scalars['jsonb'] | null)}
+export interface game_plugins_append_input {config_schema?: (Scalars['jsonb'] | null),map_rotation?: (Scalars['jsonb'] | null),panel?: (Scalars['jsonb'] | null),wiring?: (Scalars['jsonb'] | null)}
 
 
 /** aggregate avg on columns */
@@ -62292,23 +62617,23 @@ export interface game_plugins_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "game_plugins". All fields are combined with a logical 'AND'. */
-export interface game_plugins_bool_exp {_and?: (game_plugins_bool_exp[] | null),_not?: (game_plugins_bool_exp | null),_or?: (game_plugins_bool_exp[] | null),author?: (String_comparison_exp | null),config_path?: (String_comparison_exp | null),config_schema?: (jsonb_comparison_exp | null),cvars?: (String_array_comparison_exp | null),description?: (String_comparison_exp | null),game_modes?: (game_mode_plugins_bool_exp | null),game_modes_aggregate?: (game_mode_plugins_aggregate_bool_exp | null),homepage?: (String_comparison_exp | null),hot_swappable?: (Boolean_comparison_exp | null),install_state?: (String_comparison_exp | null),installed_node_count?: (Int_comparison_exp | null),kind?: (e_game_plugin_kinds_enum_comparison_exp | null),name?: (String_comparison_exp | null),node_installs?: (game_server_node_plugins_bool_exp | null),node_installs_aggregate?: (game_server_node_plugins_aggregate_bool_exp | null),pairs_with?: (String_array_comparison_exp | null),panel?: (jsonb_comparison_exp | null),requires_server_guidelines_disabled?: (Boolean_comparison_exp | null),requires_service?: (String_comparison_exp | null),slug?: (String_comparison_exp | null),source?: (String_comparison_exp | null),synced_at?: (timestamptz_comparison_exp | null),tags?: (String_array_comparison_exp | null),target_node_count?: (Int_comparison_exp | null),verified?: (Boolean_comparison_exp | null),versions?: (game_plugin_versions_bool_exp | null),versions_aggregate?: (game_plugin_versions_aggregate_bool_exp | null),wiring?: (jsonb_comparison_exp | null)}
+export interface game_plugins_bool_exp {_and?: (game_plugins_bool_exp[] | null),_not?: (game_plugins_bool_exp | null),_or?: (game_plugins_bool_exp[] | null),author?: (String_comparison_exp | null),config_path?: (String_comparison_exp | null),config_schema?: (jsonb_comparison_exp | null),cvars?: (String_array_comparison_exp | null),description?: (String_comparison_exp | null),game_modes?: (game_mode_plugins_bool_exp | null),game_modes_aggregate?: (game_mode_plugins_aggregate_bool_exp | null),homepage?: (String_comparison_exp | null),hot_swappable?: (Boolean_comparison_exp | null),install_state?: (String_comparison_exp | null),installed_node_count?: (Int_comparison_exp | null),kind?: (e_game_plugin_kinds_enum_comparison_exp | null),map_rotation?: (jsonb_comparison_exp | null),name?: (String_comparison_exp | null),node_installs?: (game_server_node_plugins_bool_exp | null),node_installs_aggregate?: (game_server_node_plugins_aggregate_bool_exp | null),pairs_with?: (String_array_comparison_exp | null),panel?: (jsonb_comparison_exp | null),requires_server_guidelines_disabled?: (Boolean_comparison_exp | null),requires_service?: (String_comparison_exp | null),slug?: (String_comparison_exp | null),source?: (String_comparison_exp | null),synced_at?: (timestamptz_comparison_exp | null),tags?: (String_array_comparison_exp | null),target_node_count?: (Int_comparison_exp | null),verified?: (Boolean_comparison_exp | null),versions?: (game_plugin_versions_bool_exp | null),versions_aggregate?: (game_plugin_versions_aggregate_bool_exp | null),wiring?: (jsonb_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
-export interface game_plugins_delete_at_path_input {config_schema?: (Scalars['String'][] | null),panel?: (Scalars['String'][] | null),wiring?: (Scalars['String'][] | null)}
+export interface game_plugins_delete_at_path_input {config_schema?: (Scalars['String'][] | null),map_rotation?: (Scalars['String'][] | null),panel?: (Scalars['String'][] | null),wiring?: (Scalars['String'][] | null)}
 
 
 /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
-export interface game_plugins_delete_elem_input {config_schema?: (Scalars['Int'] | null),panel?: (Scalars['Int'] | null),wiring?: (Scalars['Int'] | null)}
+export interface game_plugins_delete_elem_input {config_schema?: (Scalars['Int'] | null),map_rotation?: (Scalars['Int'] | null),panel?: (Scalars['Int'] | null),wiring?: (Scalars['Int'] | null)}
 
 
 /** delete key/value pair or string element. key/value pairs are matched based on their key value */
-export interface game_plugins_delete_key_input {config_schema?: (Scalars['String'] | null),panel?: (Scalars['String'] | null),wiring?: (Scalars['String'] | null)}
+export interface game_plugins_delete_key_input {config_schema?: (Scalars['String'] | null),map_rotation?: (Scalars['String'] | null),panel?: (Scalars['String'] | null),wiring?: (Scalars['String'] | null)}
 
 
 /** input type for inserting data into table "game_plugins" */
-export interface game_plugins_insert_input {author?: (Scalars['String'] | null),config_path?: (Scalars['String'] | null),config_schema?: (Scalars['jsonb'] | null),cvars?: (Scalars['String'][] | null),description?: (Scalars['String'] | null),game_modes?: (game_mode_plugins_arr_rel_insert_input | null),homepage?: (Scalars['String'] | null),hot_swappable?: (Scalars['Boolean'] | null),kind?: (e_game_plugin_kinds_enum | null),name?: (Scalars['String'] | null),node_installs?: (game_server_node_plugins_arr_rel_insert_input | null),pairs_with?: (Scalars['String'][] | null),panel?: (Scalars['jsonb'] | null),requires_server_guidelines_disabled?: (Scalars['Boolean'] | null),requires_service?: (Scalars['String'] | null),slug?: (Scalars['String'] | null),source?: (Scalars['String'] | null),synced_at?: (Scalars['timestamptz'] | null),tags?: (Scalars['String'][] | null),verified?: (Scalars['Boolean'] | null),versions?: (game_plugin_versions_arr_rel_insert_input | null),wiring?: (Scalars['jsonb'] | null)}
+export interface game_plugins_insert_input {author?: (Scalars['String'] | null),config_path?: (Scalars['String'] | null),config_schema?: (Scalars['jsonb'] | null),cvars?: (Scalars['String'][] | null),description?: (Scalars['String'] | null),game_modes?: (game_mode_plugins_arr_rel_insert_input | null),homepage?: (Scalars['String'] | null),hot_swappable?: (Scalars['Boolean'] | null),kind?: (e_game_plugin_kinds_enum | null),map_rotation?: (Scalars['jsonb'] | null),name?: (Scalars['String'] | null),node_installs?: (game_server_node_plugins_arr_rel_insert_input | null),pairs_with?: (Scalars['String'][] | null),panel?: (Scalars['jsonb'] | null),requires_server_guidelines_disabled?: (Scalars['Boolean'] | null),requires_service?: (Scalars['String'] | null),slug?: (Scalars['String'] | null),source?: (Scalars['String'] | null),synced_at?: (Scalars['timestamptz'] | null),tags?: (Scalars['String'][] | null),verified?: (Scalars['Boolean'] | null),versions?: (game_plugin_versions_arr_rel_insert_input | null),wiring?: (Scalars['jsonb'] | null)}
 
 
 /** aggregate max on columns */
@@ -62383,7 +62708,7 @@ export interface game_plugins_on_conflict {constraint: game_plugins_constraint,u
 
 
 /** Ordering options when selecting data from "game_plugins". */
-export interface game_plugins_order_by {author?: (order_by | null),config_path?: (order_by | null),config_schema?: (order_by | null),cvars?: (order_by | null),description?: (order_by | null),game_modes_aggregate?: (game_mode_plugins_aggregate_order_by | null),homepage?: (order_by | null),hot_swappable?: (order_by | null),install_state?: (order_by | null),installed_node_count?: (order_by | null),kind?: (order_by | null),name?: (order_by | null),node_installs_aggregate?: (game_server_node_plugins_aggregate_order_by | null),pairs_with?: (order_by | null),panel?: (order_by | null),requires_server_guidelines_disabled?: (order_by | null),requires_service?: (order_by | null),slug?: (order_by | null),source?: (order_by | null),synced_at?: (order_by | null),tags?: (order_by | null),target_node_count?: (order_by | null),verified?: (order_by | null),versions_aggregate?: (game_plugin_versions_aggregate_order_by | null),wiring?: (order_by | null)}
+export interface game_plugins_order_by {author?: (order_by | null),config_path?: (order_by | null),config_schema?: (order_by | null),cvars?: (order_by | null),description?: (order_by | null),game_modes_aggregate?: (game_mode_plugins_aggregate_order_by | null),homepage?: (order_by | null),hot_swappable?: (order_by | null),install_state?: (order_by | null),installed_node_count?: (order_by | null),kind?: (order_by | null),map_rotation?: (order_by | null),name?: (order_by | null),node_installs_aggregate?: (game_server_node_plugins_aggregate_order_by | null),pairs_with?: (order_by | null),panel?: (order_by | null),requires_server_guidelines_disabled?: (order_by | null),requires_service?: (order_by | null),slug?: (order_by | null),source?: (order_by | null),synced_at?: (order_by | null),tags?: (order_by | null),target_node_count?: (order_by | null),verified?: (order_by | null),versions_aggregate?: (game_plugin_versions_aggregate_order_by | null),wiring?: (order_by | null)}
 
 
 /** primary key columns input for table: game_plugins */
@@ -62391,11 +62716,11 @@ export interface game_plugins_pk_columns_input {slug: Scalars['String']}
 
 
 /** prepend existing jsonb value of filtered columns with new jsonb value */
-export interface game_plugins_prepend_input {config_schema?: (Scalars['jsonb'] | null),panel?: (Scalars['jsonb'] | null),wiring?: (Scalars['jsonb'] | null)}
+export interface game_plugins_prepend_input {config_schema?: (Scalars['jsonb'] | null),map_rotation?: (Scalars['jsonb'] | null),panel?: (Scalars['jsonb'] | null),wiring?: (Scalars['jsonb'] | null)}
 
 
 /** input type for updating data in table "game_plugins" */
-export interface game_plugins_set_input {author?: (Scalars['String'] | null),config_path?: (Scalars['String'] | null),config_schema?: (Scalars['jsonb'] | null),cvars?: (Scalars['String'][] | null),description?: (Scalars['String'] | null),homepage?: (Scalars['String'] | null),hot_swappable?: (Scalars['Boolean'] | null),kind?: (e_game_plugin_kinds_enum | null),name?: (Scalars['String'] | null),pairs_with?: (Scalars['String'][] | null),panel?: (Scalars['jsonb'] | null),requires_server_guidelines_disabled?: (Scalars['Boolean'] | null),requires_service?: (Scalars['String'] | null),slug?: (Scalars['String'] | null),source?: (Scalars['String'] | null),synced_at?: (Scalars['timestamptz'] | null),tags?: (Scalars['String'][] | null),verified?: (Scalars['Boolean'] | null),wiring?: (Scalars['jsonb'] | null)}
+export interface game_plugins_set_input {author?: (Scalars['String'] | null),config_path?: (Scalars['String'] | null),config_schema?: (Scalars['jsonb'] | null),cvars?: (Scalars['String'][] | null),description?: (Scalars['String'] | null),homepage?: (Scalars['String'] | null),hot_swappable?: (Scalars['Boolean'] | null),kind?: (e_game_plugin_kinds_enum | null),map_rotation?: (Scalars['jsonb'] | null),name?: (Scalars['String'] | null),pairs_with?: (Scalars['String'][] | null),panel?: (Scalars['jsonb'] | null),requires_server_guidelines_disabled?: (Scalars['Boolean'] | null),requires_service?: (Scalars['String'] | null),slug?: (Scalars['String'] | null),source?: (Scalars['String'] | null),synced_at?: (Scalars['timestamptz'] | null),tags?: (Scalars['String'][] | null),verified?: (Scalars['Boolean'] | null),wiring?: (Scalars['jsonb'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -62440,7 +62765,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface game_plugins_stream_cursor_value_input {author?: (Scalars['String'] | null),config_path?: (Scalars['String'] | null),config_schema?: (Scalars['jsonb'] | null),cvars?: (Scalars['String'][] | null),description?: (Scalars['String'] | null),homepage?: (Scalars['String'] | null),hot_swappable?: (Scalars['Boolean'] | null),kind?: (e_game_plugin_kinds_enum | null),name?: (Scalars['String'] | null),pairs_with?: (Scalars['String'][] | null),panel?: (Scalars['jsonb'] | null),requires_server_guidelines_disabled?: (Scalars['Boolean'] | null),requires_service?: (Scalars['String'] | null),slug?: (Scalars['String'] | null),source?: (Scalars['String'] | null),synced_at?: (Scalars['timestamptz'] | null),tags?: (Scalars['String'][] | null),verified?: (Scalars['Boolean'] | null),wiring?: (Scalars['jsonb'] | null)}
+export interface game_plugins_stream_cursor_value_input {author?: (Scalars['String'] | null),config_path?: (Scalars['String'] | null),config_schema?: (Scalars['jsonb'] | null),cvars?: (Scalars['String'][] | null),description?: (Scalars['String'] | null),homepage?: (Scalars['String'] | null),hot_swappable?: (Scalars['Boolean'] | null),kind?: (e_game_plugin_kinds_enum | null),map_rotation?: (Scalars['jsonb'] | null),name?: (Scalars['String'] | null),pairs_with?: (Scalars['String'][] | null),panel?: (Scalars['jsonb'] | null),requires_server_guidelines_disabled?: (Scalars['Boolean'] | null),requires_service?: (Scalars['String'] | null),slug?: (Scalars['String'] | null),source?: (Scalars['String'] | null),synced_at?: (Scalars['timestamptz'] | null),tags?: (Scalars['String'][] | null),verified?: (Scalars['Boolean'] | null),wiring?: (Scalars['jsonb'] | null)}
 
 
 /** aggregate sum on columns */
@@ -73708,6 +74033,18 @@ export interface mutation_rootGenqlSelection{
     where: seasons_bool_exp} })
     /** delete single row from the table: "seasons" */
     delete_seasons_by_pk?: (seasonsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "server_map_rotation" */
+    delete_server_map_rotation?: (server_map_rotation_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: server_map_rotation_bool_exp} })
+    /** delete single row from the table: "server_map_rotation" */
+    delete_server_map_rotation_by_pk?: (server_map_rotationGenqlSelection & { __args: {map_id: Scalars['uuid'], server_id: Scalars['uuid']} })
+    /** delete data from the table: "server_plugins" */
+    delete_server_plugins?: (server_plugins_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: server_plugins_bool_exp} })
+    /** delete single row from the table: "server_plugins" */
+    delete_server_plugins_by_pk?: (server_pluginsGenqlSelection & { __args: {plugin_slug: Scalars['String'], server_id: Scalars['uuid']} })
     /** delete data from the table: "server_regions" */
     delete_server_regions?: (server_regions_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -74051,6 +74388,8 @@ export interface mutation_rootGenqlSelection{
     importSteamMatchShareCode?: (PendingMatchImportActionOutputGenqlSelection & { __args: {share_code: Scalars['String']} })
     /** Seed the utility library from an operator-supplied payload */
     importUtilityLineups?: (UtilityImportOutputGenqlSelection & { __args: {dry_run?: (Scalars['Boolean'] | null), payload: Scalars['jsonb']} })
+    /** Add every map in a Steam workshop collection to the map catalog */
+    importWorkshopCollection?: (ImportWorkshopCollectionOutputGenqlSelection & { __args: {collection: Scalars['String']} })
     /** insert data into the table: "_map_pool" */
     insert__map_pool?: (_map_pool_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -75919,6 +76258,30 @@ export interface mutation_rootGenqlSelection{
     object: seasons_insert_input, 
     /** upsert condition */
     on_conflict?: (seasons_on_conflict | null)} })
+    /** insert data into the table: "server_map_rotation" */
+    insert_server_map_rotation?: (server_map_rotation_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: server_map_rotation_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (server_map_rotation_on_conflict | null)} })
+    /** insert a single row into the table: "server_map_rotation" */
+    insert_server_map_rotation_one?: (server_map_rotationGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: server_map_rotation_insert_input, 
+    /** upsert condition */
+    on_conflict?: (server_map_rotation_on_conflict | null)} })
+    /** insert data into the table: "server_plugins" */
+    insert_server_plugins?: (server_plugins_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: server_plugins_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (server_plugins_on_conflict | null)} })
+    /** insert a single row into the table: "server_plugins" */
+    insert_server_plugins_one?: (server_pluginsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: server_plugins_insert_input, 
+    /** upsert condition */
+    on_conflict?: (server_plugins_on_conflict | null)} })
     /** insert data into the table: "server_regions" */
     insert_server_regions?: (server_regions_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -76770,6 +77133,10 @@ export interface mutation_rootGenqlSelection{
     setMatchWinner?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], winning_lineup_id: Scalars['uuid']} })
     /** Publish or unpublish a news post. Caller role is verified against public.post_news_role. */
     setNewsPostStatus?: (NewsPostGenqlSelection & { __args: {id: Scalars['uuid'], status: Scalars['String']} })
+    /** Replace a dedicated server's map rotation and restart it */
+    setServerMapRotation?: (SuccessOutputGenqlSelection & { __args: {map_ids: Scalars['uuid'][], server_id: Scalars['uuid'], shuffle: Scalars['Boolean']} })
+    /** Replace a dedicated server's per-server plugin overrides and restart it */
+    setServerPlugins?: (SuccessOutputGenqlSelection & { __args: {plugins: ServerPluginInput[], server_id: Scalars['uuid']} })
     /** Map a tournament placement to an award */
     setTournamentAward?: (TournamentAwardGenqlSelection & { __args: {award_id?: (Scalars['uuid'] | null), custom_name?: (Scalars['String'] | null), placement: Scalars['Int'], silhouette?: (Scalars['Int'] | null), tournament_id: Scalars['uuid']} })
     setUtilityPracticeAccess?: (SuccessOutputGenqlSelection & { __args: {access: Scalars['String'], session_id: Scalars['uuid']} })
@@ -79653,6 +80020,38 @@ export interface mutation_rootGenqlSelection{
     update_seasons_many?: (seasons_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: seasons_updates[]} })
+    /** update data of the table: "server_map_rotation" */
+    update_server_map_rotation?: (server_map_rotation_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (server_map_rotation_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (server_map_rotation_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: server_map_rotation_bool_exp} })
+    /** update single row of the table: "server_map_rotation" */
+    update_server_map_rotation_by_pk?: (server_map_rotationGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (server_map_rotation_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (server_map_rotation_set_input | null), pk_columns: server_map_rotation_pk_columns_input} })
+    /** update multiples rows of table: "server_map_rotation" */
+    update_server_map_rotation_many?: (server_map_rotation_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: server_map_rotation_updates[]} })
+    /** update data of the table: "server_plugins" */
+    update_server_plugins?: (server_plugins_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (server_plugins_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: server_plugins_bool_exp} })
+    /** update single row of the table: "server_plugins" */
+    update_server_plugins_by_pk?: (server_pluginsGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (server_plugins_set_input | null), pk_columns: server_plugins_pk_columns_input} })
+    /** update multiples rows of table: "server_plugins" */
+    update_server_plugins_many?: (server_plugins_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: server_plugins_updates[]} })
     /** update data of the table: "server_regions" */
     update_server_regions?: (server_regions_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -97300,6 +97699,58 @@ export interface query_rootGenqlSelection{
     where?: (seasons_bool_exp | null)} })
     /** fetch data from the table: "seasons" using primary key columns */
     seasons_by_pk?: (seasonsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "server_map_rotation" */
+    server_map_rotation?: (server_map_rotationGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (server_map_rotation_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (server_map_rotation_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (server_map_rotation_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "server_map_rotation" */
+    server_map_rotation_aggregate?: (server_map_rotation_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (server_map_rotation_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (server_map_rotation_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (server_map_rotation_bool_exp | null)} })
+    /** fetch data from the table: "server_map_rotation" using primary key columns */
+    server_map_rotation_by_pk?: (server_map_rotationGenqlSelection & { __args: {map_id: Scalars['uuid'], server_id: Scalars['uuid']} })
+    /** fetch data from the table: "server_plugins" */
+    server_plugins?: (server_pluginsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (server_plugins_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (server_plugins_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (server_plugins_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "server_plugins" */
+    server_plugins_aggregate?: (server_plugins_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (server_plugins_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (server_plugins_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (server_plugins_bool_exp | null)} })
+    /** fetch data from the table: "server_plugins" using primary key columns */
+    server_plugins_by_pk?: (server_pluginsGenqlSelection & { __args: {plugin_slug: Scalars['String'], server_id: Scalars['uuid']} })
     /** fetch data from the table: "server_regions" */
     server_regions?: (server_regionsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -99784,6 +100235,374 @@ export interface seasons_variance_fieldsGenqlSelection{
 }
 
 
+/** columns and relationships of "server_map_rotation" */
+export interface server_map_rotationGenqlSelection{
+    /** An object relationship */
+    map?: mapsGenqlSelection
+    map_id?: boolean | number
+    position?: boolean | number
+    /** An object relationship */
+    server?: serversGenqlSelection
+    server_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "server_map_rotation" */
+export interface server_map_rotation_aggregateGenqlSelection{
+    aggregate?: server_map_rotation_aggregate_fieldsGenqlSelection
+    nodes?: server_map_rotationGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface server_map_rotation_aggregate_bool_exp {count?: (server_map_rotation_aggregate_bool_exp_count | null)}
+
+export interface server_map_rotation_aggregate_bool_exp_count {arguments?: (server_map_rotation_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (server_map_rotation_bool_exp | null),predicate: Int_comparison_exp}
+
+
+/** aggregate fields of "server_map_rotation" */
+export interface server_map_rotation_aggregate_fieldsGenqlSelection{
+    avg?: server_map_rotation_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (server_map_rotation_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: server_map_rotation_max_fieldsGenqlSelection
+    min?: server_map_rotation_min_fieldsGenqlSelection
+    stddev?: server_map_rotation_stddev_fieldsGenqlSelection
+    stddev_pop?: server_map_rotation_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: server_map_rotation_stddev_samp_fieldsGenqlSelection
+    sum?: server_map_rotation_sum_fieldsGenqlSelection
+    var_pop?: server_map_rotation_var_pop_fieldsGenqlSelection
+    var_samp?: server_map_rotation_var_samp_fieldsGenqlSelection
+    variance?: server_map_rotation_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "server_map_rotation" */
+export interface server_map_rotation_aggregate_order_by {avg?: (server_map_rotation_avg_order_by | null),count?: (order_by | null),max?: (server_map_rotation_max_order_by | null),min?: (server_map_rotation_min_order_by | null),stddev?: (server_map_rotation_stddev_order_by | null),stddev_pop?: (server_map_rotation_stddev_pop_order_by | null),stddev_samp?: (server_map_rotation_stddev_samp_order_by | null),sum?: (server_map_rotation_sum_order_by | null),var_pop?: (server_map_rotation_var_pop_order_by | null),var_samp?: (server_map_rotation_var_samp_order_by | null),variance?: (server_map_rotation_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "server_map_rotation" */
+export interface server_map_rotation_arr_rel_insert_input {data: server_map_rotation_insert_input[],
+/** upsert condition */
+on_conflict?: (server_map_rotation_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface server_map_rotation_avg_fieldsGenqlSelection{
+    position?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "server_map_rotation" */
+export interface server_map_rotation_avg_order_by {position?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "server_map_rotation". All fields are combined with a logical 'AND'. */
+export interface server_map_rotation_bool_exp {_and?: (server_map_rotation_bool_exp[] | null),_not?: (server_map_rotation_bool_exp | null),_or?: (server_map_rotation_bool_exp[] | null),map?: (maps_bool_exp | null),map_id?: (uuid_comparison_exp | null),position?: (Int_comparison_exp | null),server?: (servers_bool_exp | null),server_id?: (uuid_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "server_map_rotation" */
+export interface server_map_rotation_inc_input {position?: (Scalars['Int'] | null)}
+
+
+/** input type for inserting data into table "server_map_rotation" */
+export interface server_map_rotation_insert_input {map?: (maps_obj_rel_insert_input | null),map_id?: (Scalars['uuid'] | null),position?: (Scalars['Int'] | null),server?: (servers_obj_rel_insert_input | null),server_id?: (Scalars['uuid'] | null)}
+
+
+/** aggregate max on columns */
+export interface server_map_rotation_max_fieldsGenqlSelection{
+    map_id?: boolean | number
+    position?: boolean | number
+    server_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "server_map_rotation" */
+export interface server_map_rotation_max_order_by {map_id?: (order_by | null),position?: (order_by | null),server_id?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface server_map_rotation_min_fieldsGenqlSelection{
+    map_id?: boolean | number
+    position?: boolean | number
+    server_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "server_map_rotation" */
+export interface server_map_rotation_min_order_by {map_id?: (order_by | null),position?: (order_by | null),server_id?: (order_by | null)}
+
+
+/** response of any mutation on the table "server_map_rotation" */
+export interface server_map_rotation_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: server_map_rotationGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "server_map_rotation" */
+export interface server_map_rotation_on_conflict {constraint: server_map_rotation_constraint,update_columns?: server_map_rotation_update_column[],where?: (server_map_rotation_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "server_map_rotation". */
+export interface server_map_rotation_order_by {map?: (maps_order_by | null),map_id?: (order_by | null),position?: (order_by | null),server?: (servers_order_by | null),server_id?: (order_by | null)}
+
+
+/** primary key columns input for table: server_map_rotation */
+export interface server_map_rotation_pk_columns_input {map_id: Scalars['uuid'],server_id: Scalars['uuid']}
+
+
+/** input type for updating data in table "server_map_rotation" */
+export interface server_map_rotation_set_input {map_id?: (Scalars['uuid'] | null),position?: (Scalars['Int'] | null),server_id?: (Scalars['uuid'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface server_map_rotation_stddev_fieldsGenqlSelection{
+    position?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "server_map_rotation" */
+export interface server_map_rotation_stddev_order_by {position?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface server_map_rotation_stddev_pop_fieldsGenqlSelection{
+    position?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "server_map_rotation" */
+export interface server_map_rotation_stddev_pop_order_by {position?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface server_map_rotation_stddev_samp_fieldsGenqlSelection{
+    position?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "server_map_rotation" */
+export interface server_map_rotation_stddev_samp_order_by {position?: (order_by | null)}
+
+
+/** Streaming cursor of the table "server_map_rotation" */
+export interface server_map_rotation_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: server_map_rotation_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface server_map_rotation_stream_cursor_value_input {map_id?: (Scalars['uuid'] | null),position?: (Scalars['Int'] | null),server_id?: (Scalars['uuid'] | null)}
+
+
+/** aggregate sum on columns */
+export interface server_map_rotation_sum_fieldsGenqlSelection{
+    position?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "server_map_rotation" */
+export interface server_map_rotation_sum_order_by {position?: (order_by | null)}
+
+export interface server_map_rotation_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (server_map_rotation_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (server_map_rotation_set_input | null),
+/** filter the rows which have to be updated */
+where: server_map_rotation_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface server_map_rotation_var_pop_fieldsGenqlSelection{
+    position?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "server_map_rotation" */
+export interface server_map_rotation_var_pop_order_by {position?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface server_map_rotation_var_samp_fieldsGenqlSelection{
+    position?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "server_map_rotation" */
+export interface server_map_rotation_var_samp_order_by {position?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface server_map_rotation_variance_fieldsGenqlSelection{
+    position?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "server_map_rotation" */
+export interface server_map_rotation_variance_order_by {position?: (order_by | null)}
+
+
+/** columns and relationships of "server_plugins" */
+export interface server_pluginsGenqlSelection{
+    enabled?: boolean | number
+    /** An object relationship */
+    install?: game_plugin_installsGenqlSelection
+    plugin_slug?: boolean | number
+    /** An object relationship */
+    server?: serversGenqlSelection
+    server_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "server_plugins" */
+export interface server_plugins_aggregateGenqlSelection{
+    aggregate?: server_plugins_aggregate_fieldsGenqlSelection
+    nodes?: server_pluginsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface server_plugins_aggregate_bool_exp {bool_and?: (server_plugins_aggregate_bool_exp_bool_and | null),bool_or?: (server_plugins_aggregate_bool_exp_bool_or | null),count?: (server_plugins_aggregate_bool_exp_count | null)}
+
+export interface server_plugins_aggregate_bool_exp_bool_and {arguments: server_plugins_select_column_server_plugins_aggregate_bool_exp_bool_and_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (server_plugins_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface server_plugins_aggregate_bool_exp_bool_or {arguments: server_plugins_select_column_server_plugins_aggregate_bool_exp_bool_or_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (server_plugins_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface server_plugins_aggregate_bool_exp_count {arguments?: (server_plugins_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (server_plugins_bool_exp | null),predicate: Int_comparison_exp}
+
+
+/** aggregate fields of "server_plugins" */
+export interface server_plugins_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (server_plugins_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: server_plugins_max_fieldsGenqlSelection
+    min?: server_plugins_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "server_plugins" */
+export interface server_plugins_aggregate_order_by {count?: (order_by | null),max?: (server_plugins_max_order_by | null),min?: (server_plugins_min_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "server_plugins" */
+export interface server_plugins_arr_rel_insert_input {data: server_plugins_insert_input[],
+/** upsert condition */
+on_conflict?: (server_plugins_on_conflict | null)}
+
+
+/** Boolean expression to filter rows from the table "server_plugins". All fields are combined with a logical 'AND'. */
+export interface server_plugins_bool_exp {_and?: (server_plugins_bool_exp[] | null),_not?: (server_plugins_bool_exp | null),_or?: (server_plugins_bool_exp[] | null),enabled?: (Boolean_comparison_exp | null),install?: (game_plugin_installs_bool_exp | null),plugin_slug?: (String_comparison_exp | null),server?: (servers_bool_exp | null),server_id?: (uuid_comparison_exp | null)}
+
+
+/** input type for inserting data into table "server_plugins" */
+export interface server_plugins_insert_input {enabled?: (Scalars['Boolean'] | null),install?: (game_plugin_installs_obj_rel_insert_input | null),plugin_slug?: (Scalars['String'] | null),server?: (servers_obj_rel_insert_input | null),server_id?: (Scalars['uuid'] | null)}
+
+
+/** aggregate max on columns */
+export interface server_plugins_max_fieldsGenqlSelection{
+    plugin_slug?: boolean | number
+    server_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "server_plugins" */
+export interface server_plugins_max_order_by {plugin_slug?: (order_by | null),server_id?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface server_plugins_min_fieldsGenqlSelection{
+    plugin_slug?: boolean | number
+    server_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "server_plugins" */
+export interface server_plugins_min_order_by {plugin_slug?: (order_by | null),server_id?: (order_by | null)}
+
+
+/** response of any mutation on the table "server_plugins" */
+export interface server_plugins_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: server_pluginsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "server_plugins" */
+export interface server_plugins_on_conflict {constraint: server_plugins_constraint,update_columns?: server_plugins_update_column[],where?: (server_plugins_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "server_plugins". */
+export interface server_plugins_order_by {enabled?: (order_by | null),install?: (game_plugin_installs_order_by | null),plugin_slug?: (order_by | null),server?: (servers_order_by | null),server_id?: (order_by | null)}
+
+
+/** primary key columns input for table: server_plugins */
+export interface server_plugins_pk_columns_input {plugin_slug: Scalars['String'],server_id: Scalars['uuid']}
+
+
+/** input type for updating data in table "server_plugins" */
+export interface server_plugins_set_input {enabled?: (Scalars['Boolean'] | null),plugin_slug?: (Scalars['String'] | null),server_id?: (Scalars['uuid'] | null)}
+
+
+/** Streaming cursor of the table "server_plugins" */
+export interface server_plugins_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: server_plugins_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface server_plugins_stream_cursor_value_input {enabled?: (Scalars['Boolean'] | null),plugin_slug?: (Scalars['String'] | null),server_id?: (Scalars['uuid'] | null)}
+
+export interface server_plugins_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (server_plugins_set_input | null),
+/** filter the rows which have to be updated */
+where: server_plugins_bool_exp}
+
+
 /** columns and relationships of "server_regions" */
 export interface server_regionsGenqlSelection{
     /** A computed field, executes function "available_region_server_count" */
@@ -100060,6 +100879,31 @@ export interface serversGenqlSelection{
     /** JSON select path */
     path?: (Scalars['String'] | null)} } | boolean | number
     /** An array relationship */
+    map_rotation?: (server_map_rotationGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (server_map_rotation_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (server_map_rotation_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (server_map_rotation_bool_exp | null)} })
+    /** An aggregate relationship */
+    map_rotation_aggregate?: (server_map_rotation_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (server_map_rotation_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (server_map_rotation_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (server_map_rotation_bool_exp | null)} })
+    map_rotation_shuffle?: boolean | number
+    /** An array relationship */
     matches?: (matchesGenqlSelection & { __args?: {
     /** distinct select on columns */
     distinct_on?: (matches_select_column[] | null), 
@@ -100085,6 +100929,30 @@ export interface serversGenqlSelection{
     where?: (matches_bool_exp | null)} })
     max_players?: boolean | number
     offline_at?: boolean | number
+    /** An array relationship */
+    plugin_overrides?: (server_pluginsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (server_plugins_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (server_plugins_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (server_plugins_bool_exp | null)} })
+    /** An aggregate relationship */
+    plugin_overrides_aggregate?: (server_plugins_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (server_plugins_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (server_plugins_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (server_plugins_bool_exp | null)} })
     plugin_runtime?: boolean | number
     plugin_version?: boolean | number
     plugins_checked_at?: boolean | number
@@ -100168,7 +101036,7 @@ export interface servers_avg_order_by {max_players?: (order_by | null),port?: (o
 
 
 /** Boolean expression to filter rows from the table "servers". All fields are combined with a logical 'AND'. */
-export interface servers_bool_exp {_and?: (servers_bool_exp[] | null),_not?: (servers_bool_exp | null),_or?: (servers_bool_exp[] | null),api_password?: (uuid_comparison_exp | null),boot_status?: (String_comparison_exp | null),boot_status_detail?: (String_comparison_exp | null),connect_password?: (String_comparison_exp | null),connected?: (Boolean_comparison_exp | null),connection_link?: (String_comparison_exp | null),connection_string?: (String_comparison_exp | null),current_match?: (matches_bool_exp | null),enabled?: (Boolean_comparison_exp | null),game?: (String_comparison_exp | null),game_mode?: (game_modes_bool_exp | null),game_mode_id?: (uuid_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),host?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_dedicated?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),loaded_plugins?: (jsonb_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),max_players?: (Int_comparison_exp | null),offline_at?: (timestamptz_comparison_exp | null),plugin_runtime?: (e_plugin_runtimes_enum_comparison_exp | null),plugin_version?: (String_comparison_exp | null),plugins_checked_at?: (timestamptz_comparison_exp | null),port?: (Int_comparison_exp | null),rcon_password?: (bytea_comparison_exp | null),rcon_status?: (Boolean_comparison_exp | null),region?: (String_comparison_exp | null),reserved_by_match_id?: (uuid_comparison_exp | null),server_region?: (server_regions_bool_exp | null),steam_relay?: (String_comparison_exp | null),tv_port?: (Int_comparison_exp | null),type?: (e_server_types_enum_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
+export interface servers_bool_exp {_and?: (servers_bool_exp[] | null),_not?: (servers_bool_exp | null),_or?: (servers_bool_exp[] | null),api_password?: (uuid_comparison_exp | null),boot_status?: (String_comparison_exp | null),boot_status_detail?: (String_comparison_exp | null),connect_password?: (String_comparison_exp | null),connected?: (Boolean_comparison_exp | null),connection_link?: (String_comparison_exp | null),connection_string?: (String_comparison_exp | null),current_match?: (matches_bool_exp | null),enabled?: (Boolean_comparison_exp | null),game?: (String_comparison_exp | null),game_mode?: (game_modes_bool_exp | null),game_mode_id?: (uuid_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),host?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_dedicated?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),loaded_plugins?: (jsonb_comparison_exp | null),map_rotation?: (server_map_rotation_bool_exp | null),map_rotation_aggregate?: (server_map_rotation_aggregate_bool_exp | null),map_rotation_shuffle?: (Boolean_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),max_players?: (Int_comparison_exp | null),offline_at?: (timestamptz_comparison_exp | null),plugin_overrides?: (server_plugins_bool_exp | null),plugin_overrides_aggregate?: (server_plugins_aggregate_bool_exp | null),plugin_runtime?: (e_plugin_runtimes_enum_comparison_exp | null),plugin_version?: (String_comparison_exp | null),plugins_checked_at?: (timestamptz_comparison_exp | null),port?: (Int_comparison_exp | null),rcon_password?: (bytea_comparison_exp | null),rcon_status?: (Boolean_comparison_exp | null),region?: (String_comparison_exp | null),reserved_by_match_id?: (uuid_comparison_exp | null),server_region?: (server_regions_bool_exp | null),steam_relay?: (String_comparison_exp | null),tv_port?: (Int_comparison_exp | null),type?: (e_server_types_enum_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -100188,7 +101056,7 @@ export interface servers_inc_input {max_players?: (Scalars['Int'] | null),port?:
 
 
 /** input type for inserting data into table "servers" */
-export interface servers_insert_input {api_password?: (Scalars['uuid'] | null),boot_status?: (Scalars['String'] | null),boot_status_detail?: (Scalars['String'] | null),connect_password?: (Scalars['String'] | null),connected?: (Scalars['Boolean'] | null),current_match?: (matches_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),game?: (Scalars['String'] | null),game_mode?: (game_modes_obj_rel_insert_input | null),game_mode_id?: (Scalars['uuid'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_dedicated?: (Scalars['Boolean'] | null),label?: (Scalars['String'] | null),loaded_plugins?: (Scalars['jsonb'] | null),matches?: (matches_arr_rel_insert_input | null),max_players?: (Scalars['Int'] | null),offline_at?: (Scalars['timestamptz'] | null),plugin_runtime?: (e_plugin_runtimes_enum | null),plugin_version?: (Scalars['String'] | null),plugins_checked_at?: (Scalars['timestamptz'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),rcon_status?: (Scalars['Boolean'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),server_region?: (server_regions_obj_rel_insert_input | null),steam_relay?: (Scalars['String'] | null),tv_port?: (Scalars['Int'] | null),type?: (e_server_types_enum | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface servers_insert_input {api_password?: (Scalars['uuid'] | null),boot_status?: (Scalars['String'] | null),boot_status_detail?: (Scalars['String'] | null),connect_password?: (Scalars['String'] | null),connected?: (Scalars['Boolean'] | null),current_match?: (matches_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),game?: (Scalars['String'] | null),game_mode?: (game_modes_obj_rel_insert_input | null),game_mode_id?: (Scalars['uuid'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_dedicated?: (Scalars['Boolean'] | null),label?: (Scalars['String'] | null),loaded_plugins?: (Scalars['jsonb'] | null),map_rotation?: (server_map_rotation_arr_rel_insert_input | null),map_rotation_shuffle?: (Scalars['Boolean'] | null),matches?: (matches_arr_rel_insert_input | null),max_players?: (Scalars['Int'] | null),offline_at?: (Scalars['timestamptz'] | null),plugin_overrides?: (server_plugins_arr_rel_insert_input | null),plugin_runtime?: (e_plugin_runtimes_enum | null),plugin_version?: (Scalars['String'] | null),plugins_checked_at?: (Scalars['timestamptz'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),rcon_status?: (Scalars['Boolean'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),server_region?: (server_regions_obj_rel_insert_input | null),steam_relay?: (Scalars['String'] | null),tv_port?: (Scalars['Int'] | null),type?: (e_server_types_enum | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate max on columns */
@@ -100283,7 +101151,7 @@ export interface servers_on_conflict {constraint: servers_constraint,update_colu
 
 
 /** Ordering options when selecting data from "servers". */
-export interface servers_order_by {api_password?: (order_by | null),boot_status?: (order_by | null),boot_status_detail?: (order_by | null),connect_password?: (order_by | null),connected?: (order_by | null),connection_link?: (order_by | null),connection_string?: (order_by | null),current_match?: (matches_order_by | null),enabled?: (order_by | null),game?: (order_by | null),game_mode?: (game_modes_order_by | null),game_mode_id?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),host?: (order_by | null),id?: (order_by | null),is_dedicated?: (order_by | null),label?: (order_by | null),loaded_plugins?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),max_players?: (order_by | null),offline_at?: (order_by | null),plugin_runtime?: (order_by | null),plugin_version?: (order_by | null),plugins_checked_at?: (order_by | null),port?: (order_by | null),rcon_password?: (order_by | null),rcon_status?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),server_region?: (server_regions_order_by | null),steam_relay?: (order_by | null),tv_port?: (order_by | null),type?: (order_by | null),updated_at?: (order_by | null)}
+export interface servers_order_by {api_password?: (order_by | null),boot_status?: (order_by | null),boot_status_detail?: (order_by | null),connect_password?: (order_by | null),connected?: (order_by | null),connection_link?: (order_by | null),connection_string?: (order_by | null),current_match?: (matches_order_by | null),enabled?: (order_by | null),game?: (order_by | null),game_mode?: (game_modes_order_by | null),game_mode_id?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),host?: (order_by | null),id?: (order_by | null),is_dedicated?: (order_by | null),label?: (order_by | null),loaded_plugins?: (order_by | null),map_rotation_aggregate?: (server_map_rotation_aggregate_order_by | null),map_rotation_shuffle?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),max_players?: (order_by | null),offline_at?: (order_by | null),plugin_overrides_aggregate?: (server_plugins_aggregate_order_by | null),plugin_runtime?: (order_by | null),plugin_version?: (order_by | null),plugins_checked_at?: (order_by | null),port?: (order_by | null),rcon_password?: (order_by | null),rcon_status?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),server_region?: (server_regions_order_by | null),steam_relay?: (order_by | null),tv_port?: (order_by | null),type?: (order_by | null),updated_at?: (order_by | null)}
 
 
 /** primary key columns input for table: servers */
@@ -100295,7 +101163,7 @@ export interface servers_prepend_input {loaded_plugins?: (Scalars['jsonb'] | nul
 
 
 /** input type for updating data in table "servers" */
-export interface servers_set_input {api_password?: (Scalars['uuid'] | null),boot_status?: (Scalars['String'] | null),boot_status_detail?: (Scalars['String'] | null),connect_password?: (Scalars['String'] | null),connected?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),game?: (Scalars['String'] | null),game_mode_id?: (Scalars['uuid'] | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_dedicated?: (Scalars['Boolean'] | null),label?: (Scalars['String'] | null),loaded_plugins?: (Scalars['jsonb'] | null),max_players?: (Scalars['Int'] | null),offline_at?: (Scalars['timestamptz'] | null),plugin_runtime?: (e_plugin_runtimes_enum | null),plugin_version?: (Scalars['String'] | null),plugins_checked_at?: (Scalars['timestamptz'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),rcon_status?: (Scalars['Boolean'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),steam_relay?: (Scalars['String'] | null),tv_port?: (Scalars['Int'] | null),type?: (e_server_types_enum | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface servers_set_input {api_password?: (Scalars['uuid'] | null),boot_status?: (Scalars['String'] | null),boot_status_detail?: (Scalars['String'] | null),connect_password?: (Scalars['String'] | null),connected?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),game?: (Scalars['String'] | null),game_mode_id?: (Scalars['uuid'] | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_dedicated?: (Scalars['Boolean'] | null),label?: (Scalars['String'] | null),loaded_plugins?: (Scalars['jsonb'] | null),map_rotation_shuffle?: (Scalars['Boolean'] | null),max_players?: (Scalars['Int'] | null),offline_at?: (Scalars['timestamptz'] | null),plugin_runtime?: (e_plugin_runtimes_enum | null),plugin_version?: (Scalars['String'] | null),plugins_checked_at?: (Scalars['timestamptz'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),rcon_status?: (Scalars['Boolean'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),steam_relay?: (Scalars['String'] | null),tv_port?: (Scalars['Int'] | null),type?: (e_server_types_enum | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -100349,7 +101217,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface servers_stream_cursor_value_input {api_password?: (Scalars['uuid'] | null),boot_status?: (Scalars['String'] | null),boot_status_detail?: (Scalars['String'] | null),connect_password?: (Scalars['String'] | null),connected?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),game?: (Scalars['String'] | null),game_mode_id?: (Scalars['uuid'] | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_dedicated?: (Scalars['Boolean'] | null),label?: (Scalars['String'] | null),loaded_plugins?: (Scalars['jsonb'] | null),max_players?: (Scalars['Int'] | null),offline_at?: (Scalars['timestamptz'] | null),plugin_runtime?: (e_plugin_runtimes_enum | null),plugin_version?: (Scalars['String'] | null),plugins_checked_at?: (Scalars['timestamptz'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),rcon_status?: (Scalars['Boolean'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),steam_relay?: (Scalars['String'] | null),tv_port?: (Scalars['Int'] | null),type?: (e_server_types_enum | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface servers_stream_cursor_value_input {api_password?: (Scalars['uuid'] | null),boot_status?: (Scalars['String'] | null),boot_status_detail?: (Scalars['String'] | null),connect_password?: (Scalars['String'] | null),connected?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),game?: (Scalars['String'] | null),game_mode_id?: (Scalars['uuid'] | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_dedicated?: (Scalars['Boolean'] | null),label?: (Scalars['String'] | null),loaded_plugins?: (Scalars['jsonb'] | null),map_rotation_shuffle?: (Scalars['Boolean'] | null),max_players?: (Scalars['Int'] | null),offline_at?: (Scalars['timestamptz'] | null),plugin_runtime?: (e_plugin_runtimes_enum | null),plugin_version?: (Scalars['String'] | null),plugins_checked_at?: (Scalars['timestamptz'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),rcon_status?: (Scalars['Boolean'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),steam_relay?: (Scalars['String'] | null),tv_port?: (Scalars['Int'] | null),type?: (e_server_types_enum | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate sum on columns */
@@ -106545,6 +107413,74 @@ export interface subscription_rootGenqlSelection{
     cursor: (seasons_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (seasons_bool_exp | null)} })
+    /** fetch data from the table: "server_map_rotation" */
+    server_map_rotation?: (server_map_rotationGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (server_map_rotation_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (server_map_rotation_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (server_map_rotation_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "server_map_rotation" */
+    server_map_rotation_aggregate?: (server_map_rotation_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (server_map_rotation_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (server_map_rotation_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (server_map_rotation_bool_exp | null)} })
+    /** fetch data from the table: "server_map_rotation" using primary key columns */
+    server_map_rotation_by_pk?: (server_map_rotationGenqlSelection & { __args: {map_id: Scalars['uuid'], server_id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "server_map_rotation" */
+    server_map_rotation_stream?: (server_map_rotationGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (server_map_rotation_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (server_map_rotation_bool_exp | null)} })
+    /** fetch data from the table: "server_plugins" */
+    server_plugins?: (server_pluginsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (server_plugins_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (server_plugins_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (server_plugins_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "server_plugins" */
+    server_plugins_aggregate?: (server_plugins_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (server_plugins_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (server_plugins_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (server_plugins_bool_exp | null)} })
+    /** fetch data from the table: "server_plugins" using primary key columns */
+    server_plugins_by_pk?: (server_pluginsGenqlSelection & { __args: {plugin_slug: Scalars['String'], server_id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "server_plugins" */
+    server_plugins_stream?: (server_pluginsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (server_plugins_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (server_plugins_bool_exp | null)} })
     /** fetch data from the table: "server_regions" */
     server_regions?: (server_regionsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -130700,6 +131636,22 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const ImportWorkshopCollectionOutput_possibleTypes: string[] = ['ImportWorkshopCollectionOutput']
+    export const isImportWorkshopCollectionOutput = (obj?: { __typename?: any } | null): obj is ImportWorkshopCollectionOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isImportWorkshopCollectionOutput"')
+      return ImportWorkshopCollectionOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const ImportedWorkshopMap_possibleTypes: string[] = ['ImportedWorkshopMap']
+    export const isImportedWorkshopMap = (obj?: { __typename?: any } | null): obj is ImportedWorkshopMap => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isImportedWorkshopMap"')
+      return ImportedWorkshopMap_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const IndexIOStat_possibleTypes: string[] = ['IndexIOStat']
     export const isIndexIOStat = (obj?: { __typename?: any } | null): obj is IndexIOStat => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isIndexIOStat"')
@@ -144884,6 +145836,166 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const server_map_rotation_possibleTypes: string[] = ['server_map_rotation']
+    export const isserver_map_rotation = (obj?: { __typename?: any } | null): obj is server_map_rotation => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_map_rotation"')
+      return server_map_rotation_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_map_rotation_aggregate_possibleTypes: string[] = ['server_map_rotation_aggregate']
+    export const isserver_map_rotation_aggregate = (obj?: { __typename?: any } | null): obj is server_map_rotation_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_map_rotation_aggregate"')
+      return server_map_rotation_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_map_rotation_aggregate_fields_possibleTypes: string[] = ['server_map_rotation_aggregate_fields']
+    export const isserver_map_rotation_aggregate_fields = (obj?: { __typename?: any } | null): obj is server_map_rotation_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_map_rotation_aggregate_fields"')
+      return server_map_rotation_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_map_rotation_avg_fields_possibleTypes: string[] = ['server_map_rotation_avg_fields']
+    export const isserver_map_rotation_avg_fields = (obj?: { __typename?: any } | null): obj is server_map_rotation_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_map_rotation_avg_fields"')
+      return server_map_rotation_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_map_rotation_max_fields_possibleTypes: string[] = ['server_map_rotation_max_fields']
+    export const isserver_map_rotation_max_fields = (obj?: { __typename?: any } | null): obj is server_map_rotation_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_map_rotation_max_fields"')
+      return server_map_rotation_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_map_rotation_min_fields_possibleTypes: string[] = ['server_map_rotation_min_fields']
+    export const isserver_map_rotation_min_fields = (obj?: { __typename?: any } | null): obj is server_map_rotation_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_map_rotation_min_fields"')
+      return server_map_rotation_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_map_rotation_mutation_response_possibleTypes: string[] = ['server_map_rotation_mutation_response']
+    export const isserver_map_rotation_mutation_response = (obj?: { __typename?: any } | null): obj is server_map_rotation_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_map_rotation_mutation_response"')
+      return server_map_rotation_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_map_rotation_stddev_fields_possibleTypes: string[] = ['server_map_rotation_stddev_fields']
+    export const isserver_map_rotation_stddev_fields = (obj?: { __typename?: any } | null): obj is server_map_rotation_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_map_rotation_stddev_fields"')
+      return server_map_rotation_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_map_rotation_stddev_pop_fields_possibleTypes: string[] = ['server_map_rotation_stddev_pop_fields']
+    export const isserver_map_rotation_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is server_map_rotation_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_map_rotation_stddev_pop_fields"')
+      return server_map_rotation_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_map_rotation_stddev_samp_fields_possibleTypes: string[] = ['server_map_rotation_stddev_samp_fields']
+    export const isserver_map_rotation_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is server_map_rotation_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_map_rotation_stddev_samp_fields"')
+      return server_map_rotation_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_map_rotation_sum_fields_possibleTypes: string[] = ['server_map_rotation_sum_fields']
+    export const isserver_map_rotation_sum_fields = (obj?: { __typename?: any } | null): obj is server_map_rotation_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_map_rotation_sum_fields"')
+      return server_map_rotation_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_map_rotation_var_pop_fields_possibleTypes: string[] = ['server_map_rotation_var_pop_fields']
+    export const isserver_map_rotation_var_pop_fields = (obj?: { __typename?: any } | null): obj is server_map_rotation_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_map_rotation_var_pop_fields"')
+      return server_map_rotation_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_map_rotation_var_samp_fields_possibleTypes: string[] = ['server_map_rotation_var_samp_fields']
+    export const isserver_map_rotation_var_samp_fields = (obj?: { __typename?: any } | null): obj is server_map_rotation_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_map_rotation_var_samp_fields"')
+      return server_map_rotation_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_map_rotation_variance_fields_possibleTypes: string[] = ['server_map_rotation_variance_fields']
+    export const isserver_map_rotation_variance_fields = (obj?: { __typename?: any } | null): obj is server_map_rotation_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_map_rotation_variance_fields"')
+      return server_map_rotation_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_plugins_possibleTypes: string[] = ['server_plugins']
+    export const isserver_plugins = (obj?: { __typename?: any } | null): obj is server_plugins => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_plugins"')
+      return server_plugins_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_plugins_aggregate_possibleTypes: string[] = ['server_plugins_aggregate']
+    export const isserver_plugins_aggregate = (obj?: { __typename?: any } | null): obj is server_plugins_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_plugins_aggregate"')
+      return server_plugins_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_plugins_aggregate_fields_possibleTypes: string[] = ['server_plugins_aggregate_fields']
+    export const isserver_plugins_aggregate_fields = (obj?: { __typename?: any } | null): obj is server_plugins_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_plugins_aggregate_fields"')
+      return server_plugins_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_plugins_max_fields_possibleTypes: string[] = ['server_plugins_max_fields']
+    export const isserver_plugins_max_fields = (obj?: { __typename?: any } | null): obj is server_plugins_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_plugins_max_fields"')
+      return server_plugins_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_plugins_min_fields_possibleTypes: string[] = ['server_plugins_min_fields']
+    export const isserver_plugins_min_fields = (obj?: { __typename?: any } | null): obj is server_plugins_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_plugins_min_fields"')
+      return server_plugins_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_plugins_mutation_response_possibleTypes: string[] = ['server_plugins_mutation_response']
+    export const isserver_plugins_mutation_response = (obj?: { __typename?: any } | null): obj is server_plugins_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_plugins_mutation_response"')
+      return server_plugins_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const server_regions_possibleTypes: string[] = ['server_regions']
     export const isserver_regions = (obj?: { __typename?: any } | null): obj is server_regions => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isserver_regions"')
@@ -155906,6 +157018,7 @@ export const enumGamePluginsSelectColumn = {
    homepage: 'homepage' as const,
    hot_swappable: 'hot_swappable' as const,
    kind: 'kind' as const,
+   map_rotation: 'map_rotation' as const,
    name: 'name' as const,
    pairs_with: 'pairs_with' as const,
    panel: 'panel' as const,
@@ -155928,6 +157041,7 @@ export const enumGamePluginsUpdateColumn = {
    homepage: 'homepage' as const,
    hot_swappable: 'hot_swappable' as const,
    kind: 'kind' as const,
+   map_rotation: 'map_rotation' as const,
    name: 'name' as const,
    pairs_with: 'pairs_with' as const,
    panel: 'panel' as const,
@@ -158583,6 +159697,46 @@ export const enumSeasonsUpdateColumn = {
    starts_at: 'starts_at' as const
 }
 
+export const enumServerMapRotationConstraint = {
+   server_map_rotation_pkey: 'server_map_rotation_pkey' as const
+}
+
+export const enumServerMapRotationSelectColumn = {
+   map_id: 'map_id' as const,
+   position: 'position' as const,
+   server_id: 'server_id' as const
+}
+
+export const enumServerMapRotationUpdateColumn = {
+   map_id: 'map_id' as const,
+   position: 'position' as const,
+   server_id: 'server_id' as const
+}
+
+export const enumServerPluginsConstraint = {
+   server_plugins_pkey: 'server_plugins_pkey' as const
+}
+
+export const enumServerPluginsSelectColumn = {
+   enabled: 'enabled' as const,
+   plugin_slug: 'plugin_slug' as const,
+   server_id: 'server_id' as const
+}
+
+export const enumServerPluginsSelectColumnServerPluginsAggregateBoolExpBoolAndArgumentsColumns = {
+   enabled: 'enabled' as const
+}
+
+export const enumServerPluginsSelectColumnServerPluginsAggregateBoolExpBoolOrArgumentsColumns = {
+   enabled: 'enabled' as const
+}
+
+export const enumServerPluginsUpdateColumn = {
+   enabled: 'enabled' as const,
+   plugin_slug: 'plugin_slug' as const,
+   server_id: 'server_id' as const
+}
+
 export const enumServerRegionsConstraint = {
    e_server_regions_pkey: 'e_server_regions_pkey' as const
 }
@@ -158621,6 +159775,7 @@ export const enumServersSelectColumn = {
    is_dedicated: 'is_dedicated' as const,
    label: 'label' as const,
    loaded_plugins: 'loaded_plugins' as const,
+   map_rotation_shuffle: 'map_rotation_shuffle' as const,
    max_players: 'max_players' as const,
    offline_at: 'offline_at' as const,
    plugin_runtime: 'plugin_runtime' as const,
@@ -158641,6 +159796,7 @@ export const enumServersSelectColumnServersAggregateBoolExpBoolAndArgumentsColum
    connected: 'connected' as const,
    enabled: 'enabled' as const,
    is_dedicated: 'is_dedicated' as const,
+   map_rotation_shuffle: 'map_rotation_shuffle' as const,
    rcon_status: 'rcon_status' as const
 }
 
@@ -158648,6 +159804,7 @@ export const enumServersSelectColumnServersAggregateBoolExpBoolOrArgumentsColumn
    connected: 'connected' as const,
    enabled: 'enabled' as const,
    is_dedicated: 'is_dedicated' as const,
+   map_rotation_shuffle: 'map_rotation_shuffle' as const,
    rcon_status: 'rcon_status' as const
 }
 
@@ -158666,6 +159823,7 @@ export const enumServersUpdateColumn = {
    is_dedicated: 'is_dedicated' as const,
    label: 'label' as const,
    loaded_plugins: 'loaded_plugins' as const,
+   map_rotation_shuffle: 'map_rotation_shuffle' as const,
    max_players: 'max_players' as const,
    offline_at: 'offline_at' as const,
    plugin_runtime: 'plugin_runtime' as const,

@@ -380,6 +380,23 @@ export class GameModesService {
     };
   }
 
+  private static deepMerge(base: unknown, over: unknown): unknown {
+    const isObject = (value: unknown): value is Record<string, unknown> =>
+      !!value && typeof value === "object" && !Array.isArray(value);
+
+    if (!isObject(base) || !isObject(over)) {
+      return over;
+    }
+
+    const merged: Record<string, unknown> = { ...base };
+
+    for (const [key, value] of Object.entries(over)) {
+      merged[key] = GameModesService.deepMerge(base[key], value);
+    }
+
+    return merged;
+  }
+
   private static entriesOf(mode: ResolvedGameMode | null): Array<string> {
     return (mode?.enabledPlugins ?? "").split(",").filter(Boolean);
   }
@@ -388,21 +405,30 @@ export class GameModesService {
     return entry.split("@")[0];
   }
 
-  // A file the rotation writes replaces the same path from the mode's plugin
-  // config: the rotation is about this server, the mode about every server.
+  // A file the rotation writes is merged over the same path from the mode's
+  // plugin config, the rotation's keys winning: the rotation is about this
+  // server, the mode about every server running it.
   private static withConfigFiles(
     encoded: string | null,
     files: Record<string, string>,
   ): string | null {
-    const merged = {
-      ...(encoded
-        ? (JSON.parse(Buffer.from(encoded, "base64").toString()) as Record<
-            string,
-            string
-          >)
-        : {}),
-      ...files,
-    };
+    const merged: Record<string, string> = encoded
+      ? JSON.parse(Buffer.from(encoded, "base64").toString())
+      : {};
+
+    for (const [path, content] of Object.entries(files)) {
+      merged[path] =
+        path in merged
+          ? JSON.stringify(
+              GameModesService.deepMerge(
+                JSON.parse(merged[path]),
+                JSON.parse(content),
+              ),
+              null,
+              2,
+            )
+          : content;
+    }
 
     return Object.keys(merged).length > 0
       ? Buffer.from(JSON.stringify(merged)).toString("base64")

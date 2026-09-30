@@ -9,17 +9,12 @@ object_relationships:
     using:
       foreign_key_constraint_on: server_id
 select_permissions:
-  - role: guest
+  - role: administrator
     permission:
       columns:
         - map_id
         - position
         - server_id
-      filter:
-        server:
-          type:
-            _nin:
-              - Ranked
-              - Practice
+      filter: {}
       allow_aggregations: true
     comment: ""

@@ -10,8 +10,7 @@ describe("dedicated server config (SQL-driven)", () => {
   let service: DedicatedServerConfigService;
 
   const dedicatedServers = {
-    removeDedicatedServer: jest.fn(async (): Promise<void> => undefined),
-    setupDedicatedServer: jest.fn(async () => true),
+    rebuildDedicatedServer: jest.fn(async () => true),
   };
 
   beforeAll(async () => {
@@ -103,7 +102,7 @@ describe("dedicated server config (SQL-driven)", () => {
         [serverId],
       );
       expect(server.shuffle).toBe(false);
-      expect(dedicatedServers.setupDedicatedServer).toHaveBeenCalledTimes(2);
+      expect(dedicatedServers.rebuildDedicatedServer).toHaveBeenCalledTimes(2);
     });
 
     it("clears the rotation when given no maps", async () => {
@@ -113,17 +112,28 @@ describe("dedicated server config (SQL-driven)", () => {
       expect(await rotation()).toEqual([]);
     });
 
-    it("refuses a deleted map and keeps the rotation it had", async () => {
+    // The page can still list a map deleted after it loaded; failing the
+    // save would block every later edit until the page was reloaded.
+    it("drops a deleted map instead of refusing the save", async () => {
+      const a = await map("rotation-a");
+      const gone = await map("rotation-gone", true);
+
+      await service.setMapRotation(serverId, [gone, a], false);
+
+      expect(await rotation()).toEqual([a]);
+    });
+
+    it("refuses a map that does not exist", async () => {
       const a = await map("rotation-a");
       await service.setMapRotation(serverId, [a], true);
 
       await expect(
         service.setMapRotation(
           serverId,
-          [a, await map("rotation-gone", true)],
+          [a, "00000000-0000-0000-0000-00000000dead"],
           true,
         ),
-      ).rejects.toThrow(/does not exist or was deleted/);
+      ).rejects.toThrow(/does not exist/);
 
       expect(await rotation()).toEqual([a]);
     });
@@ -137,7 +147,7 @@ describe("dedicated server config (SQL-driven)", () => {
 
       await service.setMapRotation(serverId, [await map("rotation-a")], true);
 
-      expect(dedicatedServers.setupDedicatedServer).not.toHaveBeenCalled();
+      expect(dedicatedServers.rebuildDedicatedServer).not.toHaveBeenCalled();
     });
 
     it("refuses Ranked servers", async () => {
@@ -239,6 +249,7 @@ describe("dedicated server config (SQL-driven)", () => {
       banned: 0,
       title,
       preview_url: `https://img/${id}.jpg`,
+      tags: [{ tag: "Cs2" }, { tag: "Map" }],
       ...extra,
     });
 
@@ -332,6 +343,75 @@ describe("dedicated server config (SQL-driven)", () => {
         [existing.id],
       );
       expect(row.deleted_at).toBeNull();
+    });
+
+    // Skins, stickers and collections are app-730 workshop items as well.
+    it("skips workshop items that are not maps", async () => {
+      steam({
+        GetCollectionDetails: {
+          response: {
+            collectiondetails: [
+              {
+                result: 1,
+                children: [
+                  { publishedfileid: "91", sortorder: 1, filetype: 0 },
+                  { publishedfileid: "95", sortorder: 2, filetype: 0 },
+                ],
+              },
+            ],
+          },
+        },
+        GetPublishedFileDetails: {
+          response: {
+            publishedfiledetails: [
+              item("91", "Prophunt Dust2"),
+              item("95", "AK-47 | Some Skin", {
+                tags: [{ tag: "Cs2" }, { tag: "Weapon Finish" }],
+              }),
+            ],
+          },
+        },
+      });
+
+      const result = await service.importWorkshopCollection("90");
+
+      expect(result.skipped).toBe(1);
+      expect(result.maps.map((m) => m.workshop_map_id)).toEqual(["91"]);
+    });
+
+    // Restoring a map that was in the active pool would put it back into the
+    // seed pools matchmaking and vetoes play from.
+    it("restores a deleted map disabled and out of the match pools", async () => {
+      await postgres.query(
+        `INSERT INTO settings (name, value) VALUES ('update_map_pools', 'true')
+         ON CONFLICT (name) DO UPDATE SET value = 'true'`,
+      );
+      await postgres.query(
+        `INSERT INTO maps
+           (name, label, workshop_map_id, type, enabled, active_pool, deleted_at)
+         VALUES ('96', 'Was Active', '96', 'Competitive', true, true, now())`,
+      );
+
+      steam({
+        GetCollectionDetails: {
+          response: { collectiondetails: [{ result: 9 }] },
+        },
+        GetPublishedFileDetails: {
+          response: { publishedfiledetails: [item("96", "Was Active")] },
+        },
+      });
+
+      await service.importWorkshopCollection("96");
+
+      const [row] = await postgres.query<
+        Array<{ enabled: boolean; active_pool: boolean; pools: number }>
+      >(
+        `SELECT m.enabled, m.active_pool,
+                (SELECT count(*)::int FROM _map_pool mp WHERE mp.map_id = m.id) AS pools
+           FROM maps m
+          WHERE m.workshop_map_id = '96'`,
+      );
+      expect(row).toEqual({ enabled: false, active_pool: false, pools: 0 });
     });
 
     it("says so when nothing in the link is a CS2 map", async () => {

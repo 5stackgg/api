@@ -60,6 +60,29 @@ describe("MapRotationService", () => {
       });
     });
 
+    // MapChooser changes map by display name, so a shared name would make the
+    // second map unplayable.
+    it("gives maps that share a display name distinct names", () => {
+      const files = MapRotationService.render(
+        mapChooser,
+        {
+          maps: [
+            { name: "1111", label: "aim_map", workshop_map_id: "1111" },
+            { name: "2222", label: "AIM_MAP", workshop_map_id: "2222" },
+            { name: "de_dust2", label: null, workshop_map_id: null },
+          ],
+          shuffle: true,
+        },
+        "swiftlys2",
+      );
+
+      expect(
+        JSON.parse(
+          files["addons/swiftlys2/configs/plugins/MapChooser/maps.jsonc"],
+        ).MapChooserMaps.Maps.map((map: { Name: string }) => map.Name),
+      ).toEqual(["aim_map (1111)", "AIM_MAP (2222)", "de_dust2"]);
+    });
+
     it("keeps shuffle a boolean", () => {
       const files = MapRotationService.render(
         mapChooser,

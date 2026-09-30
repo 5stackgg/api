@@ -328,6 +328,19 @@ type HypertableInfo {
   num_chunks: Int!
 }
 
+type ImportWorkshopCollectionOutput {
+  maps: [ImportedWorkshopMap!]!
+  skipped: Int!
+}
+
+type ImportedWorkshopMap {
+  id: uuid!
+  label: String
+  name: String!
+  poster: String
+  workshop_map_id: String!
+}
+
 type IndexIOStat {
   idx_blks_hit: Int!
   idx_blks_read: Int!
@@ -623,6 +636,11 @@ type SeasonBackfillStatusOutput {
 type ServerPlayer {
   name: String!
   steam_id: String!
+}
+
+input ServerPluginInput {
+  enabled: Boolean!
+  slug: String!
 }
 
 type SetupGameServeOutput {
@@ -24979,6 +24997,16 @@ type game_plugin_installs_mutation_response {
 }
 
 """
+input type for inserting object relation for remote table "game_plugin_installs"
+"""
+input game_plugin_installs_obj_rel_insert_input {
+  data: game_plugin_installs_insert_input!
+
+  """upsert condition"""
+  on_conflict: game_plugin_installs_on_conflict
+}
+
+"""
 on_conflict condition type for table "game_plugin_installs"
 """
 input game_plugin_installs_on_conflict {
@@ -25674,6 +25702,10 @@ type game_plugins {
   """
   installed_node_count: Int
   kind: e_game_plugin_kinds_enum!
+  map_rotation(
+    """JSON select path"""
+    path: String
+  ): jsonb
   name: String!
 
   """An array relationship"""
@@ -25798,6 +25830,7 @@ type game_plugins_aggregate_fields {
 """append existing jsonb value of filtered columns with new jsonb value"""
 input game_plugins_append_input {
   config_schema: jsonb
+  map_rotation: jsonb
   panel: jsonb
   wiring: jsonb
 }
@@ -25834,6 +25867,7 @@ input game_plugins_bool_exp {
   install_state: String_comparison_exp
   installed_node_count: Int_comparison_exp
   kind: e_game_plugin_kinds_enum_comparison_exp
+  map_rotation: jsonb_comparison_exp
   name: String_comparison_exp
   node_installs: game_server_node_plugins_bool_exp
   node_installs_aggregate: game_server_node_plugins_aggregate_bool_exp
@@ -25867,6 +25901,7 @@ delete the field or element with specified path (for JSON arrays, negative integ
 """
 input game_plugins_delete_at_path_input {
   config_schema: [String!]
+  map_rotation: [String!]
   panel: [String!]
   wiring: [String!]
 }
@@ -25876,6 +25911,7 @@ delete the array element with specified index (negative integers count from the 
 """
 input game_plugins_delete_elem_input {
   config_schema: Int
+  map_rotation: Int
   panel: Int
   wiring: Int
 }
@@ -25885,6 +25921,7 @@ delete key/value pair or string element. key/value pairs are matched based on th
 """
 input game_plugins_delete_key_input {
   config_schema: String
+  map_rotation: String
   panel: String
   wiring: String
 }
@@ -25902,6 +25939,7 @@ input game_plugins_insert_input {
   homepage: String
   hot_swappable: Boolean
   kind: e_game_plugin_kinds_enum
+  map_rotation: jsonb
   name: String
   node_installs: game_server_node_plugins_arr_rel_insert_input
   pairs_with: [String!]
@@ -26018,6 +26056,7 @@ input game_plugins_order_by {
   install_state: order_by
   installed_node_count: order_by
   kind: order_by
+  map_rotation: order_by
   name: order_by
   node_installs_aggregate: game_server_node_plugins_aggregate_order_by
   pairs_with: order_by
@@ -26042,6 +26081,7 @@ input game_plugins_pk_columns_input {
 """prepend existing jsonb value of filtered columns with new jsonb value"""
 input game_plugins_prepend_input {
   config_schema: jsonb
+  map_rotation: jsonb
   panel: jsonb
   wiring: jsonb
 }
@@ -26073,6 +26113,9 @@ enum game_plugins_select_column {
 
   """column name"""
   kind
+
+  """column name"""
+  map_rotation
 
   """column name"""
   name
@@ -26120,6 +26163,7 @@ input game_plugins_set_input {
   homepage: String
   hot_swappable: Boolean
   kind: e_game_plugin_kinds_enum
+  map_rotation: jsonb
   name: String
   pairs_with: [String!]
   panel: jsonb
@@ -26193,6 +26237,7 @@ input game_plugins_stream_cursor_value_input {
   homepage: String
   hot_swappable: Boolean
   kind: e_game_plugin_kinds_enum
+  map_rotation: jsonb
   name: String
   pairs_with: [String!]
   panel: jsonb
@@ -26246,6 +26291,9 @@ enum game_plugins_update_column {
 
   """column name"""
   kind
+
+  """column name"""
+  map_rotation
 
   """column name"""
   name
@@ -48656,6 +48704,32 @@ type mutation_root {
   delete_seasons_by_pk(id: uuid!): seasons
 
   """
+  delete data from the table: "server_map_rotation"
+  """
+  delete_server_map_rotation(
+    """filter the rows which have to be deleted"""
+    where: server_map_rotation_bool_exp!
+  ): server_map_rotation_mutation_response
+
+  """
+  delete single row from the table: "server_map_rotation"
+  """
+  delete_server_map_rotation_by_pk(map_id: uuid!, server_id: uuid!): server_map_rotation
+
+  """
+  delete data from the table: "server_plugins"
+  """
+  delete_server_plugins(
+    """filter the rows which have to be deleted"""
+    where: server_plugins_bool_exp!
+  ): server_plugins_mutation_response
+
+  """
+  delete single row from the table: "server_plugins"
+  """
+  delete_server_plugins_by_pk(plugin_slug: String!, server_id: uuid!): server_plugins
+
+  """
   delete data from the table: "server_regions"
   """
   delete_server_regions(
@@ -49380,6 +49454,9 @@ type mutation_root {
 
   """Seed the utility library from an operator-supplied payload"""
   importUtilityLineups(dry_run: Boolean, payload: jsonb!): UtilityImportOutput
+
+  """Add every map in a Steam workshop collection to the map catalog"""
+  importWorkshopCollection(collection: String!): ImportWorkshopCollectionOutput
 
   """
   insert data into the table: "_map_pool"
@@ -52812,6 +52889,50 @@ type mutation_root {
   ): seasons
 
   """
+  insert data into the table: "server_map_rotation"
+  """
+  insert_server_map_rotation(
+    """the rows to be inserted"""
+    objects: [server_map_rotation_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: server_map_rotation_on_conflict
+  ): server_map_rotation_mutation_response
+
+  """
+  insert a single row into the table: "server_map_rotation"
+  """
+  insert_server_map_rotation_one(
+    """the row to be inserted"""
+    object: server_map_rotation_insert_input!
+
+    """upsert condition"""
+    on_conflict: server_map_rotation_on_conflict
+  ): server_map_rotation
+
+  """
+  insert data into the table: "server_plugins"
+  """
+  insert_server_plugins(
+    """the rows to be inserted"""
+    objects: [server_plugins_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: server_plugins_on_conflict
+  ): server_plugins_mutation_response
+
+  """
+  insert a single row into the table: "server_plugins"
+  """
+  insert_server_plugins_one(
+    """the row to be inserted"""
+    object: server_plugins_insert_input!
+
+    """upsert condition"""
+    on_conflict: server_plugins_on_conflict
+  ): server_plugins
+
+  """
   insert data into the table: "server_regions"
   """
   insert_server_regions(
@@ -54347,6 +54468,14 @@ type mutation_root {
   Publish or unpublish a news post. Caller role is verified against public.post_news_role.
   """
   setNewsPostStatus(id: uuid!, status: String!): NewsPost
+
+  """Replace a dedicated server's map rotation and restart it"""
+  setServerMapRotation(map_ids: [uuid!]!, server_id: uuid!, shuffle: Boolean!): SuccessOutput
+
+  """
+  Replace a dedicated server's per-server plugin overrides and restart it
+  """
+  setServerPlugins(plugins: [ServerPluginInput!]!, server_id: uuid!): SuccessOutput
 
   """Map a tournament placement to an award"""
   setTournamentAward(award_id: uuid, custom_name: String, placement: Int!, silhouette: Int, tournament_id: uuid!): TournamentAward
@@ -59943,6 +60072,68 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [seasons_updates!]!
   ): [seasons_mutation_response]
+
+  """
+  update data of the table: "server_map_rotation"
+  """
+  update_server_map_rotation(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: server_map_rotation_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: server_map_rotation_set_input
+
+    """filter the rows which have to be updated"""
+    where: server_map_rotation_bool_exp!
+  ): server_map_rotation_mutation_response
+
+  """
+  update single row of the table: "server_map_rotation"
+  """
+  update_server_map_rotation_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: server_map_rotation_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: server_map_rotation_set_input
+    pk_columns: server_map_rotation_pk_columns_input!
+  ): server_map_rotation
+
+  """
+  update multiples rows of table: "server_map_rotation"
+  """
+  update_server_map_rotation_many(
+    """updates to execute, in order"""
+    updates: [server_map_rotation_updates!]!
+  ): [server_map_rotation_mutation_response]
+
+  """
+  update data of the table: "server_plugins"
+  """
+  update_server_plugins(
+    """sets the columns of the filtered rows to the given values"""
+    _set: server_plugins_set_input
+
+    """filter the rows which have to be updated"""
+    where: server_plugins_bool_exp!
+  ): server_plugins_mutation_response
+
+  """
+  update single row of the table: "server_plugins"
+  """
+  update_server_plugins_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: server_plugins_set_input
+    pk_columns: server_plugins_pk_columns_input!
+  ): server_plugins
+
+  """
+  update multiples rows of table: "server_plugins"
+  """
+  update_server_plugins_many(
+    """updates to execute, in order"""
+    updates: [server_plugins_updates!]!
+  ): [server_plugins_mutation_response]
 
   """
   update data of the table: "server_regions"
@@ -91973,6 +92164,94 @@ type query_root {
   seasons_by_pk(id: uuid!): seasons
 
   """
+  fetch data from the table: "server_map_rotation"
+  """
+  server_map_rotation(
+    """distinct select on columns"""
+    distinct_on: [server_map_rotation_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_map_rotation_order_by!]
+
+    """filter the rows returned"""
+    where: server_map_rotation_bool_exp
+  ): [server_map_rotation!]!
+
+  """
+  fetch aggregated fields from the table: "server_map_rotation"
+  """
+  server_map_rotation_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_map_rotation_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_map_rotation_order_by!]
+
+    """filter the rows returned"""
+    where: server_map_rotation_bool_exp
+  ): server_map_rotation_aggregate!
+
+  """
+  fetch data from the table: "server_map_rotation" using primary key columns
+  """
+  server_map_rotation_by_pk(map_id: uuid!, server_id: uuid!): server_map_rotation
+
+  """
+  fetch data from the table: "server_plugins"
+  """
+  server_plugins(
+    """distinct select on columns"""
+    distinct_on: [server_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: server_plugins_bool_exp
+  ): [server_plugins!]!
+
+  """
+  fetch aggregated fields from the table: "server_plugins"
+  """
+  server_plugins_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: server_plugins_bool_exp
+  ): server_plugins_aggregate!
+
+  """fetch data from the table: "server_plugins" using primary key columns"""
+  server_plugins_by_pk(plugin_slug: String!, server_id: uuid!): server_plugins
+
+  """
   fetch data from the table: "server_regions"
   """
   server_regions(
@@ -96067,6 +96346,609 @@ type seasons_variance_fields {
 }
 
 """
+columns and relationships of "server_map_rotation"
+"""
+type server_map_rotation {
+  """An object relationship"""
+  map: maps!
+  map_id: uuid!
+  position: Int!
+
+  """An object relationship"""
+  server: servers!
+  server_id: uuid!
+}
+
+"""
+aggregated selection of "server_map_rotation"
+"""
+type server_map_rotation_aggregate {
+  aggregate: server_map_rotation_aggregate_fields
+  nodes: [server_map_rotation!]!
+}
+
+input server_map_rotation_aggregate_bool_exp {
+  count: server_map_rotation_aggregate_bool_exp_count
+}
+
+input server_map_rotation_aggregate_bool_exp_count {
+  arguments: [server_map_rotation_select_column!]
+  distinct: Boolean
+  filter: server_map_rotation_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "server_map_rotation"
+"""
+type server_map_rotation_aggregate_fields {
+  avg: server_map_rotation_avg_fields
+  count(columns: [server_map_rotation_select_column!], distinct: Boolean): Int!
+  max: server_map_rotation_max_fields
+  min: server_map_rotation_min_fields
+  stddev: server_map_rotation_stddev_fields
+  stddev_pop: server_map_rotation_stddev_pop_fields
+  stddev_samp: server_map_rotation_stddev_samp_fields
+  sum: server_map_rotation_sum_fields
+  var_pop: server_map_rotation_var_pop_fields
+  var_samp: server_map_rotation_var_samp_fields
+  variance: server_map_rotation_variance_fields
+}
+
+"""
+order by aggregate values of table "server_map_rotation"
+"""
+input server_map_rotation_aggregate_order_by {
+  avg: server_map_rotation_avg_order_by
+  count: order_by
+  max: server_map_rotation_max_order_by
+  min: server_map_rotation_min_order_by
+  stddev: server_map_rotation_stddev_order_by
+  stddev_pop: server_map_rotation_stddev_pop_order_by
+  stddev_samp: server_map_rotation_stddev_samp_order_by
+  sum: server_map_rotation_sum_order_by
+  var_pop: server_map_rotation_var_pop_order_by
+  var_samp: server_map_rotation_var_samp_order_by
+  variance: server_map_rotation_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "server_map_rotation"
+"""
+input server_map_rotation_arr_rel_insert_input {
+  data: [server_map_rotation_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: server_map_rotation_on_conflict
+}
+
+"""aggregate avg on columns"""
+type server_map_rotation_avg_fields {
+  position: Float
+}
+
+"""
+order by avg() on columns of table "server_map_rotation"
+"""
+input server_map_rotation_avg_order_by {
+  position: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "server_map_rotation". All fields are combined with a logical 'AND'.
+"""
+input server_map_rotation_bool_exp {
+  _and: [server_map_rotation_bool_exp!]
+  _not: server_map_rotation_bool_exp
+  _or: [server_map_rotation_bool_exp!]
+  map: maps_bool_exp
+  map_id: uuid_comparison_exp
+  position: Int_comparison_exp
+  server: servers_bool_exp
+  server_id: uuid_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "server_map_rotation"
+"""
+enum server_map_rotation_constraint {
+  """
+  unique or primary key constraint on columns "server_id", "map_id"
+  """
+  server_map_rotation_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "server_map_rotation"
+"""
+input server_map_rotation_inc_input {
+  position: Int
+}
+
+"""
+input type for inserting data into table "server_map_rotation"
+"""
+input server_map_rotation_insert_input {
+  map: maps_obj_rel_insert_input
+  map_id: uuid
+  position: Int
+  server: servers_obj_rel_insert_input
+  server_id: uuid
+}
+
+"""aggregate max on columns"""
+type server_map_rotation_max_fields {
+  map_id: uuid
+  position: Int
+  server_id: uuid
+}
+
+"""
+order by max() on columns of table "server_map_rotation"
+"""
+input server_map_rotation_max_order_by {
+  map_id: order_by
+  position: order_by
+  server_id: order_by
+}
+
+"""aggregate min on columns"""
+type server_map_rotation_min_fields {
+  map_id: uuid
+  position: Int
+  server_id: uuid
+}
+
+"""
+order by min() on columns of table "server_map_rotation"
+"""
+input server_map_rotation_min_order_by {
+  map_id: order_by
+  position: order_by
+  server_id: order_by
+}
+
+"""
+response of any mutation on the table "server_map_rotation"
+"""
+type server_map_rotation_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [server_map_rotation!]!
+}
+
+"""
+on_conflict condition type for table "server_map_rotation"
+"""
+input server_map_rotation_on_conflict {
+  constraint: server_map_rotation_constraint!
+  update_columns: [server_map_rotation_update_column!]! = []
+  where: server_map_rotation_bool_exp
+}
+
+"""Ordering options when selecting data from "server_map_rotation"."""
+input server_map_rotation_order_by {
+  map: maps_order_by
+  map_id: order_by
+  position: order_by
+  server: servers_order_by
+  server_id: order_by
+}
+
+"""primary key columns input for table: server_map_rotation"""
+input server_map_rotation_pk_columns_input {
+  map_id: uuid!
+  server_id: uuid!
+}
+
+"""
+select columns of table "server_map_rotation"
+"""
+enum server_map_rotation_select_column {
+  """column name"""
+  map_id
+
+  """column name"""
+  position
+
+  """column name"""
+  server_id
+}
+
+"""
+input type for updating data in table "server_map_rotation"
+"""
+input server_map_rotation_set_input {
+  map_id: uuid
+  position: Int
+  server_id: uuid
+}
+
+"""aggregate stddev on columns"""
+type server_map_rotation_stddev_fields {
+  position: Float
+}
+
+"""
+order by stddev() on columns of table "server_map_rotation"
+"""
+input server_map_rotation_stddev_order_by {
+  position: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type server_map_rotation_stddev_pop_fields {
+  position: Float
+}
+
+"""
+order by stddev_pop() on columns of table "server_map_rotation"
+"""
+input server_map_rotation_stddev_pop_order_by {
+  position: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type server_map_rotation_stddev_samp_fields {
+  position: Float
+}
+
+"""
+order by stddev_samp() on columns of table "server_map_rotation"
+"""
+input server_map_rotation_stddev_samp_order_by {
+  position: order_by
+}
+
+"""
+Streaming cursor of the table "server_map_rotation"
+"""
+input server_map_rotation_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: server_map_rotation_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input server_map_rotation_stream_cursor_value_input {
+  map_id: uuid
+  position: Int
+  server_id: uuid
+}
+
+"""aggregate sum on columns"""
+type server_map_rotation_sum_fields {
+  position: Int
+}
+
+"""
+order by sum() on columns of table "server_map_rotation"
+"""
+input server_map_rotation_sum_order_by {
+  position: order_by
+}
+
+"""
+update columns of table "server_map_rotation"
+"""
+enum server_map_rotation_update_column {
+  """column name"""
+  map_id
+
+  """column name"""
+  position
+
+  """column name"""
+  server_id
+}
+
+input server_map_rotation_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: server_map_rotation_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: server_map_rotation_set_input
+
+  """filter the rows which have to be updated"""
+  where: server_map_rotation_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type server_map_rotation_var_pop_fields {
+  position: Float
+}
+
+"""
+order by var_pop() on columns of table "server_map_rotation"
+"""
+input server_map_rotation_var_pop_order_by {
+  position: order_by
+}
+
+"""aggregate var_samp on columns"""
+type server_map_rotation_var_samp_fields {
+  position: Float
+}
+
+"""
+order by var_samp() on columns of table "server_map_rotation"
+"""
+input server_map_rotation_var_samp_order_by {
+  position: order_by
+}
+
+"""aggregate variance on columns"""
+type server_map_rotation_variance_fields {
+  position: Float
+}
+
+"""
+order by variance() on columns of table "server_map_rotation"
+"""
+input server_map_rotation_variance_order_by {
+  position: order_by
+}
+
+"""
+columns and relationships of "server_plugins"
+"""
+type server_plugins {
+  enabled: Boolean!
+
+  """An object relationship"""
+  install: game_plugin_installs!
+  plugin_slug: String!
+
+  """An object relationship"""
+  server: servers!
+  server_id: uuid!
+}
+
+"""
+aggregated selection of "server_plugins"
+"""
+type server_plugins_aggregate {
+  aggregate: server_plugins_aggregate_fields
+  nodes: [server_plugins!]!
+}
+
+input server_plugins_aggregate_bool_exp {
+  bool_and: server_plugins_aggregate_bool_exp_bool_and
+  bool_or: server_plugins_aggregate_bool_exp_bool_or
+  count: server_plugins_aggregate_bool_exp_count
+}
+
+input server_plugins_aggregate_bool_exp_bool_and {
+  arguments: server_plugins_select_column_server_plugins_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: server_plugins_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input server_plugins_aggregate_bool_exp_bool_or {
+  arguments: server_plugins_select_column_server_plugins_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: server_plugins_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input server_plugins_aggregate_bool_exp_count {
+  arguments: [server_plugins_select_column!]
+  distinct: Boolean
+  filter: server_plugins_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "server_plugins"
+"""
+type server_plugins_aggregate_fields {
+  count(columns: [server_plugins_select_column!], distinct: Boolean): Int!
+  max: server_plugins_max_fields
+  min: server_plugins_min_fields
+}
+
+"""
+order by aggregate values of table "server_plugins"
+"""
+input server_plugins_aggregate_order_by {
+  count: order_by
+  max: server_plugins_max_order_by
+  min: server_plugins_min_order_by
+}
+
+"""
+input type for inserting array relation for remote table "server_plugins"
+"""
+input server_plugins_arr_rel_insert_input {
+  data: [server_plugins_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: server_plugins_on_conflict
+}
+
+"""
+Boolean expression to filter rows from the table "server_plugins". All fields are combined with a logical 'AND'.
+"""
+input server_plugins_bool_exp {
+  _and: [server_plugins_bool_exp!]
+  _not: server_plugins_bool_exp
+  _or: [server_plugins_bool_exp!]
+  enabled: Boolean_comparison_exp
+  install: game_plugin_installs_bool_exp
+  plugin_slug: String_comparison_exp
+  server: servers_bool_exp
+  server_id: uuid_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "server_plugins"
+"""
+enum server_plugins_constraint {
+  """
+  unique or primary key constraint on columns "server_id", "plugin_slug"
+  """
+  server_plugins_pkey
+}
+
+"""
+input type for inserting data into table "server_plugins"
+"""
+input server_plugins_insert_input {
+  enabled: Boolean
+  install: game_plugin_installs_obj_rel_insert_input
+  plugin_slug: String
+  server: servers_obj_rel_insert_input
+  server_id: uuid
+}
+
+"""aggregate max on columns"""
+type server_plugins_max_fields {
+  plugin_slug: String
+  server_id: uuid
+}
+
+"""
+order by max() on columns of table "server_plugins"
+"""
+input server_plugins_max_order_by {
+  plugin_slug: order_by
+  server_id: order_by
+}
+
+"""aggregate min on columns"""
+type server_plugins_min_fields {
+  plugin_slug: String
+  server_id: uuid
+}
+
+"""
+order by min() on columns of table "server_plugins"
+"""
+input server_plugins_min_order_by {
+  plugin_slug: order_by
+  server_id: order_by
+}
+
+"""
+response of any mutation on the table "server_plugins"
+"""
+type server_plugins_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [server_plugins!]!
+}
+
+"""
+on_conflict condition type for table "server_plugins"
+"""
+input server_plugins_on_conflict {
+  constraint: server_plugins_constraint!
+  update_columns: [server_plugins_update_column!]! = []
+  where: server_plugins_bool_exp
+}
+
+"""Ordering options when selecting data from "server_plugins"."""
+input server_plugins_order_by {
+  enabled: order_by
+  install: game_plugin_installs_order_by
+  plugin_slug: order_by
+  server: servers_order_by
+  server_id: order_by
+}
+
+"""primary key columns input for table: server_plugins"""
+input server_plugins_pk_columns_input {
+  plugin_slug: String!
+  server_id: uuid!
+}
+
+"""
+select columns of table "server_plugins"
+"""
+enum server_plugins_select_column {
+  """column name"""
+  enabled
+
+  """column name"""
+  plugin_slug
+
+  """column name"""
+  server_id
+}
+
+"""
+select "server_plugins_aggregate_bool_exp_bool_and_arguments_columns" columns of table "server_plugins"
+"""
+enum server_plugins_select_column_server_plugins_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  enabled
+}
+
+"""
+select "server_plugins_aggregate_bool_exp_bool_or_arguments_columns" columns of table "server_plugins"
+"""
+enum server_plugins_select_column_server_plugins_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  enabled
+}
+
+"""
+input type for updating data in table "server_plugins"
+"""
+input server_plugins_set_input {
+  enabled: Boolean
+  plugin_slug: String
+  server_id: uuid
+}
+
+"""
+Streaming cursor of the table "server_plugins"
+"""
+input server_plugins_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: server_plugins_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input server_plugins_stream_cursor_value_input {
+  enabled: Boolean
+  plugin_slug: String
+  server_id: uuid
+}
+
+"""
+update columns of table "server_plugins"
+"""
+enum server_plugins_update_column {
+  """column name"""
+  enabled
+
+  """column name"""
+  plugin_slug
+
+  """column name"""
+  server_id
+}
+
+input server_plugins_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: server_plugins_set_input
+
+  """filter the rows which have to be updated"""
+  where: server_plugins_bool_exp!
+}
+
+"""
 columns and relationships of "server_regions"
 """
 type server_regions {
@@ -96501,6 +97383,43 @@ type servers {
   ): jsonb
 
   """An array relationship"""
+  map_rotation(
+    """distinct select on columns"""
+    distinct_on: [server_map_rotation_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_map_rotation_order_by!]
+
+    """filter the rows returned"""
+    where: server_map_rotation_bool_exp
+  ): [server_map_rotation!]!
+
+  """An aggregate relationship"""
+  map_rotation_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_map_rotation_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_map_rotation_order_by!]
+
+    """filter the rows returned"""
+    where: server_map_rotation_bool_exp
+  ): server_map_rotation_aggregate!
+  map_rotation_shuffle: Boolean!
+
+  """An array relationship"""
   matches(
     """distinct select on columns"""
     distinct_on: [matches_select_column!]
@@ -96537,6 +97456,42 @@ type servers {
   ): matches_aggregate!
   max_players: Int
   offline_at: timestamptz
+
+  """An array relationship"""
+  plugin_overrides(
+    """distinct select on columns"""
+    distinct_on: [server_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: server_plugins_bool_exp
+  ): [server_plugins!]!
+
+  """An aggregate relationship"""
+  plugin_overrides_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: server_plugins_bool_exp
+  ): server_plugins_aggregate!
   plugin_runtime: e_plugin_runtimes_enum
   plugin_version: String
   plugins_checked_at: timestamptz
@@ -96680,10 +97635,15 @@ input servers_bool_exp {
   is_dedicated: Boolean_comparison_exp
   label: String_comparison_exp
   loaded_plugins: jsonb_comparison_exp
+  map_rotation: server_map_rotation_bool_exp
+  map_rotation_aggregate: server_map_rotation_aggregate_bool_exp
+  map_rotation_shuffle: Boolean_comparison_exp
   matches: matches_bool_exp
   matches_aggregate: matches_aggregate_bool_exp
   max_players: Int_comparison_exp
   offline_at: timestamptz_comparison_exp
+  plugin_overrides: server_plugins_bool_exp
+  plugin_overrides_aggregate: server_plugins_aggregate_bool_exp
   plugin_runtime: e_plugin_runtimes_enum_comparison_exp
   plugin_version: String_comparison_exp
   plugins_checked_at: timestamptz_comparison_exp
@@ -96765,9 +97725,12 @@ input servers_insert_input {
   is_dedicated: Boolean
   label: String
   loaded_plugins: jsonb
+  map_rotation: server_map_rotation_arr_rel_insert_input
+  map_rotation_shuffle: Boolean
   matches: matches_arr_rel_insert_input
   max_players: Int
   offline_at: timestamptz
+  plugin_overrides: server_plugins_arr_rel_insert_input
   plugin_runtime: e_plugin_runtimes_enum
   plugin_version: String
   plugins_checked_at: timestamptz
@@ -96954,9 +97917,12 @@ input servers_order_by {
   is_dedicated: order_by
   label: order_by
   loaded_plugins: order_by
+  map_rotation_aggregate: server_map_rotation_aggregate_order_by
+  map_rotation_shuffle: order_by
   matches_aggregate: matches_aggregate_order_by
   max_players: order_by
   offline_at: order_by
+  plugin_overrides_aggregate: server_plugins_aggregate_order_by
   plugin_runtime: order_by
   plugin_version: order_by
   plugins_checked_at: order_by
@@ -97029,6 +97995,9 @@ enum servers_select_column {
   loaded_plugins
 
   """column name"""
+  map_rotation_shuffle
+
+  """column name"""
   max_players
 
   """column name"""
@@ -97085,6 +98054,9 @@ enum servers_select_column_servers_aggregate_bool_exp_bool_and_arguments_columns
   is_dedicated
 
   """column name"""
+  map_rotation_shuffle
+
+  """column name"""
   rcon_status
 }
 
@@ -97100,6 +98072,9 @@ enum servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_columns 
 
   """column name"""
   is_dedicated
+
+  """column name"""
+  map_rotation_shuffle
 
   """column name"""
   rcon_status
@@ -97123,6 +98098,7 @@ input servers_set_input {
   is_dedicated: Boolean
   label: String
   loaded_plugins: jsonb
+  map_rotation_shuffle: Boolean
   max_players: Int
   offline_at: timestamptz
   plugin_runtime: e_plugin_runtimes_enum
@@ -97214,6 +98190,7 @@ input servers_stream_cursor_value_input {
   is_dedicated: Boolean
   label: String
   loaded_plugins: jsonb
+  map_rotation_shuffle: Boolean
   max_players: Int
   offline_at: timestamptz
   plugin_runtime: e_plugin_runtimes_enum
@@ -97291,6 +98268,9 @@ enum servers_update_column {
 
   """column name"""
   loaded_plugins
+
+  """column name"""
+  map_rotation_shuffle
 
   """column name"""
   max_players
@@ -107828,6 +108808,122 @@ type subscription_root {
     """filter the rows returned"""
     where: seasons_bool_exp
   ): [seasons!]!
+
+  """
+  fetch data from the table: "server_map_rotation"
+  """
+  server_map_rotation(
+    """distinct select on columns"""
+    distinct_on: [server_map_rotation_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_map_rotation_order_by!]
+
+    """filter the rows returned"""
+    where: server_map_rotation_bool_exp
+  ): [server_map_rotation!]!
+
+  """
+  fetch aggregated fields from the table: "server_map_rotation"
+  """
+  server_map_rotation_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_map_rotation_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_map_rotation_order_by!]
+
+    """filter the rows returned"""
+    where: server_map_rotation_bool_exp
+  ): server_map_rotation_aggregate!
+
+  """
+  fetch data from the table: "server_map_rotation" using primary key columns
+  """
+  server_map_rotation_by_pk(map_id: uuid!, server_id: uuid!): server_map_rotation
+
+  """
+  fetch data from the table in a streaming manner: "server_map_rotation"
+  """
+  server_map_rotation_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [server_map_rotation_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: server_map_rotation_bool_exp
+  ): [server_map_rotation!]!
+
+  """
+  fetch data from the table: "server_plugins"
+  """
+  server_plugins(
+    """distinct select on columns"""
+    distinct_on: [server_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: server_plugins_bool_exp
+  ): [server_plugins!]!
+
+  """
+  fetch aggregated fields from the table: "server_plugins"
+  """
+  server_plugins_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: server_plugins_bool_exp
+  ): server_plugins_aggregate!
+
+  """fetch data from the table: "server_plugins" using primary key columns"""
+  server_plugins_by_pk(plugin_slug: String!, server_id: uuid!): server_plugins
+
+  """
+  fetch data from the table in a streaming manner: "server_plugins"
+  """
+  server_plugins_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [server_plugins_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: server_plugins_bool_exp
+  ): [server_plugins!]!
 
   """
   fetch data from the table: "server_regions"
