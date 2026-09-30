@@ -21,6 +21,7 @@ describe("dedicated server config (SQL-driven)", () => {
       { warn: jest.fn(), log: jest.fn() } as never,
       postgres,
       dedicatedServers as never,
+      { connect: jest.fn(async (): Promise<null> => null) } as never,
     );
   }, 600_000);
 

@@ -185,6 +185,27 @@ export class DedicatedServersController {
     );
   }
 
+  @HasuraAction()
+  public async setServerAccess(data: {
+    user: User;
+    server_id: string;
+    restricted: boolean;
+    min_role?: string | null;
+    steam_ids: Array<string>;
+    event_ids: Array<string>;
+  }) {
+    this.assertAdministrator(data.user);
+
+    await this.dedicatedServerConfig.setAccess(data.server_id, {
+      restricted: data.restricted,
+      minRole: data.min_role ?? null,
+      steamIds: data.steam_ids,
+      eventIds: data.event_ids,
+    });
+
+    return { success: true };
+  }
+
   private assertAdministrator(user: User): void {
     if (!user || !isRoleAbove(user.role, "administrator")) {
       throw new ForbiddenException("Administrator access required");

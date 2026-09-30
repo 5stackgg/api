@@ -11,6 +11,12 @@ BEGIN
         RETURN NULL;
     END IF;
 
+    -- A restricted server's connect info is also what lists it for guests
+    -- and players, so returning nothing hides it from everyone not allowed.
+    IF NOT can_connect_to_server(server, hasura_session) THEN
+        RETURN NULL;
+    END IF;
+
     connection_string := CONCAT('connect ', get_server_host(server));
 
     IF NULLIF(server.connect_password, '') IS NULL THEN
@@ -37,6 +43,10 @@ BEGIN
     -- A disabled server can still be online (external servers keep running),
     -- so gate on connected rather than enabled.
     IF server.connected = false OR server.type IN ('Ranked', 'Practice') OR NULLIF(server.connect_password, '') IS NOT NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF NOT can_connect_to_server(server, hasura_session) THEN
         RETURN NULL;
     END IF;
 

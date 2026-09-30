@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { DedicatedServersService } from "./dedicated-servers.service";
 import { DedicatedServerConfigService } from "./dedicated-server-config.service";
+import { ServerAccessService } from "./server-access.service";
 import { DedicatedServersController } from "./dedicated-servers.controller";
 import { HasuraModule } from "src/hasura/hasura.module";
 import { loggerFactory } from "src/utilities/LoggerFactory";
@@ -42,11 +43,12 @@ import { NotificationsModule } from "../notifications/notifications.module";
   providers: [
     DedicatedServersService,
     DedicatedServerConfigService,
+    ServerAccessService,
     PingDedicatedServers,
     ...getQueuesProcessors("DedicatedServers"),
     loggerFactory(),
   ],
-  exports: [DedicatedServersService],
+  exports: [DedicatedServersService, ServerAccessService],
   controllers: [DedicatedServersController],
 })
 export class DedicatedServersModule {
