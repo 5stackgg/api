@@ -127,8 +127,9 @@ export class GamePluginsService {
       `INSERT INTO public.game_plugins
          (slug, kind, name, author, description, homepage, tags, verified,
           hot_swappable, requires_service, requires_server_guidelines_disabled,
-          config_schema, config_path, cvars, panel, wiring, pairs_with, synced_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17, now())
+          config_schema, config_path, cvars, panel, wiring, pairs_with,
+          map_rotation, synced_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18, now())
        ON CONFLICT (slug) DO UPDATE SET
          kind = EXCLUDED.kind,
          name = EXCLUDED.name,
@@ -146,6 +147,7 @@ export class GamePluginsService {
          panel = EXCLUDED.panel,
          wiring = EXCLUDED.wiring,
          pairs_with = EXCLUDED.pairs_with,
+         map_rotation = EXCLUDED.map_rotation,
          synced_at = now()`,
       [
         plugin.slug,
@@ -165,6 +167,7 @@ export class GamePluginsService {
         plugin.panel ? JSON.stringify(plugin.panel) : null,
         plugin.wiring ? JSON.stringify(plugin.wiring) : null,
         plugin.pairs_with ?? [],
+        plugin.map_rotation ? JSON.stringify(plugin.map_rotation) : null,
       ],
     );
 

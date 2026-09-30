@@ -36,6 +36,12 @@ describe("GameModesService auto-load plugins", () => {
             pin?.pin_plugin_runtime ?? "swiftlys2",
         ),
       } as never,
+      {
+        forServer: jest.fn(async () => ({
+          maps: [] as Array<never>,
+          shuffle: true,
+        })),
+      } as never,
     );
 
     return { service, postgres };
@@ -210,6 +216,12 @@ describe("GameModesService node scoping", () => {
             pin?.pin_plugin_runtime ?? "swiftlys2",
         ),
       } as never,
+      {
+        forServer: jest.fn(async () => ({
+          maps: [] as Array<never>,
+          shuffle: true,
+        })),
+      } as never,
     );
 
     return { service, seen };
@@ -363,6 +375,12 @@ describe("GameModesService server guidelines", () => {
       {
         getPluginRuntime: jest.fn(async () => "swiftlys2"),
         resolvePluginRuntime: jest.fn(async () => "swiftlys2"),
+      } as never,
+      {
+        forServer: jest.fn(async () => ({
+          maps: [] as Array<never>,
+          shuffle: true,
+        })),
       } as never,
     );
 

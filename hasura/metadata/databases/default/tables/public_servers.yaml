@@ -27,12 +27,26 @@ object_relationships:
           name: server_regions
           schema: public
 array_relationships:
+  - name: map_rotation
+    using:
+      foreign_key_constraint_on:
+        column: server_id
+        table:
+          name: server_map_rotation
+          schema: public
   - name: matches
     using:
       foreign_key_constraint_on:
         column: server_id
         table:
           name: matches
+          schema: public
+  - name: plugin_overrides
+    using:
+      foreign_key_constraint_on:
+        column: server_id
+        table:
+          name: server_plugins
           schema: public
 computed_fields:
   - name: connection_link
@@ -84,6 +98,7 @@ select_permissions:
         - id
         - is_dedicated
         - label
+        - map_rotation_shuffle
         - max_players
         - offline_at
         - plugin_runtime
@@ -112,6 +127,7 @@ select_permissions:
         - host
         - id
         - label
+        - map_rotation_shuffle
         - max_players
         - plugin_runtime
         - plugin_version
@@ -144,6 +160,7 @@ select_permissions:
         - id
         - is_dedicated
         - label
+        - map_rotation_shuffle
         - max_players
         - plugin_runtime
         - plugin_version

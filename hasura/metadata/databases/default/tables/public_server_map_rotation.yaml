@@ -1,0 +1,25 @@
+table:
+  name: server_map_rotation
+  schema: public
+object_relationships:
+  - name: map
+    using:
+      foreign_key_constraint_on: map_id
+  - name: server
+    using:
+      foreign_key_constraint_on: server_id
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - map_id
+        - position
+        - server_id
+      filter:
+        server:
+          type:
+            _nin:
+              - Ranked
+              - Practice
+      allow_aggregations: true
+    comment: ""

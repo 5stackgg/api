@@ -3,6 +3,7 @@ import {
   GameModesService,
   RequiredPluginMissing,
 } from "./../src/game-plugins/game-modes.service";
+import { MapRotationService } from "./../src/game-plugins/map-rotation.service";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 
 // What a server is actually told to load, resolved against a real schema. The
@@ -26,6 +27,7 @@ describe("game mode resolution (SQL-driven)", () => {
           pin_plugin_runtime?: string | null;
         }) => pin?.pin_plugin_runtime ?? "swiftlys2",
       } as never,
+      new MapRotationService(postgres),
     );
   }, 600_000);
 
@@ -42,6 +44,7 @@ describe("game mode resolution (SQL-driven)", () => {
     );
     await postgres.query("DELETE FROM matches");
     await postgres.query("DELETE FROM servers");
+    await postgres.query("DELETE FROM maps WHERE name LIKE 'rotation-%'");
     await postgres.query("DELETE FROM game_server_node_plugins");
     await postgres.query("DELETE FROM game_plugin_installs");
     await postgres.query("DELETE FROM game_mode_plugins");
@@ -535,6 +538,271 @@ describe("game mode resolution (SQL-driven)", () => {
 
     it("has nothing to say when no plugin loads", async () => {
       expect(await service.pluginCfgLayers(null)).toEqual([]);
+    });
+  });
+  // A dedicated server that is not Ranked or Practice: the public (or private)
+  // server an operator runs on its own terms.
+  describe("community servers", () => {
+    const mapChooserRotation = {
+      files: {
+        "addons/{runtime}/configs/plugins/MapChooser/maps.jsonc": {
+          MapChooserMaps: { Maps: "{{maps}}" },
+        },
+        "addons/{runtime}/configs/plugins/MapChooser/config.jsonc": {
+          MapChooser: { Cycle: { Enabled: true, RandomOrder: "{{shuffle}}" } },
+        },
+      },
+      map: { Name: "{{label}}", Id: "{{id}}" },
+    };
+
+    const community = async (port: number): Promise<string> => {
+      const [server] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO servers
+           (host, label, rcon_password, port, tv_port, region, type,
+            is_dedicated, enabled, game_server_node_id)
+         VALUES ('127.0.0.1', 'public', $1, $2, $2 + 1, 'TestRegion', 'Casual',
+                 false, true, 'node-a')
+         RETURNING id`,
+        [Buffer.from("password"), port],
+      );
+
+      await postgres.query(
+        `UPDATE servers SET is_dedicated = true WHERE id = $1`,
+        [server.id],
+      );
+
+      return server.id;
+    };
+
+    const override = async (
+      server: string,
+      slug: string,
+      enabled: boolean,
+    ): Promise<void> => {
+      await postgres.query(
+        `INSERT INTO server_plugins (server_id, plugin_slug, enabled)
+         VALUES ($1, $2, $3)`,
+        [server, slug, enabled],
+      );
+    };
+
+    const workshopMap = async (
+      name: string,
+      label: string,
+      workshopId: string,
+    ): Promise<string> => {
+      const [map] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO maps (name, label, workshop_map_id, type, enabled, active_pool)
+         VALUES ($1, $2, $3, 'Competitive', false, false)
+         RETURNING id`,
+        [name, label, workshopId],
+      );
+
+      return map.id;
+    };
+
+    const rotate = async (
+      server: string,
+      mapIds: Array<string>,
+      shuffle = true,
+    ): Promise<void> => {
+      await postgres.query(
+        `INSERT INTO server_map_rotation (server_id, map_id, position)
+         SELECT $1, rotation.map_id, rotation.position
+           FROM unnest($2::uuid[]) WITH ORDINALITY AS rotation(map_id, position)`,
+        [server, mapIds],
+      );
+      await postgres.query(
+        `UPDATE servers SET map_rotation_shuffle = $2 WHERE id = $1`,
+        [server, shuffle],
+      );
+    };
+
+    const files = (encoded: string | null): Record<string, unknown> =>
+      Object.fromEntries(
+        Object.entries(
+          JSON.parse(Buffer.from(encoded ?? "", "base64").toString() || "{}"),
+        ).map(([path, content]) => [path, JSON.parse(content as string)]),
+      );
+
+    let publicServer: string;
+
+    beforeEach(async () => {
+      publicServer = await community(27100);
+
+      await catalog("csroll");
+      await installed("csroll");
+      await onNode("node-a", "csroll", "1.0.0");
+
+      await catalog("map-chooser");
+      await postgres.query(
+        `UPDATE game_plugins SET map_rotation = $1 WHERE slug = 'map-chooser'`,
+        [JSON.stringify(mapChooserRotation)],
+      );
+      await installed("map-chooser");
+      await onNode("node-a", "map-chooser", "1.3.2");
+    });
+
+    it("loads a plugin switched on for that server and no other", async () => {
+      const otherServer = await community(27200);
+      await override(publicServer, "csroll", true);
+
+      expect(
+        (await service.resolveForServer(publicServer))?.enabledPlugins,
+      ).toEqual("csroll@1.0.0");
+      expect(
+        (await service.resolveForServer(otherServer))?.enabledPlugins ?? "",
+      ).toEqual("");
+    });
+
+    it("keeps an auto-load plugin off a server that switched it off", async () => {
+      const otherServer = await community(27200);
+      await autoLoads("csroll");
+      await override(publicServer, "csroll", false);
+
+      expect(
+        (await service.resolveForServer(publicServer))?.enabledPlugins ?? "",
+      ).toEqual("");
+      expect(
+        (await service.resolveForServer(otherServer))?.enabledPlugins,
+      ).toEqual("csroll@1.0.0");
+    });
+
+    it("does not let a server switch off a plugin its mode needs", async () => {
+      await postgres.query(`UPDATE servers SET type = 'Custom' WHERE id = $1`, [
+        publicServer,
+      ]);
+      const [mode] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO game_modes (slug, name) VALUES ('chaos', 'Chaos') RETURNING id`,
+      );
+      await postgres.query(
+        `INSERT INTO game_mode_plugins (game_mode_id, plugin_slug) VALUES ($1, 'csroll')`,
+        [mode.id],
+      );
+      await postgres.query(
+        `UPDATE servers SET game_mode_id = $1 WHERE id = $2`,
+        [mode.id, publicServer],
+      );
+      await override(publicServer, "csroll", false);
+
+      expect(
+        (await service.resolveForServer(publicServer))?.enabledPlugins,
+      ).toEqual("csroll@1.0.0");
+    });
+
+    it("ignores overrides on a Ranked server", async () => {
+      await override(publicServer, "csroll", true);
+      await postgres.query(`UPDATE servers SET type = 'Ranked' WHERE id = $1`, [
+        publicServer,
+      ]);
+
+      expect(
+        (await service.resolveForServer(publicServer))?.enabledPlugins ?? "",
+      ).toEqual("");
+    });
+
+    it("loads the installed rotation plugin and writes the rotation into its files", async () => {
+      const mirage = await workshopMap(
+        "rotation-mirage",
+        "Prophunt Mirage",
+        "3615968422",
+      );
+      const office = await workshopMap(
+        "rotation-office",
+        "Prophunt Office",
+        "3644811896",
+      );
+      await rotate(publicServer, [office, mirage], false);
+
+      const resolved = await service.resolveForServer(publicServer);
+
+      expect(resolved?.enabledPlugins).toEqual("map-chooser@1.3.2");
+      expect(files(resolved?.pluginConfigs ?? null)).toEqual({
+        "addons/swiftlys2/configs/plugins/MapChooser/maps.jsonc": {
+          MapChooserMaps: {
+            Maps: [
+              { Name: "Prophunt Office", Id: "3644811896" },
+              { Name: "Prophunt Mirage", Id: "3615968422" },
+            ],
+          },
+        },
+        "addons/swiftlys2/configs/plugins/MapChooser/config.jsonc": {
+          MapChooser: { Cycle: { Enabled: true, RandomOrder: false } },
+        },
+      });
+      expect(service.environmentFor(resolved).map((env) => env.name)).toEqual([
+        "ENABLED_PLUGINS",
+        "PLUGIN_CONFIGS",
+      ]);
+    });
+
+    it("drops a deleted map from the rotation", async () => {
+      const mirage = await workshopMap(
+        "rotation-mirage",
+        "Prophunt Mirage",
+        "3615968422",
+      );
+      const office = await workshopMap(
+        "rotation-office",
+        "Prophunt Office",
+        "3644811896",
+      );
+      await rotate(publicServer, [mirage, office]);
+      await postgres.query(`UPDATE maps SET deleted_at = now() WHERE id = $1`, [
+        office,
+      ]);
+
+      const resolved = await service.resolveForServer(publicServer);
+
+      expect(
+        files(resolved?.pluginConfigs ?? null)[
+          "addons/swiftlys2/configs/plugins/MapChooser/maps.jsonc"
+        ],
+      ).toEqual({
+        MapChooserMaps: {
+          Maps: [{ Name: "Prophunt Mirage", Id: "3615968422" }],
+        },
+      });
+    });
+
+    it("leaves the rotation plugin off a server that switched it off", async () => {
+      await rotate(publicServer, [
+        await workshopMap("rotation-mirage", "Prophunt Mirage", "3615968422"),
+      ]);
+      await override(publicServer, "map-chooser", false);
+
+      const resolved = await service.resolveForServer(publicServer);
+
+      expect(resolved?.enabledPlugins ?? "").toEqual("");
+      expect(resolved?.pluginConfigs ?? null).toBeNull();
+    });
+
+    it("writes the rotation for a rotation plugin already loading, without loading it twice", async () => {
+      await autoLoads("map-chooser");
+      await rotate(publicServer, [
+        await workshopMap("rotation-mirage", "Prophunt Mirage", "3615968422"),
+      ]);
+
+      const resolved = await service.resolveForServer(publicServer);
+
+      expect(resolved?.enabledPlugins).toEqual("map-chooser@1.3.2");
+      expect(Object.keys(files(resolved?.pluginConfigs ?? null))).toHaveLength(
+        2,
+      );
+    });
+
+    it("plays no rotation on a Practice server", async () => {
+      await rotate(publicServer, [
+        await workshopMap("rotation-mirage", "Prophunt Mirage", "3615968422"),
+      ]);
+      await postgres.query(
+        `UPDATE servers SET type = 'Practice' WHERE id = $1`,
+        [publicServer],
+      );
+
+      expect(
+        (await service.resolveForServer(publicServer))?.enabledPlugins ?? "",
+      ).toEqual("");
     });
   });
 });

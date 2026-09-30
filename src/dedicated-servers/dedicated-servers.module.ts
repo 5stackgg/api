@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { DedicatedServersService } from "./dedicated-servers.service";
+import { DedicatedServerConfigService } from "./dedicated-server-config.service";
 import { DedicatedServersController } from "./dedicated-servers.controller";
 import { HasuraModule } from "src/hasura/hasura.module";
 import { loggerFactory } from "src/utilities/LoggerFactory";
@@ -16,6 +17,7 @@ import { RedisModule } from "src/redis/redis.module";
 import { SystemModule } from "src/system/system.module";
 import { PluginRuntimeModule } from "src/plugin-runtime/plugin-runtime.module";
 import { GamePluginsModule } from "../game-plugins/game-plugins.module";
+import { PostgresModule } from "../postgres/postgres.module";
 
 @Module({
   imports: [
@@ -33,9 +35,11 @@ import { GamePluginsModule } from "../game-plugins/game-plugins.module";
     SystemModule,
     PluginRuntimeModule,
     GamePluginsModule,
+    PostgresModule,
   ],
   providers: [
     DedicatedServersService,
+    DedicatedServerConfigService,
     PingDedicatedServers,
     ...getQueuesProcessors("DedicatedServers"),
     loggerFactory(),

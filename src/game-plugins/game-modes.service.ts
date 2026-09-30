@@ -2,6 +2,8 @@ import { Injectable, Logger } from "@nestjs/common";
 import { PostgresService } from "../postgres/postgres.service";
 import { PluginRuntimeService } from "../plugin-runtime/plugin-runtime.service";
 import { PluginRuntime } from "../configs/types/GameServersConfig";
+import { MapRotationService } from "./map-rotation.service";
+import { MapRotationSpec } from "./types/Registry";
 
 export type ResolvedGameMode = {
   id: string;
@@ -67,6 +69,7 @@ export class GameModesService {
     private readonly logger: Logger,
     private readonly postgres: PostgresService,
     private readonly pluginRuntime: PluginRuntimeService,
+    private readonly mapRotation: MapRotationService,
   ) {}
 
   // A match's own mode always wins. A Ranked server never falls back to a
@@ -84,6 +87,7 @@ export class GameModesService {
         is_ranked: boolean;
         is_tournament: boolean;
         is_ranked_server: boolean;
+        is_community_server: boolean;
       }>
     >(
       `SELECT COALESCE(
@@ -104,7 +108,9 @@ export class GameModesService {
               EXISTS (
                 SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = $2
               ) AS is_tournament,
-              s.type = 'Ranked' AS is_ranked_server
+              s.type = 'Ranked' AS is_ranked_server,
+              s.is_dedicated AND s.type NOT IN ('Ranked', 'Practice')
+                AS is_community_server
          FROM servers s
          LEFT JOIN game_server_nodes n ON n.id = s.game_server_node_id
         WHERE s.id = $1`,
@@ -147,6 +153,10 @@ export class GameModesService {
       );
     }
 
+    if (!matchId && row?.is_community_server) {
+      return await this.withServerPlugins(serverId, mode, scope);
+    }
+
     return await this.withAutoLoad(mode, scope);
   }
 
@@ -166,42 +176,237 @@ export class GameModesService {
     mode: ResolvedGameMode | null,
     scope?: PluginScope,
   ): Promise<ResolvedGameMode | null> {
-    const always = await this.autoLoadPlugins(scope);
+    return await this.withServerGuidelines(
+      GameModesService.withPlugins(mode, await this.autoLoadPlugins(scope)),
+    );
+  }
 
-    if (always.length === 0) {
-      return await this.withServerGuidelines(mode);
+  // A community server can switch a plugin on or off for itself; with no
+  // override it follows the install's load flags like every other server.
+  // Its mode's plugins are not overridable: picking the mode is the choice.
+  private async withServerPlugins(
+    serverId: string,
+    mode: ResolvedGameMode | null,
+    scope: PluginScope,
+  ): Promise<ResolvedGameMode | null> {
+    const overrides = await this.postgres.query<
+      Array<{ plugin_slug: string; enabled: boolean; version: string | null }>
+    >(
+      `SELECT sp.plugin_slug,
+              sp.enabled,
+              CASE WHEN i.enabled THEN
+                (SELECT n.version
+                   FROM game_server_node_plugins n
+                  WHERE n.plugin_slug = sp.plugin_slug
+                    AND n.runtime = $2
+                    AND n.status = 'Installed'
+                    AND n.version IS NOT NULL
+                    AND ($3::text IS NULL OR n.game_server_node_id = $3)
+                  ORDER BY n.updated_at DESC
+                  LIMIT 1)
+              END AS version
+         FROM server_plugins sp
+         INNER JOIN game_plugin_installs i ON i.plugin_slug = sp.plugin_slug
+        WHERE sp.server_id = $1
+        ORDER BY sp.plugin_slug`,
+      [serverId, scope.runtime, scope.nodeId],
+    );
+
+    const off = new Set(
+      overrides
+        .filter((override) => !override.enabled)
+        .map((override) => override.plugin_slug),
+    );
+
+    for (const override of overrides) {
+      if (override.enabled && !override.version) {
+        this.logger.warn(
+          `server ${serverId}: ${override.plugin_slug} is switched on but not installed on ${
+            scope.nodeId ?? `any node for ${scope.runtime}`
+          }`,
+        );
+      }
     }
 
-    const fromMode = (mode?.enabledPlugins ?? "").split(",").filter(Boolean);
-    const modeSlugs = new Set(fromMode.map((entry) => entry.split("@")[0]));
+    const always = (await this.autoLoadPlugins(scope)).filter(
+      (entry) => !off.has(GameModesService.slugOf(entry)),
+    );
 
-    const enabled = [
-      ...fromMode,
-      // The mode wins a duplicate: it may pin a different version, and it is
-      // the more specific statement of what this match should run.
-      ...always.filter((entry) => !modeSlugs.has(entry.split("@")[0])),
-    ];
+    const on = overrides
+      .filter((override) => override.enabled && override.version)
+      .map((override) => `${override.plugin_slug}@${override.version}`);
 
-    if (mode) {
-      return await this.withServerGuidelines({
-        ...mode,
-        enabledPlugins: enabled.join(","),
-      });
+    const resolved = await this.withMapRotation(
+      serverId,
+      GameModesService.withPlugins(mode, [...always, ...on]),
+      scope,
+      off,
+    );
+
+    return await this.withServerGuidelines(resolved);
+  }
+
+  // A rotation is only played by a plugin that declares map_rotation in the
+  // registry. If none is loading yet the first installed one is added, since
+  // a rotation with nothing to run it would leave the server on its first map
+  // forever -- unless the server switched that plugin off.
+  private async withMapRotation(
+    serverId: string,
+    resolved: ResolvedGameMode | null,
+    scope: PluginScope,
+    off: Set<string>,
+  ): Promise<ResolvedGameMode | null> {
+    const rotation = await this.mapRotation.forServer(serverId);
+
+    if (rotation.maps.length === 0) {
+      return resolved;
     }
 
-    // No mode, but plugins that load regardless. Everything else is empty so
-    // the server gets the plugins and none of a mode's cfg or launch params.
-    return await this.withServerGuidelines({
+    const players = await this.postgres.query<
+      Array<{
+        slug: string;
+        map_rotation: MapRotationSpec;
+        installed: boolean;
+        version: string | null;
+      }>
+    >(
+      `SELECT p.slug,
+              p.map_rotation,
+              COALESCE(i.enabled, false) AS installed,
+              (SELECT n.version
+                 FROM game_server_node_plugins n
+                WHERE n.plugin_slug = p.slug
+                  AND n.runtime = $1
+                  AND n.status = 'Installed'
+                  AND n.version IS NOT NULL
+                  AND ($2::text IS NULL OR n.game_server_node_id = $2)
+                ORDER BY n.updated_at DESC
+                LIMIT 1) AS version
+         FROM game_plugins p
+         LEFT JOIN game_plugin_installs i ON i.plugin_slug = p.slug
+        WHERE p.map_rotation IS NOT NULL
+        ORDER BY p.slug`,
+      [scope.runtime, scope.nodeId],
+    );
+
+    const loading = GameModesService.entriesOf(resolved);
+    const loadingSlugs = new Set(loading.map(GameModesService.slugOf));
+
+    let runners = players.filter((player) => loadingSlugs.has(player.slug));
+
+    if (runners.length === 0) {
+      const runner = players.find(
+        (player) => player.installed && player.version && !off.has(player.slug),
+      );
+
+      if (!runner) {
+        this.logger.warn(
+          `server ${serverId} has a map rotation but no map rotation plugin is installed on ${
+            scope.nodeId ?? `any node for ${scope.runtime}`
+          }`,
+        );
+
+        return resolved;
+      }
+
+      runners = [runner];
+      loading.push(`${runner.slug}@${runner.version}`);
+    }
+
+    const files: Record<string, string> = {};
+
+    for (const runner of runners) {
+      Object.assign(
+        files,
+        MapRotationService.render(runner.map_rotation, rotation, scope.runtime),
+      );
+    }
+
+    const base = resolved ?? GameModesService.noMode();
+
+    return {
+      ...base,
+      enabledPlugins: loading.join(","),
+      pluginConfigs: GameModesService.withConfigFiles(
+        base.pluginConfigs,
+        files,
+      ),
+    };
+  }
+
+  // The mode wins a duplicate: it may pin a different version, and it is the
+  // more specific statement of what this server should run.
+  private static withPlugins(
+    mode: ResolvedGameMode | null,
+    extra: Array<string>,
+  ): ResolvedGameMode | null {
+    if (extra.length === 0) {
+      return mode;
+    }
+
+    const enabled = GameModesService.entriesOf(mode);
+    const taken = new Set(enabled.map(GameModesService.slugOf));
+
+    for (const entry of extra) {
+      const slug = GameModesService.slugOf(entry);
+
+      if (taken.has(slug)) {
+        continue;
+      }
+
+      taken.add(slug);
+      enabled.push(entry);
+    }
+
+    return {
+      ...(mode ?? GameModesService.noMode()),
+      enabledPlugins: enabled.join(","),
+    };
+  }
+
+  // No mode, but plugins that load regardless. Everything else is empty so the
+  // server gets the plugins and none of a mode's cfg or launch params.
+  private static noMode(): ResolvedGameMode {
+    return {
       id: "",
       slug: "",
       name: "",
       cfg: null,
       extraGameParams: null,
-      enabledPlugins: enabled.join(","),
+      enabledPlugins: "",
       pluginConfigs: null,
       missingRequired: [],
       disableServerGuidelines: false,
-    });
+    };
+  }
+
+  private static entriesOf(mode: ResolvedGameMode | null): Array<string> {
+    return (mode?.enabledPlugins ?? "").split(",").filter(Boolean);
+  }
+
+  private static slugOf(entry: string): string {
+    return entry.split("@")[0];
+  }
+
+  // A file the rotation writes replaces the same path from the mode's plugin
+  // config: the rotation is about this server, the mode about every server.
+  private static withConfigFiles(
+    encoded: string | null,
+    files: Record<string, string>,
+  ): string | null {
+    const merged = {
+      ...(encoded
+        ? (JSON.parse(Buffer.from(encoded, "base64").toString()) as Record<
+            string,
+            string
+          >)
+        : {}),
+      ...files,
+    };
+
+    return Object.keys(merged).length > 0
+      ? Buffer.from(JSON.stringify(merged)).toString("base64")
+      : null;
   }
 
   // Both frameworks refuse the calls a HUD or scoreboard plugin needs while

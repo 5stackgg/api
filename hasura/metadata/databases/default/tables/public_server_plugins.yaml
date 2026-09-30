@@ -1,0 +1,19 @@
+table:
+  name: server_plugins
+  schema: public
+object_relationships:
+  - name: install
+    using:
+      foreign_key_constraint_on: plugin_slug
+  - name: server
+    using:
+      foreign_key_constraint_on: server_id
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - enabled
+        - plugin_slug
+        - server_id
+      filter: {}
+    comment: ""
