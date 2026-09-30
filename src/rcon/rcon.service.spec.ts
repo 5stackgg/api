@@ -31,7 +31,10 @@ describe("RconService connect failure", () => {
     game_server_node: null as null,
   });
 
+  let graceRemaining: number;
+
   beforeEach(() => {
+    graceRemaining = -2;
     hasura = {
       query: jest.fn(),
       mutation: jest.fn().mockResolvedValue({}),
@@ -43,7 +46,9 @@ describe("RconService connect failure", () => {
       notifications as any,
       { warn: jest.fn(), log: jest.fn(), error: jest.fn() } as any,
       {} as any,
-      {} as any,
+      {
+        getConnection: () => ({ pttl: jest.fn(async () => graceRemaining) }),
+      } as any,
       {} as any,
     );
   });
@@ -80,6 +85,16 @@ describe("RconService connect failure", () => {
     hasura.query.mockResolvedValue({
       servers_by_pk: dedicatedServer(true, "Retake"),
     });
+
+    await service.connect("server-1");
+
+    expect(hasura.mutation).toHaveBeenCalled();
+    expect(notifications.send).not.toHaveBeenCalled();
+  });
+
+  it("stays quiet while a Ranked server is restarting", async () => {
+    hasura.query.mockResolvedValue({ servers_by_pk: dedicatedServer(true) });
+    graceRemaining = 2 * 60 * 1000;
 
     await service.connect("server-1");
 

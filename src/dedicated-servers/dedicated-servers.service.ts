@@ -17,6 +17,12 @@ import { NotificationsService } from "src/notifications/notifications.service";
 import { DISCORD_COLORS } from "src/notifications/utilities/constants";
 import { MarkDedicatedServerOffline } from "src/game-server-node/jobs/MarkDedicatedServerOffline";
 
+type UnreachableStreak = {
+  since: number;
+  last: number;
+  reported: boolean;
+};
+
 @Injectable()
 export class DedicatedServersService {
   private static readonly rebuilds = new Map<string, Promise<boolean>>();
@@ -25,6 +31,8 @@ export class DedicatedServersService {
   // marked Offline up to 90s later, and a restart takes a while to boot. A
   // server is reported once it has stayed unreachable this long.
   public static readonly UNREACHABLE_ALERT_AFTER_MS = 2 * 60 * 1000;
+
+  private static readonly UNREACHABLE_GAP_MS = 90 * 1000;
 
   private static readonly UNREACHABLE_KEY = "dedicated-servers:unreachable";
 
@@ -921,15 +929,25 @@ export class DedicatedServersService {
     server: { label: string; enabled: boolean; connected: boolean },
   ): Promise<void> {
     const now = Date.now();
-
-    await this.redis.hsetnx(
-      DedicatedServersService.UNREACHABLE_KEY,
-      serverId,
-      JSON.stringify({ since: now, reported: false }),
+    const previous: UnreachableStreak | null = JSON.parse(
+      (await this.redis.hget(
+        DedicatedServersService.UNREACHABLE_KEY,
+        serverId,
+      )) ?? "null",
     );
 
-    const streak: { since: number; reported: boolean } = JSON.parse(
-      await this.redis.hget(DedicatedServersService.UNREACHABLE_KEY, serverId),
+    // Pings run every minute. A longer gap means nothing was watching, not that
+    // the server stayed down the whole time.
+    const streak: UnreachableStreak =
+      previous &&
+      now - previous.last <= DedicatedServersService.UNREACHABLE_GAP_MS
+        ? { ...previous, last: now }
+        : { since: now, last: now, reported: false };
+
+    await this.redis.hset(
+      DedicatedServersService.UNREACHABLE_KEY,
+      serverId,
+      JSON.stringify(streak),
     );
 
     if (
@@ -962,12 +980,6 @@ export class DedicatedServersService {
       return;
     }
 
-    await this.redis.hset(
-      DedicatedServersService.UNREACHABLE_KEY,
-      serverId,
-      JSON.stringify({ ...streak, reported: true }),
-    );
-
     await this.notifications.send(
       "DedicatedServerRconStatus",
       {
@@ -978,6 +990,12 @@ export class DedicatedServersService {
       },
       undefined,
       DISCORD_COLORS.RED,
+    );
+
+    await this.redis.hset(
+      DedicatedServersService.UNREACHABLE_KEY,
+      serverId,
+      JSON.stringify({ ...streak, reported: true }),
     );
   }
 

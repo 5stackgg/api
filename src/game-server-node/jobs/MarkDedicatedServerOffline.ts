@@ -8,14 +8,6 @@ import { NotificationsService } from "../../notifications/notifications.service"
 import { DISCORD_COLORS } from "../../notifications/utilities/constants";
 import { RedisManagerService } from "../../redis/redis-manager/redis-manager.service";
 
-type OfflineServer = {
-  enabled: boolean;
-  is_dedicated: boolean;
-  game_server_node?: {
-    status: string;
-  } | null;
-};
-
 @UseQueue("GameServerNode", GameServerQueues.NodeOffline)
 export class MarkDedicatedServerOffline extends WorkerHost {
   // A server restarted on purpose is quiet for as long as it takes to boot, so
@@ -38,6 +30,55 @@ export class MarkDedicatedServerOffline extends WorkerHost {
       serverId: string;
     }>,
   ): Promise<void> {
+    const { servers_by_pk: server } = await this.hasura.query({
+      servers_by_pk: {
+        __args: {
+          id: job.data.serverId,
+        },
+        label: true,
+        enabled: true,
+        is_dedicated: true,
+        offline_at: true,
+        game_server_node: {
+          status: true,
+        },
+      },
+    });
+
+    if (!server) {
+      return;
+    }
+
+    await this.hasura.mutation({
+      update_servers_by_pk: {
+        __args: {
+          pk_columns: {
+            id: job.data.serverId,
+          },
+          _set: {
+            connected: false,
+            offline_at: server.offline_at ?? new Date().toISOString(),
+          },
+        },
+        __typename: true,
+      },
+    });
+
+    // Disabling a server tears it down on purpose.
+    if (!server.is_dedicated || !server.enabled) {
+      return;
+    }
+
+    // A server on a node that is down is the node's outage, which the node
+    // reports. It is looked at again once the node is back and the server has
+    // had time to boot, so one that never returns is still reported.
+    if (server.game_server_node?.status === "Offline") {
+      await MarkDedicatedServerOffline.expectRestart(
+        this.redis,
+        job.data.serverId,
+      );
+    }
+
     const grace = await MarkDedicatedServerOffline.restartGraceRemaining(
       this.redis,
       job.data.serverId,
@@ -48,34 +89,10 @@ export class MarkDedicatedServerOffline extends WorkerHost {
       throw new DelayedError();
     }
 
-    const { update_servers_by_pk } = await this.hasura.mutation({
-      update_servers_by_pk: {
-        __args: {
-          pk_columns: {
-            id: job.data.serverId,
-          },
-          _set: {
-            connected: false,
-            offline_at: new Date().toISOString(),
-          },
-        },
-        label: true,
-        enabled: true,
-        is_dedicated: true,
-        game_server_node: {
-          status: true,
-        },
-      },
-    });
-
-    if (!MarkDedicatedServerOffline.shouldNotify(update_servers_by_pk)) {
-      return;
-    }
-
     await this.notifications.send(
       "DedicatedServerStatus",
       {
-        message: `Dedicated Server (${NotificationsService.escapeHtml(update_servers_by_pk.label || job.data.serverId)}) is Offline.`,
+        message: `Dedicated Server (${NotificationsService.escapeHtml(server.label || job.data.serverId)}) is Offline.`,
         title: "Dedicated Server Offline",
         role: "administrator",
         entity_id: job.data.serverId,
@@ -114,7 +131,7 @@ export class MarkDedicatedServerOffline extends WorkerHost {
 
   // A node-hosted dedicated server waits out the node's own 90s timer (the node
   // pings every 30s, plugins every 15s), so when the whole node dies it is
-  // already marked Offline and shouldNotify leaves the outage to the node.
+  // already marked Offline by the time its servers are looked at.
   public static delayFor(server: {
     is_dedicated: boolean;
     game_server_node_id: string | null;
@@ -124,16 +141,5 @@ export class MarkDedicatedServerOffline extends WorkerHost {
     }
 
     return 90 * 1000;
-  }
-
-  // Disabling a server tears it down on purpose. A server on a node that is
-  // down is the node's outage, which the node reports: a node hosting an enabled
-  // dedicated server always counts as in service.
-  public static shouldNotify(server: OfflineServer | null): boolean {
-    if (!server?.is_dedicated || !server.enabled) {
-      return false;
-    }
-
-    return server.game_server_node?.status !== "Offline";
   }
 }

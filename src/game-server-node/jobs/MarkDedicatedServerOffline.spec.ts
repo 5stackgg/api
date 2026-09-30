@@ -5,6 +5,7 @@ type Server = {
   label: string;
   enabled: boolean;
   is_dedicated: boolean;
+  offline_at: string | null;
   game_server_node: { status: string } | null;
 };
 
@@ -12,28 +13,37 @@ const server = (fields: Partial<Server> = {}): Server => ({
   label: "Retakes #1",
   enabled: true,
   is_dedicated: true,
+  offline_at: null,
   game_server_node: null,
   ...fields,
 });
 
 describe("MarkDedicatedServerOffline", () => {
   let row: Server | null;
-  let graceRemaining: number;
-  let hasura: { mutation: jest.Mock };
+  let now: number;
+  let graceUntil: number | null;
+  let hasura: { query: jest.Mock; mutation: jest.Mock };
   let notifications: { send: jest.Mock };
   let redis: { pttl: jest.Mock; set: jest.Mock };
-  let job: MarkDedicatedServerOffline;
   let queued: { moveToDelayed: jest.Mock };
+  let job: MarkDedicatedServerOffline;
 
   beforeEach(() => {
-    graceRemaining = -2;
+    now = Date.now();
+    graceUntil = null;
     hasura = {
-      mutation: jest.fn(async () => ({ update_servers_by_pk: row })),
+      query: jest.fn(async () => ({ servers_by_pk: row && { ...row } })),
+      mutation: jest.fn().mockResolvedValue({}),
     };
     notifications = { send: jest.fn().mockResolvedValue(undefined) };
     redis = {
-      pttl: jest.fn(async () => graceRemaining),
-      set: jest.fn().mockResolvedValue("OK"),
+      pttl: jest.fn(async () =>
+        graceUntil && graceUntil > now ? graceUntil - now : -2,
+      ),
+      set: jest.fn(async (_key: string, _value: string, _px: string, ms) => {
+        graceUntil = now + ms;
+        return "OK";
+      }),
     };
     queued = { moveToDelayed: jest.fn().mockResolvedValue(undefined) };
     job = new MarkDedicatedServerOffline(
@@ -50,12 +60,18 @@ describe("MarkDedicatedServerOffline", () => {
       ...queued,
     } as any);
 
+  const offlineWrite = () =>
+    hasura.mutation.mock.calls[0]?.[0].update_servers_by_pk.__args._set;
+
   it("alerts when an enabled dedicated server stops heartbeating", async () => {
     row = server();
 
     await run();
 
-    expect(hasura.mutation).toHaveBeenCalledTimes(1);
+    expect(offlineWrite()).toEqual({
+      connected: false,
+      offline_at: expect.any(String),
+    });
     expect(notifications.send).toHaveBeenCalledWith(
       "DedicatedServerStatus",
       expect.objectContaining({ title: "Dedicated Server Offline" }),
@@ -69,20 +85,12 @@ describe("MarkDedicatedServerOffline", () => {
 
     await run();
 
-    expect(hasura.mutation).toHaveBeenCalledTimes(1);
+    expect(offlineWrite().connected).toBe(false);
     expect(notifications.send).not.toHaveBeenCalled();
   });
 
   it("stays quiet for a match server", async () => {
     row = server({ is_dedicated: false });
-
-    await run();
-
-    expect(notifications.send).not.toHaveBeenCalled();
-  });
-
-  it("leaves a server on an offline node to the node's own alert", async () => {
-    row = server({ game_server_node: { status: "Offline" } });
 
     await run();
 
@@ -104,40 +112,59 @@ describe("MarkDedicatedServerOffline", () => {
     expect(notifications.send).not.toHaveBeenCalled();
   });
 
-  it("holds a server being restarted until the grace runs out", async () => {
+  it("keeps the time the server first went offline", async () => {
+    row = server({ offline_at: "2026-09-30T10:00:00.000Z" });
+
+    await run();
+
+    expect(offlineWrite().offline_at).toBe("2026-09-30T10:00:00.000Z");
+  });
+
+  it("marks a restarting server offline but holds the alert until the grace runs out", async () => {
     row = server();
-    graceRemaining = 3 * 60 * 1000;
+    graceUntil = now + 3 * 60 * 1000;
 
     await expect(run()).rejects.toThrow(DelayedError);
 
-    expect(queued.moveToDelayed).toHaveBeenCalledWith(
-      expect.any(Number),
-      "token",
-    );
-    const [[until]] = queued.moveToDelayed.mock.calls;
-    expect(until - Date.now()).toBeGreaterThanOrEqual(3 * 60 * 1000);
-    expect(hasura.mutation).not.toHaveBeenCalled();
+    expect(offlineWrite().connected).toBe(false);
+    const [[until, token]] = queued.moveToDelayed.mock.calls;
+    expect(token).toBe("token");
+    expect(until - Date.now()).toBeGreaterThanOrEqual(3 * 60 * 1000 - 1000);
     expect(notifications.send).not.toHaveBeenCalled();
   });
 
-  it("reports a restarted server that never came back", async () => {
+  it("reports a restarted server that is still down once the grace has run out", async () => {
     row = server();
-    graceRemaining = -2;
+    graceUntil = now + 3 * 60 * 1000;
+    await expect(run()).rejects.toThrow(DelayedError);
 
+    now += 3 * 60 * 1000 + 5 * 1000;
     await run();
 
     expect(notifications.send).toHaveBeenCalledTimes(1);
   });
 
-  it("gives a restart five minutes", async () => {
-    await MarkDedicatedServerOffline.expectRestart(redis as any, "server-1");
+  it("leaves an outage to the node, then reports the server if it never came back", async () => {
+    row = server({ game_server_node: { status: "Offline" } });
 
+    await expect(run()).rejects.toThrow(DelayedError);
     expect(redis.set).toHaveBeenCalledWith(
       "dedicated-servers:restarting:server-1",
       "1",
       "PX",
       5 * 60 * 1000,
     );
+    expect(notifications.send).not.toHaveBeenCalled();
+
+    now += 5 * 60 * 1000;
+    await expect(run()).rejects.toThrow(DelayedError);
+    expect(notifications.send).not.toHaveBeenCalled();
+
+    row.game_server_node = { status: "Online" };
+    now += 5 * 60 * 1000 + 5 * 1000;
+    await run();
+
+    expect(notifications.send).toHaveBeenCalledTimes(1);
   });
 
   describe("delayFor", () => {

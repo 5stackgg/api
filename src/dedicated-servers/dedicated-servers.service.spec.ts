@@ -4,13 +4,14 @@ import { DedicatedServersService } from "./dedicated-servers.service";
 // to interleave: both removed, one created, and the other's AlreadyExists
 // handler deleted the deployment the first had just created.
 describe("DedicatedServersService.rebuildDedicatedServer", () => {
+  const redis = { set: jest.fn() };
   const service = new DedicatedServersService(
     { log: jest.fn(), error: jest.fn(), verbose: jest.fn() } as never,
     { get: () => ({ namespace: "5stack" }) } as never,
     null as never,
     null as never,
     null as never,
-    { getConnection: () => ({ set: jest.fn() }) } as never,
+    { getConnection: () => redis } as never,
     null as never,
     null as never,
     null as never,
@@ -23,6 +24,7 @@ describe("DedicatedServersService.rebuildDedicatedServer", () => {
 
   beforeEach(() => {
     steps.length = 0;
+    redis.set.mockClear();
 
     jest
       .spyOn(service, "removeDedicatedServer")
@@ -69,6 +71,23 @@ describe("DedicatedServersService.rebuildDedicatedServer", () => {
     await service.rebuildDedicatedServer("a", false);
 
     expect(steps).toEqual(["remove a"]);
+  });
+
+  it("gives a server that will start again time to boot", async () => {
+    await service.rebuildDedicatedServer("a");
+
+    expect(redis.set).toHaveBeenCalledWith(
+      "dedicated-servers:restarting:a",
+      "1",
+      "PX",
+      5 * 60 * 1000,
+    );
+  });
+
+  it("gives no boot time to a server being taken down", async () => {
+    await service.rebuildDedicatedServer("a", false);
+
+    expect(redis.set).not.toHaveBeenCalled();
   });
 
   it("keeps going after a rebuild that failed", async () => {
@@ -288,13 +307,12 @@ describe("DedicatedServersService.pingDedicatedServer", () => {
     await service.restartDedicatedServer("server-1");
     reachable = false;
 
-    for (let minute = 0; minute < 4; minute++) {
+    for (let minute = 0; minute < 5; minute++) {
       await service.pingDedicatedServer("server-1");
       minutes(1);
     }
     expect(alerts()).toBe(0);
 
-    minutes(1);
     await service.pingDedicatedServer("server-1");
     expect(alerts()).toBe(1);
   });
@@ -310,6 +328,52 @@ describe("DedicatedServersService.pingDedicatedServer", () => {
     }
 
     expect(alerts()).toBe(0);
+  });
+
+  it("starts the clock over after a gap in pings", async () => {
+    reachable = false;
+
+    await service.pingDedicatedServer("server-1");
+    minutes(5);
+    await service.pingDedicatedServer("server-1");
+    minutes(1);
+    await service.pingDedicatedServer("server-1");
+    expect(alerts()).toBe(0);
+
+    minutes(1);
+    await service.pingDedicatedServer("server-1");
+    expect(alerts()).toBe(1);
+  });
+
+  it("tries the alert again when sending it failed", async () => {
+    reachable = false;
+    notifications.send.mockRejectedValueOnce(new Error("discord down"));
+
+    await service.pingDedicatedServer("server-1");
+    minutes(1);
+    await service.pingDedicatedServer("server-1");
+    minutes(1);
+    await expect(service.pingDedicatedServer("server-1")).rejects.toThrow(
+      "discord down",
+    );
+    minutes(1);
+    await service.pingDedicatedServer("server-1");
+    minutes(1);
+    await service.pingDedicatedServer("server-1");
+
+    expect(alerts()).toBe(2);
+  });
+
+  it("forgets the streak of a server that is removed", async () => {
+    (service as any).apps = { deleteNamespacedDeployment: jest.fn() };
+    reachable = false;
+
+    await service.pingDedicatedServer("server-1");
+    await service.removeDedicatedServer("server-1");
+
+    expect(
+      await redis.hget("dedicated-servers:unreachable", "server-1"),
+    ).toBeNull();
   });
 });
 

@@ -9,6 +9,7 @@ import { RedisManagerService } from "../redis/redis-manager/redis-manager.servic
 import { CacheService } from "../cache/cache.service";
 import { User } from "../auth/types/User";
 import { isRoleAbove } from "../utilities/isRoleAbove";
+import { MarkDedicatedServerOffline } from "../game-server-node/jobs/MarkDedicatedServerOffline";
 
 @Injectable()
 export class RconService {
@@ -213,8 +214,16 @@ export class RconService {
         });
 
         // Every other dedicated server is watched by PingDedicatedServers, which
-        // only reports one that stays unreachable.
-        if (server.enabled && server.type === "Ranked") {
+        // only reports one that stays unreachable. A server restarted on purpose
+        // is still booting.
+        if (
+          server.enabled &&
+          server.type === "Ranked" &&
+          (await MarkDedicatedServerOffline.restartGraceRemaining(
+            this.redisManager.getConnection(),
+            serverId,
+          )) === 0
+        ) {
           void this.notifications.send(
             "DedicatedServerRconStatus",
             {
