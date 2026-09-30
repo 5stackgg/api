@@ -1695,6 +1695,12 @@ export class ClipsService {
     const segments = spec?.segments ?? [];
     if (segments.length === 0) return null;
 
+    // A best-round reel with knife kills from other rounds appended counts
+    // only the round, so the footage over-counts it.
+    if (typeof spec?.kills_count === "number") {
+      return spec.kills_count;
+    }
+
     try {
       const { match_map_demos } = await this.hasura.query({
         match_map_demos: {
@@ -3276,7 +3282,6 @@ export class ClipsService {
           ...baseRest,
           segments: [...base.segments, ...extraKnifeSegs].slice(0, 20),
           title: `${base.title} + ${knifeCount} Knife ${knifeCount === 1 ? "Kill" : "Kills"}`,
-          kills_count: (base.kills_count ?? 0) + knifeCount,
         };
       }
     } else {
