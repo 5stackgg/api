@@ -35,7 +35,8 @@ describe("node scheduling across an outage (SQL-driven)", () => {
         `SELECT * FROM game_server_nodes WHERE id = $1`,
         [query.game_server_nodes_by_pk.__args.id],
       );
-      return { game_server_nodes_by_pk: row ? { ...row, servers: [] } : null };
+      const servers: Array<{ id: string }> = [];
+      return { game_server_nodes_by_pk: row ? { ...row, servers } : null };
     },
     mutation: async (mutation: Record<string, any>) => {
       const byPk = mutation.update_game_server_nodes_by_pk;
