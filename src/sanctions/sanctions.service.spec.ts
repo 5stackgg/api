@@ -119,28 +119,283 @@ describe("SanctionsService", () => {
     });
   });
 
-  describe("getActiveServerSanctions", () => {
-    it("only reads the types a server enforces", async () => {
-      await service.getActiveServerSanctions("server-1");
+  describe("syncServerSanctions", () => {
+    const heartbeats = () =>
+      postgres.query.mock.calls.filter(([sql]) =>
+        sql.includes("UPDATE public.servers"),
+      );
+    const reads = () =>
+      postgres.query.mock.calls.filter(([sql]) =>
+        sql.includes("FROM public.player_sanctions"),
+      );
 
-      const [sql, params] = postgres.query.mock.calls[0];
+    it("reads only the enforced types, for only the players it was asked about", async () => {
+      await service.syncServerSanctions("server-1", {
+        steamIds: [steamId, "76561198000000002"],
+      });
+
+      const [sql, params] = reads()[0];
       expect(sql).toContain("type = ANY($1::text[])");
-      expect(params).toEqual([["ban", "mute", "gag", "silence"]]);
-      expect(params[0]).not.toContain("warning");
+      expect(sql).toContain("player_steam_id = ANY($2::bigint[])");
+      expect(params).toEqual([
+        ["ban", "mute", "gag", "silence"],
+        [steamId, "76561198000000002"],
+      ]);
     });
 
-    it("maps the enforced types onto the plugin flags", async () => {
-      postgres.query.mockResolvedValueOnce([
-        { player_steam_id: "1", type: "ban" },
-        { player_steam_id: "2", type: "silence" },
-        { player_steam_id: "3", type: "mute" },
-      ]);
+    it("drops anything that is not a steam id, and duplicates", async () => {
+      await service.syncServerSanctions("server-1", {
+        steamIds: [steamId, steamId, "1; DROP TABLE players", "9".repeat(19)],
+      });
 
-      expect(await service.getActiveServerSanctions("server-1")).toEqual([
-        { steam_id: "1", is_banned: true, is_muted: false, is_gagged: false },
-        { steam_id: "2", is_banned: false, is_muted: true, is_gagged: true },
-        { steam_id: "3", is_banned: false, is_muted: true, is_gagged: false },
+      expect(reads()[0][1][1]).toEqual([steamId]);
+    });
+
+    it("hands the plugin each sanction with an ISO expiry", async () => {
+      postgres.query.mockImplementation(async (sql: string) =>
+        sql.includes("FROM public.player_sanctions")
+          ? [
+              {
+                steam_id: steamId,
+                type: "silence",
+                reason: "spam",
+                expires_at: new Date("2026-10-01T00:00:00Z"),
+              },
+              {
+                steam_id: steamId,
+                type: "ban",
+                reason: null,
+                expires_at: null,
+              },
+            ]
+          : [],
+      );
+
+      expect(
+        await service.syncServerSanctions("server-1", { steamIds: [steamId] }),
+      ).toEqual([
+        {
+          steam_id: steamId,
+          type: "silence",
+          reason: "spam",
+          expires_at: "2026-10-01T00:00:00.000Z",
+        },
+        { steam_id: steamId, type: "ban", reason: null, expires_at: null },
       ]);
+    });
+
+    // An empty server still has to show as running the plugin.
+    it("records the heartbeat of an empty server without reading sanctions", async () => {
+      expect(
+        await service.syncServerSanctions("server-1", {
+          steamIds: [],
+          pluginVersion: "0.0.412",
+          pluginRuntime: "swiftlys2",
+        }),
+      ).toEqual([]);
+
+      expect(reads()).toHaveLength(0);
+      const [sql, params] = heartbeats()[0];
+      expect(sql).toContain("player_management_seen_at = now()");
+      expect(sql).toContain("interval '60 seconds'");
+      expect(params).toEqual(["server-1", "0.0.412", "swiftlys2"]);
+    });
+
+    it("records a dev build as dev and an unknown runtime as nothing", async () => {
+      await service.syncServerSanctions("server-1", {
+        pluginVersion: "__RELEASE_VERSION__",
+        pluginRuntime: "metamod",
+      });
+
+      expect(heartbeats()[0][1]).toEqual(["server-1", "dev", null]);
+    });
+
+    it("still answers when the heartbeat cannot be written", async () => {
+      postgres.query.mockImplementation(async (sql: string) => {
+        if (sql.includes("UPDATE public.servers")) {
+          throw new Error("deadlock");
+        }
+        return [];
+      });
+
+      await expect(
+        service.syncServerSanctions("server-1", { steamIds: [steamId] }),
+      ).resolves.toEqual([]);
+    });
+  });
+
+  describe("syncing a community server", () => {
+    const replyToRefresh = (reply: string) => {
+      rcon.send.mockImplementation(async (command: string) =>
+        command === "player_management_refresh" ? reply : "",
+      );
+    };
+
+    beforeEach(() => {
+      hasura.query.mockResolvedValue({
+        matches: [],
+        servers_by_pk: { is_dedicated: true, type: "Casual", game: "cs2" },
+      });
+    });
+
+    it("asks the player management plugin to sync instead of the match plugin", async () => {
+      replyToRefresh("PlayerManagement: syncing 4 player(s)");
+
+      const result = await service.sanctionServerPlayer({
+        serverId: "server-1",
+        steamId,
+        type: "gag",
+        sanctionedBySteamId: moderator,
+      });
+
+      expect(rcon.send).toHaveBeenCalledWith("player_management_refresh");
+      expect(rcon.send).not.toHaveBeenCalledWith("get_match");
+      expect(result).toMatchObject({
+        enforced: true,
+        message: "sanction saved and synced to server",
+      });
+    });
+
+    it("says so when the plugin is loaded but not configured", async () => {
+      replyToRefresh(
+        "PlayerManagement: not configured; set API_DOMAIN, SERVER_ID and SERVER_API_PASSWORD",
+      );
+
+      const result = await service.sanctionServerPlayer({
+        serverId: "server-1",
+        steamId,
+        type: "mute",
+        sanctionedBySteamId: moderator,
+      });
+
+      expect(result).toMatchObject({
+        enforced: false,
+        message:
+          "sanction saved; the Player Management plugin on this server is not configured",
+      });
+    });
+
+    it("says so when the plugin is not installed", async () => {
+      replyToRefresh('Unknown command "player_management_refresh"!');
+
+      const result = await service.sanctionServerPlayer({
+        serverId: "server-1",
+        steamId,
+        type: "mute",
+        sanctionedBySteamId: moderator,
+      });
+
+      expect(result).toMatchObject({
+        enforced: false,
+        message:
+          "sanction saved; the Player Management plugin is not installed on this server",
+      });
+    });
+
+    // The kick lands, but nothing stops the player rejoining, so the
+    // moderator is told rather than shown a clean success.
+    it("does not count a kicked ban as enforced when the plugin is missing", async () => {
+      replyToRefresh("");
+
+      const result = await service.sanctionServerPlayer({
+        serverId: "server-1",
+        steamId,
+        type: "ban",
+        sanctionedBySteamId: moderator,
+      });
+
+      expect(rcon.send).toHaveBeenCalledWith("kickid 4 Banned");
+      expect(result).toMatchObject({
+        enforced: false,
+        message:
+          "sanction saved and player kicked; the Player Management plugin is not installed on this server",
+      });
+    });
+
+    it("keeps the kick in the message when the plugin is not configured", async () => {
+      replyToRefresh("PlayerManagement: not configured");
+
+      const result = await service.sanctionServerPlayer({
+        serverId: "server-1",
+        steamId,
+        type: "ban",
+        sanctionedBySteamId: moderator,
+      });
+
+      expect(result).toMatchObject({
+        enforced: false,
+        message:
+          "sanction saved and player kicked; the Player Management plugin on this server is not configured",
+      });
+    });
+
+    it("words a lifted sanction as removed, not saved", async () => {
+      replyToRefresh("");
+
+      const result = await service.unsanctionServerPlayer({
+        serverId: "server-1",
+        steamId,
+        type: "mute",
+      });
+
+      expect(result).toMatchObject({
+        enforced: false,
+        message:
+          "sanction removed; the Player Management plugin is not installed on this server",
+      });
+    });
+
+    it("never asks a CS:GO server for the CS2-only plugin", async () => {
+      hasura.query.mockResolvedValue({
+        matches: [],
+        servers_by_pk: { is_dedicated: true, type: "Casual", game: "csgo" },
+      });
+
+      const result = await service.sanctionServerPlayer({
+        serverId: "server-1",
+        steamId,
+        type: "mute",
+        sanctionedBySteamId: moderator,
+      });
+
+      expect(rcon.send).not.toHaveBeenCalledWith("player_management_refresh");
+      expect(result).toMatchObject({
+        enforced: false,
+        message: "sanction saved; server has no match to sync",
+      });
+    });
+
+    it("refreshes the plugin when a sanction is lifted", async () => {
+      replyToRefresh("PlayerManagement: syncing 1 player(s)");
+
+      const result = await service.unsanctionServerPlayer({
+        serverId: "server-1",
+        steamId,
+        type: "gag",
+      });
+
+      expect(rcon.send).toHaveBeenCalledWith("player_management_refresh");
+      expect(result.enforced).toBe(true);
+    });
+
+    it("leaves a Ranked server with no match alone", async () => {
+      hasura.query.mockResolvedValue({
+        matches: [],
+        servers_by_pk: { is_dedicated: true, type: "Ranked", game: "cs2" },
+      });
+
+      const result = await service.sanctionServerPlayer({
+        serverId: "server-1",
+        steamId,
+        type: "mute",
+        sanctionedBySteamId: moderator,
+      });
+
+      expect(rcon.send).not.toHaveBeenCalled();
+      expect(result).toMatchObject({
+        enforced: false,
+        message: "sanction saved; server has no match to sync",
+      });
     });
   });
 

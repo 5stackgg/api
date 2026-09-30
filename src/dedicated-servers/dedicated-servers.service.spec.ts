@@ -312,3 +312,45 @@ describe("DedicatedServersService.pingDedicatedServer", () => {
     expect(alerts()).toBe(0);
   });
 });
+
+describe("DedicatedServersService.pluginInstallEnvironment", () => {
+  const installs = (type: string, game = "cs2") =>
+    Object.fromEntries(
+      DedicatedServersService.pluginInstallEnvironment({ type, game }).map(
+        ({ name, value }) => [name, value],
+      ),
+    );
+
+  it("gives a Ranked server only the match plugin", () => {
+    expect(installs("Ranked")).toEqual({
+      INSTALL_5STACK_PLUGIN: "true",
+      INSTALL_UTILITY_PRACTICE_PLUGIN: "false",
+      INSTALL_PLAYER_MANAGEMENT_PLUGIN: "false",
+    });
+  });
+
+  it("gives a Practice server only the utility plugin", () => {
+    expect(installs("Practice")).toEqual({
+      INSTALL_5STACK_PLUGIN: "false",
+      INSTALL_UTILITY_PRACTICE_PLUGIN: "true",
+      INSTALL_PLAYER_MANAGEMENT_PLUGIN: "false",
+    });
+  });
+
+  it.each(["Competitive", "Casual", "Wingman", "Deathmatch", "Custom"])(
+    "gives a %s community server the player management plugin",
+    (type) => {
+      expect(installs(type)).toEqual({
+        INSTALL_5STACK_PLUGIN: "false",
+        INSTALL_UTILITY_PRACTICE_PLUGIN: "false",
+        INSTALL_PLAYER_MANAGEMENT_PLUGIN: "true",
+      });
+    },
+  );
+
+  it("never gives a CS:GO server the CS2-only player management plugin", () => {
+    expect(installs("Casual", "csgo").INSTALL_PLAYER_MANAGEMENT_PLUGIN).toBe(
+      "false",
+    );
+  });
+});

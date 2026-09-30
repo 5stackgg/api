@@ -24,7 +24,7 @@ export class SanctionsModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(MatchServerMiddlewareMiddleware).forRoutes({
       path: "sanctions/server/:serverId",
-      method: RequestMethod.GET,
+      method: RequestMethod.POST,
     });
   }
 }

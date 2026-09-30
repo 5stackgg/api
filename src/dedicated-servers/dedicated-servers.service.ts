@@ -64,6 +64,31 @@ export class DedicatedServersService {
     this.apps = kc.makeApiClient(AppsV1Api);
   }
 
+  // Exactly one 5stack plugin per server: the match plugin on Ranked, the
+  // utility plugin on Practice, and on a community server, which has no match
+  // plugin to carry sanctions, the player management plugin. It is CS2 only.
+  public static pluginInstallEnvironment(server: {
+    type: string;
+    game: string;
+  }): Array<{ name: string; value: string }> {
+    const community = server.type !== "Ranked" && server.type !== "Practice";
+
+    return [
+      {
+        name: "INSTALL_5STACK_PLUGIN",
+        value: server.type === "Ranked" ? "true" : "false",
+      },
+      {
+        name: "INSTALL_UTILITY_PRACTICE_PLUGIN",
+        value: server.type === "Practice" ? "true" : "false",
+      },
+      {
+        name: "INSTALL_PLAYER_MANAGEMENT_PLUGIN",
+        value: community && server.game !== "csgo" ? "true" : "false",
+      },
+    ];
+  }
+
   public async setupDedicatedServer(serverId: string): Promise<boolean> {
     this.logger.log(`[${serverId}] assigning dedicated server`);
 
@@ -266,16 +291,9 @@ export class DedicatedServersService {
                         name: "SERVER_TYPE",
                         value: server.type,
                       },
-                      {
-                        name: "INSTALL_5STACK_PLUGIN",
-                        value: server.type === "Ranked" ? "true" : "false",
-                      },
-                      // A practice server runs the utility plugin in the match
-                      // plugin's place -- never both, and never neither.
-                      {
-                        name: "INSTALL_UTILITY_PRACTICE_PLUGIN",
-                        value: server.type === "Practice" ? "true" : "false",
-                      },
+                      ...DedicatedServersService.pluginInstallEnvironment(
+                        server,
+                      ),
                       {
                         name: "GAME_NODE_SERVER",
                         value: "true",
