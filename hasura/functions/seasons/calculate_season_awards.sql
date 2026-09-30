@@ -42,6 +42,9 @@ BEGIN
       INTO _mvp_steam_id
     FROM public.player_elo pe
     WHERE pe.season_id = _season_id
+      -- Impact is relative to teammates, so a Duel scores a flat 1.08
+      -- regardless of result and would outrank every 5v5 regular.
+      AND pe."type" = 'Competitive'
     GROUP BY pe.steam_id
     HAVING COUNT(*) > 0
     ORDER BY AVG(COALESCE(pe.impact, 1.0)) DESC,
