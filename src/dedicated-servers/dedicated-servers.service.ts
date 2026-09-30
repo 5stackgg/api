@@ -16,6 +16,8 @@ import { MapRotationService } from "../game-plugins/map-rotation.service";
 
 @Injectable()
 export class DedicatedServersService {
+  private static readonly rebuilds = new Map<string, Promise<boolean>>();
+
   private appConfig: AppConfig;
   private gameServerConfig: GameServersConfig;
   private readonly namespace: string;
@@ -424,7 +426,11 @@ export class DedicatedServersService {
 
       return true;
     } catch (error) {
-      await this.removeDedicatedServer(serverId);
+      // AlreadyExists means another rebuild created it; deleting it here would
+      // take down the server that rebuild just started.
+      if (error?.code?.toString() !== "409") {
+        await this.removeDedicatedServer(serverId);
+      }
 
       this.logger.error(
         `[${serverId}] unable to create dedicated server`,
@@ -432,6 +438,36 @@ export class DedicatedServersService {
       );
 
       return false;
+    }
+  }
+
+  // Remove-then-create is not atomic, and a servers event, a region relay
+  // change and the dedicated server settings all trigger it. Overlapping runs
+  // can both remove, one creates, and the other fails on AlreadyExists, so
+  // they run one at a time per server.
+  public async rebuildDedicatedServer(
+    serverId: string,
+    start = true,
+  ): Promise<boolean> {
+    const previous =
+      DedicatedServersService.rebuilds.get(serverId) ?? Promise.resolve(true);
+
+    const rebuild = previous
+      .catch(() => false)
+      .then(async () => {
+        await this.removeDedicatedServer(serverId);
+
+        return start ? await this.setupDedicatedServer(serverId) : true;
+      });
+
+    DedicatedServersService.rebuilds.set(serverId, rebuild);
+
+    try {
+      return await rebuild;
+    } finally {
+      if (DedicatedServersService.rebuilds.get(serverId) === rebuild) {
+        DedicatedServersService.rebuilds.delete(serverId);
+      }
     }
   }
 

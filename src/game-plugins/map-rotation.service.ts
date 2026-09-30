@@ -88,11 +88,13 @@ export class MapRotationService {
     rotation: ServerMapRotation,
     runtime: string,
   ): Record<string, string> {
-    const maps = rotation.maps.map((map) =>
+    const labels = MapRotationService.uniqueLabels(rotation.maps);
+
+    const maps = rotation.maps.map((map, index) =>
       MapRotationService.fill(spec.map, {
         id: MapRotationService.mapId(map),
         name: map.name,
-        label: map.label || map.name,
+        label: labels[index],
         workshop_id: map.workshop_map_id,
       }),
     );
@@ -111,6 +113,25 @@ export class MapRotationService {
     }
 
     return files;
+  }
+
+  // MapChooser finds the map to change to by its display name, so a second map
+  // sharing one could never be played.
+  private static uniqueLabels(maps: Array<RotationMap>): Array<string> {
+    const counts = new Map<string, number>();
+
+    for (const map of maps) {
+      const label = (map.label || map.name).toLowerCase();
+      counts.set(label, (counts.get(label) ?? 0) + 1);
+    }
+
+    return maps.map((map) => {
+      const label = map.label || map.name;
+
+      return (counts.get(label.toLowerCase()) ?? 0) > 1
+        ? `${label} (${MapRotationService.mapId(map)})`
+        : label;
+    });
   }
 
   // A string that is exactly one token takes the token's own type, so

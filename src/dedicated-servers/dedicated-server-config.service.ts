@@ -15,6 +15,7 @@ type WorkshopItem = {
   banned?: number | boolean;
   title?: string;
   preview_url?: string;
+  tags?: Array<{ tag: string }>;
 };
 
 export type ImportedWorkshopMap = {
@@ -49,19 +50,24 @@ export class DedicatedServerConfigService {
     const ids = [...new Set(mapIds)];
 
     await this.postgres.transaction(async (client) => {
-      const { rows } = await client.query<{ count: number }>(
-        `SELECT count(*)::int AS count
+      const { rows } = await client.query<{ id: string; deleted: boolean }>(
+        `SELECT id, deleted_at IS NOT NULL AS deleted
            FROM maps
-          WHERE id = ANY($1::uuid[])
-            AND deleted_at IS NULL`,
+          WHERE id = ANY($1::uuid[])`,
         [ids],
       );
 
-      if (rows[0].count !== ids.length) {
+      if (rows.length !== ids.length) {
         throw new BadRequestException(
-          "The rotation names a map that does not exist or was deleted",
+          "The rotation names a map that does not exist",
         );
       }
+
+      // A map deleted since the page loaded is skipped at boot anyway, so it
+      // is dropped here rather than blocking every save that still lists it.
+      const deleted = new Set(
+        rows.filter((row) => row.deleted).map((row) => row.id),
+      );
 
       await client.query(
         `DELETE FROM server_map_rotation WHERE server_id = $1`,
@@ -72,7 +78,7 @@ export class DedicatedServerConfigService {
         `INSERT INTO server_map_rotation (server_id, map_id, position)
          SELECT $1, rotation.map_id, rotation.position - 1
            FROM unnest($2::uuid[]) WITH ORDINALITY AS rotation(map_id, position)`,
-        [serverId, ids],
+        [serverId, ids.filter((id) => !deleted.has(id))],
       );
 
       await client.query(
@@ -133,13 +139,7 @@ export class DedicatedServerConfigService {
     for (const itemId of itemIds) {
       const item = details.get(itemId);
 
-      if (
-        !item ||
-        item.result !== 1 ||
-        item.consumer_app_id !== 730 ||
-        item.banned ||
-        !item.title
-      ) {
+      if (!DedicatedServerConfigService.isPlayableMap(item)) {
         skipped++;
         continue;
       }
@@ -156,6 +156,19 @@ export class DedicatedServerConfigService {
     }
 
     return { maps, skipped };
+  }
+
+  // CS2 skins, stickers and collections are workshop items for app 730 too;
+  // only a map carries the Map tag.
+  public static isPlayableMap(item: WorkshopItem | undefined): boolean {
+    return (
+      !!item &&
+      item.result === 1 &&
+      item.consumer_app_id === 730 &&
+      !item.banned &&
+      !!item.title &&
+      (item.tags ?? []).some(({ tag }) => tag.toLowerCase() === "map")
+    );
   }
 
   public static workshopId(input: string): string | null {
@@ -212,9 +225,7 @@ export class DedicatedServerConfigService {
       return;
     }
 
-    await this.dedicatedServers.removeDedicatedServer(server.id);
-
-    if (!(await this.dedicatedServers.setupDedicatedServer(server.id))) {
+    if (!(await this.dedicatedServers.rebuildDedicatedServer(server.id))) {
       throw new BadRequestException(
         "Saved, but the server failed to start again; check the API logs",
       );
@@ -296,7 +307,9 @@ export class DedicatedServerConfigService {
 
   // A workshop map is catalogued once, under Competitive and disabled, the same
   // way the map form adds one: that keeps it out of every match map pool until
-  // an admin opts it in. An existing row is reused, and restored if deleted.
+  // an admin opts it in. An existing row is reused. A deleted one is restored
+  // disabled and out of the active pool, because restoring an active map puts
+  // it straight back into the seed pools that matchmaking plays.
   private async upsertWorkshopMap(
     workshopId: string,
     title: string,
@@ -317,7 +330,10 @@ export class DedicatedServerConfigService {
     if (existing) {
       if (existing.deleted) {
         await this.postgres.query(
-          `UPDATE maps SET deleted_at = NULL WHERE workshop_map_id = $1`,
+          `UPDATE maps
+              SET deleted_at = NULL, enabled = false, active_pool = false
+            WHERE workshop_map_id = $1
+              AND deleted_at IS NOT NULL`,
           [workshopId],
         );
       }

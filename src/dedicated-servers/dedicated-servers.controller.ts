@@ -31,17 +31,12 @@ export class DedicatedServersController {
       return;
     }
 
-    await this.dedicatedServersService.removeDedicatedServer(serverId);
-
-    if (
-      data.op === "DELETE" ||
-      !data.new.game_server_node_id ||
-      data.new.enabled === false
-    ) {
-      return;
-    }
-
-    await this.dedicatedServersService.setupDedicatedServer(serverId);
+    await this.dedicatedServersService.rebuildDedicatedServer(
+      serverId,
+      data.op !== "DELETE" &&
+        !!data.new.game_server_node_id &&
+        data.new.enabled !== false,
+    );
   }
 
   @HasuraEvent()
@@ -71,8 +66,7 @@ export class DedicatedServersController {
     });
 
     for (const server of servers) {
-      await this.dedicatedServersService.removeDedicatedServer(server.id);
-      await this.dedicatedServersService.setupDedicatedServer(server.id);
+      await this.dedicatedServersService.rebuildDedicatedServer(server.id);
     }
   }
 
