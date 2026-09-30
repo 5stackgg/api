@@ -3,6 +3,7 @@ import {
   GameServerNodeService,
   GamedataValidationEntry,
   GamedataValidationResult,
+  NodeWorkloads,
 } from "./game-server-node.service";
 
 const entry = (
@@ -254,5 +255,71 @@ describe("GameServerNodeService gamedata errors", () => {
         error: "no pod was scheduled",
       }),
     ).toBe("no pod was scheduled");
+  });
+});
+
+describe("GameServerNodeService.isInService", () => {
+  const node = (fields: Partial<NodeWorkloads> = {}): NodeWorkloads => ({
+    enabled: true,
+    enabled_for_match_making: true,
+    gpu_streaming_enabled: true,
+    gpu_demos_enabled: true,
+    gpu_rendering_enabled: true,
+    servers: [],
+    ...fields,
+  });
+
+  const gpuMode = (fields: Partial<NodeWorkloads> = {}) =>
+    node({ enabled_for_match_making: false, ...fields });
+
+  it("counts an enabled match node", () => {
+    expect(GameServerNodeService.isInService(node())).toBe(true);
+  });
+
+  it("drops a disabled node", () => {
+    expect(GameServerNodeService.isInService(node({ enabled: false }))).toBe(
+      false,
+    );
+  });
+
+  it("keeps a disabled node that still hosts an enabled dedicated server", () => {
+    expect(
+      GameServerNodeService.isInService(
+        node({ enabled: false, servers: [{ id: "server-1" }] }),
+      ),
+    ).toBe(true);
+  });
+
+  it("counts a GPU-mode node while any GPU workload is on", () => {
+    expect(
+      GameServerNodeService.isInService(
+        gpuMode({ gpu_streaming_enabled: false, gpu_demos_enabled: false }),
+      ),
+    ).toBe(true);
+  });
+
+  it("drops a GPU-mode node with every workload off", () => {
+    expect(
+      GameServerNodeService.isInService(
+        gpuMode({
+          gpu_streaming_enabled: false,
+          gpu_demos_enabled: false,
+          gpu_rendering_enabled: false,
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  it("keeps a GPU-mode node with workloads off that hosts a dedicated server", () => {
+    expect(
+      GameServerNodeService.isInService(
+        gpuMode({
+          gpu_streaming_enabled: false,
+          gpu_demos_enabled: false,
+          gpu_rendering_enabled: false,
+          servers: [{ id: "server-1" }],
+        }),
+      ),
+    ).toBe(true);
   });
 });

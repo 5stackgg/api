@@ -82,6 +82,9 @@ export class CheckServerPluginVersions extends WorkerHost {
             connected: {
               _eq: true,
             },
+            enabled: {
+              _eq: true,
+            },
             // A server known to be on the other framework is waiting to be
             // recycled onto the selected runtime, not running an out of date
             // plugin. A server that has never reported one is assumed to be on

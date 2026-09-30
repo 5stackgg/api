@@ -42,10 +42,7 @@ export class PingDedicatedServers extends WorkerHost {
 
     await Promise.all(
       servers.map(async (server) => {
-        if (
-          server.game_server_node &&
-          server.game_server_node.status !== "Online"
-        ) {
+        if (server.game_server_node?.status === "Offline") {
           await this.hasura.mutation({
             update_servers_by_pk: {
               __args: {
@@ -55,6 +52,8 @@ export class PingDedicatedServers extends WorkerHost {
               __typename: true,
             },
           });
+          // Its pod comes back up only once the node does.
+          await this.dedicatedServersService.expectRestart(server.id);
           return;
         }
         await this.dedicatedServersService.pingDedicatedServer(server.id);

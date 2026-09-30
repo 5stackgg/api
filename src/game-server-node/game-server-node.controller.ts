@@ -183,6 +183,9 @@ export class GameServerNodeController {
       const cooldownKey = (level: string) => `${payload.node}:${level}`;
 
       const shouldNotify = (level: string) => {
+        if (!result?.inService) {
+          return false;
+        }
         const last = this.diskWarningCooldowns.get(cooldownKey(level));
         return (
           !last ||
@@ -459,38 +462,11 @@ export class GameServerNodeController {
     game_server_node_id: string;
     enabled: boolean;
   }) {
-    const { game_server_nodes_by_pk } = await this.hasura.query({
-      game_server_nodes_by_pk: {
-        __args: {
-          id: data.game_server_node_id,
-        },
-        status: true,
-      },
-    });
-
-    if (game_server_nodes_by_pk.status === "Setup") {
-      return {
-        success: false,
-      };
-    }
-
-    await this.hasura.mutation({
-      update_game_server_nodes_by_pk: {
-        __args: {
-          pk_columns: {
-            id: data.game_server_node_id,
-          },
-          _set: {
-            // we set it to offline, to allow it to come back online to accept new matches
-            status: data.enabled ? "Online" : "NotAcceptingNewMatches",
-          },
-        },
-        __typename: true,
-      },
-    });
-
     return {
-      success: true,
+      success: await this.gameServerNodeService.setAcceptingNewMatches(
+        data.game_server_node_id,
+        data.enabled,
+      ),
     };
   }
 
@@ -1003,7 +979,7 @@ UNIT
         serverId,
       },
       {
-        delay: 90 * 1000,
+        delay: MarkDedicatedServerOffline.delayFor(server),
         attempts: 1,
         removeOnFail: false,
         removeOnComplete: true,

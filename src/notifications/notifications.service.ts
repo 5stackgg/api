@@ -313,6 +313,31 @@ export class NotificationsService {
     this.logger.log(`notified warned player ${sanction.steamId}`);
   }
 
+  // The newest of an entity's paired alerts (offline/online). Dismissed rows
+  // count: deleting an alert does not undo the condition it reported.
+  async latestTitle(
+    type: e_notification_types_enum,
+    entityId: string,
+    titles: Array<string>,
+  ): Promise<string | null> {
+    const { notifications } = await this.hasura.query({
+      notifications: {
+        __args: {
+          where: {
+            type: { _eq: type },
+            entity_id: { _eq: entityId },
+            title: { _in: titles },
+          },
+          order_by: [{ created_at: "desc" }],
+          limit: 1,
+        },
+        title: true,
+      },
+    });
+
+    return notifications.at(0)?.title ?? null;
+  }
+
   async send(
     type: e_notification_types_enum,
     notification: {

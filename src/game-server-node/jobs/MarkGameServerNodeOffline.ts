@@ -5,6 +5,7 @@ import { HasuraService } from "../../hasura/hasura.service";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { NotificationsService } from "../../notifications/notifications.service";
 import { DISCORD_COLORS } from "../../notifications/utilities/constants";
+import { GameServerNodeService } from "../game-server-node.service";
 
 @UseQueue("GameServerNode", GameServerQueues.NodeOffline)
 export class MarkGameServerNodeOffline extends WorkerHost {
@@ -20,6 +21,23 @@ export class MarkGameServerNodeOffline extends WorkerHost {
       node: string;
     }>,
   ): Promise<void> {
+    const { game_server_nodes_by_pk: node } = await this.hasura.query({
+      game_server_nodes_by_pk: {
+        __args: {
+          id: job.data.node,
+        },
+        status: true,
+        ...GameServerNodeService.inServiceSelection,
+        e_region: {
+          status: true,
+        },
+      },
+    });
+
+    if (!node || node.status === "Offline") {
+      return;
+    }
+
     const { update_game_server_nodes_by_pk } = await this.hasura.mutation({
       update_game_server_nodes_by_pk: {
         __args: {
@@ -57,7 +75,10 @@ export class MarkGameServerNodeOffline extends WorkerHost {
       },
     });
 
-    if (!update_game_server_nodes_by_pk) {
+    if (
+      !update_game_server_nodes_by_pk ||
+      !GameServerNodeService.isInService(node)
+    ) {
       return;
     }
 
@@ -88,6 +109,18 @@ export class MarkGameServerNodeOffline extends WorkerHost {
     });
 
     if (!server_regions_by_pk || server_regions_by_pk.status !== "Offline") {
+      return;
+    }
+
+    // A region can read Offline without anyone being told (its only node
+    // stopped accepting matches), so an unchanged status alone is no repeat.
+    if (
+      node.e_region?.status === "Offline" &&
+      (await this.notifications.latestTitle("GameNodeStatus", region, [
+        "Region Offline",
+        "Region Online",
+      ])) === "Region Offline"
+    ) {
       return;
     }
 
