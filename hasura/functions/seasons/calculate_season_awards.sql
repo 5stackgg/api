@@ -46,7 +46,7 @@ BEGIN
       -- regardless of result and would outrank every 5v5 regular.
       AND pe."type" = 'Competitive'
     GROUP BY pe.steam_id
-    HAVING COUNT(*) > 0
+    HAVING COUNT(*) >= 5
     ORDER BY AVG(COALESCE(pe.impact, 1.0)) DESC,
              SUM(COALESCE(pe.impact, 1.0)) DESC,
              pe.steam_id ASC
