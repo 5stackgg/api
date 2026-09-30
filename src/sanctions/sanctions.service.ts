@@ -155,6 +155,7 @@ export class SanctionsService {
       const result = await this.syncServer(
         serverId,
         type === "ban" ? (onServer?.userid ?? null) : null,
+        "saved",
       );
       enforced = result.enforced;
       message = result.message;
@@ -218,7 +219,7 @@ export class SanctionsService {
     let message = type === "warning" ? "warning removed" : "sanction removed";
 
     if (serverId && SERVER_ENFORCED_SANCTION_TYPES.includes(type)) {
-      const result = await this.syncServer(serverId, null);
+      const result = await this.syncServer(serverId, null, "removed");
       enforced = result.enforced;
       message = result.message;
     }
@@ -390,6 +391,7 @@ export class SanctionsService {
         },
         is_dedicated: true,
         type: true,
+        game: true,
       },
     });
 
@@ -397,8 +399,10 @@ export class SanctionsService {
       return "match";
     }
 
+    // The plugin is CS2 only, so a CS:GO server can never have it.
     if (
       servers_by_pk?.is_dedicated &&
+      servers_by_pk.game !== "csgo" &&
       servers_by_pk.type !== "Ranked" &&
       servers_by_pk.type !== "Practice"
     ) {
@@ -411,13 +415,16 @@ export class SanctionsService {
   private async syncServer(
     serverId: string,
     kickUserid: string | null,
+    action: "saved" | "removed",
   ): Promise<{ enforced: boolean; message: string }> {
+    const saved = `sanction ${action}`;
+
     try {
       const rcon = await this.rconService.connect(serverId);
       if (!rcon) {
         return {
           enforced: false,
-          message: "sanction saved; unable to connect to server rcon",
+          message: `${saved}; unable to connect to server rcon`,
         };
       }
 
@@ -435,7 +442,7 @@ export class SanctionsService {
 
         return {
           enforced: true,
-          message: "sanction saved and synced to server",
+          message: `${saved} and synced to server`,
         };
       }
 
@@ -447,37 +454,33 @@ export class SanctionsService {
         if (reply.includes("PlayerManagement: syncing")) {
           return {
             enforced: true,
-            message: "sanction saved and synced to server",
+            message: `${saved} and synced to server`,
           };
         }
 
-        if (reply.includes("PlayerManagement:")) {
-          return {
-            enforced: kicked,
-            message:
-              "sanction saved; the Player Management plugin on this server is not configured",
-          };
-        }
+        // Not enforced even when the kick landed: without the plugin nothing
+        // stops a banned player rejoining, and the moderator has to know.
+        const done = kicked ? `${saved} and player kicked` : saved;
 
         return {
-          enforced: kicked,
-          message: kicked
-            ? "sanction saved and player kicked; the Player Management plugin is not installed on this server"
-            : "sanction saved; the Player Management plugin is not installed on this server",
+          enforced: false,
+          message: reply.includes("PlayerManagement:")
+            ? `${done}; the Player Management plugin on this server is not configured`
+            : `${done}; the Player Management plugin is not installed on this server`,
         };
       }
 
       return {
         enforced: kicked,
         message: kicked
-          ? "sanction saved and player kicked; server has no match to sync"
-          : "sanction saved; server has no match to sync",
+          ? `${saved} and player kicked; server has no match to sync`
+          : `${saved}; server has no match to sync`,
       };
     } catch (error) {
       this.logger.warn(`failed to sync sanctions to ${serverId}`, error);
       return {
         enforced: false,
-        message: "sanction saved; live enforcement failed",
+        message: `${saved}; live enforcement failed`,
       };
     } finally {
       await this.rconService.disconnect(serverId);

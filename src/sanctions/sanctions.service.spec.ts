@@ -234,7 +234,7 @@ describe("SanctionsService", () => {
     beforeEach(() => {
       hasura.query.mockResolvedValue({
         matches: [],
-        servers_by_pk: { is_dedicated: true, type: "Casual" },
+        servers_by_pk: { is_dedicated: true, type: "Casual", game: "cs2" },
       });
     });
 
@@ -292,7 +292,9 @@ describe("SanctionsService", () => {
       });
     });
 
-    it("still counts a ban as enforced by the kick when the plugin is missing", async () => {
+    // The kick lands, but nothing stops the player rejoining, so the
+    // moderator is told rather than shown a clean success.
+    it("does not count a kicked ban as enforced when the plugin is missing", async () => {
       replyToRefresh("");
 
       const result = await service.sanctionServerPlayer({
@@ -304,9 +306,62 @@ describe("SanctionsService", () => {
 
       expect(rcon.send).toHaveBeenCalledWith("kickid 4 Banned");
       expect(result).toMatchObject({
-        enforced: true,
+        enforced: false,
         message:
           "sanction saved and player kicked; the Player Management plugin is not installed on this server",
+      });
+    });
+
+    it("keeps the kick in the message when the plugin is not configured", async () => {
+      replyToRefresh("PlayerManagement: not configured");
+
+      const result = await service.sanctionServerPlayer({
+        serverId: "server-1",
+        steamId,
+        type: "ban",
+        sanctionedBySteamId: moderator,
+      });
+
+      expect(result).toMatchObject({
+        enforced: false,
+        message:
+          "sanction saved and player kicked; the Player Management plugin on this server is not configured",
+      });
+    });
+
+    it("words a lifted sanction as removed, not saved", async () => {
+      replyToRefresh("");
+
+      const result = await service.unsanctionServerPlayer({
+        serverId: "server-1",
+        steamId,
+        type: "mute",
+      });
+
+      expect(result).toMatchObject({
+        enforced: false,
+        message:
+          "sanction removed; the Player Management plugin is not installed on this server",
+      });
+    });
+
+    it("never asks a CS:GO server for the CS2-only plugin", async () => {
+      hasura.query.mockResolvedValue({
+        matches: [],
+        servers_by_pk: { is_dedicated: true, type: "Casual", game: "csgo" },
+      });
+
+      const result = await service.sanctionServerPlayer({
+        serverId: "server-1",
+        steamId,
+        type: "mute",
+        sanctionedBySteamId: moderator,
+      });
+
+      expect(rcon.send).not.toHaveBeenCalledWith("player_management_refresh");
+      expect(result).toMatchObject({
+        enforced: false,
+        message: "sanction saved; server has no match to sync",
       });
     });
 
@@ -326,7 +381,7 @@ describe("SanctionsService", () => {
     it("leaves a Ranked server with no match alone", async () => {
       hasura.query.mockResolvedValue({
         matches: [],
-        servers_by_pk: { is_dedicated: true, type: "Ranked" },
+        servers_by_pk: { is_dedicated: true, type: "Ranked", game: "cs2" },
       });
 
       const result = await service.sanctionServerPlayer({

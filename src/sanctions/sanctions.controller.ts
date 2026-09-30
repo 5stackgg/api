@@ -1,4 +1,11 @@
-import { Body, Controller, HttpCode, Param, Post } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  HttpCode,
+  Param,
+  Post,
+} from "@nestjs/common";
 import { HasuraAction } from "src/hasura/hasura.controller";
 import { User } from "src/auth/types/User";
 import { isRoleAbove } from "src/utilities/isRoleAbove";
@@ -17,11 +24,18 @@ export class SanctionsController {
     @Param("serverId") serverId: string,
     @Body()
     body: {
+      serverId?: unknown;
       steam_ids?: unknown;
       plugin_version?: unknown;
       plugin_runtime?: unknown;
     },
   ) {
+    // The server middleware authenticates a body serverId ahead of the path
+    // one, so without this any server could write another's heartbeat.
+    if (body?.serverId !== undefined && body.serverId !== serverId) {
+      throw new ForbiddenException();
+    }
+
     return {
       sanctions: await this.sanctionsService.syncServerSanctions(serverId, {
         steamIds: body?.steam_ids,

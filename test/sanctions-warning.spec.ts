@@ -149,9 +149,90 @@ describe("warning sanctions (SQL-driven)", () => {
     await sanction(warned, "warning");
     await sanction(muted, "mute");
 
-    expect(await service().getActiveServerSanctions("server-1")).toEqual([
-      { steam_id: muted, is_banned: false, is_muted: true, is_gagged: false },
+    expect(
+      await service().syncServerSanctions(
+        "00000000-0000-0000-0000-000000000000",
+        { steamIds: [warned, muted] },
+      ),
+    ).toEqual([
+      { steam_id: muted, type: "mute", reason: "reason", expires_at: null },
     ]);
+  });
+
+  it("hands the server only live sanctions of the players it asked about", async () => {
+    const asked = await fx.player();
+    const other = await fx.player();
+    await sanction(asked, "ban");
+    await sanction(asked, "gag", new Date(Date.now() - 60_000).toISOString());
+    await sanction(other, "mute");
+
+    expect(
+      await service().syncServerSanctions(
+        "00000000-0000-0000-0000-000000000000",
+        { steamIds: [asked] },
+      ),
+    ).toEqual([
+      { steam_id: asked, type: "ban", reason: "reason", expires_at: null },
+    ]);
+  });
+
+  it("records the plugin's heartbeat at most once a minute unless it changes", async () => {
+    await postgres.query(
+      "INSERT INTO server_regions (value, is_lan) VALUES ('PmTest', false) ON CONFLICT (value) DO NOTHING",
+    );
+    const [{ id: serverId }] = await postgres.query<Array<{ id: string }>>(
+      `INSERT INTO servers (host, label, rcon_password, port, enabled, region, type, is_dedicated)
+       VALUES ('127.0.0.1', 'pm', '\\x00'::bytea, 27916, true, 'PmTest', 'Casual', true)
+       RETURNING id`,
+    );
+    const heartbeat = async () => {
+      const [row] = await postgres.query<
+        Array<{
+          player_management_version: string | null;
+          player_management_runtime: string | null;
+          player_management_seen_at: Date | null;
+        }>
+      >(
+        `SELECT player_management_version, player_management_runtime, player_management_seen_at
+           FROM servers WHERE id = $1`,
+        [serverId],
+      );
+      return row;
+    };
+    const sync = (version: string) =>
+      service().syncServerSanctions(serverId, {
+        pluginVersion: version,
+        pluginRuntime: "swiftlys2",
+      });
+
+    try {
+      await sync("0.0.1");
+      const first = await heartbeat();
+      expect(first.player_management_version).toBe("0.0.1");
+      expect(first.player_management_runtime).toBe("swiftlys2");
+      expect(first.player_management_seen_at).not.toBeNull();
+
+      await sync("0.0.1");
+      expect((await heartbeat()).player_management_seen_at).toEqual(
+        first.player_management_seen_at,
+      );
+
+      await sync("0.0.2");
+      expect((await heartbeat()).player_management_version).toBe("0.0.2");
+
+      await postgres.query(
+        `UPDATE servers
+            SET player_management_seen_at = now() - interval '90 seconds'
+          WHERE id = $1`,
+        [serverId],
+      );
+      await sync("0.0.2");
+      expect(
+        (await heartbeat()).player_management_seen_at!.getTime(),
+      ).toBeGreaterThan(Date.now() - 30_000);
+    } finally {
+      await postgres.query("DELETE FROM servers WHERE id = $1", [serverId]);
+    }
   });
 
   it("removes one warning by id and leaves the rest of the record", async () => {

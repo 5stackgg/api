@@ -159,12 +159,14 @@ select_permissions:
         - connected
         - enabled
         - game
+        - game_server_node_id
         - host
         - id
         - is_dedicated
         - label
         - map_rotation_shuffle
         - max_players
+        - offline_at
         - player_management_runtime
         - player_management_seen_at
         - player_management_version
