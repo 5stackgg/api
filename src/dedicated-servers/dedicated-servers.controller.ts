@@ -1,8 +1,9 @@
-import { Controller } from "@nestjs/common";
+import { Controller, ForbiddenException } from "@nestjs/common";
 import { HasuraEvent } from "src/hasura/hasura.controller";
 import { HasuraEventData } from "src/hasura/types/HasuraEventData";
 import { server_regions_set_input, servers_set_input } from "generated";
 import { DedicatedServersService } from "./dedicated-servers.service";
+import { DedicatedServerConfigService } from "./dedicated-server-config.service";
 import { HasuraService } from "src/hasura/hasura.service";
 import { HasuraAction } from "src/hasura/hasura.controller";
 import { game_server_nodes_set_input } from "generated/schema";
@@ -14,6 +15,7 @@ export class DedicatedServersController {
   constructor(
     private readonly hasura: HasuraService,
     private readonly dedicatedServersService: DedicatedServersService,
+    private readonly dedicatedServerConfig: DedicatedServerConfigService,
   ) {}
 
   @HasuraEvent()
@@ -144,5 +146,54 @@ export class DedicatedServersController {
       steam_id: player.steam_id,
       name: player.name,
     }));
+  }
+
+  @HasuraAction()
+  public async setServerMapRotation(data: {
+    user: User;
+    server_id: string;
+    map_ids: Array<string>;
+    shuffle: boolean;
+  }) {
+    this.assertAdministrator(data.user);
+
+    await this.dedicatedServerConfig.setMapRotation(
+      data.server_id,
+      data.map_ids,
+      data.shuffle,
+    );
+
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async setServerPlugins(data: {
+    user: User;
+    server_id: string;
+    plugins: Array<{ slug: string; enabled: boolean }>;
+  }) {
+    this.assertAdministrator(data.user);
+
+    await this.dedicatedServerConfig.setPlugins(data.server_id, data.plugins);
+
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async importWorkshopCollection(data: {
+    user: User;
+    collection: string;
+  }) {
+    this.assertAdministrator(data.user);
+
+    return await this.dedicatedServerConfig.importWorkshopCollection(
+      data.collection,
+    );
+  }
+
+  private assertAdministrator(user: User): void {
+    if (!user || !isRoleAbove(user.role, "administrator")) {
+      throw new ForbiddenException("Administrator access required");
+    }
   }
 }

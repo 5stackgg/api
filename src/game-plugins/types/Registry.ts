@@ -10,6 +10,11 @@ export type RegistryVersion = {
   install_path?: string;
 };
 
+export type MapRotationSpec = {
+  files: Record<string, Record<string, unknown>>;
+  map: Record<string, unknown>;
+};
+
 export type RegistryPlugin = {
   slug: string;
   kind: "game" | "panel" | "bundle";
@@ -25,6 +30,7 @@ export type RegistryPlugin = {
   config_schema?: Record<string, unknown>;
   config_path?: string;
   cvars?: Array<string>;
+  map_rotation?: MapRotationSpec;
   panel?: Record<string, unknown>;
   wiring?: Record<string, unknown>;
   pairs_with?: Array<string>;

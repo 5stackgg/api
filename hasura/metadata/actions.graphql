@@ -2635,3 +2635,42 @@ type TournamentInviteCodeOutput {
 type TournamentDraftOutput {
   teams_created: Int!
 }
+
+type Mutation {
+  setServerMapRotation(
+    server_id: uuid!
+    map_ids: [uuid!]!
+    shuffle: Boolean!
+  ): SuccessOutput
+}
+
+type Mutation {
+  setServerPlugins(
+    server_id: uuid!
+    plugins: [ServerPluginInput!]!
+  ): SuccessOutput
+}
+
+type Mutation {
+  importWorkshopCollection(
+    collection: String!
+  ): ImportWorkshopCollectionOutput
+}
+
+input ServerPluginInput {
+  slug: String!
+  enabled: Boolean!
+}
+
+type ImportedWorkshopMap {
+  id: uuid!
+  name: String!
+  label: String
+  poster: String
+  workshop_map_id: String!
+}
+
+type ImportWorkshopCollectionOutput {
+  maps: [ImportedWorkshopMap!]!
+  skipped: Int!
+}

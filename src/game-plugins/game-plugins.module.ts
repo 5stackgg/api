@@ -13,6 +13,7 @@ import { loggerFactory } from "../utilities/LoggerFactory";
 import { GamePluginQueues } from "./enums/GamePluginQueues";
 import { GamePluginsService } from "./game-plugins.service";
 import { GameModesService } from "./game-modes.service";
+import { MapRotationService } from "./map-rotation.service";
 import { GamePluginsController } from "./game-plugins.controller";
 import { SyncGamePluginRegistry } from "./jobs/SyncGamePluginRegistry";
 import { CheckGamePluginUpdates } from "./jobs/CheckGamePluginUpdates";
@@ -22,6 +23,7 @@ import { NotifyGamePluginUpdate } from "./jobs/NotifyGamePluginUpdate";
   providers: [
     GamePluginsService,
     GameModesService,
+    MapRotationService,
     SyncGamePluginRegistry,
     CheckGamePluginUpdates,
     NotifyGamePluginUpdate,
@@ -42,7 +44,7 @@ import { NotifyGamePluginUpdate } from "./jobs/NotifyGamePluginUpdate";
       { name: GamePluginQueues.Registry, adapter: BullMQAdapter },
     ),
   ],
-  exports: [GamePluginsService, GameModesService],
+  exports: [GamePluginsService, GameModesService, MapRotationService],
   controllers: [GamePluginsController],
 })
 export class GamePluginsModule {

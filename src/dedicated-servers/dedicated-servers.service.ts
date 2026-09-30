@@ -12,6 +12,7 @@ import { Redis } from "ioredis";
 import { SystemService } from "src/system/system.service";
 import { PluginRuntimeService } from "src/plugin-runtime/plugin-runtime.service";
 import { GameModesService } from "../game-plugins/game-modes.service";
+import { MapRotationService } from "../game-plugins/map-rotation.service";
 
 @Injectable()
 export class DedicatedServersService {
@@ -34,6 +35,7 @@ export class DedicatedServersService {
     private readonly systemService: SystemService,
     private readonly pluginRuntimeService: PluginRuntimeService,
     private readonly gameModesService: GameModesService,
+    private readonly mapRotationService: MapRotationService,
   ) {
     this.redis = this.redisManager.getConnection();
 
@@ -165,6 +167,10 @@ export class DedicatedServersService {
       const gameModeEnvironment =
         this.gameModesService.environmentFor(gameMode);
 
+      const startMap = MapRotationService.startMap(
+        await this.mapRotationService.forServer(serverId),
+      );
+
       const dedicatedServerDeploymentName =
         this.getDedicatedServerDeploymentName(serverId);
 
@@ -272,7 +278,26 @@ export class DedicatedServersService {
                       // TODO - number of players
                       {
                         name: "EXTRA_GAME_PARAMS",
-                        value: `-maxplayers ${server.type === "Ranked" ? 16 : server.max_players} +map de_dust2 +game_type ${this.getGameType(server.type)} +game_mode ${this.getGameMode(server.type)} +sv_skirmish_id ${this.getWarGameType(server.type)} ${server.connect_password ? ` +sv_password ${server.connect_password}` : ""}${gameMode?.extraGameParams ? ` ${gameMode.extraGameParams}` : ""}`,
+                        value: [
+                          `-maxplayers ${server.type === "Ranked" ? 16 : server.max_players}`,
+                          startMap?.workshop_map_id
+                            ? null
+                            : `+map ${startMap?.name ?? "de_dust2"}`,
+                          `+game_type ${this.getGameType(server.type)}`,
+                          `+game_mode ${this.getGameMode(server.type)}`,
+                          `+sv_skirmish_id ${this.getWarGameType(server.type)}`,
+                          server.connect_password
+                            ? `+sv_password ${server.connect_password}`
+                            : null,
+                          gameMode?.extraGameParams,
+                          // Runs in command-line order, unlike +map, so it
+                          // goes after game_type/game_mode have been set.
+                          startMap?.workshop_map_id
+                            ? `+host_workshop_map ${startMap.workshop_map_id}`
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" "),
                       },
                       { name: "SERVER_ID", value: server.id },
                       {
