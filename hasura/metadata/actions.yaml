@@ -380,6 +380,27 @@ actions:
       forward_client_headers: true
     permissions:
       - role: guest
+  - name: getServerCommunityStats
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: guest
+  - name: getServerLeaderboard
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: guest
+  - name: getPlayerCommunityStats
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: guest
   - name: getDedicatedServerPlayers
     definition:
       kind: ""
@@ -2191,4 +2212,14 @@ custom_types:
     - name: UtilityRenderClearOutput
     - name: ImportedWorkshopMap
     - name: ImportWorkshopCollectionOutput
+    - name: ServerCommunityStats
+    - name: ServerHourlyActivity
+    - name: ServerLeaderboard
+    - name: ServerLeaderboardEntry
+    - name: PlayerCommunityStats
+    - name: CommunityTotals
+    - name: PlayerCommunityServer
+    - name: PlayerCommunitySession
+    - name: PlayerCommunityIp
+    - name: PlayerCommunityIpMatch
   scalars: []

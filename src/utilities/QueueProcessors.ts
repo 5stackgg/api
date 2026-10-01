@@ -35,7 +35,8 @@ type Modules =
   | "Chat"
   | "Utility"
   | "Voice"
-  | "MapAssets";
+  | "MapAssets"
+  | "ServerRoster";
 
 export type UseQueueOptions = {
   concurrency?: number;

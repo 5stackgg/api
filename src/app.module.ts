@@ -45,6 +45,7 @@ import { ClientsModule } from "@nestjs/microservices";
 import { Transport } from "@nestjs/microservices";
 import { DedicatedServersModule } from "./dedicated-servers/dedicated-servers.module";
 import { SanctionsModule } from "./sanctions/sanctions.module";
+import { ServerRosterModule } from "./server-roster/server-roster.module";
 import { K8sModule } from "./k8s/k8s.module";
 import { FileManagerModule } from "./file-manager/file-manager.module";
 import { BrandingModule } from "./branding/branding.module";
@@ -147,6 +148,7 @@ import { UtilityModule } from "./utility/utility.module";
     S3ScanModule,
     DedicatedServersModule,
     SanctionsModule,
+    ServerRosterModule,
     K8sModule,
     FileManagerModule,
     BrandingModule,

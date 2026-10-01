@@ -13,12 +13,14 @@ import { isRoleAbove } from "src/utilities/isRoleAbove";
 import { SanctionsService } from "./sanctions.service";
 import { SanctionType } from "./sanction-types";
 import { ServerAccessService } from "../dedicated-servers/server-access.service";
+import { ServerRosterService } from "../server-roster/server-roster.service";
 
 @Controller("sanctions")
 export class SanctionsController {
   constructor(
     private readonly sanctionsService: SanctionsService,
     private readonly serverAccess: ServerAccessService,
+    private readonly serverRoster: ServerRosterService,
   ) {}
 
   // Polled by the game-server Player Management plugin; the call doubles as
@@ -33,6 +35,8 @@ export class SanctionsController {
       steam_ids?: unknown;
       plugin_version?: unknown;
       plugin_runtime?: unknown;
+      players?: unknown;
+      departed?: unknown;
     },
   ) {
     // The server middleware authenticates a body serverId ahead of the path
@@ -41,17 +45,27 @@ export class SanctionsController {
       throw new ForbiddenException();
     }
 
-    return {
-      sanctions: await this.sanctionsService.syncServerSanctions(serverId, {
+    const sanctions = await this.sanctionsService.syncServerSanctions(
+      serverId,
+      {
         steamIds: body?.steam_ids,
         pluginVersion: body?.plugin_version,
         pluginRuntime: body?.plugin_runtime,
-      }),
-      access: await this.serverAccess.forSync(
-        serverId,
-        SanctionsService.syncSteamIds(body?.steam_ids),
-      ),
-    };
+      },
+    );
+
+    const access = await this.serverAccess.forSync(
+      serverId,
+      SanctionsService.syncSteamIds(body?.steam_ids),
+    );
+
+    const rosterRecorded = await this.serverRoster.apply(
+      serverId,
+      body?.players,
+      body?.departed,
+    );
+
+    return { sanctions, access, roster_recorded: rosterRecorded };
   }
 
   // Fetched by the Player Management plugin when the sync reports a new

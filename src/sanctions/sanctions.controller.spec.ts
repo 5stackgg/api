@@ -16,14 +16,17 @@ describe("SanctionsController.syncServerSanctions", () => {
 
   let syncServerSanctions: jest.Mock;
   let forSync: jest.Mock;
+  let apply: jest.Mock;
   let controller: SanctionsController;
 
   beforeEach(() => {
     syncServerSanctions = jest.fn().mockResolvedValue([]);
     forSync = jest.fn().mockResolvedValue(open);
+    apply = jest.fn().mockResolvedValue(true);
     controller = new SanctionsController(
       { syncServerSanctions } as any,
       { forSync } as any,
+      { apply } as any,
     );
   });
 
@@ -38,6 +41,7 @@ describe("SanctionsController.syncServerSanctions", () => {
     ).rejects.toThrow(ForbiddenException);
 
     expect(syncServerSanctions).not.toHaveBeenCalled();
+    expect(apply).not.toHaveBeenCalled();
   });
 
   it("syncs the server in the path", async () => {
@@ -47,7 +51,7 @@ describe("SanctionsController.syncServerSanctions", () => {
         plugin_version: "0.0.412",
         plugin_runtime: "swiftlys2",
       }),
-    ).resolves.toEqual({ sanctions: [], access: open });
+    ).resolves.toEqual({ sanctions: [], access: open, roster_recorded: true });
 
     expect(syncServerSanctions).toHaveBeenCalledWith(serverA, {
       steamIds: ["76561198000000001"],
@@ -65,6 +69,15 @@ describe("SanctionsController.syncServerSanctions", () => {
 
     expect(forSync).toHaveBeenCalledWith(serverA, ["76561198000000001"]);
   });
+
+  it("hands the roster and departed counters to the roster service", async () => {
+    const players = [{ steam_id: "76561198000000001", name: "nyx" }];
+    const departed = [{ steam_id: "76561198000000002", kills: 3, deaths: 1 }];
+
+    await controller.syncServerSanctions(serverA, { players, departed });
+
+    expect(apply).toHaveBeenCalledWith(serverA, players, departed);
+  });
 });
 
 describe("SanctionsController.serverAccessList", () => {
@@ -79,6 +92,7 @@ describe("SanctionsController.serverAccessList", () => {
       {
         allowlist,
       } as any,
+      {} as any,
     );
 
     await expect(
