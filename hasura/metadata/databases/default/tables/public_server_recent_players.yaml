@@ -1,0 +1,39 @@
+table:
+  name: server_recent_players
+  schema: public
+object_relationships:
+  - name: player
+    using:
+      manual_configuration:
+        column_mapping:
+          player_steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
+  - name: server
+    using:
+      manual_configuration:
+        column_mapping:
+          server_id: id
+        insertion_order: null
+        remote_table:
+          name: servers
+          schema: public
+select_permissions:
+  - role: moderator
+    permission:
+      columns:
+        - first_seen_at
+        - ip
+        - kills
+        - last_seen_at
+        - name
+        - online
+        - player_steam_id
+        - seconds_played
+        - server_id
+        - sessions
+      filter: {}
+      allow_aggregations: true
+    comment: ""

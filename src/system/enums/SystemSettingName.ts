@@ -84,4 +84,8 @@ export enum SystemSettingName {
   // CDN can serve it would point latest.json at files nothing can read. Gates
   // the build a new CS2 version triggers, never the manual action.
   MapAssetsAutoBuild = "map_assets_auto_build",
+  // Days of exact community-server sessions to keep; pruned sessions are
+  // folded into server_player_stats, so all-time totals survive. Clamped to
+  // [7, 90] because the weekly leaderboards read the raw sessions.
+  PlayerSessionRetentionDays = "player_session_retention_days",
 }

@@ -17,6 +17,7 @@ import { NotificationsService } from "src/notifications/notifications.service";
 import { DISCORD_COLORS } from "src/notifications/utilities/constants";
 import { MarkDedicatedServerOffline } from "src/game-server-node/jobs/MarkDedicatedServerOffline";
 import { PostgresService } from "src/postgres/postgres.service";
+import { ServerRosterService } from "src/server-roster/server-roster.service";
 
 type UnreachableStreak = {
   since: number;
@@ -1129,9 +1130,16 @@ export class DedicatedServersService {
     }>
   > {
     try {
-      const allServerData = await this.redis.hgetall("dedicated-servers:stats");
+      const allServerData =
+        (await this.redis.hgetall("dedicated-servers:stats")) ?? {};
 
-      if (!allServerData || Object.keys(allServerData).length === 0) {
+      // The Player Management roster is pushed within a second of a join or
+      // leave, so it wins over the minute-old RCON count whenever it exists.
+      // It only refines servers the ping already lists, never adds any.
+      const rosterCounts =
+        (await this.redis.hgetall(ServerRosterService.COUNTS_KEY)) ?? {};
+
+      if (Object.keys(allServerData).length === 0) {
         return [];
       }
 
@@ -1139,12 +1147,17 @@ export class DedicatedServersService {
         .map(([serverId, jsonData]) => {
           try {
             const data = JSON.parse(jsonData);
+            const rosterCount = Number(rosterCounts[serverId]);
 
             return {
               id: serverId,
               map: data.map,
               lastPing: data.last_ping,
-              players: parseInt(data.clients_human),
+              players:
+                rosterCounts[serverId] !== undefined &&
+                Number.isInteger(rosterCount)
+                  ? rosterCount
+                  : parseInt(data.clients_human),
             };
           } catch (error) {
             this.logger.warn(

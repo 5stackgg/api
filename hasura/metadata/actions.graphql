@@ -269,6 +269,27 @@ type Query {
 }
 
 type Query {
+  getServerCommunityStats(
+    server_id: uuid!
+  ): ServerCommunityStats
+}
+
+type Query {
+  getServerLeaderboard(
+    server_id: uuid!
+    period: String!
+    metric: String!
+    limit: Int
+  ): ServerLeaderboard!
+}
+
+type Query {
+  getPlayerCommunityStats(
+    steam_id: bigint!
+  ): PlayerCommunityStats
+}
+
+type Query {
   getDedicatedServerPlayers(
     serverId: String!
   ): [ServerPlayer!]!
@@ -2718,4 +2739,95 @@ input ServerAccessInput {
   min_role: String
   steam_ids: [String!]!
   event_ids: [uuid!]!
+}
+
+type ServerCommunityStats {
+  server_id: uuid!
+  online: Int!
+  max_players: Int
+  week_players: Int!
+  week_seconds: Int!
+  all_time_players: Int!
+  tracked_since: timestamptz
+  hourly: [ServerHourlyActivity!]!
+}
+
+type ServerHourlyActivity {
+  hour: timestamptz!
+  seconds: Int!
+  players: Int!
+}
+
+type ServerLeaderboard {
+  entries: [ServerLeaderboardEntry!]!
+  you: ServerLeaderboardEntry
+}
+
+type ServerLeaderboardEntry {
+  rank: Int!
+  steam_id: bigint!
+  name: String!
+  avatar_url: String
+  country: String
+  seconds: Int!
+  kills: Int!
+  deaths: Int!
+  sessions: Int!
+}
+
+type PlayerCommunityStats {
+  is_moderator_view: Boolean!
+  week: CommunityTotals!
+  all_time: CommunityTotals!
+  last_seen_at: timestamptz
+  online_server_id: uuid
+  online_server_label: String
+  servers: [PlayerCommunityServer!]!
+  ips: [PlayerCommunityIp!]
+  ip_matches: [PlayerCommunityIpMatch!]
+}
+
+type CommunityTotals {
+  sessions: Int!
+  seconds: Int!
+  kills: Int!
+  deaths: Int!
+  servers: Int!
+  rank: Int
+}
+
+type PlayerCommunityServer {
+  server_id: uuid!
+  label: String!
+  region: String
+  type: String
+  online: Boolean!
+  last_seen_at: timestamptz
+  week: CommunityTotals!
+  all_time: CommunityTotals!
+  names: [String!]
+  sessions: [PlayerCommunitySession!]
+}
+
+type PlayerCommunitySession {
+  started_at: timestamptz!
+  ended_at: timestamptz
+  ip: String
+}
+
+type PlayerCommunityIp {
+  ip: String!
+  sessions: Int!
+}
+
+type PlayerCommunityIpMatch {
+  steam_id: bigint!
+  name: String
+  avatar_url: String
+  has_account: Boolean!
+  is_banned: Boolean!
+  sessions: Int!
+  last_seen_at: timestamptz
+  online: Boolean!
+  ip: String!
 }
