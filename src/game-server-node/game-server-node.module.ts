@@ -35,10 +35,13 @@ import { BakeShaders } from "./jobs/BakeShaders";
 import { ValidateGamedata } from "./jobs/ValidateGamedata";
 import { MapAssetsModule } from "src/map-assets/map-assets.module";
 import { PostgresModule } from "src/postgres/postgres.module";
+import { NodeCleanupService } from "./node-cleanup.service";
+import { CleanupRemovedNode } from "./jobs/CleanupRemovedNode";
 
 @Module({
   providers: [
     GameServerNodeService,
+    NodeCleanupService,
     CheckGameUpdate,
     GetPluginVersions,
     MarkGameServerNodeOffline,
@@ -47,6 +50,7 @@ import { PostgresModule } from "src/postgres/postgres.module";
     CheckServerPluginVersions,
     BakeShaders,
     ValidateGamedata,
+    CleanupRemovedNode,
     ...getQueuesProcessors("GameServerNode"),
     loggerFactory(),
   ],

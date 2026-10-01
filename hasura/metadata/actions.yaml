@@ -222,6 +222,14 @@ actions:
     permissions:
       - role: user
     comment: checkIntoMatch
+  - name: cleanupRemovedNodes
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Delete the Jobs, volume claims, volumes and k8s Nodes left behind by removed game server nodes
   - name: clearClipRenderBatch
     definition:
       kind: synchronous
@@ -2084,6 +2092,7 @@ custom_types:
     - name: DeleteOrphansOutput
     - name: WatchDemoOutput
     - name: SetupGameServeOutput
+    - name: CleanupRemovedNodesOutput
     - name: SampleOutput
     - name: CpuStat
     - name: MemoryStat

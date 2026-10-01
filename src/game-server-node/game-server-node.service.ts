@@ -312,6 +312,12 @@ export class GameServerNodeService {
       this.logger.log(`Creating volumes for node ${node}`);
       await this.createVolumes(node);
     }
+    // A node that registers again after the cleanup of its removal still has
+    // its CS:GO install on disk, but no volume for it anymore.
+    if (csgoBuildId && !game_server_nodes_by_pk) {
+      this.logger.log(`Creating CS:GO volume for node ${node}`);
+      await this.createVolumes(node, "csgo");
+    }
     if (game_server_nodes_by_pk?.status === "NotAcceptingNewMatches") {
       status = "NotAcceptingNewMatches";
     }

@@ -128,6 +128,10 @@ type Mutation {
 }
 
 type Mutation {
+  cleanupRemovedNodes: CleanupRemovedNodesOutput
+}
+
+type Mutation {
   clearClipRenderBatch(
     match_map_id: uuid!
   ): SuccessOutput
@@ -1166,6 +1170,16 @@ type WatchDemoOutput {
 type SetupGameServeOutput {
   link: String!
   gameServerId: String!
+}
+
+type CleanupRemovedNodesOutput {
+  nodes: Int!
+  jobs: Int!
+  volume_claims: Int!
+  volumes: Int!
+  failed: Int!
+  node_delete_forbidden: Boolean!
+  recently_ready: Int!
 }
 
 type SampleOutput {

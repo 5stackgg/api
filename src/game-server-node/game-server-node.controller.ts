@@ -1,6 +1,7 @@
 import { Controller, Get, Logger, Req, Res } from "@nestjs/common";
 import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { GameServerNodeService } from "./game-server-node.service";
+import { NodeCleanupService } from "./node-cleanup.service";
 import { TailscaleService } from "../tailscale/tailscale.service";
 import { HasuraService } from "../hasura/hasura.service";
 import { InjectQueue } from "@nestjs/bullmq";
@@ -24,6 +25,7 @@ import { NodeStats } from "./interfaces/NodeStats";
 import { PodStats } from "./interfaces/PodStats";
 import { MarkGameServerNodeOffline } from "./jobs/MarkGameServerNodeOffline";
 import { MarkGameServerNodeOnline } from "./jobs/MarkGameServerNodeOnline";
+import { CleanupRemovedNode } from "./jobs/CleanupRemovedNode";
 import { HasuraEventData } from "src/hasura/types/HasuraEventData";
 import { game_server_nodes_set_input } from "generated/schema";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -59,6 +61,7 @@ export class GameServerNodeController {
     @InjectQueue(GameServerQueues.ValidateGamedata)
     private readonly validateGamedataQueue: Queue,
     protected readonly mapAssets: MapAssetsService,
+    protected readonly nodeCleanup: NodeCleanupService,
   ) {
     this.appConfig = this.config.get<AppConfig>("app");
   }
@@ -810,6 +813,46 @@ UNIT
     await this.gameServerNodeService.updateDemoNetworkLimiterLabel(
       data.new.id,
       data.new.demo_network_limiter,
+    );
+  }
+
+  @HasuraAction()
+  public async cleanupRemovedNodes() {
+    return await this.nodeCleanup.cleanupRemovedNodes();
+  }
+
+  @HasuraEvent()
+  public async game_server_node_removed(
+    data: HasuraEventData<game_server_nodes_set_input>,
+  ) {
+    const nodeId = data.old?.id;
+    if (!nodeId) {
+      return;
+    }
+
+    // HasuraController answers every event with a success, so an error thrown
+    // here would never be retried. The job retries instead. A waiting or failed
+    // job of the node is replaced, which restarts its checks, since a taken job
+    // id makes the add a no-op. A running one cannot be removed, so this
+    // removal gets a job of its own.
+    const jobId = `node-cleanup.${nodeId}`;
+    const removed = await this.nodeOfflineQueue.remove(jobId);
+
+    await this.nodeOfflineQueue.add(
+      CleanupRemovedNode.name,
+      {
+        nodeId,
+      },
+      {
+        attempts: 6,
+        backoff: {
+          type: "exponential",
+          delay: 10 * 1000,
+        },
+        removeOnFail: false,
+        removeOnComplete: true,
+        jobId: removed === 0 ? `${jobId}.${Date.now()}` : jobId,
+      },
     );
   }
 
