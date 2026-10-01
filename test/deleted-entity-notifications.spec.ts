@@ -176,7 +176,7 @@ describe("notifications of deleted matches and tournaments (SQL-driven)", () => 
     const up = readFileSync(
       join(
         __dirname,
-        "../hasura/migrations/default/1889000000900_remove_orphaned_entity_notifications/up.sql",
+        "../hasura/migrations/default/1889000001000_remove_orphaned_entity_notifications/up.sql",
       ),
       "utf8",
     );
