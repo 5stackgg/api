@@ -16,6 +16,7 @@ import { MapRotationService } from "../game-plugins/map-rotation.service";
 import { NotificationsService } from "src/notifications/notifications.service";
 import { DISCORD_COLORS } from "src/notifications/utilities/constants";
 import { MarkDedicatedServerOffline } from "src/game-server-node/jobs/MarkDedicatedServerOffline";
+import { PostgresService } from "src/postgres/postgres.service";
 
 type UnreachableStreak = {
   since: number;
@@ -35,6 +36,21 @@ export class DedicatedServersService {
   private static readonly UNREACHABLE_GAP_MS = 90 * 1000;
 
   private static readonly UNREACHABLE_KEY = "dedicated-servers:unreachable";
+
+  public static readonly ACTIVE_MIGRATION_STATUSES = [
+    "Queued",
+    "Stopping",
+    "Transferring",
+    "Finalizing",
+  ];
+
+  // Only while the move has the server down. A queued move has not touched
+  // it yet, and the node change Finalizing commits is what deploys it on the
+  // new node.
+  public static readonly HOLDING_MIGRATION_STATUSES = [
+    "Stopping",
+    "Transferring",
+  ];
 
   private appConfig: AppConfig;
   private gameServerConfig: GameServersConfig;
@@ -57,6 +73,7 @@ export class DedicatedServersService {
     private readonly gameModesService: GameModesService,
     private readonly mapRotationService: MapRotationService,
     private readonly notifications: NotificationsService,
+    private readonly postgres: PostgresService,
   ) {
     this.redis = this.redisManager.getConnection();
 
@@ -491,13 +508,21 @@ export class DedicatedServersService {
     const rebuild = previous
       .catch(() => false)
       .then(async () => {
-        if (start) {
+        const shouldStart = start && !(await this.isHeldByMigration(serverId));
+
+        if (start && !shouldStart) {
+          this.logger.log(
+            `[${serverId}] not starting, the server is being moved to another node`,
+          );
+        }
+
+        if (shouldStart) {
           await this.expectRestart(serverId);
         }
 
         await this.removeDedicatedServer(serverId);
 
-        return start ? await this.setupDedicatedServer(serverId) : true;
+        return shouldStart ? await this.setupDedicatedServer(serverId) : true;
       });
 
     DedicatedServersService.rebuilds.set(serverId, rebuild);
@@ -508,6 +533,94 @@ export class DedicatedServersService {
       if (DedicatedServersService.rebuilds.get(serverId) === rebuild) {
         DedicatedServersService.rebuilds.delete(serverId);
       }
+    }
+  }
+
+  public async isHeldByMigration(serverId: string): Promise<boolean> {
+    const rows = await this.postgres.query<Array<unknown>>(
+      `SELECT 1 FROM server_migrations WHERE server_id = $1 AND status = ANY($2::text[])`,
+      [serverId, DedicatedServersService.HOLDING_MIGRATION_STATUSES],
+    );
+
+    return rows.length > 0;
+  }
+
+  // Deleting the deployment returns before its pod has exited, and a server
+  // still shutting down is still writing to its files.
+  public async waitForDedicatedServerStopped(
+    serverId: string,
+    options: { acceptTerminating: boolean; timeoutMs: number },
+  ): Promise<void> {
+    const name = this.getDedicatedServerDeploymentName(serverId);
+    const deadline = Date.now() + options.timeoutMs;
+
+    while (true) {
+      const deployment = await this.apps
+        .readNamespacedDeployment({ name, namespace: this.namespace })
+        .catch((error): null => {
+          if (error?.code?.toString() === "404") {
+            return null;
+          }
+
+          throw error;
+        });
+
+      if (deployment) {
+        await this.removeDedicatedServer(serverId);
+      }
+
+      const { items: pods } = await this.core.listNamespacedPod({
+        namespace: this.namespace,
+        labelSelector: `app=${name}`,
+      });
+
+      if (
+        !deployment &&
+        (pods.length === 0 ||
+          (options.acceptTerminating &&
+            pods.every((pod) => !!pod.metadata?.deletionTimestamp)))
+      ) {
+        return;
+      }
+
+      if (Date.now() >= deadline) {
+        throw new Error("The server did not stop in time");
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+  }
+
+  public async deploymentExists(serverId: string): Promise<boolean> {
+    return await this.apps
+      .readNamespacedDeployment({
+        name: this.getDedicatedServerDeploymentName(serverId),
+        namespace: this.namespace,
+      })
+      .then(() => true)
+      .catch((error): boolean => {
+        if (error?.code?.toString() === "404") {
+          return false;
+        }
+
+        throw error;
+      });
+  }
+
+  public async waitForDeployment(
+    serverId: string,
+    timeoutMs: number,
+  ): Promise<boolean> {
+    const deadline = Date.now() + timeoutMs;
+
+    while (true) {
+      const exists = await this.deploymentExists(serverId).catch(() => false);
+
+      if (exists || Date.now() >= deadline) {
+        return exists;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 5000));
     }
   }
 

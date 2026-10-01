@@ -5,6 +5,7 @@ import { DedicatedServersService } from "./dedicated-servers.service";
 // handler deleted the deployment the first had just created.
 describe("DedicatedServersService.rebuildDedicatedServer", () => {
   const redis = { set: jest.fn() };
+  const postgres = { query: jest.fn() };
   const service = new DedicatedServersService(
     { log: jest.fn(), error: jest.fn(), verbose: jest.fn() } as never,
     { get: () => ({ namespace: "5stack" }) } as never,
@@ -17,6 +18,7 @@ describe("DedicatedServersService.rebuildDedicatedServer", () => {
     null as never,
     null as never,
     null as never,
+    postgres as never,
   );
 
   const steps: Array<string> = [];
@@ -25,6 +27,7 @@ describe("DedicatedServersService.rebuildDedicatedServer", () => {
   beforeEach(() => {
     steps.length = 0;
     redis.set.mockClear();
+    postgres.query.mockReset().mockResolvedValue([]);
 
     jest
       .spyOn(service, "removeDedicatedServer")
@@ -88,6 +91,25 @@ describe("DedicatedServersService.rebuildDedicatedServer", () => {
     await service.rebuildDedicatedServer("a", false);
 
     expect(redis.set).not.toHaveBeenCalled();
+  });
+
+  it("takes a server down but does not start it while it is being moved", async () => {
+    postgres.query.mockResolvedValue([{ "?column?": 1 }]);
+
+    await expect(service.rebuildDedicatedServer("a")).resolves.toBe(true);
+
+    expect(steps).toEqual(["remove a"]);
+    expect(redis.set).not.toHaveBeenCalled();
+    expect(postgres.query).toHaveBeenCalledWith(expect.any(String), [
+      "a",
+      ["Stopping", "Transferring"],
+    ]);
+  });
+
+  it("does not ask about a move when the server is only being taken down", async () => {
+    await service.rebuildDedicatedServer("a", false);
+
+    expect(postgres.query).not.toHaveBeenCalled();
   });
 
   it("keeps going after a rebuild that failed", async () => {
@@ -217,6 +239,7 @@ describe("DedicatedServersService.pingDedicatedServer", () => {
       null as never,
       null as never,
       notifications as never,
+      null as never,
     );
   });
 

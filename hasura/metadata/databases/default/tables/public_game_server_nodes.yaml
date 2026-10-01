@@ -42,6 +42,11 @@ array_relationships:
           name: servers
           schema: public
 computed_fields:
+  - name: available_dedicated_slot_count
+    definition:
+      function:
+        name: available_dedicated_slot_count
+        schema: public
   - name: available_server_count
     definition:
       function:
@@ -104,6 +109,7 @@ select_permissions:
         - update_failed_at
         - update_status
       computed_fields:
+        - available_dedicated_slot_count
         - available_server_count
         - plugin_supported
         - total_server_count

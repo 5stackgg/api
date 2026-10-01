@@ -41,6 +41,13 @@ array_relationships:
         table:
           name: matches
           schema: public
+  - name: migrations
+    using:
+      foreign_key_constraint_on:
+        column: server_id
+        table:
+          name: server_migrations
+          schema: public
   - name: plugin_overrides
     using:
       foreign_key_constraint_on:
@@ -194,7 +201,6 @@ update_permissions:
         - connect_password
         - enabled
         - game
-        - game_server_node_id
         - host
         - is_dedicated
         - label
@@ -206,8 +212,17 @@ update_permissions:
         - type
         - game_mode_id
       filter:
-        is_dedicated:
-          _eq: true
+        _and:
+          - is_dedicated:
+              _eq: true
+          - _not:
+              migrations:
+                status:
+                  _in:
+                    - Queued
+                    - Stopping
+                    - Transferring
+                    - Finalizing
       check:
         is_dedicated:
           _eq: true
@@ -216,8 +231,17 @@ delete_permissions:
   - role: administrator
     permission:
       filter:
-        is_dedicated:
-          _eq: true
+        _and:
+          - is_dedicated:
+              _eq: true
+          - _not:
+              migrations:
+                status:
+                  _in:
+                    - Queued
+                    - Stopping
+                    - Transferring
+                    - Finalizing
     comment: ""
 event_triggers:
   - name: server_availability

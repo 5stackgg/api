@@ -51,13 +51,15 @@ BEGIN
             RAISE EXCEPTION 'No available game node server found on this node' USING ERRCODE = '22000';
         END IF;
 
-        -- Disable the selected (now replaced) game node server
-        UPDATE servers SET enabled = false where id = disable_game_node_server_id;
+        -- Take the selected game node server's slot; a disabled dedicated server leaves it usable, as toggling does
+        UPDATE servers SET enabled = (NEW.enabled IS FALSE) where id = disable_game_node_server_id;
     END IF;
 
     IF TG_OP = 'UPDATE' THEN
-        -- Prevent port/tv_port changes for dedicated servers
-        IF NEW.is_dedicated = true AND NEW.game_server_node_id IS NOT NULL AND (NEW.port != OLD.port OR NEW.tv_port != OLD.tv_port) THEN
+        -- Prevent port/tv_port changes for dedicated servers; a move to another node takes that node's free slot above
+        IF NEW.is_dedicated = true AND NEW.game_server_node_id IS NOT NULL
+           AND NEW.game_server_node_id IS NOT DISTINCT FROM OLD.game_server_node_id
+           AND (NEW.port != OLD.port OR NEW.tv_port != OLD.tv_port) THEN
             RAISE EXCEPTION 'Cannot change the port or tv_port of a dedicated server' USING ERRCODE = '22000';
         END IF;
 
