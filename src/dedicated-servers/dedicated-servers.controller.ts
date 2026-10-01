@@ -1,4 +1,6 @@
-import { Controller, ForbiddenException } from "@nestjs/common";
+import { Controller, ForbiddenException, Logger } from "@nestjs/common";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
 import { HasuraEvent } from "src/hasura/hasura.controller";
 import { HasuraEventData } from "src/hasura/types/HasuraEventData";
 import { server_regions_set_input, servers_set_input } from "generated";
@@ -9,6 +11,9 @@ import { HasuraAction } from "src/hasura/hasura.controller";
 import { game_server_nodes_set_input } from "generated/schema";
 import { User } from "src/auth/types/User";
 import { isRoleAbove } from "src/utilities/isRoleAbove";
+import { DedicatedServerMigrationService } from "./dedicated-server-migration.service";
+import { DedicatedServerQueues } from "./enums/DedicatedServerQueues";
+import { CleanupDedicatedServerFiles } from "./jobs/CleanupDedicatedServerFiles";
 
 @Controller("dedicated-servers")
 export class DedicatedServersController {
@@ -16,6 +21,10 @@ export class DedicatedServersController {
     private readonly hasura: HasuraService,
     private readonly dedicatedServersService: DedicatedServersService,
     private readonly dedicatedServerConfig: DedicatedServerConfigService,
+    private readonly migrations: DedicatedServerMigrationService,
+    private readonly logger: Logger,
+    @InjectQueue(DedicatedServerQueues.ServerMaintenance)
+    private readonly maintenanceQueue: Queue,
   ) {}
 
   @HasuraEvent()
@@ -37,6 +46,20 @@ export class DedicatedServersController {
         !!data.new.game_server_node_id &&
         data.new.enabled !== false,
     );
+
+    if (data.op === "DELETE" && data.old.game_server_node_id) {
+      await this.maintenanceQueue.add(
+        CleanupDedicatedServerFiles.name,
+        { serverId, gameServerNodeId: data.old.game_server_node_id },
+        {
+          jobId: `cleanup-server-files:${serverId}`,
+          attempts: 5,
+          backoff: { type: "exponential", delay: 60 * 1000 },
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
+      );
+    }
   }
 
   @HasuraEvent()
@@ -94,7 +117,13 @@ export class DedicatedServersController {
         },
       });
       for (const server of servers) {
-        await this.dedicatedServersService.restartDedicatedServer(server.id);
+        try {
+          await this.dedicatedServersService.restartDedicatedServer(server.id);
+        } catch (error) {
+          this.logger.warn(
+            `[${server.id}] unable to restart after the CS2 build changed: ${error?.message ?? error}`,
+          );
+        }
       }
     }
   }
@@ -183,6 +212,37 @@ export class DedicatedServersController {
     return await this.dedicatedServerConfig.importWorkshopCollection(
       data.collection,
     );
+  }
+
+  @HasuraAction()
+  public async moveDedicatedServerToNode(data: {
+    user: User;
+    server_id: string;
+    game_server_node_id: string;
+    without_files?: boolean;
+  }) {
+    this.assertAdministrator(data.user);
+
+    await this.migrations.requestMove(
+      data.user,
+      data.server_id,
+      data.game_server_node_id,
+      !!data.without_files,
+    );
+
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async cancelDedicatedServerMove(data: {
+    user: User;
+    server_id: string;
+  }) {
+    this.assertAdministrator(data.user);
+
+    await this.migrations.requestCancel(data.server_id);
+
+    return { success: true };
   }
 
   private assertAdministrator(user: User): void {

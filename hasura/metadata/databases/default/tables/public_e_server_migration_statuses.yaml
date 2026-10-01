@@ -1,0 +1,12 @@
+table:
+  name: e_server_migration_statuses
+  schema: public
+is_enum: true
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""

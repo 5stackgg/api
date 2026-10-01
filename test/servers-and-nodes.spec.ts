@@ -13,7 +13,7 @@ describe("servers and game server nodes (SQL-driven)", () => {
     db = await bootMigratedDb("ServersNodesTest");
     postgres = db.postgres;
     await postgres.query(
-      `INSERT INTO server_regions (value, description) VALUES ('NodeRegion', 'NodeRegion')
+      `INSERT INTO server_regions (value, description) VALUES ('NodeRegion', 'NodeRegion'), ('OtherRegion', 'OtherRegion')
        ON CONFLICT (value) DO NOTHING`,
     );
   }, 600_000);
@@ -28,15 +28,57 @@ describe("servers and game server nodes (SQL-driven)", () => {
   });
 
   // A node whose port range yields five paired game/tv ports.
-  const createNode = async () => {
+  const createNode = async (
+    options: { startPort?: number; ip?: string; region?: string } = {},
+  ) => {
     const id = `test-node-${++nodeSeq}`;
+    const startPort = options.startPort ?? 27015;
     await postgres.query(
       `INSERT INTO game_server_nodes (id, public_ip, start_port_range, end_port_range, region, status, enabled, label)
-       VALUES ($1, '203.0.113.1', 27015, 27025, 'NodeRegion', 'Online', true, $1)`,
-      [id],
+       VALUES ($1, $2, $3, $4, $5, 'Online', true, $1)`,
+      [
+        id,
+        options.ip ?? "203.0.113.1",
+        startPort,
+        startPort + 10,
+        options.region ?? "NodeRegion",
+      ],
     );
     return id;
   };
+
+  const createDedicatedServer = async (nodeId: string) => {
+    const [server] = await postgres.query<Array<{ id: string }>>(
+      `INSERT INTO servers (host, label, rcon_password, port, tv_port, region, type, is_dedicated, enabled, game_server_node_id)
+       VALUES ('203.0.113.1', 'dedicated', $1, 28000, 28001, 'NodeRegion', 'Casual', true, true, $2)
+       RETURNING id`,
+      [Buffer.from("secret"), nodeId],
+    );
+    return server.id;
+  };
+
+  const dedicatedServer = async (id: string) => {
+    const [server] = await postgres.query<
+      Array<{
+        game_server_node_id: string;
+        host: string;
+        port: number;
+        tv_port: number;
+        region: string;
+      }>
+    >(
+      "SELECT game_server_node_id, host, port, tv_port, region FROM servers WHERE id = $1",
+      [id],
+    );
+    return {
+      ...server,
+      port: Number(server.port),
+      tv_port: Number(server.tv_port),
+    };
+  };
+
+  const slotEnabled = async (nodeId: string, port: number) =>
+    (await nodeServers(nodeId)).find((s) => Number(s.port) === port)!.enabled;
 
   const nodeServers = (nodeId: string) =>
     postgres.query<
@@ -90,6 +132,159 @@ describe("servers and game server nodes (SQL-driven)", () => {
     await postgres.query("DELETE FROM servers WHERE id = $1", [dedicated.id]);
     servers = await nodeServers(nodeId);
     expect(servers.every((s) => s.enabled)).toBe(true);
+  });
+
+  it("moving a dedicated server to another node claims a slot there and frees the old one", async () => {
+    const from = await createNode();
+    const to = await createNode({
+      startPort: 27115,
+      ip: "203.0.113.2",
+      region: "OtherRegion",
+    });
+    const serverId = await createDedicatedServer(from);
+
+    await postgres.query(
+      "UPDATE servers SET game_server_node_id = $1 WHERE id = $2",
+      [to, serverId],
+    );
+
+    expect(await dedicatedServer(serverId)).toEqual({
+      game_server_node_id: to,
+      host: "203.0.113.2",
+      port: 27115,
+      tv_port: 27116,
+      region: "OtherRegion",
+    });
+    expect(await slotEnabled(from, 27015)).toBe(true);
+    expect(await slotEnabled(to, 27115)).toBe(false);
+  });
+
+  it("a disabled dedicated server leaves its slot to on-demand matches, wherever it is moved", async () => {
+    const from = await createNode();
+    const to = await createNode({ startPort: 27115, ip: "203.0.113.2" });
+    const serverId = await createDedicatedServer(from);
+    await postgres.query("UPDATE servers SET enabled = false WHERE id = $1", [
+      serverId,
+    ]);
+    expect(await slotEnabled(from, 27015)).toBe(true);
+
+    await postgres.query(
+      "UPDATE servers SET game_server_node_id = $1 WHERE id = $2",
+      [to, serverId],
+    );
+
+    expect(await dedicatedServer(serverId)).toMatchObject({ port: 27115 });
+    expect(await slotEnabled(to, 27115)).toBe(true);
+
+    await postgres.query("UPDATE servers SET enabled = true WHERE id = $1", [
+      serverId,
+    ]);
+    expect(await slotEnabled(to, 27115)).toBe(false);
+  });
+
+  it("a dedicated server staying on its node still cannot change its ports", async () => {
+    const nodeId = await createNode();
+    const serverId = await createDedicatedServer(nodeId);
+
+    await expect(
+      postgres.query("UPDATE servers SET port = 27017 WHERE id = $1", [
+        serverId,
+      ]),
+    ).rejects.toThrow(/Cannot change the port or tv_port/i);
+  });
+
+  it("moving to a node with no free slot is refused and leaves the server where it was", async () => {
+    const from = await createNode();
+    const to = await createNode({ startPort: 27115, ip: "203.0.113.2" });
+    const serverId = await createDedicatedServer(from);
+    await postgres.query(
+      "UPDATE servers SET enabled = false WHERE game_server_node_id = $1 AND is_dedicated = false",
+      [to],
+    );
+
+    await expect(
+      postgres.query(
+        "UPDATE servers SET game_server_node_id = $1 WHERE id = $2",
+        [to, serverId],
+      ),
+    ).rejects.toThrow(/No available game node server/i);
+
+    expect(await dedicatedServer(serverId)).toMatchObject({
+      game_server_node_id: from,
+      port: 27015,
+    });
+    expect(await slotEnabled(from, 27015)).toBe(false);
+  });
+
+  it("counts the slots a dedicated server moving onto a node could take", async () => {
+    const count = async (nodeId: string) => {
+      const [row] = await postgres.query<Array<{ c: number }>>(
+        "SELECT available_dedicated_slot_count(n) AS c FROM game_server_nodes n WHERE id = $1",
+        [nodeId],
+      );
+      return Number(row.c);
+    };
+
+    const nodeId = await createNode();
+    expect(await count(nodeId)).toBe(5);
+
+    await createDedicatedServer(nodeId);
+    expect(await count(nodeId)).toBe(4);
+
+    await postgres.query(
+      "UPDATE servers SET enabled = false WHERE game_server_node_id = $1 AND port = 27017",
+      [nodeId],
+    );
+    expect(await count(nodeId)).toBe(3);
+  });
+
+  describe("server moves", () => {
+    const insertMove = (serverId: string, status = "Queued") =>
+      postgres.query(
+        "INSERT INTO server_migrations (server_id, status) VALUES ($1, $2)",
+        [serverId, status],
+      );
+
+    it("allows only one move in flight per server", async () => {
+      const serverId = await createDedicatedServer(await createNode());
+
+      await insertMove(serverId, "Transferring");
+
+      await expect(insertMove(serverId)).rejects.toMatchObject({
+        code: "23505",
+      });
+    });
+
+    it("allows a new move once the last one has finished", async () => {
+      const serverId = await createDedicatedServer(await createNode());
+
+      await insertMove(serverId, "Completed");
+      await insertMove(serverId, "Failed");
+      await insertMove(serverId, "Canceled");
+
+      await expect(insertMove(serverId)).resolves.toBeDefined();
+    });
+
+    it("refuses a status that is not a move status", async () => {
+      const serverId = await createDedicatedServer(await createNode());
+
+      await expect(insertMove(serverId, "Paused")).rejects.toThrow(
+        /server_migrations_status_fkey/,
+      );
+    });
+
+    it("goes away with the server", async () => {
+      const serverId = await createDedicatedServer(await createNode());
+      await insertMove(serverId, "Completed");
+
+      await postgres.query("DELETE FROM servers WHERE id = $1", [serverId]);
+
+      const moves = await postgres.query<Array<unknown>>(
+        "SELECT 1 FROM server_migrations WHERE server_id = $1",
+        [serverId],
+      );
+      expect(moves.length).toBe(0);
+    });
   });
 
   it("encrypts rcon passwords at rest and re-encrypts on change", async () => {
