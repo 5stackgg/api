@@ -114,7 +114,7 @@ class FakeRedis {
   multi() {
     const queued: Array<() => Promise<unknown>> = [];
     const chain: any = {
-      exec: async () => {
+      exec: async (): Promise<Array<unknown>> => {
         for (const run of queued) {
           await run();
         }
