@@ -158,8 +158,9 @@ export class GameServerNodeService {
   // a k8s log follow can stall without ever ending, so stop waiting on it and re-check the job
   private static readonly UPDATE_LOG_IDLE_MS = 60 * 1000;
 
-  private static readonly UPDATE_RESULT_RECORDED_ANNOTATION =
-    "5stack.gg/update-result-recorded";
+  private static UPDATE_RESULT_RECORDED_KEY(job: V1Job) {
+    return `update-result-recorded:${job.metadata.uid}`;
+  }
 
   public static GET_UPDATE_JOB_NAME(gameServerNodeId: string, game = "cs2") {
     const sanitized = gameServerNodeId.replaceAll(".", "-");
@@ -586,9 +587,11 @@ export class GameServerNodeService {
         .deleteNamespacedJob({
           name: jobName,
           namespace: this.namespace,
-          propagationPolicy: "Background",
-          gracePeriodSeconds: 0,
-          body: { preconditions: { uid: existingJob.metadata.uid } },
+          body: {
+            propagationPolicy: "Background",
+            gracePeriodSeconds: 0,
+            preconditions: { uid: existingJob.metadata.uid },
+          },
         })
         .catch((error) => {
           if (error.code?.toString() !== "404") {
@@ -848,19 +851,19 @@ export class GameServerNodeService {
     try {
       while (true) {
         const job = await this.loggingService.getJob(jobName);
-        const pod = await this.loggingService.getJobPod(jobName);
 
-        if (!job && !pod) {
+        // a pod left without its job was orphaned by a delete, not a running update
+        if (!job) {
           await writeStatus(null);
           return;
         }
 
+        const pod = await this.loggingService.getJobPod(jobName);
+
         const result = GameServerNodeService.updateJobResult(job);
         if (result) {
           await statusWrites;
-          if (!GameServerNodeService.isUpdateResultRecorded(job)) {
-            await this.recordUpdateResult(gameServerNodeId, game, job, result);
-          }
+          await this.recordUpdateResult(gameServerNodeId, game, job, result);
           return;
         }
 
@@ -899,14 +902,24 @@ export class GameServerNodeService {
         return;
       }
 
-      // unpinned: steamcmd app_update "Update state (0x61) downloading, progress: 12.34 (...)"
+      // unpinned: steamcmd app_update "Update state (0x61) downloading, progress: 12.34 (1234 / 5678)"
       const steamcmd = line.match(
-        /Update state \(0x[0-9a-f]+\) ([^,]+), progress: ([0-9.]+)/,
+        /Update state \(0x[0-9a-f]+\) ([^,]+), progress: ([0-9.]+)(?: \(\d+ \/ (\d+)\))?/,
       );
       if (steamcmd) {
+        // steamcmd brackets the update with "(0x0) unknown, progress: 0.00 (0 / 0)"
+        // style states that carry no progress
+        if (steamcmd[3] === "0") {
+          return;
+        }
         const type = steamcmd[1].trim();
         const percentage = Math.round(parseFloat(steamcmd[2]));
         void writeStatus(`${type} ${percentage}%`);
+        return;
+      }
+
+      if (/Success! App '\d+' fully installed/.test(line)) {
+        void writeStatus("Finishing");
         return;
       }
 
@@ -1013,9 +1026,10 @@ export class GameServerNodeService {
       game_server_nodes: {
         __args: {
           where: {
-            enabled: {
-              _eq: true,
-            },
+            _or: [
+              { enabled: { _eq: true } },
+              { update_status: { _is_null: false } },
+            ],
           },
         },
         id: true,
@@ -1033,13 +1047,12 @@ export class GameServerNodeService {
             game,
           );
           const job = await this.loggingService.getJob(jobName);
-          const pod = await this.loggingService.getJobPod(jobName);
 
           const settled =
             GameServerNodeService.updateJobResult(job) &&
-            GameServerNodeService.isUpdateResultRecorded(job);
+            (await this.isUpdateResultRecorded(job));
 
-          if ((job || pod) && !settled) {
+          if (job && !settled) {
             hasUpdateJob = true;
             void this.monitorUpdateStatus(node.id, game);
           }
@@ -1102,35 +1115,27 @@ export class GameServerNodeService {
     return null;
   }
 
-  public static isUpdateResultRecorded(job?: V1Job | null): boolean {
+  private async isUpdateResultRecorded(job: V1Job): Promise<boolean> {
     return (
-      job?.metadata?.annotations?.[
-        GameServerNodeService.UPDATE_RESULT_RECORDED_ANNOTATION
-      ] === "true"
+      (await this.redis.exists(
+        GameServerNodeService.UPDATE_RESULT_RECORDED_KEY(job),
+      )) === 1
     );
   }
 
   // update_status is one column shared by the cs2 and csgo jobs, so whether a
-  // job's result was recorded lives on the job itself; the uid test makes the
-  // claim fail on a retry job that has since reused the name
+  // job's result was recorded is keyed by the job's uid; a retry reusing the
+  // name gets its own uid, and the key outlives the kept job
   private async claimUpdateResult(job: V1Job): Promise<boolean> {
     try {
-      await this.batchApi.patchNamespacedJob({
-        name: job.metadata.name,
-        namespace: this.namespace,
-        body: [
-          { op: "test", path: "/metadata/uid", value: job.metadata.uid },
-          {
-            op: "add",
-            path: "/metadata/annotations",
-            value: {
-              ...job.metadata.annotations,
-              [GameServerNodeService.UPDATE_RESULT_RECORDED_ANNOTATION]: "true",
-            },
-          },
-        ],
-      });
-      return true;
+      const claimed = await this.redis.set(
+        GameServerNodeService.UPDATE_RESULT_RECORDED_KEY(job),
+        1,
+        "EX",
+        GameServerNodeService.UPDATE_JOB_TTL_S,
+        "NX",
+      );
+      return claimed !== null;
     } catch (error) {
       this.logger.warn(
         `[${job.metadata.name}] unable to claim the update result`,
@@ -1146,33 +1151,39 @@ export class GameServerNodeService {
     job: V1Job,
     result: "Succeeded" | "Failed",
   ): Promise<void> {
-    if (!(await this.claimUpdateResult(job))) {
-      return;
-    }
-
+    // a succeeded job is deleted, which is its record; only a failed job is
+    // kept for its logs and needs the claim. The uid precondition fails when a
+    // retry already replaced the job, so its status is left alone
     if (result === "Succeeded") {
+      try {
+        await this.batchApi.deleteNamespacedJob({
+          name: job.metadata.name,
+          namespace: this.namespace,
+          body: {
+            propagationPolicy: "Background",
+            preconditions: { uid: job.metadata.uid },
+          },
+        });
+      } catch (error) {
+        if (error.code?.toString() !== "404") {
+          this.logger.warn(
+            `[${gameServerNodeId}] unable to delete finished ${game} update job`,
+            error,
+          );
+          return;
+        }
+      }
+
       await this.postgres.query(
         `UPDATE game_server_nodes
             SET update_status = NULL, update_failed_at = NULL
           WHERE id = $1`,
         [gameServerNodeId],
       );
+      return;
+    }
 
-      await this.batchApi
-        .deleteNamespacedJob({
-          name: job.metadata.name,
-          namespace: this.namespace,
-          propagationPolicy: "Background",
-          body: { preconditions: { uid: job.metadata.uid } },
-        })
-        .catch((error) => {
-          if (error.code?.toString() !== "404") {
-            this.logger.warn(
-              `[${gameServerNodeId}] unable to delete finished ${game} update job`,
-              error,
-            );
-          }
-        });
+    if (!(await this.claimUpdateResult(job))) {
       return;
     }
 
