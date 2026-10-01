@@ -38,10 +38,48 @@ export class DedicatedServerConfigService {
     private readonly rcon: RconService,
   ) {}
 
+  // One save from the settings console: the pod settings are written first and
+  // the server restarts once for all of them, while access applies live.
+  public async saveSettings(
+    serverId: string,
+    settings: {
+      mapRotation: { mapIds: Array<string>; shuffle: boolean } | null;
+      plugins: Array<{ slug: string; enabled: boolean }> | null;
+      access: {
+        restricted: boolean;
+        minRole: string | null;
+        steamIds: Array<string>;
+        eventIds: Array<string>;
+      } | null;
+    },
+  ): Promise<void> {
+    if (settings.mapRotation) {
+      await this.setMapRotation(
+        serverId,
+        settings.mapRotation.mapIds,
+        settings.mapRotation.shuffle,
+        { restart: false },
+      );
+    }
+
+    if (settings.plugins) {
+      await this.setPlugins(serverId, settings.plugins, { restart: false });
+    }
+
+    if (settings.access) {
+      await this.setAccess(serverId, settings.access);
+    }
+
+    if (settings.mapRotation || settings.plugins) {
+      await this.restart(await this.communityServer(serverId));
+    }
+  }
+
   public async setMapRotation(
     serverId: string,
     mapIds: Array<string>,
     shuffle: boolean,
+    options: { restart?: boolean } = {},
   ): Promise<void> {
     const server = await this.communityServer(serverId);
 
@@ -89,12 +127,15 @@ export class DedicatedServerConfigService {
       );
     });
 
-    await this.restart(server);
+    if (options.restart !== false) {
+      await this.restart(server);
+    }
   }
 
   public async setPlugins(
     serverId: string,
     plugins: Array<{ slug: string; enabled: boolean }>,
+    options: { restart?: boolean } = {},
   ): Promise<void> {
     const server = await this.communityServer(serverId);
 
@@ -115,7 +156,9 @@ export class DedicatedServerConfigService {
       );
     });
 
-    await this.restart(server);
+    if (options.restart !== false) {
+      await this.restart(server);
+    }
   }
 
   // Enforced by the Player Management plugin, which rereads the list on a
