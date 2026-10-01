@@ -27,6 +27,20 @@ object_relationships:
           name: server_regions
           schema: public
 array_relationships:
+  - name: access_events
+    using:
+      foreign_key_constraint_on:
+        column: server_id
+        table:
+          name: server_access_events
+          schema: public
+  - name: access_players
+    using:
+      foreign_key_constraint_on:
+        column: server_id
+        table:
+          name: server_access_players
+          schema: public
   - name: map_rotation
     using:
       foreign_key_constraint_on:
@@ -93,6 +107,8 @@ select_permissions:
   - role: administrator
     permission:
       columns:
+        - access_min_role
+        - access_restricted
         - api_password
         - boot_status
         - boot_status_detail

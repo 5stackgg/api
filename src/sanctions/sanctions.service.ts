@@ -30,6 +30,22 @@ export class SanctionsService {
     "warning",
   ];
 
+  // Anything past 18 digits can overflow the bigint cast and fail the whole
+  // query; a real SteamID64 is 17.
+  public static syncSteamIds(value: unknown): Array<string> {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return [
+      ...new Set(
+        value
+          .map((steamId) => String(steamId))
+          .filter((steamId) => /^\d{1,18}$/.test(steamId)),
+      ),
+    ].slice(0, SanctionsService.MAX_SYNC_STEAM_IDS);
+  }
+
   public async syncServerSanctions(
     serverId: string,
     params: {
@@ -51,17 +67,7 @@ export class SanctionsService {
       params.pluginRuntime,
     );
 
-    // Anything past 18 digits can overflow the bigint cast and fail the whole
-    // query; a real SteamID64 is 17.
-    const steamIds = Array.isArray(params.steamIds)
-      ? [
-          ...new Set(
-            params.steamIds
-              .map((steamId) => String(steamId))
-              .filter((steamId) => /^\d{1,18}$/.test(steamId)),
-          ),
-        ].slice(0, SanctionsService.MAX_SYNC_STEAM_IDS)
-      : [];
+    const steamIds = SanctionsService.syncSteamIds(params.steamIds);
 
     if (steamIds.length === 0) {
       return [];

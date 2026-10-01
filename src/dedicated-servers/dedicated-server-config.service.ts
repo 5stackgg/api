@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { PostgresService } from "../postgres/postgres.service";
 import { DedicatedServersService } from "./dedicated-servers.service";
+import { RconService } from "../rcon/rcon.service";
 
 type CommunityServer = {
   id: string;
@@ -34,12 +35,51 @@ export class DedicatedServerConfigService {
     private readonly logger: Logger,
     private readonly postgres: PostgresService,
     private readonly dedicatedServers: DedicatedServersService,
+    private readonly rcon: RconService,
   ) {}
+
+  // One save from the settings console: the pod settings are written first and
+  // the server restarts once for all of them, while access applies live.
+  public async saveSettings(
+    serverId: string,
+    settings: {
+      mapRotation: { mapIds: Array<string>; shuffle: boolean } | null;
+      plugins: Array<{ slug: string; enabled: boolean }> | null;
+      access: {
+        restricted: boolean;
+        minRole: string | null;
+        steamIds: Array<string>;
+        eventIds: Array<string>;
+      } | null;
+    },
+  ): Promise<void> {
+    if (settings.mapRotation) {
+      await this.setMapRotation(
+        serverId,
+        settings.mapRotation.mapIds,
+        settings.mapRotation.shuffle,
+        { restart: false },
+      );
+    }
+
+    if (settings.plugins) {
+      await this.setPlugins(serverId, settings.plugins, { restart: false });
+    }
+
+    if (settings.access) {
+      await this.setAccess(serverId, settings.access);
+    }
+
+    if (settings.mapRotation || settings.plugins) {
+      await this.restart(await this.communityServer(serverId));
+    }
+  }
 
   public async setMapRotation(
     serverId: string,
     mapIds: Array<string>,
     shuffle: boolean,
+    options: { restart?: boolean } = {},
   ): Promise<void> {
     const server = await this.communityServer(serverId);
 
@@ -87,12 +127,15 @@ export class DedicatedServerConfigService {
       );
     });
 
-    await this.restart(server);
+    if (options.restart !== false) {
+      await this.restart(server);
+    }
   }
 
   public async setPlugins(
     serverId: string,
     plugins: Array<{ slug: string; enabled: boolean }>,
+    options: { restart?: boolean } = {},
   ): Promise<void> {
     const server = await this.communityServer(serverId);
 
@@ -113,7 +156,96 @@ export class DedicatedServerConfigService {
       );
     });
 
-    await this.restart(server);
+    if (options.restart !== false) {
+      await this.restart(server);
+    }
+  }
+
+  // Enforced by the Player Management plugin, which rereads the list on a
+  // refresh, so unlike the pod settings above this needs no restart and works
+  // on external servers too.
+  public async setAccess(
+    serverId: string,
+    access: {
+      restricted: boolean;
+      minRole: string | null;
+      steamIds: Array<string>;
+      eventIds: Array<string>;
+    },
+  ): Promise<void> {
+    const [server] = await this.postgres.query<
+      Array<{ is_dedicated: boolean; type: string; game: string }>
+    >(`SELECT is_dedicated, type, game FROM servers WHERE id = $1`, [serverId]);
+
+    if (!server?.is_dedicated) {
+      throw new BadRequestException("Not a dedicated server");
+    }
+
+    if (server.type === "Ranked" || server.type === "Practice") {
+      throw new BadRequestException(
+        `${server.type} servers run 5Stack's own plugin set`,
+      );
+    }
+
+    if (server.game === "csgo") {
+      throw new BadRequestException(
+        "Restricted servers need the Player Management plugin, which is CS2 only",
+      );
+    }
+
+    const steamIds = [...new Set(access.steamIds)].filter((steamId) =>
+      /^\d{1,18}$/.test(steamId),
+    );
+    const eventIds = [...new Set(access.eventIds)];
+
+    await this.postgres.transaction(async (client) => {
+      await client.query(
+        `UPDATE servers
+            SET access_restricted = $2, access_min_role = $3
+          WHERE id = $1`,
+        [serverId, access.restricted, access.minRole || null],
+      );
+
+      await client.query(
+        `DELETE FROM server_access_players WHERE server_id = $1`,
+        [serverId],
+      );
+
+      await client.query(
+        `INSERT INTO server_access_players (server_id, steam_id)
+         SELECT $1, steam_id FROM unnest($2::bigint[]) AS steam_id`,
+        [serverId, steamIds],
+      );
+
+      await client.query(
+        `DELETE FROM server_access_events WHERE server_id = $1`,
+        [serverId],
+      );
+
+      await client.query(
+        `INSERT INTO server_access_events (server_id, event_id)
+         SELECT $1, event_id FROM unnest($2::uuid[]) AS event_id`,
+        [serverId, eventIds],
+      );
+    });
+
+    await this.refreshPlayerManagement(serverId);
+  }
+
+  // Best effort: an offline server picks the list up on its next sync anyway.
+  private async refreshPlayerManagement(serverId: string): Promise<void> {
+    try {
+      const rcon = await this.rcon.connect(serverId);
+
+      if (rcon) {
+        await rcon.send("player_management_refresh");
+      }
+    } catch (error) {
+      this.logger.warn(
+        `[${serverId}] unable to refresh player management`,
+        error?.message ?? error,
+      );
+    }
   }
 
   // Accepts a collection or a single map, as a link or a bare id: Steam answers

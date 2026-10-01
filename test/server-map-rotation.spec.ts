@@ -21,6 +21,7 @@ describe("dedicated server config (SQL-driven)", () => {
       { warn: jest.fn(), log: jest.fn() } as never,
       postgres,
       dedicatedServers as never,
+      { connect: jest.fn(async (): Promise<null> => null) } as never,
     );
   }, 600_000);
 
@@ -174,6 +175,47 @@ describe("dedicated server config (SQL-driven)", () => {
       await expect(
         service.setMapRotation(external.id, [await map("rotation-a")], true),
       ).rejects.toThrow(/game server node/);
+    });
+  });
+
+  describe("saveSettings", () => {
+    beforeEach(async () => {
+      await postgres.query(
+        `INSERT INTO game_plugins (slug, kind, name, author, description)
+         VALUES ('csroll', 'game', 'csroll', 'tester', 'a test plugin')
+         ON CONFLICT (slug) DO NOTHING`,
+      );
+      await postgres.query(
+        `INSERT INTO game_plugin_installs (plugin_slug, version, channel)
+         VALUES ('csroll', NULL, 'Auto') ON CONFLICT (plugin_slug) DO NOTHING`,
+      );
+    });
+
+    // Saving the rotation and the plugins used to be two saves, each of
+    // which restarted the server.
+    it("restarts the server once for rotation and plugin changes together", async () => {
+      await service.saveSettings(serverId, {
+        mapRotation: { mapIds: [await map("rotation-a")], shuffle: false },
+        plugins: [{ slug: "csroll", enabled: true }],
+        access: null,
+      });
+
+      expect(await rotation()).toHaveLength(1);
+      expect(dedicatedServers.rebuildDedicatedServer).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not restart for an access change alone", async () => {
+      await service.saveSettings(serverId, {
+        mapRotation: null,
+        plugins: null,
+        access: { restricted: true, minRole: null, steamIds: [], eventIds: [] },
+      });
+
+      const [server] = await postgres.query<
+        Array<{ access_restricted: boolean }>
+      >(`SELECT access_restricted FROM servers WHERE id = $1`, [serverId]);
+      expect(server.access_restricted).toBe(true);
+      expect(dedicatedServers.rebuildDedicatedServer).not.toHaveBeenCalled();
     });
   });
 

@@ -172,6 +172,42 @@ export class DedicatedServersController {
   }
 
   @HasuraAction()
+  public async setServerSettings(data: {
+    user: User;
+    server_id: string;
+    map_rotation?: { map_ids: Array<string>; shuffle: boolean } | null;
+    plugins?: Array<{ slug: string; enabled: boolean }> | null;
+    access?: {
+      restricted: boolean;
+      min_role?: string | null;
+      steam_ids: Array<string>;
+      event_ids: Array<string>;
+    } | null;
+  }) {
+    this.assertAdministrator(data.user);
+
+    await this.dedicatedServerConfig.saveSettings(data.server_id, {
+      mapRotation: data.map_rotation
+        ? {
+            mapIds: data.map_rotation.map_ids,
+            shuffle: data.map_rotation.shuffle,
+          }
+        : null,
+      plugins: data.plugins ?? null,
+      access: data.access
+        ? {
+            restricted: data.access.restricted,
+            minRole: data.access.min_role ?? null,
+            steamIds: data.access.steam_ids,
+            eventIds: data.access.event_ids,
+          }
+        : null,
+    });
+
+    return { success: true };
+  }
+
+  @HasuraAction()
   public async setServerMapRotation(data: {
     user: User;
     server_id: string;
@@ -212,6 +248,27 @@ export class DedicatedServersController {
     return await this.dedicatedServerConfig.importWorkshopCollection(
       data.collection,
     );
+  }
+
+  @HasuraAction()
+  public async setServerAccess(data: {
+    user: User;
+    server_id: string;
+    restricted: boolean;
+    min_role?: string | null;
+    steam_ids: Array<string>;
+    event_ids: Array<string>;
+  }) {
+    this.assertAdministrator(data.user);
+
+    await this.dedicatedServerConfig.setAccess(data.server_id, {
+      restricted: data.restricted,
+      minRole: data.min_role ?? null,
+      steamIds: data.steam_ids,
+      eventIds: data.event_ids,
+    });
+
+    return { success: true };
   }
 
   @HasuraAction()

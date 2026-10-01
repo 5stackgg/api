@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { DedicatedServersService } from "./dedicated-servers.service";
 import { DedicatedServerConfigService } from "./dedicated-server-config.service";
+import { ServerAccessService } from "./server-access.service";
 import { DedicatedServersController } from "./dedicated-servers.controller";
 import { HasuraModule } from "src/hasura/hasura.module";
 import { loggerFactory } from "src/utilities/LoggerFactory";
@@ -64,6 +65,7 @@ import { CleanupDedicatedServerFiles } from "./jobs/CleanupDedicatedServerFiles"
   providers: [
     DedicatedServersService,
     DedicatedServerConfigService,
+    ServerAccessService,
     DedicatedServerMigrationService,
     PingDedicatedServers,
     MigrateDedicatedServer,
@@ -72,7 +74,7 @@ import { CleanupDedicatedServerFiles } from "./jobs/CleanupDedicatedServerFiles"
     ...getQueuesProcessors("DedicatedServers"),
     loggerFactory(),
   ],
-  exports: [DedicatedServersService],
+  exports: [DedicatedServersService, ServerAccessService],
   controllers: [DedicatedServersController],
 })
 export class DedicatedServersModule {

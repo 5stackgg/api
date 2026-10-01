@@ -2688,3 +2688,34 @@ type ImportWorkshopCollectionOutput {
   maps: [ImportedWorkshopMap!]!
   skipped: Int!
 }
+
+type Mutation {
+  setServerAccess(
+    server_id: uuid!
+    restricted: Boolean!
+    min_role: String
+    steam_ids: [String!]!
+    event_ids: [uuid!]!
+  ): SuccessOutput
+}
+
+type Mutation {
+  setServerSettings(
+    server_id: uuid!
+    map_rotation: ServerMapRotationInput
+    plugins: [ServerPluginInput!]
+    access: ServerAccessInput
+  ): SuccessOutput
+}
+
+input ServerMapRotationInput {
+  map_ids: [uuid!]!
+  shuffle: Boolean!
+}
+
+input ServerAccessInput {
+  restricted: Boolean!
+  min_role: String
+  steam_ids: [String!]!
+  event_ids: [uuid!]!
+}

@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   ForbiddenException,
+  Get,
   HttpCode,
   Param,
   Post,
@@ -11,10 +12,14 @@ import { User } from "src/auth/types/User";
 import { isRoleAbove } from "src/utilities/isRoleAbove";
 import { SanctionsService } from "./sanctions.service";
 import { SanctionType } from "./sanction-types";
+import { ServerAccessService } from "../dedicated-servers/server-access.service";
 
 @Controller("sanctions")
 export class SanctionsController {
-  constructor(private readonly sanctionsService: SanctionsService) {}
+  constructor(
+    private readonly sanctionsService: SanctionsService,
+    private readonly serverAccess: ServerAccessService,
+  ) {}
 
   // Polled by the game-server Player Management plugin; the call doubles as
   // its heartbeat.
@@ -42,6 +47,23 @@ export class SanctionsController {
         pluginVersion: body?.plugin_version,
         pluginRuntime: body?.plugin_runtime,
       }),
+      access: await this.serverAccess.forSync(
+        serverId,
+        SanctionsService.syncSteamIds(body?.steam_ids),
+      ),
+    };
+  }
+
+  // Fetched by the Player Management plugin when the sync reports a new
+  // access version, so it can refuse players at connect.
+  @Get("server/:serverId/access")
+  public async serverAccessList(@Param("serverId") serverId: string) {
+    const access = await this.serverAccess.allowlist(serverId);
+
+    return {
+      restricted: access.restricted,
+      version: access.version,
+      steam_ids: access.steamIds,
     };
   }
 

@@ -176,6 +176,8 @@
 - "!include public_plugin_versions.yaml"
 - "!include public_push_subscriptions.yaml"
 - "!include public_seasons.yaml"
+- "!include public_server_access_events.yaml"
+- "!include public_server_access_players.yaml"
 - "!include public_server_map_rotation.yaml"
 - "!include public_server_migrations.yaml"
 - "!include public_server_plugins.yaml"

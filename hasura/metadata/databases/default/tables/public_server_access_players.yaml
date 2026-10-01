@@ -1,0 +1,18 @@
+table:
+  name: server_access_players
+  schema: public
+object_relationships:
+  - name: player
+    using:
+      foreign_key_constraint_on: steam_id
+  - name: server
+    using:
+      foreign_key_constraint_on: server_id
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - server_id
+        - steam_id
+      filter: {}
+    comment: ""

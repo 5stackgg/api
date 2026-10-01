@@ -2022,6 +2022,22 @@ actions:
     permissions:
       - role: administrator
     comment: Add every map in a Steam workshop collection to the map catalog
+  - name: setServerAccess
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Restrict who may connect to a community server
+  - name: setServerSettings
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Save a community server's rotation, plugins and access, restarting it at most once
   - name: moveDedicatedServerToNode
     definition:
       kind: synchronous
@@ -2051,6 +2067,8 @@ custom_types:
     - name: UtilityPlaybookStepInput
     - name: UtilitySightlinePairInput
     - name: ServerPluginInput
+    - name: ServerMapRotationInput
+    - name: ServerAccessInput
   objects:
     - name: Award
     - name: AwardRecipient

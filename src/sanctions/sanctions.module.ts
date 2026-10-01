@@ -22,9 +22,15 @@ import { SanctionsController } from "./sanctions.controller";
 })
 export class SanctionsModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(MatchServerMiddlewareMiddleware).forRoutes({
-      path: "sanctions/server/:serverId",
-      method: RequestMethod.POST,
-    });
+    consumer.apply(MatchServerMiddlewareMiddleware).forRoutes(
+      {
+        path: "sanctions/server/:serverId",
+        method: RequestMethod.POST,
+      },
+      {
+        path: "sanctions/server/:serverId/access",
+        method: RequestMethod.GET,
+      },
+    );
   }
 }
