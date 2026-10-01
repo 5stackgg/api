@@ -23,6 +23,14 @@ type BoardRow = {
 
 type RankedRow = BoardRow & { rank: number };
 
+type BoardKeys = {
+  time: string;
+  kills: string;
+  rows: string;
+  lock: string;
+  failed: string;
+};
+
 type Totals = {
   sessions: number;
   seconds: number;
@@ -73,7 +81,7 @@ export class CommunityStatsService {
     }
 
     const stats = await this.cached(
-      `community:server:${serverId}`,
+      `community:server:${serverId}:${await this.roster.version(serverId)}`,
       CommunityStatsService.SERVER_STATS_TTL_SECONDS,
       () => this.loadServerStats(serverId),
     );
@@ -115,11 +123,12 @@ export class CommunityStatsService {
       return empty;
     }
 
-    if (!(await this.ensureBoard(serverId, period))) {
+    const keys = await this.ensureBoard(serverId, period);
+
+    if (!keys) {
       return empty;
     }
 
-    const keys = CommunityStatsService.boardKeys(serverId, period);
     const scoreKey = metric === "time" ? keys.time : keys.kills;
     const size = Math.min(
       Math.max(Math.floor(limit ?? CommunityStatsService.DEFAULT_LIMIT), 1),
@@ -264,15 +273,19 @@ export class CommunityStatsService {
   private async ensureBoard(
     serverId: string,
     period: CommunityPeriod,
-  ): Promise<boolean> {
-    const keys = CommunityStatsService.boardKeys(serverId, period);
+  ): Promise<BoardKeys | null> {
+    const keys = CommunityStatsService.boardKeys(
+      serverId,
+      period,
+      await this.roster.version(serverId),
+    );
 
     if (await this.redis.exists(keys.rows)) {
-      return true;
+      return keys;
     }
 
     if (await this.redis.exists(keys.failed)) {
-      return false;
+      return null;
     }
 
     const token = randomUUID();
@@ -285,7 +298,7 @@ export class CommunityStatsService {
     );
 
     if (!locked) {
-      return await this.waitFor(keys.rows, keys.failed);
+      return (await this.waitFor(keys.rows, keys.failed)) ? keys : null;
     }
 
     try {
@@ -329,7 +342,7 @@ export class CommunityStatsService {
 
       await multi.exec();
 
-      return true;
+      return keys;
     } catch (error) {
       this.logger.warn(
         `[${serverId}] unable to build the ${period} leaderboard: ${(error as Error)?.message ?? error}`,
@@ -340,7 +353,7 @@ export class CommunityStatsService {
         "EX",
         CommunityStatsService.FAILURE_SECONDS,
       );
-      return false;
+      return null;
     } finally {
       await this.release(keys.lock, token);
     }
@@ -652,14 +665,13 @@ export class CommunityStatsService {
 
     for (const serverId of serverIds) {
       for (const period of ["week", "all"] as const) {
-        if (!(await this.ensureBoard(serverId, period))) {
+        const keys = await this.ensureBoard(serverId, period);
+
+        if (!keys) {
           continue;
         }
 
-        const rank = await this.redis.zrevrank(
-          CommunityStatsService.boardKeys(serverId, period).time,
-          steamId,
-        );
+        const rank = await this.redis.zrevrank(keys.time, steamId);
 
         if (rank !== null) {
           ranks.set(`${serverId}:${period}`, rank + 1);
@@ -812,8 +824,12 @@ export class CommunityStatsService {
     }));
   }
 
-  private static boardKeys(serverId: string, period: CommunityPeriod) {
-    const base = `community:lb:${serverId}:${period}`;
+  private static boardKeys(
+    serverId: string,
+    period: CommunityPeriod,
+    version: string,
+  ): BoardKeys {
+    const base = `community:lb:${serverId}:${version}:${period}`;
     return {
       time: `${base}:time`,
       kills: `${base}:kills`,

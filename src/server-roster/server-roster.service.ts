@@ -26,6 +26,11 @@ export class ServerRosterService {
   // server list shows the plugin's live count instead of the minute-old RCON one.
   public static readonly COUNTS_KEY = "dedicated-servers:roster-counts";
 
+  // Bumped whenever who is on a server changes. The community stats cached for
+  // a server are keyed on it, so a join or a leave shows up on the next request
+  // instead of after the cache expires.
+  public static readonly VERSIONS_KEY = "dedicated-servers:roster-versions";
+
   private static readonly COUNT_TTL_SECONDS = 180;
   private static readonly MAX_PLAYERS = 64;
   private static readonly MAX_DEPARTED = 256;
@@ -61,17 +66,26 @@ export class ServerRosterService {
       return false;
     }
 
+    const departures = ServerRosterService.departedEntries(departed);
+
     try {
-      const [row] = await this.postgres.query<Array<{ online: number }>>(
-        `SELECT public.sync_server_player_sessions($1, $2::jsonb, $3::jsonb) AS online`,
-        [
-          serverId,
-          JSON.stringify(roster),
-          JSON.stringify(ServerRosterService.departedEntries(departed)),
-        ],
+      const previous = await this.redis.hget(
+        ServerRosterService.COUNTS_KEY,
+        serverId,
       );
 
-      await this.recordCount(serverId, row?.online ?? roster.length);
+      const [row] = await this.postgres.query<Array<{ online: number }>>(
+        `SELECT public.sync_server_player_sessions($1, $2::jsonb, $3::jsonb) AS online`,
+        [serverId, JSON.stringify(roster), JSON.stringify(departures)],
+      );
+
+      const online = row?.online ?? roster.length;
+
+      await this.recordCount(serverId, online);
+
+      if (previous !== String(online) || departures.length > 0) {
+        await this.rosterChanged([serverId]);
+      }
 
       return true;
     } catch (error) {
@@ -106,6 +120,27 @@ export class ServerRosterService {
         `[${serverId}] unable to refresh the held player roster: ${(error as Error)?.message ?? error}`,
       );
     }
+  }
+
+  public async version(serverId: string): Promise<string> {
+    return (
+      (await this.redis.hget(ServerRosterService.VERSIONS_KEY, serverId)) ??
+      "0"
+    );
+  }
+
+  public async rosterChanged(serverIds: Array<string>): Promise<void> {
+    if (serverIds.length === 0) {
+      return;
+    }
+
+    const multi = this.redis.multi();
+
+    for (const serverId of serverIds) {
+      multi.hincrby(ServerRosterService.VERSIONS_KEY, serverId, 1);
+    }
+
+    await multi.exec();
   }
 
   public async liveCounts(): Promise<Record<string, number>> {
