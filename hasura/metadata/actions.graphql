@@ -2657,6 +2657,20 @@ type Mutation {
   ): ImportWorkshopCollectionOutput
 }
 
+type Mutation {
+  moveDedicatedServerToNode(
+    server_id: uuid!
+    game_server_node_id: String!
+    without_files: Boolean
+  ): SuccessOutput
+}
+
+type Mutation {
+  cancelDedicatedServerMove(
+    server_id: uuid!
+  ): SuccessOutput
+}
+
 input ServerPluginInput {
   slug: String!
   enabled: Boolean!

@@ -1,0 +1,42 @@
+table:
+  name: server_migrations
+  schema: public
+object_relationships:
+  - name: e_status
+    using:
+      foreign_key_constraint_on: status
+  - name: from_game_server_node
+    using:
+      foreign_key_constraint_on: from_game_server_node_id
+  - name: requested_by
+    using:
+      foreign_key_constraint_on: requested_by_steam_id
+  - name: server
+    using:
+      foreign_key_constraint_on: server_id
+  - name: to_game_server_node
+    using:
+      foreign_key_constraint_on: to_game_server_node_id
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - bytes_done
+        - bytes_total
+        - created_at
+        - entries_total
+        - error
+        - finished_at
+        - from_game_server_node_id
+        - id
+        - requested_by_steam_id
+        - server_id
+        - started_at
+        - status
+        - to_game_server_node_id
+        - updated_at
+        - warnings
+        - with_files
+      filter: {}
+      allow_aggregations: true
+    comment: ""

@@ -771,18 +771,44 @@ describe("awards (SQL-driven)", () => {
   describe("season awards", () => {
     const seedSeasonElo = async (
       seasonId: string,
-      rows: Array<{ steam: string; elo: number; impact: number }>,
+      rows: Array<{
+        steam: string;
+        elo: number;
+        impact: number;
+        type?: string;
+        matches?: number;
+      }>,
     ) => {
       for (const row of rows) {
-        const { matchId } = await fx.bareMatch();
-        await postgres.query(
-          `INSERT INTO player_elo
-              (match_id, steam_id, season_id, type, current, change, impact,
-               expected_score, actual_score, k_factor)
-            VALUES ($1, $2, $3, 'Competitive', $4, 0, $5, 0.5, 1.0, 32)`,
-          [matchId, row.steam, seasonId, row.elo, row.impact],
-        );
+        for (let i = 0; i < (row.matches ?? 1); i++) {
+          const { matchId } = await fx.bareMatch();
+          await postgres.query(
+            `INSERT INTO player_elo
+                (match_id, steam_id, season_id, type, current, change, impact,
+                 expected_score, actual_score, k_factor)
+              VALUES ($1, $2, $3, $6, $4, 0, $5, 0.5, 1.0, 32)`,
+            [
+              matchId,
+              row.steam,
+              seasonId,
+              row.elo,
+              row.impact,
+              row.type ?? "Competitive",
+            ],
+          );
+        }
       }
+    };
+
+    const seasonMvp = async (seasonId: string) => {
+      const [mvp] = await postgres.query<Array<{ player_steam_id: string }>>(
+        `SELECT ar.player_steam_id
+           FROM award_recipients ar
+           JOIN awards a ON a.id = ar.award_id
+          WHERE ar.season_id = $1 AND a.system_key = 'season_mvp'`,
+        [seasonId],
+      );
+      return mvp ? String(mvp.player_steam_id) : null;
     };
 
     it("ships the four season system awards", async () => {
@@ -810,7 +836,7 @@ describe("awards (SQL-driven)", () => {
         { steam: players[0], elo: 1400, impact: 1.0 },
         { steam: players[1], elo: 1300, impact: 1.0 },
         { steam: players[2], elo: 1200, impact: 1.0 },
-        { steam: players[3], elo: 1100, impact: 1.9 },
+        { steam: players[3], elo: 1100, impact: 1.9, matches: 5 },
       ]);
 
       await postgres.query("SELECT calculate_season_awards($1)", [season.id]);
@@ -841,6 +867,57 @@ describe("awards (SQL-driven)", () => {
       expect(String(rows[3].player_steam_id)).toBe(String(players[2]));
     });
 
+    it("picks the mvp from competitive matches only", async () => {
+      const [season] = await postgres.query<Array<{ id: string }>>(
+        "INSERT INTO seasons (starts_at) VALUES (now()) RETURNING id",
+      );
+      const players = await fx.players(2);
+
+      await seedSeasonElo(season.id, [
+        { steam: players[0], elo: 1200, impact: 1.05, matches: 5 },
+        {
+          steam: players[1],
+          elo: 1100,
+          impact: 1.08,
+          type: "Duel",
+          matches: 5,
+        },
+        {
+          steam: players[1],
+          elo: 1100,
+          impact: 1.2,
+          type: "Wingman",
+          matches: 5,
+        },
+      ]);
+
+      await postgres.query("SELECT calculate_season_awards($1)", [season.id]);
+
+      expect(await seasonMvp(season.id)).toBe(String(players[0]));
+    });
+
+    it("requires five competitive matches for mvp", async () => {
+      const [season] = await postgres.query<Array<{ id: string }>>(
+        "INSERT INTO seasons (starts_at) VALUES (now()) RETURNING id",
+      );
+      const players = await fx.players(2);
+
+      await seedSeasonElo(season.id, [
+        { steam: players[0], elo: 1200, impact: 1.2, matches: 4 },
+        { steam: players[1], elo: 1100, impact: 1.01, matches: 4 },
+      ]);
+
+      await postgres.query("SELECT calculate_season_awards($1)", [season.id]);
+      expect(await seasonMvp(season.id)).toBeNull();
+
+      await seedSeasonElo(season.id, [
+        { steam: players[1], elo: 1100, impact: 1.01 },
+      ]);
+
+      await postgres.query("SELECT calculate_season_awards($1)", [season.id]);
+      expect(await seasonMvp(season.id)).toBe(String(players[1]));
+    });
+
     it("counts season medals on the awards leaderboard", async () => {
       const [season] = await postgres.query<Array<{ id: string }>>(
         "INSERT INTO seasons (starts_at) VALUES (now()) RETURNING id",
@@ -848,7 +925,7 @@ describe("awards (SQL-driven)", () => {
       const players = await fx.players(3);
 
       await seedSeasonElo(season.id, [
-        { steam: players[0], elo: 1400, impact: 1.0 },
+        { steam: players[0], elo: 1400, impact: 1.0, matches: 5 },
         { steam: players[1], elo: 1300, impact: 1.0 },
         { steam: players[2], elo: 1200, impact: 1.0 },
       ]);
@@ -910,7 +987,12 @@ describe("awards (SQL-driven)", () => {
       const players = await fx.players(3);
       await seedSeasonElo(
         season.id,
-        players.map((steam, i) => ({ steam, elo: 1400 - i * 100, impact: 1 })),
+        players.map((steam, i) => ({
+          steam,
+          elo: 1400 - i * 100,
+          impact: 1,
+          matches: 5,
+        })),
       );
 
       const handId = await createAward("Season Community Pick");
@@ -943,7 +1025,12 @@ describe("awards (SQL-driven)", () => {
       const players = await fx.players(3);
       await seedSeasonElo(
         season.id,
-        players.map((steam, i) => ({ steam, elo: 1400 - i * 100, impact: 1 })),
+        players.map((steam, i) => ({
+          steam,
+          elo: 1400 - i * 100,
+          impact: 1,
+          matches: 5,
+        })),
       );
 
       const calculated = async () =>
