@@ -1,12 +1,10 @@
 const createNamespacedJob = jest.fn();
 const deleteNamespacedJob = jest.fn();
-const patchNamespacedJob = jest.fn();
 
 jest.mock("@kubernetes/client-node", () => ({
   BatchV1Api: class BatchV1Api {
     createNamespacedJob = createNamespacedJob;
     deleteNamespacedJob = deleteNamespacedJob;
-    patchNamespacedJob = patchNamespacedJob;
   },
   CoreV1Api: class CoreV1Api {},
   KubeConfig: class KubeConfig {
@@ -57,13 +55,21 @@ describe("GameServerNodeService — CS2 update status", () => {
       conditions: [{ type: "Failed", status: "True" }],
     },
   };
-  const recorded = <T extends { metadata: object }>(job: T) => ({
-    ...job,
-    metadata: {
-      ...job.metadata,
-      annotations: { "5stack.gg/update-result-recorded": "true" },
-    },
-  });
+  let redisKeys: Set<string>;
+  const redis = {
+    set: jest.fn(async (key: string) => {
+      if (redisKeys.has(key)) {
+        return null;
+      }
+      redisKeys.add(key);
+      return "OK";
+    }),
+    exists: jest.fn(async (key: string) => (redisKeys.has(key) ? 1 : 0)),
+  };
+  const recorded = <T extends { metadata: { uid: string } }>(job: T) => {
+    redisKeys.add(`update-result-recorded:${job.metadata.uid}`);
+    return job;
+  };
 
   const logLine = (log: string) =>
     JSON.stringify({ pod: runningPod.metadata.name, log });
@@ -83,7 +89,7 @@ describe("GameServerNodeService — CS2 update status", () => {
     });
     createNamespacedJob.mockReset().mockResolvedValue({});
     deleteNamespacedJob.mockReset().mockResolvedValue({});
-    patchNamespacedJob.mockReset().mockResolvedValue({});
+    redisKeys = new Set();
     events = [];
 
     hasura = {
@@ -126,7 +132,7 @@ describe("GameServerNodeService — CS2 update status", () => {
       logger as any,
       config as any,
       hasura as any,
-      { getConnection: () => ({}) } as any,
+      { getConnection: () => redis } as any,
       loggingService as any,
       notifications as any,
       {
@@ -269,30 +275,27 @@ describe("GameServerNodeService — CS2 update status", () => {
     expect(terminalWrites()).toEqual(["terminal:failed"]);
     expect(notifications.send).toHaveBeenCalledTimes(1);
     expect(deleteNamespacedJob).not.toHaveBeenCalled();
-    expect(patchNamespacedJob.mock.calls[0][0].body[0]).toEqual({
-      op: "test",
-      path: "/metadata/uid",
-      value: "uid-failed",
-    });
 
-    loggingService.getJob.mockResolvedValue(recorded(failedJob));
     await service.monitorUpdateStatus(NODE_ID);
 
     expect(terminalWrites()).toEqual(["terminal:failed"]);
     expect(notifications.send).toHaveBeenCalledTimes(1);
   });
 
-  it("records nothing when the job was replaced by a retry before the claim", async () => {
+  it("records a retry's failure separately from the job it replaced", async () => {
     loggingService.getJob.mockResolvedValue(failedJob);
     loggingService.getJobPod.mockResolvedValue(undefined);
-    patchNamespacedJob.mockRejectedValue(
-      Object.assign(new Error("test operation failed"), { code: 422 }),
-    );
 
     await service.monitorUpdateStatus(NODE_ID);
 
-    expect(terminalWrites()).toEqual([]);
-    expect(notifications.send).not.toHaveBeenCalled();
+    loggingService.getJob.mockResolvedValue({
+      ...failedJob,
+      metadata: { name: JOB_NAME, uid: "uid-retry-failed" },
+    });
+    await service.monitorUpdateStatus(NODE_ID);
+
+    expect(terminalWrites()).toEqual(["terminal:failed", "terminal:failed"]);
+    expect(notifications.send).toHaveBeenCalledTimes(2);
   });
 
   it("does not let a kept csgo failure touch a running cs2 update", async () => {
@@ -301,7 +304,10 @@ describe("GameServerNodeService — CS2 update status", () => {
     });
     loggingService.getJob.mockImplementation(async (name: string) =>
       name === CSGO_JOB_NAME
-        ? recorded({ ...failedJob, metadata: { name: CSGO_JOB_NAME } })
+        ? recorded({
+            ...failedJob,
+            metadata: { name: CSGO_JOB_NAME, uid: "uid-csgo-failed" },
+          })
         : runningJob,
     );
     loggingService.getJobPod.mockImplementation(async (name: string) =>
@@ -400,9 +406,116 @@ describe("GameServerNodeService — CS2 update status", () => {
     expect(deleteNamespacedJob).toHaveBeenCalledWith(
       expect.objectContaining({
         name: JOB_NAME,
-        body: { preconditions: { uid: "uid-succeeded" } },
+        body: {
+          propagationPolicy: "Background",
+          preconditions: { uid: "uid-succeeded" },
+        },
       }),
     );
+  });
+
+  it("does not report steamcmd's closing unknown state as the update status", async () => {
+    let succeeded = false;
+    loggingService.getJob.mockImplementation(async () =>
+      succeeded
+        ? {
+            metadata: { name: JOB_NAME, uid: "uid-succeeded" },
+            status: { succeeded: 1 },
+          }
+        : runningJob,
+    );
+    loggingService.getJobPod.mockResolvedValue(runningPod);
+    loggingService.getLogsForPod.mockImplementation(
+      async (_pod: unknown, stream: PassThrough) => {
+        stream.write(
+          [
+            "\u001b[0m Update state (0x81) verifying update, progress: 2.27 (1669999610 / 73471564417)",
+            "\u001b[0m Update state (0x0) unknown, progress: 0.00 (0 / 0)",
+          ]
+            .map(logLine)
+            .join(""),
+        );
+        setTimeout(() => {
+          stream.write(logLine("\u001b[0mSuccess! App '730' fully installed."));
+          succeeded = true;
+          stream.end();
+        }, 1000);
+      },
+    );
+
+    const monitor = service.monitorUpdateStatus(NODE_ID);
+    await jest.advanceTimersByTimeAsync(10 * 1000);
+    await monitor;
+
+    expect(statusWrites()).toEqual(["verifying update 2%", "Finishing"]);
+    expect(terminalWrites()).toEqual(["terminal:succeeded"]);
+  });
+
+  it("treats a pod orphaned by a deleted job as no update", async () => {
+    const orphanedPod = { ...runningPod, status: { phase: "Succeeded" } };
+    loggingService.getJob.mockResolvedValue(null);
+    loggingService.getJobPod.mockResolvedValue(orphanedPod);
+
+    let finished = false;
+    void service.monitorUpdateStatus(NODE_ID).then(() => {
+      finished = true;
+    });
+    await jest.advanceTimersByTimeAsync(60 * 1000);
+
+    expect(finished).toBe(true);
+    expect(statusWrites()).toEqual([null]);
+
+    hasura.query.mockResolvedValue({
+      game_server_nodes: [{ id: NODE_ID, update_status: "unknown 0%" }],
+    });
+    const monitor = jest
+      .spyOn(service, "monitorUpdateStatus")
+      .mockResolvedValue(undefined);
+
+    await service.reconcileUpdateStatuses();
+
+    expect(monitor).not.toHaveBeenCalled();
+    expect(statusWrites()).toEqual([null, null]);
+  });
+
+  it("reconciles a stuck status on a disabled node", async () => {
+    const disabledNode = {
+      id: NODE_ID,
+      enabled: false,
+      update_status: "unknown 0%",
+    };
+    const matches = (where: any): boolean =>
+      where._or
+        ? where._or.some(matches)
+        : where.enabled
+          ? disabledNode.enabled === where.enabled._eq
+          : (disabledNode.update_status !== null) ===
+            !where.update_status._is_null;
+    hasura.query.mockImplementation(async ({ game_server_nodes }) => ({
+      game_server_nodes: matches(game_server_nodes.__args.where)
+        ? [disabledNode]
+        : [],
+    }));
+    loggingService.getJob.mockResolvedValue(null);
+
+    await service.reconcileUpdateStatuses();
+
+    expect(statusWrites()).toEqual([null]);
+  });
+
+  it("leaves the status alone when a retry replaced the succeeded job", async () => {
+    loggingService.getJob.mockResolvedValue({
+      metadata: { name: JOB_NAME, uid: "uid-succeeded" },
+      status: { succeeded: 1 },
+    });
+    loggingService.getJobPod.mockResolvedValue(undefined);
+    deleteNamespacedJob.mockRejectedValue(
+      Object.assign(new Error("Precondition failed: UID"), { code: 409 }),
+    );
+
+    await service.monitorUpdateStatus(NODE_ID);
+
+    expect(terminalWrites()).toEqual([]);
   });
 
   it("replaces a failed job when the update is retried instead of only watching it", async () => {
@@ -426,7 +539,13 @@ describe("GameServerNodeService — CS2 update status", () => {
     await service.updateCsServer(NODE_ID, true);
 
     expect(deleteNamespacedJob).toHaveBeenCalledWith(
-      expect.objectContaining({ name: JOB_NAME }),
+      expect.objectContaining({
+        name: JOB_NAME,
+        body: expect.objectContaining({
+          propagationPolicy: "Background",
+          preconditions: { uid: "uid-failed" },
+        }),
+      }),
     );
     expect(createNamespacedJob).toHaveBeenCalledTimes(1);
     expect(deleteNamespacedJob.mock.invocationCallOrder[0]).toBeLessThan(
