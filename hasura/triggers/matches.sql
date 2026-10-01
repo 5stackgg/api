@@ -517,6 +517,26 @@ BEGIN
 
     delete from match_lineups where id = OLD.lineup_1_id or id = OLD.lineup_2_id;
 
+    -- entity_id is free text with no FK, so nothing else removes a dead match's
+    -- rows. Team rooms are matched by their exact ids rather than a LIKE prefix
+    -- so every arm stays a notifications_type_entity_id_idx lookup.
+    DELETE FROM public.notifications
+     WHERE (type IN (
+                'MatchStatusChange',
+                'MatchImported',
+                'MatchSupport',
+                'MatchAbandoned',
+                'MatchStatsReady',
+                'AdminCall'
+            )
+            AND entity_id = OLD.id::text)
+        OR (type = 'MatchChatMessage'
+            AND entity_id IN (
+                'match:' || OLD.id,
+                'match_team:' || OLD.id || ':' || OLD.lineup_1_id,
+                'match_team:' || OLD.id || ':' || OLD.lineup_2_id
+            ));
+
     IF _tournament_id IS NOT NULL THEN
         PERFORM calculate_tournament_bracket_start_times(_tournament_id);
     END IF;

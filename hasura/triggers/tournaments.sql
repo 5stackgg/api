@@ -259,6 +259,34 @@ BEGIN
     DELETE FROM tournament_stages
         WHERE tournament_id = OLD.id;
 
+    -- BEFORE DELETE because the invite rows are still here to say which
+    -- notifications were theirs; the FK cascade has removed them by AFTER.
+    DELETE FROM public.notifications
+     WHERE (type IN (
+                'TournamentCreated',
+                'TournamentCheckInOpen',
+                'TournamentCheckInMissed',
+                'TournamentPartySignup'
+            )
+            AND entity_id = OLD.id::text)
+        OR (type IN ('TournamentReminder', 'TournamentCheckInClosing')
+            AND entity_id LIKE OLD.id || ':%')
+        OR (type = 'ChatMessage'
+            AND entity_id = 'tournament:' || OLD.id)
+        OR (type = 'TournamentInvite'
+            AND entity_id IN (
+                SELECT ti.id::text
+                  FROM public.tournament_invites ti
+                 WHERE ti.tournament_id = OLD.id
+            ))
+        OR (type = 'TournamentTeamInvite'
+            AND entity_id IN (
+                SELECT tti.id::text
+                  FROM public.tournament_team_invites tti
+                  JOIN public.tournament_teams tt ON tt.id = tti.tournament_team_id
+                 WHERE tt.tournament_id = OLD.id
+            ));
+
     RETURN OLD;
 END;
 $$;

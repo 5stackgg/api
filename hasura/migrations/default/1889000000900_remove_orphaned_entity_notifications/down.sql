@@ -1,0 +1,2 @@
+-- The deleted rows pointed at matches and tournaments that no longer exist, so
+-- there is nothing to put back.
