@@ -736,11 +736,16 @@ export class DedicatedServersService {
       servers_by_pk: {
         __args: { id: serverId },
         game: true,
+        connected: true,
       },
     });
 
     if (!server) {
       throw Error(`unable to find server ${serverId}`);
+    }
+
+    if (!server.connected) {
+      return [];
     }
 
     const rcon = await this.RconService.connect(serverId);
