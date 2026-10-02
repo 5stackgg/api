@@ -135,8 +135,25 @@ export class HasuraService {
 
     await this.apply(path.resolve("./hasura/enums"));
     await this.apply(path.resolve("./hasura/functions"));
-    await this.apply(path.resolve("./hasura/views"));
-    await this.apply(path.resolve("./hasura/triggers"));
+
+    const views = path.resolve("./hasura/views");
+    const triggers = path.resolve("./hasura/triggers");
+
+    // Recreating a view drops the INSTEAD OF triggers on it and, with CASCADE,
+    // the views built on it, while the files that define those still match
+    // their digests. Forgetting those digests up front also leaves them for the
+    // next boot when this one dies part way through.
+    if (await this.hasChanges(views)) {
+      await this.forgetDigests([
+        ...this.sqlFiles(views),
+        ...this.sqlFiles(triggers).filter((file) =>
+          HasuraService.createsViewTriggers(fs.readFileSync(file, "utf8")),
+        ),
+      ]);
+    }
+
+    await this.apply(views);
+    await this.apply(triggers);
 
     await this.updateSettings();
 
@@ -416,10 +433,7 @@ export class HasuraService {
       const sql = fs.readFileSync(filePath, "utf8");
 
       const digest = this.calcSqlDigest(sql);
-      const setting = path.relative(
-        process.cwd(),
-        filePath.replace(".sql", ""),
-      );
+      const setting = this.digestName(filePath);
 
       if (digest === (await this.getSetting(setting))) {
         return;
@@ -438,6 +452,44 @@ export class HasuraService {
         `failed to exec sql ${path.basename(filePath)}: ${error.message}`,
       );
     }
+  }
+
+  private sqlFiles(dir: string): Array<string> {
+    return fs
+      .readdirSync(dir)
+      .sort()
+      .flatMap((file) => {
+        const filePath = path.join(dir, file);
+        return fs.statSync(filePath).isDirectory()
+          ? this.sqlFiles(filePath)
+          : [filePath];
+      });
+  }
+
+  private async hasChanges(dir: string): Promise<boolean> {
+    for (const file of this.sqlFiles(dir)) {
+      const digest = this.calcSqlDigest(fs.readFileSync(file, "utf8"));
+      if (digest !== (await this.getSetting(this.digestName(file)))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private async forgetDigests(files: Array<string>) {
+    await this.postgresService.query(
+      "delete from migration_hashes.hashes where name = any($1::text[])",
+      [files.map((file) => this.digestName(file))],
+    );
+  }
+
+  // Postgres only allows INSTEAD OF triggers on views.
+  private static createsViewTriggers(sql: string) {
+    return /\bINSTEAD\s+OF\s+(INSERT|UPDATE|DELETE)\b/i.test(sql);
+  }
+
+  private digestName(filePath: string) {
+    return path.relative(process.cwd(), filePath.replace(".sql", ""));
   }
 
   public async getSetting(name: string) {
