@@ -29,7 +29,10 @@ describe("BuildMapAssets", () => {
   const auto = { gameServerNodeId: "node-1", trigger: "auto" as const };
 
   it("notifies once for every outcome", async () => {
-    const mapAssets = { build: jest.fn().mockResolvedValue(published()) };
+    const mapAssets = {
+      build: jest.fn().mockResolvedValue(published()),
+      queueCalloutsSync: jest.fn().mockResolvedValue(undefined),
+    };
     const notifications = { sendCs2Build: jest.fn() };
     const job = new BuildMapAssets(
       { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
@@ -53,6 +56,34 @@ describe("BuildMapAssets", () => {
       expect.objectContaining({ title: "Map Assets Published" }),
     );
   });
+
+  it.each([
+    ["Published", 1],
+    ["Partial", 1],
+    ["Failed", 0],
+  ] as const)(
+    "syncs callouts after a %s build only when one was published",
+    async (status, syncs) => {
+      const mapAssets = {
+        build: jest.fn().mockResolvedValue(published({ status })),
+        queueCalloutsSync: jest.fn().mockResolvedValue(undefined),
+      };
+      const job = new BuildMapAssets(
+        { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
+        mapAssets as any,
+        { sendCs2Build: jest.fn() } as any,
+      );
+
+      await job.process({
+        data: { gameServerNodeId: "node-1", buildId: "25537370" },
+      } as any);
+
+      expect(mapAssets.queueCalloutsSync).toHaveBeenCalledTimes(syncs);
+      if (syncs) {
+        expect(mapAssets.queueCalloutsSync).toHaveBeenCalledWith("25537370");
+      }
+    },
+  );
 
   it("summarises what changed since the previous build", () => {
     const notice = BuildMapAssets.notice("25537370", published(), auto);

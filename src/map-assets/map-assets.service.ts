@@ -15,6 +15,8 @@ import { LoggingService } from "../k8s/logging/logging.service";
 import { GameServersConfig } from "../configs/types/GameServersConfig";
 import { SystemSettingName } from "../system/enums/SystemSettingName";
 import { MapAssetsQueues } from "./enums/MapAssetsQueues";
+import { UtilityQueues } from "../utility/enums/UtilityQueues";
+import { UtilityJobs } from "../utility/enums/UtilityJobs";
 
 export type MapAssetKind = "tri" | "grenadeclip" | "view" | "callouts";
 
@@ -133,6 +135,8 @@ export class MapAssetsService {
     private readonly loggingService: LoggingService,
     @InjectQueue(MapAssetsQueues.BuildMapAssets)
     private readonly queue: Queue,
+    @InjectQueue(UtilityQueues.UtilityMeta)
+    private readonly utilityMetaQueue: Queue,
   ) {
     this.namespace =
       this.config.get<GameServersConfig>("gameServers").namespace;
@@ -150,6 +154,33 @@ export class MapAssetsService {
 
   public static GET_QUEUE_JOB_ID(buildId: string) {
     return `map-assets.${buildId}`;
+  }
+
+  public static GET_CALLOUTS_SYNC_JOB_ID(buildId: number | string) {
+    return `sync-map-callouts.${buildId}`;
+  }
+
+  // Queued when a node finishes updating to a new CS2 build, the sync waits
+  // (see SyncMapCallouts) until that build's map assets are published. A
+  // publish promotes the waiting sync rather than queueing a second one.
+  public async queueCalloutsSync(buildId: number | string): Promise<void> {
+    const jobId = MapAssetsService.GET_CALLOUTS_SYNC_JOB_ID(buildId);
+
+    const existing = await this.utilityMetaQueue.getJob(jobId);
+    if (existing && (await existing.isDelayed())) {
+      await existing.promote();
+      return;
+    }
+
+    await this.utilityMetaQueue.add(
+      UtilityJobs.SyncMapCallouts,
+      { buildId: Number(buildId) },
+      {
+        jobId,
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    );
   }
 
   public static isSafeKey(key: unknown): key is string {

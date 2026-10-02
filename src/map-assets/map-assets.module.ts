@@ -8,6 +8,7 @@ import { NotificationsModule } from "../notifications/notifications.module";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { MapAssetsQueues } from "./enums/MapAssetsQueues";
+import { UtilityQueues } from "../utility/enums/UtilityQueues";
 import { MapAssetsService } from "./map-assets.service";
 import { BuildMapAssets } from "./jobs/BuildMapAssets";
 
@@ -16,9 +17,14 @@ import { BuildMapAssets } from "./jobs/BuildMapAssets";
     PostgresModule,
     K8sModule,
     NotificationsModule,
-    BullModule.registerQueue({
-      name: MapAssetsQueues.BuildMapAssets,
-    }),
+    BullModule.registerQueue(
+      {
+        name: MapAssetsQueues.BuildMapAssets,
+      },
+      {
+        name: UtilityQueues.UtilityMeta,
+      },
+    ),
     BullBoardModule.forFeature({
       name: MapAssetsQueues.BuildMapAssets,
       adapter: BullMQAdapter,
