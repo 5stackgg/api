@@ -839,6 +839,115 @@ describe("game mode resolution (SQL-driven)", () => {
       );
     });
 
+    // Set once on the plugin's page, the file reaches every server running it;
+    // a rotation on this server still wins the keys it owns.
+    it("writes the plugin's config file under the rotation's keys", async () => {
+      await postgres.query(
+        `UPDATE game_plugins SET config_path = $1 WHERE slug = 'map-chooser'`,
+        ["addons/{runtime}/configs/plugins/MapChooser/config.jsonc"],
+      );
+      await postgres.query(
+        `UPDATE game_plugin_installs SET config = $1 WHERE plugin_slug = 'map-chooser'`,
+        [
+          JSON.stringify({
+            MapChooser: {
+              Rtv: { VotePercentage: 60 },
+              Cycle: { Enabled: false, RandomOrder: false },
+            },
+          }),
+        ],
+      );
+      await rotate(publicServer, [
+        await workshopMap("rotation-mirage", "Prophunt Mirage", "3615968422"),
+      ]);
+
+      const resolved = await service.resolveForServer(publicServer);
+
+      expect(
+        files(resolved?.pluginConfigs ?? null)[
+          "addons/swiftlys2/configs/plugins/MapChooser/config.jsonc"
+        ],
+      ).toEqual({
+        MapChooser: {
+          Rtv: { VotePercentage: 60 },
+          Cycle: { Enabled: true, RandomOrder: true },
+        },
+      });
+    });
+
+    describe("a plugin that reads its file from a cvar", () => {
+      const modes = [{ name: "Rifles", weapons: ["ak47"], duration: 600 }];
+      const path = "addons/swiftlys2/configs/plugins/Deathmatch/modes.json";
+
+      beforeEach(async () => {
+        await catalog("deathmatch");
+        await postgres.query(
+          `UPDATE game_plugins SET config_path = $1, config_cvar = 'dm_modes_file'
+            WHERE slug = 'deathmatch'`,
+          [path],
+        );
+        await installed("deathmatch");
+        await onNode("node-a", "deathmatch", "1.1.2");
+        await override(publicServer, "deathmatch", true);
+      });
+
+      it("writes the file and points the cvar at it", async () => {
+        await postgres.query(
+          `UPDATE game_plugin_installs SET config = $1, cfg = 'dm_replenish_health 20'
+            WHERE plugin_slug = 'deathmatch'`,
+          [JSON.stringify(modes)],
+        );
+
+        const resolved = await service.resolveForServer(publicServer);
+
+        expect(files(resolved?.pluginConfigs ?? null)[path]).toEqual(modes);
+        expect(await service.pluginCfgLayers(resolved)).toEqual([
+          {
+            slug: "deathmatch",
+            cfg: `dm_replenish_health 20\ndm_modes_file "${path}"`,
+          },
+        ]);
+      });
+
+      // Placed on the node by hand, so the panel has no install row for it.
+      it("points the cvar at a mode's file for a plugin with no install row", async () => {
+        await postgres.query(
+          `DELETE FROM game_plugin_installs WHERE plugin_slug = 'deathmatch'`,
+        );
+        await postgres.query(
+          `UPDATE servers SET type = 'Custom' WHERE id = $1`,
+          [publicServer],
+        );
+        const [mode] = await postgres.query<Array<{ id: string }>>(
+          `INSERT INTO game_modes (slug, name) VALUES ('dm', 'DM') RETURNING id`,
+        );
+        await postgres.query(
+          `INSERT INTO game_mode_plugins (game_mode_id, plugin_slug, config)
+           VALUES ($1, 'deathmatch', $2)`,
+          [mode.id, JSON.stringify(modes)],
+        );
+        await postgres.query(
+          `UPDATE servers SET game_mode_id = $1 WHERE id = $2`,
+          [mode.id, publicServer],
+        );
+
+        const resolved = await service.resolveForServer(publicServer);
+
+        expect(files(resolved?.pluginConfigs ?? null)[path]).toEqual(modes);
+        expect(await service.pluginCfgLayers(resolved)).toEqual([
+          { slug: "deathmatch", cfg: `dm_modes_file "${path}"` },
+        ]);
+      });
+
+      // The cvar only ever names a file this server is actually given.
+      it("leaves the cvar alone while the plugin keeps its own file", async () => {
+        const resolved = await service.resolveForServer(publicServer);
+
+        expect(files(resolved?.pluginConfigs ?? null)[path]).toBeUndefined();
+        expect(await service.pluginCfgLayers(resolved)).toEqual([]);
+      });
+    });
+
     it("plays no rotation on a Practice server", async () => {
       await rotate(publicServer, [
         await workshopMap("rotation-mirage", "Prophunt Mirage", "3615968422"),

@@ -16,6 +16,7 @@ import {
   ResolvedGameMode,
 } from "../game-plugins/game-modes.service";
 import { MapRotationService } from "../game-plugins/map-rotation.service";
+import { PluginCvarsService } from "../game-plugins/plugin-cvars.service";
 import { NotificationsService } from "src/notifications/notifications.service";
 import { DISCORD_COLORS } from "src/notifications/utilities/constants";
 import { MarkDedicatedServerOffline } from "src/game-server-node/jobs/MarkDedicatedServerOffline";
@@ -78,6 +79,7 @@ export class DedicatedServersService {
     private readonly mapRotationService: MapRotationService,
     private readonly notifications: NotificationsService,
     private readonly postgres: PostgresService,
+    private readonly pluginCvars: PluginCvarsService,
   ) {
     this.redis = this.redisManager.getConnection();
 
@@ -1112,7 +1114,28 @@ export class DedicatedServersService {
       });
     }
 
+    // Not connected before this ping means it just came up, possibly with a
+    // different plugin set than the last time it was asked.
+    await this.readPluginCvars(serverId, !server.connected);
+
     await this.RconService.disconnect(serverId);
+  }
+
+  private async readPluginCvars(
+    serverId: string,
+    restarted: boolean,
+  ): Promise<void> {
+    try {
+      await this.pluginCvars.harvest(
+        serverId,
+        (name) => this.RconService.listCvars(serverId, name),
+        { restarted },
+      );
+    } catch (error) {
+      this.logger.warn(
+        `[${serverId}] could not read plugin cvars: ${error?.message ?? error}`,
+      );
+    }
   }
 
   public async expectRestart(serverId: string): Promise<void> {

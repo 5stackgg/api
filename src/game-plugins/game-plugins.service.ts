@@ -128,8 +128,10 @@ export class GamePluginsService {
          (slug, kind, name, author, description, homepage, tags, verified,
           hot_swappable, requires_service, requires_server_guidelines_disabled,
           config_schema, config_path, cvars, panel, wiring, pairs_with,
-          map_rotation, synced_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18, now())
+          map_rotation, config_cvar, config_default, config_shipped,
+          forced_cvars, synced_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,
+               $19,$20,$21,$22, now())
        ON CONFLICT (slug) DO UPDATE SET
          kind = EXCLUDED.kind,
          name = EXCLUDED.name,
@@ -148,6 +150,10 @@ export class GamePluginsService {
          wiring = EXCLUDED.wiring,
          pairs_with = EXCLUDED.pairs_with,
          map_rotation = EXCLUDED.map_rotation,
+         config_cvar = EXCLUDED.config_cvar,
+         config_default = EXCLUDED.config_default,
+         config_shipped = EXCLUDED.config_shipped,
+         forced_cvars = EXCLUDED.forced_cvars,
          synced_at = now()`,
       [
         plugin.slug,
@@ -168,6 +174,10 @@ export class GamePluginsService {
         plugin.wiring ? JSON.stringify(plugin.wiring) : null,
         plugin.pairs_with ?? [],
         plugin.map_rotation ? JSON.stringify(plugin.map_rotation) : null,
+        plugin.config_cvar ?? null,
+        plugin.config_default ? JSON.stringify(plugin.config_default) : null,
+        plugin.config_shipped ? JSON.stringify(plugin.config_shipped) : null,
+        plugin.forced_cvars ?? [],
       ],
     );
 

@@ -29,7 +29,11 @@ export type RegistryPlugin = {
   requires_server_guidelines_disabled?: boolean;
   config_schema?: Record<string, unknown>;
   config_path?: string;
+  config_cvar?: string;
+  config_default?: Record<string, unknown> | Array<unknown>;
+  config_shipped?: { path?: string; repo_path?: string };
   cvars?: Array<string>;
+  forced_cvars?: Array<string>;
   map_rotation?: MapRotationSpec;
   panel?: Record<string, unknown>;
   wiring?: Record<string, unknown>;

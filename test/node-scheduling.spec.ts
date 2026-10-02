@@ -106,6 +106,7 @@ describe("node scheduling across an outage (SQL-driven)", () => {
       {} as never,
       {} as never,
       {} as never,
+      {} as never,
     );
   });
 

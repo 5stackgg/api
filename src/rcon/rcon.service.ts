@@ -391,6 +391,21 @@ export class RconService {
     }
   }
 
+  public async listCvars(
+    serverId: string,
+    prefix: string,
+  ): Promise<
+    Array<{ name: string; kind: string; flags: string; description: string }>
+  > {
+    const rcon = await this.connect(serverId);
+
+    if (!rcon) {
+      throw new Error(`unable to connect to server ${serverId}`);
+    }
+
+    return this.parseCvarList(await rcon.send(`Cvarlist ${prefix}`));
+  }
+
   private parseCvarList(
     output: string,
   ): Array<{ name: string; kind: string; flags: string; description: string }> {
@@ -423,10 +438,9 @@ export class RconService {
         continue;
       }
 
-      // Match 4 columns split by ':' allowing optional spaces and empty description
-      const match = line.match(
-        /^\s*([^:]+)\s*:\s*([^:]+)\s*:\s*([^:]*)\s*:\s*(.*)$/,
-      );
+      // Columns are separated by " : ", never a bare colon: a value can be a
+      // URL, and splitting on every colon cut it at "https".
+      const match = line.match(/^\s*(\S+)\s+:\s?(.*?)\s+:\s?(.*?)\s+:\s?(.*)$/);
       if (!match) {
         this.logger.warn(`unable to parse cvar list: ${line}`);
         continue;

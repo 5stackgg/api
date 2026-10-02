@@ -14,6 +14,7 @@ import { GamePluginQueues } from "./enums/GamePluginQueues";
 import { GamePluginsService } from "./game-plugins.service";
 import { GameModesService } from "./game-modes.service";
 import { MapRotationService } from "./map-rotation.service";
+import { PluginCvarsService } from "./plugin-cvars.service";
 import { GamePluginsController } from "./game-plugins.controller";
 import { SyncGamePluginRegistry } from "./jobs/SyncGamePluginRegistry";
 import { CheckGamePluginUpdates } from "./jobs/CheckGamePluginUpdates";
@@ -24,6 +25,7 @@ import { NotifyGamePluginUpdate } from "./jobs/NotifyGamePluginUpdate";
     GamePluginsService,
     GameModesService,
     MapRotationService,
+    PluginCvarsService,
     SyncGamePluginRegistry,
     CheckGamePluginUpdates,
     NotifyGamePluginUpdate,
@@ -37,20 +39,22 @@ import { NotifyGamePluginUpdate } from "./jobs/NotifyGamePluginUpdate";
     PostgresModule,
     NotificationsModule,
     PluginRuntimeModule,
-    BullModule.registerQueue(
-      { name: GamePluginQueues.Registry },
-    ),
-    BullBoardModule.forFeature(
-      { name: GamePluginQueues.Registry, adapter: BullMQAdapter },
-    ),
+    BullModule.registerQueue({ name: GamePluginQueues.Registry }),
+    BullBoardModule.forFeature({
+      name: GamePluginQueues.Registry,
+      adapter: BullMQAdapter,
+    }),
   ],
-  exports: [GamePluginsService, GameModesService, MapRotationService],
+  exports: [
+    GamePluginsService,
+    GameModesService,
+    MapRotationService,
+    PluginCvarsService,
+  ],
   controllers: [GamePluginsController],
 })
 export class GamePluginsModule {
-  constructor(
-    @InjectQueue(GamePluginQueues.Registry) registry: Queue,
-  ) {
+  constructor(@InjectQueue(GamePluginQueues.Registry) registry: Queue) {
     if (process.env.RUN_MIGRATIONS) {
       return;
     }
@@ -66,6 +70,5 @@ export class GamePluginsModule {
       {},
       { repeat: { pattern: "7 * * * *" } },
     );
-
   }
 }

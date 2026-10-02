@@ -30,6 +30,7 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { DISCORD_COLORS } from "../notifications/utilities/constants";
 import { GameStreamerService } from "../matches/game-streamer/game-streamer.service";
 import { GamePluginsService } from "../game-plugins/game-plugins.service";
+import { PluginCvarsService } from "../game-plugins/plugin-cvars.service";
 import { MapAssetsService } from "../map-assets/map-assets.service";
 import { User } from "../auth/types/User";
 
@@ -59,6 +60,7 @@ export class GameServerNodeController {
     @InjectQueue(GameServerQueues.ValidateGamedata)
     private readonly validateGamedataQueue: Queue,
     protected readonly mapAssets: MapAssetsService,
+    protected readonly pluginCvars: PluginCvarsService,
   ) {
     this.appConfig = this.config.get<AppConfig>("app");
   }
@@ -960,13 +962,19 @@ UNIT
       // identical on the filesystem -- so ask the server itself, once, as it
       // comes up.
       if (!server.connected) {
-        void this.recordLoadedPlugins(String(serverId), pluginRuntime).catch(
-          (error: Error) => {
+        void this.recordLoadedPlugins(String(serverId), pluginRuntime)
+          .then(() =>
+            this.pluginCvars.harvest(
+              String(serverId),
+              (name) => this.rcon.listCvars(String(serverId), name),
+              { restarted: true },
+            ),
+          )
+          .catch((error: Error) => {
             this.logger.warn(
               `could not read loaded plugins from ${serverId}: ${error.message}`,
             );
-          },
-        );
+          });
       }
     }
 
