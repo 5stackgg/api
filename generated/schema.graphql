@@ -131,6 +131,15 @@ input ClipSpecInput {
   title: String
 }
 
+type CommunityTotals {
+  deaths: Int!
+  kills: Int!
+  rank: Int
+  seconds: Int!
+  servers: Int!
+  sessions: Int!
+}
+
 type ConnectionByState {
   count: Int!
   state: String!
@@ -504,6 +513,54 @@ type PendingMatchImportActionOutput {
   success: Boolean!
 }
 
+type PlayerCommunityIp {
+  ip: String!
+  sessions: Int!
+}
+
+type PlayerCommunityIpMatch {
+  avatar_url: String
+  has_account: Boolean!
+  ip: String!
+  is_banned: Boolean!
+  last_seen_at: timestamptz
+  name: String
+  online: Boolean!
+  sessions: Int!
+  steam_id: bigint!
+}
+
+type PlayerCommunityServer {
+  all_time: CommunityTotals!
+  label: String!
+  last_seen_at: timestamptz
+  names: [String!]
+  online: Boolean!
+  region: String
+  server_id: uuid!
+  sessions: [PlayerCommunitySession!]
+  type: String
+  week: CommunityTotals!
+}
+
+type PlayerCommunitySession {
+  ended_at: timestamptz
+  ip: String
+  started_at: timestamptz!
+}
+
+type PlayerCommunityStats {
+  all_time: CommunityTotals!
+  ip_matches: [PlayerCommunityIpMatch!]
+  ips: [PlayerCommunityIp!]
+  is_moderator_view: Boolean!
+  last_seen_at: timestamptz
+  online_server_id: uuid
+  online_server_label: String
+  servers: [PlayerCommunityServer!]!
+  week: CommunityTotals!
+}
+
 type PluginReadmeOutput {
   content: String
   format: String
@@ -631,6 +688,52 @@ type SeasonBackfillStatusOutput {
   season_id: String
   started_at: String
   total: Int!
+}
+
+input ServerAccessInput {
+  event_ids: [uuid!]!
+  min_role: String
+  restricted: Boolean!
+  steam_ids: [String!]!
+}
+
+type ServerCommunityStats {
+  all_time_players: Int!
+  hourly: [ServerHourlyActivity!]!
+  max_players: Int
+  online: Int!
+  server_id: uuid!
+  tracked_since: timestamptz
+  week_players: Int!
+  week_seconds: Int!
+}
+
+type ServerHourlyActivity {
+  hour: timestamptz!
+  players: Int!
+  seconds: Int!
+}
+
+type ServerLeaderboard {
+  entries: [ServerLeaderboardEntry!]!
+  you: ServerLeaderboardEntry
+}
+
+type ServerLeaderboardEntry {
+  avatar_url: String
+  country: String
+  deaths: Int!
+  kills: Int!
+  name: String!
+  rank: Int!
+  seconds: Int!
+  sessions: Int!
+  steam_id: bigint!
+}
+
+input ServerMapRotationInput {
+  map_ids: [uuid!]!
+  shuffle: Boolean!
 }
 
 type ServerPlayer {
@@ -16488,6 +16591,204 @@ input e_scrim_request_statuses_updates {
 }
 
 """
+columns and relationships of "e_server_migration_statuses"
+"""
+type e_server_migration_statuses {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_server_migration_statuses"
+"""
+type e_server_migration_statuses_aggregate {
+  aggregate: e_server_migration_statuses_aggregate_fields
+  nodes: [e_server_migration_statuses!]!
+}
+
+"""
+aggregate fields of "e_server_migration_statuses"
+"""
+type e_server_migration_statuses_aggregate_fields {
+  count(columns: [e_server_migration_statuses_select_column!], distinct: Boolean): Int!
+  max: e_server_migration_statuses_max_fields
+  min: e_server_migration_statuses_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_server_migration_statuses". All fields are combined with a logical 'AND'.
+"""
+input e_server_migration_statuses_bool_exp {
+  _and: [e_server_migration_statuses_bool_exp!]
+  _not: e_server_migration_statuses_bool_exp
+  _or: [e_server_migration_statuses_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_server_migration_statuses"
+"""
+enum e_server_migration_statuses_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_server_migration_statuses_pkey
+}
+
+enum e_server_migration_statuses_enum {
+  """The move was canceled and the server was restored on its original node"""
+  Canceled
+
+  """Moved to the new node"""
+  Completed
+
+  """The move failed and the server was restored on its original node"""
+  Failed
+
+  """Switching the server to the new node"""
+  Finalizing
+
+  """Waiting to start"""
+  Queued
+
+  """Stopping the server on its current node"""
+  Stopping
+
+  """Copying the server files to the new node"""
+  Transferring
+}
+
+"""
+Boolean expression to compare columns of type "e_server_migration_statuses_enum". All fields are combined with logical 'AND'.
+"""
+input e_server_migration_statuses_enum_comparison_exp {
+  _eq: e_server_migration_statuses_enum
+  _in: [e_server_migration_statuses_enum!]
+  _is_null: Boolean
+  _neq: e_server_migration_statuses_enum
+  _nin: [e_server_migration_statuses_enum!]
+}
+
+"""
+input type for inserting data into table "e_server_migration_statuses"
+"""
+input e_server_migration_statuses_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_server_migration_statuses_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_server_migration_statuses_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_server_migration_statuses"
+"""
+type e_server_migration_statuses_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_server_migration_statuses!]!
+}
+
+"""
+input type for inserting object relation for remote table "e_server_migration_statuses"
+"""
+input e_server_migration_statuses_obj_rel_insert_input {
+  data: e_server_migration_statuses_insert_input!
+
+  """upsert condition"""
+  on_conflict: e_server_migration_statuses_on_conflict
+}
+
+"""
+on_conflict condition type for table "e_server_migration_statuses"
+"""
+input e_server_migration_statuses_on_conflict {
+  constraint: e_server_migration_statuses_constraint!
+  update_columns: [e_server_migration_statuses_update_column!]! = []
+  where: e_server_migration_statuses_bool_exp
+}
+
+"""
+Ordering options when selecting data from "e_server_migration_statuses".
+"""
+input e_server_migration_statuses_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_server_migration_statuses"""
+input e_server_migration_statuses_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_server_migration_statuses"
+"""
+enum e_server_migration_statuses_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_server_migration_statuses"
+"""
+input e_server_migration_statuses_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_server_migration_statuses"
+"""
+input e_server_migration_statuses_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_server_migration_statuses_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_server_migration_statuses_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_server_migration_statuses"
+"""
+enum e_server_migration_statuses_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_server_migration_statuses_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_server_migration_statuses_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_server_migration_statuses_bool_exp!
+}
+
+"""
 columns and relationships of "e_server_types"
 """
 type e_server_types {
@@ -24581,7 +24882,9 @@ type game_modes {
     """JSON select path"""
     path: String
   ): jsonb
+  system: Boolean!
   updated_at: timestamptz!
+  valve_mode: String
 }
 
 """
@@ -24625,7 +24928,9 @@ input game_modes_bool_exp {
   runtime_conflicts: jsonb_comparison_exp
   slug: String_comparison_exp
   supported_runtimes: jsonb_comparison_exp
+  system: Boolean_comparison_exp
   updated_at: timestamptz_comparison_exp
+  valve_mode: String_comparison_exp
 }
 
 """
@@ -24660,7 +24965,9 @@ input game_modes_insert_input {
   name: String
   plugins: game_mode_plugins_arr_rel_insert_input
   slug: String
+  system: Boolean
   updated_at: timestamptz
+  valve_mode: String
 }
 
 """aggregate max on columns"""
@@ -24675,6 +24982,7 @@ type game_modes_max_fields {
   name: String
   slug: String
   updated_at: timestamptz
+  valve_mode: String
 }
 
 """aggregate min on columns"""
@@ -24689,6 +24997,7 @@ type game_modes_min_fields {
   name: String
   slug: String
   updated_at: timestamptz
+  valve_mode: String
 }
 
 """
@@ -24738,7 +25047,9 @@ input game_modes_order_by {
   runtime_conflicts: order_by
   slug: order_by
   supported_runtimes: order_by
+  system: order_by
   updated_at: order_by
+  valve_mode: order_by
 }
 
 """primary key columns input for table: game_modes"""
@@ -24784,7 +25095,13 @@ enum game_modes_select_column {
   slug
 
   """column name"""
+  system
+
+  """column name"""
   updated_at
+
+  """column name"""
+  valve_mode
 }
 
 """
@@ -24802,7 +25119,9 @@ input game_modes_set_input {
   id: uuid
   name: String
   slug: String
+  system: Boolean
   updated_at: timestamptz
+  valve_mode: String
 }
 
 """
@@ -24829,7 +25148,9 @@ input game_modes_stream_cursor_value_input {
   id: uuid
   name: String
   slug: String
+  system: Boolean
   updated_at: timestamptz
+  valve_mode: String
 }
 
 """
@@ -24870,7 +25191,13 @@ enum game_modes_update_column {
   slug
 
   """column name"""
+  system
+
+  """column name"""
   updated_at
+
+  """column name"""
+  valve_mode
 }
 
 input game_modes_updates {
@@ -26856,6 +27183,13 @@ input game_server_node_plugins_updates {
 columns and relationships of "game_server_nodes"
 """
 type game_server_nodes {
+  accepting_new_matches: Boolean!
+
+  """
+  A computed field, executes function "available_dedicated_slot_count"
+  """
+  available_dedicated_slot_count: Int
+
   """
   A computed field, executes function "available_node_server_count"
   """
@@ -27113,6 +27447,11 @@ input game_server_nodes_arr_rel_insert_input {
 """aggregate avg on columns"""
 type game_server_nodes_avg_fields {
   """
+  A computed field, executes function "available_dedicated_slot_count"
+  """
+  available_dedicated_slot_count: Int
+
+  """
   A computed field, executes function "available_node_server_count"
   """
   available_server_count: Int
@@ -27160,6 +27499,8 @@ input game_server_nodes_bool_exp {
   _and: [game_server_nodes_bool_exp!]
   _not: game_server_nodes_bool_exp
   _or: [game_server_nodes_bool_exp!]
+  accepting_new_matches: Boolean_comparison_exp
+  available_dedicated_slot_count: Int_comparison_exp
   available_server_count: Int_comparison_exp
   build_id: Int_comparison_exp
   cpu_cores_per_socket: Int_comparison_exp
@@ -27287,6 +27628,7 @@ input game_server_nodes_inc_input {
 input type for inserting data into table "game_server_nodes"
 """
 input game_server_nodes_insert_input {
+  accepting_new_matches: Boolean
   build_id: Int
   cpu_cores_per_socket: Int
   cpu_frequency_info: jsonb
@@ -27340,6 +27682,11 @@ input game_server_nodes_insert_input {
 
 """aggregate max on columns"""
 type game_server_nodes_max_fields {
+  """
+  A computed field, executes function "available_dedicated_slot_count"
+  """
+  available_dedicated_slot_count: Int
+
   """
   A computed field, executes function "available_node_server_count"
   """
@@ -27407,6 +27754,11 @@ input game_server_nodes_max_order_by {
 
 """aggregate min on columns"""
 type game_server_nodes_min_fields {
+  """
+  A computed field, executes function "available_dedicated_slot_count"
+  """
+  available_dedicated_slot_count: Int
+
   """
   A computed field, executes function "available_node_server_count"
   """
@@ -27504,6 +27856,8 @@ input game_server_nodes_on_conflict {
 
 """Ordering options when selecting data from "game_server_nodes"."""
 input game_server_nodes_order_by {
+  accepting_new_matches: order_by
+  available_dedicated_slot_count: order_by
   available_server_count: order_by
   build_id: order_by
   cpu_cores_per_socket: order_by
@@ -27578,6 +27932,9 @@ input game_server_nodes_prepend_input {
 select columns of table "game_server_nodes"
 """
 enum game_server_nodes_select_column {
+  """column name"""
+  accepting_new_matches
+
   """column name"""
   build_id
 
@@ -27713,6 +28070,9 @@ select "game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns" columns
 """
 enum game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns {
   """column name"""
+  accepting_new_matches
+
+  """column name"""
   enabled
 
   """column name"""
@@ -27742,6 +28102,9 @@ select "game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns" columns 
 """
 enum game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns {
   """column name"""
+  accepting_new_matches
+
+  """column name"""
   enabled
 
   """column name"""
@@ -27770,6 +28133,7 @@ enum game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_o
 input type for updating data in table "game_server_nodes"
 """
 input game_server_nodes_set_input {
+  accepting_new_matches: Boolean
   build_id: Int
   cpu_cores_per_socket: Int
   cpu_frequency_info: jsonb
@@ -27818,6 +28182,11 @@ input game_server_nodes_set_input {
 """aggregate stddev on columns"""
 type game_server_nodes_stddev_fields {
   """
+  A computed field, executes function "available_dedicated_slot_count"
+  """
+  available_dedicated_slot_count: Int
+
+  """
   A computed field, executes function "available_node_server_count"
   """
   available_server_count: Int
@@ -27861,6 +28230,11 @@ input game_server_nodes_stddev_order_by {
 """aggregate stddev_pop on columns"""
 type game_server_nodes_stddev_pop_fields {
   """
+  A computed field, executes function "available_dedicated_slot_count"
+  """
+  available_dedicated_slot_count: Int
+
+  """
   A computed field, executes function "available_node_server_count"
   """
   available_server_count: Int
@@ -27903,6 +28277,11 @@ input game_server_nodes_stddev_pop_order_by {
 
 """aggregate stddev_samp on columns"""
 type game_server_nodes_stddev_samp_fields {
+  """
+  A computed field, executes function "available_dedicated_slot_count"
+  """
+  available_dedicated_slot_count: Int
+
   """
   A computed field, executes function "available_node_server_count"
   """
@@ -27957,6 +28336,7 @@ input game_server_nodes_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input game_server_nodes_stream_cursor_value_input {
+  accepting_new_matches: Boolean
   build_id: Int
   cpu_cores_per_socket: Int
   cpu_frequency_info: jsonb
@@ -28005,6 +28385,11 @@ input game_server_nodes_stream_cursor_value_input {
 """aggregate sum on columns"""
 type game_server_nodes_sum_fields {
   """
+  A computed field, executes function "available_dedicated_slot_count"
+  """
+  available_dedicated_slot_count: Int
+
+  """
   A computed field, executes function "available_node_server_count"
   """
   available_server_count: Int
@@ -28049,6 +28434,9 @@ input game_server_nodes_sum_order_by {
 update columns of table "game_server_nodes"
 """
 enum game_server_nodes_update_column {
+  """column name"""
+  accepting_new_matches
+
   """column name"""
   build_id
 
@@ -28214,6 +28602,11 @@ input game_server_nodes_updates {
 """aggregate var_pop on columns"""
 type game_server_nodes_var_pop_fields {
   """
+  A computed field, executes function "available_dedicated_slot_count"
+  """
+  available_dedicated_slot_count: Int
+
+  """
   A computed field, executes function "available_node_server_count"
   """
   available_server_count: Int
@@ -28257,6 +28650,11 @@ input game_server_nodes_var_pop_order_by {
 """aggregate var_samp on columns"""
 type game_server_nodes_var_samp_fields {
   """
+  A computed field, executes function "available_dedicated_slot_count"
+  """
+  available_dedicated_slot_count: Int
+
+  """
   A computed field, executes function "available_node_server_count"
   """
   available_server_count: Int
@@ -28299,6 +28697,11 @@ input game_server_nodes_var_samp_order_by {
 
 """aggregate variance on columns"""
 type game_server_nodes_variance_fields {
+  """
+  A computed field, executes function "available_dedicated_slot_count"
+  """
+  available_dedicated_slot_count: Int
+
   """
   A computed field, executes function "available_node_server_count"
   """
@@ -46555,6 +46958,9 @@ type mutation_root {
   """Cancel an entire match_map's render queue + tear down the pod."""
   cancelClipRenderBatch(match_map_id: uuid!): SuccessOutput
 
+  """Cancel a dedicated server move that has not reached the new node yet"""
+  cancelDedicatedServerMove(server_id: uuid!): SuccessOutput
+
   """cancelMatch"""
   cancelMatch(match_id: uuid!): SuccessOutput
 
@@ -47409,6 +47815,19 @@ type mutation_root {
   delete single row from the table: "e_scrim_request_statuses"
   """
   delete_e_scrim_request_statuses_by_pk(value: String!): e_scrim_request_statuses
+
+  """
+  delete data from the table: "e_server_migration_statuses"
+  """
+  delete_e_server_migration_statuses(
+    """filter the rows which have to be deleted"""
+    where: e_server_migration_statuses_bool_exp!
+  ): e_server_migration_statuses_mutation_response
+
+  """
+  delete single row from the table: "e_server_migration_statuses"
+  """
+  delete_e_server_migration_statuses_by_pk(value: String!): e_server_migration_statuses
 
   """
   delete data from the table: "e_server_types"
@@ -48704,6 +49123,32 @@ type mutation_root {
   delete_seasons_by_pk(id: uuid!): seasons
 
   """
+  delete data from the table: "server_access_events"
+  """
+  delete_server_access_events(
+    """filter the rows which have to be deleted"""
+    where: server_access_events_bool_exp!
+  ): server_access_events_mutation_response
+
+  """
+  delete single row from the table: "server_access_events"
+  """
+  delete_server_access_events_by_pk(event_id: uuid!, server_id: uuid!): server_access_events
+
+  """
+  delete data from the table: "server_access_players"
+  """
+  delete_server_access_players(
+    """filter the rows which have to be deleted"""
+    where: server_access_players_bool_exp!
+  ): server_access_players_mutation_response
+
+  """
+  delete single row from the table: "server_access_players"
+  """
+  delete_server_access_players_by_pk(server_id: uuid!, steam_id: bigint!): server_access_players
+
+  """
   delete data from the table: "server_map_rotation"
   """
   delete_server_map_rotation(
@@ -48715,6 +49160,32 @@ type mutation_root {
   delete single row from the table: "server_map_rotation"
   """
   delete_server_map_rotation_by_pk(map_id: uuid!, server_id: uuid!): server_map_rotation
+
+  """
+  delete data from the table: "server_migrations"
+  """
+  delete_server_migrations(
+    """filter the rows which have to be deleted"""
+    where: server_migrations_bool_exp!
+  ): server_migrations_mutation_response
+
+  """
+  delete single row from the table: "server_migrations"
+  """
+  delete_server_migrations_by_pk(id: uuid!): server_migrations
+
+  """
+  delete data from the table: "server_player_sessions"
+  """
+  delete_server_player_sessions(
+    """filter the rows which have to be deleted"""
+    where: server_player_sessions_bool_exp!
+  ): server_player_sessions_mutation_response
+
+  """
+  delete single row from the table: "server_player_sessions"
+  """
+  delete_server_player_sessions_by_pk(id: bigint!): server_player_sessions
 
   """
   delete data from the table: "server_plugins"
@@ -48741,6 +49212,19 @@ type mutation_root {
   delete single row from the table: "server_regions"
   """
   delete_server_regions_by_pk(value: String!): server_regions
+
+  """
+  delete data from the table: "server_rosters"
+  """
+  delete_server_rosters(
+    """filter the rows which have to be deleted"""
+    where: server_rosters_bool_exp!
+  ): server_rosters_mutation_response
+
+  """
+  delete single row from the table: "server_rosters"
+  """
+  delete_server_rosters_by_pk(server_id: uuid!): server_rosters
 
   """
   delete data from the table: "servers"
@@ -50689,6 +51173,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: e_scrim_request_statuses_on_conflict
   ): e_scrim_request_statuses
+
+  """
+  insert data into the table: "e_server_migration_statuses"
+  """
+  insert_e_server_migration_statuses(
+    """the rows to be inserted"""
+    objects: [e_server_migration_statuses_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_server_migration_statuses_on_conflict
+  ): e_server_migration_statuses_mutation_response
+
+  """
+  insert a single row into the table: "e_server_migration_statuses"
+  """
+  insert_e_server_migration_statuses_one(
+    """the row to be inserted"""
+    object: e_server_migration_statuses_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_server_migration_statuses_on_conflict
+  ): e_server_migration_statuses
 
   """
   insert data into the table: "e_server_types"
@@ -52889,6 +53395,50 @@ type mutation_root {
   ): seasons
 
   """
+  insert data into the table: "server_access_events"
+  """
+  insert_server_access_events(
+    """the rows to be inserted"""
+    objects: [server_access_events_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: server_access_events_on_conflict
+  ): server_access_events_mutation_response
+
+  """
+  insert a single row into the table: "server_access_events"
+  """
+  insert_server_access_events_one(
+    """the row to be inserted"""
+    object: server_access_events_insert_input!
+
+    """upsert condition"""
+    on_conflict: server_access_events_on_conflict
+  ): server_access_events
+
+  """
+  insert data into the table: "server_access_players"
+  """
+  insert_server_access_players(
+    """the rows to be inserted"""
+    objects: [server_access_players_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: server_access_players_on_conflict
+  ): server_access_players_mutation_response
+
+  """
+  insert a single row into the table: "server_access_players"
+  """
+  insert_server_access_players_one(
+    """the row to be inserted"""
+    object: server_access_players_insert_input!
+
+    """upsert condition"""
+    on_conflict: server_access_players_on_conflict
+  ): server_access_players
+
+  """
   insert data into the table: "server_map_rotation"
   """
   insert_server_map_rotation(
@@ -52909,6 +53459,50 @@ type mutation_root {
     """upsert condition"""
     on_conflict: server_map_rotation_on_conflict
   ): server_map_rotation
+
+  """
+  insert data into the table: "server_migrations"
+  """
+  insert_server_migrations(
+    """the rows to be inserted"""
+    objects: [server_migrations_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: server_migrations_on_conflict
+  ): server_migrations_mutation_response
+
+  """
+  insert a single row into the table: "server_migrations"
+  """
+  insert_server_migrations_one(
+    """the row to be inserted"""
+    object: server_migrations_insert_input!
+
+    """upsert condition"""
+    on_conflict: server_migrations_on_conflict
+  ): server_migrations
+
+  """
+  insert data into the table: "server_player_sessions"
+  """
+  insert_server_player_sessions(
+    """the rows to be inserted"""
+    objects: [server_player_sessions_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: server_player_sessions_on_conflict
+  ): server_player_sessions_mutation_response
+
+  """
+  insert a single row into the table: "server_player_sessions"
+  """
+  insert_server_player_sessions_one(
+    """the row to be inserted"""
+    object: server_player_sessions_insert_input!
+
+    """upsert condition"""
+    on_conflict: server_player_sessions_on_conflict
+  ): server_player_sessions
 
   """
   insert data into the table: "server_plugins"
@@ -52953,6 +53547,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: server_regions_on_conflict
   ): server_regions
+
+  """
+  insert data into the table: "server_rosters"
+  """
+  insert_server_rosters(
+    """the rows to be inserted"""
+    objects: [server_rosters_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: server_rosters_on_conflict
+  ): server_rosters_mutation_response
+
+  """
+  insert a single row into the table: "server_rosters"
+  """
+  insert_server_rosters_one(
+    """the row to be inserted"""
+    object: server_rosters_insert_input!
+
+    """upsert condition"""
+    on_conflict: server_rosters_on_conflict
+  ): server_rosters
 
   """
   insert data into the table: "servers"
@@ -54195,6 +54811,9 @@ type mutation_root {
   """logout"""
   logout: SuccessOutput
 
+  """Move a dedicated server and its files to another game server node"""
+  moveDedicatedServerToNode(game_server_node_id: String!, server_id: uuid!, without_files: Boolean): SuccessOutput
+
   """Move file or directory on game server"""
   moveServerItem(dest_path: String!, node_id: String!, server_id: String, source_path: String!): SuccessOutput
 
@@ -54469,6 +55088,9 @@ type mutation_root {
   """
   setNewsPostStatus(id: uuid!, status: String!): NewsPost
 
+  """Restrict who may connect to a community server"""
+  setServerAccess(event_ids: [uuid!]!, min_role: String, restricted: Boolean!, server_id: uuid!, steam_ids: [String!]!): SuccessOutput
+
   """Replace a dedicated server's map rotation and restart it"""
   setServerMapRotation(map_ids: [uuid!]!, server_id: uuid!, shuffle: Boolean!): SuccessOutput
 
@@ -54476,6 +55098,11 @@ type mutation_root {
   Replace a dedicated server's per-server plugin overrides and restart it
   """
   setServerPlugins(plugins: [ServerPluginInput!]!, server_id: uuid!): SuccessOutput
+
+  """
+  Save a community server's rotation, plugins and access, restarting it at most once
+  """
+  setServerSettings(access: ServerAccessInput, map_rotation: ServerMapRotationInput, plugins: [ServerPluginInput!], server_id: uuid!): SuccessOutput
 
   """Map a tournament placement to an award"""
   setTournamentAward(award_id: uuid, custom_name: String, placement: Int!, silhouette: Int, tournament_id: uuid!): TournamentAward
@@ -56344,6 +56971,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [e_scrim_request_statuses_updates!]!
   ): [e_scrim_request_statuses_mutation_response]
+
+  """
+  update data of the table: "e_server_migration_statuses"
+  """
+  update_e_server_migration_statuses(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_server_migration_statuses_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_server_migration_statuses_bool_exp!
+  ): e_server_migration_statuses_mutation_response
+
+  """
+  update single row of the table: "e_server_migration_statuses"
+  """
+  update_e_server_migration_statuses_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_server_migration_statuses_set_input
+    pk_columns: e_server_migration_statuses_pk_columns_input!
+  ): e_server_migration_statuses
+
+  """
+  update multiples rows of table: "e_server_migration_statuses"
+  """
+  update_e_server_migration_statuses_many(
+    """updates to execute, in order"""
+    updates: [e_server_migration_statuses_updates!]!
+  ): [e_server_migration_statuses_mutation_response]
 
   """
   update data of the table: "e_server_types"
@@ -60074,6 +60729,68 @@ type mutation_root {
   ): [seasons_mutation_response]
 
   """
+  update data of the table: "server_access_events"
+  """
+  update_server_access_events(
+    """sets the columns of the filtered rows to the given values"""
+    _set: server_access_events_set_input
+
+    """filter the rows which have to be updated"""
+    where: server_access_events_bool_exp!
+  ): server_access_events_mutation_response
+
+  """
+  update single row of the table: "server_access_events"
+  """
+  update_server_access_events_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: server_access_events_set_input
+    pk_columns: server_access_events_pk_columns_input!
+  ): server_access_events
+
+  """
+  update multiples rows of table: "server_access_events"
+  """
+  update_server_access_events_many(
+    """updates to execute, in order"""
+    updates: [server_access_events_updates!]!
+  ): [server_access_events_mutation_response]
+
+  """
+  update data of the table: "server_access_players"
+  """
+  update_server_access_players(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: server_access_players_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: server_access_players_set_input
+
+    """filter the rows which have to be updated"""
+    where: server_access_players_bool_exp!
+  ): server_access_players_mutation_response
+
+  """
+  update single row of the table: "server_access_players"
+  """
+  update_server_access_players_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: server_access_players_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: server_access_players_set_input
+    pk_columns: server_access_players_pk_columns_input!
+  ): server_access_players
+
+  """
+  update multiples rows of table: "server_access_players"
+  """
+  update_server_access_players_many(
+    """updates to execute, in order"""
+    updates: [server_access_players_updates!]!
+  ): [server_access_players_mutation_response]
+
+  """
   update data of the table: "server_map_rotation"
   """
   update_server_map_rotation(
@@ -60106,6 +60823,116 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [server_map_rotation_updates!]!
   ): [server_map_rotation_mutation_response]
+
+  """
+  update data of the table: "server_migrations"
+  """
+  update_server_migrations(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: server_migrations_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: server_migrations_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: server_migrations_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: server_migrations_delete_key_input
+
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: server_migrations_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: server_migrations_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: server_migrations_set_input
+
+    """filter the rows which have to be updated"""
+    where: server_migrations_bool_exp!
+  ): server_migrations_mutation_response
+
+  """
+  update single row of the table: "server_migrations"
+  """
+  update_server_migrations_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: server_migrations_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: server_migrations_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: server_migrations_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: server_migrations_delete_key_input
+
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: server_migrations_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: server_migrations_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: server_migrations_set_input
+    pk_columns: server_migrations_pk_columns_input!
+  ): server_migrations
+
+  """
+  update multiples rows of table: "server_migrations"
+  """
+  update_server_migrations_many(
+    """updates to execute, in order"""
+    updates: [server_migrations_updates!]!
+  ): [server_migrations_mutation_response]
+
+  """
+  update data of the table: "server_player_sessions"
+  """
+  update_server_player_sessions(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: server_player_sessions_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: server_player_sessions_set_input
+
+    """filter the rows which have to be updated"""
+    where: server_player_sessions_bool_exp!
+  ): server_player_sessions_mutation_response
+
+  """
+  update single row of the table: "server_player_sessions"
+  """
+  update_server_player_sessions_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: server_player_sessions_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: server_player_sessions_set_input
+    pk_columns: server_player_sessions_pk_columns_input!
+  ): server_player_sessions
+
+  """
+  update multiples rows of table: "server_player_sessions"
+  """
+  update_server_player_sessions_many(
+    """updates to execute, in order"""
+    updates: [server_player_sessions_updates!]!
+  ): [server_player_sessions_mutation_response]
 
   """
   update data of the table: "server_plugins"
@@ -60162,6 +60989,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [server_regions_updates!]!
   ): [server_regions_mutation_response]
+
+  """
+  update data of the table: "server_rosters"
+  """
+  update_server_rosters(
+    """sets the columns of the filtered rows to the given values"""
+    _set: server_rosters_set_input
+
+    """filter the rows which have to be updated"""
+    where: server_rosters_bool_exp!
+  ): server_rosters_mutation_response
+
+  """
+  update single row of the table: "server_rosters"
+  """
+  update_server_rosters_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: server_rosters_set_input
+    pk_columns: server_rosters_pk_columns_input!
+  ): server_rosters
+
+  """
+  update multiples rows of table: "server_rosters"
+  """
+  update_server_rosters_many(
+    """updates to execute, in order"""
+    updates: [server_rosters_updates!]!
+  ): [server_rosters_mutation_response]
 
   """
   update data of the table: "servers"
@@ -87266,6 +88121,51 @@ type query_root {
   e_scrim_request_statuses_by_pk(value: String!): e_scrim_request_statuses
 
   """
+  fetch data from the table: "e_server_migration_statuses"
+  """
+  e_server_migration_statuses(
+    """distinct select on columns"""
+    distinct_on: [e_server_migration_statuses_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_server_migration_statuses_order_by!]
+
+    """filter the rows returned"""
+    where: e_server_migration_statuses_bool_exp
+  ): [e_server_migration_statuses!]!
+
+  """
+  fetch aggregated fields from the table: "e_server_migration_statuses"
+  """
+  e_server_migration_statuses_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_server_migration_statuses_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_server_migration_statuses_order_by!]
+
+    """filter the rows returned"""
+    where: e_server_migration_statuses_bool_exp
+  ): e_server_migration_statuses_aggregate!
+
+  """
+  fetch data from the table: "e_server_migration_statuses" using primary key columns
+  """
+  e_server_migration_statuses_by_pk(value: String!): e_server_migration_statuses
+
+  """
   fetch data from the table: "e_server_types"
   """
   e_server_types(
@@ -88976,6 +89876,7 @@ type query_root {
   """Get index usage statistics"""
   getIndexStats(schemas: [String!]): [IndexStat]!
   getNodeStats(node: String!): NodeStats!
+  getPlayerCommunityStats(steam_id: bigint!): PlayerCommunityStats
 
   """Get detailed query analysis with EXPLAIN plan"""
   getQueryDetail(queryid: String!): QueryDetail
@@ -88985,6 +89886,8 @@ type query_root {
 
   """Get available database schemas"""
   getSchemas: String!
+  getServerCommunityStats(server_id: uuid!): ServerCommunityStats
+  getServerLeaderboard(limit: Int, metric: String!, period: String!, server_id: uuid!): ServerLeaderboard!
   getServiceStats: [PodStats]!
 
   """Get database storage statistics and reclaimable space"""
@@ -92164,6 +93067,96 @@ type query_root {
   seasons_by_pk(id: uuid!): seasons
 
   """
+  fetch data from the table: "server_access_events"
+  """
+  server_access_events(
+    """distinct select on columns"""
+    distinct_on: [server_access_events_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_access_events_order_by!]
+
+    """filter the rows returned"""
+    where: server_access_events_bool_exp
+  ): [server_access_events!]!
+
+  """
+  fetch aggregated fields from the table: "server_access_events"
+  """
+  server_access_events_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_access_events_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_access_events_order_by!]
+
+    """filter the rows returned"""
+    where: server_access_events_bool_exp
+  ): server_access_events_aggregate!
+
+  """
+  fetch data from the table: "server_access_events" using primary key columns
+  """
+  server_access_events_by_pk(event_id: uuid!, server_id: uuid!): server_access_events
+
+  """
+  fetch data from the table: "server_access_players"
+  """
+  server_access_players(
+    """distinct select on columns"""
+    distinct_on: [server_access_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_access_players_order_by!]
+
+    """filter the rows returned"""
+    where: server_access_players_bool_exp
+  ): [server_access_players!]!
+
+  """
+  fetch aggregated fields from the table: "server_access_players"
+  """
+  server_access_players_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_access_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_access_players_order_by!]
+
+    """filter the rows returned"""
+    where: server_access_players_bool_exp
+  ): server_access_players_aggregate!
+
+  """
+  fetch data from the table: "server_access_players" using primary key columns
+  """
+  server_access_players_by_pk(server_id: uuid!, steam_id: bigint!): server_access_players
+
+  """
   fetch data from the table: "server_map_rotation"
   """
   server_map_rotation(
@@ -92209,6 +93202,96 @@ type query_root {
   server_map_rotation_by_pk(map_id: uuid!, server_id: uuid!): server_map_rotation
 
   """
+  fetch data from the table: "server_migrations"
+  """
+  server_migrations(
+    """distinct select on columns"""
+    distinct_on: [server_migrations_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_migrations_order_by!]
+
+    """filter the rows returned"""
+    where: server_migrations_bool_exp
+  ): [server_migrations!]!
+
+  """
+  fetch aggregated fields from the table: "server_migrations"
+  """
+  server_migrations_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_migrations_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_migrations_order_by!]
+
+    """filter the rows returned"""
+    where: server_migrations_bool_exp
+  ): server_migrations_aggregate!
+
+  """
+  fetch data from the table: "server_migrations" using primary key columns
+  """
+  server_migrations_by_pk(id: uuid!): server_migrations
+
+  """
+  fetch data from the table: "server_player_sessions"
+  """
+  server_player_sessions(
+    """distinct select on columns"""
+    distinct_on: [server_player_sessions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_player_sessions_order_by!]
+
+    """filter the rows returned"""
+    where: server_player_sessions_bool_exp
+  ): [server_player_sessions!]!
+
+  """
+  fetch aggregated fields from the table: "server_player_sessions"
+  """
+  server_player_sessions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_player_sessions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_player_sessions_order_by!]
+
+    """filter the rows returned"""
+    where: server_player_sessions_bool_exp
+  ): server_player_sessions_aggregate!
+
+  """
+  fetch data from the table: "server_player_sessions" using primary key columns
+  """
+  server_player_sessions_by_pk(id: bigint!): server_player_sessions
+
+  """
   fetch data from the table: "server_plugins"
   """
   server_plugins(
@@ -92252,6 +93335,46 @@ type query_root {
   server_plugins_by_pk(plugin_slug: String!, server_id: uuid!): server_plugins
 
   """
+  fetch data from the table: "server_recent_players"
+  """
+  server_recent_players(
+    """distinct select on columns"""
+    distinct_on: [server_recent_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_recent_players_order_by!]
+
+    """filter the rows returned"""
+    where: server_recent_players_bool_exp
+  ): [server_recent_players!]!
+
+  """
+  fetch aggregated fields from the table: "server_recent_players"
+  """
+  server_recent_players_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_recent_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_recent_players_order_by!]
+
+    """filter the rows returned"""
+    where: server_recent_players_bool_exp
+  ): server_recent_players_aggregate!
+
+  """
   fetch data from the table: "server_regions"
   """
   server_regions(
@@ -92293,6 +93416,49 @@ type query_root {
 
   """fetch data from the table: "server_regions" using primary key columns"""
   server_regions_by_pk(value: String!): server_regions
+
+  """
+  fetch data from the table: "server_rosters"
+  """
+  server_rosters(
+    """distinct select on columns"""
+    distinct_on: [server_rosters_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_rosters_order_by!]
+
+    """filter the rows returned"""
+    where: server_rosters_bool_exp
+  ): [server_rosters!]!
+
+  """
+  fetch aggregated fields from the table: "server_rosters"
+  """
+  server_rosters_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_rosters_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_rosters_order_by!]
+
+    """filter the rows returned"""
+    where: server_rosters_bool_exp
+  ): server_rosters_aggregate!
+
+  """fetch data from the table: "server_rosters" using primary key columns"""
+  server_rosters_by_pk(server_id: uuid!): server_rosters
 
   """An array relationship"""
   servers(
@@ -95419,46 +96585,6 @@ type query_root {
   ): v_player_multi_kills_aggregate!
 
   """
-  fetch data from the table: "v_player_queue_partners"
-  """
-  v_player_queue_partners(
-    """distinct select on columns"""
-    distinct_on: [v_player_queue_partners_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_player_queue_partners_order_by!]
-
-    """filter the rows returned"""
-    where: v_player_queue_partners_bool_exp
-  ): [v_player_queue_partners!]!
-
-  """
-  fetch aggregated fields from the table: "v_player_queue_partners"
-  """
-  v_player_queue_partners_aggregate(
-    """distinct select on columns"""
-    distinct_on: [v_player_queue_partners_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_player_queue_partners_order_by!]
-
-    """filter the rows returned"""
-    where: v_player_queue_partners_bool_exp
-  ): v_player_queue_partners_aggregate!
-
-  """
   fetch data from the table: "v_player_weapon_damage"
   """
   v_player_weapon_damage(
@@ -96346,6 +97472,548 @@ type seasons_variance_fields {
 }
 
 """
+columns and relationships of "server_access_events"
+"""
+type server_access_events {
+  """An object relationship"""
+  event: events!
+  event_id: uuid!
+
+  """An object relationship"""
+  server: servers!
+  server_id: uuid!
+}
+
+"""
+aggregated selection of "server_access_events"
+"""
+type server_access_events_aggregate {
+  aggregate: server_access_events_aggregate_fields
+  nodes: [server_access_events!]!
+}
+
+input server_access_events_aggregate_bool_exp {
+  count: server_access_events_aggregate_bool_exp_count
+}
+
+input server_access_events_aggregate_bool_exp_count {
+  arguments: [server_access_events_select_column!]
+  distinct: Boolean
+  filter: server_access_events_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "server_access_events"
+"""
+type server_access_events_aggregate_fields {
+  count(columns: [server_access_events_select_column!], distinct: Boolean): Int!
+  max: server_access_events_max_fields
+  min: server_access_events_min_fields
+}
+
+"""
+order by aggregate values of table "server_access_events"
+"""
+input server_access_events_aggregate_order_by {
+  count: order_by
+  max: server_access_events_max_order_by
+  min: server_access_events_min_order_by
+}
+
+"""
+input type for inserting array relation for remote table "server_access_events"
+"""
+input server_access_events_arr_rel_insert_input {
+  data: [server_access_events_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: server_access_events_on_conflict
+}
+
+"""
+Boolean expression to filter rows from the table "server_access_events". All fields are combined with a logical 'AND'.
+"""
+input server_access_events_bool_exp {
+  _and: [server_access_events_bool_exp!]
+  _not: server_access_events_bool_exp
+  _or: [server_access_events_bool_exp!]
+  event: events_bool_exp
+  event_id: uuid_comparison_exp
+  server: servers_bool_exp
+  server_id: uuid_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "server_access_events"
+"""
+enum server_access_events_constraint {
+  """
+  unique or primary key constraint on columns "server_id", "event_id"
+  """
+  server_access_events_pkey
+}
+
+"""
+input type for inserting data into table "server_access_events"
+"""
+input server_access_events_insert_input {
+  event: events_obj_rel_insert_input
+  event_id: uuid
+  server: servers_obj_rel_insert_input
+  server_id: uuid
+}
+
+"""aggregate max on columns"""
+type server_access_events_max_fields {
+  event_id: uuid
+  server_id: uuid
+}
+
+"""
+order by max() on columns of table "server_access_events"
+"""
+input server_access_events_max_order_by {
+  event_id: order_by
+  server_id: order_by
+}
+
+"""aggregate min on columns"""
+type server_access_events_min_fields {
+  event_id: uuid
+  server_id: uuid
+}
+
+"""
+order by min() on columns of table "server_access_events"
+"""
+input server_access_events_min_order_by {
+  event_id: order_by
+  server_id: order_by
+}
+
+"""
+response of any mutation on the table "server_access_events"
+"""
+type server_access_events_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [server_access_events!]!
+}
+
+"""
+on_conflict condition type for table "server_access_events"
+"""
+input server_access_events_on_conflict {
+  constraint: server_access_events_constraint!
+  update_columns: [server_access_events_update_column!]! = []
+  where: server_access_events_bool_exp
+}
+
+"""Ordering options when selecting data from "server_access_events"."""
+input server_access_events_order_by {
+  event: events_order_by
+  event_id: order_by
+  server: servers_order_by
+  server_id: order_by
+}
+
+"""primary key columns input for table: server_access_events"""
+input server_access_events_pk_columns_input {
+  event_id: uuid!
+  server_id: uuid!
+}
+
+"""
+select columns of table "server_access_events"
+"""
+enum server_access_events_select_column {
+  """column name"""
+  event_id
+
+  """column name"""
+  server_id
+}
+
+"""
+input type for updating data in table "server_access_events"
+"""
+input server_access_events_set_input {
+  event_id: uuid
+  server_id: uuid
+}
+
+"""
+Streaming cursor of the table "server_access_events"
+"""
+input server_access_events_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: server_access_events_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input server_access_events_stream_cursor_value_input {
+  event_id: uuid
+  server_id: uuid
+}
+
+"""
+update columns of table "server_access_events"
+"""
+enum server_access_events_update_column {
+  """column name"""
+  event_id
+
+  """column name"""
+  server_id
+}
+
+input server_access_events_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: server_access_events_set_input
+
+  """filter the rows which have to be updated"""
+  where: server_access_events_bool_exp!
+}
+
+"""
+columns and relationships of "server_access_players"
+"""
+type server_access_players {
+  """An object relationship"""
+  player: players!
+
+  """An object relationship"""
+  server: servers!
+  server_id: uuid!
+  steam_id: bigint!
+}
+
+"""
+aggregated selection of "server_access_players"
+"""
+type server_access_players_aggregate {
+  aggregate: server_access_players_aggregate_fields
+  nodes: [server_access_players!]!
+}
+
+input server_access_players_aggregate_bool_exp {
+  count: server_access_players_aggregate_bool_exp_count
+}
+
+input server_access_players_aggregate_bool_exp_count {
+  arguments: [server_access_players_select_column!]
+  distinct: Boolean
+  filter: server_access_players_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "server_access_players"
+"""
+type server_access_players_aggregate_fields {
+  avg: server_access_players_avg_fields
+  count(columns: [server_access_players_select_column!], distinct: Boolean): Int!
+  max: server_access_players_max_fields
+  min: server_access_players_min_fields
+  stddev: server_access_players_stddev_fields
+  stddev_pop: server_access_players_stddev_pop_fields
+  stddev_samp: server_access_players_stddev_samp_fields
+  sum: server_access_players_sum_fields
+  var_pop: server_access_players_var_pop_fields
+  var_samp: server_access_players_var_samp_fields
+  variance: server_access_players_variance_fields
+}
+
+"""
+order by aggregate values of table "server_access_players"
+"""
+input server_access_players_aggregate_order_by {
+  avg: server_access_players_avg_order_by
+  count: order_by
+  max: server_access_players_max_order_by
+  min: server_access_players_min_order_by
+  stddev: server_access_players_stddev_order_by
+  stddev_pop: server_access_players_stddev_pop_order_by
+  stddev_samp: server_access_players_stddev_samp_order_by
+  sum: server_access_players_sum_order_by
+  var_pop: server_access_players_var_pop_order_by
+  var_samp: server_access_players_var_samp_order_by
+  variance: server_access_players_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "server_access_players"
+"""
+input server_access_players_arr_rel_insert_input {
+  data: [server_access_players_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: server_access_players_on_conflict
+}
+
+"""aggregate avg on columns"""
+type server_access_players_avg_fields {
+  steam_id: Float
+}
+
+"""
+order by avg() on columns of table "server_access_players"
+"""
+input server_access_players_avg_order_by {
+  steam_id: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "server_access_players". All fields are combined with a logical 'AND'.
+"""
+input server_access_players_bool_exp {
+  _and: [server_access_players_bool_exp!]
+  _not: server_access_players_bool_exp
+  _or: [server_access_players_bool_exp!]
+  player: players_bool_exp
+  server: servers_bool_exp
+  server_id: uuid_comparison_exp
+  steam_id: bigint_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "server_access_players"
+"""
+enum server_access_players_constraint {
+  """
+  unique or primary key constraint on columns "server_id", "steam_id"
+  """
+  server_access_players_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "server_access_players"
+"""
+input server_access_players_inc_input {
+  steam_id: bigint
+}
+
+"""
+input type for inserting data into table "server_access_players"
+"""
+input server_access_players_insert_input {
+  player: players_obj_rel_insert_input
+  server: servers_obj_rel_insert_input
+  server_id: uuid
+  steam_id: bigint
+}
+
+"""aggregate max on columns"""
+type server_access_players_max_fields {
+  server_id: uuid
+  steam_id: bigint
+}
+
+"""
+order by max() on columns of table "server_access_players"
+"""
+input server_access_players_max_order_by {
+  server_id: order_by
+  steam_id: order_by
+}
+
+"""aggregate min on columns"""
+type server_access_players_min_fields {
+  server_id: uuid
+  steam_id: bigint
+}
+
+"""
+order by min() on columns of table "server_access_players"
+"""
+input server_access_players_min_order_by {
+  server_id: order_by
+  steam_id: order_by
+}
+
+"""
+response of any mutation on the table "server_access_players"
+"""
+type server_access_players_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [server_access_players!]!
+}
+
+"""
+on_conflict condition type for table "server_access_players"
+"""
+input server_access_players_on_conflict {
+  constraint: server_access_players_constraint!
+  update_columns: [server_access_players_update_column!]! = []
+  where: server_access_players_bool_exp
+}
+
+"""Ordering options when selecting data from "server_access_players"."""
+input server_access_players_order_by {
+  player: players_order_by
+  server: servers_order_by
+  server_id: order_by
+  steam_id: order_by
+}
+
+"""primary key columns input for table: server_access_players"""
+input server_access_players_pk_columns_input {
+  server_id: uuid!
+  steam_id: bigint!
+}
+
+"""
+select columns of table "server_access_players"
+"""
+enum server_access_players_select_column {
+  """column name"""
+  server_id
+
+  """column name"""
+  steam_id
+}
+
+"""
+input type for updating data in table "server_access_players"
+"""
+input server_access_players_set_input {
+  server_id: uuid
+  steam_id: bigint
+}
+
+"""aggregate stddev on columns"""
+type server_access_players_stddev_fields {
+  steam_id: Float
+}
+
+"""
+order by stddev() on columns of table "server_access_players"
+"""
+input server_access_players_stddev_order_by {
+  steam_id: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type server_access_players_stddev_pop_fields {
+  steam_id: Float
+}
+
+"""
+order by stddev_pop() on columns of table "server_access_players"
+"""
+input server_access_players_stddev_pop_order_by {
+  steam_id: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type server_access_players_stddev_samp_fields {
+  steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "server_access_players"
+"""
+input server_access_players_stddev_samp_order_by {
+  steam_id: order_by
+}
+
+"""
+Streaming cursor of the table "server_access_players"
+"""
+input server_access_players_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: server_access_players_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input server_access_players_stream_cursor_value_input {
+  server_id: uuid
+  steam_id: bigint
+}
+
+"""aggregate sum on columns"""
+type server_access_players_sum_fields {
+  steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "server_access_players"
+"""
+input server_access_players_sum_order_by {
+  steam_id: order_by
+}
+
+"""
+update columns of table "server_access_players"
+"""
+enum server_access_players_update_column {
+  """column name"""
+  server_id
+
+  """column name"""
+  steam_id
+}
+
+input server_access_players_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: server_access_players_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: server_access_players_set_input
+
+  """filter the rows which have to be updated"""
+  where: server_access_players_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type server_access_players_var_pop_fields {
+  steam_id: Float
+}
+
+"""
+order by var_pop() on columns of table "server_access_players"
+"""
+input server_access_players_var_pop_order_by {
+  steam_id: order_by
+}
+
+"""aggregate var_samp on columns"""
+type server_access_players_var_samp_fields {
+  steam_id: Float
+}
+
+"""
+order by var_samp() on columns of table "server_access_players"
+"""
+input server_access_players_var_samp_order_by {
+  steam_id: order_by
+}
+
+"""aggregate variance on columns"""
+type server_access_players_variance_fields {
+  steam_id: Float
+}
+
+"""
+order by variance() on columns of table "server_access_players"
+"""
+input server_access_players_variance_order_by {
+  steam_id: order_by
+}
+
+"""
 columns and relationships of "server_map_rotation"
 """
 type server_map_rotation {
@@ -96694,6 +98362,1299 @@ input server_map_rotation_variance_order_by {
 }
 
 """
+columns and relationships of "server_migrations"
+"""
+type server_migrations {
+  bytes_done: bigint!
+  bytes_total: bigint
+  created_at: timestamptz!
+
+  """An object relationship"""
+  e_status: e_server_migration_statuses!
+  entries_total: Int
+  error: String
+  finished_at: timestamptz
+
+  """An object relationship"""
+  from_game_server_node: game_server_nodes
+  from_game_server_node_id: String
+  id: uuid!
+
+  """An object relationship"""
+  requested_by: players
+  requested_by_steam_id: bigint
+
+  """An object relationship"""
+  server: servers!
+  server_id: uuid!
+  started_at: timestamptz
+  status: e_server_migration_statuses_enum!
+
+  """An object relationship"""
+  to_game_server_node: game_server_nodes
+  to_game_server_node_id: String
+  updated_at: timestamptz!
+  warnings(
+    """JSON select path"""
+    path: String
+  ): jsonb!
+  with_files: Boolean!
+}
+
+"""
+aggregated selection of "server_migrations"
+"""
+type server_migrations_aggregate {
+  aggregate: server_migrations_aggregate_fields
+  nodes: [server_migrations!]!
+}
+
+input server_migrations_aggregate_bool_exp {
+  bool_and: server_migrations_aggregate_bool_exp_bool_and
+  bool_or: server_migrations_aggregate_bool_exp_bool_or
+  count: server_migrations_aggregate_bool_exp_count
+}
+
+input server_migrations_aggregate_bool_exp_bool_and {
+  arguments: server_migrations_select_column_server_migrations_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: server_migrations_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input server_migrations_aggregate_bool_exp_bool_or {
+  arguments: server_migrations_select_column_server_migrations_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: server_migrations_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input server_migrations_aggregate_bool_exp_count {
+  arguments: [server_migrations_select_column!]
+  distinct: Boolean
+  filter: server_migrations_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "server_migrations"
+"""
+type server_migrations_aggregate_fields {
+  avg: server_migrations_avg_fields
+  count(columns: [server_migrations_select_column!], distinct: Boolean): Int!
+  max: server_migrations_max_fields
+  min: server_migrations_min_fields
+  stddev: server_migrations_stddev_fields
+  stddev_pop: server_migrations_stddev_pop_fields
+  stddev_samp: server_migrations_stddev_samp_fields
+  sum: server_migrations_sum_fields
+  var_pop: server_migrations_var_pop_fields
+  var_samp: server_migrations_var_samp_fields
+  variance: server_migrations_variance_fields
+}
+
+"""
+order by aggregate values of table "server_migrations"
+"""
+input server_migrations_aggregate_order_by {
+  avg: server_migrations_avg_order_by
+  count: order_by
+  max: server_migrations_max_order_by
+  min: server_migrations_min_order_by
+  stddev: server_migrations_stddev_order_by
+  stddev_pop: server_migrations_stddev_pop_order_by
+  stddev_samp: server_migrations_stddev_samp_order_by
+  sum: server_migrations_sum_order_by
+  var_pop: server_migrations_var_pop_order_by
+  var_samp: server_migrations_var_samp_order_by
+  variance: server_migrations_variance_order_by
+}
+
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input server_migrations_append_input {
+  warnings: jsonb
+}
+
+"""
+input type for inserting array relation for remote table "server_migrations"
+"""
+input server_migrations_arr_rel_insert_input {
+  data: [server_migrations_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: server_migrations_on_conflict
+}
+
+"""aggregate avg on columns"""
+type server_migrations_avg_fields {
+  bytes_done: Float
+  bytes_total: Float
+  entries_total: Float
+  requested_by_steam_id: Float
+}
+
+"""
+order by avg() on columns of table "server_migrations"
+"""
+input server_migrations_avg_order_by {
+  bytes_done: order_by
+  bytes_total: order_by
+  entries_total: order_by
+  requested_by_steam_id: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "server_migrations". All fields are combined with a logical 'AND'.
+"""
+input server_migrations_bool_exp {
+  _and: [server_migrations_bool_exp!]
+  _not: server_migrations_bool_exp
+  _or: [server_migrations_bool_exp!]
+  bytes_done: bigint_comparison_exp
+  bytes_total: bigint_comparison_exp
+  created_at: timestamptz_comparison_exp
+  e_status: e_server_migration_statuses_bool_exp
+  entries_total: Int_comparison_exp
+  error: String_comparison_exp
+  finished_at: timestamptz_comparison_exp
+  from_game_server_node: game_server_nodes_bool_exp
+  from_game_server_node_id: String_comparison_exp
+  id: uuid_comparison_exp
+  requested_by: players_bool_exp
+  requested_by_steam_id: bigint_comparison_exp
+  server: servers_bool_exp
+  server_id: uuid_comparison_exp
+  started_at: timestamptz_comparison_exp
+  status: e_server_migration_statuses_enum_comparison_exp
+  to_game_server_node: game_server_nodes_bool_exp
+  to_game_server_node_id: String_comparison_exp
+  updated_at: timestamptz_comparison_exp
+  warnings: jsonb_comparison_exp
+  with_files: Boolean_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "server_migrations"
+"""
+enum server_migrations_constraint {
+  """
+  unique or primary key constraint on columns "server_id"
+  """
+  server_migrations_one_active_idx
+
+  """
+  unique or primary key constraint on columns "id"
+  """
+  server_migrations_pkey
+}
+
+"""
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input server_migrations_delete_at_path_input {
+  warnings: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input server_migrations_delete_elem_input {
+  warnings: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input server_migrations_delete_key_input {
+  warnings: String
+}
+
+"""
+input type for incrementing numeric columns in table "server_migrations"
+"""
+input server_migrations_inc_input {
+  bytes_done: bigint
+  bytes_total: bigint
+  entries_total: Int
+  requested_by_steam_id: bigint
+}
+
+"""
+input type for inserting data into table "server_migrations"
+"""
+input server_migrations_insert_input {
+  bytes_done: bigint
+  bytes_total: bigint
+  created_at: timestamptz
+  e_status: e_server_migration_statuses_obj_rel_insert_input
+  entries_total: Int
+  error: String
+  finished_at: timestamptz
+  from_game_server_node: game_server_nodes_obj_rel_insert_input
+  from_game_server_node_id: String
+  id: uuid
+  requested_by: players_obj_rel_insert_input
+  requested_by_steam_id: bigint
+  server: servers_obj_rel_insert_input
+  server_id: uuid
+  started_at: timestamptz
+  status: e_server_migration_statuses_enum
+  to_game_server_node: game_server_nodes_obj_rel_insert_input
+  to_game_server_node_id: String
+  updated_at: timestamptz
+  warnings: jsonb
+  with_files: Boolean
+}
+
+"""aggregate max on columns"""
+type server_migrations_max_fields {
+  bytes_done: bigint
+  bytes_total: bigint
+  created_at: timestamptz
+  entries_total: Int
+  error: String
+  finished_at: timestamptz
+  from_game_server_node_id: String
+  id: uuid
+  requested_by_steam_id: bigint
+  server_id: uuid
+  started_at: timestamptz
+  to_game_server_node_id: String
+  updated_at: timestamptz
+}
+
+"""
+order by max() on columns of table "server_migrations"
+"""
+input server_migrations_max_order_by {
+  bytes_done: order_by
+  bytes_total: order_by
+  created_at: order_by
+  entries_total: order_by
+  error: order_by
+  finished_at: order_by
+  from_game_server_node_id: order_by
+  id: order_by
+  requested_by_steam_id: order_by
+  server_id: order_by
+  started_at: order_by
+  to_game_server_node_id: order_by
+  updated_at: order_by
+}
+
+"""aggregate min on columns"""
+type server_migrations_min_fields {
+  bytes_done: bigint
+  bytes_total: bigint
+  created_at: timestamptz
+  entries_total: Int
+  error: String
+  finished_at: timestamptz
+  from_game_server_node_id: String
+  id: uuid
+  requested_by_steam_id: bigint
+  server_id: uuid
+  started_at: timestamptz
+  to_game_server_node_id: String
+  updated_at: timestamptz
+}
+
+"""
+order by min() on columns of table "server_migrations"
+"""
+input server_migrations_min_order_by {
+  bytes_done: order_by
+  bytes_total: order_by
+  created_at: order_by
+  entries_total: order_by
+  error: order_by
+  finished_at: order_by
+  from_game_server_node_id: order_by
+  id: order_by
+  requested_by_steam_id: order_by
+  server_id: order_by
+  started_at: order_by
+  to_game_server_node_id: order_by
+  updated_at: order_by
+}
+
+"""
+response of any mutation on the table "server_migrations"
+"""
+type server_migrations_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [server_migrations!]!
+}
+
+"""
+on_conflict condition type for table "server_migrations"
+"""
+input server_migrations_on_conflict {
+  constraint: server_migrations_constraint!
+  update_columns: [server_migrations_update_column!]! = []
+  where: server_migrations_bool_exp
+}
+
+"""Ordering options when selecting data from "server_migrations"."""
+input server_migrations_order_by {
+  bytes_done: order_by
+  bytes_total: order_by
+  created_at: order_by
+  e_status: e_server_migration_statuses_order_by
+  entries_total: order_by
+  error: order_by
+  finished_at: order_by
+  from_game_server_node: game_server_nodes_order_by
+  from_game_server_node_id: order_by
+  id: order_by
+  requested_by: players_order_by
+  requested_by_steam_id: order_by
+  server: servers_order_by
+  server_id: order_by
+  started_at: order_by
+  status: order_by
+  to_game_server_node: game_server_nodes_order_by
+  to_game_server_node_id: order_by
+  updated_at: order_by
+  warnings: order_by
+  with_files: order_by
+}
+
+"""primary key columns input for table: server_migrations"""
+input server_migrations_pk_columns_input {
+  id: uuid!
+}
+
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input server_migrations_prepend_input {
+  warnings: jsonb
+}
+
+"""
+select columns of table "server_migrations"
+"""
+enum server_migrations_select_column {
+  """column name"""
+  bytes_done
+
+  """column name"""
+  bytes_total
+
+  """column name"""
+  created_at
+
+  """column name"""
+  entries_total
+
+  """column name"""
+  error
+
+  """column name"""
+  finished_at
+
+  """column name"""
+  from_game_server_node_id
+
+  """column name"""
+  id
+
+  """column name"""
+  requested_by_steam_id
+
+  """column name"""
+  server_id
+
+  """column name"""
+  started_at
+
+  """column name"""
+  status
+
+  """column name"""
+  to_game_server_node_id
+
+  """column name"""
+  updated_at
+
+  """column name"""
+  warnings
+
+  """column name"""
+  with_files
+}
+
+"""
+select "server_migrations_aggregate_bool_exp_bool_and_arguments_columns" columns of table "server_migrations"
+"""
+enum server_migrations_select_column_server_migrations_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  with_files
+}
+
+"""
+select "server_migrations_aggregate_bool_exp_bool_or_arguments_columns" columns of table "server_migrations"
+"""
+enum server_migrations_select_column_server_migrations_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  with_files
+}
+
+"""
+input type for updating data in table "server_migrations"
+"""
+input server_migrations_set_input {
+  bytes_done: bigint
+  bytes_total: bigint
+  created_at: timestamptz
+  entries_total: Int
+  error: String
+  finished_at: timestamptz
+  from_game_server_node_id: String
+  id: uuid
+  requested_by_steam_id: bigint
+  server_id: uuid
+  started_at: timestamptz
+  status: e_server_migration_statuses_enum
+  to_game_server_node_id: String
+  updated_at: timestamptz
+  warnings: jsonb
+  with_files: Boolean
+}
+
+"""aggregate stddev on columns"""
+type server_migrations_stddev_fields {
+  bytes_done: Float
+  bytes_total: Float
+  entries_total: Float
+  requested_by_steam_id: Float
+}
+
+"""
+order by stddev() on columns of table "server_migrations"
+"""
+input server_migrations_stddev_order_by {
+  bytes_done: order_by
+  bytes_total: order_by
+  entries_total: order_by
+  requested_by_steam_id: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type server_migrations_stddev_pop_fields {
+  bytes_done: Float
+  bytes_total: Float
+  entries_total: Float
+  requested_by_steam_id: Float
+}
+
+"""
+order by stddev_pop() on columns of table "server_migrations"
+"""
+input server_migrations_stddev_pop_order_by {
+  bytes_done: order_by
+  bytes_total: order_by
+  entries_total: order_by
+  requested_by_steam_id: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type server_migrations_stddev_samp_fields {
+  bytes_done: Float
+  bytes_total: Float
+  entries_total: Float
+  requested_by_steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "server_migrations"
+"""
+input server_migrations_stddev_samp_order_by {
+  bytes_done: order_by
+  bytes_total: order_by
+  entries_total: order_by
+  requested_by_steam_id: order_by
+}
+
+"""
+Streaming cursor of the table "server_migrations"
+"""
+input server_migrations_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: server_migrations_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input server_migrations_stream_cursor_value_input {
+  bytes_done: bigint
+  bytes_total: bigint
+  created_at: timestamptz
+  entries_total: Int
+  error: String
+  finished_at: timestamptz
+  from_game_server_node_id: String
+  id: uuid
+  requested_by_steam_id: bigint
+  server_id: uuid
+  started_at: timestamptz
+  status: e_server_migration_statuses_enum
+  to_game_server_node_id: String
+  updated_at: timestamptz
+  warnings: jsonb
+  with_files: Boolean
+}
+
+"""aggregate sum on columns"""
+type server_migrations_sum_fields {
+  bytes_done: bigint
+  bytes_total: bigint
+  entries_total: Int
+  requested_by_steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "server_migrations"
+"""
+input server_migrations_sum_order_by {
+  bytes_done: order_by
+  bytes_total: order_by
+  entries_total: order_by
+  requested_by_steam_id: order_by
+}
+
+"""
+update columns of table "server_migrations"
+"""
+enum server_migrations_update_column {
+  """column name"""
+  bytes_done
+
+  """column name"""
+  bytes_total
+
+  """column name"""
+  created_at
+
+  """column name"""
+  entries_total
+
+  """column name"""
+  error
+
+  """column name"""
+  finished_at
+
+  """column name"""
+  from_game_server_node_id
+
+  """column name"""
+  id
+
+  """column name"""
+  requested_by_steam_id
+
+  """column name"""
+  server_id
+
+  """column name"""
+  started_at
+
+  """column name"""
+  status
+
+  """column name"""
+  to_game_server_node_id
+
+  """column name"""
+  updated_at
+
+  """column name"""
+  warnings
+
+  """column name"""
+  with_files
+}
+
+input server_migrations_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: server_migrations_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: server_migrations_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: server_migrations_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: server_migrations_delete_key_input
+
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: server_migrations_inc_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: server_migrations_prepend_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: server_migrations_set_input
+
+  """filter the rows which have to be updated"""
+  where: server_migrations_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type server_migrations_var_pop_fields {
+  bytes_done: Float
+  bytes_total: Float
+  entries_total: Float
+  requested_by_steam_id: Float
+}
+
+"""
+order by var_pop() on columns of table "server_migrations"
+"""
+input server_migrations_var_pop_order_by {
+  bytes_done: order_by
+  bytes_total: order_by
+  entries_total: order_by
+  requested_by_steam_id: order_by
+}
+
+"""aggregate var_samp on columns"""
+type server_migrations_var_samp_fields {
+  bytes_done: Float
+  bytes_total: Float
+  entries_total: Float
+  requested_by_steam_id: Float
+}
+
+"""
+order by var_samp() on columns of table "server_migrations"
+"""
+input server_migrations_var_samp_order_by {
+  bytes_done: order_by
+  bytes_total: order_by
+  entries_total: order_by
+  requested_by_steam_id: order_by
+}
+
+"""aggregate variance on columns"""
+type server_migrations_variance_fields {
+  bytes_done: Float
+  bytes_total: Float
+  entries_total: Float
+  requested_by_steam_id: Float
+}
+
+"""
+order by variance() on columns of table "server_migrations"
+"""
+input server_migrations_variance_order_by {
+  bytes_done: order_by
+  bytes_total: order_by
+  entries_total: order_by
+  requested_by_steam_id: order_by
+}
+
+"""
+columns and relationships of "server_player_sessions"
+"""
+type server_player_sessions {
+  conn: String
+  deaths: Int!
+  deaths_conn: Int!
+  ended_at: timestamptz
+  id: bigint!
+  ip: inet
+  kills: Int!
+  kills_conn: Int!
+  name: String
+
+  """An object relationship"""
+  player: players
+  player_steam_id: bigint!
+
+  """An object relationship"""
+  server: servers!
+  server_id: uuid!
+  settled_conns: [String!]!
+  started_at: timestamptz!
+}
+
+"""
+aggregated selection of "server_player_sessions"
+"""
+type server_player_sessions_aggregate {
+  aggregate: server_player_sessions_aggregate_fields
+  nodes: [server_player_sessions!]!
+}
+
+input server_player_sessions_aggregate_bool_exp {
+  count: server_player_sessions_aggregate_bool_exp_count
+}
+
+input server_player_sessions_aggregate_bool_exp_count {
+  arguments: [server_player_sessions_select_column!]
+  distinct: Boolean
+  filter: server_player_sessions_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "server_player_sessions"
+"""
+type server_player_sessions_aggregate_fields {
+  avg: server_player_sessions_avg_fields
+  count(columns: [server_player_sessions_select_column!], distinct: Boolean): Int!
+  max: server_player_sessions_max_fields
+  min: server_player_sessions_min_fields
+  stddev: server_player_sessions_stddev_fields
+  stddev_pop: server_player_sessions_stddev_pop_fields
+  stddev_samp: server_player_sessions_stddev_samp_fields
+  sum: server_player_sessions_sum_fields
+  var_pop: server_player_sessions_var_pop_fields
+  var_samp: server_player_sessions_var_samp_fields
+  variance: server_player_sessions_variance_fields
+}
+
+"""
+order by aggregate values of table "server_player_sessions"
+"""
+input server_player_sessions_aggregate_order_by {
+  avg: server_player_sessions_avg_order_by
+  count: order_by
+  max: server_player_sessions_max_order_by
+  min: server_player_sessions_min_order_by
+  stddev: server_player_sessions_stddev_order_by
+  stddev_pop: server_player_sessions_stddev_pop_order_by
+  stddev_samp: server_player_sessions_stddev_samp_order_by
+  sum: server_player_sessions_sum_order_by
+  var_pop: server_player_sessions_var_pop_order_by
+  var_samp: server_player_sessions_var_samp_order_by
+  variance: server_player_sessions_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "server_player_sessions"
+"""
+input server_player_sessions_arr_rel_insert_input {
+  data: [server_player_sessions_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: server_player_sessions_on_conflict
+}
+
+"""aggregate avg on columns"""
+type server_player_sessions_avg_fields {
+  deaths: Float
+  deaths_conn: Float
+  id: Float
+  kills: Float
+  kills_conn: Float
+  player_steam_id: Float
+}
+
+"""
+order by avg() on columns of table "server_player_sessions"
+"""
+input server_player_sessions_avg_order_by {
+  deaths: order_by
+  deaths_conn: order_by
+  id: order_by
+  kills: order_by
+  kills_conn: order_by
+  player_steam_id: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "server_player_sessions". All fields are combined with a logical 'AND'.
+"""
+input server_player_sessions_bool_exp {
+  _and: [server_player_sessions_bool_exp!]
+  _not: server_player_sessions_bool_exp
+  _or: [server_player_sessions_bool_exp!]
+  conn: String_comparison_exp
+  deaths: Int_comparison_exp
+  deaths_conn: Int_comparison_exp
+  ended_at: timestamptz_comparison_exp
+  id: bigint_comparison_exp
+  ip: inet_comparison_exp
+  kills: Int_comparison_exp
+  kills_conn: Int_comparison_exp
+  name: String_comparison_exp
+  player: players_bool_exp
+  player_steam_id: bigint_comparison_exp
+  server: servers_bool_exp
+  server_id: uuid_comparison_exp
+  settled_conns: String_array_comparison_exp
+  started_at: timestamptz_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "server_player_sessions"
+"""
+enum server_player_sessions_constraint {
+  """
+  unique or primary key constraint on columns "player_steam_id", "server_id"
+  """
+  server_player_sessions_open_idx
+
+  """
+  unique or primary key constraint on columns "id"
+  """
+  server_player_sessions_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "server_player_sessions"
+"""
+input server_player_sessions_inc_input {
+  deaths: Int
+  deaths_conn: Int
+  kills: Int
+  kills_conn: Int
+  player_steam_id: bigint
+}
+
+"""
+input type for inserting data into table "server_player_sessions"
+"""
+input server_player_sessions_insert_input {
+  conn: String
+  deaths: Int
+  deaths_conn: Int
+  ended_at: timestamptz
+  ip: inet
+  kills: Int
+  kills_conn: Int
+  name: String
+  player: players_obj_rel_insert_input
+  player_steam_id: bigint
+  server: servers_obj_rel_insert_input
+  server_id: uuid
+  settled_conns: [String!]
+  started_at: timestamptz
+}
+
+"""aggregate max on columns"""
+type server_player_sessions_max_fields {
+  conn: String
+  deaths: Int
+  deaths_conn: Int
+  ended_at: timestamptz
+  id: bigint
+  kills: Int
+  kills_conn: Int
+  name: String
+  player_steam_id: bigint
+  server_id: uuid
+  settled_conns: [String!]
+  started_at: timestamptz
+}
+
+"""
+order by max() on columns of table "server_player_sessions"
+"""
+input server_player_sessions_max_order_by {
+  conn: order_by
+  deaths: order_by
+  deaths_conn: order_by
+  ended_at: order_by
+  id: order_by
+  kills: order_by
+  kills_conn: order_by
+  name: order_by
+  player_steam_id: order_by
+  server_id: order_by
+  settled_conns: order_by
+  started_at: order_by
+}
+
+"""aggregate min on columns"""
+type server_player_sessions_min_fields {
+  conn: String
+  deaths: Int
+  deaths_conn: Int
+  ended_at: timestamptz
+  id: bigint
+  kills: Int
+  kills_conn: Int
+  name: String
+  player_steam_id: bigint
+  server_id: uuid
+  settled_conns: [String!]
+  started_at: timestamptz
+}
+
+"""
+order by min() on columns of table "server_player_sessions"
+"""
+input server_player_sessions_min_order_by {
+  conn: order_by
+  deaths: order_by
+  deaths_conn: order_by
+  ended_at: order_by
+  id: order_by
+  kills: order_by
+  kills_conn: order_by
+  name: order_by
+  player_steam_id: order_by
+  server_id: order_by
+  settled_conns: order_by
+  started_at: order_by
+}
+
+"""
+response of any mutation on the table "server_player_sessions"
+"""
+type server_player_sessions_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [server_player_sessions!]!
+}
+
+"""
+on_conflict condition type for table "server_player_sessions"
+"""
+input server_player_sessions_on_conflict {
+  constraint: server_player_sessions_constraint!
+  update_columns: [server_player_sessions_update_column!]! = []
+  where: server_player_sessions_bool_exp
+}
+
+"""Ordering options when selecting data from "server_player_sessions"."""
+input server_player_sessions_order_by {
+  conn: order_by
+  deaths: order_by
+  deaths_conn: order_by
+  ended_at: order_by
+  id: order_by
+  ip: order_by
+  kills: order_by
+  kills_conn: order_by
+  name: order_by
+  player: players_order_by
+  player_steam_id: order_by
+  server: servers_order_by
+  server_id: order_by
+  settled_conns: order_by
+  started_at: order_by
+}
+
+"""primary key columns input for table: server_player_sessions"""
+input server_player_sessions_pk_columns_input {
+  id: bigint!
+}
+
+"""
+select columns of table "server_player_sessions"
+"""
+enum server_player_sessions_select_column {
+  """column name"""
+  conn
+
+  """column name"""
+  deaths
+
+  """column name"""
+  deaths_conn
+
+  """column name"""
+  ended_at
+
+  """column name"""
+  id
+
+  """column name"""
+  ip
+
+  """column name"""
+  kills
+
+  """column name"""
+  kills_conn
+
+  """column name"""
+  name
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  server_id
+
+  """column name"""
+  settled_conns
+
+  """column name"""
+  started_at
+}
+
+"""
+input type for updating data in table "server_player_sessions"
+"""
+input server_player_sessions_set_input {
+  conn: String
+  deaths: Int
+  deaths_conn: Int
+  ended_at: timestamptz
+  ip: inet
+  kills: Int
+  kills_conn: Int
+  name: String
+  player_steam_id: bigint
+  server_id: uuid
+  settled_conns: [String!]
+  started_at: timestamptz
+}
+
+"""aggregate stddev on columns"""
+type server_player_sessions_stddev_fields {
+  deaths: Float
+  deaths_conn: Float
+  id: Float
+  kills: Float
+  kills_conn: Float
+  player_steam_id: Float
+}
+
+"""
+order by stddev() on columns of table "server_player_sessions"
+"""
+input server_player_sessions_stddev_order_by {
+  deaths: order_by
+  deaths_conn: order_by
+  id: order_by
+  kills: order_by
+  kills_conn: order_by
+  player_steam_id: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type server_player_sessions_stddev_pop_fields {
+  deaths: Float
+  deaths_conn: Float
+  id: Float
+  kills: Float
+  kills_conn: Float
+  player_steam_id: Float
+}
+
+"""
+order by stddev_pop() on columns of table "server_player_sessions"
+"""
+input server_player_sessions_stddev_pop_order_by {
+  deaths: order_by
+  deaths_conn: order_by
+  id: order_by
+  kills: order_by
+  kills_conn: order_by
+  player_steam_id: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type server_player_sessions_stddev_samp_fields {
+  deaths: Float
+  deaths_conn: Float
+  id: Float
+  kills: Float
+  kills_conn: Float
+  player_steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "server_player_sessions"
+"""
+input server_player_sessions_stddev_samp_order_by {
+  deaths: order_by
+  deaths_conn: order_by
+  id: order_by
+  kills: order_by
+  kills_conn: order_by
+  player_steam_id: order_by
+}
+
+"""
+Streaming cursor of the table "server_player_sessions"
+"""
+input server_player_sessions_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: server_player_sessions_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input server_player_sessions_stream_cursor_value_input {
+  conn: String
+  deaths: Int
+  deaths_conn: Int
+  ended_at: timestamptz
+  id: bigint
+  ip: inet
+  kills: Int
+  kills_conn: Int
+  name: String
+  player_steam_id: bigint
+  server_id: uuid
+  settled_conns: [String!]
+  started_at: timestamptz
+}
+
+"""aggregate sum on columns"""
+type server_player_sessions_sum_fields {
+  deaths: Int
+  deaths_conn: Int
+  id: bigint
+  kills: Int
+  kills_conn: Int
+  player_steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "server_player_sessions"
+"""
+input server_player_sessions_sum_order_by {
+  deaths: order_by
+  deaths_conn: order_by
+  id: order_by
+  kills: order_by
+  kills_conn: order_by
+  player_steam_id: order_by
+}
+
+"""
+update columns of table "server_player_sessions"
+"""
+enum server_player_sessions_update_column {
+  """column name"""
+  conn
+
+  """column name"""
+  deaths
+
+  """column name"""
+  deaths_conn
+
+  """column name"""
+  ended_at
+
+  """column name"""
+  ip
+
+  """column name"""
+  kills
+
+  """column name"""
+  kills_conn
+
+  """column name"""
+  name
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  server_id
+
+  """column name"""
+  settled_conns
+
+  """column name"""
+  started_at
+}
+
+input server_player_sessions_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: server_player_sessions_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: server_player_sessions_set_input
+
+  """filter the rows which have to be updated"""
+  where: server_player_sessions_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type server_player_sessions_var_pop_fields {
+  deaths: Float
+  deaths_conn: Float
+  id: Float
+  kills: Float
+  kills_conn: Float
+  player_steam_id: Float
+}
+
+"""
+order by var_pop() on columns of table "server_player_sessions"
+"""
+input server_player_sessions_var_pop_order_by {
+  deaths: order_by
+  deaths_conn: order_by
+  id: order_by
+  kills: order_by
+  kills_conn: order_by
+  player_steam_id: order_by
+}
+
+"""aggregate var_samp on columns"""
+type server_player_sessions_var_samp_fields {
+  deaths: Float
+  deaths_conn: Float
+  id: Float
+  kills: Float
+  kills_conn: Float
+  player_steam_id: Float
+}
+
+"""
+order by var_samp() on columns of table "server_player_sessions"
+"""
+input server_player_sessions_var_samp_order_by {
+  deaths: order_by
+  deaths_conn: order_by
+  id: order_by
+  kills: order_by
+  kills_conn: order_by
+  player_steam_id: order_by
+}
+
+"""aggregate variance on columns"""
+type server_player_sessions_variance_fields {
+  deaths: Float
+  deaths_conn: Float
+  id: Float
+  kills: Float
+  kills_conn: Float
+  player_steam_id: Float
+}
+
+"""
+order by variance() on columns of table "server_player_sessions"
+"""
+input server_player_sessions_variance_order_by {
+  deaths: order_by
+  deaths_conn: order_by
+  id: order_by
+  kills: order_by
+  kills_conn: order_by
+  player_steam_id: order_by
+}
+
+"""
 columns and relationships of "server_plugins"
 """
 type server_plugins {
@@ -96946,6 +99907,240 @@ input server_plugins_updates {
 
   """filter the rows which have to be updated"""
   where: server_plugins_bool_exp!
+}
+
+"""
+columns and relationships of "server_recent_players"
+"""
+type server_recent_players {
+  first_seen_at: timestamptz
+  ip: String
+  kills: Int
+  last_seen_at: timestamptz
+  name: String
+  online: Boolean
+
+  """An object relationship"""
+  player: players
+  player_steam_id: bigint
+  seconds_played: Int
+
+  """An object relationship"""
+  server: servers
+  server_id: uuid
+  sessions: Int
+}
+
+"""
+aggregated selection of "server_recent_players"
+"""
+type server_recent_players_aggregate {
+  aggregate: server_recent_players_aggregate_fields
+  nodes: [server_recent_players!]!
+}
+
+"""
+aggregate fields of "server_recent_players"
+"""
+type server_recent_players_aggregate_fields {
+  avg: server_recent_players_avg_fields
+  count(columns: [server_recent_players_select_column!], distinct: Boolean): Int!
+  max: server_recent_players_max_fields
+  min: server_recent_players_min_fields
+  stddev: server_recent_players_stddev_fields
+  stddev_pop: server_recent_players_stddev_pop_fields
+  stddev_samp: server_recent_players_stddev_samp_fields
+  sum: server_recent_players_sum_fields
+  var_pop: server_recent_players_var_pop_fields
+  var_samp: server_recent_players_var_samp_fields
+  variance: server_recent_players_variance_fields
+}
+
+"""aggregate avg on columns"""
+type server_recent_players_avg_fields {
+  kills: Float
+  player_steam_id: Float
+  seconds_played: Float
+  sessions: Float
+}
+
+"""
+Boolean expression to filter rows from the table "server_recent_players". All fields are combined with a logical 'AND'.
+"""
+input server_recent_players_bool_exp {
+  _and: [server_recent_players_bool_exp!]
+  _not: server_recent_players_bool_exp
+  _or: [server_recent_players_bool_exp!]
+  first_seen_at: timestamptz_comparison_exp
+  ip: String_comparison_exp
+  kills: Int_comparison_exp
+  last_seen_at: timestamptz_comparison_exp
+  name: String_comparison_exp
+  online: Boolean_comparison_exp
+  player: players_bool_exp
+  player_steam_id: bigint_comparison_exp
+  seconds_played: Int_comparison_exp
+  server: servers_bool_exp
+  server_id: uuid_comparison_exp
+  sessions: Int_comparison_exp
+}
+
+"""aggregate max on columns"""
+type server_recent_players_max_fields {
+  first_seen_at: timestamptz
+  ip: String
+  kills: Int
+  last_seen_at: timestamptz
+  name: String
+  player_steam_id: bigint
+  seconds_played: Int
+  server_id: uuid
+  sessions: Int
+}
+
+"""aggregate min on columns"""
+type server_recent_players_min_fields {
+  first_seen_at: timestamptz
+  ip: String
+  kills: Int
+  last_seen_at: timestamptz
+  name: String
+  player_steam_id: bigint
+  seconds_played: Int
+  server_id: uuid
+  sessions: Int
+}
+
+"""Ordering options when selecting data from "server_recent_players"."""
+input server_recent_players_order_by {
+  first_seen_at: order_by
+  ip: order_by
+  kills: order_by
+  last_seen_at: order_by
+  name: order_by
+  online: order_by
+  player: players_order_by
+  player_steam_id: order_by
+  seconds_played: order_by
+  server: servers_order_by
+  server_id: order_by
+  sessions: order_by
+}
+
+"""
+select columns of table "server_recent_players"
+"""
+enum server_recent_players_select_column {
+  """column name"""
+  first_seen_at
+
+  """column name"""
+  ip
+
+  """column name"""
+  kills
+
+  """column name"""
+  last_seen_at
+
+  """column name"""
+  name
+
+  """column name"""
+  online
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  seconds_played
+
+  """column name"""
+  server_id
+
+  """column name"""
+  sessions
+}
+
+"""aggregate stddev on columns"""
+type server_recent_players_stddev_fields {
+  kills: Float
+  player_steam_id: Float
+  seconds_played: Float
+  sessions: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type server_recent_players_stddev_pop_fields {
+  kills: Float
+  player_steam_id: Float
+  seconds_played: Float
+  sessions: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type server_recent_players_stddev_samp_fields {
+  kills: Float
+  player_steam_id: Float
+  seconds_played: Float
+  sessions: Float
+}
+
+"""
+Streaming cursor of the table "server_recent_players"
+"""
+input server_recent_players_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: server_recent_players_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input server_recent_players_stream_cursor_value_input {
+  first_seen_at: timestamptz
+  ip: String
+  kills: Int
+  last_seen_at: timestamptz
+  name: String
+  online: Boolean
+  player_steam_id: bigint
+  seconds_played: Int
+  server_id: uuid
+  sessions: Int
+}
+
+"""aggregate sum on columns"""
+type server_recent_players_sum_fields {
+  kills: Int
+  player_steam_id: bigint
+  seconds_played: Int
+  sessions: Int
+}
+
+"""aggregate var_pop on columns"""
+type server_recent_players_var_pop_fields {
+  kills: Float
+  player_steam_id: Float
+  seconds_played: Float
+  sessions: Float
+}
+
+"""aggregate var_samp on columns"""
+type server_recent_players_var_samp_fields {
+  kills: Float
+  player_steam_id: Float
+  seconds_played: Float
+  sessions: Float
+}
+
+"""aggregate variance on columns"""
+type server_recent_players_variance_fields {
+  kills: Float
+  player_steam_id: Float
+  seconds_played: Float
+  sessions: Float
 }
 
 """
@@ -97342,9 +100537,294 @@ type server_regions_variance_fields {
 }
 
 """
+columns and relationships of "server_rosters"
+"""
+type server_rosters {
+  held_since: timestamptz
+  reported_at: timestamptz!
+
+  """An object relationship"""
+  server: servers!
+  server_id: uuid!
+
+  """An array relationship"""
+  sessions(
+    """distinct select on columns"""
+    distinct_on: [server_player_sessions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_player_sessions_order_by!]
+
+    """filter the rows returned"""
+    where: server_player_sessions_bool_exp
+  ): [server_player_sessions!]!
+
+  """An aggregate relationship"""
+  sessions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_player_sessions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_player_sessions_order_by!]
+
+    """filter the rows returned"""
+    where: server_player_sessions_bool_exp
+  ): server_player_sessions_aggregate!
+}
+
+"""
+aggregated selection of "server_rosters"
+"""
+type server_rosters_aggregate {
+  aggregate: server_rosters_aggregate_fields
+  nodes: [server_rosters!]!
+}
+
+"""
+aggregate fields of "server_rosters"
+"""
+type server_rosters_aggregate_fields {
+  count(columns: [server_rosters_select_column!], distinct: Boolean): Int!
+  max: server_rosters_max_fields
+  min: server_rosters_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "server_rosters". All fields are combined with a logical 'AND'.
+"""
+input server_rosters_bool_exp {
+  _and: [server_rosters_bool_exp!]
+  _not: server_rosters_bool_exp
+  _or: [server_rosters_bool_exp!]
+  held_since: timestamptz_comparison_exp
+  reported_at: timestamptz_comparison_exp
+  server: servers_bool_exp
+  server_id: uuid_comparison_exp
+  sessions: server_player_sessions_bool_exp
+  sessions_aggregate: server_player_sessions_aggregate_bool_exp
+}
+
+"""
+unique or primary key constraints on table "server_rosters"
+"""
+enum server_rosters_constraint {
+  """
+  unique or primary key constraint on columns "server_id"
+  """
+  server_rosters_pkey
+}
+
+"""
+input type for inserting data into table "server_rosters"
+"""
+input server_rosters_insert_input {
+  held_since: timestamptz
+  reported_at: timestamptz
+  server: servers_obj_rel_insert_input
+  server_id: uuid
+  sessions: server_player_sessions_arr_rel_insert_input
+}
+
+"""aggregate max on columns"""
+type server_rosters_max_fields {
+  held_since: timestamptz
+  reported_at: timestamptz
+  server_id: uuid
+}
+
+"""aggregate min on columns"""
+type server_rosters_min_fields {
+  held_since: timestamptz
+  reported_at: timestamptz
+  server_id: uuid
+}
+
+"""
+response of any mutation on the table "server_rosters"
+"""
+type server_rosters_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [server_rosters!]!
+}
+
+"""
+on_conflict condition type for table "server_rosters"
+"""
+input server_rosters_on_conflict {
+  constraint: server_rosters_constraint!
+  update_columns: [server_rosters_update_column!]! = []
+  where: server_rosters_bool_exp
+}
+
+"""Ordering options when selecting data from "server_rosters"."""
+input server_rosters_order_by {
+  held_since: order_by
+  reported_at: order_by
+  server: servers_order_by
+  server_id: order_by
+  sessions_aggregate: server_player_sessions_aggregate_order_by
+}
+
+"""primary key columns input for table: server_rosters"""
+input server_rosters_pk_columns_input {
+  server_id: uuid!
+}
+
+"""
+select columns of table "server_rosters"
+"""
+enum server_rosters_select_column {
+  """column name"""
+  held_since
+
+  """column name"""
+  reported_at
+
+  """column name"""
+  server_id
+}
+
+"""
+input type for updating data in table "server_rosters"
+"""
+input server_rosters_set_input {
+  held_since: timestamptz
+  reported_at: timestamptz
+  server_id: uuid
+}
+
+"""
+Streaming cursor of the table "server_rosters"
+"""
+input server_rosters_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: server_rosters_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input server_rosters_stream_cursor_value_input {
+  held_since: timestamptz
+  reported_at: timestamptz
+  server_id: uuid
+}
+
+"""
+update columns of table "server_rosters"
+"""
+enum server_rosters_update_column {
+  """column name"""
+  held_since
+
+  """column name"""
+  reported_at
+
+  """column name"""
+  server_id
+}
+
+input server_rosters_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: server_rosters_set_input
+
+  """filter the rows which have to be updated"""
+  where: server_rosters_bool_exp!
+}
+
+"""
 columns and relationships of "servers"
 """
 type servers {
+  """An array relationship"""
+  access_events(
+    """distinct select on columns"""
+    distinct_on: [server_access_events_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_access_events_order_by!]
+
+    """filter the rows returned"""
+    where: server_access_events_bool_exp
+  ): [server_access_events!]!
+
+  """An aggregate relationship"""
+  access_events_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_access_events_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_access_events_order_by!]
+
+    """filter the rows returned"""
+    where: server_access_events_bool_exp
+  ): server_access_events_aggregate!
+  access_min_role: e_player_roles_enum
+
+  """An array relationship"""
+  access_players(
+    """distinct select on columns"""
+    distinct_on: [server_access_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_access_players_order_by!]
+
+    """filter the rows returned"""
+    where: server_access_players_bool_exp
+  ): [server_access_players!]!
+
+  """An aggregate relationship"""
+  access_players_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_access_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_access_players_order_by!]
+
+    """filter the rows returned"""
+    where: server_access_players_bool_exp
+  ): server_access_players_aggregate!
+  access_restricted: Boolean!
   api_password: uuid!
   boot_status: String
   boot_status_detail: String
@@ -97455,7 +100935,46 @@ type servers {
     where: matches_bool_exp
   ): matches_aggregate!
   max_players: Int
+
+  """An array relationship"""
+  migrations(
+    """distinct select on columns"""
+    distinct_on: [server_migrations_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_migrations_order_by!]
+
+    """filter the rows returned"""
+    where: server_migrations_bool_exp
+  ): [server_migrations!]!
+
+  """An aggregate relationship"""
+  migrations_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_migrations_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_migrations_order_by!]
+
+    """filter the rows returned"""
+    where: server_migrations_bool_exp
+  ): server_migrations_aggregate!
   offline_at: timestamptz
+  player_management_runtime: String
+  player_management_seen_at: timestamptz
+  player_management_version: String
 
   """An array relationship"""
   plugin_overrides(
@@ -97616,6 +101135,12 @@ input servers_bool_exp {
   _and: [servers_bool_exp!]
   _not: servers_bool_exp
   _or: [servers_bool_exp!]
+  access_events: server_access_events_bool_exp
+  access_events_aggregate: server_access_events_aggregate_bool_exp
+  access_min_role: e_player_roles_enum_comparison_exp
+  access_players: server_access_players_bool_exp
+  access_players_aggregate: server_access_players_aggregate_bool_exp
+  access_restricted: Boolean_comparison_exp
   api_password: uuid_comparison_exp
   boot_status: String_comparison_exp
   boot_status_detail: String_comparison_exp
@@ -97641,7 +101166,12 @@ input servers_bool_exp {
   matches: matches_bool_exp
   matches_aggregate: matches_aggregate_bool_exp
   max_players: Int_comparison_exp
+  migrations: server_migrations_bool_exp
+  migrations_aggregate: server_migrations_aggregate_bool_exp
   offline_at: timestamptz_comparison_exp
+  player_management_runtime: String_comparison_exp
+  player_management_seen_at: timestamptz_comparison_exp
+  player_management_version: String_comparison_exp
   plugin_overrides: server_plugins_bool_exp
   plugin_overrides_aggregate: server_plugins_aggregate_bool_exp
   plugin_runtime: e_plugin_runtimes_enum_comparison_exp
@@ -97708,6 +101238,10 @@ input servers_inc_input {
 input type for inserting data into table "servers"
 """
 input servers_insert_input {
+  access_events: server_access_events_arr_rel_insert_input
+  access_min_role: e_player_roles_enum
+  access_players: server_access_players_arr_rel_insert_input
+  access_restricted: Boolean
   api_password: uuid
   boot_status: String
   boot_status_detail: String
@@ -97729,7 +101263,11 @@ input servers_insert_input {
   map_rotation_shuffle: Boolean
   matches: matches_arr_rel_insert_input
   max_players: Int
+  migrations: server_migrations_arr_rel_insert_input
   offline_at: timestamptz
+  player_management_runtime: String
+  player_management_seen_at: timestamptz
+  player_management_version: String
   plugin_overrides: server_plugins_arr_rel_insert_input
   plugin_runtime: e_plugin_runtimes_enum
   plugin_version: String
@@ -97770,6 +101308,9 @@ type servers_max_fields {
   label: String
   max_players: Int
   offline_at: timestamptz
+  player_management_runtime: String
+  player_management_seen_at: timestamptz
+  player_management_version: String
   plugin_version: String
   plugins_checked_at: timestamptz
   port: Int
@@ -97796,6 +101337,9 @@ input servers_max_order_by {
   label: order_by
   max_players: order_by
   offline_at: order_by
+  player_management_runtime: order_by
+  player_management_seen_at: order_by
+  player_management_version: order_by
   plugin_version: order_by
   plugins_checked_at: order_by
   port: order_by
@@ -97830,6 +101374,9 @@ type servers_min_fields {
   label: String
   max_players: Int
   offline_at: timestamptz
+  player_management_runtime: String
+  player_management_seen_at: timestamptz
+  player_management_version: String
   plugin_version: String
   plugins_checked_at: timestamptz
   port: Int
@@ -97856,6 +101403,9 @@ input servers_min_order_by {
   label: order_by
   max_players: order_by
   offline_at: order_by
+  player_management_runtime: order_by
+  player_management_seen_at: order_by
+  player_management_version: order_by
   plugin_version: order_by
   plugins_checked_at: order_by
   port: order_by
@@ -97898,6 +101448,10 @@ input servers_on_conflict {
 
 """Ordering options when selecting data from "servers"."""
 input servers_order_by {
+  access_events_aggregate: server_access_events_aggregate_order_by
+  access_min_role: order_by
+  access_players_aggregate: server_access_players_aggregate_order_by
+  access_restricted: order_by
   api_password: order_by
   boot_status: order_by
   boot_status_detail: order_by
@@ -97921,7 +101475,11 @@ input servers_order_by {
   map_rotation_shuffle: order_by
   matches_aggregate: matches_aggregate_order_by
   max_players: order_by
+  migrations_aggregate: server_migrations_aggregate_order_by
   offline_at: order_by
+  player_management_runtime: order_by
+  player_management_seen_at: order_by
+  player_management_version: order_by
   plugin_overrides_aggregate: server_plugins_aggregate_order_by
   plugin_runtime: order_by
   plugin_version: order_by
@@ -97952,6 +101510,12 @@ input servers_prepend_input {
 select columns of table "servers"
 """
 enum servers_select_column {
+  """column name"""
+  access_min_role
+
+  """column name"""
+  access_restricted
+
   """column name"""
   api_password
 
@@ -98004,6 +101568,15 @@ enum servers_select_column {
   offline_at
 
   """column name"""
+  player_management_runtime
+
+  """column name"""
+  player_management_seen_at
+
+  """column name"""
+  player_management_version
+
+  """column name"""
   plugin_runtime
 
   """column name"""
@@ -98045,6 +101618,9 @@ select "servers_aggregate_bool_exp_bool_and_arguments_columns" columns of table 
 """
 enum servers_select_column_servers_aggregate_bool_exp_bool_and_arguments_columns {
   """column name"""
+  access_restricted
+
+  """column name"""
   connected
 
   """column name"""
@@ -98065,6 +101641,9 @@ select "servers_aggregate_bool_exp_bool_or_arguments_columns" columns of table "
 """
 enum servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_columns {
   """column name"""
+  access_restricted
+
+  """column name"""
   connected
 
   """column name"""
@@ -98084,6 +101663,8 @@ enum servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_columns 
 input type for updating data in table "servers"
 """
 input servers_set_input {
+  access_min_role: e_player_roles_enum
+  access_restricted: Boolean
   api_password: uuid
   boot_status: String
   boot_status_detail: String
@@ -98101,6 +101682,9 @@ input servers_set_input {
   map_rotation_shuffle: Boolean
   max_players: Int
   offline_at: timestamptz
+  player_management_runtime: String
+  player_management_seen_at: timestamptz
+  player_management_version: String
   plugin_runtime: e_plugin_runtimes_enum
   plugin_version: String
   plugins_checked_at: timestamptz
@@ -98176,6 +101760,8 @@ input servers_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input servers_stream_cursor_value_input {
+  access_min_role: e_player_roles_enum
+  access_restricted: Boolean
   api_password: uuid
   boot_status: String
   boot_status_detail: String
@@ -98193,6 +101779,9 @@ input servers_stream_cursor_value_input {
   map_rotation_shuffle: Boolean
   max_players: Int
   offline_at: timestamptz
+  player_management_runtime: String
+  player_management_seen_at: timestamptz
+  player_management_version: String
   plugin_runtime: e_plugin_runtimes_enum
   plugin_version: String
   plugins_checked_at: timestamptz
@@ -98227,6 +101816,12 @@ input servers_sum_order_by {
 update columns of table "servers"
 """
 enum servers_update_column {
+  """column name"""
+  access_min_role
+
+  """column name"""
+  access_restricted
+
   """column name"""
   api_password
 
@@ -98277,6 +101872,15 @@ enum servers_update_column {
 
   """column name"""
   offline_at
+
+  """column name"""
+  player_management_runtime
+
+  """column name"""
+  player_management_seen_at
+
+  """column name"""
+  player_management_version
 
   """column name"""
   plugin_runtime
@@ -102497,6 +106101,65 @@ type subscription_root {
     """filter the rows returned"""
     where: e_scrim_request_statuses_bool_exp
   ): [e_scrim_request_statuses!]!
+
+  """
+  fetch data from the table: "e_server_migration_statuses"
+  """
+  e_server_migration_statuses(
+    """distinct select on columns"""
+    distinct_on: [e_server_migration_statuses_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_server_migration_statuses_order_by!]
+
+    """filter the rows returned"""
+    where: e_server_migration_statuses_bool_exp
+  ): [e_server_migration_statuses!]!
+
+  """
+  fetch aggregated fields from the table: "e_server_migration_statuses"
+  """
+  e_server_migration_statuses_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_server_migration_statuses_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_server_migration_statuses_order_by!]
+
+    """filter the rows returned"""
+    where: e_server_migration_statuses_bool_exp
+  ): e_server_migration_statuses_aggregate!
+
+  """
+  fetch data from the table: "e_server_migration_statuses" using primary key columns
+  """
+  e_server_migration_statuses_by_pk(value: String!): e_server_migration_statuses
+
+  """
+  fetch data from the table in a streaming manner: "e_server_migration_statuses"
+  """
+  e_server_migration_statuses_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_server_migration_statuses_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_server_migration_statuses_bool_exp
+  ): [e_server_migration_statuses!]!
 
   """
   fetch data from the table: "e_server_types"
@@ -108810,6 +112473,124 @@ type subscription_root {
   ): [seasons!]!
 
   """
+  fetch data from the table: "server_access_events"
+  """
+  server_access_events(
+    """distinct select on columns"""
+    distinct_on: [server_access_events_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_access_events_order_by!]
+
+    """filter the rows returned"""
+    where: server_access_events_bool_exp
+  ): [server_access_events!]!
+
+  """
+  fetch aggregated fields from the table: "server_access_events"
+  """
+  server_access_events_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_access_events_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_access_events_order_by!]
+
+    """filter the rows returned"""
+    where: server_access_events_bool_exp
+  ): server_access_events_aggregate!
+
+  """
+  fetch data from the table: "server_access_events" using primary key columns
+  """
+  server_access_events_by_pk(event_id: uuid!, server_id: uuid!): server_access_events
+
+  """
+  fetch data from the table in a streaming manner: "server_access_events"
+  """
+  server_access_events_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [server_access_events_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: server_access_events_bool_exp
+  ): [server_access_events!]!
+
+  """
+  fetch data from the table: "server_access_players"
+  """
+  server_access_players(
+    """distinct select on columns"""
+    distinct_on: [server_access_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_access_players_order_by!]
+
+    """filter the rows returned"""
+    where: server_access_players_bool_exp
+  ): [server_access_players!]!
+
+  """
+  fetch aggregated fields from the table: "server_access_players"
+  """
+  server_access_players_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_access_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_access_players_order_by!]
+
+    """filter the rows returned"""
+    where: server_access_players_bool_exp
+  ): server_access_players_aggregate!
+
+  """
+  fetch data from the table: "server_access_players" using primary key columns
+  """
+  server_access_players_by_pk(server_id: uuid!, steam_id: bigint!): server_access_players
+
+  """
+  fetch data from the table in a streaming manner: "server_access_players"
+  """
+  server_access_players_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [server_access_players_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: server_access_players_bool_exp
+  ): [server_access_players!]!
+
+  """
   fetch data from the table: "server_map_rotation"
   """
   server_map_rotation(
@@ -108869,6 +112650,124 @@ type subscription_root {
   ): [server_map_rotation!]!
 
   """
+  fetch data from the table: "server_migrations"
+  """
+  server_migrations(
+    """distinct select on columns"""
+    distinct_on: [server_migrations_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_migrations_order_by!]
+
+    """filter the rows returned"""
+    where: server_migrations_bool_exp
+  ): [server_migrations!]!
+
+  """
+  fetch aggregated fields from the table: "server_migrations"
+  """
+  server_migrations_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_migrations_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_migrations_order_by!]
+
+    """filter the rows returned"""
+    where: server_migrations_bool_exp
+  ): server_migrations_aggregate!
+
+  """
+  fetch data from the table: "server_migrations" using primary key columns
+  """
+  server_migrations_by_pk(id: uuid!): server_migrations
+
+  """
+  fetch data from the table in a streaming manner: "server_migrations"
+  """
+  server_migrations_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [server_migrations_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: server_migrations_bool_exp
+  ): [server_migrations!]!
+
+  """
+  fetch data from the table: "server_player_sessions"
+  """
+  server_player_sessions(
+    """distinct select on columns"""
+    distinct_on: [server_player_sessions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_player_sessions_order_by!]
+
+    """filter the rows returned"""
+    where: server_player_sessions_bool_exp
+  ): [server_player_sessions!]!
+
+  """
+  fetch aggregated fields from the table: "server_player_sessions"
+  """
+  server_player_sessions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_player_sessions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_player_sessions_order_by!]
+
+    """filter the rows returned"""
+    where: server_player_sessions_bool_exp
+  ): server_player_sessions_aggregate!
+
+  """
+  fetch data from the table: "server_player_sessions" using primary key columns
+  """
+  server_player_sessions_by_pk(id: bigint!): server_player_sessions
+
+  """
+  fetch data from the table in a streaming manner: "server_player_sessions"
+  """
+  server_player_sessions_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [server_player_sessions_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: server_player_sessions_bool_exp
+  ): [server_player_sessions!]!
+
+  """
   fetch data from the table: "server_plugins"
   """
   server_plugins(
@@ -108926,6 +112825,60 @@ type subscription_root {
   ): [server_plugins!]!
 
   """
+  fetch data from the table: "server_recent_players"
+  """
+  server_recent_players(
+    """distinct select on columns"""
+    distinct_on: [server_recent_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_recent_players_order_by!]
+
+    """filter the rows returned"""
+    where: server_recent_players_bool_exp
+  ): [server_recent_players!]!
+
+  """
+  fetch aggregated fields from the table: "server_recent_players"
+  """
+  server_recent_players_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_recent_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_recent_players_order_by!]
+
+    """filter the rows returned"""
+    where: server_recent_players_bool_exp
+  ): server_recent_players_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "server_recent_players"
+  """
+  server_recent_players_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [server_recent_players_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: server_recent_players_bool_exp
+  ): [server_recent_players!]!
+
+  """
   fetch data from the table: "server_regions"
   """
   server_regions(
@@ -108981,6 +112934,63 @@ type subscription_root {
     """filter the rows returned"""
     where: server_regions_bool_exp
   ): [server_regions!]!
+
+  """
+  fetch data from the table: "server_rosters"
+  """
+  server_rosters(
+    """distinct select on columns"""
+    distinct_on: [server_rosters_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_rosters_order_by!]
+
+    """filter the rows returned"""
+    where: server_rosters_bool_exp
+  ): [server_rosters!]!
+
+  """
+  fetch aggregated fields from the table: "server_rosters"
+  """
+  server_rosters_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_rosters_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_rosters_order_by!]
+
+    """filter the rows returned"""
+    where: server_rosters_bool_exp
+  ): server_rosters_aggregate!
+
+  """fetch data from the table: "server_rosters" using primary key columns"""
+  server_rosters_by_pk(server_id: uuid!): server_rosters
+
+  """
+  fetch data from the table in a streaming manner: "server_rosters"
+  """
+  server_rosters_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [server_rosters_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: server_rosters_bool_exp
+  ): [server_rosters!]!
 
   """An array relationship"""
   servers(
@@ -113101,60 +117111,6 @@ type subscription_root {
     """filter the rows returned"""
     where: v_player_multi_kills_bool_exp
   ): [v_player_multi_kills!]!
-
-  """
-  fetch data from the table: "v_player_queue_partners"
-  """
-  v_player_queue_partners(
-    """distinct select on columns"""
-    distinct_on: [v_player_queue_partners_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_player_queue_partners_order_by!]
-
-    """filter the rows returned"""
-    where: v_player_queue_partners_bool_exp
-  ): [v_player_queue_partners!]!
-
-  """
-  fetch aggregated fields from the table: "v_player_queue_partners"
-  """
-  v_player_queue_partners_aggregate(
-    """distinct select on columns"""
-    distinct_on: [v_player_queue_partners_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_player_queue_partners_order_by!]
-
-    """filter the rows returned"""
-    where: v_player_queue_partners_bool_exp
-  ): v_player_queue_partners_aggregate!
-
-  """
-  fetch data from the table in a streaming manner: "v_player_queue_partners"
-  """
-  v_player_queue_partners_stream(
-    """maximum number of rows returned in a single batch"""
-    batch_size: Int!
-
-    """cursor to stream the results returned by the query"""
-    cursor: [v_player_queue_partners_stream_cursor_input]!
-
-    """filter the rows returned"""
-    where: v_player_queue_partners_bool_exp
-  ): [v_player_queue_partners!]!
 
   """
   fetch data from the table: "v_player_weapon_damage"
@@ -147913,206 +151869,6 @@ input v_player_multi_kills_variance_order_by {
   attacker_steam_id: order_by
   kills: order_by
   round: order_by
-}
-
-"""
-columns and relationships of "v_player_queue_partners"
-"""
-type v_player_queue_partners {
-  first_played_at: timestamptz
-  last_played_at: timestamptz
-  matches_together: Int
-
-  """An object relationship"""
-  partner: players
-  partner_steam_id: bigint
-
-  """An object relationship"""
-  player: players
-  steam_id: bigint
-  wins_together: Int
-}
-
-"""
-aggregated selection of "v_player_queue_partners"
-"""
-type v_player_queue_partners_aggregate {
-  aggregate: v_player_queue_partners_aggregate_fields
-  nodes: [v_player_queue_partners!]!
-}
-
-"""
-aggregate fields of "v_player_queue_partners"
-"""
-type v_player_queue_partners_aggregate_fields {
-  avg: v_player_queue_partners_avg_fields
-  count(columns: [v_player_queue_partners_select_column!], distinct: Boolean): Int!
-  max: v_player_queue_partners_max_fields
-  min: v_player_queue_partners_min_fields
-  stddev: v_player_queue_partners_stddev_fields
-  stddev_pop: v_player_queue_partners_stddev_pop_fields
-  stddev_samp: v_player_queue_partners_stddev_samp_fields
-  sum: v_player_queue_partners_sum_fields
-  var_pop: v_player_queue_partners_var_pop_fields
-  var_samp: v_player_queue_partners_var_samp_fields
-  variance: v_player_queue_partners_variance_fields
-}
-
-"""aggregate avg on columns"""
-type v_player_queue_partners_avg_fields {
-  matches_together: Float
-  partner_steam_id: Float
-  steam_id: Float
-  wins_together: Float
-}
-
-"""
-Boolean expression to filter rows from the table "v_player_queue_partners". All fields are combined with a logical 'AND'.
-"""
-input v_player_queue_partners_bool_exp {
-  _and: [v_player_queue_partners_bool_exp!]
-  _not: v_player_queue_partners_bool_exp
-  _or: [v_player_queue_partners_bool_exp!]
-  first_played_at: timestamptz_comparison_exp
-  last_played_at: timestamptz_comparison_exp
-  matches_together: Int_comparison_exp
-  partner: players_bool_exp
-  partner_steam_id: bigint_comparison_exp
-  player: players_bool_exp
-  steam_id: bigint_comparison_exp
-  wins_together: Int_comparison_exp
-}
-
-"""aggregate max on columns"""
-type v_player_queue_partners_max_fields {
-  first_played_at: timestamptz
-  last_played_at: timestamptz
-  matches_together: Int
-  partner_steam_id: bigint
-  steam_id: bigint
-  wins_together: Int
-}
-
-"""aggregate min on columns"""
-type v_player_queue_partners_min_fields {
-  first_played_at: timestamptz
-  last_played_at: timestamptz
-  matches_together: Int
-  partner_steam_id: bigint
-  steam_id: bigint
-  wins_together: Int
-}
-
-"""Ordering options when selecting data from "v_player_queue_partners"."""
-input v_player_queue_partners_order_by {
-  first_played_at: order_by
-  last_played_at: order_by
-  matches_together: order_by
-  partner: players_order_by
-  partner_steam_id: order_by
-  player: players_order_by
-  steam_id: order_by
-  wins_together: order_by
-}
-
-"""
-select columns of table "v_player_queue_partners"
-"""
-enum v_player_queue_partners_select_column {
-  """column name"""
-  first_played_at
-
-  """column name"""
-  last_played_at
-
-  """column name"""
-  matches_together
-
-  """column name"""
-  partner_steam_id
-
-  """column name"""
-  steam_id
-
-  """column name"""
-  wins_together
-}
-
-"""aggregate stddev on columns"""
-type v_player_queue_partners_stddev_fields {
-  matches_together: Float
-  partner_steam_id: Float
-  steam_id: Float
-  wins_together: Float
-}
-
-"""aggregate stddev_pop on columns"""
-type v_player_queue_partners_stddev_pop_fields {
-  matches_together: Float
-  partner_steam_id: Float
-  steam_id: Float
-  wins_together: Float
-}
-
-"""aggregate stddev_samp on columns"""
-type v_player_queue_partners_stddev_samp_fields {
-  matches_together: Float
-  partner_steam_id: Float
-  steam_id: Float
-  wins_together: Float
-}
-
-"""
-Streaming cursor of the table "v_player_queue_partners"
-"""
-input v_player_queue_partners_stream_cursor_input {
-  """Stream column input with initial value"""
-  initial_value: v_player_queue_partners_stream_cursor_value_input!
-
-  """cursor ordering"""
-  ordering: cursor_ordering
-}
-
-"""Initial value of the column from where the streaming should start"""
-input v_player_queue_partners_stream_cursor_value_input {
-  first_played_at: timestamptz
-  last_played_at: timestamptz
-  matches_together: Int
-  partner_steam_id: bigint
-  steam_id: bigint
-  wins_together: Int
-}
-
-"""aggregate sum on columns"""
-type v_player_queue_partners_sum_fields {
-  matches_together: Int
-  partner_steam_id: bigint
-  steam_id: bigint
-  wins_together: Int
-}
-
-"""aggregate var_pop on columns"""
-type v_player_queue_partners_var_pop_fields {
-  matches_together: Float
-  partner_steam_id: Float
-  steam_id: Float
-  wins_together: Float
-}
-
-"""aggregate var_samp on columns"""
-type v_player_queue_partners_var_samp_fields {
-  matches_together: Float
-  partner_steam_id: Float
-  steam_id: Float
-  wins_together: Float
-}
-
-"""aggregate variance on columns"""
-type v_player_queue_partners_variance_fields {
-  matches_together: Float
-  partner_steam_id: Float
-  steam_id: Float
-  wins_together: Float
 }
 
 """
