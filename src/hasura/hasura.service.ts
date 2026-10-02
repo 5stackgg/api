@@ -135,8 +135,13 @@ export class HasuraService {
 
     await this.apply(path.resolve("./hasura/enums"));
     await this.apply(path.resolve("./hasura/functions"));
-    await this.apply(path.resolve("./hasura/views"));
-    await this.apply(path.resolve("./hasura/triggers"));
+
+    // Recreating a view drops the triggers on it and, with CASCADE, the views
+    // built on it, while the files defining those still match their digests.
+    const views = path.resolve("./hasura/views");
+    const viewsChanged = await this.hasChanges(views);
+    await this.apply(views, viewsChanged);
+    await this.apply(path.resolve("./hasura/triggers"), viewsChanged);
 
     await this.updateSettings();
 
@@ -401,13 +406,13 @@ export class HasuraService {
     return versions;
   }
 
-  public async apply(filePath: string): Promise<boolean> {
+  public async apply(filePath: string, force = false): Promise<void> {
     const filePathStats = fs.statSync(filePath);
 
     if (filePathStats.isDirectory()) {
       const files = fs.readdirSync(filePath).sort();
       for (const file of files) {
-        await this.apply(path.join(filePath, file));
+        await this.apply(path.join(filePath, file), force);
       }
       return;
     }
@@ -416,12 +421,9 @@ export class HasuraService {
       const sql = fs.readFileSync(filePath, "utf8");
 
       const digest = this.calcSqlDigest(sql);
-      const setting = path.relative(
-        process.cwd(),
-        filePath.replace(".sql", ""),
-      );
+      const setting = this.digestName(filePath);
 
-      if (digest === (await this.getSetting(setting))) {
+      if (!force && digest === (await this.getSetting(setting))) {
         return;
       }
 
@@ -438,6 +440,25 @@ export class HasuraService {
         `failed to exec sql ${path.basename(filePath)}: ${error.message}`,
       );
     }
+  }
+
+  private async hasChanges(filePath: string): Promise<boolean> {
+    if (fs.statSync(filePath).isDirectory()) {
+      for (const file of fs.readdirSync(filePath).sort()) {
+        if (await this.hasChanges(path.join(filePath, file))) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    const digest = this.calcSqlDigest(fs.readFileSync(filePath, "utf8"));
+
+    return digest !== (await this.getSetting(this.digestName(filePath)));
+  }
+
+  private digestName(filePath: string) {
+    return path.relative(process.cwd(), filePath.replace(".sql", ""));
   }
 
   public async getSetting(name: string) {
