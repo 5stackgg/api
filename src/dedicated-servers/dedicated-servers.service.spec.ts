@@ -599,6 +599,7 @@ describe("DedicatedServersService.withServerCfg", () => {
     pluginConfigs: null as string | null,
     missingRequired: [] as Array<string>,
     disableServerGuidelines: false,
+    workshopAddons: [] as Array<string>,
     ...overrides,
   });
 
@@ -738,6 +739,7 @@ describe("DedicatedServersService.setupDedicatedServer", () => {
     pluginConfigs: null,
     missingRequired: [],
     disableServerGuidelines: false,
+    workshopAddons: [] as Array<string>,
   };
 
   const deploy = async (type: string, game = "cs2") => {
