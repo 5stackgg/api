@@ -204,9 +204,9 @@ const BATCHED_TYPES = new Set<string>([
   // fails -- and the point of the claim failing is to degrade to one batched
   // job, not to one send per player.
   "SeasonEnded",
-  // Six months of the sanctioned player's team-mates, every row carrying their
+  // Six months of the banned player's team-mates, every row carrying their
   // steam id as the entity, which is what the jobId collapses on.
-  "PlayerSanctioned",
+  "TeammateBanned",
 ]);
 
 const SEND_CHUNK_SIZE = 25;
@@ -491,7 +491,7 @@ export class PushNotificationsService {
 
   // The id a burst collapses onto. Bucketed by time as well as by entity: the
   // entity alone is stable for a type that can happen to the same entity twice.
-  // PlayerSanctioned keys on the sanctioned player's steam id, so muting a
+  // The co-player sanction notice keys on the player's steam id, so muting a
   // player at 10:00 and banning them at 10:20 produced the same jobId, and
   // BullMQ rejected the second burst as a duplicate of the completed job it
   // retains for an hour -- nobody was told about the ban. Worst case a burst

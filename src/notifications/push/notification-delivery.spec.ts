@@ -86,6 +86,16 @@ describe("notification delivery policies", () => {
     });
   });
 
+  it("delivers a banned-teammate notice the way the sanction notice it split from was", () => {
+    expect(deliveryPolicyForType("TeammateBanned")).toEqual({
+      bundleSeconds: 0,
+      requireUnseen: true,
+    });
+    expect(deliveryPolicyForType("TeammateBanned")).toEqual(
+      deliveryPolicyForType("PlayerSanctioned"),
+    );
+  });
+
   it.each(["MatchFound", "AdminCall"])(
     "rings %s now, even in quiet hours, and lets it expire with its window",
     (type) => {

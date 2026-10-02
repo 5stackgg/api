@@ -14756,7 +14756,7 @@ enum e_notification_types_enum {
   """Player search reindex finished"""
   PlayerReindex
 
-  """A player you recently played with received a sanction"""
+  """You were banned, or (for staff) a player was banned"""
   PlayerSanctioned
 
   """A moderator issued you a warning"""
@@ -14797,6 +14797,9 @@ enum e_notification_types_enum {
 
   """You were invited to a team"""
   TeamInvite
+
+  """A player you played with in the last 6 months was banned"""
+  TeammateBanned
 
   """Check-in for your tournament closes soon"""
   TournamentCheckInClosing

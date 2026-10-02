@@ -121,6 +121,27 @@ describe("notification categories", () => {
     expect(inAppKeyForType("MatchChatMessage")).toBeNull();
   });
 
+  it("gives banned teammates their own push category, on by default, after account", () => {
+    expect(pushCategoryForType("TeammateBanned")).toEqual({
+      key: "teammate_bans",
+      defaultEnabled: true,
+    });
+
+    const keys = PUSH_KEYS.map((entry) => entry.key);
+    expect(keys.indexOf("teammate_bans")).toBe(keys.indexOf("account") + 1);
+  });
+
+  it("keeps a player's own sanction under account", () => {
+    expect(pushCategoryForType("PlayerSanctioned")?.key).toBe("account");
+  });
+
+  it("lets the bell mute banned teammates, on by default", () => {
+    expect(inAppKeyForType("TeammateBanned")).toEqual({
+      key: "TeammateBanned",
+      defaultEnabled: true,
+    });
+  });
+
   it("resolves in-app keys back to their own type", () => {
     for (const entry of IN_APP_KEYS) {
       expect(inAppKeyForType(entry.key)).toEqual(entry);

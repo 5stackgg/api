@@ -6227,7 +6227,7 @@ export interface e_notification_types_aggregate_fields {
 /** unique or primary key constraints on table "e_notification_types" */
 export type e_notification_types_constraint = 'e_notification_types_pkey'
 
-export type e_notification_types_enum = 'AdminCall' | 'AwardGranted' | 'ChatMessage' | 'ClipReady' | 'DedicatedServerRconStatus' | 'DedicatedServerStatus' | 'DraftInvite' | 'EloRecompute' | 'EventReminder' | 'FormTeamSuggestion' | 'GameNodeStatus' | 'GameUpdate' | 'LeagueMatchUnscheduled' | 'LeagueProposalAccepted' | 'LeagueProposalDeclined' | 'LeagueProposalReceived' | 'LeagueRegistrationDecision' | 'LeagueRosterUndersized' | 'MatchAbandoned' | 'MatchChatMessage' | 'MatchFound' | 'MatchImported' | 'MatchStatsReady' | 'MatchStatusChange' | 'MatchSupport' | 'NadeDriftScanFinished' | 'NadePracticeInvite' | 'NadePracticeReady' | 'NameChangeApproved' | 'NameChangeDenied' | 'NameChangeRequest' | 'NewsPublished' | 'PlayerReindex' | 'PlayerSanctioned' | 'PlayerWarning' | 'ScrimAlertMatch' | 'ScrimMatchCanceled' | 'ScrimMatchScheduled' | 'ScrimRequestAccepted' | 'ScrimRequestCountered' | 'ScrimRequestDeclined' | 'ScrimRequestExpired' | 'ScrimRequestReceived' | 'ScrimTimeChanged' | 'SeasonEnded' | 'StorageScan' | 'TeamInvite' | 'TournamentCheckInClosing' | 'TournamentCheckInMissed' | 'TournamentCheckInOpen' | 'TournamentCreated' | 'TournamentInvite' | 'TournamentPartySignup' | 'TournamentReminder' | 'TournamentTeamInvite' | 'UtilityDriftScanFinished' | 'UtilityPracticeInvite' | 'UtilityPracticeReady'
+export type e_notification_types_enum = 'AdminCall' | 'AwardGranted' | 'ChatMessage' | 'ClipReady' | 'DedicatedServerRconStatus' | 'DedicatedServerStatus' | 'DraftInvite' | 'EloRecompute' | 'EventReminder' | 'FormTeamSuggestion' | 'GameNodeStatus' | 'GameUpdate' | 'LeagueMatchUnscheduled' | 'LeagueProposalAccepted' | 'LeagueProposalDeclined' | 'LeagueProposalReceived' | 'LeagueRegistrationDecision' | 'LeagueRosterUndersized' | 'MatchAbandoned' | 'MatchChatMessage' | 'MatchFound' | 'MatchImported' | 'MatchStatsReady' | 'MatchStatusChange' | 'MatchSupport' | 'NadeDriftScanFinished' | 'NadePracticeInvite' | 'NadePracticeReady' | 'NameChangeApproved' | 'NameChangeDenied' | 'NameChangeRequest' | 'NewsPublished' | 'PlayerReindex' | 'PlayerSanctioned' | 'PlayerWarning' | 'ScrimAlertMatch' | 'ScrimMatchCanceled' | 'ScrimMatchScheduled' | 'ScrimRequestAccepted' | 'ScrimRequestCountered' | 'ScrimRequestDeclined' | 'ScrimRequestExpired' | 'ScrimRequestReceived' | 'ScrimTimeChanged' | 'SeasonEnded' | 'StorageScan' | 'TeamInvite' | 'TeammateBanned' | 'TournamentCheckInClosing' | 'TournamentCheckInMissed' | 'TournamentCheckInOpen' | 'TournamentCreated' | 'TournamentInvite' | 'TournamentPartySignup' | 'TournamentReminder' | 'TournamentTeamInvite' | 'UtilityDriftScanFinished' | 'UtilityPracticeInvite' | 'UtilityPracticeReady'
 
 
 /** aggregate max on columns */
@@ -162460,6 +162460,7 @@ export const enumENotificationTypesEnum = {
    SeasonEnded: 'SeasonEnded' as const,
    StorageScan: 'StorageScan' as const,
    TeamInvite: 'TeamInvite' as const,
+   TeammateBanned: 'TeammateBanned' as const,
    TournamentCheckInClosing: 'TournamentCheckInClosing' as const,
    TournamentCheckInMissed: 'TournamentCheckInMissed' as const,
    TournamentCheckInOpen: 'TournamentCheckInOpen' as const,

@@ -50,6 +50,7 @@ describe("discord routing", () => {
     "ChatMessage",
     "MatchChatMessage",
     "PlayerSanctioned",
+    "TeammateBanned",
     "PlayerWarning",
     "MatchImported",
     "MatchFound",
@@ -379,16 +380,48 @@ describe("NotificationsService", () => {
       },
     );
 
-    it("tells recent team-mates about a ban", async () => {
+    it("tells recent team-mates about a ban as a banned-teammate notice", async () => {
       await service.notifyMatchPlayersOfSanction(sanction("ban"));
 
       expect(notifyPlayers).toHaveBeenCalledTimes(1);
       const [type, notification] = notifyPlayers.mock.calls[0];
-      expect(type).toBe("PlayerSanctioned");
+      expect(type).toBe("TeammateBanned");
+      expect(notification.title).toBe("Player Banned");
+      expect(notification.entity_id).toBe("76561198000000001");
       expect(notification.steamIds).toEqual(["76561198000000002"]);
       expect(notification.message).toContain(
         `<a href="${webDomain}/players/76561198000000001">keith</a>, was banned. (cheating)`,
       );
+    });
+
+    it("tells them about an automatic Steam ban too", async () => {
+      await service.notifyMatchPlayersOfSanction({
+        ...sanction("ban"),
+        reason: "VAC ban on record (1 ban)",
+      });
+
+      expect(notifyPlayers).toHaveBeenCalledTimes(1);
+      expect(notifyPlayers.mock.calls[0][0]).toBe("TeammateBanned");
+    });
+  });
+
+  describe("the banned player's own notice and the admin alert", () => {
+    const insertedTypes = () =>
+      hasura.mutation.mock.calls.map(
+        ([mutation]) => mutation.insert_notifications.__args.objects[0].type,
+      );
+
+    it("stay on PlayerSanctioned", async () => {
+      hasura.query.mockResolvedValue({
+        players_by_pk: { last_sign_in_at: "2026-09-01T00:00:00.000Z" },
+      });
+      postgres.query.mockResolvedValue([{ exists: true }]);
+
+      await service.notifyBannedPlayer(sanction("ban"));
+      await service.notifyAdminsOfBan(sanction("ban"));
+
+      expect(insertedTypes()).toEqual(["PlayerSanctioned", "PlayerSanctioned"]);
+      expect(notifyPlayers).not.toHaveBeenCalled();
     });
   });
 
