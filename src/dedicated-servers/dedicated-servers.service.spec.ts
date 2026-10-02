@@ -723,7 +723,7 @@ describe("DedicatedServersService.setupDedicatedServer", () => {
     disableServerGuidelines: false,
   };
 
-  const setup = async (type: string) => {
+  const deploy = async (type: string, game = "cs2") => {
     const createNamespacedDeployment = jest.fn().mockResolvedValue({});
     const gameModes = {
       resolveForServer: jest.fn().mockResolvedValue(pluginsOnly),
@@ -745,7 +745,7 @@ describe("DedicatedServersService.setupDedicatedServer", () => {
             type,
             port: 27015,
             tv_port: 27020,
-            game: "cs2",
+            game,
             max_players: 10,
             api_password: "api",
             rcon_password: "rcon",
@@ -781,6 +781,12 @@ describe("DedicatedServersService.setupDedicatedServer", () => {
     const env: Array<{ name: string; value: string }> =
       createNamespacedDeployment.mock.calls[0][0].body.spec.template.spec
         .containers[0].env;
+
+    return env;
+  };
+
+  const setup = async (type: string) => {
+    const env = await deploy(type);
     const pluginConfigs = env.find((entry) => entry.name === "PLUGIN_CONFIGS");
 
     return pluginConfigs
@@ -798,5 +804,25 @@ describe("DedicatedServersService.setupDedicatedServer", () => {
 
   it("leaves them to the match on a Ranked server", async () => {
     expect(await setup("Ranked")).toEqual({});
+  });
+
+  const launchParams = async (type: string, game?: string) =>
+    (await deploy(type, game))
+      .find((entry) => entry.name === "EXTRA_GAME_PARAMS")
+      .value.split(" ");
+
+  it.each(["Casual", "Ranked", "Custom"])(
+    "boots a CS2 %s server with workshop command filtering off",
+    async (type) => {
+      expect(await launchParams(type)).toContain(
+        "-disable_workshop_command_filtering",
+      );
+    },
+  );
+
+  it("leaves the CS2-only flag off a CS:GO server", async () => {
+    expect(await launchParams("Casual", "csgo")).not.toContain(
+      "-disable_workshop_command_filtering",
+    );
   });
 });
