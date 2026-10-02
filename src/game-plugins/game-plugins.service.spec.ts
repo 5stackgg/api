@@ -490,3 +490,52 @@ describe("GamePluginsService.setAutoUpdate", () => {
     ).toBe(true);
   });
 });
+
+describe("GamePluginsService.desiredForNode", () => {
+  let postgres: { query: jest.Mock };
+  let service: GamePluginsService;
+
+  beforeEach(() => {
+    postgres = {
+      query: jest.fn(async (sql: string): Promise<Array<any>> => {
+        if (sql.includes("FROM public.game_server_nodes")) {
+          return [{ pin_plugin_runtime: null }];
+        }
+        if (sql.includes("FROM public.game_plugin_installs")) {
+          return [{ plugin_slug: "arenas", version: null }];
+        }
+        if (sql.includes("FROM public.game_plugin_versions")) {
+          return [
+            {
+              version: "1.0.0",
+              url: "https://example.com/K4-Arenas-v1.0.0.zip",
+              sha256: "abc",
+              layout: "plugin",
+              install_path: "addons/{runtime}/plugins",
+            },
+          ];
+        }
+        return [];
+      }),
+    };
+
+    service = new GamePluginsService(
+      { warn: jest.fn(), log: jest.fn() } as any,
+      {} as any,
+      postgres as any,
+      {
+        resolvePluginRuntime: jest.fn(async (): Promise<string> => "swiftlys2"),
+      } as any,
+      {} as any,
+      { add: jest.fn(), getJob: jest.fn() } as any,
+    );
+  });
+
+  // The node extracts to installPath verbatim, so an unexpanded placeholder
+  // lands the plugin in a literal addons/{runtime}/ that no runtime loads.
+  it("expands {runtime} in the install path for the node's runtime", async () => {
+    const { plugins } = await service.desiredForNode("node-1");
+
+    expect(plugins[0].installPath).toEqual("addons/swiftlys2/plugins");
+  });
+});

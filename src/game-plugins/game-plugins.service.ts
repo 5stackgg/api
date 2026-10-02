@@ -608,7 +608,8 @@ export class GamePluginsService {
           url: resolved.url,
           sha256: resolved.sha256,
           layout: resolved.layout,
-          installPath: resolved.install_path,
+          installPath:
+            resolved.install_path?.replaceAll("{runtime}", runtime) ?? null,
         });
       } catch (error) {
         // A plugin with no build for this runtime is not an error the node can
