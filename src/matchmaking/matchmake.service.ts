@@ -27,6 +27,8 @@ import { balanceTeams, canFillTeams } from "./utilities/balanceTeams";
 import { selectMatchCandidates } from "./utilities/selectMatchCandidates";
 import { WINDOW_CAP, winProbability } from "./utilities/matchmakingTuning";
 
+type MatchmakePass = { claimed: boolean };
+
 function averageRank(players: Array<{ rank: number }>) {
   return players.reduce((acc, player) => acc + player.rank, 0) / players.length;
 }
@@ -201,43 +203,54 @@ export class MatchmakeService {
       return;
     }
 
-    // TODO - its possible, but highly unlikley we will ever runinto the issue of too many lobbies in the queue
-    const lobbiesData = await this.redis.zrange(
-      getMatchmakingRankCacheKey(type, region),
-      0,
-      -1,
-      "WITHSCORES",
-    );
+    const pass: MatchmakePass = { claimed: false };
 
-    const lobbies = await this.processLobbyData(lobbiesData, region);
+    try {
+      // TODO - its possible, but highly unlikley we will ever runinto the issue of too many lobbies in the queue
+      const lobbiesData = await this.redis.zrange(
+        getMatchmakingRankCacheKey(type, region),
+        0,
+        -1,
+        "WITHSCORES",
+      );
 
-    if (lobbies.length === 0) {
-      await this.releaseMatchmakeRegionLock(region);
-      return;
+      const lobbies = await this.processLobbyData(lobbiesData, region, pass);
+
+      if (lobbies.length === 0) {
+        await this.releaseMatchmakeRegionLock(region);
+        return;
+      }
+
+      const totalPlayerNotQueued = await this.createMatches(
+        region,
+        type,
+        lobbies,
+        pass,
+      ).finally(() => {
+        void this.releaseMatchmakeRegionLock(region);
+      });
+
+      if (totalPlayerNotQueued < ExpectedPlayers[type]) {
+        await this.releaseMatchmakeRegionLock(region);
+        return;
+      }
+
+      this.logger.log(
+        `${totalPlayerNotQueued} players not queued, expanding search....`,
+      );
+
+      await this.scheduleExpandedSearch(
+        type,
+        region,
+        10000 + Math.floor(Math.random() * 10000),
+      );
+    } finally {
+      // A claim takes a lobby out of every region's queue, so any broadcast
+      // made while this pass held one (another region's, a join's) missed it.
+      if (pass.claimed) {
+        await this.refreshRegionStats();
+      }
     }
-
-    const totalPlayerNotQueued = await this.createMatches(
-      region,
-      type,
-      lobbies,
-    ).finally(() => {
-      void this.releaseMatchmakeRegionLock(region);
-    });
-
-    if (totalPlayerNotQueued < ExpectedPlayers[type]) {
-      await this.releaseMatchmakeRegionLock(region);
-      return;
-    }
-
-    this.logger.log(
-      `${totalPlayerNotQueued} players not queued, expanding search....`,
-    );
-
-    await this.scheduleExpandedSearch(
-      type,
-      region,
-      10000 + Math.floor(Math.random() * 10000),
-    );
   }
 
   /**
@@ -274,6 +287,7 @@ export class MatchmakeService {
   private async processLobbyData(
     lobbiesData: string[],
     region: string,
+    pass: MatchmakePass = { claimed: false },
   ): Promise<MatchmakingLobby[]> {
     const lobbyDetails = [];
 
@@ -294,6 +308,8 @@ export class MatchmakeService {
           );
           continue;
         }
+
+        pass.claimed = true;
 
         try {
           // a party that fills the whole match keeps a random split - they
@@ -352,6 +368,7 @@ export class MatchmakeService {
     region: string,
     type: e_match_types_enum,
     lobbies: Array<MatchmakingLobby>,
+    pass: MatchmakePass = { claimed: false },
   ): Promise<number> {
     const requiredPlayers = ExpectedPlayers[type];
 
@@ -428,6 +445,7 @@ export class MatchmakeService {
           }
 
           claimed.set(lobby.lobbyId, lobby);
+          pass.claimed = true;
         }
 
         // pure from here until the confirmation, so the teams we pick are
@@ -485,6 +503,14 @@ export class MatchmakeService {
           this.logger.error(`Failed to requeue lobby ${lobbyId}:`, error);
         }
       }
+    }
+  }
+
+  private async refreshRegionStats() {
+    try {
+      await this.sendRegionStats();
+    } catch (error) {
+      this.logger.warn("unable to send region stats", error);
     }
   }
 

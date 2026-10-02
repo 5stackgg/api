@@ -329,6 +329,125 @@ describe("matchmaking (end to end)", () => {
       ).toEqual(["real"]);
     });
 
+    function playCount(region = "us-east") {
+      return (lastRegionStats()?.[region]?.[COMPETITIVE] ?? []).reduce(
+        (total: number, lobby: { players: number }) => total + lobby.players,
+        0,
+      );
+    }
+
+    it("drops matched players from the Play count once a match is found", async () => {
+      await enqueue(
+        Array.from({ length: 13 }, (_, i) => makeLobby(`solo-${i}`, [5000])),
+      );
+      await service.sendRegionStats();
+      expect(playCount()).toBe(13);
+
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      expect(confirmations).toHaveLength(1);
+      expect(playCount()).toBe(3);
+    });
+
+    it("drops a full party from the Play count once its match is found", async () => {
+      await enqueue([makeLobby("ten-stack", new Array(10).fill(5000))]);
+      await service.sendRegionStats();
+      expect(playCount()).toBe(10);
+
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      expect(confirmations).toHaveLength(1);
+      expect(playCount()).toBe(0);
+    });
+
+    it("keeps the ready check when the Play count cannot be sent", async () => {
+      const lobbies = Array.from({ length: 10 }, (_, i) =>
+        makeLobby(`solo-${i}`, [5000]),
+      );
+      await enqueue(lobbies);
+      hasura.query.mockRejectedValue(new Error("hasura unavailable"));
+
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      expect(confirmations).toHaveLength(1);
+      expect(queuedIn("us-east")).toHaveLength(0);
+      expect(queue.add).toHaveBeenCalledWith(
+        "CancelMatchMaking",
+        expect.anything(),
+        expect.anything(),
+      );
+      assertInvariants(lobbies);
+    });
+
+    function regionStatsBroadcasts() {
+      return redis.published.filter(
+        (entry) =>
+          entry.channel === "broadcast-message" &&
+          JSON.parse(entry.message).event === "matchmaking:region-stats",
+      ).length;
+    }
+
+    // Another region's pass takes "multi" between this pass reading the queue
+    // and claiming it, so this pass claims the rest, cannot field a match, and
+    // puts them back. A broadcast made while it held them missed them all.
+    it("re-counts lobbies a pass claimed and put back without a match", async () => {
+      await enqueue([
+        makeLobby("multi", [5000], {
+          regions: ["us-east", "eu-west"],
+          waitSeconds: 120,
+        }),
+        ...Array.from({ length: 9 }, (_, i) =>
+          makeLobby(`west-${i}`, [5000], { regions: ["eu-west"] }),
+        ),
+      ]);
+
+      const details = lobbyService.getLobbyDetails as jest.Mock;
+      const read = details.getMockImplementation();
+      let takenByEast = false;
+      details.mockImplementation(async (lobbyId: string) => {
+        const lobby = await read(lobbyId);
+        if (lobbyId === "multi" && !takenByEast) {
+          takenByEast = true;
+          await (service as any).claimLobby("multi", lobby);
+        }
+        return lobby;
+      });
+
+      const expire = redis.expire.bind(redis);
+      let broadcastWhileHeld = false;
+      jest
+        .spyOn(redis, "expire")
+        .mockImplementation(async (key: string, seconds: number) => {
+          if (!broadcastWhileHeld && seconds === 0) {
+            broadcastWhileHeld = true;
+            await service.sendRegionStats();
+            expect(playCount("eu-west")).toBe(0);
+          }
+          return expire(key, seconds);
+        });
+
+      await service.matchmake(COMPETITIVE, "eu-west");
+
+      expect(broadcastWhileHeld).toBe(true);
+      expect(confirmations).toHaveLength(0);
+      expect(queuedIn("eu-west")).toHaveLength(9);
+      expect(playCount("eu-west")).toBe(9);
+    });
+
+    it("sends the Play count once for a pass that matches a party and a queue", async () => {
+      await enqueue([
+        makeLobby("ten-stack", new Array(10).fill(5000)),
+        ...Array.from({ length: 10 }, (_, i) => makeLobby(`solo-${i}`, [5000])),
+      ]);
+      const before = regionStatsBroadcasts();
+
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      expect(confirmations).toHaveLength(2);
+      expect(regionStatsBroadcasts() - before).toBe(1);
+      expect(playCount()).toBe(0);
+    });
+
     it("keeps a lobby that rejoins while the stats are being built", async () => {
       await enqueue([makeLobby("rejoiner", [5000])]);
 
