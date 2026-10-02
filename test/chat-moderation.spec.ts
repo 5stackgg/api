@@ -11,9 +11,12 @@ import { ChatService } from "./../src/chat/chat.service";
 import { PlayerBlocksService } from "./../src/player-blocks/player-blocks.service";
 import { ChatErrorCode } from "./../src/chat/enums/ChatErrorCode";
 import { ChatLobbyType } from "./../src/chat/enums/ChatLobbyTypes";
-import { NotificationsService } from "./../src/notifications/notifications.service";
-import { NotificationPreferencesService } from "./../src/notifications/preferences/notification-preferences.service";
-import { PushNotificationsService } from "./../src/notifications/push/push-notifications.service";
+import {
+  ChatPush,
+  PushNotificationsService,
+} from "./../src/notifications/push/push-notifications.service";
+import { chatThreadKey } from "./../src/notifications/push/notification-delivery";
+import { rolesAtOrAbove } from "./../src/utilities/isRoleAbove";
 
 jest.mock("web-push", () => ({
   setVapidDetails: jest.fn(),
@@ -21,8 +24,8 @@ jest.mock("web-push", () => ({
   generateVAPIDKeys: jest.fn(),
 }));
 
-// The audit row, the redis removal and the bell retraction each live in a
-// different store, and the unit specs stub all three.
+// The audit row, the redis removal and the retraction of a held push each live
+// in a different store, and the unit specs stub all three.
 describe("chat moderation (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
@@ -30,7 +33,7 @@ describe("chat moderation (SQL-driven)", () => {
   let container: StartedTestContainer;
   let redis: Redis;
   let chat: ChatService;
-  let notifications: NotificationsService;
+  let push: PushNotificationsService;
 
   const logger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
 
@@ -70,61 +73,6 @@ describe("chat moderation (SQL-driven)", () => {
     }),
   });
 
-  const pushService = () =>
-    new PushNotificationsService(
-      logger as any,
-      postgres,
-      {
-        get: (key: string) =>
-          key === "app"
-            ? { webDomain: "https://example.com" }
-            : {
-                publicKey: "public-key",
-                privateKey: "private-key",
-                subject: "https://example.com",
-              },
-      } as any,
-      { add: async () => ({}) } as any,
-      {
-        getConnection: () => ({
-          exists: async () => 0,
-          set: async () => "OK",
-          get: async (): Promise<string | null> => null,
-          ttl: async () => -2,
-          del: async () => 1,
-          rpush: async () => 1,
-          expire: async () => 1,
-          multi: () => ({
-            lrange() {
-              return this;
-            },
-            del() {
-              return this;
-            },
-            rpush() {
-              return this;
-            },
-            expire() {
-              return this;
-            },
-            exec: async (): Promise<Array<unknown>> => [[null, []]],
-          }),
-          pipeline: () => {
-            const queued: string[] = [];
-            return {
-              set: () => {},
-              hvals: (key: string) => queued.push(key),
-              exec: async (): Promise<Array<unknown>> =>
-                queued.map(() => [null, []] as [unknown, Array<unknown>]),
-            };
-          },
-          subscribe: async () => 1,
-          publish: async () => 1,
-          on: () => {},
-        }),
-      } as any,
-    );
-
   beforeAll(async () => {
     container = await new GenericContainer("redis:8.8-alpine")
       .withExposedPorts(6379)
@@ -138,16 +86,23 @@ describe("chat moderation (SQL-driven)", () => {
     postgres = db.postgres;
     fx = new Fixtures(postgres, 76561199600000000n);
 
-    notifications = new NotificationsService(
-      hasura() as any,
-      postgres,
+    push = new PushNotificationsService(
       logger as any,
-      { get: () => ({ webDomain: "https://example.com" }) } as any,
-      new NotificationPreferencesService(postgres),
-      { add: jest.fn() } as any,
-      { add: jest.fn() } as any,
-      { add: jest.fn() } as any,
+      postgres,
+      {
+        get: (key: string) =>
+          key === "app"
+            ? { webDomain: "https://example.com" }
+            : {
+                publicKey: "public-key",
+                privateKey: "private-key",
+                subject: "https://example.com",
+              },
+      } as any,
+      { add: async () => ({}) } as any,
+      { getConnection: () => redis } as any,
     );
+    await push.loadKeys();
 
     chat = new ChatService(
       logger as any,
@@ -155,7 +110,7 @@ describe("chat moderation (SQL-driven)", () => {
       hasura() as any,
       postgres,
       { getConnection: () => redis } as any,
-      notifications,
+      push,
       new PlayerBlocksService(postgres),
     );
   }, 600_000);
@@ -172,7 +127,8 @@ describe("chat moderation (SQL-driven)", () => {
     await postgres.query("DELETE FROM chat_message_deletions");
     await postgres.query("DELETE FROM player_sanctions");
     await postgres.query("DELETE FROM push_subscriptions");
-    await postgres.query("DELETE FROM notifications");
+    await postgres.query("DELETE FROM chat_read_state");
+    await postgres.query("DELETE FROM player_blocks");
     await postgres.query("DELETE FROM players");
   });
 
@@ -312,20 +268,6 @@ describe("chat moderation (SQL-driven)", () => {
       expect(await audits()).toHaveLength(1);
     });
 
-    it("tells a deleted message from one that merely expired", async () => {
-      const mod = await moderator();
-      const author = await fx.player("Author");
-      const matchId = randomUUID();
-      const deleted = await post(matchId, author);
-      const expired = await post(matchId, author, "fine");
-
-      await chat.deleteMessage(ChatLobbyType.Match, matchId, deleted, mod);
-      await redis.hdel(`chat_match_${matchId}`, expired);
-
-      expect(await chat["wasDeleted"](deleted)).toBe(true);
-      expect(await chat["wasDeleted"](expired)).toBe(false);
-    });
-
     it("keeps the audit when the author's player row goes", async () => {
       const mod = await moderator();
       const author = await fx.player("Author");
@@ -344,30 +286,17 @@ describe("chat moderation (SQL-driven)", () => {
     });
   });
 
-  describe("retracting the bell", () => {
-    const chatNotification = async (
-      steamId: string,
-      entityId: string,
-      messageId: string,
-      type = "MatchChatMessage",
-    ) => {
-      const [row] = await postgres.query<Array<{ id: string }>>(
-        `INSERT INTO notifications
-                (type, title, message, role, steam_id, entity_id, data)
-              VALUES ($4, 'Author', 'something awful', 'user',
-                      $1::bigint, $2,
-                      jsonb_build_object('threadKey', 'chat:' || $2,
-                                         'messageId', $3::text))
-           RETURNING id::text AS id`,
-        [steamId, entityId, messageId, type],
-      );
-      return row.id;
-    };
+  describe("a push still being held", () => {
+    const pushed = () => (webPush.sendNotification as jest.Mock).mock.calls;
 
-    // Match chat is off for push by default, so delivery is shown on a room
-    // whose category is on.
-    const subscribedReader = async () => {
+    const bodyOf = (call: number) => JSON.parse(pushed()[call][1]).body;
+
+    const subscribedReader = async (role = "user") => {
       const reader = await fx.player("Reader");
+      await postgres.query(
+        `UPDATE players SET role = $2 WHERE steam_id = $1::bigint`,
+        [reader, role],
+      );
       await postgres.query(
         `INSERT INTO push_subscriptions (steam_id, endpoint, p256dh, auth)
               VALUES ($1::bigint, $2, 'key', 'auth')`,
@@ -376,213 +305,241 @@ describe("chat moderation (SQL-driven)", () => {
       return reader;
     };
 
-    const deliver = async (id: string) => {
-      const push = pushService();
-      await push.loadKeys();
-      await push.sendForNotification({ id, type: "ChatMessage" });
+    // Plain chat rather than match chat, which is off for push by default.
+    const message = (
+      matchId: string,
+      messageId: string,
+      senderSteamId: string,
+    ): ChatPush => ({
+      messageId,
+      type: "ChatMessage",
+      title: "Author",
+      message: "something awful",
+      entityId: `match:${matchId}`,
+      threadKey: chatThreadKey(ChatLobbyType.Match, matchId),
+      threadLabel: "Blue vs Red",
+      senderSteamId,
+      blockExemptRoles: rolesAtOrAbove("moderator"),
+    });
+
+    // The first message buzzes; the rest wait for the window to close.
+    const burst = async (
+      reader: string,
+      matchId: string,
+      sender: string,
+      messageIds: string[],
+    ) => {
+      for (const messageId of messageIds) {
+        await push.sendChatMessage(
+          [reader],
+          message(matchId, messageId, sender),
+        );
+      }
+
+      expect(pushed()).toHaveLength(1);
     };
 
-    const notification = async (id: string) =>
-      (
-        await postgres.query<
-          Array<{ deleted_at: Date | null; message: string }>
-        >(`SELECT deleted_at, message FROM notifications WHERE id = $1::uuid`, [
-          id,
-        ])
-      ).at(0);
+    const closeWindow = (reader: string, matchId: string) =>
+      push.sendPending(reader, chatThreadKey(ChatLobbyType.Match, matchId));
 
-    const deletedAt = async (id: string) =>
-      (await notification(id))?.deleted_at;
-
-    it("retracts the deleted message's row and no other", async () => {
+    it("leaves a message a moderator deleted out of the summary", async () => {
       const mod = await moderator();
       const author = await fx.player("Author");
-      const reader = await fx.player("Reader");
+      const reader = await subscribedReader();
       const matchId = randomUUID();
+      const first = await post(matchId, author);
       const target = await post(matchId, author);
-      const other = await post(matchId, author, "fine");
+      const last = await post(matchId, author);
 
-      const retracted = await chatNotification(
-        reader,
-        `match:${matchId}`,
-        target,
-      );
-      const kept = await chatNotification(reader, `match:${matchId}`, other);
-
+      await burst(reader, matchId, author, [first, target, last]);
       await chat.deleteMessage(ChatLobbyType.Match, matchId, target, mod);
+      await closeWindow(reader, matchId);
 
-      expect(await deletedAt(retracted)).toBeInstanceOf(Date);
-      expect(await deletedAt(kept)).toBeNull();
+      expect(pushed()).toHaveLength(2);
+      expect(bodyOf(1)).toBe("2 new messages");
     });
 
-    it("takes the text out of the row, so it cannot be read back", async () => {
+    it("says nothing more when the only message after the first was deleted", async () => {
       const mod = await moderator();
       const author = await fx.player("Author");
-      const reader = await fx.player("Reader");
+      const reader = await subscribedReader();
       const matchId = randomUUID();
+      const first = await post(matchId, author);
       const target = await post(matchId, author);
-      const id = await chatNotification(reader, `match:${matchId}`, target);
 
+      await burst(reader, matchId, author, [first, target]);
       await chat.deleteMessage(ChatLobbyType.Match, matchId, target, mod);
+      await closeWindow(reader, matchId);
 
-      expect((await notification(id))?.message).toBe("");
+      expect(pushed()).toHaveLength(1);
     });
 
-    it("blanks a row the bell had already collapsed, leaving it retired", async () => {
-      const reader = await fx.player("Reader");
-      const messageId = randomUUID();
-      const id = await chatNotification(reader, "tournament:t-1", messageId);
-      await postgres.query(
-        `UPDATE notifications
-            SET deleted_at = now() - interval '1 hour'
-          WHERE id = $1::uuid`,
-        [id],
-      );
-      const before = await deletedAt(id);
+    it("does not push a message deleted before its push went out", async () => {
+      const mod = await moderator();
+      const author = await fx.player("Author");
+      const reader = await subscribedReader();
+      const matchId = randomUUID();
+      const target = await post(matchId, author);
 
-      await notifications.retractChatMessage(messageId);
+      await chat.deleteMessage(ChatLobbyType.Match, matchId, target, mod);
+      await push.sendChatMessage([reader], message(matchId, target, author));
 
-      expect(await notification(id)).toEqual({
-        deleted_at: before,
-        message: "",
-      });
+      expect(pushed()).toHaveLength(0);
     });
 
     it("retracts a draft lobby's message after it moved into the match", async () => {
       const mod = await moderator();
       const author = await fx.player("Author");
-      const reader = await fx.player("Reader");
+      const reader = await subscribedReader();
       const draftId = randomUUID();
       const matchId = randomUUID();
+      const first = await post(draftId, author);
       const target = await post(draftId, author);
       await redis.rename(`chat_match_${draftId}`, `chat_draft_${draftId}`);
 
-      const id = await chatNotification(
-        reader,
-        `draft:${draftId}`,
-        target,
-        "ChatMessage",
-      );
-
+      await burst(reader, matchId, author, [first, target]);
       await chat.migrateLobbyMessages(
         ChatLobbyType.Draft,
         draftId,
         ChatLobbyType.Match,
         matchId,
       );
-
       await expect(
         chat.deleteMessage(ChatLobbyType.Match, matchId, target, mod),
       ).resolves.toEqual({ deleted: true });
+      await closeWindow(reader, matchId);
 
-      expect(await deletedAt(id)).toBeInstanceOf(Date);
+      expect(pushed()).toHaveLength(1);
     });
 
-    it("leaves a message's rows alone when it expired rather than being deleted", async () => {
-      // A 0 TTL drops the field as soon as it is written, and a draft lobby's
-      // history moves out from under it into the match. Neither is a delete.
+    it("shows what an edit made of a held message", async () => {
       const author = await fx.player("Author");
-      const reader = await fx.player("Reader");
+      const reader = await subscribedReader();
       const matchId = randomUUID();
-      const messageId = await post(matchId, author);
-      const id = await chatNotification(reader, `match:${matchId}`, messageId);
-      await redis.hdel(`chat_match_${matchId}`, messageId);
+      const target = randomUUID();
 
-      const members = jest
-        .spyOn(chat, "getLobbyMemberSteamIds")
-        .mockResolvedValueOnce([author, reader]);
-      const written = jest
-        .spyOn(notifications, "notifyPlayers")
-        .mockResolvedValueOnce(undefined);
-
-      await chat["notifyLobbyMembers"](
-        ChatLobbyType.Match,
-        matchId,
-        { steam_id: author, name: "Author", role: "user" } as any,
-        "Author",
-        "something awful",
-        messageId,
+      await postgres.query(
+        `UPDATE players
+            SET quiet_hours_start = (now() AT TIME ZONE 'UTC')::time - interval '1 hour',
+                quiet_hours_end = (now() AT TIME ZONE 'UTC')::time + interval '1 hour',
+                notification_timezone = 'UTC'
+          WHERE steam_id = $1::bigint`,
+        [reader],
+      );
+      await push.sendChatMessage([reader], message(matchId, target, author));
+      await postgres.query(
+        `UPDATE players SET quiet_hours_start = NULL, quiet_hours_end = NULL
+          WHERE steam_id = $1::bigint`,
+        [reader],
       );
 
-      members.mockRestore();
-      written.mockRestore();
+      expect(pushed()).toHaveLength(0);
 
-      expect(await notification(id)).toEqual({
-        deleted_at: null,
-        message: "something awful",
-      });
+      await push.editChatMessage(target, "fixed");
+      await closeWindow(reader, matchId);
+
+      expect(pushed()).toHaveLength(1);
+      expect(bodyOf(0)).toBe("fixed");
     });
 
-    it("leaves a notification that is not chat alone, whatever its data holds", async () => {
-      const reader = await fx.player("Reader");
-      const messageId = randomUUID();
-      const id = await chatNotification(
-        reader,
-        "tournament:t-1",
-        messageId,
-        "MatchStatusChange",
-      );
-
-      await notifications.retractChatMessage(messageId);
-
-      expect(await notification(id)).toEqual({
-        deleted_at: null,
-        message: "something awful",
-      });
-    });
-
-    it("finds the message's rows through an index", async () => {
-      const plan = await postgres.transaction(async (client) => {
-        await client.query("SET LOCAL enable_seqscan = off");
-
-        const { rows } = await client.query(
-          `EXPLAIN SELECT id FROM notifications
-            WHERE data->>'messageId' = $1`,
-          [randomUUID()],
-        );
-
-        return rows.map((row) => row["QUERY PLAN"]).join("\n");
-      });
-
-      expect(plan).toContain("notifications_message_id_idx");
-    });
-
-    it("drops a retracted row from push delivery", async () => {
+    it("drops what a sender the reader has since blocked said", async () => {
+      const author = await fx.player("Author");
       const reader = await subscribedReader();
-      const messageId = randomUUID();
-      const id = await chatNotification(
-        reader,
-        "tournament:t-1",
-        messageId,
-        "ChatMessage",
+      const matchId = randomUUID();
+
+      await burst(reader, matchId, author, [randomUUID(), randomUUID()]);
+      await postgres.query(
+        `INSERT INTO player_blocks (blocker_steam_id, blocked_steam_id)
+              VALUES ($1::bigint, $2::bigint)`,
+        [reader, author],
       );
+      await closeWindow(reader, matchId);
 
-      await notifications.retractChatMessage(messageId);
-      await deliver(id);
-
-      expect(webPush.sendNotification).not.toHaveBeenCalled();
+      expect(pushed()).toHaveLength(1);
     });
 
-    it("still delivers the row next to it", async () => {
+    it("still tells a moderator who blocked the sender about a group room", async () => {
+      const author = await fx.player("Author");
+      const reader = await subscribedReader("moderator");
+      const matchId = randomUUID();
+
+      await burst(reader, matchId, author, [randomUUID(), randomUUID()]);
+      await postgres.query(
+        `INSERT INTO player_blocks (blocker_steam_id, blocked_steam_id)
+              VALUES ($1::bigint, $2::bigint)`,
+        [reader, author],
+      );
+      await closeWindow(reader, matchId);
+
+      expect(pushed()).toHaveLength(2);
+      expect(bodyOf(1)).toBe("2 new messages");
+    });
+
+    it("says nothing about held messages the reader has since read", async () => {
+      const author = await fx.player("Author");
       const reader = await subscribedReader();
-      const retracted = randomUUID();
-      await chatNotification(
-        reader,
-        "tournament:t-1",
-        retracted,
-        "ChatMessage",
+      const matchId = randomUUID();
+
+      await burst(reader, matchId, author, [randomUUID(), randomUUID()]);
+      await postgres.query(
+        `INSERT INTO chat_read_state (steam_id, thread, last_read_at)
+              VALUES ($1::bigint, $2, now())`,
+        [reader, chatThreadKey(ChatLobbyType.Match, matchId)],
       );
-      const kept = await chatNotification(
-        reader,
-        "tournament:t-1",
-        randomUUID(),
-        "ChatMessage",
+      await closeWindow(reader, matchId);
+
+      expect(pushed()).toHaveLength(1);
+    });
+
+    it("ignores a cursor on a different thread", async () => {
+      const author = await fx.player("Author");
+      const reader = await subscribedReader();
+      const matchId = randomUUID();
+
+      await burst(reader, matchId, author, [randomUUID(), randomUUID()]);
+      await postgres.query(
+        `INSERT INTO chat_read_state (steam_id, thread, last_read_at)
+              VALUES ($1::bigint, $2, now())`,
+        [reader, chatThreadKey(ChatLobbyType.Match, randomUUID())],
+      );
+      await closeWindow(reader, matchId);
+
+      expect(pushed()).toHaveLength(2);
+    });
+
+    it("pushes nobody who turned chat off", async () => {
+      const author = await fx.player("Author");
+      const reader = await subscribedReader();
+      await postgres.query(
+        `INSERT INTO notification_preferences (steam_id, channel, key, enabled)
+              VALUES ($1::bigint, 'push', 'chat', false)`,
+        [reader],
       );
 
-      await notifications.retractChatMessage(retracted);
-      await deliver(kept);
+      await push.sendChatMessage(
+        [reader],
+        message(randomUUID(), randomUUID(), author),
+      );
 
-      expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
+      expect(pushed()).toHaveLength(0);
+    });
+
+    it("writes no notifications row", async () => {
+      const author = await fx.player("Author");
+      const reader = await subscribedReader();
+
+      await push.sendChatMessage(
+        [reader],
+        message(randomUUID(), randomUUID(), author),
+      );
+
+      const [{ count }] = await postgres.query<Array<{ count: string }>>(
+        `SELECT count(*)::text AS count FROM notifications
+          WHERE type IN ('ChatMessage', 'MatchChatMessage')`,
+      );
+
+      expect(pushed()).toHaveLength(1);
+      expect(count).toBe("0");
     });
   });
 

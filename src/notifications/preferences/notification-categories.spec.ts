@@ -116,6 +116,11 @@ describe("notification categories", () => {
     expect(offenders).toEqual([]);
   });
 
+  it("offers no in-app toggle for chat, which never reaches the bell", () => {
+    expect(inAppKeyForType("ChatMessage")).toBeNull();
+    expect(inAppKeyForType("MatchChatMessage")).toBeNull();
+  });
+
   it("resolves in-app keys back to their own type", () => {
     for (const entry of IN_APP_KEYS) {
       expect(inAppKeyForType(entry.key)).toEqual(entry);

@@ -204,13 +204,10 @@ describe("ChatService direct messages", () => {
     }),
   };
 
-  const notifications = {
-    notifyPlayers: jest.fn(),
-    collapseOlderUnread: jest.fn(),
-    markConversationRead: jest.fn(),
+  const push = {
+    sendChatMessage: jest.fn(),
     retractChatMessage: jest.fn().mockResolvedValue(undefined),
-    retractChatMessageFromBlocked: jest.fn().mockResolvedValue(undefined),
-    updateChatMessagePreview: jest.fn().mockResolvedValue(undefined),
+    editChatMessage: jest.fn().mockResolvedValue(undefined),
   };
 
   const client = (steamId: string) =>
@@ -425,9 +422,8 @@ describe("ChatService direct messages", () => {
     redis.eval.mockImplementation(async (script: string) =>
       script.includes("INCR") ? 1 : [1, 1],
     );
-    notifications.retractChatMessage.mockResolvedValue(undefined);
-    notifications.retractChatMessageFromBlocked.mockResolvedValue(undefined);
-    notifications.updateChatMessagePreview.mockResolvedValue(undefined);
+    push.retractChatMessage.mockResolvedValue(undefined);
+    push.editChatMessage.mockResolvedValue(undefined);
     directMessage = undefined;
     acceptedFriendships = [[ME, FRIEND]];
     myMatches = ["m-1"];
@@ -458,7 +454,7 @@ describe("ChatService direct messages", () => {
       hasuraService as any,
       postgres as any,
       { getConnection: () => redis } as any,
-      notifications as any,
+      push as any,
       playerBlocks as any,
     );
   });
@@ -765,7 +761,7 @@ describe("ChatService direct messages", () => {
       expect(ChatService.notificationTypeFor(type)).toBe("ChatMessage");
     });
 
-    it("notifies and collapses a team room line under one type", async () => {
+    it("pushes a team room line as match chat", async () => {
       await service.sendMessageToChat(
         ChatLobbyType.MatchTeam,
         "m-1:l-1",
@@ -779,29 +775,13 @@ describe("ChatService direct messages", () => {
         await new Promise((resolve) => setImmediate(resolve));
       }
 
-      expect(notifications.notifyPlayers).toHaveBeenCalledWith(
-        "MatchChatMessage",
-        expect.objectContaining({
-          entity_id: "match_team:m-1:l-1",
-          steamIds: [FRIEND],
-        }),
-      );
-      expect(notifications.collapseOlderUnread).toHaveBeenCalledWith(
-        "MatchChatMessage",
-        "match_team:m-1:l-1",
+      expect(push.sendChatMessage).toHaveBeenCalledWith(
         [FRIEND],
-      );
-    });
-
-    it("clears a team room's badge under the type it was sent with", async () => {
-      await service.markThreadRead(ChatLobbyType.MatchTeam, "m-1:l-1", {
-        steam_id: ME,
-      } as any);
-
-      expect(notifications.markConversationRead).toHaveBeenCalledWith(
-        "MatchChatMessage",
-        "match_team:m-1:l-1",
-        ME,
+        expect.objectContaining({
+          type: "MatchChatMessage",
+          entityId: "match_team:m-1:l-1",
+          threadKey: "chat:match_team:m-1:l-1",
+        }),
       );
     });
   });
@@ -1206,7 +1186,7 @@ describe("ChatService direct messages", () => {
 
         expect(redis.hset).not.toHaveBeenCalled();
         expect(redis.publish).not.toHaveBeenCalled();
-        expect(notifications.notifyPlayers).not.toHaveBeenCalled();
+        expect(push.sendChatMessage).not.toHaveBeenCalled();
       },
     );
 
@@ -1479,7 +1459,7 @@ describe("ChatService direct messages", () => {
       ).rejects.toThrow("database down");
 
       expect(redis.hdel).not.toHaveBeenCalled();
-      expect(notifications.retractChatMessage).not.toHaveBeenCalled();
+      expect(push.retractChatMessage).not.toHaveBeenCalled();
     });
 
     it("records no author for a steam id stored as a number", async () => {
@@ -1507,12 +1487,12 @@ describe("ChatService direct messages", () => {
         moderator(),
       );
 
-      expect(notifications.retractChatMessage).toHaveBeenCalledWith(MESSAGE_ID);
+      expect(push.retractChatMessage).toHaveBeenCalledWith(MESSAGE_ID);
     });
 
     it("still deletes when the retraction fails", async () => {
       store(ChatLobbyType.Match, "m-1");
-      notifications.retractChatMessage.mockRejectedValue(new Error("nope"));
+      push.retractChatMessage.mockRejectedValue(new Error("nope"));
 
       await expect(
         service.deleteMessage(
@@ -1623,58 +1603,14 @@ describe("ChatService direct messages", () => {
       expect(redis.hget).not.toHaveBeenCalled();
     });
 
-    describe("while its notifications are still being written", () => {
-      const sayInTournament = async () => {
-        tournament.roster = [ME, FRIEND];
-        redis.hget.mockResolvedValue(
-          JSON.stringify({ user: { steam_id: ME } }),
-        );
-        role = "user";
-
-        const result = await service.sendMessageToChat(
-          ChatLobbyType.Tournament,
-          "t-1",
-          { steam_id: ME, name: "Someone", role: "user" } as any,
-          "hi",
-        );
-
-        await flush();
-        await flush();
-
-        return result.accepted ? result.messageId : undefined;
-      };
-
-      it("retracts them once written if the message was deleted meanwhile", async () => {
-        audited = true;
-
-        const messageId = await sayInTournament();
-
-        expect(notifications.notifyPlayers).toHaveBeenCalled();
-        expect(
-          queries.find(({ sql }) =>
-            sql.includes("SELECT 1 FROM public.chat_message_deletions"),
-          )?.bindings,
-        ).toEqual([messageId]);
-        expect(notifications.retractChatMessage).toHaveBeenCalledWith(
-          messageId,
-        );
-      });
-
-      it("leaves them alone when nothing deleted the message", async () => {
-        await sayInTournament();
-
-        expect(notifications.notifyPlayers).toHaveBeenCalled();
-        expect(notifications.retractChatMessage).not.toHaveBeenCalled();
-      });
-    });
-
-    it("stamps each chat notification with the message it announces", async () => {
+    it("pushes a direct message straight to the other party", async () => {
       redis.hget.mockResolvedValue(JSON.stringify({ user: { steam_id: ME } }));
       role = "user";
+      const room = directRoomId(ME, FRIEND);
 
       const result = await service.sendMessageToChat(
         ChatLobbyType.Direct,
-        directRoomId(ME, FRIEND),
+        room,
         { steam_id: ME, name: "Someone", role: "user" } as any,
         "hi",
       );
@@ -1682,14 +1618,18 @@ describe("ChatService direct messages", () => {
       await flush();
 
       expect(result.accepted).toBe(true);
-      expect(notifications.notifyPlayers).toHaveBeenCalledWith(
-        "ChatMessage",
-        expect.objectContaining({
-          data: expect.objectContaining({
-            messageId: result.accepted ? result.messageId : undefined,
-          }),
-        }),
-      );
+      expect(push.sendChatMessage).toHaveBeenCalledWith([FRIEND], {
+        messageId: result.accepted ? result.messageId : undefined,
+        type: "ChatMessage",
+        title: "Someone",
+        message: "hi",
+        entityId: `direct:${room}`,
+        threadKey: `chat:direct:${room}`,
+        threadLabel: "Someone",
+        icon: undefined,
+        senderSteamId: ME,
+        blockExemptRoles: [],
+      });
     });
   });
 
@@ -1837,24 +1777,22 @@ describe("ChatService direct messages", () => {
         expect(broadcasts("lobby:match:m-1:chat")).toEqual([]);
       });
 
-      it("rewrites the bell's preview rather than notifying again", async () => {
+      it("rewrites a held push's text rather than notifying again", async () => {
         store();
 
         await edit("<b>fixed</b>");
         await flush();
 
-        expect(notifications.updateChatMessagePreview).toHaveBeenCalledWith(
+        expect(push.editChatMessage).toHaveBeenCalledWith(
           MESSAGE_ID,
           "&lt;b&gt;fixed&lt;/b&gt;",
         );
-        expect(notifications.notifyPlayers).not.toHaveBeenCalled();
+        expect(push.sendChatMessage).not.toHaveBeenCalled();
       });
 
       it("still edits when the preview cannot be rewritten", async () => {
         store();
-        notifications.updateChatMessagePreview.mockRejectedValue(
-          new Error("database down"),
-        );
+        push.editChatMessage.mockRejectedValue(new Error("database down"));
 
         await expect(edit()).resolves.toMatchObject({ edited: true });
         expect(current().message).toBe("fixed");
@@ -2159,9 +2097,7 @@ describe("ChatService direct messages", () => {
           "web",
           ME,
         ]);
-        expect(notifications.retractChatMessage).toHaveBeenCalledWith(
-          MESSAGE_ID,
-        );
+        expect(push.retractChatMessage).toHaveBeenCalledWith(MESSAGE_ID);
       });
 
       it("lets a gagged author delete their own message", async () => {
@@ -2269,10 +2205,7 @@ describe("ChatService direct messages", () => {
             },
           },
         ]);
-        expect(notifications.updateChatMessagePreview).toHaveBeenCalledWith(
-          MESSAGE_ID,
-          "fixed",
-        );
+        expect(push.editChatMessage).toHaveBeenCalledWith(MESSAGE_ID, "fixed");
       });
 
       it("never audits the edit of a direct message", async () => {
@@ -2373,9 +2306,7 @@ describe("ChatService direct messages", () => {
             data: { id: MESSAGE_ID },
           },
         ]);
-        expect(notifications.retractChatMessage).toHaveBeenCalledWith(
-          MESSAGE_ID,
-        );
+        expect(push.retractChatMessage).toHaveBeenCalledWith(MESSAGE_ID);
       });
 
       it("refuses to delete the other party's message", async () => {
@@ -2386,131 +2317,6 @@ describe("ChatService direct messages", () => {
           code: ChatErrorCode.NotAllowed,
         });
         expect(directMessage).toBeDefined();
-      });
-    });
-
-    describe("while its notifications are still being written", () => {
-      const say = async (type: ChatLobbyType, id: string) => {
-        redis.hget.mockImplementation(async (key: string, field: string) =>
-          key.startsWith("chat:")
-            ? JSON.stringify({ user: { steam_id: ME } })
-            : (stored[key]?.[field] ?? null),
-        );
-
-        const result = await service.sendMessageToChat(type, id, me(), "typo");
-
-        return result.accepted ? result.messageId : undefined;
-      };
-
-      it("gives the rows a room message's edited text", async () => {
-        tournament.roster = [ME, FRIEND];
-        notifications.notifyPlayers.mockImplementationOnce(async () => {
-          const [key] = redis.hset.mock.calls.at(-1);
-          const [field, raw] = redis.hset.mock.calls.at(-1).slice(1);
-          stored[key] = {
-            [field]: JSON.stringify({
-              ...JSON.parse(raw),
-              message: "fixed",
-              edited_at: new Date().toISOString(),
-            }),
-          };
-        });
-
-        const messageId = await say(ChatLobbyType.Tournament, "t-1");
-        await flush();
-        await flush();
-
-        expect(notifications.updateChatMessagePreview).toHaveBeenCalledWith(
-          messageId,
-          "fixed",
-        );
-        expect(notifications.retractChatMessage).not.toHaveBeenCalled();
-      });
-
-      it("leaves the rows alone when the message is unchanged", async () => {
-        tournament.roster = [ME, FRIEND];
-        redis.hset.mockImplementationOnce(
-          async (key: string, field: string, raw: string) => {
-            stored[key] = { [field]: raw };
-          },
-        );
-
-        await say(ChatLobbyType.Tournament, "t-1");
-        await flush();
-        await flush();
-
-        expect(notifications.notifyPlayers).toHaveBeenCalled();
-        expect(notifications.updateChatMessagePreview).not.toHaveBeenCalled();
-        expect(notifications.retractChatMessage).not.toHaveBeenCalled();
-      });
-
-      it("retracts them when a direct message was deleted meanwhile", async () => {
-        const room = directRoomId(ME, FRIEND);
-        notifications.notifyPlayers.mockImplementationOnce(async () => {
-          const insert = queries.find(({ sql }) =>
-            sql.includes("INSERT INTO public.direct_messages"),
-          );
-          directMessage = {
-            id: insert.bindings[0],
-            roomId: room,
-            author: ME,
-            message: "typo",
-            open: true,
-            editedAt: null,
-          };
-
-          await expect(
-            service.deleteMessage(
-              ChatLobbyType.Direct,
-              room,
-              insert.bindings[0],
-              me(),
-            ),
-          ).resolves.toEqual({ deleted: true });
-        });
-
-        const messageId = await say(ChatLobbyType.Direct, room);
-        await flush();
-        await flush();
-
-        expect(notifications.retractChatMessage).toHaveBeenCalledTimes(2);
-        expect(notifications.retractChatMessage).toHaveBeenLastCalledWith(
-          messageId,
-        );
-        expect(
-          notifications.retractChatMessage.mock.invocationCallOrder[1],
-        ).toBeGreaterThan(
-          notifications.collapseOlderUnread.mock.invocationCallOrder[0],
-        );
-      });
-
-      it("gives them a direct message's edited text", async () => {
-        notifications.notifyPlayers.mockImplementationOnce(async () => {
-          const insert = queries.find(({ sql }) =>
-            sql.includes("INSERT INTO public.direct_messages"),
-          );
-          directMessage = {
-            id: insert.bindings[0],
-            roomId: insert.bindings[1],
-            author: ME,
-            message: "fixed",
-            open: true,
-            editedAt: new Date(),
-          };
-        });
-
-        const messageId = await say(
-          ChatLobbyType.Direct,
-          directRoomId(ME, FRIEND),
-        );
-        await flush();
-        await flush();
-
-        expect(notifications.updateChatMessagePreview).toHaveBeenCalledWith(
-          messageId,
-          "fixed",
-        );
-        expect(notifications.retractChatMessage).not.toHaveBeenCalled();
       });
     });
   });
@@ -2852,7 +2658,7 @@ describe("ChatService direct messages", () => {
       await react();
       await flush();
 
-      expect(notifications.notifyPlayers).not.toHaveBeenCalled();
+      expect(push.sendChatMessage).not.toHaveBeenCalled();
       expect(rcon.connect).not.toHaveBeenCalled();
       expect(broadcasts("lobby:match:m-1:chat")).toEqual([]);
     });
@@ -2910,7 +2716,7 @@ describe("ChatService direct messages", () => {
       await flush();
 
       expect(broadcasts("lobby:match:m-1:deleted")).toHaveLength(1);
-      expect(notifications.retractChatMessage).toHaveBeenCalledWith(MESSAGE_ID);
+      expect(push.retractChatMessage).toHaveBeenCalledWith(MESSAGE_ID);
     });
 
     it("puts each message's reactions in the room's history", async () => {
@@ -3488,7 +3294,7 @@ describe("ChatService direct messages", () => {
         ),
       ).toBe(false);
       expect(redis.publish).not.toHaveBeenCalled();
-      expect(notifications.notifyPlayers).not.toHaveBeenCalled();
+      expect(push.sendChatMessage).not.toHaveBeenCalled();
     });
 
     it("keeps a direct message from a player its recipient has just blocked", async () => {
@@ -3503,7 +3309,7 @@ describe("ChatService direct messages", () => {
 
       expect(published().map(({ steamId }) => steamId)).not.toContain(FRIEND);
       expect(playerBlocks.hasBlocked).toHaveBeenCalledWith(FRIEND, ME);
-      expect(notifications.notifyPlayers).not.toHaveBeenCalled();
+      expect(push.sendChatMessage).not.toHaveBeenCalled();
     });
 
     it("keeps the socket's cleanup when the history's block lookup fails", async () => {
@@ -3867,23 +3673,22 @@ describe("ChatService direct messages", () => {
         return result.accepted ? result.messageId : undefined;
       };
 
-      it("writes none for a player who blocked the sender", async () => {
+      it("pushes nothing to a player who blocked the sender", async () => {
         blocks = [[ME, FRIEND]];
 
         await sayInTournament(FRIEND);
 
-        expect(notifications.notifyPlayers).toHaveBeenCalledWith(
-          "ChatMessage",
-          expect.objectContaining({ steamIds: [STRANGER] }),
-        );
-        expect(notifications.collapseOlderUnread).toHaveBeenCalledWith(
-          "ChatMessage",
-          "tournament:t-1",
+        expect(push.sendChatMessage).toHaveBeenCalledWith(
           [STRANGER],
+          expect.objectContaining({
+            type: "ChatMessage",
+            senderSteamId: FRIEND,
+            blockExemptRoles: MODERATORS,
+          }),
         );
       });
 
-      it("writes none at all when everyone else blocked the sender", async () => {
+      it("pushes nothing at all when everyone else blocked the sender", async () => {
         blocks = [
           [ME, FRIEND],
           [STRANGER, FRIEND],
@@ -3896,22 +3701,8 @@ describe("ChatService direct messages", () => {
           [FRIEND],
           MODERATORS,
         );
-        expect(notifications.notifyPlayers).not.toHaveBeenCalled();
+        expect(push.sendChatMessage).not.toHaveBeenCalled();
         expect(logger.warn).not.toHaveBeenCalled();
-      });
-
-      it("catches up on a block that landed while the rows were being written", async () => {
-        const messageId = await sayInTournament(FRIEND);
-
-        expect(
-          notifications.retractChatMessageFromBlocked,
-        ).toHaveBeenCalledWith(messageId, MODERATORS);
-        expect(
-          notifications.retractChatMessageFromBlocked.mock
-            .invocationCallOrder[0],
-        ).toBeGreaterThan(
-          notifications.notifyPlayers.mock.invocationCallOrder[0],
-        );
       });
 
       it("still notifies the player a block is aimed at", async () => {
@@ -3919,9 +3710,9 @@ describe("ChatService direct messages", () => {
 
         await sayInTournament(FRIEND);
 
-        expect(
-          notifications.notifyPlayers.mock.calls[0][1].steamIds.sort(),
-        ).toEqual([ME, STRANGER].sort());
+        expect(push.sendChatMessage.mock.calls[0][0].sort()).toEqual(
+          [ME, STRANGER].sort(),
+        );
       });
     });
 
