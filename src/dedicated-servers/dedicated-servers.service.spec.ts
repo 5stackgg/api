@@ -689,6 +689,23 @@ describe("DedicatedServersService.withServerCfg", () => {
     });
   });
 
+  // A server's own value for a plugin is the most specific, so it lands last.
+  it("runs a server's own plugin cvars after the mode's", () => {
+    expect(
+      files(
+        DedicatedServersService.withServerCfg(
+          mode(),
+          "Custom" as never,
+          [{ slug: "deathmatch", cfg: "dm_replenish_health 10" }],
+          [{ slug: "deathmatch", cfg: "dm_replenish_health 50" }],
+        ),
+      ),
+    ).toEqual({
+      "cfg/gamemode_deathmatch_server.cfg":
+        "dm_replenish_health 10\nmp_teammates_are_enemies 1\ndm_replenish_health 50\n",
+    });
+  });
+
   it("writes plugin cvars on a server whose mode has none of its own", () => {
     expect(
       files(
@@ -731,6 +748,11 @@ describe("DedicatedServersService.setupDedicatedServer", () => {
         .fn()
         .mockResolvedValue([
           { slug: "inventory-simulator", cfg: inventoryCfg },
+        ]),
+      serverCfgLayers: jest
+        .fn()
+        .mockResolvedValue([
+          { slug: "inventory-simulator", cfg: "invsim_ws_enabled 0" },
         ]),
       environmentFor: GameModesService.prototype.environmentFor,
     };
@@ -792,7 +814,7 @@ describe("DedicatedServersService.setupDedicatedServer", () => {
   // only a match execs plugin cvars, so it ran on the plugin's own defaults.
   it("gives a community server the cvars of the plugins it loads", async () => {
     expect(await setup("Casual")).toEqual({
-      "cfg/gamemode_casual_server.cfg": `${inventoryCfg}\n`,
+      "cfg/gamemode_casual_server.cfg": `${inventoryCfg}\ninvsim_ws_enabled 0\n`,
     });
   });
 

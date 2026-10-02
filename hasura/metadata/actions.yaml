@@ -2058,7 +2058,7 @@ actions:
       forward_client_headers: true
     permissions:
       - role: administrator
-    comment: Save a community server's rotation, plugins and access, restarting it at most once
+    comment: Save a community server's rotation, plugins, plugin configs and access, restarting it at most once
   - name: moveDedicatedServerToNode
     definition:
       kind: synchronous
@@ -2088,6 +2088,7 @@ custom_types:
     - name: UtilityPlaybookStepInput
     - name: UtilitySightlinePairInput
     - name: ServerPluginInput
+    - name: ServerPluginConfigInput
     - name: ServerMapRotationInput
     - name: ServerAccessInput
   objects:

@@ -939,6 +939,63 @@ describe("game mode resolution (SQL-driven)", () => {
         ]);
       });
 
+      // One server's rotation is not every server's: its own file wins over
+      // the plugin page's, and the cvar still points at it.
+      it("writes a server's own file over the plugin page's", async () => {
+        const own = [{ name: "Pistols", weapons: ["deagle"], duration: 60 }];
+        await postgres.query(
+          `UPDATE game_plugin_installs SET config = $1 WHERE plugin_slug = 'deathmatch'`,
+          [JSON.stringify(modes)],
+        );
+        await postgres.query(
+          `INSERT INTO server_plugin_configs (server_id, plugin_slug, config)
+           VALUES ($1, 'deathmatch', $2)`,
+          [publicServer, JSON.stringify(own)],
+        );
+
+        const resolved = await service.resolveForServer(publicServer);
+
+        expect(files(resolved?.pluginConfigs ?? null)[path]).toEqual(own);
+        expect(await service.pluginCfgLayers(resolved)).toEqual([
+          { slug: "deathmatch", cfg: `dm_modes_file "${path}"` },
+        ]);
+      });
+
+      it("writes a server's own file with nothing on the plugin page", async () => {
+        const own = [{ name: "Pistols", weapons: ["deagle"], duration: 60 }];
+        await postgres.query(
+          `INSERT INTO server_plugin_configs (server_id, plugin_slug, config)
+           VALUES ($1, 'deathmatch', $2)`,
+          [publicServer, JSON.stringify(own)],
+        );
+
+        const resolved = await service.resolveForServer(publicServer);
+
+        expect(files(resolved?.pluginConfigs ?? null)[path]).toEqual(own);
+      });
+
+      it("hands back a server's own cvars for the plugins it loads", async () => {
+        const otherServer = await community(27200);
+        await postgres.query(
+          `INSERT INTO server_plugin_configs (server_id, plugin_slug, cfg)
+           VALUES ($1, 'deathmatch', 'dm_replenish_health 50'),
+                  ($2, 'deathmatch', 'dm_replenish_health 5')`,
+          [publicServer, otherServer],
+        );
+
+        const resolved = await service.resolveForServer(publicServer);
+
+        expect(await service.serverCfgLayers(publicServer, resolved)).toEqual([
+          { slug: "deathmatch", cfg: "dm_replenish_health 50" },
+        ]);
+        expect(
+          await service.serverCfgLayers(
+            otherServer,
+            await service.resolveForServer(otherServer),
+          ),
+        ).toEqual([]);
+      });
+
       // The cvar only ever names a file this server is actually given.
       it("leaves the cvar alone while the plugin keeps its own file", async () => {
         const resolved = await service.resolveForServer(publicServer);

@@ -69,6 +69,13 @@ array_relationships:
         table:
           name: server_plugins
           schema: public
+  - name: plugin_configs
+    using:
+      foreign_key_constraint_on:
+        column: server_id
+        table:
+          name: server_plugin_configs
+          schema: public
 computed_fields:
   - name: connection_link
     definition:

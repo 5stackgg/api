@@ -177,6 +177,11 @@ export class DedicatedServersController {
     server_id: string;
     map_rotation?: { map_ids: Array<string>; shuffle: boolean } | null;
     plugins?: Array<{ slug: string; enabled: boolean }> | null;
+    plugin_configs?: Array<{
+      slug: string;
+      cfg?: string | null;
+      config?: unknown;
+    }> | null;
     access?: {
       restricted: boolean;
       min_role?: string | null;
@@ -194,6 +199,12 @@ export class DedicatedServersController {
           }
         : null,
       plugins: data.plugins ?? null,
+      pluginConfigs:
+        data.plugin_configs?.map((entry) => ({
+          slug: entry.slug,
+          cfg: entry.cfg ?? null,
+          config: entry.config ?? null,
+        })) ?? null,
       access: data.access
         ? {
             restricted: data.access.restricted,

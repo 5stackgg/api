@@ -236,12 +236,17 @@ export class DedicatedServersService {
 
       // Ranked and Practice servers host matches, and a match execs each
       // plugin's cvars itself.
+      const community = server.type !== "Ranked" && server.type !== "Practice";
+
       const gameMode = DedicatedServersService.withServerCfg(
         resolvedMode,
         server.type,
-        server.type === "Ranked" || server.type === "Practice"
-          ? []
-          : await this.gameModesService.pluginCfgLayers(resolvedMode),
+        community
+          ? await this.gameModesService.pluginCfgLayers(resolvedMode)
+          : [],
+        community
+          ? await this.gameModesService.serverCfgLayers(serverId, resolvedMode)
+          : [],
       );
 
       const gameModeEnvironment =
@@ -746,18 +751,23 @@ export class DedicatedServersService {
   // A community server has no match, so the cvars a match would exec -- each
   // loading plugin's, then the mode's -- ride in as the server config CS2
   // execs after the Valve mode's own, on every map load, which is also what
-  // keeps them across a rotation.
+  // keeps them across a rotation. The server's own plugin cvars run last.
   public static withServerCfg(
     mode: ResolvedGameMode | null,
     type: e_server_types_enum,
     pluginCfgs: Array<{ slug: string; cfg: string }> = [],
+    serverCfgs: Array<{ slug: string; cfg: string }> = [],
   ): ResolvedGameMode | null {
     const serverCfg = DedicatedServersService.valveModeFor(
       type,
       mode?.valveMode,
     ).serverCfg;
 
-    const cfg = [...pluginCfgs.map((layer) => layer.cfg), mode?.cfg ?? ""]
+    const cfg = [
+      ...pluginCfgs.map((layer) => layer.cfg),
+      mode?.cfg ?? "",
+      ...serverCfgs.map((layer) => layer.cfg),
+    ]
       .filter((block) => block.trim())
       .map((block) => (block.endsWith("\n") ? block : `${block}\n`))
       .join("");
