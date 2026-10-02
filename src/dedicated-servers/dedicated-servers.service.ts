@@ -229,9 +229,17 @@ export class DedicatedServersService {
 
       // A Ranked server resolves to no mode by design, so matchmaking capacity
       // always comes up on a clean plugin set.
-      const gameMode = DedicatedServersService.withModeCfg(
-        await this.gameModesService.resolveForServer(serverId),
+      const resolvedMode =
+        await this.gameModesService.resolveForServer(serverId);
+
+      // Ranked and Practice servers host matches, and a match execs each
+      // plugin's cvars itself.
+      const gameMode = DedicatedServersService.withServerCfg(
+        resolvedMode,
         server.type,
+        server.type === "Ranked" || server.type === "Practice"
+          ? []
+          : await this.gameModesService.pluginCfgLayers(resolvedMode),
       );
 
       const gameModeEnvironment =
@@ -733,19 +741,26 @@ export class DedicatedServersService {
     );
   }
 
-  // A community server has no match, so the mode's cvars ride in as the
-  // server config CS2 execs after the Valve mode's own -- on every map load,
-  // which is also what keeps them across a rotation.
-  public static withModeCfg(
+  // A community server has no match, so the cvars a match would exec -- each
+  // loading plugin's, then the mode's -- ride in as the server config CS2
+  // execs after the Valve mode's own, on every map load, which is also what
+  // keeps them across a rotation.
+  public static withServerCfg(
     mode: ResolvedGameMode | null,
     type: e_server_types_enum,
+    pluginCfgs: Array<{ slug: string; cfg: string }> = [],
   ): ResolvedGameMode | null {
     const serverCfg = DedicatedServersService.valveModeFor(
       type,
       mode?.valveMode,
     ).serverCfg;
 
-    if (!mode?.cfg?.trim() || !serverCfg) {
+    const cfg = [...pluginCfgs.map((layer) => layer.cfg), mode?.cfg ?? ""]
+      .filter((block) => block.trim())
+      .map((block) => (block.endsWith("\n") ? block : `${block}\n`))
+      .join("");
+
+    if (!mode || !cfg || !serverCfg) {
       return mode;
     }
 
@@ -753,9 +768,7 @@ export class DedicatedServersService {
       ? JSON.parse(Buffer.from(mode.pluginConfigs, "base64").toString())
       : {};
 
-    files[`cfg/${serverCfg}.cfg`] = mode.cfg.endsWith("\n")
-      ? mode.cfg
-      : `${mode.cfg}\n`;
+    files[`cfg/${serverCfg}.cfg`] = cfg;
 
     return {
       ...mode,
