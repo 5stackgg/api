@@ -1,4 +1,5 @@
 import { DedicatedServersService } from "./dedicated-servers.service";
+import { GameModesService } from "../game-plugins/game-modes.service";
 
 // Remove-then-create is not atomic. Two overlapping rebuilds of one server used
 // to interleave: both removed, one created, and the other's AlreadyExists
@@ -492,9 +493,10 @@ describe("DedicatedServersService.launchMode", () => {
   // The Deathmatch plugin patches Valve's deathmatch rules; on stock Custom
   // they never run and everyone spawns at their team's spawn.
   it("boots a custom mode on the Valve mode it names", () => {
-    expect(DedicatedServersService.launchMode("Custom", "deathmatch")).toEqual(
-      ["+game_type 1", "+game_mode 2"],
-    );
+    expect(DedicatedServersService.launchMode("Custom", "deathmatch")).toEqual([
+      "+game_type 1",
+      "+game_mode 2",
+    ]);
   });
 
   it("keeps stock Custom when the mode names no Valve mode", () => {
@@ -528,7 +530,7 @@ describe("DedicatedServersService.launchMode", () => {
   });
 });
 
-describe("DedicatedServersService.withModeCfg", () => {
+describe("DedicatedServersService.withServerCfg", () => {
   const mode = (overrides: Record<string, unknown> = {}) => ({
     id: "mode-1",
     slug: "deathmatch",
@@ -553,7 +555,7 @@ describe("DedicatedServersService.withModeCfg", () => {
   // config on every map load, which is also what keeps them after a map change.
   it("writes a mode's cvars where CS2 runs them after its Valve mode's config", () => {
     expect(
-      files(DedicatedServersService.withModeCfg(mode(), "Custom" as never)),
+      files(DedicatedServersService.withServerCfg(mode(), "Custom" as never)),
     ).toEqual({
       "cfg/gamemode_deathmatch_server.cfg": "mp_teammates_are_enemies 1\n",
     });
@@ -563,7 +565,7 @@ describe("DedicatedServersService.withModeCfg", () => {
     expect(
       Object.keys(
         files(
-          DedicatedServersService.withModeCfg(
+          DedicatedServersService.withServerCfg(
             mode({ valveMode: null }),
             "Custom" as never,
           ),
@@ -579,7 +581,7 @@ describe("DedicatedServersService.withModeCfg", () => {
 
     expect(
       files(
-        DedicatedServersService.withModeCfg(
+        DedicatedServersService.withServerCfg(
           mode({ pluginConfigs }),
           "Custom" as never,
         ),
@@ -592,15 +594,17 @@ describe("DedicatedServersService.withModeCfg", () => {
 
   it("adds nothing for a mode without cvars", () => {
     expect(
-      DedicatedServersService.withModeCfg(mode({ cfg: "  " }), "Custom" as never)
-        ?.pluginConfigs,
+      DedicatedServersService.withServerCfg(
+        mode({ cfg: "  " }),
+        "Custom" as never,
+      )?.pluginConfigs,
     ).toBeNull();
   });
 
   // Rush runs a Valve map script and execs no server config of its own.
   it("adds nothing on Rush, which has no server config to run them from", () => {
     expect(
-      DedicatedServersService.withModeCfg(
+      DedicatedServersService.withServerCfg(
         mode({ valveMode: "rush" }),
         "Custom" as never,
       )?.pluginConfigs,
@@ -609,8 +613,132 @@ describe("DedicatedServersService.withModeCfg", () => {
 
   it("leaves a server with no mode alone", () => {
     expect(
-      DedicatedServersService.withModeCfg(null, "Casual" as never),
+      DedicatedServersService.withServerCfg(null, "Casual" as never),
     ).toBeNull();
+  });
+
+  // Same order a match execs them in: the mode's cvars win over a plugin's.
+  it("runs each loading plugin's cvars ahead of the mode's", () => {
+    expect(
+      files(
+        DedicatedServersService.withServerCfg(mode(), "Custom" as never, [
+          { slug: "inventory", cfg: 'invsim_url "https://inv.example"' },
+          { slug: "stats", cfg: "mp_teammates_are_enemies 0\n" },
+        ]),
+      ),
+    ).toEqual({
+      "cfg/gamemode_deathmatch_server.cfg":
+        'invsim_url "https://inv.example"\nmp_teammates_are_enemies 0\nmp_teammates_are_enemies 1\n',
+    });
+  });
+
+  it("writes plugin cvars on a server whose mode has none of its own", () => {
+    expect(
+      files(
+        DedicatedServersService.withServerCfg(
+          mode({ cfg: null, valveMode: null }),
+          "Casual" as never,
+          [{ slug: "inventory", cfg: "invsim_ws_enabled 1" }],
+        ),
+      ),
+    ).toEqual({
+      "cfg/gamemode_casual_server.cfg": "invsim_ws_enabled 1\n",
+    });
   });
 });
 
+describe("DedicatedServersService.setupDedicatedServer", () => {
+  const inventoryCfg = [
+    'invsim_url "https://inventory.5stack.gg"',
+    "invsim_ws_enabled 1",
+  ].join("\n");
+
+  const pluginsOnly = {
+    id: "",
+    slug: "",
+    name: "",
+    cfg: null,
+    extraGameParams: null,
+    valveMode: null,
+    enabledPlugins: "inventory-simulator@1.0.0",
+    pluginConfigs: null,
+    missingRequired: [],
+    disableServerGuidelines: false,
+  };
+
+  const setup = async (type: string) => {
+    const createNamespacedDeployment = jest.fn().mockResolvedValue({});
+    const gameModes = {
+      resolveForServer: jest.fn().mockResolvedValue(pluginsOnly),
+      pluginCfgLayers: jest
+        .fn()
+        .mockResolvedValue([
+          { slug: "inventory-simulator", cfg: inventoryCfg },
+        ]),
+      environmentFor: GameModesService.prototype.environmentFor,
+    };
+
+    const service = new DedicatedServersService(
+      { log: jest.fn(), verbose: jest.fn(), error: jest.fn() } as never,
+      { get: () => ({ namespace: "5stack" }) } as never,
+      {
+        query: jest.fn().mockResolvedValue({
+          servers_by_pk: {
+            id: "server-1",
+            type,
+            port: 27015,
+            tv_port: 27020,
+            game: "cs2",
+            max_players: 10,
+            api_password: "api",
+            rcon_password: "rcon",
+            connect_password: null,
+            game_server_node: { id: "node-1" },
+            server_region: { steam_relay: false },
+          },
+        }),
+        mutation: jest.fn().mockResolvedValue({}),
+      } as never,
+      { decrypt: jest.fn().mockResolvedValue("rcon") } as never,
+      null as never,
+      { getConnection: () => ({}) } as never,
+      null as never,
+      {
+        resolvePluginRuntime: jest.fn().mockResolvedValue("swiftly"),
+        resolveGameServerPluginImage: jest.fn().mockResolvedValue("image"),
+      } as never,
+      gameModes as never,
+      { forServer: jest.fn().mockResolvedValue({ maps: [] }) } as never,
+      null as never,
+      null as never,
+    );
+
+    Object.assign(service, { apps: { createNamespacedDeployment } });
+    jest
+      .spyOn(service as never, "waitForPodReady")
+      .mockReturnValue(new Promise(() => {}) as never);
+
+    expect(await service.setupDedicatedServer("server-1")).toBe(true);
+
+    const env: Array<{ name: string; value: string }> =
+      createNamespacedDeployment.mock.calls[0][0].body.spec.template.spec
+        .containers[0].env;
+    const pluginConfigs = env.find((entry) => entry.name === "PLUGIN_CONFIGS");
+
+    return pluginConfigs
+      ? JSON.parse(Buffer.from(pluginConfigs.value, "base64").toString())
+      : {};
+  };
+
+  // The inventory plugin's configuration never reached a community server:
+  // only a match execs plugin cvars, so it ran on the plugin's own defaults.
+  it("gives a community server the cvars of the plugins it loads", async () => {
+    expect(await setup("Casual")).toEqual({
+      "cfg/gamemode_casual_server.cfg": `${inventoryCfg}\n`,
+    });
+  });
+
+  it("leaves them to the match on a Ranked server", async () => {
+    expect(await setup("Ranked")).toEqual({});
+  });
+});
