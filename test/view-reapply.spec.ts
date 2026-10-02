@@ -82,6 +82,61 @@ describe("re-applying a view at boot (SQL-driven)", () => {
     expect(await viewExists("player_performance_v")).toBe(true);
   });
 
+  const failOnce = (part: string) => {
+    const apply = db.hasura.apply.bind(db.hasura);
+    const spy = jest
+      .spyOn(db.hasura, "apply")
+      .mockImplementation(async (...args: Parameters<typeof apply>) => {
+        if (args[0].includes(part)) {
+          spy.mockRestore();
+          throw new Error("boot died");
+        }
+        return apply(...args);
+      });
+  };
+
+  it("restores the v_pool_maps triggers on the next boot when a boot dies before the trigger pass", async () => {
+    await changeView("v_pool_maps");
+    failOnce("/hasura/triggers");
+
+    await expect(db.hasura.setup()).rejects.toThrow("boot died");
+    expect(await triggersOn("v_pool_maps")).toEqual([]);
+
+    await db.hasura.setup();
+
+    expect(await triggersOn("v_pool_maps")).toEqual([
+      "td_v_pool_maps",
+      "ti_v_pool_maps",
+      "tu_v_pool_maps",
+    ]);
+  });
+
+  it("restores a CASCADE-dropped view on the next boot when a boot dies before re-creating it", async () => {
+    await changeView("v_player_perf_career");
+    failOnce("/hasura/views/v_player_perf_ratings.sql");
+
+    await expect(db.hasura.setup()).rejects.toThrow("boot died");
+    expect(await viewExists("player_performance_v")).toBe(false);
+
+    await db.hasura.setup();
+
+    expect(await viewExists("player_performance_v")).toBe(true);
+  });
+
+  it("leaves the table trigger files alone when a view changes", async () => {
+    const setSetting = jest.spyOn(db.hasura, "setSetting");
+
+    await changeView("v_pool_maps");
+    await db.hasura.setup();
+
+    const triggerFiles = setSetting.mock.calls
+      .map(([name]) => name)
+      .filter((name) => name.startsWith("hasura/triggers/"));
+    setSetting.mockRestore();
+
+    expect(triggerFiles).toEqual(["hasura/triggers/v_pool_maps"]);
+  });
+
   it("re-applies nothing when no file changed", async () => {
     const setSetting = jest.spyOn(db.hasura, "setSetting");
 
