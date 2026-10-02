@@ -198,3 +198,28 @@ describe("S3Service.removePrefix", () => {
     ).rejects.toThrow(/AccessDenied/);
   });
 });
+
+// getPresignedUrl is stubbed for the same reason as above: its files-sdk path
+// cannot run here.
+describe("S3Service presigned url origin", () => {
+  it("is the origin of a url getPresignedUrl signs for the bucket", async () => {
+    const service = build("s3.us-east-005.backblazeb2.com", "443", true, {
+      forcePathStyle: false,
+    });
+    const sign = jest
+      .spyOn(service, "getPresignedUrl")
+      .mockResolvedValue(
+        "https://5stack.s3.us-east-005.backblazeb2.com/probe?X-Amz-Signature=x",
+      );
+
+    await expect(service.getPresignedUrlOrigin()).resolves.toBe(
+      "https://5stack.s3.us-east-005.backblazeb2.com",
+    );
+
+    // The default bucket, signed for outside the cluster like the URLs that
+    // get handed to pods.
+    const [, bucket, , , useLocal] = sign.mock.calls[0];
+    expect(bucket).toBe("5stack");
+    expect(useLocal).toBeFalsy();
+  });
+});

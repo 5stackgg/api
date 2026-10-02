@@ -5,11 +5,43 @@ import {
   buildOutroEnv,
   clipOutputFromSpec,
   sharedClipOutput,
+  outroAccentFromSetting,
 } from "./outro-branding";
 
 describe("outro-branding", () => {
   it("default accent is the stock amber triple", () => {
     expect(DEFAULT_OUTRO_ACCENT).toBe("33 94% 58%");
+  });
+
+  // The web saves whole numbers from its color picker and keeps the
+  // decimals of its stock palette.
+  it.each([
+    ["33 94% 58%", "33 94% 58%"],
+    ["0 0% 100%", "0 0% 100%"],
+    ["360 100% 100%", "360 100% 100%"],
+    ["224.3 76.3% 48%", "224.3 76.3% 48%"],
+    ["217.2 91.2% 59.8%", "217.2 91.2% 59.8%"],
+    ["  224.3 76.3% 48%\n", "224.3 76.3% 48%"],
+  ])("accent keeps the saved triple %p as %p", (value, accent) => {
+    expect(outroAccentFromSetting(value)).toBe(accent);
+  });
+
+  it.each([
+    undefined,
+    "",
+    "   ",
+    "orange",
+    "#f59e0b",
+    "hsl(33 94% 58%)",
+    "33, 94%, 58%",
+    "33 94 58",
+    "33  94% 58%",
+    "1000 94% 58%",
+    "33 94% 58%; background: url(http://attacker.test/x)",
+    "33 94% 58%)} body { display: none",
+    "33 94% 58%\n</style><script>alert(1)</script>",
+  ])("accent falls back to the stock amber for %p", (value) => {
+    expect(outroAccentFromSetting(value)).toBe(DEFAULT_OUTRO_ACCENT);
   });
 
   it("version is deterministic and 12 chars", () => {

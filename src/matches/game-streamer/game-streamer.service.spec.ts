@@ -6,6 +6,11 @@ jest.mock("@kubernetes/client-node", () => ({
 }));
 
 import { GameStreamerService } from "./game-streamer.service";
+import {
+  DEFAULT_OUTRO_ACCENT,
+  computeOutroVersion,
+  outroCacheKey,
+} from "./outro-branding";
 
 describe("GameStreamerService", () => {
   let service: GameStreamerService;
@@ -16,6 +21,12 @@ describe("GameStreamerService", () => {
     resolveEnabled: jest.Mock;
     bundleUrl: jest.Mock;
   };
+  let s3: {
+    stat: jest.Mock;
+    has: jest.Mock;
+    getPresignedUrl: jest.Mock;
+    getPresignedUrlOrigin: jest.Mock;
+  };
 
   const config = {
     get: (key: string) => {
@@ -23,7 +34,10 @@ describe("GameStreamerService", () => {
         return { namespace: "test" };
       }
       if (key === "app") {
-        return { relayDomain: "https://tv.example.test" };
+        return {
+          relayDomain: "https://tv.example.test",
+          demosDomain: "https://demos.example.test",
+        };
       }
       return {} as any;
     },
@@ -37,6 +51,12 @@ describe("GameStreamerService", () => {
       resolveEnabled: jest.fn(),
       bundleUrl: jest.fn().mockResolvedValue(null),
     };
+    s3 = {
+      stat: jest.fn(),
+      has: jest.fn(),
+      getPresignedUrl: jest.fn(),
+      getPresignedUrlOrigin: jest.fn(),
+    };
 
     service = new GameStreamerService(
       logger as any,
@@ -48,7 +68,7 @@ describe("GameStreamerService", () => {
       {} as any,
       {} as any,
       broadcastHuds as any,
-      {} as any,
+      s3 as any,
     );
   });
 
@@ -331,6 +351,63 @@ describe("GameStreamerService", () => {
       expect(env.find((e: any) => e.name === "PLAYCAST_URL")?.value).toBe(
         "https://tv.example.test/m-1",
       );
+    });
+  });
+
+  describe("resolveS3PublicOrigin", () => {
+    // A remote store signs the outro URLs against its own host, so the
+    // demos domain would fail the pod's outro URL allowlist.
+    it("is the origin the outro urls are presigned against", async () => {
+      s3.getPresignedUrlOrigin.mockResolvedValue(
+        "https://5stack.s3.example.test",
+      );
+
+      await expect((service as any).resolveS3PublicOrigin()).resolves.toBe(
+        "https://5stack.s3.example.test",
+      );
+    });
+
+    it("falls back to the demos domain so the pod still starts", async () => {
+      s3.getPresignedUrlOrigin.mockRejectedValue(new Error("bad endpoint"));
+
+      await expect((service as any).resolveS3PublicOrigin()).resolves.toBe(
+        "https://demos.example.test",
+      );
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining("bad endpoint"),
+      );
+    });
+  });
+
+  describe("resolveOutroBranding", () => {
+    // game-streamer drops the whole outro env for an accent that is not an
+    // HSL triple, so the stock amber is what gets rendered, and the version
+    // has to hash that accent rather than the setting.
+    it("renders and hashes the stock accent when the setting is not an HSL triple", async () => {
+      const settings: Record<string, string> = {
+        "public.logo_url": "branding/logo.png",
+        "public.brand_name": "Adria",
+        "public.color_dark_tactical_amber": "0 0% 0%) url(http://10.0.0.1/x",
+      };
+      hasura.query.mockImplementation(async (query: any) => ({
+        settings_by_pk: { value: settings[query.settings_by_pk.__args.name] },
+      }));
+      s3.stat.mockResolvedValue({ etag: "logo-etag" });
+      s3.has.mockResolvedValue(false);
+      s3.getPresignedUrl.mockImplementation(
+        async (key: string) => `https://s3.example.test/${key}`,
+      );
+
+      const env = await service.resolveOutroBranding("1920x1080", 60);
+
+      expect(env.CLIP_BRAND_ACCENT).toBe(DEFAULT_OUTRO_ACCENT);
+      const version = computeOutroVersion({
+        brandName: "Adria",
+        accent: DEFAULT_OUTRO_ACCENT,
+        etag: "logo-etag",
+      });
+      const key = outroCacheKey({ version, dims: "1920x1080", fps: 60 });
+      expect(env.CLIP_OUTRO_PUT_URL).toBe(`https://s3.example.test/${key}`);
     });
   });
 
