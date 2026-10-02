@@ -9,12 +9,10 @@ import { ChatErrorCode } from "./../src/chat/enums/ChatErrorCode";
 import { ChatLobbyType } from "./../src/chat/enums/ChatLobbyTypes";
 import { directRoomId } from "./../src/chat/utilities/directRoomId";
 import { PlayerBlocksService } from "./../src/player-blocks/player-blocks.service";
-import { NotificationsService } from "./../src/notifications/notifications.service";
-import { NotificationPreferencesService } from "./../src/notifications/preferences/notification-preferences.service";
 
 // A block hides what the blocked player says from the blocker in group rooms,
-// and closes a DM in both directions. Against real Postgres (the block, its
-// trigger, the bell) and real redis (rooms, history, fan-out).
+// and closes a DM in both directions. Against real Postgres (the block and its
+// trigger) and real redis (rooms, history, fan-out).
 describe("chat blocks (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
@@ -26,7 +24,7 @@ describe("chat blocks (SQL-driven)", () => {
 
   let roster: string[];
   let friendshipOverride: boolean;
-  let beforeBellInsert: (() => Promise<unknown>) | undefined;
+  let pushes: Array<{ steamIds: string[]; messageId: string }>;
 
   let to: jest.SpyInstance;
   let notify: jest.SpyInstance;
@@ -91,41 +89,6 @@ describe("chat blocks (SQL-driven)", () => {
 
       return {};
     }),
-    mutation: jest.fn(async (mutation: any) => {
-      const insert = mutation?.insert_notifications;
-
-      if (!insert) {
-        return {};
-      }
-
-      const hook = beforeBellInsert;
-      beforeBellInsert = undefined;
-      await hook?.();
-
-      const returning: Array<{ id: string }> = [];
-
-      for (const object of insert.__args.objects) {
-        const [row] = await postgres.query<Array<{ id: string }>>(
-          `INSERT INTO notifications
-                  (type, title, message, role, steam_id, entity_id, in_app, data)
-                VALUES ($1, $2, $3, $4, $5::bigint, $6, $7, $8::jsonb)
-             RETURNING id::text AS id`,
-          [
-            object.type,
-            object.title,
-            object.message,
-            object.role,
-            object.steam_id,
-            object.entity_id ?? null,
-            object.in_app ?? true,
-            object.data ? JSON.stringify(object.data) : null,
-          ],
-        );
-        returning.push(row);
-      }
-
-      return { insert_notifications: { returning } };
-    }),
   };
 
   beforeAll(async () => {
@@ -141,20 +104,6 @@ describe("chat blocks (SQL-driven)", () => {
     postgres = db.postgres;
     fx = new Fixtures(postgres, 76561192820000000n);
 
-    const notifications = new NotificationsService(
-      hasura as any,
-      postgres,
-      logger as any,
-      { get: () => ({ webDomain: "https://example.com" }) } as any,
-      new NotificationPreferencesService(postgres),
-      {
-        filterSubscribed: async (): Promise<string[]> => [],
-        claimFanOut: jest.fn(),
-      } as any,
-      { add: jest.fn() } as any,
-      { add: jest.fn() } as any,
-    );
-
     blocks = new PlayerBlocksService(postgres);
 
     chat = new ChatService(
@@ -163,7 +112,16 @@ describe("chat blocks (SQL-driven)", () => {
       hasura as any,
       postgres,
       { getConnection: () => redis } as any,
-      notifications,
+      {
+        sendChatMessage: async (
+          steamIds: string[],
+          push: { messageId: string },
+        ) => {
+          pushes.push({ steamIds, messageId: push.messageId });
+        },
+        retractChatMessage: async () => {},
+        editChatMessage: async () => {},
+      } as any,
       blocks,
     );
   }, 600_000);
@@ -178,7 +136,6 @@ describe("chat blocks (SQL-driven)", () => {
     jest.restoreAllMocks();
     jest.clearAllMocks();
     await redis.flushall();
-    await postgres.query("DELETE FROM notifications");
     await postgres.query("DELETE FROM chat_message_edits");
     await postgres.query("DELETE FROM chat_message_deletions");
     await postgres.query("DELETE FROM direct_messages");
@@ -187,7 +144,7 @@ describe("chat blocks (SQL-driven)", () => {
 
     roster = [];
     friendshipOverride = false;
-    beforeBellInsert = undefined;
+    pushes = [];
 
     to = jest.spyOn(chat as any, "to");
     notify = jest.spyOn(chat as any, "notifyLobbyMembers");
@@ -288,25 +245,11 @@ describe("chat blocks (SQL-driven)", () => {
       .map(({ steamId }) => steamId)
       .sort();
 
-  const bell = (messageId: string) =>
-    postgres.query<
-      Array<{ steam_id: string; message: string; deleted: boolean }>
-    >(
-      `SELECT steam_id::text AS steam_id, message,
-              deleted_at IS NOT NULL AS deleted
-         FROM notifications
-        WHERE data->>'messageId' = $1
-        ORDER BY steam_id`,
-      [messageId],
-    );
-
-  const previews = async (messageId: string) =>
-    Object.fromEntries(
-      (await bell(messageId)).map(({ steam_id, message }) => [
-        steam_id,
-        message,
-      ]),
-    );
+  const pushedTo = (messageId: string) =>
+    pushes
+      .filter((push) => push.messageId === messageId)
+      .flatMap(({ steamIds }) => steamIds)
+      .sort();
 
   describe("a group room", () => {
     let blocker: string;
@@ -437,20 +380,12 @@ describe("chat blocks (SQL-driven)", () => {
 
       await block(blocker, blocked);
 
-      expect(await previews(before)).toEqual({
-        [blocker]: "before",
-        [bystander]: "before",
-      });
-
       const after = messageIdOf(await inMatch(blocked, "after"));
 
       expect(recipientsOf(`lobby:match:${matchId}:chat`, after)).toEqual(
         [...roster].sort(),
       );
-      expect(await previews(after)).toEqual({
-        [blocker]: "after",
-        [bystander]: "after",
-      });
+      expect(pushedTo(after)).toEqual([blocker, bystander].sort());
 
       await chat.editMessage(
         ChatLobbyType.Match,
@@ -500,70 +435,24 @@ describe("chat blocks (SQL-driven)", () => {
       );
     });
 
-    it("writes the blocker no bell row for a hidden line, and blanks the ones from before", async () => {
+    it("pushes the blocker nothing for a hidden line", async () => {
       const before = messageIdOf(await inMatch(blocked, "before"));
 
-      expect(await previews(before)).toEqual({
-        [blocker]: "before",
-        [bystander]: "before",
-      });
+      expect(pushedTo(before)).toEqual([blocker, bystander].sort());
 
       await block(blocker, blocked);
 
-      expect(await bell(before)).toContainEqual({
-        steam_id: blocker,
-        message: "",
-        deleted: true,
-      });
-      expect(await bell(before)).toContainEqual({
-        steam_id: bystander,
-        message: "before",
-        deleted: false,
-      });
-
       const after = messageIdOf(await inMatch(blocked, "after"));
 
-      expect(await previews(after)).toEqual({ [bystander]: "after" });
-
-      await chat.editMessage(
-        ChatLobbyType.Match,
-        matchId,
-        before,
-        player(blocked),
-        "before, edited",
-      );
-      await settle();
-
-      expect(await previews(before)).toEqual({
-        [blocker]: "",
-        [bystander]: "before, edited",
-      });
+      expect(pushedTo(after)).toEqual([bystander]);
     });
 
-    it("blanks the blocker's row for a line whose rows were aimed before the block landed", async () => {
-      beforeBellInsert = () => block(blocker, blocked);
-
-      const id = messageIdOf(await inMatch(blocked, "racing"));
-
-      expect(await previews(id)).toEqual({
-        [blocker]: "",
-        [bystander]: "racing",
-      });
-      expect(await bell(id)).toContainEqual({
-        steam_id: blocker,
-        message: "",
-        deleted: true,
-      });
-    });
-
-    it("leaves the bell alone for everyone when the blocker is the one talking", async () => {
+    it("still pushes everyone else when the blocker is the one talking", async () => {
       await block(blocker, blocked);
 
       const id = messageIdOf(await inMatch(blocker, "hello"));
 
-      expect((await bell(id)).map(({ steam_id }) => steam_id)).toEqual(
-        [blocked, bystander].sort(),
-      );
+      expect(pushedTo(id)).toEqual([blocked, bystander].sort());
     });
 
     it("gives back lines that are still live once unblocked", async () => {
@@ -772,7 +661,7 @@ describe("chat blocks (SQL-driven)", () => {
       await refusesEverything();
     });
 
-    it("refuses both sides and blanks the bell when the blocker is a moderator", async () => {
+    it("refuses both sides when the blocker is a moderator", async () => {
       await postgres.query("DELETE FROM chat_read_state");
       await postgres.query(
         "UPDATE players SET role = 'moderator' WHERE steam_id = $1::bigint",
@@ -781,24 +670,6 @@ describe("chat blocks (SQL-driven)", () => {
       await block(blocker, blocked);
 
       await refusesEverything();
-
-      expect(await bell(fromBlocked)).toEqual([
-        { steam_id: blocker, message: "", deleted: true },
-      ]);
-    });
-
-    it("blanks a moderator's row for a DM whose rows were aimed before their block landed", async () => {
-      await postgres.query(
-        "UPDATE players SET role = 'moderator' WHERE steam_id = $1::bigint",
-        [blocker],
-      );
-      beforeBellInsert = () => block(blocker, blocked);
-
-      const racing = await say(ChatLobbyType.Direct, room, blocked, "racing");
-
-      expect(await bell(racing.accepted ? racing.messageId : "")).toEqual([
-        { steam_id: blocker, message: "", deleted: true },
-      ]);
     });
 
     it("refuses both sides on the block alone, while a friendship still reads as accepted", async () => {
@@ -848,17 +719,6 @@ describe("chat blocks (SQL-driven)", () => {
       await unblock(blocker, blocked);
 
       expect(await rail(blocker)).toEqual([room]);
-    });
-
-    it("blanks the blocker's bell rows for the blocked player's messages, and never the other way", async () => {
-      await block(blocker, blocked);
-
-      expect(await bell(fromBlocked)).toEqual([
-        { steam_id: blocker, message: "", deleted: true },
-      ]);
-      expect(await bell(fromBlocker)).toEqual([
-        { steam_id: blocked, message: "hi", deleted: false },
-      ]);
     });
   });
 });

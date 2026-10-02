@@ -8,8 +8,8 @@ export type DeliveryPolicy = {
   // 0 disables windowing entirely -- one push per row, as before.
   bundleSeconds: number;
   // Drop the push if the bell row has been read or dismissed by the time it is
-  // sent. For chat this also means "the recipient's read cursor for the thread
-  // has moved past this message".
+  // sent. Chat has no row; for it this means "the recipient's read cursor for
+  // the thread has moved past this message".
   requireUnseen: boolean;
   // How long the push service may hold the message for an offline device
   // before discarding it. Unset keeps web-push's four-week default.
@@ -181,6 +181,10 @@ export function threadKeyFor(notification: {
 // as a read cursor, a focus report and a device tag.
 export function chatThreadKey(type: string, id: string): string {
   return `chat:${type}:${id}`;
+}
+
+export function isChatThreadKey(thread: string): boolean {
+  return thread.startsWith("chat:");
 }
 
 // Where a client's focus reports land. Read by the delivery gate and written by

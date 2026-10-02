@@ -9,7 +9,10 @@ import { PostgresService } from "../../postgres/postgres.service";
 import { RedisManagerService } from "../../redis/redis-manager/redis-manager.service";
 import { AppConfig } from "src/configs/types/AppConfig";
 import { WebPushConfig } from "src/configs/types/WebPushConfig";
-import { e_player_roles_enum } from "generated/schema";
+import {
+  e_notification_types_enum,
+  e_player_roles_enum,
+} from "generated/schema";
 import { generateMutationOp } from "../../../generated";
 import { rolesAtOrAbove } from "src/utilities/isRoleAbove";
 import { SystemSettingName } from "src/system/enums/SystemSettingName";
@@ -21,6 +24,7 @@ import {
   DEFAULT_DELIVERY_POLICY,
   DeliveryPolicy,
   deliveryPolicyForType,
+  isChatThreadKey,
   presenceFocusKey,
   threadKeyFor,
 } from "./notification-delivery";
@@ -66,6 +70,29 @@ export type NotificationRow = {
   actions?: NotificationAction[] | null;
 };
 
+// A chat message on its way to a phone. Chat writes no notifications row, so
+// this is everything the gate knows about it, and what a bundling window holds
+// until it closes.
+export type ChatPush = {
+  messageId: string;
+  type: e_notification_types_enum;
+  title: string;
+  message: string;
+  entityId: string;
+  threadKey: string;
+  threadLabel: string;
+  icon?: string | null;
+  senderSteamId: string;
+  // Recipients whose block on the sender does not hide the message from them
+  // (ChatService.blockExemptRoles).
+  blockExemptRoles: e_player_roles_enum[];
+};
+
+// `at` is when it was queued by postgres's clock, the one the read cursor is
+// stamped with. `pushed` marks the message that opened the window, which the
+// device already shows.
+type HeldChatPush = ChatPush & { at: string; pushed?: boolean };
+
 // A notification button as the service worker sees it: an id to match the
 // click against and a ready-to-POST GraphQL operation, so the worker never
 // has to know how to build one.
@@ -103,6 +130,9 @@ type Delivery = {
   // one. Held rather than dropped, so a night of messages arrives as one
   // summary in the morning instead of as nothing at all.
   quietSeconds: number;
+  // What the window holds for a summary when it is not the rows' ids, before
+  // and after the leading push has gone out.
+  held?: { waiting: string[]; sent: string[] };
 };
 
 // Which rows to consider. `ids` is the exact set a writer just inserted;
@@ -204,6 +234,15 @@ const pendingKey = (steamId: string, thread: string) =>
 // night away before anyone woke up.
 const pendingTtlFor = (windowSeconds: number) =>
   Math.max(900, windowSeconds + 300);
+
+const chatRetractedKey = (messageId: string) =>
+  `notifications:chat-retracted:${messageId}`;
+
+const chatEditedKey = (messageId: string) =>
+  `notifications:chat-edited:${messageId}`;
+
+// Outlives the longest a chat push is ever held: a whole night of quiet hours.
+const CHAT_OVERRIDE_TTL_SECONDS = 25 * 60 * 60;
 
 @Injectable()
 export class PushNotificationsService {
@@ -602,6 +641,11 @@ export class PushNotificationsService {
       return;
     }
 
+    if (isChatThreadKey(thread)) {
+      await this.sendPendingChat(steamId, thread, ids);
+      return;
+    }
+
     const newest = await this.newestOf({ ids });
 
     if (!newest) {
@@ -650,14 +694,9 @@ export class PushNotificationsService {
         continue;
       }
 
-      // Counted from the window rather than from the rows that survived it.
-      //
-      // collapseOlderUnread soft-deletes every superseded ChatMessage row so
-      // the bell shows one entry per conversation, and requireUnseen drops
-      // soft-deleted rows -- so resolving a burst of four finds one survivor.
-      // The window is what actually knows how many arrived; the surviving rows
-      // are only there to say whether it is still worth sending at all, and to
-      // supply the text.
+      // Counted from the window rather than from the rows that survived it: the
+      // surviving rows are only there to say whether it is still worth sending
+      // at all, and to supply the text.
       await this.deliver(
         delivery.steamId,
         delivery.subscriptions,
@@ -665,6 +704,260 @@ export class PushNotificationsService {
         ids.length,
       );
     }
+  }
+
+  // A chat message, pushed straight from the conversation: there is no row
+  // behind it, and every check a row would have made is made here instead.
+  public async sendChatMessage(
+    steamIds: string[],
+    push: ChatPush,
+  ): Promise<void> {
+    if (!this.configured || steamIds.length === 0) {
+      return;
+    }
+
+    // Deleted or edited in the moments it took to get here.
+    const [current] = await this.applyChatOverrides([push]);
+
+    if (!current) {
+      return;
+    }
+
+    const category = pushCategoryForType(current.type);
+    const rows = await this.postgres.query<
+      Array<Omit<DeliveryRow, keyof NotificationRow> & { at: Date }>
+    >(
+      `SELECT p.steam_id::text AS steam_id,
+              public.quiet_hours_seconds_remaining(
+                p.quiet_hours_start, p.quiet_hours_end, p.notification_timezone
+              ) AS quiet_seconds,
+              ps.id::text AS subscription_id, ps.endpoint, ps.p256dh, ps.auth,
+              now() AS at
+         FROM public.players p
+         JOIN public.push_subscriptions ps ON ps.steam_id = p.steam_id
+    LEFT JOIN public.notification_preferences np
+           ON np.steam_id = p.steam_id
+          AND np.channel = 'push'
+          AND np.key = $2
+        WHERE p.steam_id = ANY($1::bigint[])
+          AND COALESCE(np.enabled, $3::boolean) = true`,
+      [steamIds, category?.key ?? "", category?.defaultEnabled ?? true],
+    );
+
+    if (rows.length === 0) {
+      return;
+    }
+
+    const row = PushNotificationsService.chatRow(current);
+    const held: HeldChatPush = {
+      ...current,
+      at: new Date(rows[0].at).toISOString(),
+    };
+    const deliveries = PushNotificationsService.groupDeliveries(
+      rows.map((recipient) => ({ ...row, ...recipient })),
+    ).map((delivery) => ({
+      ...delivery,
+      held: {
+        waiting: [JSON.stringify(held)],
+        sent: [JSON.stringify({ ...held, pushed: true })],
+      },
+    }));
+
+    await this.dispatch(
+      deliveries,
+      deliveryPolicyForType(current.type) ?? DEFAULT_DELIVERY_POLICY,
+    );
+  }
+
+  // Keyed by message id alone, because that is all a delete knows, and read by
+  // whichever window is holding the message whenever it closes.
+  public async retractChatMessage(messageId: string): Promise<void> {
+    await this.redis.set(
+      chatRetractedKey(messageId),
+      1,
+      "EX",
+      CHAT_OVERRIDE_TTL_SECONDS,
+    );
+  }
+
+  public async editChatMessage(
+    messageId: string,
+    preview: string,
+  ): Promise<void> {
+    await this.redis.set(
+      chatEditedKey(messageId),
+      preview,
+      "EX",
+      CHAT_OVERRIDE_TTL_SECONDS,
+    );
+  }
+
+  // A chat window closing. Everything it held is checked again against what
+  // happened in the meantime: deleted, edited, read, or its sender blocked.
+  private async sendPendingChat(
+    steamId: string,
+    thread: string,
+    entries: string[],
+  ): Promise<void> {
+    const held = await this.applyChatOverrides(
+      entries.flatMap((entry): HeldChatPush[] => {
+        try {
+          return [JSON.parse(entry) as HeldChatPush];
+        } catch {
+          return [];
+        }
+      }),
+    );
+
+    if (held.length === 0) {
+      return;
+    }
+
+    const newest = held.at(-1);
+    const policy =
+      deliveryPolicyForType(newest.type) ?? DEFAULT_DELIVERY_POLICY;
+    const category = pushCategoryForType(newest.type);
+
+    const rows = await this.postgres.query<
+      Array<
+        Omit<SubscriptionRow, "id"> & {
+          subscription_id: string;
+          quiet_seconds: number;
+          last_read_at: Date | null;
+          blocked: string[] | null;
+        }
+      >
+    >(
+      `SELECT public.quiet_hours_seconds_remaining(
+                p.quiet_hours_start, p.quiet_hours_end, p.notification_timezone
+              ) AS quiet_seconds,
+              crs.last_read_at,
+              ARRAY(
+                SELECT pb.blocked_steam_id::text
+                  FROM public.player_blocks pb
+                 WHERE pb.blocker_steam_id = p.steam_id
+                   AND pb.blocked_steam_id = ANY($3::bigint[])
+                   AND p.role::text <> ALL($4::text[])
+              ) AS blocked,
+              ps.id::text AS subscription_id, ps.endpoint, ps.p256dh, ps.auth
+         FROM public.players p
+         JOIN public.push_subscriptions ps ON ps.steam_id = p.steam_id
+    LEFT JOIN public.notification_preferences np
+           ON np.steam_id = p.steam_id
+          AND np.channel = 'push'
+          AND np.key = $5
+    LEFT JOIN public.chat_read_state crs
+           ON crs.steam_id = p.steam_id
+          AND crs.thread = $2
+        WHERE p.steam_id = $1::bigint
+          AND COALESCE(np.enabled, $6::boolean) = true`,
+      [
+        steamId,
+        thread,
+        [...new Set(held.map(({ senderSteamId }) => senderSteamId))],
+        newest.blockExemptRoles,
+        category?.key ?? "",
+        category?.defaultEnabled ?? true,
+      ],
+    );
+
+    if (rows.length === 0) {
+      return;
+    }
+
+    const { quiet_seconds, last_read_at, blocked } = rows[0];
+    const readTo = last_read_at ? new Date(last_read_at).getTime() : null;
+    const hidden = new Set(blocked ?? []);
+
+    const unseen = held.filter(
+      (push) =>
+        !hidden.has(push.senderSteamId) &&
+        (readTo === null || new Date(push.at).getTime() > readTo),
+    );
+
+    // Only what the device already shows: everything after it was deleted or
+    // read, and saying it again would buzz for nothing new.
+    if (unseen.every(({ pushed }) => pushed)) {
+      return;
+    }
+
+    if ((await this.filterFocusedOn([steamId], thread)).has(steamId)) {
+      return;
+    }
+
+    const entriesLeft = unseen.map((push) => JSON.stringify(push));
+
+    if (Number(quiet_seconds ?? 0) > 0 && !policy.ignoreQuietHours) {
+      const claim = await this.claimWindow(
+        steamId,
+        thread,
+        Number(quiet_seconds),
+      );
+
+      if (claim.leading) {
+        await this.resetPending(steamId, thread, entriesLeft, claim.ttl);
+      } else {
+        await this.appendPending(steamId, thread, entriesLeft, claim.ttl);
+      }
+
+      await this.scheduleTrailing(steamId, thread, claim.token, claim.ttl);
+      return;
+    }
+
+    await this.deliver(
+      steamId,
+      rows.map(({ subscription_id, endpoint, p256dh, auth }) => ({
+        id: subscription_id,
+        endpoint,
+        p256dh,
+        auth,
+      })),
+      unseen.map((push) => PushNotificationsService.chatRow(push)),
+    );
+  }
+
+  // Drops what was deleted after it was queued, and shows the rest as edited.
+  private async applyChatOverrides<T extends ChatPush>(
+    pushes: T[],
+  ): Promise<T[]> {
+    if (pushes.length === 0) {
+      return [];
+    }
+
+    const overrides = await this.redis.mget(
+      ...pushes.flatMap(({ messageId }) => [
+        chatRetractedKey(messageId),
+        chatEditedKey(messageId),
+      ]),
+    );
+
+    return pushes.flatMap((push, index) => {
+      if (overrides[index * 2] !== null) {
+        return [];
+      }
+
+      const edited = overrides[index * 2 + 1];
+
+      return [edited === null ? push : { ...push, message: edited }];
+    });
+  }
+
+  private static chatRow(push: ChatPush): NotificationRow {
+    return {
+      id: push.messageId,
+      type: push.type,
+      role: "user",
+      title: push.title,
+      message: push.message,
+      entity_id: push.entityId,
+      data: {
+        threadKey: push.threadKey,
+        threadLabel: push.threadLabel,
+        icon: push.icon,
+        senderSteamId: push.senderSteamId,
+        messageId: push.messageId,
+      },
+    };
   }
 
   private static readonly SELECT_NOTIFICATION = `SELECT id::text AS id, type::text AS type, role::text AS role,
@@ -762,18 +1055,11 @@ export class PushNotificationsService {
            ON np.steam_id = p.steam_id
           AND np.channel = 'push'
           AND np.key = $${next + 2}
-    -- Only ever matches a row whose writer declared a thread, which today is
-    -- chat and nothing else. Anything without one joins to NULL and passes.
-    LEFT JOIN public.chat_read_state crs
-           ON crs.steam_id = p.steam_id
-          AND crs.thread = n.data->>'threadKey'
         WHERE ${selectorSql}
           AND COALESCE(np.enabled, $${next + 3}::boolean) = true
           -- Dealt with in the bell between the insert and now.
           AND ($${next + 4}::boolean = false
                OR (n.is_read = false AND n.deleted_at IS NULL))
-          -- Or read in the conversation itself, which never touches the bell.
-          AND (crs.last_read_at IS NULL OR n.created_at > crs.last_read_at)
         ORDER BY n.created_at ASC`,
       [
         ...selectorParams,
@@ -784,6 +1070,10 @@ export class PushNotificationsService {
       ],
     );
 
+    return PushNotificationsService.groupDeliveries(rows);
+  }
+
+  private static groupDeliveries(rows: DeliveryRow[]): Delivery[] {
     const byRecipient = new Map<string, Delivery>();
 
     for (const row of rows) {
@@ -852,7 +1142,8 @@ export class PushNotificationsService {
         continue;
       }
 
-      const ids = delivery.notifications.map(({ id }) => id);
+      const ids =
+        delivery.held?.waiting ?? delivery.notifications.map(({ id }) => id);
 
       // Asleep. Hold everything until the window closes and let the trailing
       // job deliver it as one summary -- which is the same machinery bundling
@@ -905,7 +1196,12 @@ export class PushNotificationsService {
         // device, so leaving it out would make a burst of four report three.
         // The list is reset rather than appended to, so a window that closed
         // without ever being drained cannot leak into the next one's count.
-        await this.resetPending(delivery.steamId, thread, ids, claim.ttl);
+        await this.resetPending(
+          delivery.steamId,
+          thread,
+          delivery.held?.sent ?? ids,
+          claim.ttl,
+        );
         continue;
       }
 
@@ -1182,8 +1478,8 @@ export class PushNotificationsService {
     const newest = notifications.at(-1);
     const byId = { id: { _in: notifications.map(({ id }) => id) } };
 
-    // Marking a bell row read says nothing about the conversation's own read
-    // cursor, and a "Dismiss" that leaves the thread unread would mislead.
+    // Chat has no bell row to mark, and a "Dismiss" that leaves the thread
+    // unread would mislead.
     if (newest.type.endsWith("ChatMessage")) {
       return [];
     }

@@ -11,8 +11,6 @@ import { ChatGateway } from "./../src/chat/chat.gateway";
 import { PlayerBlocksService } from "./../src/player-blocks/player-blocks.service";
 import { ChatErrorCode } from "./../src/chat/enums/ChatErrorCode";
 import { ChatLobbyType } from "./../src/chat/enums/ChatLobbyTypes";
-import { NotificationsService } from "./../src/notifications/notifications.service";
-import { NotificationPreferencesService } from "./../src/notifications/preferences/notification-preferences.service";
 
 // The edit is one compare-and-set script against real hash-field expiry, which
 // no fake reproduces: HSET dropping a field's TTL is the whole reason it exists.
@@ -23,7 +21,12 @@ describe("chat edits and self deletes (SQL-driven)", () => {
   let container: StartedTestContainer;
   let redis: Redis;
   let chat: ChatService;
-  let notifications: NotificationsService;
+
+  const push = {
+    sendChatMessage: jest.fn(async () => {}),
+    retractChatMessage: jest.fn(async () => {}),
+    editChatMessage: jest.fn(async () => {}),
+  };
 
   const logger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
 
@@ -72,24 +75,13 @@ describe("chat edits and self deletes (SQL-driven)", () => {
     postgres = db.postgres;
     fx = new Fixtures(postgres, 76561199610000000n);
 
-    notifications = new NotificationsService(
-      hasura() as any,
-      postgres,
-      logger as any,
-      { get: () => ({ webDomain: "https://example.com" }) } as any,
-      new NotificationPreferencesService(postgres),
-      { add: jest.fn() } as any,
-      { add: jest.fn() } as any,
-      { add: jest.fn() } as any,
-    );
-
     chat = new ChatService(
       logger as any,
       {} as any,
       hasura() as any,
       postgres,
       { getConnection: () => redis } as any,
-      notifications,
+      push as any,
       new PlayerBlocksService(postgres),
     );
   }, 600_000);
@@ -107,7 +99,6 @@ describe("chat edits and self deletes (SQL-driven)", () => {
     await postgres.query("DELETE FROM chat_message_deletions");
     await postgres.query("DELETE FROM chat_message_edits");
     await postgres.query("DELETE FROM player_sanctions");
-    await postgres.query("DELETE FROM notifications");
     await postgres.query("DELETE FROM players");
   });
 
@@ -1103,126 +1094,6 @@ describe("chat edits and self deletes (SQL-driven)", () => {
     });
   });
 
-  describe("the bell's preview", () => {
-    const row = async (
-      steamId: string,
-      messageId: string,
-      overrides: {
-        is_read?: boolean;
-        deleted?: boolean;
-        message?: string;
-      } = {},
-    ) => {
-      const [inserted] = await postgres.query<Array<{ id: string }>>(
-        `INSERT INTO notifications
-                (type, title, message, role, steam_id, entity_id, data,
-                 is_read, deleted_at)
-              VALUES ('MatchChatMessage', 'Author', $3, 'user', $1::bigint,
-                      'match:m-1',
-                      jsonb_build_object('messageId', $2::text),
-                      $4, CASE WHEN $5 THEN now() END)
-           RETURNING id::text AS id`,
-        [
-          steamId,
-          messageId,
-          overrides.message ?? "typo",
-          overrides.is_read ?? false,
-          overrides.deleted ?? false,
-        ],
-      );
-      return inserted.id;
-    };
-
-    const text = async (id: string) =>
-      (
-        await postgres.query<Array<{ message: string }>>(
-          `SELECT message FROM notifications WHERE id = $1::uuid`,
-          [id],
-        )
-      )[0].message;
-
-    it("shows the edited text on the recipient's unread row", async () => {
-      const user = await author();
-      const reader = await fx.player("Reader");
-      const matchId = randomUUID();
-      const id = await place(matchId, user);
-      const unread = await row(reader, id);
-
-      await edit(matchId, id, user, "<b>fixed</b>");
-
-      expect(await text(unread)).toBe("&lt;b&gt;fixed&lt;/b&gt;");
-    });
-
-    // A read row stays in the bell, and a collapsed one can be restored by
-    // its recipient, so neither may keep the text the author took back.
-    it("rewrites every row for that message, read or collapsed", async () => {
-      const reader = await fx.player("Reader");
-      const messageId = randomUUID();
-      const unread = await row(reader, messageId);
-      const read = await row(reader, messageId, { is_read: true });
-      const collapsed = await row(reader, messageId, { deleted: true });
-      const other = await row(reader, randomUUID());
-
-      await notifications.updateChatMessagePreview(messageId, "fixed");
-
-      expect(await text(unread)).toBe("fixed");
-      expect(await text(read)).toBe("fixed");
-      expect(await text(collapsed)).toBe("fixed");
-      expect(await text(other)).toBe("typo");
-    });
-
-    it("leaves a row retracted mid-edit blank", async () => {
-      const reader = await fx.player("Reader");
-      const messageId = randomUUID();
-      const id = await row(reader, messageId);
-      let pending: Promise<void> = Promise.resolve();
-
-      await postgres.transaction(async (client) => {
-        await client.query(
-          `UPDATE notifications SET deleted_at = now(), message = ''
-            WHERE id = $1::uuid`,
-          [id],
-        );
-
-        pending = notifications.updateChatMessagePreview(messageId, "fixed");
-        await new Promise((resolve) => setTimeout(resolve, 200));
-      });
-
-      await pending;
-
-      expect(await text(id)).toBe("");
-    });
-
-    it("leaves a retracted row blank when the edit lands after the delete", async () => {
-      const reader = await fx.player("Reader");
-      const messageId = randomUUID();
-      const id = await row(reader, messageId);
-
-      await notifications.retractChatMessage(messageId);
-      await notifications.updateChatMessagePreview(messageId, "fixed");
-
-      expect(await text(id)).toBe("");
-    });
-
-    it("finds the message's rows through an index", async () => {
-      const plan = await postgres.transaction(async (client) => {
-        await client.query("SET LOCAL enable_seqscan = off");
-
-        const { rows } = await client.query(
-          `EXPLAIN UPDATE notifications SET message = 'x'
-            WHERE data->>'messageId' = $1
-              AND type IN ('ChatMessage', 'MatchChatMessage')
-              AND message <> ''`,
-          [randomUUID()],
-        );
-
-        return rows.map((plan) => plan["QUERY PLAN"]).join("\n");
-      });
-
-      expect(plan).toContain("notifications_message_id_idx");
-    });
-  });
-
   describe("sending from the web", () => {
     const LIMIT = 5;
     const WINDOW_MS = 3_000;
@@ -1259,7 +1130,7 @@ describe("chat edits and self deletes (SQL-driven)", () => {
         stub as any,
         postgres,
         { getConnection: () => redis } as any,
-        notifications,
+        push as any,
         new PlayerBlocksService(postgres),
       );
 

@@ -7,7 +7,6 @@ import { ChatService } from "./../src/chat/chat.service";
 import { PlayerBlocksService } from "./../src/player-blocks/player-blocks.service";
 import { ChatErrorCode } from "./../src/chat/enums/ChatErrorCode";
 import { ChatLobbyType } from "./../src/chat/enums/ChatLobbyTypes";
-import { NotificationsService } from "./../src/notifications/notifications.service";
 import { PruneDirectMessages } from "./../src/chat/jobs/PruneDirectMessages";
 import { directRoomId } from "./../src/chat/utilities/directRoomId";
 
@@ -19,7 +18,12 @@ describe("direct messages (SQL-driven)", () => {
   let postgres: PostgresService;
   let fx: Fixtures;
   let chat: ChatService;
-  let bell: NotificationsService;
+
+  const push = {
+    sendChatMessage: jest.fn(async () => {}),
+    retractChatMessage: jest.fn(async () => {}),
+    editChatMessage: jest.fn(async () => {}),
+  };
 
   const logger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
 
@@ -45,17 +49,6 @@ describe("direct messages (SQL-driven)", () => {
     postgres = db.postgres;
     fx = new Fixtures(postgres, 76561199400000000n);
 
-    bell = new NotificationsService(
-      {} as any,
-      postgres,
-      logger as any,
-      { get: () => ({ webDomain: "https://example.com" }) } as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-    );
-
     chat = new ChatService(
       logger as any,
       {} as any,
@@ -69,17 +62,7 @@ describe("direct messages (SQL-driven)", () => {
       } as any,
       postgres,
       { getConnection: () => redis } as any,
-      {
-        notifyPlayers: jest.fn(),
-        markConversationRead: jest.fn(),
-        collapseOlderUnread: jest.fn(),
-        retractChatMessage: (messageId: string) =>
-          bell.retractChatMessage(messageId),
-        retractChatMessageFromBlocked: (messageId: string) =>
-          bell.retractChatMessageFromBlocked(messageId),
-        updateChatMessagePreview: (messageId: string, preview: string) =>
-          bell.updateChatMessagePreview(messageId, preview),
-      } as any,
+      push as any,
       new PlayerBlocksService(postgres),
     );
   }, 600_000);
@@ -94,7 +77,6 @@ describe("direct messages (SQL-driven)", () => {
     await postgres.query("DELETE FROM direct_messages");
     await postgres.query("DELETE FROM direct_conversations");
     await postgres.query("DELETE FROM chat_read_state");
-    await postgres.query("DELETE FROM notifications");
     await postgres.query("DELETE FROM players");
   });
 
@@ -449,27 +431,6 @@ describe("direct messages (SQL-driven)", () => {
         [id, minutes],
       );
 
-    const bellRow = async (steamId: string, messageId: string) => {
-      const [row] = await postgres.query<Array<{ id: string }>>(
-        `INSERT INTO notifications
-                (type, title, message, role, steam_id, entity_id, data)
-              VALUES ('ChatMessage', 'Someone', 'typo', 'user', $1::bigint,
-                      'direct:' || $1, jsonb_build_object('messageId', $2::text))
-           RETURNING id::text AS id`,
-        [steamId, messageId],
-      );
-      return row.id;
-    };
-
-    const notification = async (id: string) =>
-      (
-        await postgres.query<
-          Array<{ message: string; deleted_at: Date | null }>
-        >(`SELECT message, deleted_at FROM notifications WHERE id = $1::uuid`, [
-          id,
-        ])
-      ).at(0);
-
     const as = (steamId: string) => ({ steam_id: steamId }) as any;
 
     it("stamps edited_at and leaves created_at alone", async () => {
@@ -578,37 +539,29 @@ describe("direct messages (SQL-driven)", () => {
       ).resolves.toEqual({ edited: false, code: ChatErrorCode.NotFound });
     });
 
-    it("shows the edit on the recipient's unread bell row", async () => {
+    it("shows the edit on a push still being held", async () => {
       const me = await fx.player();
       const friend = await fx.player();
       const room = directRoomId(me, friend);
       const id = await sent(room, me);
-      const row = await bellRow(friend, id);
 
       await chat.editMessage(ChatLobbyType.Direct, room, id, as(me), "fixed");
 
-      expect(await notification(row)).toEqual({
-        message: "fixed",
-        deleted_at: null,
-      });
+      expect(push.editChatMessage).toHaveBeenCalledWith(id, "fixed");
     });
 
-    it("deletes within the window and retracts the recipient's bell row", async () => {
+    it("deletes within the window and retracts a push still being held", async () => {
       const me = await fx.player();
       const friend = await fx.player();
       const room = directRoomId(me, friend);
       const id = await sent(room, me);
-      const row = await bellRow(friend, id);
 
       await expect(
         chat.deleteMessage(ChatLobbyType.Direct, room, id, as(me)),
       ).resolves.toEqual({ deleted: true });
 
       expect(await stored(id)).toBeUndefined();
-      expect(await notification(row)).toEqual({
-        message: "",
-        deleted_at: expect.any(Date),
-      });
+      expect(push.retractChatMessage).toHaveBeenCalledWith(id);
 
       const [{ count }] = await postgres.query<Array<{ count: string }>>(
         `SELECT count(*)::text AS count FROM chat_message_deletions`,

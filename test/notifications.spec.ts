@@ -172,10 +172,13 @@ describe("notifications (SQL-driven)", () => {
       const listening = await fx.player();
       const service = preferences();
 
-      await service.set(muted, "in_app", "ChatMessage", false);
+      await service.set(muted, "in_app", "MatchImported", false);
 
       expect(
-        await service.filterInAppRecipients("ChatMessage", [muted, listening]),
+        await service.filterInAppRecipients("MatchImported", [
+          muted,
+          listening,
+        ]),
       ).toEqual([listening]);
     });
 
@@ -425,58 +428,6 @@ describe("notifications (SQL-driven)", () => {
     });
   });
 
-  describe("collapseOlderUnread", () => {
-    it("keeps only the newest unread row for a conversation", async () => {
-      const steamId = await fx.player();
-
-      for (const body of ["first", "second", "third"]) {
-        await postgres.query(
-          `INSERT INTO notifications (type, title, message, role, steam_id, entity_id)
-                VALUES ('ChatMessage', 'Someone', $1, 'user', $2::bigint, 'match:m-1')`,
-          [body, steamId],
-        );
-      }
-
-      await notifications().collapseOlderUnread("ChatMessage", "match:m-1", [
-        steamId,
-      ]);
-
-      const rows = await postgres.query<Array<{ message: string }>>(
-        `SELECT message FROM notifications
-          WHERE deleted_at IS NULL AND type = 'ChatMessage'`,
-      );
-
-      expect(rows.map((row) => row.message)).toEqual(["third"]);
-    });
-
-    it("leaves another conversation untouched", async () => {
-      const steamId = await fx.player();
-
-      for (const entity of ["match:m-1", "match:m-2"]) {
-        await postgres.query(
-          `INSERT INTO notifications (type, title, message, role, steam_id, entity_id)
-                VALUES ('ChatMessage', 'Someone', 'hi', 'user', $1::bigint, $2)`,
-          [steamId, entity],
-        );
-      }
-
-      await notifications().collapseOlderUnread("ChatMessage", "match:m-1", [
-        steamId,
-      ]);
-
-      const [row] = await postgres.query<Array<{ count: string }>>(
-        `SELECT count(*)::text AS count FROM notifications WHERE deleted_at IS NULL`,
-      );
-      expect(row.count).toBe("2");
-    });
-  });
-
-  // A notification that reaches the support webhook is posted verbatim into a
-  // staff channel, so only the types an operator has to act on go there and
-  // everything else is in-app. Routing used to say that the other way round --
-  // a list of exclusions, with Discord the default -- which is how invites and
-  // check-in reminders addressed to one player came to be posted to staff.
-  //
   // The next type that gets routed through notifyPlayers, which is where the
   // webhook lives, should fail here rather than in a staff channel.
   describe("discord relay", () => {
@@ -594,8 +545,6 @@ describe("notifications (SQL-driven)", () => {
   });
 
   describe("push recipient resolution", () => {
-    // What a bundling window has waiting in it, for the trailing-summary case.
-    let pending: string[] = [];
     // Jobs the delivery queue was handed, so a deferred push can be told apart
     // from a dropped one.
     let pendingQueued: Array<{ delay?: number }> = [];
@@ -624,7 +573,7 @@ describe("notifications (SQL-driven)", () => {
           expire() {
             return this;
           },
-          exec: async (): Promise<Array<unknown>> => [[null, pending]],
+          exec: async (): Promise<Array<unknown>> => [[null, []]],
         }),
         pipeline: () => {
           const queued: string[] = [];
@@ -688,19 +637,17 @@ describe("notifications (SQL-driven)", () => {
       return push;
     };
 
-    const chatNotification = async (
+    const matchAlert = async (
       steamId: string,
-      overrides: { createdAt?: string; isRead?: boolean } = {},
+      overrides: { isRead?: boolean } = {},
     ) => {
       const [row] = await postgres.query<Array<{ id: string }>>(
         `INSERT INTO notifications
-                (type, title, message, role, steam_id, entity_id, is_read, data, created_at)
-              VALUES ('ChatMessage', 'Luke', 'hey', 'user', $1::bigint,
-                      'match:m-1', $2,
-                      '{"threadKey":"chat:match:m-1"}'::jsonb,
-                      COALESCE($3::timestamptz, now()))
+                (type, title, message, role, steam_id, entity_id, is_read)
+              VALUES ('MatchStatusChange', 'Match paused', 'paused', 'user',
+                      $1::bigint, 'm-1', $2)
            RETURNING id::text AS id`,
-        [steamId, overrides.isRead ?? false, overrides.createdAt ?? null],
+        [steamId, overrides.isRead ?? false],
       );
       return row.id;
     };
@@ -721,73 +668,11 @@ describe("notifications (SQL-driven)", () => {
     it("resolves a subscribed recipient", async () => {
       const steamId = await fx.player();
       await subscribe(steamId);
-      const id = await chatNotification(steamId);
+      const id = await matchAlert(steamId);
 
       await (await configuredService()).sendForNotification({
         id,
-        type: "ChatMessage",
-      });
-
-      expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
-    });
-
-    it("says nothing when the thread was read after the message", async () => {
-      // The whole point of the read cursor: a message the recipient has
-      // already scrolled past is not worth a buzz.
-      const steamId = await fx.player();
-      await subscribe(steamId);
-      const id = await chatNotification(steamId, {
-        createdAt: new Date(Date.now() - 60_000).toISOString(),
-      });
-
-      await postgres.query(
-        `INSERT INTO chat_read_state (steam_id, thread, last_read_at)
-              VALUES ($1::bigint, 'chat:match:m-1', now())`,
-        [steamId],
-      );
-
-      await (await configuredService()).sendForNotification({
-        id,
-        type: "ChatMessage",
-      });
-
-      expect(webPush.sendNotification).not.toHaveBeenCalled();
-    });
-
-    it("still buzzes for a message newer than the cursor", async () => {
-      const steamId = await fx.player();
-      await subscribe(steamId);
-
-      await postgres.query(
-        `INSERT INTO chat_read_state (steam_id, thread, last_read_at)
-              VALUES ($1::bigint, 'chat:match:m-1', now() - interval '1 hour')`,
-        [steamId],
-      );
-
-      const id = await chatNotification(steamId);
-
-      await (await configuredService()).sendForNotification({
-        id,
-        type: "ChatMessage",
-      });
-
-      expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
-    });
-
-    it("ignores a cursor for a different thread", async () => {
-      const steamId = await fx.player();
-      await subscribe(steamId);
-      const id = await chatNotification(steamId);
-
-      await postgres.query(
-        `INSERT INTO chat_read_state (steam_id, thread, last_read_at)
-              VALUES ($1::bigint, 'chat:match:m-2', now())`,
-        [steamId],
-      );
-
-      await (await configuredService()).sendForNotification({
-        id,
-        type: "ChatMessage",
+        type: "MatchStatusChange",
       });
 
       expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
@@ -836,11 +721,11 @@ describe("notifications (SQL-driven)", () => {
     it("drops a row already dealt with in the bell", async () => {
       const steamId = await fx.player();
       await subscribe(steamId);
-      const id = await chatNotification(steamId, { isRead: true });
+      const id = await matchAlert(steamId, { isRead: true });
 
       await (await configuredService()).sendForNotification({
         id,
-        type: "ChatMessage",
+        type: "MatchStatusChange",
       });
 
       expect(webPush.sendNotification).not.toHaveBeenCalled();
@@ -872,53 +757,14 @@ describe("notifications (SQL-driven)", () => {
       // which is what makes the flag above load-bearing rather than decorative.
       const steamId = await fx.player();
       await subscribe(steamId);
-      const id = await chatNotification(steamId, { isRead: true });
+      const id = await matchAlert(steamId, { isRead: true });
 
       await (await configuredService()).sendForNotification({
         id,
-        type: "ChatMessage",
+        type: "MatchStatusChange",
       });
 
       expect(webPush.sendNotification).not.toHaveBeenCalled();
-    });
-
-    it("still counts a burst whose older rows the bell collapsed", async () => {
-      // collapseOlderUnread soft-deletes every superseded ChatMessage row so
-      // the bell shows one entry per conversation. The summary's count comes
-      // from the window rather than from those rows for exactly that reason --
-      // resolving them finds one survivor and would report a burst of three as
-      // a single message.
-      const steamId = await fx.player();
-      await subscribe(steamId);
-
-      const ids = [
-        await chatNotification(steamId, {
-          createdAt: new Date(Date.now() - 3000).toISOString(),
-        }),
-        await chatNotification(steamId, {
-          createdAt: new Date(Date.now() - 2000).toISOString(),
-        }),
-        await chatNotification(steamId),
-      ];
-
-      await notifications().collapseOlderUnread("ChatMessage", "match:m-1", [
-        steamId,
-      ]);
-
-      const [surviving] = await postgres.query<Array<{ count: string }>>(
-        `SELECT count(*)::text AS count FROM notifications
-          WHERE type = 'ChatMessage' AND deleted_at IS NULL`,
-      );
-      expect(surviving.count).toBe("1");
-
-      pending = ids;
-      await (await configuredService()).sendPending(steamId, "chat:match:m-1");
-
-      const [, payload] = (webPush.sendNotification as jest.Mock).mock.calls[0];
-      expect(JSON.parse(payload)).toMatchObject({
-        body: "3 new messages",
-        count: 3,
-      });
     });
 
     it("holds rather than drops during the recipient's quiet hours", async () => {
@@ -932,12 +778,12 @@ describe("notifications (SQL-driven)", () => {
           WHERE steam_id = $1::bigint`,
         [steamId],
       );
-      const id = await chatNotification(steamId);
+      const id = await matchAlert(steamId);
 
       pendingQueued = [];
       await (await configuredService()).sendForNotification({
         id,
-        type: "ChatMessage",
+        type: "MatchStatusChange",
       });
 
       expect(webPush.sendNotification).not.toHaveBeenCalled();

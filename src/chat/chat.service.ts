@@ -14,6 +14,7 @@ import {
 } from "generated/schema";
 import { isRoleAbove, rolesAtOrAbove } from "src/utilities/isRoleAbove";
 import { NotificationsService } from "src/notifications/notifications.service";
+import { PushNotificationsService } from "src/notifications/push/push-notifications.service";
 import { PostgresService } from "src/postgres/postgres.service";
 import { PlayerBlocksService } from "src/player-blocks/player-blocks.service";
 import { chatThreadKey } from "src/notifications/push/notification-delivery";
@@ -302,7 +303,7 @@ export class ChatService {
     private readonly hasuraService: HasuraService,
     private readonly postgres: PostgresService,
     private readonly redisManager: RedisManagerService,
-    private readonly notifications: NotificationsService,
+    private readonly pushNotifications: PushNotificationsService,
     private readonly playerBlocks: PlayerBlocksService,
   ) {
     this.redis = this.redisManager.getConnection();
@@ -1595,8 +1596,8 @@ export class ChatService {
     return null;
   }
 
-  // Never relayed to the game server, and no new notification: the bell rows
-  // already announcing the message just show what it says now.
+  // Never relayed to the game server, and no new notification: a push still
+  // being held for the message just says what it says now.
   private async announceEdit(
     type: ChatLobbyType,
     id: string,
@@ -1619,11 +1620,8 @@ export class ChatService {
       this.logger.warn(`unable to broadcast an edit to ${type}:${id}`, error);
     });
 
-    await this.notifications
-      .updateChatMessagePreview(
-        messageId,
-        ChatService.notificationPreview(text),
-      )
+    await this.pushNotifications
+      .editChatMessage(messageId, ChatService.notificationPreview(text))
       .catch((error) => {
         this.logger.warn(
           `unable to update notifications for ${type}:${id} message ${messageId}`,
@@ -1639,12 +1637,14 @@ export class ChatService {
     id: string,
     messageId: string,
   ) {
-    await this.notifications.retractChatMessage(messageId).catch((error) => {
-      this.logger.warn(
-        `unable to retract notifications for ${type}:${id} message ${messageId}`,
-        error,
-      );
-    });
+    await this.pushNotifications
+      .retractChatMessage(messageId)
+      .catch((error) => {
+        this.logger.warn(
+          `unable to retract notifications for ${type}:${id} message ${messageId}`,
+          error,
+        );
+      });
   }
 
   private async recordDeletion(
@@ -1765,8 +1765,9 @@ export class ChatService {
   // What replaced it is a signal that means what it says: the client reports
   // the thread it is showing while visible, and the recipient's read cursor
   // says how far they have got. Both are checked at send time rather than here,
-  // because between an insert and a push is precisely when someone opens the
-  // conversation. See notifications/push/push-notifications.service.ts.
+  // because a burst's summary goes out seconds after its messages, which is
+  // precisely when someone opens the conversation. See
+  // notifications/push/push-notifications.service.ts.
   private async notifyLobbyMembers(
     type: ChatLobbyType,
     id: string,
@@ -1790,110 +1791,24 @@ export class ChatService {
       return;
     }
 
-    const entityId = `${type}:${id}`;
-    const notificationType = ChatService.notificationTypeFor(type);
-
-    await this.notifications.notifyPlayers(notificationType, {
+    await this.pushNotifications.sendChatMessage(targets, {
+      messageId,
+      type: ChatService.notificationTypeFor(type),
       title: senderName,
       message: ChatService.notificationPreview(message),
-      role: "user",
-      entity_id: entityId,
-      steamIds: targets,
-      data: {
-        threadKey: chatThreadKey(type, id),
-        threadLabel: await this.threadLabel(type, id, sender),
-        icon: sender.avatar_url,
-        senderSteamId,
-        messageId,
-      },
+      entityId: `${type}:${id}`,
+      threadKey: chatThreadKey(type, id),
+      threadLabel: await this.threadLabel(type, id, sender),
+      icon: sender.avatar_url,
+      senderSteamId,
+      blockExemptRoles: ChatService.blockExemptRoles(type),
     });
-
-    // Collapse to one unread bell row per conversation, and only after the
-    // insert above. Editing an existing row instead would produce no INSERT,
-    // and the INSERT is what the push event trigger fires on -- so the bell
-    // would be tidy and the phone would stay silent.
-    await this.notifications.collapseOlderUnread(
-      notificationType,
-      entityId,
-      targets,
-    );
-
-    await this.catchUpNotifications(type, id, messageId);
-  }
-
-  // A delete or an edit that landed while the rows were being written had no
-  // rows to act on yet, so whatever became of the message is applied now.
-  //
-  // A room's audit row is what says it was deleted: unlike the redis field, it
-  // is not gone just because the message expired or moved. A direct message
-  // has no audit, but one written moments ago cannot have been pruned yet, so
-  // a missing row was deleted.
-  private async catchUpNotifications(
-    type: ChatLobbyType,
-    id: string,
-    messageId: string,
-  ) {
-    await this.notifications.retractChatMessageFromBlocked(
-      messageId,
-      ChatService.blockExemptRoles(type),
-    );
-
-    if (type === ChatLobbyType.Direct) {
-      const [row] = await this.postgres.query<
-        Array<{ message: string; edited_at: Date | null }>
-      >(
-        `SELECT message, edited_at FROM public.direct_messages
-          WHERE id = $1::uuid`,
-        [messageId],
-      );
-
-      if (!row) {
-        await this.notifications.retractChatMessage(messageId);
-        return;
-      }
-
-      if (row.edited_at) {
-        await this.notifications.updateChatMessagePreview(
-          messageId,
-          ChatService.notificationPreview(row.message),
-        );
-      }
-
-      return;
-    }
-
-    if (await this.wasDeleted(messageId)) {
-      await this.notifications.retractChatMessage(messageId);
-      return;
-    }
-
-    const raw = await this.redis.hget(`chat_${type}_${id}`, messageId);
-    const message = raw ? (JSON.parse(raw) as ChatMessage) : null;
-
-    if (message?.edited_at) {
-      await this.notifications.updateChatMessagePreview(
-        messageId,
-        ChatService.notificationPreview(message.message),
-      );
-    }
   }
 
   private static notificationPreview(message: string) {
     return NotificationsService.escapeHtml(
       message.length > 140 ? `${message.slice(0, 140)}…` : message,
     );
-  }
-
-  private async wasDeleted(messageId: string): Promise<boolean> {
-    const [row] = await this.postgres.query<Array<{ deleted: boolean }>>(
-      `SELECT EXISTS (
-         SELECT 1 FROM public.chat_message_deletions
-          WHERE message_id = $1::uuid
-       ) AS deleted`,
-      [messageId],
-    );
-
-    return row?.deleted === true;
   }
 
   // Match chat is its own notification type, and so its own push category.
@@ -1904,9 +1819,6 @@ export class ChatService {
   // line, and the player it reaches is the one already reading those lines in
   // the game. Sharing a category with direct messages meant the only way to
   // stop that was to mute DMs too.
-  //
-  // The insert, the bell collapse and the read-clear all have to agree on the
-  // type or the collapse stops collapsing and the badge never clears.
   public static notificationTypeFor(
     type: ChatLobbyType,
   ): e_notification_types_enum {
@@ -2175,9 +2087,8 @@ export class ChatService {
         // notifyLobbyMembers bailed on the empty list -- the organizers' room
         // has never notified anyone in it.
         //
-        // Not narrowed to recently active staff. The list is small, and
-        // notifyPlayers already drops anyone with neither the bell nor a
-        // subscription to deliver to.
+        // Not narrowed to recently active staff. The list is small, and the
+        // push only reaches those with a device subscribed.
         for (const steamId of await this.organizerSteamIds()) {
           add(steamId);
         }
@@ -2508,12 +2419,6 @@ export class ChatService {
       [user.steam_id, thread],
     );
 
-    await this.notifications.markConversationRead(
-      ChatService.notificationTypeFor(type),
-      `${type}:${id}`,
-      user.steam_id,
-    );
-
     if (!row) {
       return null;
     }
@@ -2611,9 +2516,8 @@ export class ChatService {
   //
   // Cursors rather than counts, deliberately. The client is handed a room's
   // whole history when it joins, so it can count what is newer than the cursor
-  // itself -- and counting server side would mean either reaching into every
-  // lobby's redis hash on page load, or reading the bell, where
-  // collapseOlderUnread has already reduced each conversation to one row.
+  // itself -- and counting server side would mean reaching into every lobby's
+  // redis hash on page load.
   public async getReadState(user: User) {
     const rows = await this.postgres.query<
       Array<{ thread: string; last_read_at: Date }>

@@ -39,6 +39,31 @@ const chainableMulti = (result: unknown[]) => {
   return multi as any;
 };
 
+const ROOM = "chat:match:m-1";
+
+const chatPush = (overrides: Record<string, any> = {}) => ({
+  messageId: "11111111-1111-1111-1111-111111111111",
+  type: "ChatMessage" as const,
+  title: "Luke",
+  message: "hey",
+  entityId: "match:m-1",
+  threadKey: ROOM,
+  threadLabel: "Ancients vs Ratz",
+  icon: null as string | null,
+  senderSteamId: "76561100000000009",
+  blockExemptRoles: [] as any[],
+  ...overrides,
+});
+
+// What a window holds for a chat message: the push itself, stamped with when
+// postgres says it was queued.
+const heldChat = (overrides: Record<string, any> = {}) =>
+  JSON.stringify({
+    ...chatPush(),
+    at: "2026-10-02T12:00:00.000Z",
+    ...overrides,
+  });
+
 const subscription = (id: string) => ({
   id,
   endpoint: `https://fcm.googleapis.com/fcm/send/${id}`,
@@ -56,6 +81,8 @@ describe("PushNotificationsService", () => {
   // looking at anything, which is the case every pre-existing test assumes.
   let focus: Record<string, string[]>;
   let pipelined: string[];
+  // Deleted and edited chat messages, as the keys a delete or an edit writes.
+  let overrides: Record<string, string>;
   const redis = {
     exists: jest.fn().mockResolvedValue(0),
     subscribe: jest.fn().mockResolvedValue(1),
@@ -66,6 +93,9 @@ describe("PushNotificationsService", () => {
     get: jest.fn().mockResolvedValue(null),
     ttl: jest.fn().mockResolvedValue(-2),
     del: jest.fn().mockResolvedValue(1),
+    mget: jest.fn(async (...keys: string[]) =>
+      keys.map((key) => overrides[key] ?? null),
+    ),
     rpush: jest.fn().mockResolvedValue(1),
     expire: jest.fn().mockResolvedValue(1),
     multi: jest.fn(() => chainableMulti([[null, []]])),
@@ -114,6 +144,10 @@ describe("PushNotificationsService", () => {
   let updates: Array<{ sql: string; bindings: any[] }>;
   // What the badge-count query answers with.
   let unread: number;
+  // The recipient's read cursor for the thread a closing chat window is on.
+  let readTo: string | null;
+  // Senders the recipient has blocked, among those a chat window holds.
+  let blockedSenders: string[];
 
   // Keys are resolved from settings (with env taking precedence), so they are
   // not known until loadKeys() runs.
@@ -158,6 +192,9 @@ describe("PushNotificationsService", () => {
     updates = [];
     settings = {};
     unread = 4;
+    overrides = {};
+    readTo = null;
+    blockedSenders = [];
 
     postgres.query.mockImplementation(async (sql: string, bindings: any[]) => {
       if (sql.includes("AS unread")) {
@@ -165,6 +202,32 @@ describe("PushNotificationsService", () => {
       }
       if (sql.includes("FROM public.notifications\n")) {
         return notificationRow ? [notificationRow] : [];
+      }
+      if (sql.includes("now() AS at")) {
+        return (
+          recipients.length > 0 ? recipients : ["76561100000000001"]
+        ).flatMap((steam_id) =>
+          subscriptions.map((sub) => ({
+            steam_id,
+            quiet_seconds: quietSeconds,
+            subscription_id: sub.id,
+            endpoint: sub.endpoint,
+            p256dh: sub.p256dh,
+            auth: sub.auth,
+            at: new Date("2026-10-02T12:00:00.000Z"),
+          })),
+        );
+      }
+      if (sql.includes("chat_read_state crs")) {
+        return subscriptions.map((sub) => ({
+          quiet_seconds: quietSeconds,
+          last_read_at: readTo ? new Date(readTo) : null,
+          blocked: blockedSenders,
+          subscription_id: sub.id,
+          endpoint: sub.endpoint,
+          p256dh: sub.p256dh,
+          auth: sub.auth,
+        }));
       }
       if (sql.includes("push_subscriptions ps")) {
         return bundled.length > 0 ? bundled : deliveryRows();
@@ -413,76 +476,224 @@ describe("PushNotificationsService", () => {
   });
 
   describe("focus gating", () => {
-    const chat = () =>
-      notification({
-        type: "ChatMessage",
-        title: "Luke",
-        message: "hey",
-        entity_id: "match:m-1",
-        data: { threadKey: "chat:match:m-1", threadLabel: "Ancients vs Ratz" },
-      });
-
     it("says nothing to a player already reading the conversation", async () => {
-      notificationRow = chat();
-      recipients = ["76561100000000001"];
-      focus["76561100000000001"] = ["chat:match:m-1"];
+      focus["76561100000000001"] = [ROOM];
 
-      await service.sendForNotification({
-        id: notificationRow.id,
-        type: "ChatMessage",
-      });
+      await service.sendChatMessage(["76561100000000001"], chatPush());
 
       expect(webPush.sendNotification).not.toHaveBeenCalled();
     });
 
     it("still buzzes a player looking at a different conversation", async () => {
-      notificationRow = chat();
-      recipients = ["76561100000000001"];
       focus["76561100000000001"] = ["chat:direct:1:2"];
 
-      await service.sendForNotification({
-        id: notificationRow.id,
-        type: "ChatMessage",
-      });
+      await service.sendChatMessage(["76561100000000001"], chatPush());
 
       expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
     });
 
-    it("gates each recipient of a fan-out on their own attention", async () => {
-      // One row per lobby member, so the reader and the absentee arrive
-      // together and only one of them should hear about it.
-      notificationRow = chat();
+    it("gates each recipient of a lobby on their own attention", async () => {
       recipients = ["76561100000000001", "76561100000000002"];
-      focus["76561100000000001"] = ["chat:match:m-1"];
+      focus["76561100000000001"] = [ROOM];
 
-      await service.sendForIds([notificationRow.id]);
+      await service.sendChatMessage(recipients, chatPush());
 
       expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe("bundling", () => {
-    const chat = (overrides: Record<string, any> = {}) =>
-      notification({
-        type: "ChatMessage",
-        title: "Luke",
-        message: "hey",
-        entity_id: "match:m-1",
-        data: { threadKey: "chat:match:m-1", threadLabel: "Ancients vs Ratz" },
-        ...overrides,
-      });
+  describe("chat", () => {
+    const payloadOf = (call: number) =>
+      JSON.parse((webPush.sendNotification as jest.Mock).mock.calls[call][1]);
 
+    const closeWindow = async (entries: string[]) => {
+      redis.multi.mockReturnValueOnce(chainableMulti([[null, entries]]));
+      await service.sendPending("76561100000000001", ROOM);
+    };
+
+    it("never reads or writes a notifications row for the message", async () => {
+      await service.sendChatMessage(["76561100000000001"], chatPush());
+      await closeWindow([heldChat()]);
+
+      expect(webPush.sendNotification).toHaveBeenCalledTimes(2);
+      // The badge still counts the bell; nothing else touches it.
+      expect(
+        postgres.query.mock.calls.filter(
+          ([sql]: [string]) =>
+            sql.includes("public.notifications") && !sql.includes("AS unread"),
+        ),
+      ).toEqual([]);
+    });
+
+    it("asks only the push category the room belongs to", async () => {
+      await service.sendChatMessage(
+        ["76561100000000001"],
+        chatPush({ type: "MatchChatMessage" }),
+      );
+
+      const [, bindings] = postgres.query.mock.calls.find(([sql]: [string]) =>
+        sql.includes("now() AS at"),
+      );
+
+      // match_chat is off unless the player turned it on.
+      expect(bindings).toEqual([["76561100000000001"], "match_chat", false]);
+    });
+
+    it("does not push a message deleted before it went out", async () => {
+      await service.retractChatMessage(chatPush().messageId);
+      overrides[redis.set.mock.calls.at(-1)[0]] = "1";
+
+      await service.sendChatMessage(["76561100000000001"], chatPush());
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
+
+    it("pushes what an edit made of the message", async () => {
+      await service.editChatMessage(chatPush().messageId, "fixed");
+      overrides[redis.set.mock.calls.at(-1)[0]] = "fixed";
+
+      await service.sendChatMessage(["76561100000000001"], chatPush());
+
+      expect(payloadOf(0)).toMatchObject({ body: "fixed" });
+    });
+
+    it("keeps deletes and edits for as long as a night of quiet hours", async () => {
+      await service.retractChatMessage("m-a");
+      await service.editChatMessage("m-b", "fixed");
+
+      expect(redis.set).toHaveBeenCalledWith(
+        "notifications:chat-retracted:m-a",
+        1,
+        "EX",
+        25 * 60 * 60,
+      );
+      expect(redis.set).toHaveBeenCalledWith(
+        "notifications:chat-edited:m-b",
+        "fixed",
+        "EX",
+        25 * 60 * 60,
+      );
+    });
+
+    it("leaves a deleted message out of the summary", async () => {
+      overrides["notifications:chat-retracted:m-b"] = "1";
+
+      await closeWindow([
+        heldChat({ messageId: "m-a" }),
+        heldChat({ messageId: "m-b" }),
+        heldChat({ messageId: "m-c" }),
+      ]);
+
+      expect(payloadOf(0)).toMatchObject({ body: "2 new messages" });
+    });
+
+    it("does not repeat the first message when everything after it was deleted", async () => {
+      overrides["notifications:chat-retracted:m-b"] = "1";
+
+      await closeWindow([
+        heldChat({ messageId: "m-a", pushed: true }),
+        heldChat({ messageId: "m-b" }),
+      ]);
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
+
+    it("still delivers a lone message quiet hours held back", async () => {
+      await closeWindow([heldChat({ messageId: "m-a" })]);
+
+      expect(payloadOf(0)).toMatchObject({ body: "hey" });
+    });
+
+    it("says nothing when every held message was deleted", async () => {
+      overrides["notifications:chat-retracted:m-a"] = "1";
+
+      await closeWindow([heldChat({ messageId: "m-a" })]);
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
+
+    it("shows a held message as it was edited", async () => {
+      overrides["notifications:chat-edited:m-a"] = "fixed";
+
+      await closeWindow([heldChat({ messageId: "m-a", message: "typo" })]);
+
+      expect(payloadOf(0)).toMatchObject({ body: "fixed" });
+    });
+
+    it("counts only what the player has not read since", async () => {
+      readTo = "2026-10-02T12:00:05.000Z";
+
+      await closeWindow([
+        heldChat({ messageId: "m-a", at: "2026-10-02T12:00:00.000Z" }),
+        heldChat({ messageId: "m-b", at: "2026-10-02T12:00:10.000Z" }),
+        heldChat({ messageId: "m-c", at: "2026-10-02T12:00:11.000Z" }),
+      ]);
+
+      expect(payloadOf(0)).toMatchObject({ body: "2 new messages" });
+    });
+
+    it("says nothing once the player has read the whole burst", async () => {
+      readTo = "2026-10-02T12:00:30.000Z";
+
+      await closeWindow([
+        heldChat({ messageId: "m-a" }),
+        heldChat({ messageId: "m-b" }),
+      ]);
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
+
+    it("drops what a sender the player blocked meanwhile said", async () => {
+      blockedSenders = ["76561100000000009"];
+
+      await closeWindow([
+        heldChat({ messageId: "m-a", senderSteamId: "76561100000000009" }),
+        heldChat({
+          messageId: "m-b",
+          title: "Ratz",
+          message: "still here",
+          senderSteamId: "76561100000000008",
+        }),
+      ]);
+
+      expect(payloadOf(0)).toMatchObject({
+        title: "Ratz · Ancients vs Ratz",
+        body: "still here",
+      });
+    });
+
+    it("lets a moderator's block leave a group room alone", async () => {
+      await closeWindow([
+        heldChat({ blockExemptRoles: ["moderator", "administrator"] }),
+      ]);
+
+      const [, bindings] = postgres.query.mock.calls.find(([sql]: [string]) =>
+        sql.includes("chat_read_state crs"),
+      );
+
+      expect(bindings).toEqual([
+        "76561100000000001",
+        ROOM,
+        ["76561100000000009"],
+        ["moderator", "administrator"],
+        "chat",
+        true,
+      ]);
+    });
+
+    it("skips an entry it cannot read rather than the whole window", async () => {
+      await closeWindow(["not json", heldChat()]);
+
+      expect(payloadOf(0)).toMatchObject({ body: "hey" });
+    });
+  });
+
+  describe("bundling", () => {
     const payloadOf = (call: number) =>
       JSON.parse((webPush.sendNotification as jest.Mock).mock.calls[call][1]);
 
     it("pushes the first message of a burst straight away", async () => {
-      notificationRow = chat();
-      recipients = ["76561100000000001"];
-
-      await service.sendForNotification({
-        id: notificationRow.id,
-        type: "ChatMessage",
-      });
+      await service.sendChatMessage(["76561100000000001"], chatPush());
 
       expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
       // Named room and all: a message on its own still has to say where it
@@ -490,46 +701,44 @@ describe("PushNotificationsService", () => {
       expect(payloadOf(0)).toMatchObject({
         title: "Luke · Ancients vs Ratz",
         body: "hey",
-        tag: "chat:match:m-1",
+        url: "/chat/match%3Am-1",
+        tag: ROOM,
         renotify: true,
-        threadKey: "chat:match:m-1",
+        threadKey: ROOM,
       });
     });
 
     it("does not repeat a direct message's sender as its room", async () => {
       // A DM's label is whoever sent it, so naming the room would say the
       // same name twice.
-      notificationRow = chat({
-        entity_id: "direct:1:2",
-        data: { threadKey: "chat:direct:1:2", threadLabel: "Luke" },
-      });
-      recipients = ["76561100000000001"];
-
-      await service.sendForNotification({
-        id: notificationRow.id,
-        type: "ChatMessage",
-      });
+      await service.sendChatMessage(
+        ["76561100000000001"],
+        chatPush({
+          entityId: "direct:1:2",
+          threadKey: "chat:direct:1:2",
+          threadLabel: "Luke",
+        }),
+      );
 
       expect(payloadOf(0)).toMatchObject({ title: "Luke" });
     });
 
     it("holds a message that lands inside an open window", async () => {
-      notificationRow = chat();
-      recipients = ["76561100000000001"];
       // The window is already taken, which is what a second message sees.
       redis.set.mockResolvedValueOnce(null);
       redis.get.mockResolvedValueOnce("token-1");
       redis.ttl.mockResolvedValueOnce(12);
 
-      await service.sendForNotification({
-        id: notificationRow.id,
-        type: "ChatMessage",
-      });
+      await service.sendChatMessage(["76561100000000001"], chatPush());
 
       expect(webPush.sendNotification).not.toHaveBeenCalled();
+      expect(redis.rpush).toHaveBeenCalledWith(
+        `notifications:push-pending:76561100000000001:${ROOM}`,
+        heldChat(),
+      );
       expect(pushDeliveryQueue.add).toHaveBeenCalledWith(
         SendPushDelivery.name,
-        { steamId: "76561100000000001", thread: "chat:match:m-1" },
+        { steamId: "76561100000000001", thread: ROOM },
         expect.objectContaining({
           // Colons encoded: BullMQ rejects a custom job id containing one.
           jobId: "push-trail.76561100000000001.chat%3Amatch%3Am-1.token-1",
@@ -544,36 +753,25 @@ describe("PushNotificationsService", () => {
     it("counts the message that opened the window", async () => {
       // The summary replaces the leading notification on the device, so
       // leaving it out of the tally makes a burst of four report three.
-      notificationRow = chat();
-      recipients = ["76561100000000001"];
-
-      await service.sendForNotification({
-        id: notificationRow.id,
-        type: "ChatMessage",
-      });
+      await service.sendChatMessage(["76561100000000001"], chatPush());
 
       const reset = redis.multi.mock.results.at(-1)?.value;
 
       expect(reset.del).toHaveBeenCalledWith(
-        "notifications:push-pending:76561100000000001:chat:match:m-1",
+        `notifications:push-pending:76561100000000001:${ROOM}`,
       );
       expect(reset.rpush).toHaveBeenCalledWith(
-        "notifications:push-pending:76561100000000001:chat:match:m-1",
-        notificationRow.id,
+        `notifications:push-pending:76561100000000001:${ROOM}`,
+        heldChat({ pushed: true }),
       );
     });
 
     it("takes the leading edge when the window expired mid-decision", async () => {
-      notificationRow = chat();
-      recipients = ["76561100000000001"];
       redis.set.mockResolvedValueOnce(null);
       redis.get.mockResolvedValueOnce(null);
       redis.ttl.mockResolvedValueOnce(-2);
 
-      await service.sendForNotification({
-        id: notificationRow.id,
-        type: "ChatMessage",
-      });
+      await service.sendChatMessage(["76561100000000001"], chatPush());
 
       expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
       expect(pushDeliveryQueue.add).not.toHaveBeenCalled();
@@ -583,21 +781,16 @@ describe("PushNotificationsService", () => {
       // Both attempts lost the race and both then found the key already gone.
       // Reporting a leading edge without holding the key opens a bundle that
       // nothing will ever drain, and the next message takes the edge as well.
-      notificationRow = chat();
-      recipients = ["76561100000000001"];
       redis.set.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
       redis.get.mockResolvedValue(null);
       redis.ttl.mockResolvedValue(-2);
 
-      await service.sendForNotification({
-        id: notificationRow.id,
-        type: "ChatMessage",
-      });
+      await service.sendChatMessage(["76561100000000001"], chatPush());
 
       expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
       // Plain SET, not SET NX: the two NX attempts above are what just failed.
       expect(redis.set).toHaveBeenLastCalledWith(
-        "notifications:push-window:76561100000000001:chat:match:m-1",
+        `notifications:push-window:76561100000000001:${ROOM}`,
         expect.any(String),
         "EX",
         expect.any(Number),
@@ -608,71 +801,61 @@ describe("PushNotificationsService", () => {
       // A bundling window opened seconds before 22:00 closes inside quiet
       // hours, and delivering its summary there is the buzz the hold exists to
       // prevent.
-      const held = ["id-a", "id-b"];
-      redis.multi.mockReturnValueOnce(chainableMulti([[null, held]]));
+      redis.multi.mockReturnValueOnce(
+        chainableMulti([
+          [
+            null,
+            [heldChat({ messageId: "m-a" }), heldChat({ messageId: "m-b" })],
+          ],
+        ]),
+      );
+      quietSeconds = 6 * 60 * 60;
 
-      notificationRow = chat();
-      bundled = held.map((id) => ({
-        ...chat({ id }),
-        steam_id: "76561100000000001",
-        quiet_seconds: 6 * 60 * 60,
-        subscription_id: "sub-1",
-        endpoint: subscription("sub-1").endpoint,
-        p256dh: "p256dh",
-        auth: "auth",
-      }));
-
-      await service.sendPending("76561100000000001", "chat:match:m-1");
+      await service.sendPending("76561100000000001", ROOM);
 
       expect(webPush.sendNotification).not.toHaveBeenCalled();
       expect(pushDeliveryQueue.add).toHaveBeenCalledWith(
         SendPushDelivery.name,
-        { steamId: "76561100000000001", thread: "chat:match:m-1" },
+        { steamId: "76561100000000001", thread: ROOM },
         expect.objectContaining({ delay: 6 * 60 * 60 * 1000 }),
       );
     });
 
     it("replaces the burst with one summary when the window closes", async () => {
-      const held = ["id-a", "id-b", "id-c"];
-      redis.multi.mockReturnValueOnce(chainableMulti([[null, held]]));
+      redis.multi.mockReturnValueOnce(
+        chainableMulti([
+          [
+            null,
+            ["m-a", "m-b", "m-c"].map((messageId) => heldChat({ messageId })),
+          ],
+        ]),
+      );
 
-      notificationRow = chat();
-      bundled = held.map((id) => ({
-        ...chat({ id }),
-        steam_id: "76561100000000001",
-        subscription_id: "sub-1",
-        endpoint: subscription("sub-1").endpoint,
-        p256dh: "p256dh",
-        auth: "auth",
-      }));
-
-      await service.sendPending("76561100000000001", "chat:match:m-1");
+      await service.sendPending("76561100000000001", ROOM);
 
       expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
       expect(payloadOf(0)).toMatchObject({
         title: "Luke · Ancients vs Ratz",
         body: "3 new messages",
-        tag: "chat:match:m-1",
+        tag: ROOM,
         renotify: true,
-        threadKey: "chat:match:m-1",
+        threadKey: ROOM,
       });
     });
 
     it("names the room when a burst has more than one sender", async () => {
-      const held = ["id-a", "id-b", "id-c"];
-      redis.multi.mockReturnValueOnce(chainableMulti([[null, held]]));
+      redis.multi.mockReturnValueOnce(
+        chainableMulti([
+          [
+            null,
+            ["Luke", "Ratz", "Catz"].map((title, index) =>
+              heldChat({ messageId: `m-${index}`, title }),
+            ),
+          ],
+        ]),
+      );
 
-      notificationRow = chat();
-      bundled = ["Luke", "Ratz", "Catz"].map((title, index) => ({
-        ...chat({ id: held[index], title }),
-        steam_id: "76561100000000001",
-        subscription_id: "sub-1",
-        endpoint: subscription("sub-1").endpoint,
-        p256dh: "p256dh",
-        auth: "auth",
-      }));
-
-      await service.sendPending("76561100000000001", "chat:match:m-1");
+      await service.sendPending("76561100000000001", ROOM);
 
       expect(payloadOf(0)).toMatchObject({
         title: "Ancients vs Ratz",
@@ -683,19 +866,14 @@ describe("PushNotificationsService", () => {
     it("holds a message until quiet hours are over", async () => {
       // Dropped outright before, so a night of messages arrived as nothing at
       // all -- a silent phone and a full bell in the morning.
-      notificationRow = chat();
-      recipients = ["76561100000000001"];
       quietSeconds = 6 * 60 * 60;
 
-      await service.sendForNotification({
-        id: notificationRow.id,
-        type: "ChatMessage",
-      });
+      await service.sendChatMessage(["76561100000000001"], chatPush());
 
       expect(webPush.sendNotification).not.toHaveBeenCalled();
       expect(pushDeliveryQueue.add).toHaveBeenCalledWith(
         SendPushDelivery.name,
-        { steamId: "76561100000000001", thread: "chat:match:m-1" },
+        { steamId: "76561100000000001", thread: ROOM },
         // Woken when the window closes, not on the bundling window.
         expect.objectContaining({ delay: 6 * 60 * 60 * 1000 }),
       );
@@ -718,19 +896,14 @@ describe("PushNotificationsService", () => {
     it("keeps the held payload alive past the whole quiet window", async () => {
       // The pending list used to expire after fifteen minutes, which would
       // have thrown the night away long before anyone woke up.
-      notificationRow = chat();
-      recipients = ["76561100000000001"];
       quietSeconds = 8 * 60 * 60;
 
-      await service.sendForNotification({
-        id: notificationRow.id,
-        type: "ChatMessage",
-      });
+      await service.sendChatMessage(["76561100000000001"], chatPush());
 
       const reset = redis.multi.mock.results.at(-1)?.value;
 
       expect(reset.expire).toHaveBeenCalledWith(
-        "notifications:push-pending:76561100000000001:chat:match:m-1",
+        `notifications:push-pending:76561100000000001:${ROOM}`,
         8 * 60 * 60 + 300,
       );
     });
@@ -738,32 +911,51 @@ describe("PushNotificationsService", () => {
     it("releases the window even when nothing survives the gate", async () => {
       // Otherwise the next burst's leading push is swallowed too, and goes on
       // being swallowed until the key expires on its own.
-      await service.sendPending("76561100000000001", "chat:match:m-1");
+      await service.sendPending("76561100000000001", ROOM);
 
       expect(redis.del).toHaveBeenCalledWith(
-        "notifications:push-window:76561100000000001:chat:match:m-1",
+        `notifications:push-window:76561100000000001:${ROOM}`,
       );
       expect(webPush.sendNotification).not.toHaveBeenCalled();
     });
 
     it("says nothing if the player opened the thread while it was held", async () => {
+      redis.multi.mockReturnValueOnce(
+        chainableMulti([
+          [
+            null,
+            [heldChat({ messageId: "m-a" }), heldChat({ messageId: "m-b" })],
+          ],
+        ]),
+      );
+      focus["76561100000000001"] = [ROOM];
+
+      await service.sendPending("76561100000000001", ROOM);
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
+
+    it("still summarises a bundled type that writes rows", async () => {
       const held = ["id-a", "id-b"];
       redis.multi.mockReturnValueOnce(chainableMulti([[null, held]]));
 
-      notificationRow = chat();
+      notificationRow = notification();
       bundled = held.map((id) => ({
-        ...chat({ id }),
+        ...notification({ id }),
         steam_id: "76561100000000001",
+        quiet_seconds: 0,
         subscription_id: "sub-1",
         endpoint: subscription("sub-1").endpoint,
         p256dh: "p256dh",
         auth: "auth",
       }));
-      focus["76561100000000001"] = ["chat:match:m-1"];
 
-      await service.sendPending("76561100000000001", "chat:match:m-1");
+      await service.sendPending("76561100000000001", "MatchStatusChange:m-1");
 
-      expect(webPush.sendNotification).not.toHaveBeenCalled();
+      expect(payloadOf(0)).toMatchObject({
+        title: "Match ready",
+        body: "2 new notifications",
+      });
     });
   });
 
@@ -969,18 +1161,11 @@ describe("PushNotificationsService", () => {
     });
 
     it("gives chat no buttons", async () => {
-      // Reading the bell row would leave the conversation's own cursor where
-      // it was, so a Dismiss here would lie.
-      notificationRow = notification({
-        type: "ChatMessage",
-        title: "Luke",
-        message: "hey",
-        entity_id: "match:m-1",
-        data: { threadKey: "chat:match:m-1", threadLabel: "Ancients vs Ratz" },
-      });
-      recipients = ["76561100000000001"];
+      // Chat has no bell row to mark, and marking one read would leave the
+      // conversation's own cursor where it was.
+      await service.sendChatMessage(["76561100000000001"], chatPush());
 
-      expect((await send()).actions).toEqual([]);
+      expect(payloadOf(0).actions).toEqual([]);
     });
 
     it("keeps a broken stored action from blocking the push", async () => {

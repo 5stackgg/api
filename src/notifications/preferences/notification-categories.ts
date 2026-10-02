@@ -116,8 +116,6 @@ export const PUSH_KEYS: PreferenceKey[] = [
 // insert time against a known recipient list, and a role-broadcast row has no
 // such list to filter against.
 export const IN_APP_KEYS: PreferenceKey[] = [
-  { key: "ChatMessage", defaultEnabled: true },
-  { key: "MatchChatMessage", defaultEnabled: true },
   { key: "TeamInvite", defaultEnabled: true },
   { key: "TournamentTeamInvite", defaultEnabled: true },
   { key: "TournamentInvite", defaultEnabled: true },
