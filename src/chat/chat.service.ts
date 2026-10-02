@@ -43,7 +43,7 @@ export class ChatService {
     [ChatLobbyType.MatchTeam, 60 * 60],
     [ChatLobbyType.MatchMaking, 60 * 60],
     [ChatLobbyType.Draft, 60 * 60],
-    [ChatLobbyType.Tournament, 60 * 60 * 24],
+    [ChatLobbyType.Tournament, 60 * 60 * 24 * 7],
     [ChatLobbyType.Organizer, 60 * 60 * 24],
   ]);
 
@@ -247,6 +247,9 @@ export class ChatService {
           AND from_steam_id = $3::bigint
           AND created_at > now() - make_interval(secs => $4::int)`;
 
+  // The web keeps the room's tab open for the same window.
+  public static readonly FINISHED_TOURNAMENT_CHAT_DAYS = 7;
+
   // A drafted free agent is on a roster and gets in that way; withdrawn means
   // they left the pool.
   private static readonly TOURNAMENT_CHAT_FREE_AGENT_STATUSES: e_tournament_free_agent_statuses_enum[] =
@@ -283,7 +286,7 @@ export class ChatService {
     {
       setting: SystemSettingName.ChatTtlTournament,
       type: ChatLobbyType.Tournament,
-      fallback: 60 * 60 * 24,
+      fallback: 60 * 60 * 24 * 7,
     },
     {
       setting: SystemSettingName.ChatTtlOrganizers,
@@ -376,6 +379,20 @@ export class ChatService {
         },
       }),
     );
+  }
+
+  // Judged on the database's clock, the one finished_at was stamped with. A
+  // tournament finished before finished_at existed has none and stays closed.
+  private async isTournamentChatOpen(id: string): Promise<boolean> {
+    const [row] = await this.postgres.query<Array<{ chat_open: boolean }>>(
+      `SELECT (status <> 'Finished'
+               OR finished_at > now() - make_interval(days => $2::int)) AS chat_open
+         FROM public.tournaments
+        WHERE id = $1::uuid`,
+      [id, ChatService.FINISHED_TOURNAMENT_CHAT_DAYS],
+    );
+
+    return row?.chat_open === true;
   }
 
   // Who is allowed in a room at all.
@@ -528,6 +545,10 @@ export class ChatService {
         );
 
         if (tournaments.length === 0) {
+          return false;
+        }
+
+        if (!(await this.isTournamentChatOpen(id))) {
           return false;
         }
         break;
