@@ -279,6 +279,77 @@ describe("notifications (SQL-driven)", () => {
     });
   });
 
+  describe("banned teammates", () => {
+    const finishedMatchWith = async (steamIds: Array<string>) => {
+      const { matchId } = await fx.bareMatch(new Date().toISOString());
+      const [match] = await postgres.query<
+        Array<{ lineup_1_id: string; lineup_2_id: string }>
+      >(`SELECT lineup_1_id, lineup_2_id FROM matches WHERE id = $1`, [
+        matchId,
+      ]);
+      for (const [index, steamId] of steamIds.entries()) {
+        await fx.lineupPlayer(
+          index % 2 === 0 ? match.lineup_1_id : match.lineup_2_id,
+          steamId,
+        );
+      }
+      await postgres.query(
+        `UPDATE matches
+            SET started_at = now(), status = 'Finished', match_options_id = $2
+          WHERE id = $1`,
+        [matchId, await fx.matchOptions()],
+      );
+    };
+
+    const rows = async () =>
+      postgres.query<
+        Array<{
+          type: string;
+          steam_id: string;
+          entity_id: string;
+          in_app: boolean;
+        }>
+      >(
+        `SELECT type::text AS type, steam_id::text AS steam_id, entity_id, in_app
+           FROM notifications
+          ORDER BY steam_id`,
+      );
+
+    const ban = (steamId: string) =>
+      notifications().notifyMatchPlayersOfSanction({
+        sanctionId: "sanction-1",
+        steamId,
+        type: "ban",
+        reason: "VAC ban on record (1 ban)",
+      });
+
+    it("tells every co-player with its own type", async () => {
+      const [banned, teammate, opponent] = await fx.players(3);
+      await finishedMatchWith([banned, teammate, opponent]);
+
+      await ban(banned);
+
+      expect(await rows()).toEqual(
+        [teammate, opponent].sort().map((steamId) => ({
+          type: "TeammateBanned",
+          steam_id: steamId,
+          entity_id: banned,
+          in_app: true,
+        })),
+      );
+    });
+
+    it("skips a co-player who muted it in the bell and cannot be pushed", async () => {
+      const [banned, muted, listening] = await fx.players(3);
+      await finishedMatchWith([banned, muted, listening]);
+      await preferences().set(muted, "in_app", "TeammateBanned", false);
+
+      await ban(banned);
+
+      expect((await rows()).map((row) => row.steam_id)).toEqual([listening]);
+    });
+  });
+
   describe("push-only rows", () => {
     const rows = async () =>
       postgres.query<
@@ -765,6 +836,27 @@ describe("notifications (SQL-driven)", () => {
       });
 
       expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
+
+    it("pushes banned teammates under their own category, not account", async () => {
+      const [banned, muted, accountMuted] = await fx.players(3);
+      for (const steamId of [muted, accountMuted]) {
+        await subscribe(steamId);
+        await postgres.query(
+          `INSERT INTO notifications (type, title, message, role, steam_id, entity_id)
+                VALUES ('TeammateBanned', 'Player Banned', 'x', 'user', $1::bigint, $2)`,
+          [steamId, banned],
+        );
+      }
+      await preferences().set(muted, "push", "teammate_bans", false);
+      await preferences().set(accountMuted, "push", "account", false);
+
+      await (await configuredService()).sendForBatch("TeammateBanned", banned);
+
+      expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
+      expect(
+        (webPush.sendNotification as jest.Mock).mock.calls[0][0].endpoint,
+      ).toBe(`https://fcm.googleapis.com/fcm/send/${accountMuted}`);
     });
 
     it("holds rather than drops during the recipient's quiet hours", async () => {

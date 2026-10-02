@@ -171,8 +171,8 @@ export class NotificationsService {
     // months of team-mates is routinely hundreds of rows and the event trigger
     // fires per row, so every one of them resolved recipients and sent on its
     // own; notifyPlayers claims the burst so a single job covers it.
-    const notified = await this.notifyPlayers("PlayerSanctioned", {
-      title: "Player Sanctioned",
+    const notified = await this.notifyPlayers("TeammateBanned", {
+      title: "Player Banned",
       message,
       role: "user",
       entity_id: sanction.steamId,

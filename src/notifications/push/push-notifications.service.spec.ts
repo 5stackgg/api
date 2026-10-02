@@ -1329,7 +1329,7 @@ describe("PushNotificationsService", () => {
     expect(PushNotificationsService.isBatched("TournamentCreated")).toBe(true);
     // A notifyPlayers fan-out rather than a notifyActivePlayers one, and the
     // largest of them: every co-player from six months of matches.
-    expect(PushNotificationsService.isBatched("PlayerSanctioned")).toBe(true);
+    expect(PushNotificationsService.isBatched("TeammateBanned")).toBe(true);
     expect(PushNotificationsService.isBatched("MatchStatusChange")).toBe(false);
   });
 });

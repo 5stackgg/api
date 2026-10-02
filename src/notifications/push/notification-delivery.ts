@@ -63,6 +63,7 @@ const DELIVERY_POLICIES: Record<string, e_notification_types_enum[]> = {
     "NameChangeApproved",
     "NameChangeDenied",
     "PlayerSanctioned",
+    "TeammateBanned",
     "PlayerWarning",
     "TournamentReminder",
     "TournamentCheckInOpen",

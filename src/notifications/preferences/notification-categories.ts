@@ -70,6 +70,7 @@ export const PUSH_CATEGORIES: Record<string, e_notification_types_enum[]> = {
     "PlayerWarning",
     "AwardGranted",
   ],
+  teammate_bans: ["TeammateBanned"],
   news: ["NewsPublished"],
   staff_moderation: ["MatchSupport", "MatchAbandoned", "NameChangeRequest"],
   staff_infrastructure: [
@@ -102,6 +103,7 @@ export const PUSH_KEYS: PreferenceKey[] = [
   { key: "invites", defaultEnabled: true },
   { key: "utility", defaultEnabled: true },
   { key: "account", defaultEnabled: true },
+  { key: "teammate_bans", defaultEnabled: true },
   { key: "news", defaultEnabled: true },
   { key: "staff_moderation", defaultEnabled: true, adminOnly: true },
   // Infrastructure chatter is constant and rarely actionable on a phone.
@@ -124,6 +126,7 @@ export const IN_APP_KEYS: PreferenceKey[] = [
   { key: "MatchStatsReady", defaultEnabled: true },
   { key: "ClipReady", defaultEnabled: true },
   { key: "AwardGranted", defaultEnabled: true },
+  { key: "TeammateBanned", defaultEnabled: true },
   { key: "NewsPublished", defaultEnabled: true },
   { key: "TournamentReminder", defaultEnabled: true },
   { key: "TournamentCheckInOpen", defaultEnabled: true },

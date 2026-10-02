@@ -10,7 +10,7 @@ INSERT INTO e_notification_types ("value", "description") VALUES
     ('DedicatedServerRconStatus', 'DedicatedServerRconStatus'),
     ('MatchStatusChange', 'Match Status Change Notification'),
     ('StorageScan', 'Storage Scan'),
-    ('PlayerSanctioned', 'A player you recently played with received a sanction'),
+    ('PlayerSanctioned', 'You were banned, or (for staff) a player was banned'),
     ('ScrimRequestReceived', 'A team requested to scrim yours'),
     ('ScrimRequestCountered', 'A team proposed a different scrim time'),
     ('ScrimRequestAccepted', 'Your scrim request was accepted'),
@@ -52,6 +52,7 @@ INSERT INTO e_notification_types ("value", "description") VALUES
     ('TournamentPartySignup', 'Your lobby was signed up for a tournament as a free agent party'),
     ('PlayerWarning', 'A moderator issued you a warning'),
     ('MatchFound', 'A match was found and is waiting for you to ready up'),
-    ('AdminCall', 'An admin is calling you')
+    ('AdminCall', 'An admin is calling you'),
+    ('TeammateBanned', 'A player you played with in the last 6 months was banned')
 ON CONFLICT("value") DO UPDATE
     SET "description" = EXCLUDED."description";
