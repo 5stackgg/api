@@ -44,6 +44,7 @@ select_permissions:
         - cfg
         - extra_game_params
         - valve_mode
+        - system
         - created_at
         - updated_at
       computed_fields:
@@ -66,6 +67,7 @@ select_permissions:
         - cfg
         - extra_game_params
         - valve_mode
+        - system
         - created_at
         - updated_at
       computed_fields:

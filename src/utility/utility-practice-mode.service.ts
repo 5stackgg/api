@@ -71,13 +71,17 @@ export class UtilityPracticeModeService implements OnApplicationBootstrap {
       >(
         // The cfg is installed once and is the operator's afterwards: this runs
         // on every boot, and re-asserting EXCLUDED.cfg would silently undo any
-        // cvar they had edited on this mode. competitive_safe is the one thing
-        // held down, because a practice mode that claims to be safe would let
-        // sv_cheats into a ranked match.
-        `INSERT INTO public.game_modes (slug, name, description, competitive_safe, cfg, enabled)
-         VALUES ($1, $2, $3, false, $4, true)
+        // cvar they had edited on this mode. competitive_safe is held down,
+        // because a practice mode that claims to be safe would let sv_cheats
+        // into a ranked match; system keeps it from being deleted or retired,
+        // and a row from before that existed is brought back into service.
+        `INSERT INTO public.game_modes (slug, name, description, competitive_safe, cfg, enabled, system)
+         VALUES ($1, $2, $3, false, $4, true, true)
          ON CONFLICT (slug) DO UPDATE
-            SET competitive_safe = false
+            SET competitive_safe = false,
+                system = true,
+                enabled = true,
+                archived_at = NULL
          RETURNING id::text AS id, slug`,
         [
           UtilityPracticeModeService.SLUG,

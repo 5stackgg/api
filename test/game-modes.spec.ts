@@ -651,7 +651,7 @@ describe("unranked game modes (SQL-driven)", () => {
 
 // The starter modes are seeded on every boot, so they have to survive an
 // operator editing them and re-apply without duplicating anything.
-describe("starter game modes (SQL-driven)", () => {
+describe("starter and built-in game modes (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
 
@@ -671,16 +671,40 @@ describe("starter game modes (SQL-driven)", () => {
     );
   };
 
+  const starters = ["arenas", "chaos", "deathmatch", "retakes"];
+
   const seeded = async (): Promise<Array<Record<string, any>>> =>
     await postgres.query(
-      `SELECT slug, name, enabled, competitive_safe, cfg
-         FROM game_modes WHERE slug IN ('retakes','deathmatch')
+      `SELECT slug, name, enabled, competitive_safe, cfg, valve_mode
+         FROM game_modes WHERE slug = ANY($1)
         ORDER BY slug`,
+      [starters],
     );
 
-  it("ships retakes and deathmatch out of the box", async () => {
+  const addPlugin = async (slug: string): Promise<void> => {
+    await postgres.query(
+      `INSERT INTO game_plugins (slug, kind, name, author, description)
+       VALUES ($1, 'game', $1, 'tester', 'a test plugin')
+       ON CONFLICT (slug) DO NOTHING`,
+      [slug],
+    );
+  };
+
+  const pluginsOf = async (slug: string): Promise<Array<string>> =>
+    (
+      await postgres.query<Array<{ plugin_slug: string }>>(
+        `SELECT mp.plugin_slug
+           FROM game_mode_plugins mp
+           JOIN game_modes m ON m.id = mp.game_mode_id
+          WHERE m.slug = $1
+          ORDER BY mp.plugin_slug`,
+        [slug],
+      )
+    ).map((row) => row.plugin_slug);
+
+  it("offers arenas, chaos, deathmatch and retakes out of the box", async () => {
     const modes = await seeded();
-    expect(modes.map((mode) => mode.slug)).toEqual(["deathmatch", "retakes"]);
+    expect(modes.map((mode) => mode.slug)).toEqual(starters);
   });
 
   it("keeps them out of draft lobbies by default", async () => {
@@ -688,35 +712,93 @@ describe("starter game modes (SQL-driven)", () => {
     expect(modes.every((mode) => mode.competitive_safe === false)).toBe(true);
   });
 
-  it("gives each one a cvar block", async () => {
+  // The Deathmatch plugin patches Valve's deathmatch rules, so its mode only
+  // works on that Valve mode.
+  it("runs Deathmatch on Valve's deathmatch", async () => {
     const modes = await seeded();
-    expect(modes.every((mode) => (mode.cfg ?? "").includes("mp_"))).toBe(true);
+    expect(
+      Object.fromEntries(modes.map((mode) => [mode.slug, mode.valve_mode])),
+    ).toEqual({
+      arenas: null,
+      chaos: "competitive",
+      deathmatch: "deathmatch",
+      retakes: null,
+    });
   });
 
-  // The file is re-applied on every boot; a second pass must not duplicate.
-  it("re-applies without duplicating", async () => {
-    const before = await seeded();
+  it("wires each one to its plugin once the registry has it", async () => {
     await reapply();
-    const after = await seeded();
+    expect(await pluginsOf("chaos")).toEqual([]);
 
-    expect(after.length).toEqual(before.length);
+    await addPlugin("csroll");
+    await reapply();
+
+    expect(await pluginsOf("chaos")).toEqual(["csroll"]);
   });
 
-  it("keeps an operator's edits when it re-applies", async () => {
+  it("leaves a mode's plugins alone once the operator has picked them", async () => {
+    await addPlugin("arenas");
+    await addPlugin("map-chooser");
     await postgres.query(
-      `UPDATE game_modes
-          SET enabled = false, competitive_safe = true, cfg = 'mp_freezetime 99'
-        WHERE slug = 'retakes'`,
+      `INSERT INTO game_mode_plugins (game_mode_id, plugin_slug, load_order)
+       SELECT id, 'map-chooser', 0 FROM game_modes WHERE slug = 'arenas'`,
     );
 
     await reapply();
 
-    const [retakes] = await postgres.query<Array<Record<string, any>>>(
-      `SELECT enabled, competitive_safe, cfg FROM game_modes WHERE slug = 'retakes'`,
-    );
+    expect(await pluginsOf("arenas")).toEqual(["map-chooser"]);
+  });
 
-    expect(retakes.enabled).toBe(false);
-    expect(retakes.competitive_safe).toBe(true);
-    expect(retakes.cfg).toEqual("mp_freezetime 99");
+  // The seed used to recreate retakes and deathmatch on every boot, so a
+  // deleted one came straight back.
+  it("keeps a deleted starter gone after a reboot", async () => {
+    await postgres.query(`DELETE FROM game_modes WHERE slug = 'retakes'`);
+
+    await reapply();
+
+    const [row] = await postgres.query<Array<{ count: string }>>(
+      `SELECT count(*) FROM game_modes WHERE slug = 'retakes'`,
+    );
+    expect(Number(row.count)).toBe(0);
+  });
+
+  describe("a built-in mode", () => {
+    beforeAll(async () => {
+      await postgres.query(
+        `INSERT INTO game_modes (slug, name, cfg, system)
+         VALUES ('utility-practice', 'Utility Practice', 'sv_cheats 1', true)`,
+      );
+    });
+
+    const attempt = (sql: string) =>
+      postgres.query(`${sql} WHERE slug = 'utility-practice'`);
+
+    it("cannot be deleted", async () => {
+      await expect(attempt(`DELETE FROM game_modes`)).rejects.toThrow(
+        /built into 5Stack/,
+      );
+    });
+
+    it("cannot be archived, disabled or renamed", async () => {
+      for (const change of [
+        `archived_at = now()`,
+        `enabled = false`,
+        `slug = 'practice'`,
+        `system = false`,
+      ]) {
+        await expect(
+          attempt(`UPDATE game_modes SET ${change}`),
+        ).rejects.toThrow(/built into 5Stack/);
+      }
+    });
+
+    it("can still have its cvars edited", async () => {
+      await attempt(`UPDATE game_modes SET cfg = 'sv_cheats 1' || chr(10) || 'mp_buytime 10'`);
+
+      const [mode] = await postgres.query<Array<{ cfg: string }>>(
+        `SELECT cfg FROM game_modes WHERE slug = 'utility-practice'`,
+      );
+      expect(mode.cfg).toContain("mp_buytime 10");
+    });
   });
 });
