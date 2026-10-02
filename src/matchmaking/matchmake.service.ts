@@ -27,6 +27,8 @@ import { balanceTeams, canFillTeams } from "./utilities/balanceTeams";
 import { selectMatchCandidates } from "./utilities/selectMatchCandidates";
 import { WINDOW_CAP, winProbability } from "./utilities/matchmakingTuning";
 
+type MatchmakePass = { claimed: boolean };
+
 function averageRank(players: Array<{ rank: number }>) {
   return players.reduce((acc, player) => acc + player.rank, 0) / players.length;
 }
@@ -201,43 +203,54 @@ export class MatchmakeService {
       return;
     }
 
-    // TODO - its possible, but highly unlikley we will ever runinto the issue of too many lobbies in the queue
-    const lobbiesData = await this.redis.zrange(
-      getMatchmakingRankCacheKey(type, region),
-      0,
-      -1,
-      "WITHSCORES",
-    );
+    const pass: MatchmakePass = { claimed: false };
 
-    const lobbies = await this.processLobbyData(lobbiesData, region);
+    try {
+      // TODO - its possible, but highly unlikley we will ever runinto the issue of too many lobbies in the queue
+      const lobbiesData = await this.redis.zrange(
+        getMatchmakingRankCacheKey(type, region),
+        0,
+        -1,
+        "WITHSCORES",
+      );
 
-    if (lobbies.length === 0) {
-      await this.releaseMatchmakeRegionLock(region);
-      return;
+      const lobbies = await this.processLobbyData(lobbiesData, region, pass);
+
+      if (lobbies.length === 0) {
+        await this.releaseMatchmakeRegionLock(region);
+        return;
+      }
+
+      const totalPlayerNotQueued = await this.createMatches(
+        region,
+        type,
+        lobbies,
+        pass,
+      ).finally(() => {
+        void this.releaseMatchmakeRegionLock(region);
+      });
+
+      if (totalPlayerNotQueued < ExpectedPlayers[type]) {
+        await this.releaseMatchmakeRegionLock(region);
+        return;
+      }
+
+      this.logger.log(
+        `${totalPlayerNotQueued} players not queued, expanding search....`,
+      );
+
+      await this.scheduleExpandedSearch(
+        type,
+        region,
+        10000 + Math.floor(Math.random() * 10000),
+      );
+    } finally {
+      // A claim takes a lobby out of every region's queue, so any broadcast
+      // made while this pass held one (another region's, a join's) missed it.
+      if (pass.claimed) {
+        await this.refreshRegionStats();
+      }
     }
-
-    const totalPlayerNotQueued = await this.createMatches(
-      region,
-      type,
-      lobbies,
-    ).finally(() => {
-      void this.releaseMatchmakeRegionLock(region);
-    });
-
-    if (totalPlayerNotQueued < ExpectedPlayers[type]) {
-      await this.releaseMatchmakeRegionLock(region);
-      return;
-    }
-
-    this.logger.log(
-      `${totalPlayerNotQueued} players not queued, expanding search....`,
-    );
-
-    await this.scheduleExpandedSearch(
-      type,
-      region,
-      10000 + Math.floor(Math.random() * 10000),
-    );
   }
 
   /**
@@ -274,9 +287,9 @@ export class MatchmakeService {
   private async processLobbyData(
     lobbiesData: string[],
     region: string,
+    pass: MatchmakePass = { claimed: false },
   ): Promise<MatchmakingLobby[]> {
     const lobbyDetails = [];
-    let matchedParty = false;
 
     for (let i = 0; i < lobbiesData.length; i += 2) {
       const details = await this.matchmakingLobbyService.getLobbyDetails(
@@ -295,6 +308,8 @@ export class MatchmakeService {
           );
           continue;
         }
+
+        pass.claimed = true;
 
         try {
           // a party that fills the whole match keeps a random split - they
@@ -319,7 +334,6 @@ export class MatchmakeService {
             details.type,
             { team1, team2 },
           );
-          matchedParty = true;
         } catch (error) {
           this.logger.error(
             `Error creating match confirmation for lobby ${details.lobbyId}:`,
@@ -335,10 +349,6 @@ export class MatchmakeService {
         avgRank: averageRank(details.players),
         joinedAt: new Date(details.joinedAt),
       });
-    }
-
-    if (matchedParty) {
-      await this.refreshRegionStats();
     }
 
     return lobbyDetails;
@@ -358,6 +368,7 @@ export class MatchmakeService {
     region: string,
     type: e_match_types_enum,
     lobbies: Array<MatchmakingLobby>,
+    pass: MatchmakePass = { claimed: false },
   ): Promise<number> {
     const requiredPlayers = ExpectedPlayers[type];
 
@@ -370,8 +381,6 @@ export class MatchmakeService {
 
     const countPlayers = (pool: Array<MatchmakingLobby>) =>
       pool.reduce((acc, lobby) => acc + lobby.players.length, 0);
-
-    let confirmed = false;
 
     try {
       for (;;) {
@@ -436,6 +445,7 @@ export class MatchmakeService {
           }
 
           claimed.set(lobby.lobbyId, lobby);
+          pass.claimed = true;
         }
 
         // pure from here until the confirmation, so the teams we pick are
@@ -474,7 +484,6 @@ export class MatchmakeService {
 
         try {
           await this.createMatchConfirmation(region, type, { team1, team2 });
-          confirmed = true;
         } catch (error) {
           this.logger.error(`Error creating match confirmation:`, error);
           // ownership comes back to us, so the settle path requeues them
@@ -493,12 +502,6 @@ export class MatchmakeService {
         } catch (error) {
           this.logger.error(`Failed to requeue lobby ${lobbyId}:`, error);
         }
-      }
-
-      // Not from the confirmation itself: the lobbies this pass claimed but did
-      // not match are out of the queue until the requeue above puts them back.
-      if (confirmed) {
-        await this.refreshRegionStats();
       }
     }
   }
