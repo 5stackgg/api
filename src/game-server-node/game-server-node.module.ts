@@ -33,6 +33,7 @@ import { PluginRuntimeModule } from "src/plugin-runtime/plugin-runtime.module";
 import { GamePluginsModule } from "src/game-plugins/game-plugins.module";
 import { BakeShaders } from "./jobs/BakeShaders";
 import { ValidateGamedata } from "./jobs/ValidateGamedata";
+import { CleanupRemovedNodes } from "./jobs/CleanupRemovedNodes";
 import { MapAssetsModule } from "src/map-assets/map-assets.module";
 import { PostgresModule } from "src/postgres/postgres.module";
 
@@ -47,6 +48,7 @@ import { PostgresModule } from "src/postgres/postgres.module";
     CheckServerPluginVersions,
     BakeShaders,
     ValidateGamedata,
+    CleanupRemovedNodes,
     ...getQueuesProcessors("GameServerNode"),
     loggerFactory(),
   ],
@@ -138,6 +140,16 @@ export class GameServerNodeModule implements OnApplicationBootstrap {
 
     void queue.add(
       CheckServerPluginVersions.name,
+      {},
+      {
+        repeat: {
+          pattern: "*/5 * * * *",
+        },
+      },
+    );
+
+    void queue.add(
+      CleanupRemovedNodes.name,
       {},
       {
         repeat: {
