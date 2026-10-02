@@ -45,6 +45,11 @@ export class DedicatedServerConfigService {
     settings: {
       mapRotation: { mapIds: Array<string>; shuffle: boolean } | null;
       plugins: Array<{ slug: string; enabled: boolean }> | null;
+      pluginConfigs?: Array<{
+        slug: string;
+        cfg: string | null;
+        config: unknown;
+      }> | null;
       access: {
         restricted: boolean;
         minRole: string | null;
@@ -66,11 +71,17 @@ export class DedicatedServerConfigService {
       await this.setPlugins(serverId, settings.plugins, { restart: false });
     }
 
+    if (settings.pluginConfigs) {
+      await this.setPluginConfigs(serverId, settings.pluginConfigs, {
+        restart: false,
+      });
+    }
+
     if (settings.access) {
       await this.setAccess(serverId, settings.access);
     }
 
-    if (settings.mapRotation || settings.plugins) {
+    if (settings.mapRotation || settings.plugins || settings.pluginConfigs) {
       await this.restart(await this.communityServer(serverId));
     }
   }
@@ -154,6 +165,77 @@ export class DedicatedServerConfigService {
            FROM unnest($2::text[], $3::boolean[]) AS override(slug, enabled)`,
         [serverId, [...overrides.keys()], [...overrides.values()]],
       );
+    });
+
+    if (options.restart !== false) {
+      await this.restart(server);
+    }
+  }
+
+  // One server's layer over what the plugin's own page sets for every server.
+  // Only the entries sent are touched, and one with neither cvars nor a file
+  // drops the server back to the plugin page's.
+  public async setPluginConfigs(
+    serverId: string,
+    configs: Array<{ slug: string; cfg: string | null; config: unknown }>,
+    options: { restart?: boolean } = {},
+  ): Promise<void> {
+    const server = await this.communityServer(serverId);
+
+    const plugins = new Map(
+      (
+        await this.postgres.query<
+          Array<{ slug: string; name: string; config_path: string | null }>
+        >(
+          `SELECT slug, name, config_path FROM game_plugins
+            WHERE slug = ANY($1::text[])`,
+          [configs.map((entry) => entry.slug)],
+        )
+      ).map((plugin) => [plugin.slug, plugin]),
+    );
+
+    for (const entry of configs) {
+      const plugin = plugins.get(entry.slug);
+
+      if (!plugin) {
+        throw new BadRequestException(`${entry.slug} is not in the catalog`);
+      }
+
+      if (entry.config != null && !plugin.config_path) {
+        throw new BadRequestException(`${plugin.name} has no config file`);
+      }
+    }
+
+    await this.postgres.transaction(async (client) => {
+      for (const entry of configs) {
+        const cfg = entry.cfg?.trim() ? entry.cfg : null;
+        const config = entry.config ?? null;
+
+        if (cfg === null && config === null) {
+          await client.query(
+            `DELETE FROM server_plugin_configs
+              WHERE server_id = $1 AND plugin_slug = $2`,
+            [serverId, entry.slug],
+          );
+          continue;
+        }
+
+        await client.query(
+          `INSERT INTO server_plugin_configs
+             (server_id, plugin_slug, cfg, config, updated_at)
+           VALUES ($1, $2, $3, $4, now())
+           ON CONFLICT (server_id, plugin_slug) DO UPDATE SET
+             cfg = EXCLUDED.cfg,
+             config = EXCLUDED.config,
+             updated_at = now()`,
+          [
+            serverId,
+            entry.slug,
+            cfg,
+            config === null ? null : JSON.stringify(config),
+          ],
+        );
+      }
     });
 
     if (options.restart !== false) {

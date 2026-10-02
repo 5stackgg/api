@@ -2697,6 +2697,12 @@ input ServerPluginInput {
   enabled: Boolean!
 }
 
+input ServerPluginConfigInput {
+  slug: String!
+  cfg: String
+  config: jsonb
+}
+
 type ImportedWorkshopMap {
   id: uuid!
   name: String!
@@ -2725,6 +2731,7 @@ type Mutation {
     server_id: uuid!
     map_rotation: ServerMapRotationInput
     plugins: [ServerPluginInput!]
+    plugin_configs: [ServerPluginConfigInput!]
     access: ServerAccessInput
   ): SuccessOutput
 }

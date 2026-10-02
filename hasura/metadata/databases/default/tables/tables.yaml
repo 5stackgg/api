@@ -183,6 +183,7 @@
 - "!include public_server_map_rotation.yaml"
 - "!include public_server_migrations.yaml"
 - "!include public_server_player_sessions.yaml"
+- "!include public_server_plugin_configs.yaml"
 - "!include public_server_plugins.yaml"
 - "!include public_server_recent_players.yaml"
 - "!include public_server_regions.yaml"

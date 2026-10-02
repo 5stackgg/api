@@ -156,8 +156,12 @@ export class GameModesService {
     }
 
     if (!matchId && row?.is_community_server) {
-      return await this.withInstallConfigs(
-        await this.withServerPlugins(serverId, mode, scope),
+      return await this.withServerConfigs(
+        serverId,
+        await this.withInstallConfigs(
+          await this.withServerPlugins(serverId, mode, scope),
+          scope.runtime,
+        ),
         scope.runtime,
       );
     }
@@ -645,6 +649,83 @@ export class GameModesService {
         GameModesService.configFilesOf(resolved),
       ),
     };
+  }
+
+  // A community server's own config for a plugin is the most specific word on
+  // it, so it is laid over the plugin page's, the mode's and the rotation's.
+  private async withServerConfigs(
+    serverId: string,
+    resolved: ResolvedGameMode | null,
+    runtime: string,
+  ): Promise<ResolvedGameMode | null> {
+    const slugs = GameModesService.entriesOf(resolved).map(
+      GameModesService.slugOf,
+    );
+
+    if (!resolved || slugs.length === 0) {
+      return resolved;
+    }
+
+    const rows = await this.postgres.query<
+      Array<{ config: unknown; config_path: string }>
+    >(
+      `SELECT c.config, p.config_path
+         FROM server_plugin_configs c
+         INNER JOIN game_plugins p ON p.slug = c.plugin_slug
+        WHERE c.server_id = $1
+          AND c.plugin_slug = ANY($2::text[])
+          AND c.config IS NOT NULL
+          AND p.config_path IS NOT NULL`,
+      [serverId, slugs],
+    );
+
+    if (rows.length === 0) {
+      return resolved;
+    }
+
+    return {
+      ...resolved,
+      pluginConfigs: GameModesService.withConfigFiles(
+        resolved.pluginConfigs,
+        Object.fromEntries(
+          rows.map((row) => [
+            row.config_path.replace("{runtime}", runtime),
+            JSON.stringify(row.config, null, 2),
+          ]),
+        ),
+      ),
+    };
+  }
+
+  // One server's cvars for the plugins it loads, run after everything else
+  // that sets them on that server.
+  public async serverCfgLayers(
+    serverId: string,
+    mode: ResolvedGameMode | null,
+  ): Promise<Array<{ slug: string; cfg: string }>> {
+    const slugs = GameModesService.entriesOf(mode).map(GameModesService.slugOf);
+
+    if (slugs.length === 0) {
+      return [];
+    }
+
+    const rows = await this.postgres.query<
+      Array<{ plugin_slug: string; cfg: string }>
+    >(
+      `SELECT plugin_slug, cfg
+         FROM server_plugin_configs
+        WHERE server_id = $1
+          AND plugin_slug = ANY($2::text[])
+          AND cfg IS NOT NULL
+          AND btrim(cfg) <> ''`,
+      [serverId, slugs],
+    );
+
+    const cfgs = new Map(rows.map((row) => [row.plugin_slug, row.cfg]));
+
+    return slugs
+      .filter((slug) => cfgs.has(slug))
+      .map((slug) => ({ slug, cfg: cfgs.get(slug) as string }));
   }
 
   private static configFilesOf(
