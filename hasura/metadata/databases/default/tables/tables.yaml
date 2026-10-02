@@ -242,7 +242,6 @@
 - "!include public_v_player_match_performance.yaml"
 - "!include public_v_player_match_rating.yaml"
 - "!include public_v_player_multi_kills.yaml"
-- "!include public_v_player_queue_partners.yaml"
 - "!include public_v_player_weapon_damage.yaml"
 - "!include public_v_player_weapon_kills.yaml"
 - "!include public_v_pool_maps.yaml"

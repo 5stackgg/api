@@ -37,4 +37,8 @@ describe("hasura migrations (cold start)", () => {
     expect(await relkind("v_team_stage_results_compute")).toBe("v");
     expect(await relkind("v_team_tournament_results")).toBe("v");
   });
+
+  it("drops v_player_queue_partners", async () => {
+    expect(await relkind("v_player_queue_partners")).toBeUndefined();
+  });
 });
