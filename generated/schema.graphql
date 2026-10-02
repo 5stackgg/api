@@ -741,6 +741,12 @@ type ServerPlayer {
   steam_id: String!
 }
 
+input ServerPluginConfigInput {
+  cfg: String
+  config: jsonb
+  slug: String!
+}
+
 input ServerPluginInput {
   enabled: Boolean!
   slug: String!
@@ -25209,11 +25215,332 @@ input game_modes_updates {
 }
 
 """
+columns and relationships of "game_plugin_cvars"
+"""
+type game_plugin_cvars {
+  default_value: String
+  description: String!
+  flags: String!
+  kind: String!
+  name: String!
+
+  """An object relationship"""
+  plugin: game_plugins!
+  plugin_slug: String!
+  reported_at: timestamptz!
+  runtime: String!
+  version: String!
+}
+
+"""
+aggregated selection of "game_plugin_cvars"
+"""
+type game_plugin_cvars_aggregate {
+  aggregate: game_plugin_cvars_aggregate_fields
+  nodes: [game_plugin_cvars!]!
+}
+
+input game_plugin_cvars_aggregate_bool_exp {
+  count: game_plugin_cvars_aggregate_bool_exp_count
+}
+
+input game_plugin_cvars_aggregate_bool_exp_count {
+  arguments: [game_plugin_cvars_select_column!]
+  distinct: Boolean
+  filter: game_plugin_cvars_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "game_plugin_cvars"
+"""
+type game_plugin_cvars_aggregate_fields {
+  count(columns: [game_plugin_cvars_select_column!], distinct: Boolean): Int!
+  max: game_plugin_cvars_max_fields
+  min: game_plugin_cvars_min_fields
+}
+
+"""
+order by aggregate values of table "game_plugin_cvars"
+"""
+input game_plugin_cvars_aggregate_order_by {
+  count: order_by
+  max: game_plugin_cvars_max_order_by
+  min: game_plugin_cvars_min_order_by
+}
+
+"""
+input type for inserting array relation for remote table "game_plugin_cvars"
+"""
+input game_plugin_cvars_arr_rel_insert_input {
+  data: [game_plugin_cvars_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: game_plugin_cvars_on_conflict
+}
+
+"""
+Boolean expression to filter rows from the table "game_plugin_cvars". All fields are combined with a logical 'AND'.
+"""
+input game_plugin_cvars_bool_exp {
+  _and: [game_plugin_cvars_bool_exp!]
+  _not: game_plugin_cvars_bool_exp
+  _or: [game_plugin_cvars_bool_exp!]
+  default_value: String_comparison_exp
+  description: String_comparison_exp
+  flags: String_comparison_exp
+  kind: String_comparison_exp
+  name: String_comparison_exp
+  plugin: game_plugins_bool_exp
+  plugin_slug: String_comparison_exp
+  reported_at: timestamptz_comparison_exp
+  runtime: String_comparison_exp
+  version: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "game_plugin_cvars"
+"""
+enum game_plugin_cvars_constraint {
+  """
+  unique or primary key constraint on columns "plugin_slug", "name"
+  """
+  game_plugin_cvars_pkey
+}
+
+"""
+input type for inserting data into table "game_plugin_cvars"
+"""
+input game_plugin_cvars_insert_input {
+  default_value: String
+  description: String
+  flags: String
+  kind: String
+  name: String
+  plugin: game_plugins_obj_rel_insert_input
+  plugin_slug: String
+  reported_at: timestamptz
+  runtime: String
+  version: String
+}
+
+"""aggregate max on columns"""
+type game_plugin_cvars_max_fields {
+  default_value: String
+  description: String
+  flags: String
+  kind: String
+  name: String
+  plugin_slug: String
+  reported_at: timestamptz
+  runtime: String
+  version: String
+}
+
+"""
+order by max() on columns of table "game_plugin_cvars"
+"""
+input game_plugin_cvars_max_order_by {
+  default_value: order_by
+  description: order_by
+  flags: order_by
+  kind: order_by
+  name: order_by
+  plugin_slug: order_by
+  reported_at: order_by
+  runtime: order_by
+  version: order_by
+}
+
+"""aggregate min on columns"""
+type game_plugin_cvars_min_fields {
+  default_value: String
+  description: String
+  flags: String
+  kind: String
+  name: String
+  plugin_slug: String
+  reported_at: timestamptz
+  runtime: String
+  version: String
+}
+
+"""
+order by min() on columns of table "game_plugin_cvars"
+"""
+input game_plugin_cvars_min_order_by {
+  default_value: order_by
+  description: order_by
+  flags: order_by
+  kind: order_by
+  name: order_by
+  plugin_slug: order_by
+  reported_at: order_by
+  runtime: order_by
+  version: order_by
+}
+
+"""
+response of any mutation on the table "game_plugin_cvars"
+"""
+type game_plugin_cvars_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [game_plugin_cvars!]!
+}
+
+"""
+on_conflict condition type for table "game_plugin_cvars"
+"""
+input game_plugin_cvars_on_conflict {
+  constraint: game_plugin_cvars_constraint!
+  update_columns: [game_plugin_cvars_update_column!]! = []
+  where: game_plugin_cvars_bool_exp
+}
+
+"""Ordering options when selecting data from "game_plugin_cvars"."""
+input game_plugin_cvars_order_by {
+  default_value: order_by
+  description: order_by
+  flags: order_by
+  kind: order_by
+  name: order_by
+  plugin: game_plugins_order_by
+  plugin_slug: order_by
+  reported_at: order_by
+  runtime: order_by
+  version: order_by
+}
+
+"""primary key columns input for table: game_plugin_cvars"""
+input game_plugin_cvars_pk_columns_input {
+  name: String!
+  plugin_slug: String!
+}
+
+"""
+select columns of table "game_plugin_cvars"
+"""
+enum game_plugin_cvars_select_column {
+  """column name"""
+  default_value
+
+  """column name"""
+  description
+
+  """column name"""
+  flags
+
+  """column name"""
+  kind
+
+  """column name"""
+  name
+
+  """column name"""
+  plugin_slug
+
+  """column name"""
+  reported_at
+
+  """column name"""
+  runtime
+
+  """column name"""
+  version
+}
+
+"""
+input type for updating data in table "game_plugin_cvars"
+"""
+input game_plugin_cvars_set_input {
+  default_value: String
+  description: String
+  flags: String
+  kind: String
+  name: String
+  plugin_slug: String
+  reported_at: timestamptz
+  runtime: String
+  version: String
+}
+
+"""
+Streaming cursor of the table "game_plugin_cvars"
+"""
+input game_plugin_cvars_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: game_plugin_cvars_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input game_plugin_cvars_stream_cursor_value_input {
+  default_value: String
+  description: String
+  flags: String
+  kind: String
+  name: String
+  plugin_slug: String
+  reported_at: timestamptz
+  runtime: String
+  version: String
+}
+
+"""
+update columns of table "game_plugin_cvars"
+"""
+enum game_plugin_cvars_update_column {
+  """column name"""
+  default_value
+
+  """column name"""
+  description
+
+  """column name"""
+  flags
+
+  """column name"""
+  kind
+
+  """column name"""
+  name
+
+  """column name"""
+  plugin_slug
+
+  """column name"""
+  reported_at
+
+  """column name"""
+  runtime
+
+  """column name"""
+  version
+}
+
+input game_plugin_cvars_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: game_plugin_cvars_set_input
+
+  """filter the rows which have to be updated"""
+  where: game_plugin_cvars_bool_exp!
+}
+
+"""
 columns and relationships of "game_plugin_installs"
 """
 type game_plugin_installs {
   cfg: String
   channel: e_game_plugin_channels_enum!
+  config(
+    """JSON select path"""
+    path: String
+  ): jsonb
   created_at: timestamptz!
   disable_server_guidelines: Boolean!
   enabled: Boolean!
@@ -25245,6 +25572,11 @@ type game_plugin_installs_aggregate_fields {
   min: game_plugin_installs_min_fields
 }
 
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input game_plugin_installs_append_input {
+  config: jsonb
+}
+
 """
 Boolean expression to filter rows from the table "game_plugin_installs". All fields are combined with a logical 'AND'.
 """
@@ -25254,6 +25586,7 @@ input game_plugin_installs_bool_exp {
   _or: [game_plugin_installs_bool_exp!]
   cfg: String_comparison_exp
   channel: e_game_plugin_channels_enum_comparison_exp
+  config: jsonb_comparison_exp
   created_at: timestamptz_comparison_exp
   disable_server_guidelines: Boolean_comparison_exp
   enabled: Boolean_comparison_exp
@@ -25277,11 +25610,33 @@ enum game_plugin_installs_constraint {
 }
 
 """
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input game_plugin_installs_delete_at_path_input {
+  config: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input game_plugin_installs_delete_elem_input {
+  config: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input game_plugin_installs_delete_key_input {
+  config: String
+}
+
+"""
 input type for inserting data into table "game_plugin_installs"
 """
 input game_plugin_installs_insert_input {
   cfg: String
   channel: e_game_plugin_channels_enum
+  config: jsonb
   created_at: timestamptz
   disable_server_guidelines: Boolean
   enabled: Boolean
@@ -25346,6 +25701,7 @@ input game_plugin_installs_on_conflict {
 input game_plugin_installs_order_by {
   cfg: order_by
   channel: order_by
+  config: order_by
   created_at: order_by
   disable_server_guidelines: order_by
   enabled: order_by
@@ -25363,6 +25719,11 @@ input game_plugin_installs_pk_columns_input {
   plugin_slug: String!
 }
 
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input game_plugin_installs_prepend_input {
+  config: jsonb
+}
+
 """
 select columns of table "game_plugin_installs"
 """
@@ -25372,6 +25733,9 @@ enum game_plugin_installs_select_column {
 
   """column name"""
   channel
+
+  """column name"""
+  config
 
   """column name"""
   created_at
@@ -25407,6 +25771,7 @@ input type for updating data in table "game_plugin_installs"
 input game_plugin_installs_set_input {
   cfg: String
   channel: e_game_plugin_channels_enum
+  config: jsonb
   created_at: timestamptz
   disable_server_guidelines: Boolean
   enabled: Boolean
@@ -25433,6 +25798,7 @@ input game_plugin_installs_stream_cursor_input {
 input game_plugin_installs_stream_cursor_value_input {
   cfg: String
   channel: e_game_plugin_channels_enum
+  config: jsonb
   created_at: timestamptz
   disable_server_guidelines: Boolean
   enabled: Boolean
@@ -25453,6 +25819,9 @@ enum game_plugin_installs_update_column {
 
   """column name"""
   channel
+
+  """column name"""
+  config
 
   """column name"""
   created_at
@@ -25483,6 +25852,27 @@ enum game_plugin_installs_update_column {
 }
 
 input game_plugin_installs_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: game_plugin_installs_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: game_plugin_installs_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: game_plugin_installs_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: game_plugin_installs_delete_key_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: game_plugin_installs_prepend_input
+
   """sets the columns of the filtered rows to the given values"""
   _set: game_plugin_installs_set_input
 
@@ -25975,13 +26365,23 @@ columns and relationships of "game_plugins"
 """
 type game_plugins {
   author: String!
+  config_cvar: String
+  config_default(
+    """JSON select path"""
+    path: String
+  ): jsonb
   config_path: String
   config_schema(
     """JSON select path"""
     path: String
   ): jsonb
+  config_shipped(
+    """JSON select path"""
+    path: String
+  ): jsonb
   cvars: [String!]!
   description: String!
+  forced_cvars: [String!]!
 
   """An array relationship"""
   game_modes(
@@ -26075,6 +26475,42 @@ type game_plugins {
     """JSON select path"""
     path: String
   ): jsonb
+
+  """An array relationship"""
+  reported_cvars(
+    """distinct select on columns"""
+    distinct_on: [game_plugin_cvars_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_plugin_cvars_order_by!]
+
+    """filter the rows returned"""
+    where: game_plugin_cvars_bool_exp
+  ): [game_plugin_cvars!]!
+
+  """An aggregate relationship"""
+  reported_cvars_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_plugin_cvars_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_plugin_cvars_order_by!]
+
+    """filter the rows returned"""
+    where: game_plugin_cvars_bool_exp
+  ): game_plugin_cvars_aggregate!
   requires_server_guidelines_disabled: Boolean!
   requires_service: String
   slug: String!
@@ -26156,7 +26592,9 @@ type game_plugins_aggregate_fields {
 
 """append existing jsonb value of filtered columns with new jsonb value"""
 input game_plugins_append_input {
+  config_default: jsonb
   config_schema: jsonb
+  config_shipped: jsonb
   map_rotation: jsonb
   panel: jsonb
   wiring: jsonb
@@ -26183,10 +26621,14 @@ input game_plugins_bool_exp {
   _not: game_plugins_bool_exp
   _or: [game_plugins_bool_exp!]
   author: String_comparison_exp
+  config_cvar: String_comparison_exp
+  config_default: jsonb_comparison_exp
   config_path: String_comparison_exp
   config_schema: jsonb_comparison_exp
+  config_shipped: jsonb_comparison_exp
   cvars: String_array_comparison_exp
   description: String_comparison_exp
+  forced_cvars: String_array_comparison_exp
   game_modes: game_mode_plugins_bool_exp
   game_modes_aggregate: game_mode_plugins_aggregate_bool_exp
   homepage: String_comparison_exp
@@ -26200,6 +26642,8 @@ input game_plugins_bool_exp {
   node_installs_aggregate: game_server_node_plugins_aggregate_bool_exp
   pairs_with: String_array_comparison_exp
   panel: jsonb_comparison_exp
+  reported_cvars: game_plugin_cvars_bool_exp
+  reported_cvars_aggregate: game_plugin_cvars_aggregate_bool_exp
   requires_server_guidelines_disabled: Boolean_comparison_exp
   requires_service: String_comparison_exp
   slug: String_comparison_exp
@@ -26227,7 +26671,9 @@ enum game_plugins_constraint {
 delete the field or element with specified path (for JSON arrays, negative integers count from the end)
 """
 input game_plugins_delete_at_path_input {
+  config_default: [String!]
   config_schema: [String!]
+  config_shipped: [String!]
   map_rotation: [String!]
   panel: [String!]
   wiring: [String!]
@@ -26237,7 +26683,9 @@ input game_plugins_delete_at_path_input {
 delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
 """
 input game_plugins_delete_elem_input {
+  config_default: Int
   config_schema: Int
+  config_shipped: Int
   map_rotation: Int
   panel: Int
   wiring: Int
@@ -26247,7 +26695,9 @@ input game_plugins_delete_elem_input {
 delete key/value pair or string element. key/value pairs are matched based on their key value
 """
 input game_plugins_delete_key_input {
+  config_default: String
   config_schema: String
+  config_shipped: String
   map_rotation: String
   panel: String
   wiring: String
@@ -26258,10 +26708,14 @@ input type for inserting data into table "game_plugins"
 """
 input game_plugins_insert_input {
   author: String
+  config_cvar: String
+  config_default: jsonb
   config_path: String
   config_schema: jsonb
+  config_shipped: jsonb
   cvars: [String!]
   description: String
+  forced_cvars: [String!]
   game_modes: game_mode_plugins_arr_rel_insert_input
   homepage: String
   hot_swappable: Boolean
@@ -26271,6 +26725,7 @@ input game_plugins_insert_input {
   node_installs: game_server_node_plugins_arr_rel_insert_input
   pairs_with: [String!]
   panel: jsonb
+  reported_cvars: game_plugin_cvars_arr_rel_insert_input
   requires_server_guidelines_disabled: Boolean
   requires_service: String
   slug: String
@@ -26285,9 +26740,11 @@ input game_plugins_insert_input {
 """aggregate max on columns"""
 type game_plugins_max_fields {
   author: String
+  config_cvar: String
   config_path: String
   cvars: [String!]
   description: String
+  forced_cvars: [String!]
   homepage: String
 
   """Installed | Partial | Pending | Failed | Manual | NotInstalled"""
@@ -26314,9 +26771,11 @@ type game_plugins_max_fields {
 """aggregate min on columns"""
 type game_plugins_min_fields {
   author: String
+  config_cvar: String
   config_path: String
   cvars: [String!]
   description: String
+  forced_cvars: [String!]
   homepage: String
 
   """Installed | Partial | Pending | Failed | Manual | NotInstalled"""
@@ -26373,10 +26832,14 @@ input game_plugins_on_conflict {
 """Ordering options when selecting data from "game_plugins"."""
 input game_plugins_order_by {
   author: order_by
+  config_cvar: order_by
+  config_default: order_by
   config_path: order_by
   config_schema: order_by
+  config_shipped: order_by
   cvars: order_by
   description: order_by
+  forced_cvars: order_by
   game_modes_aggregate: game_mode_plugins_aggregate_order_by
   homepage: order_by
   hot_swappable: order_by
@@ -26388,6 +26851,7 @@ input game_plugins_order_by {
   node_installs_aggregate: game_server_node_plugins_aggregate_order_by
   pairs_with: order_by
   panel: order_by
+  reported_cvars_aggregate: game_plugin_cvars_aggregate_order_by
   requires_server_guidelines_disabled: order_by
   requires_service: order_by
   slug: order_by
@@ -26407,7 +26871,9 @@ input game_plugins_pk_columns_input {
 
 """prepend existing jsonb value of filtered columns with new jsonb value"""
 input game_plugins_prepend_input {
+  config_default: jsonb
   config_schema: jsonb
+  config_shipped: jsonb
   map_rotation: jsonb
   panel: jsonb
   wiring: jsonb
@@ -26421,16 +26887,28 @@ enum game_plugins_select_column {
   author
 
   """column name"""
+  config_cvar
+
+  """column name"""
+  config_default
+
+  """column name"""
   config_path
 
   """column name"""
   config_schema
 
   """column name"""
+  config_shipped
+
+  """column name"""
   cvars
 
   """column name"""
   description
+
+  """column name"""
+  forced_cvars
 
   """column name"""
   homepage
@@ -26483,10 +26961,14 @@ input type for updating data in table "game_plugins"
 """
 input game_plugins_set_input {
   author: String
+  config_cvar: String
+  config_default: jsonb
   config_path: String
   config_schema: jsonb
+  config_shipped: jsonb
   cvars: [String!]
   description: String
+  forced_cvars: [String!]
   homepage: String
   hot_swappable: Boolean
   kind: e_game_plugin_kinds_enum
@@ -26557,10 +27039,14 @@ input game_plugins_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input game_plugins_stream_cursor_value_input {
   author: String
+  config_cvar: String
+  config_default: jsonb
   config_path: String
   config_schema: jsonb
+  config_shipped: jsonb
   cvars: [String!]
   description: String
+  forced_cvars: [String!]
   homepage: String
   hot_swappable: Boolean
   kind: e_game_plugin_kinds_enum
@@ -26599,16 +27085,28 @@ enum game_plugins_update_column {
   author
 
   """column name"""
+  config_cvar
+
+  """column name"""
+  config_default
+
+  """column name"""
   config_path
 
   """column name"""
   config_schema
 
   """column name"""
+  config_shipped
+
+  """column name"""
   cvars
 
   """column name"""
   description
+
+  """column name"""
+  forced_cvars
 
   """column name"""
   homepage
@@ -48233,6 +48731,19 @@ type mutation_root {
   delete_game_modes_by_pk(id: uuid!): game_modes
 
   """
+  delete data from the table: "game_plugin_cvars"
+  """
+  delete_game_plugin_cvars(
+    """filter the rows which have to be deleted"""
+    where: game_plugin_cvars_bool_exp!
+  ): game_plugin_cvars_mutation_response
+
+  """
+  delete single row from the table: "game_plugin_cvars"
+  """
+  delete_game_plugin_cvars_by_pk(name: String!, plugin_slug: String!): game_plugin_cvars
+
+  """
   delete data from the table: "game_plugin_installs"
   """
   delete_game_plugin_installs(
@@ -49186,6 +49697,19 @@ type mutation_root {
   delete single row from the table: "server_player_sessions"
   """
   delete_server_player_sessions_by_pk(id: bigint!): server_player_sessions
+
+  """
+  delete data from the table: "server_plugin_configs"
+  """
+  delete_server_plugin_configs(
+    """filter the rows which have to be deleted"""
+    where: server_plugin_configs_bool_exp!
+  ): server_plugin_configs_mutation_response
+
+  """
+  delete single row from the table: "server_plugin_configs"
+  """
+  delete_server_plugin_configs_by_pk(plugin_slug: String!, server_id: uuid!): server_plugin_configs
 
   """
   delete data from the table: "server_plugins"
@@ -51879,6 +52403,28 @@ type mutation_root {
   ): game_modes
 
   """
+  insert data into the table: "game_plugin_cvars"
+  """
+  insert_game_plugin_cvars(
+    """the rows to be inserted"""
+    objects: [game_plugin_cvars_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: game_plugin_cvars_on_conflict
+  ): game_plugin_cvars_mutation_response
+
+  """
+  insert a single row into the table: "game_plugin_cvars"
+  """
+  insert_game_plugin_cvars_one(
+    """the row to be inserted"""
+    object: game_plugin_cvars_insert_input!
+
+    """upsert condition"""
+    on_conflict: game_plugin_cvars_on_conflict
+  ): game_plugin_cvars
+
+  """
   insert data into the table: "game_plugin_installs"
   """
   insert_game_plugin_installs(
@@ -53505,6 +54051,28 @@ type mutation_root {
   ): server_player_sessions
 
   """
+  insert data into the table: "server_plugin_configs"
+  """
+  insert_server_plugin_configs(
+    """the rows to be inserted"""
+    objects: [server_plugin_configs_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: server_plugin_configs_on_conflict
+  ): server_plugin_configs_mutation_response
+
+  """
+  insert a single row into the table: "server_plugin_configs"
+  """
+  insert_server_plugin_configs_one(
+    """the row to be inserted"""
+    object: server_plugin_configs_insert_input!
+
+    """upsert condition"""
+    on_conflict: server_plugin_configs_on_conflict
+  ): server_plugin_configs
+
+  """
   insert data into the table: "server_plugins"
   """
   insert_server_plugins(
@@ -55100,9 +55668,9 @@ type mutation_root {
   setServerPlugins(plugins: [ServerPluginInput!]!, server_id: uuid!): SuccessOutput
 
   """
-  Save a community server's rotation, plugins and access, restarting it at most once
+  Save a community server's rotation, plugins, plugin configs and access, restarting it at most once
   """
-  setServerSettings(access: ServerAccessInput, map_rotation: ServerMapRotationInput, plugins: [ServerPluginInput!], server_id: uuid!): SuccessOutput
+  setServerSettings(access: ServerAccessInput, map_rotation: ServerMapRotationInput, plugin_configs: [ServerPluginConfigInput!], plugins: [ServerPluginInput!], server_id: uuid!): SuccessOutput
 
   """Map a tournament placement to an award"""
   setTournamentAward(award_id: uuid, custom_name: String, placement: Int!, silhouette: Int, tournament_id: uuid!): TournamentAward
@@ -57953,9 +58521,58 @@ type mutation_root {
   ): [game_modes_mutation_response]
 
   """
+  update data of the table: "game_plugin_cvars"
+  """
+  update_game_plugin_cvars(
+    """sets the columns of the filtered rows to the given values"""
+    _set: game_plugin_cvars_set_input
+
+    """filter the rows which have to be updated"""
+    where: game_plugin_cvars_bool_exp!
+  ): game_plugin_cvars_mutation_response
+
+  """
+  update single row of the table: "game_plugin_cvars"
+  """
+  update_game_plugin_cvars_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: game_plugin_cvars_set_input
+    pk_columns: game_plugin_cvars_pk_columns_input!
+  ): game_plugin_cvars
+
+  """
+  update multiples rows of table: "game_plugin_cvars"
+  """
+  update_game_plugin_cvars_many(
+    """updates to execute, in order"""
+    updates: [game_plugin_cvars_updates!]!
+  ): [game_plugin_cvars_mutation_response]
+
+  """
   update data of the table: "game_plugin_installs"
   """
   update_game_plugin_installs(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: game_plugin_installs_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: game_plugin_installs_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: game_plugin_installs_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: game_plugin_installs_delete_key_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: game_plugin_installs_prepend_input
+
     """sets the columns of the filtered rows to the given values"""
     _set: game_plugin_installs_set_input
 
@@ -57967,6 +58584,27 @@ type mutation_root {
   update single row of the table: "game_plugin_installs"
   """
   update_game_plugin_installs_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: game_plugin_installs_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: game_plugin_installs_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: game_plugin_installs_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: game_plugin_installs_delete_key_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: game_plugin_installs_prepend_input
+
     """sets the columns of the filtered rows to the given values"""
     _set: game_plugin_installs_set_input
     pk_columns: game_plugin_installs_pk_columns_input!
@@ -60933,6 +61571,76 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [server_player_sessions_updates!]!
   ): [server_player_sessions_mutation_response]
+
+  """
+  update data of the table: "server_plugin_configs"
+  """
+  update_server_plugin_configs(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: server_plugin_configs_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: server_plugin_configs_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: server_plugin_configs_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: server_plugin_configs_delete_key_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: server_plugin_configs_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: server_plugin_configs_set_input
+
+    """filter the rows which have to be updated"""
+    where: server_plugin_configs_bool_exp!
+  ): server_plugin_configs_mutation_response
+
+  """
+  update single row of the table: "server_plugin_configs"
+  """
+  update_server_plugin_configs_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: server_plugin_configs_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: server_plugin_configs_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: server_plugin_configs_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: server_plugin_configs_delete_key_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: server_plugin_configs_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: server_plugin_configs_set_input
+    pk_columns: server_plugin_configs_pk_columns_input!
+  ): server_plugin_configs
+
+  """
+  update multiples rows of table: "server_plugin_configs"
+  """
+  update_server_plugin_configs_many(
+    """updates to execute, in order"""
+    updates: [server_plugin_configs_updates!]!
+  ): [server_plugin_configs_mutation_response]
 
   """
   update data of the table: "server_plugins"
@@ -79124,6 +79832,424 @@ input player_sanctions_variance_order_by {
 }
 
 """
+columns and relationships of "player_season_performance_v"
+"""
+type player_season_performance_v {
+  accuracy_score: float8
+  aim_rating: float8
+  blind_score: float8
+  counter_strafe_score: float8
+  crosshair_score: float8
+  flash_assists_score: float8
+  hs_score: float8
+  kast_score: float8
+  positioning_rating: float8
+  rounds: Int
+
+  """An object relationship"""
+  season: seasons
+  season_id: uuid
+  season_starts_at: timestamptz
+  spotted_score: float8
+  steam_id: bigint
+  survival_score: float8
+  traded_score: float8
+  ttd_score: float8
+  util_eff_score: float8
+  utility_rating: float8
+}
+
+"""
+aggregated selection of "player_season_performance_v"
+"""
+type player_season_performance_v_aggregate {
+  aggregate: player_season_performance_v_aggregate_fields
+  nodes: [player_season_performance_v!]!
+}
+
+"""
+aggregate fields of "player_season_performance_v"
+"""
+type player_season_performance_v_aggregate_fields {
+  avg: player_season_performance_v_avg_fields
+  count(columns: [player_season_performance_v_select_column!], distinct: Boolean): Int!
+  max: player_season_performance_v_max_fields
+  min: player_season_performance_v_min_fields
+  stddev: player_season_performance_v_stddev_fields
+  stddev_pop: player_season_performance_v_stddev_pop_fields
+  stddev_samp: player_season_performance_v_stddev_samp_fields
+  sum: player_season_performance_v_sum_fields
+  var_pop: player_season_performance_v_var_pop_fields
+  var_samp: player_season_performance_v_var_samp_fields
+  variance: player_season_performance_v_variance_fields
+}
+
+"""aggregate avg on columns"""
+type player_season_performance_v_avg_fields {
+  accuracy_score: Float
+  aim_rating: Float
+  blind_score: Float
+  counter_strafe_score: Float
+  crosshair_score: Float
+  flash_assists_score: Float
+  hs_score: Float
+  kast_score: Float
+  positioning_rating: Float
+  rounds: Float
+  spotted_score: Float
+  steam_id: Float
+  survival_score: Float
+  traded_score: Float
+  ttd_score: Float
+  util_eff_score: Float
+  utility_rating: Float
+}
+
+"""
+Boolean expression to filter rows from the table "player_season_performance_v". All fields are combined with a logical 'AND'.
+"""
+input player_season_performance_v_bool_exp {
+  _and: [player_season_performance_v_bool_exp!]
+  _not: player_season_performance_v_bool_exp
+  _or: [player_season_performance_v_bool_exp!]
+  accuracy_score: float8_comparison_exp
+  aim_rating: float8_comparison_exp
+  blind_score: float8_comparison_exp
+  counter_strafe_score: float8_comparison_exp
+  crosshair_score: float8_comparison_exp
+  flash_assists_score: float8_comparison_exp
+  hs_score: float8_comparison_exp
+  kast_score: float8_comparison_exp
+  positioning_rating: float8_comparison_exp
+  rounds: Int_comparison_exp
+  season: seasons_bool_exp
+  season_id: uuid_comparison_exp
+  season_starts_at: timestamptz_comparison_exp
+  spotted_score: float8_comparison_exp
+  steam_id: bigint_comparison_exp
+  survival_score: float8_comparison_exp
+  traded_score: float8_comparison_exp
+  ttd_score: float8_comparison_exp
+  util_eff_score: float8_comparison_exp
+  utility_rating: float8_comparison_exp
+}
+
+"""aggregate max on columns"""
+type player_season_performance_v_max_fields {
+  accuracy_score: float8
+  aim_rating: float8
+  blind_score: float8
+  counter_strafe_score: float8
+  crosshair_score: float8
+  flash_assists_score: float8
+  hs_score: float8
+  kast_score: float8
+  positioning_rating: float8
+  rounds: Int
+  season_id: uuid
+  season_starts_at: timestamptz
+  spotted_score: float8
+  steam_id: bigint
+  survival_score: float8
+  traded_score: float8
+  ttd_score: float8
+  util_eff_score: float8
+  utility_rating: float8
+}
+
+"""aggregate min on columns"""
+type player_season_performance_v_min_fields {
+  accuracy_score: float8
+  aim_rating: float8
+  blind_score: float8
+  counter_strafe_score: float8
+  crosshair_score: float8
+  flash_assists_score: float8
+  hs_score: float8
+  kast_score: float8
+  positioning_rating: float8
+  rounds: Int
+  season_id: uuid
+  season_starts_at: timestamptz
+  spotted_score: float8
+  steam_id: bigint
+  survival_score: float8
+  traded_score: float8
+  ttd_score: float8
+  util_eff_score: float8
+  utility_rating: float8
+}
+
+"""
+Ordering options when selecting data from "player_season_performance_v".
+"""
+input player_season_performance_v_order_by {
+  accuracy_score: order_by
+  aim_rating: order_by
+  blind_score: order_by
+  counter_strafe_score: order_by
+  crosshair_score: order_by
+  flash_assists_score: order_by
+  hs_score: order_by
+  kast_score: order_by
+  positioning_rating: order_by
+  rounds: order_by
+  season: seasons_order_by
+  season_id: order_by
+  season_starts_at: order_by
+  spotted_score: order_by
+  steam_id: order_by
+  survival_score: order_by
+  traded_score: order_by
+  ttd_score: order_by
+  util_eff_score: order_by
+  utility_rating: order_by
+}
+
+"""
+select columns of table "player_season_performance_v"
+"""
+enum player_season_performance_v_select_column {
+  """column name"""
+  accuracy_score
+
+  """column name"""
+  aim_rating
+
+  """column name"""
+  blind_score
+
+  """column name"""
+  counter_strafe_score
+
+  """column name"""
+  crosshair_score
+
+  """column name"""
+  flash_assists_score
+
+  """column name"""
+  hs_score
+
+  """column name"""
+  kast_score
+
+  """column name"""
+  positioning_rating
+
+  """column name"""
+  rounds
+
+  """column name"""
+  season_id
+
+  """column name"""
+  season_starts_at
+
+  """column name"""
+  spotted_score
+
+  """column name"""
+  steam_id
+
+  """column name"""
+  survival_score
+
+  """column name"""
+  traded_score
+
+  """column name"""
+  ttd_score
+
+  """column name"""
+  util_eff_score
+
+  """column name"""
+  utility_rating
+}
+
+"""aggregate stddev on columns"""
+type player_season_performance_v_stddev_fields {
+  accuracy_score: Float
+  aim_rating: Float
+  blind_score: Float
+  counter_strafe_score: Float
+  crosshair_score: Float
+  flash_assists_score: Float
+  hs_score: Float
+  kast_score: Float
+  positioning_rating: Float
+  rounds: Float
+  spotted_score: Float
+  steam_id: Float
+  survival_score: Float
+  traded_score: Float
+  ttd_score: Float
+  util_eff_score: Float
+  utility_rating: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type player_season_performance_v_stddev_pop_fields {
+  accuracy_score: Float
+  aim_rating: Float
+  blind_score: Float
+  counter_strafe_score: Float
+  crosshair_score: Float
+  flash_assists_score: Float
+  hs_score: Float
+  kast_score: Float
+  positioning_rating: Float
+  rounds: Float
+  spotted_score: Float
+  steam_id: Float
+  survival_score: Float
+  traded_score: Float
+  ttd_score: Float
+  util_eff_score: Float
+  utility_rating: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type player_season_performance_v_stddev_samp_fields {
+  accuracy_score: Float
+  aim_rating: Float
+  blind_score: Float
+  counter_strafe_score: Float
+  crosshair_score: Float
+  flash_assists_score: Float
+  hs_score: Float
+  kast_score: Float
+  positioning_rating: Float
+  rounds: Float
+  spotted_score: Float
+  steam_id: Float
+  survival_score: Float
+  traded_score: Float
+  ttd_score: Float
+  util_eff_score: Float
+  utility_rating: Float
+}
+
+"""
+Streaming cursor of the table "player_season_performance_v"
+"""
+input player_season_performance_v_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: player_season_performance_v_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input player_season_performance_v_stream_cursor_value_input {
+  accuracy_score: float8
+  aim_rating: float8
+  blind_score: float8
+  counter_strafe_score: float8
+  crosshair_score: float8
+  flash_assists_score: float8
+  hs_score: float8
+  kast_score: float8
+  positioning_rating: float8
+  rounds: Int
+  season_id: uuid
+  season_starts_at: timestamptz
+  spotted_score: float8
+  steam_id: bigint
+  survival_score: float8
+  traded_score: float8
+  ttd_score: float8
+  util_eff_score: float8
+  utility_rating: float8
+}
+
+"""aggregate sum on columns"""
+type player_season_performance_v_sum_fields {
+  accuracy_score: float8
+  aim_rating: float8
+  blind_score: float8
+  counter_strafe_score: float8
+  crosshair_score: float8
+  flash_assists_score: float8
+  hs_score: float8
+  kast_score: float8
+  positioning_rating: float8
+  rounds: Int
+  spotted_score: float8
+  steam_id: bigint
+  survival_score: float8
+  traded_score: float8
+  ttd_score: float8
+  util_eff_score: float8
+  utility_rating: float8
+}
+
+"""aggregate var_pop on columns"""
+type player_season_performance_v_var_pop_fields {
+  accuracy_score: Float
+  aim_rating: Float
+  blind_score: Float
+  counter_strafe_score: Float
+  crosshair_score: Float
+  flash_assists_score: Float
+  hs_score: Float
+  kast_score: Float
+  positioning_rating: Float
+  rounds: Float
+  spotted_score: Float
+  steam_id: Float
+  survival_score: Float
+  traded_score: Float
+  ttd_score: Float
+  util_eff_score: Float
+  utility_rating: Float
+}
+
+"""aggregate var_samp on columns"""
+type player_season_performance_v_var_samp_fields {
+  accuracy_score: Float
+  aim_rating: Float
+  blind_score: Float
+  counter_strafe_score: Float
+  crosshair_score: Float
+  flash_assists_score: Float
+  hs_score: Float
+  kast_score: Float
+  positioning_rating: Float
+  rounds: Float
+  spotted_score: Float
+  steam_id: Float
+  survival_score: Float
+  traded_score: Float
+  ttd_score: Float
+  util_eff_score: Float
+  utility_rating: Float
+}
+
+"""aggregate variance on columns"""
+type player_season_performance_v_variance_fields {
+  accuracy_score: Float
+  aim_rating: Float
+  blind_score: Float
+  counter_strafe_score: Float
+  crosshair_score: Float
+  flash_assists_score: Float
+  hs_score: Float
+  kast_score: Float
+  positioning_rating: Float
+  rounds: Float
+  spotted_score: Float
+  steam_id: Float
+  survival_score: Float
+  traded_score: Float
+  ttd_score: Float
+  util_eff_score: Float
+  utility_rating: Float
+}
+
+"""
 columns and relationships of "player_season_stats"
 """
 type player_season_stats {
@@ -89544,6 +90670,51 @@ type query_root {
   game_modes_by_pk(id: uuid!): game_modes
 
   """
+  fetch data from the table: "game_plugin_cvars"
+  """
+  game_plugin_cvars(
+    """distinct select on columns"""
+    distinct_on: [game_plugin_cvars_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_plugin_cvars_order_by!]
+
+    """filter the rows returned"""
+    where: game_plugin_cvars_bool_exp
+  ): [game_plugin_cvars!]!
+
+  """
+  fetch aggregated fields from the table: "game_plugin_cvars"
+  """
+  game_plugin_cvars_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_plugin_cvars_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_plugin_cvars_order_by!]
+
+    """filter the rows returned"""
+    where: game_plugin_cvars_bool_exp
+  ): game_plugin_cvars_aggregate!
+
+  """
+  fetch data from the table: "game_plugin_cvars" using primary key columns
+  """
+  game_plugin_cvars_by_pk(name: String!, plugin_slug: String!): game_plugin_cvars
+
+  """
   fetch data from the table: "game_plugin_installs"
   """
   game_plugin_installs(
@@ -92551,6 +93722,46 @@ type query_root {
   """
   player_sanctions_by_pk(id: uuid!): player_sanctions
 
+  """
+  fetch data from the table: "player_season_performance_v"
+  """
+  player_season_performance_v(
+    """distinct select on columns"""
+    distinct_on: [player_season_performance_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_season_performance_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_season_performance_v_bool_exp
+  ): [player_season_performance_v!]!
+
+  """
+  fetch aggregated fields from the table: "player_season_performance_v"
+  """
+  player_season_performance_v_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_season_performance_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_season_performance_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_season_performance_v_bool_exp
+  ): player_season_performance_v_aggregate!
+
   """An array relationship"""
   player_season_stats(
     """distinct select on columns"""
@@ -93290,6 +94501,51 @@ type query_root {
   fetch data from the table: "server_player_sessions" using primary key columns
   """
   server_player_sessions_by_pk(id: bigint!): server_player_sessions
+
+  """
+  fetch data from the table: "server_plugin_configs"
+  """
+  server_plugin_configs(
+    """distinct select on columns"""
+    distinct_on: [server_plugin_configs_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_plugin_configs_order_by!]
+
+    """filter the rows returned"""
+    where: server_plugin_configs_bool_exp
+  ): [server_plugin_configs!]!
+
+  """
+  fetch aggregated fields from the table: "server_plugin_configs"
+  """
+  server_plugin_configs_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_plugin_configs_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_plugin_configs_order_by!]
+
+    """filter the rows returned"""
+    where: server_plugin_configs_bool_exp
+  ): server_plugin_configs_aggregate!
+
+  """
+  fetch data from the table: "server_plugin_configs" using primary key columns
+  """
+  server_plugin_configs_by_pk(plugin_slug: String!, server_id: uuid!): server_plugin_configs
 
   """
   fetch data from the table: "server_plugins"
@@ -96665,6 +97921,86 @@ type query_root {
   ): v_player_weapon_kills_aggregate!
 
   """
+  fetch data from the table: "v_player_weapon_match_damage"
+  """
+  v_player_weapon_match_damage(
+    """distinct select on columns"""
+    distinct_on: [v_player_weapon_match_damage_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_weapon_match_damage_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_weapon_match_damage_bool_exp
+  ): [v_player_weapon_match_damage!]!
+
+  """
+  fetch aggregated fields from the table: "v_player_weapon_match_damage"
+  """
+  v_player_weapon_match_damage_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_player_weapon_match_damage_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_weapon_match_damage_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_weapon_match_damage_bool_exp
+  ): v_player_weapon_match_damage_aggregate!
+
+  """
+  fetch data from the table: "v_player_weapon_match_kills"
+  """
+  v_player_weapon_match_kills(
+    """distinct select on columns"""
+    distinct_on: [v_player_weapon_match_kills_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_weapon_match_kills_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_weapon_match_kills_bool_exp
+  ): [v_player_weapon_match_kills!]!
+
+  """
+  fetch aggregated fields from the table: "v_player_weapon_match_kills"
+  """
+  v_player_weapon_match_kills_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_player_weapon_match_kills_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_weapon_match_kills_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_weapon_match_kills_bool_exp
+  ): v_player_weapon_match_kills_aggregate!
+
+  """
   fetch data from the table: "v_pool_maps"
   """
   v_pool_maps(
@@ -99655,6 +100991,316 @@ input server_player_sessions_variance_order_by {
 }
 
 """
+columns and relationships of "server_plugin_configs"
+"""
+type server_plugin_configs {
+  cfg: String
+  config(
+    """JSON select path"""
+    path: String
+  ): jsonb
+
+  """An object relationship"""
+  plugin: game_plugins!
+  plugin_slug: String!
+
+  """An object relationship"""
+  server: servers!
+  server_id: uuid!
+  updated_at: timestamptz!
+}
+
+"""
+aggregated selection of "server_plugin_configs"
+"""
+type server_plugin_configs_aggregate {
+  aggregate: server_plugin_configs_aggregate_fields
+  nodes: [server_plugin_configs!]!
+}
+
+input server_plugin_configs_aggregate_bool_exp {
+  count: server_plugin_configs_aggregate_bool_exp_count
+}
+
+input server_plugin_configs_aggregate_bool_exp_count {
+  arguments: [server_plugin_configs_select_column!]
+  distinct: Boolean
+  filter: server_plugin_configs_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "server_plugin_configs"
+"""
+type server_plugin_configs_aggregate_fields {
+  count(columns: [server_plugin_configs_select_column!], distinct: Boolean): Int!
+  max: server_plugin_configs_max_fields
+  min: server_plugin_configs_min_fields
+}
+
+"""
+order by aggregate values of table "server_plugin_configs"
+"""
+input server_plugin_configs_aggregate_order_by {
+  count: order_by
+  max: server_plugin_configs_max_order_by
+  min: server_plugin_configs_min_order_by
+}
+
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input server_plugin_configs_append_input {
+  config: jsonb
+}
+
+"""
+input type for inserting array relation for remote table "server_plugin_configs"
+"""
+input server_plugin_configs_arr_rel_insert_input {
+  data: [server_plugin_configs_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: server_plugin_configs_on_conflict
+}
+
+"""
+Boolean expression to filter rows from the table "server_plugin_configs". All fields are combined with a logical 'AND'.
+"""
+input server_plugin_configs_bool_exp {
+  _and: [server_plugin_configs_bool_exp!]
+  _not: server_plugin_configs_bool_exp
+  _or: [server_plugin_configs_bool_exp!]
+  cfg: String_comparison_exp
+  config: jsonb_comparison_exp
+  plugin: game_plugins_bool_exp
+  plugin_slug: String_comparison_exp
+  server: servers_bool_exp
+  server_id: uuid_comparison_exp
+  updated_at: timestamptz_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "server_plugin_configs"
+"""
+enum server_plugin_configs_constraint {
+  """
+  unique or primary key constraint on columns "server_id", "plugin_slug"
+  """
+  server_plugin_configs_pkey
+}
+
+"""
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input server_plugin_configs_delete_at_path_input {
+  config: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input server_plugin_configs_delete_elem_input {
+  config: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input server_plugin_configs_delete_key_input {
+  config: String
+}
+
+"""
+input type for inserting data into table "server_plugin_configs"
+"""
+input server_plugin_configs_insert_input {
+  cfg: String
+  config: jsonb
+  plugin: game_plugins_obj_rel_insert_input
+  plugin_slug: String
+  server: servers_obj_rel_insert_input
+  server_id: uuid
+  updated_at: timestamptz
+}
+
+"""aggregate max on columns"""
+type server_plugin_configs_max_fields {
+  cfg: String
+  plugin_slug: String
+  server_id: uuid
+  updated_at: timestamptz
+}
+
+"""
+order by max() on columns of table "server_plugin_configs"
+"""
+input server_plugin_configs_max_order_by {
+  cfg: order_by
+  plugin_slug: order_by
+  server_id: order_by
+  updated_at: order_by
+}
+
+"""aggregate min on columns"""
+type server_plugin_configs_min_fields {
+  cfg: String
+  plugin_slug: String
+  server_id: uuid
+  updated_at: timestamptz
+}
+
+"""
+order by min() on columns of table "server_plugin_configs"
+"""
+input server_plugin_configs_min_order_by {
+  cfg: order_by
+  plugin_slug: order_by
+  server_id: order_by
+  updated_at: order_by
+}
+
+"""
+response of any mutation on the table "server_plugin_configs"
+"""
+type server_plugin_configs_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [server_plugin_configs!]!
+}
+
+"""
+on_conflict condition type for table "server_plugin_configs"
+"""
+input server_plugin_configs_on_conflict {
+  constraint: server_plugin_configs_constraint!
+  update_columns: [server_plugin_configs_update_column!]! = []
+  where: server_plugin_configs_bool_exp
+}
+
+"""Ordering options when selecting data from "server_plugin_configs"."""
+input server_plugin_configs_order_by {
+  cfg: order_by
+  config: order_by
+  plugin: game_plugins_order_by
+  plugin_slug: order_by
+  server: servers_order_by
+  server_id: order_by
+  updated_at: order_by
+}
+
+"""primary key columns input for table: server_plugin_configs"""
+input server_plugin_configs_pk_columns_input {
+  plugin_slug: String!
+  server_id: uuid!
+}
+
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input server_plugin_configs_prepend_input {
+  config: jsonb
+}
+
+"""
+select columns of table "server_plugin_configs"
+"""
+enum server_plugin_configs_select_column {
+  """column name"""
+  cfg
+
+  """column name"""
+  config
+
+  """column name"""
+  plugin_slug
+
+  """column name"""
+  server_id
+
+  """column name"""
+  updated_at
+}
+
+"""
+input type for updating data in table "server_plugin_configs"
+"""
+input server_plugin_configs_set_input {
+  cfg: String
+  config: jsonb
+  plugin_slug: String
+  server_id: uuid
+  updated_at: timestamptz
+}
+
+"""
+Streaming cursor of the table "server_plugin_configs"
+"""
+input server_plugin_configs_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: server_plugin_configs_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input server_plugin_configs_stream_cursor_value_input {
+  cfg: String
+  config: jsonb
+  plugin_slug: String
+  server_id: uuid
+  updated_at: timestamptz
+}
+
+"""
+update columns of table "server_plugin_configs"
+"""
+enum server_plugin_configs_update_column {
+  """column name"""
+  cfg
+
+  """column name"""
+  config
+
+  """column name"""
+  plugin_slug
+
+  """column name"""
+  server_id
+
+  """column name"""
+  updated_at
+}
+
+input server_plugin_configs_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: server_plugin_configs_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: server_plugin_configs_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: server_plugin_configs_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: server_plugin_configs_delete_key_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: server_plugin_configs_prepend_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: server_plugin_configs_set_input
+
+  """filter the rows which have to be updated"""
+  where: server_plugin_configs_bool_exp!
+}
+
+"""
 columns and relationships of "server_plugins"
 """
 type server_plugins {
@@ -100977,6 +102623,42 @@ type servers {
   player_management_version: String
 
   """An array relationship"""
+  plugin_configs(
+    """distinct select on columns"""
+    distinct_on: [server_plugin_configs_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_plugin_configs_order_by!]
+
+    """filter the rows returned"""
+    where: server_plugin_configs_bool_exp
+  ): [server_plugin_configs!]!
+
+  """An aggregate relationship"""
+  plugin_configs_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_plugin_configs_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_plugin_configs_order_by!]
+
+    """filter the rows returned"""
+    where: server_plugin_configs_bool_exp
+  ): server_plugin_configs_aggregate!
+
+  """An array relationship"""
   plugin_overrides(
     """distinct select on columns"""
     distinct_on: [server_plugins_select_column!]
@@ -101172,6 +102854,8 @@ input servers_bool_exp {
   player_management_runtime: String_comparison_exp
   player_management_seen_at: timestamptz_comparison_exp
   player_management_version: String_comparison_exp
+  plugin_configs: server_plugin_configs_bool_exp
+  plugin_configs_aggregate: server_plugin_configs_aggregate_bool_exp
   plugin_overrides: server_plugins_bool_exp
   plugin_overrides_aggregate: server_plugins_aggregate_bool_exp
   plugin_runtime: e_plugin_runtimes_enum_comparison_exp
@@ -101268,6 +102952,7 @@ input servers_insert_input {
   player_management_runtime: String
   player_management_seen_at: timestamptz
   player_management_version: String
+  plugin_configs: server_plugin_configs_arr_rel_insert_input
   plugin_overrides: server_plugins_arr_rel_insert_input
   plugin_runtime: e_plugin_runtimes_enum
   plugin_version: String
@@ -101480,6 +103165,7 @@ input servers_order_by {
   player_management_runtime: order_by
   player_management_seen_at: order_by
   player_management_version: order_by
+  plugin_configs_aggregate: server_plugin_configs_aggregate_order_by
   plugin_overrides_aggregate: server_plugins_aggregate_order_by
   plugin_runtime: order_by
   plugin_version: order_by
@@ -107971,6 +109657,65 @@ type subscription_root {
   ): [game_modes!]!
 
   """
+  fetch data from the table: "game_plugin_cvars"
+  """
+  game_plugin_cvars(
+    """distinct select on columns"""
+    distinct_on: [game_plugin_cvars_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_plugin_cvars_order_by!]
+
+    """filter the rows returned"""
+    where: game_plugin_cvars_bool_exp
+  ): [game_plugin_cvars!]!
+
+  """
+  fetch aggregated fields from the table: "game_plugin_cvars"
+  """
+  game_plugin_cvars_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_plugin_cvars_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_plugin_cvars_order_by!]
+
+    """filter the rows returned"""
+    where: game_plugin_cvars_bool_exp
+  ): game_plugin_cvars_aggregate!
+
+  """
+  fetch data from the table: "game_plugin_cvars" using primary key columns
+  """
+  game_plugin_cvars_by_pk(name: String!, plugin_slug: String!): game_plugin_cvars
+
+  """
+  fetch data from the table in a streaming manner: "game_plugin_cvars"
+  """
+  game_plugin_cvars_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [game_plugin_cvars_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: game_plugin_cvars_bool_exp
+  ): [game_plugin_cvars!]!
+
+  """
   fetch data from the table: "game_plugin_installs"
   """
   game_plugin_installs(
@@ -111792,6 +113537,60 @@ type subscription_root {
     where: player_sanctions_bool_exp
   ): [player_sanctions!]!
 
+  """
+  fetch data from the table: "player_season_performance_v"
+  """
+  player_season_performance_v(
+    """distinct select on columns"""
+    distinct_on: [player_season_performance_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_season_performance_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_season_performance_v_bool_exp
+  ): [player_season_performance_v!]!
+
+  """
+  fetch aggregated fields from the table: "player_season_performance_v"
+  """
+  player_season_performance_v_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_season_performance_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_season_performance_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_season_performance_v_bool_exp
+  ): player_season_performance_v_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "player_season_performance_v"
+  """
+  player_season_performance_v_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [player_season_performance_v_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: player_season_performance_v_bool_exp
+  ): [player_season_performance_v!]!
+
   """An array relationship"""
   player_season_stats(
     """distinct select on columns"""
@@ -112766,6 +114565,65 @@ type subscription_root {
     """filter the rows returned"""
     where: server_player_sessions_bool_exp
   ): [server_player_sessions!]!
+
+  """
+  fetch data from the table: "server_plugin_configs"
+  """
+  server_plugin_configs(
+    """distinct select on columns"""
+    distinct_on: [server_plugin_configs_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_plugin_configs_order_by!]
+
+    """filter the rows returned"""
+    where: server_plugin_configs_bool_exp
+  ): [server_plugin_configs!]!
+
+  """
+  fetch aggregated fields from the table: "server_plugin_configs"
+  """
+  server_plugin_configs_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_plugin_configs_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_plugin_configs_order_by!]
+
+    """filter the rows returned"""
+    where: server_plugin_configs_bool_exp
+  ): server_plugin_configs_aggregate!
+
+  """
+  fetch data from the table: "server_plugin_configs" using primary key columns
+  """
+  server_plugin_configs_by_pk(plugin_slug: String!, server_id: uuid!): server_plugin_configs
+
+  """
+  fetch data from the table in a streaming manner: "server_plugin_configs"
+  """
+  server_plugin_configs_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [server_plugin_configs_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: server_plugin_configs_bool_exp
+  ): [server_plugin_configs!]!
 
   """
   fetch data from the table: "server_plugins"
@@ -117219,6 +119077,114 @@ type subscription_root {
     """filter the rows returned"""
     where: v_player_weapon_kills_bool_exp
   ): [v_player_weapon_kills!]!
+
+  """
+  fetch data from the table: "v_player_weapon_match_damage"
+  """
+  v_player_weapon_match_damage(
+    """distinct select on columns"""
+    distinct_on: [v_player_weapon_match_damage_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_weapon_match_damage_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_weapon_match_damage_bool_exp
+  ): [v_player_weapon_match_damage!]!
+
+  """
+  fetch aggregated fields from the table: "v_player_weapon_match_damage"
+  """
+  v_player_weapon_match_damage_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_player_weapon_match_damage_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_weapon_match_damage_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_weapon_match_damage_bool_exp
+  ): v_player_weapon_match_damage_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "v_player_weapon_match_damage"
+  """
+  v_player_weapon_match_damage_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [v_player_weapon_match_damage_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: v_player_weapon_match_damage_bool_exp
+  ): [v_player_weapon_match_damage!]!
+
+  """
+  fetch data from the table: "v_player_weapon_match_kills"
+  """
+  v_player_weapon_match_kills(
+    """distinct select on columns"""
+    distinct_on: [v_player_weapon_match_kills_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_weapon_match_kills_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_weapon_match_kills_bool_exp
+  ): [v_player_weapon_match_kills!]!
+
+  """
+  fetch aggregated fields from the table: "v_player_weapon_match_kills"
+  """
+  v_player_weapon_match_kills_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_player_weapon_match_kills_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_weapon_match_kills_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_weapon_match_kills_bool_exp
+  ): v_player_weapon_match_kills_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "v_player_weapon_match_kills"
+  """
+  v_player_weapon_match_kills_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [v_player_weapon_match_kills_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: v_player_weapon_match_kills_bool_exp
+  ): [v_player_weapon_match_kills!]!
 
   """
   fetch data from the table: "v_pool_maps"
@@ -152230,6 +154196,366 @@ type v_player_weapon_kills_var_samp_fields {
 
 """aggregate variance on columns"""
 type v_player_weapon_kills_variance_fields {
+  kill_count: Float
+  player_steam_id: Float
+  rounds: Float
+}
+
+"""
+columns and relationships of "v_player_weapon_match_damage"
+"""
+type v_player_weapon_match_damage {
+  damage: bigint
+  hits: bigint
+
+  """An object relationship"""
+  match: matches
+  match_id: uuid
+  player_steam_id: bigint
+  with: String
+}
+
+"""
+aggregated selection of "v_player_weapon_match_damage"
+"""
+type v_player_weapon_match_damage_aggregate {
+  aggregate: v_player_weapon_match_damage_aggregate_fields
+  nodes: [v_player_weapon_match_damage!]!
+}
+
+"""
+aggregate fields of "v_player_weapon_match_damage"
+"""
+type v_player_weapon_match_damage_aggregate_fields {
+  avg: v_player_weapon_match_damage_avg_fields
+  count(columns: [v_player_weapon_match_damage_select_column!], distinct: Boolean): Int!
+  max: v_player_weapon_match_damage_max_fields
+  min: v_player_weapon_match_damage_min_fields
+  stddev: v_player_weapon_match_damage_stddev_fields
+  stddev_pop: v_player_weapon_match_damage_stddev_pop_fields
+  stddev_samp: v_player_weapon_match_damage_stddev_samp_fields
+  sum: v_player_weapon_match_damage_sum_fields
+  var_pop: v_player_weapon_match_damage_var_pop_fields
+  var_samp: v_player_weapon_match_damage_var_samp_fields
+  variance: v_player_weapon_match_damage_variance_fields
+}
+
+"""aggregate avg on columns"""
+type v_player_weapon_match_damage_avg_fields {
+  damage: Float
+  hits: Float
+  player_steam_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "v_player_weapon_match_damage". All fields are combined with a logical 'AND'.
+"""
+input v_player_weapon_match_damage_bool_exp {
+  _and: [v_player_weapon_match_damage_bool_exp!]
+  _not: v_player_weapon_match_damage_bool_exp
+  _or: [v_player_weapon_match_damage_bool_exp!]
+  damage: bigint_comparison_exp
+  hits: bigint_comparison_exp
+  match: matches_bool_exp
+  match_id: uuid_comparison_exp
+  player_steam_id: bigint_comparison_exp
+  with: String_comparison_exp
+}
+
+"""aggregate max on columns"""
+type v_player_weapon_match_damage_max_fields {
+  damage: bigint
+  hits: bigint
+  match_id: uuid
+  player_steam_id: bigint
+  with: String
+}
+
+"""aggregate min on columns"""
+type v_player_weapon_match_damage_min_fields {
+  damage: bigint
+  hits: bigint
+  match_id: uuid
+  player_steam_id: bigint
+  with: String
+}
+
+"""
+Ordering options when selecting data from "v_player_weapon_match_damage".
+"""
+input v_player_weapon_match_damage_order_by {
+  damage: order_by
+  hits: order_by
+  match: matches_order_by
+  match_id: order_by
+  player_steam_id: order_by
+  with: order_by
+}
+
+"""
+select columns of table "v_player_weapon_match_damage"
+"""
+enum v_player_weapon_match_damage_select_column {
+  """column name"""
+  damage
+
+  """column name"""
+  hits
+
+  """column name"""
+  match_id
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  with
+}
+
+"""aggregate stddev on columns"""
+type v_player_weapon_match_damage_stddev_fields {
+  damage: Float
+  hits: Float
+  player_steam_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type v_player_weapon_match_damage_stddev_pop_fields {
+  damage: Float
+  hits: Float
+  player_steam_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type v_player_weapon_match_damage_stddev_samp_fields {
+  damage: Float
+  hits: Float
+  player_steam_id: Float
+}
+
+"""
+Streaming cursor of the table "v_player_weapon_match_damage"
+"""
+input v_player_weapon_match_damage_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: v_player_weapon_match_damage_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input v_player_weapon_match_damage_stream_cursor_value_input {
+  damage: bigint
+  hits: bigint
+  match_id: uuid
+  player_steam_id: bigint
+  with: String
+}
+
+"""aggregate sum on columns"""
+type v_player_weapon_match_damage_sum_fields {
+  damage: bigint
+  hits: bigint
+  player_steam_id: bigint
+}
+
+"""aggregate var_pop on columns"""
+type v_player_weapon_match_damage_var_pop_fields {
+  damage: Float
+  hits: Float
+  player_steam_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type v_player_weapon_match_damage_var_samp_fields {
+  damage: Float
+  hits: Float
+  player_steam_id: Float
+}
+
+"""aggregate variance on columns"""
+type v_player_weapon_match_damage_variance_fields {
+  damage: Float
+  hits: Float
+  player_steam_id: Float
+}
+
+"""
+columns and relationships of "v_player_weapon_match_kills"
+"""
+type v_player_weapon_match_kills {
+  kill_count: bigint
+
+  """An object relationship"""
+  match: matches
+  match_id: uuid
+  player_steam_id: bigint
+  rounds: bigint
+  with: String
+}
+
+"""
+aggregated selection of "v_player_weapon_match_kills"
+"""
+type v_player_weapon_match_kills_aggregate {
+  aggregate: v_player_weapon_match_kills_aggregate_fields
+  nodes: [v_player_weapon_match_kills!]!
+}
+
+"""
+aggregate fields of "v_player_weapon_match_kills"
+"""
+type v_player_weapon_match_kills_aggregate_fields {
+  avg: v_player_weapon_match_kills_avg_fields
+  count(columns: [v_player_weapon_match_kills_select_column!], distinct: Boolean): Int!
+  max: v_player_weapon_match_kills_max_fields
+  min: v_player_weapon_match_kills_min_fields
+  stddev: v_player_weapon_match_kills_stddev_fields
+  stddev_pop: v_player_weapon_match_kills_stddev_pop_fields
+  stddev_samp: v_player_weapon_match_kills_stddev_samp_fields
+  sum: v_player_weapon_match_kills_sum_fields
+  var_pop: v_player_weapon_match_kills_var_pop_fields
+  var_samp: v_player_weapon_match_kills_var_samp_fields
+  variance: v_player_weapon_match_kills_variance_fields
+}
+
+"""aggregate avg on columns"""
+type v_player_weapon_match_kills_avg_fields {
+  kill_count: Float
+  player_steam_id: Float
+  rounds: Float
+}
+
+"""
+Boolean expression to filter rows from the table "v_player_weapon_match_kills". All fields are combined with a logical 'AND'.
+"""
+input v_player_weapon_match_kills_bool_exp {
+  _and: [v_player_weapon_match_kills_bool_exp!]
+  _not: v_player_weapon_match_kills_bool_exp
+  _or: [v_player_weapon_match_kills_bool_exp!]
+  kill_count: bigint_comparison_exp
+  match: matches_bool_exp
+  match_id: uuid_comparison_exp
+  player_steam_id: bigint_comparison_exp
+  rounds: bigint_comparison_exp
+  with: String_comparison_exp
+}
+
+"""aggregate max on columns"""
+type v_player_weapon_match_kills_max_fields {
+  kill_count: bigint
+  match_id: uuid
+  player_steam_id: bigint
+  rounds: bigint
+  with: String
+}
+
+"""aggregate min on columns"""
+type v_player_weapon_match_kills_min_fields {
+  kill_count: bigint
+  match_id: uuid
+  player_steam_id: bigint
+  rounds: bigint
+  with: String
+}
+
+"""
+Ordering options when selecting data from "v_player_weapon_match_kills".
+"""
+input v_player_weapon_match_kills_order_by {
+  kill_count: order_by
+  match: matches_order_by
+  match_id: order_by
+  player_steam_id: order_by
+  rounds: order_by
+  with: order_by
+}
+
+"""
+select columns of table "v_player_weapon_match_kills"
+"""
+enum v_player_weapon_match_kills_select_column {
+  """column name"""
+  kill_count
+
+  """column name"""
+  match_id
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  rounds
+
+  """column name"""
+  with
+}
+
+"""aggregate stddev on columns"""
+type v_player_weapon_match_kills_stddev_fields {
+  kill_count: Float
+  player_steam_id: Float
+  rounds: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type v_player_weapon_match_kills_stddev_pop_fields {
+  kill_count: Float
+  player_steam_id: Float
+  rounds: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type v_player_weapon_match_kills_stddev_samp_fields {
+  kill_count: Float
+  player_steam_id: Float
+  rounds: Float
+}
+
+"""
+Streaming cursor of the table "v_player_weapon_match_kills"
+"""
+input v_player_weapon_match_kills_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: v_player_weapon_match_kills_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input v_player_weapon_match_kills_stream_cursor_value_input {
+  kill_count: bigint
+  match_id: uuid
+  player_steam_id: bigint
+  rounds: bigint
+  with: String
+}
+
+"""aggregate sum on columns"""
+type v_player_weapon_match_kills_sum_fields {
+  kill_count: bigint
+  player_steam_id: bigint
+  rounds: bigint
+}
+
+"""aggregate var_pop on columns"""
+type v_player_weapon_match_kills_var_pop_fields {
+  kill_count: Float
+  player_steam_id: Float
+  rounds: Float
+}
+
+"""aggregate var_samp on columns"""
+type v_player_weapon_match_kills_var_samp_fields {
+  kill_count: Float
+  player_steam_id: Float
+  rounds: Float
+}
+
+"""aggregate variance on columns"""
+type v_player_weapon_match_kills_variance_fields {
   kill_count: Float
   player_steam_id: Float
   rounds: Float
