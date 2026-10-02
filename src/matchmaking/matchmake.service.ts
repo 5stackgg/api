@@ -276,6 +276,7 @@ export class MatchmakeService {
     region: string,
   ): Promise<MatchmakingLobby[]> {
     const lobbyDetails = [];
+    let matchedParty = false;
 
     for (let i = 0; i < lobbiesData.length; i += 2) {
       const details = await this.matchmakingLobbyService.getLobbyDetails(
@@ -318,6 +319,7 @@ export class MatchmakeService {
             details.type,
             { team1, team2 },
           );
+          matchedParty = true;
         } catch (error) {
           this.logger.error(
             `Error creating match confirmation for lobby ${details.lobbyId}:`,
@@ -333,6 +335,10 @@ export class MatchmakeService {
         avgRank: averageRank(details.players),
         joinedAt: new Date(details.joinedAt),
       });
+    }
+
+    if (matchedParty) {
+      await this.refreshRegionStats();
     }
 
     return lobbyDetails;
@@ -364,6 +370,8 @@ export class MatchmakeService {
 
     const countPlayers = (pool: Array<MatchmakingLobby>) =>
       pool.reduce((acc, lobby) => acc + lobby.players.length, 0);
+
+    let confirmed = false;
 
     try {
       for (;;) {
@@ -466,6 +474,7 @@ export class MatchmakeService {
 
         try {
           await this.createMatchConfirmation(region, type, { team1, team2 });
+          confirmed = true;
         } catch (error) {
           this.logger.error(`Error creating match confirmation:`, error);
           // ownership comes back to us, so the settle path requeues them
@@ -485,6 +494,20 @@ export class MatchmakeService {
           this.logger.error(`Failed to requeue lobby ${lobbyId}:`, error);
         }
       }
+
+      // Not from the confirmation itself: the lobbies this pass claimed but did
+      // not match are out of the queue until the requeue above puts them back.
+      if (confirmed) {
+        await this.refreshRegionStats();
+      }
+    }
+  }
+
+  private async refreshRegionStats() {
+    try {
+      await this.sendRegionStats();
+    } catch (error) {
+      this.logger.warn("unable to send region stats", error);
     }
   }
 

@@ -329,6 +329,56 @@ describe("matchmaking (end to end)", () => {
       ).toEqual(["real"]);
     });
 
+    function playCount(region = "us-east") {
+      return (lastRegionStats()?.[region]?.[COMPETITIVE] ?? []).reduce(
+        (total: number, lobby: { players: number }) => total + lobby.players,
+        0,
+      );
+    }
+
+    it("drops matched players from the Play count once a match is found", async () => {
+      await enqueue(
+        Array.from({ length: 13 }, (_, i) => makeLobby(`solo-${i}`, [5000])),
+      );
+      await service.sendRegionStats();
+      expect(playCount()).toBe(13);
+
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      expect(confirmations).toHaveLength(1);
+      expect(playCount()).toBe(3);
+    });
+
+    it("drops a full party from the Play count once its match is found", async () => {
+      await enqueue([makeLobby("ten-stack", new Array(10).fill(5000))]);
+      await service.sendRegionStats();
+      expect(playCount()).toBe(10);
+
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      expect(confirmations).toHaveLength(1);
+      expect(playCount()).toBe(0);
+    });
+
+    it("keeps the ready check when the Play count cannot be sent", async () => {
+      const lobbies = Array.from({ length: 10 }, (_, i) =>
+        makeLobby(`solo-${i}`, [5000]),
+      );
+      await enqueue(lobbies);
+      hasura.query.mockRejectedValue(new Error("hasura unavailable"));
+
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      expect(confirmations).toHaveLength(1);
+      expect(queuedIn("us-east")).toHaveLength(0);
+      expect(queue.add).toHaveBeenCalledWith(
+        "CancelMatchMaking",
+        expect.anything(),
+        expect.anything(),
+      );
+      assertInvariants(lobbies);
+    });
+
     it("keeps a lobby that rejoins while the stats are being built", async () => {
       await enqueue([makeLobby("rejoiner", [5000])]);
 
