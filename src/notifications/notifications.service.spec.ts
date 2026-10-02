@@ -538,3 +538,115 @@ describe("latestTitle", () => {
     ).resolves.toBeNull();
   });
 });
+
+// Match alerts reach a match's organizers by steam id, so the bell switch for
+// them has to be honoured at insert like every other per-player type.
+describe("match alerts to organizers", () => {
+  const ORGANIZER = "76561198000000001";
+  const CO_ORGANIZER = "76561198000000002";
+
+  let hasura: { query: jest.Mock; mutation: jest.Mock };
+  let preferences: { filterInAppRecipients: jest.Mock };
+  let pushNotifications: {
+    filterSubscribed: jest.Mock;
+    claimFanOut: jest.Mock;
+  };
+  let service: NotificationsService;
+
+  const organizedBy = (tournament: Record<string, unknown> | null) =>
+    hasura.query.mockImplementation(async (query: any) => {
+      if (query.tournament_brackets) {
+        return {
+          tournament_brackets: tournament ? [{ stage: { tournament } }] : [],
+        };
+      }
+      if (query.matches_by_pk) {
+        return { matches_by_pk: { organizer_steam_id: ORGANIZER } };
+      }
+      return { settings_by_pk: null };
+    });
+
+  const writtenRows = () =>
+    hasura.mutation.mock.calls.flatMap(([mutation]: [any]) =>
+      mutation.insert_notifications
+        ? mutation.insert_notifications.__args.objects
+        : [mutation.insert_notifications_one.__args.object],
+    );
+
+  beforeEach(() => {
+    hasura = {
+      query: jest.fn(),
+      mutation: jest.fn(async (mutation: any) => ({
+        insert_notifications: {
+          returning: (mutation.insert_notifications?.__args.objects ?? []).map(
+            (_: unknown, index: number) => ({ id: `row-${index}` }),
+          ),
+        },
+        insert_notifications_one: { id: "row" },
+      })),
+    };
+    preferences = {
+      filterInAppRecipients: jest.fn(async (): Promise<string[]> => []),
+    };
+    pushNotifications = {
+      filterSubscribed: jest.fn(async (): Promise<string[]> => []),
+      claimFanOut: jest.fn().mockResolvedValue(undefined),
+    };
+
+    service = new NotificationsService(
+      hasura as any,
+      { query: jest.fn().mockResolvedValue([]) } as any,
+      { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
+      { get: () => ({ webDomain: "https://5stack.gg" }) } as any,
+      preferences as any,
+      pushNotifications as any,
+      { add: jest.fn() } as any,
+      { add: jest.fn().mockResolvedValue({}) } as any,
+    );
+  });
+
+  it.each([
+    ["a paused map", "sendMatchMapPauseNotification"],
+    ["a match waiting for a server", "sendMatchWaitingForServerNotification"],
+  ] as const)(
+    "keeps %s out of the bell of an organizer who muted it",
+    async (_, send) => {
+      organizedBy(null);
+
+      await service[send]("match-1");
+
+      expect(preferences.filterInAppRecipients).toHaveBeenCalledWith(
+        "MatchStatusChange",
+        [ORGANIZER],
+      );
+      expect(writtenRows().filter((row: any) => row.steam_id)).toEqual([]);
+      expect(writtenRows().map((row: any) => row.role)).toEqual([
+        "match_organizer",
+      ]);
+    },
+  );
+
+  it("asks every tournament organizer's bell, and writes only for those listening", async () => {
+    organizedBy({
+      id: "tournament-1",
+      name: "Autumn Cup",
+      organizer_steam_id: ORGANIZER,
+      organizers: [{ steam_id: CO_ORGANIZER }],
+      discord_notify_MapPaused: false,
+    });
+    preferences.filterInAppRecipients.mockResolvedValue([CO_ORGANIZER]);
+
+    await service.sendMatchMapPauseNotification("match-1");
+
+    expect(preferences.filterInAppRecipients).toHaveBeenCalledWith(
+      "MatchStatusChange",
+      [ORGANIZER, CO_ORGANIZER],
+    );
+    expect(
+      writtenRows().map((row: any) => [row.steam_id ?? null, row.role]),
+    ).toEqual([
+      [CO_ORGANIZER, "tournament_organizer"],
+      [null, "administrator"],
+    ]);
+  });
+});

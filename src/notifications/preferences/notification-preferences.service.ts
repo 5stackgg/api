@@ -1,10 +1,12 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { PostgresService } from "../../postgres/postgres.service";
 import {
+  CategoryType,
   NotificationChannel,
   PreferenceKey,
   keysForChannel,
   inAppKeyForType,
+  typesForCategory,
 } from "./notification-categories";
 
 export type QuietHours = {
@@ -15,6 +17,7 @@ export type QuietHours = {
 
 export type ResolvedPreference = PreferenceKey & {
   enabled: boolean;
+  types?: CategoryType[];
 };
 
 @Injectable()
@@ -22,8 +25,8 @@ export class NotificationPreferencesService {
   constructor(private readonly postgres: PostgresService) {}
 
   // Returns the whole catalogue merged with the player's stored choices, so
-  // the frontend renders toggles without needing its own copy of the key list
-  // or of what each key defaults to.
+  // the frontend renders toggles without needing its own copy of the key list,
+  // of what each key defaults to, or of which types each push category covers.
   public async list(
     steamId: string,
     channel: NotificationChannel,
@@ -42,6 +45,7 @@ export class NotificationPreferencesService {
     return keysForChannel(channel).map((entry) => ({
       ...entry,
       enabled: stored.get(entry.key) ?? entry.defaultEnabled,
+      ...(channel === "push" ? { types: typesForCategory(entry.key) } : {}),
     }));
   }
 

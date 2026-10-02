@@ -6,6 +6,9 @@ import {
   IN_APP_KEYS,
   pushCategoryForType,
   inAppKeyForType,
+  isKnownKey,
+  bellControlForType,
+  typesForCategory,
 } from "./notification-categories";
 
 const HASURA_DIR = join(__dirname, "../../../hasura");
@@ -36,6 +39,29 @@ const notificationTypesInTree = (): string[] => {
 
   return [...types].sort();
 };
+
+// The bell may mute any notice about the player except their own name-change
+// decisions, sanctions and warnings.
+const ACCOUNT_AND_SAFETY = [
+  "NameChangeApproved",
+  "NameChangeDenied",
+  "PlayerSanctioned",
+  "PlayerWarning",
+];
+
+const NEVER_IN_THE_BELL = [
+  "MatchFound",
+  "AdminCall",
+  "ChatMessage",
+  "MatchChatMessage",
+];
+
+const staffTypes = () =>
+  new Set<string>(
+    PUSH_KEYS.filter((entry) => entry.adminOnly).flatMap(
+      (entry) => PUSH_CATEGORIES[entry.key],
+    ),
+  );
 
 describe("notification categories", () => {
   const types = notificationTypesInTree();
@@ -148,5 +174,109 @@ describe("notification categories", () => {
     }
 
     expect(inAppKeyForType("GameUpdate")).toBeNull();
+  });
+
+  it("gives every per-player type a bell switch except a player's own account and safety notices", () => {
+    const staff = staffTypes();
+    const perPlayer = types.filter(
+      (type) =>
+        !staff.has(type) &&
+        !ACCOUNT_AND_SAFETY.includes(type) &&
+        !NEVER_IN_THE_BELL.includes(type),
+    );
+
+    expect(IN_APP_KEYS.map((entry) => entry.key).sort()).toEqual(
+      perPlayer.sort(),
+    );
+  });
+
+  it("refuses a bell preference for a locked or push-only type", () => {
+    for (const type of [...ACCOUNT_AND_SAFETY, ...NEVER_IN_THE_BELL]) {
+      expect(isKnownKey("in_app", type)).toBe(false);
+    }
+
+    expect(isKnownKey("in_app", "ScrimRequestReceived")).toBe(true);
+    expect(isKnownKey("in_app", "MatchStatusChange")).toBe(true);
+  });
+});
+
+describe("bell control", () => {
+  const types = notificationTypesInTree();
+
+  it("classifies every notification type", () => {
+    const unclassified = types.filter((type) => !bellControlForType(type));
+
+    expect(unclassified).toEqual([]);
+  });
+
+  it("locks exactly a player's own account and safety notices", () => {
+    const staff = staffTypes();
+    const locked = types.filter(
+      (type) => !staff.has(type) && bellControlForType(type) === "locked",
+    );
+
+    expect(locked.sort()).toEqual([...ACCOUNT_AND_SAFETY].sort());
+  });
+
+  it("locks staff broadcasts, which have no recipient list to filter", () => {
+    const unlocked = [...staffTypes()].filter(
+      (type) => bellControlForType(type) !== "locked",
+    );
+
+    expect(unlocked).toEqual([]);
+  });
+
+  it("keeps the rings and chat out of the bell", () => {
+    expect(NEVER_IN_THE_BELL.map(bellControlForType)).toEqual([
+      "push_only",
+      "push_only",
+      "push_only",
+      "push_only",
+    ]);
+  });
+
+  it("toggles exactly the in-app keys", () => {
+    const toggles = types.filter(
+      (type) => bellControlForType(type) === "toggle",
+    );
+
+    expect(toggles.sort()).toEqual(
+      IN_APP_KEYS.map((entry) => entry.key).sort(),
+    );
+  });
+});
+
+describe("category catalog", () => {
+  const types = notificationTypesInTree();
+
+  it("lists a category's types in order, with how the bell treats each", () => {
+    expect(typesForCategory("account")).toEqual([
+      { type: "NameChangeApproved", bell: "locked", ignoresQuietHours: false },
+      { type: "NameChangeDenied", bell: "locked", ignoresQuietHours: false },
+      { type: "PlayerSanctioned", bell: "locked", ignoresQuietHours: false },
+      { type: "PlayerWarning", bell: "locked", ignoresQuietHours: false },
+      { type: "AwardGranted", bell: "toggle", ignoresQuietHours: false },
+    ]);
+  });
+
+  it("says which types ring through quiet hours", () => {
+    expect(typesForCategory("match_found")).toEqual([
+      { type: "MatchFound", bell: "push_only", ignoresQuietHours: true },
+    ]);
+    expect(typesForCategory("admin_call")).toEqual([
+      { type: "AdminCall", bell: "push_only", ignoresQuietHours: true },
+    ]);
+  });
+
+  it("lists every type exactly once across the push categories", () => {
+    const listed = PUSH_KEYS.flatMap((entry) =>
+      typesForCategory(entry.key).map(({ type }) => type),
+    );
+
+    expect([...listed].sort()).toEqual([...types].sort());
+  });
+
+  it("lists nothing for a category that does not exist", () => {
+    expect(typesForCategory("nope")).toEqual([]);
   });
 });

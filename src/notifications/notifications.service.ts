@@ -925,13 +925,12 @@ export class NotificationsService {
         }
 
         if (matches_by_pk.organizer_steam_id) {
-          await this.insertNotification({
-            type: "MatchStatusChange",
+          await this.notifyPlayers("MatchStatusChange", {
             title,
             message,
-            steam_id: matches_by_pk.organizer_steam_id,
             role: "user",
             entity_id: matchId,
+            steamIds: [String(matches_by_pk.organizer_steam_id)],
           });
         }
 
@@ -968,16 +967,13 @@ export class NotificationsService {
         organizerSteamIds.add(String(org.steam_id));
       }
 
-      for (const steamId of organizerSteamIds) {
-        await this.insertNotification({
-          type: "MatchStatusChange",
-          title,
-          message,
-          steam_id: steamId,
-          role: "tournament_organizer",
-          entity_id: matchId,
-        });
-      }
+      await this.notifyPlayers("MatchStatusChange", {
+        title,
+        message,
+        role: "tournament_organizer",
+        entity_id: matchId,
+        steamIds: Array.from(organizerSteamIds),
+      });
 
       await this.insertNotification({
         type: "MatchStatusChange",
@@ -1056,13 +1052,12 @@ export class NotificationsService {
         }
 
         if (matches_by_pk.organizer_steam_id) {
-          await this.insertNotification({
-            type: "MatchStatusChange",
+          await this.notifyPlayers("MatchStatusChange", {
             title,
             message,
-            steam_id: matches_by_pk.organizer_steam_id,
             role: "user",
             entity_id: matchId,
+            steamIds: [String(matches_by_pk.organizer_steam_id)],
           });
         }
 
@@ -1100,16 +1095,13 @@ export class NotificationsService {
         organizerSteamIds.add(String(org.steam_id));
       }
 
-      for (const steamId of organizerSteamIds) {
-        await this.insertNotification({
-          type: "MatchStatusChange",
-          title,
-          message,
-          steam_id: steamId,
-          role: "tournament_organizer",
-          entity_id: matchId,
-        });
-      }
+      await this.notifyPlayers("MatchStatusChange", {
+        title,
+        message,
+        role: "tournament_organizer",
+        entity_id: matchId,
+        steamIds: Array.from(organizerSteamIds),
+      });
 
       await this.insertNotification({
         type: "MatchStatusChange",
@@ -1141,13 +1133,14 @@ export class NotificationsService {
     }
   }
 
+  // Role broadcasts only: a row for one player goes through notifyPlayers,
+  // which is where their bell preference is applied.
   private async insertNotification(notification: {
     type: e_notification_types_enum;
     title: string;
     message: string;
     entity_id?: string;
     role: e_player_roles_enum;
-    steam_id?: string;
     deletable?: boolean;
   }) {
     await this.hasura.mutation({
