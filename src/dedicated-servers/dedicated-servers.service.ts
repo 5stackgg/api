@@ -352,6 +352,12 @@ export class DedicatedServersService {
                       {
                         name: "EXTRA_GAME_PARAMS",
                         value: [
+                          // CS2 (since its January 2026 update) drops
+                          // "workshop-disallowed" cvars from every cfg exec'd
+                          // on a workshop map without it.
+                          server.game === "csgo"
+                            ? null
+                            : "-disable_workshop_command_filtering",
                           `-maxplayers ${server.type === "Ranked" ? 16 : server.max_players}`,
                           `+map ${startMap && !startMap.workshop_map_id ? startMap.name : "de_dust2"}`,
                           ...DedicatedServersService.launchMode(

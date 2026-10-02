@@ -657,6 +657,20 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       });
     });
 
+    it("boots CS2 with workshop command filtering off", async () => {
+      await (service as any).assignOnDemandServer("match-1");
+
+      const [container] =
+        createNamespacedJob.mock.calls[0][0].body.spec.template.spec.containers;
+      const params = container.env.find(
+        (entry: { name: string }) => entry.name === "EXTRA_GAME_PARAMS",
+      );
+
+      expect(params.value.split(" ")).toContain(
+        "-disable_workshop_command_filtering",
+      );
+    });
+
     it("holds the pool lock past a teardown but not past the retries", async () => {
       await (service as any).assignOnDemandServer("match-1");
 

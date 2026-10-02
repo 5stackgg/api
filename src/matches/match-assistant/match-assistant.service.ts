@@ -1257,7 +1257,10 @@ export class MatchAssistantService {
                           },
                           {
                             name: "EXTRA_GAME_PARAMS",
-                            value: `-maxplayers ${match.max_players_per_lineup * 2 + 3} ${map.workshop_map_id ? `+map de_inferno` : `+map ${map.name}`} +game_type 0 +game_mode ${MatchAssistantService.getGameMode(match.options?.type)} +sv_password ${match.password}${gameMode?.extraGameParams ? ` ${gameMode.extraGameParams}` : ""}`,
+                            // CS2 (since its January 2026 update) drops
+                            // "workshop-disallowed" cvars from every cfg
+                            // exec'd on a workshop map without it.
+                            value: `-disable_workshop_command_filtering -maxplayers ${match.max_players_per_lineup * 2 + 3} ${map.workshop_map_id ? `+map de_inferno` : `+map ${map.name}`} +game_type 0 +game_mode ${MatchAssistantService.getGameMode(match.options?.type)} +sv_password ${match.password}${gameMode?.extraGameParams ? ` ${gameMode.extraGameParams}` : ""}`,
                           },
                           { name: "SERVER_ID", value: server.id },
                           { name: "MATCH_ID", value: matchId },
