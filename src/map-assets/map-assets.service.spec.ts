@@ -17,6 +17,7 @@ describe("MapAssetsService", () => {
   let postgres: { query: jest.Mock };
   let loggingService: { getJobStatus: jest.Mock; getJobPod: jest.Mock };
   let queue: { add: jest.Mock; getJob: jest.Mock };
+  let utilityMetaQueue: { add: jest.Mock; getJob: jest.Mock };
   let batchApi: {
     deleteNamespacedJob: jest.Mock;
     createNamespacedJob: jest.Mock;
@@ -67,6 +68,10 @@ describe("MapAssetsService", () => {
       add: jest.fn().mockResolvedValue({}),
       getJob: jest.fn().mockResolvedValue(undefined),
     };
+    utilityMetaQueue = {
+      add: jest.fn().mockResolvedValue({}),
+      getJob: jest.fn().mockResolvedValue(undefined),
+    };
     batchApi = {
       deleteNamespacedJob: jest.fn().mockResolvedValue({}),
       createNamespacedJob: jest.fn().mockResolvedValue({}),
@@ -92,6 +97,7 @@ describe("MapAssetsService", () => {
       postgres as any,
       loggingService as any,
       queue as any,
+      utilityMetaQueue as any,
     );
     (service as any).batchApi = batchApi;
     (service as any).coreApi = coreApi;
@@ -281,6 +287,49 @@ describe("MapAssetsService", () => {
       const release = sqlCalls().at(-1);
       expect(release).toContain("DELETE FROM public.map_asset_builds");
       expect(release).toContain("status = 'Pending'");
+    });
+  });
+
+  describe("queueCalloutsSync", () => {
+    it("queues one sync per build", async () => {
+      await service.queueCalloutsSync(25537370);
+
+      expect(utilityMetaQueue.getJob).toHaveBeenCalledWith(
+        "sync-map-callouts.25537370",
+      );
+      expect(utilityMetaQueue.add).toHaveBeenCalledWith(
+        "SyncMapCallouts",
+        { buildId: 25537370 },
+        expect.objectContaining({ jobId: "sync-map-callouts.25537370" }),
+      );
+    });
+
+    it("runs a sync still waiting on the build instead of queueing another", async () => {
+      const waiting = {
+        isDelayed: jest.fn().mockResolvedValue(true),
+        promote: jest.fn().mockResolvedValue(undefined),
+      };
+      utilityMetaQueue.getJob.mockResolvedValueOnce(waiting);
+
+      await service.queueCalloutsSync("25537370");
+
+      expect(waiting.promote).toHaveBeenCalledTimes(1);
+      expect(utilityMetaQueue.add).not.toHaveBeenCalled();
+    });
+
+    it("leaves the job id to collapse a sync that is already running", async () => {
+      utilityMetaQueue.getJob.mockResolvedValueOnce({
+        isDelayed: jest.fn().mockResolvedValue(false),
+        promote: jest.fn(),
+      });
+
+      await service.queueCalloutsSync(25537370);
+
+      expect(utilityMetaQueue.add).toHaveBeenCalledWith(
+        "SyncMapCallouts",
+        { buildId: 25537370 },
+        expect.objectContaining({ jobId: "sync-map-callouts.25537370" }),
+      );
     });
   });
 

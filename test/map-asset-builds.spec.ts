@@ -72,6 +72,7 @@ describe("map asset builds (SQL-driven)", () => {
       postgres,
       loggingService as never,
       queue as never,
+      queue as never,
     );
     (mapAssets as any).batchApi = {
       deleteNamespacedJob: jest.fn().mockResolvedValue({}),

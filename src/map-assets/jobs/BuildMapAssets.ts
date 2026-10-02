@@ -48,6 +48,12 @@ export class BuildMapAssets extends WorkerHost {
       this.logger.log(
         `[map-assets] published build ${buildId} (${Object.keys(outcome.maps ?? {}).length} maps)`,
       );
+      await this.mapAssets.queueCalloutsSync(buildId).catch((error) => {
+        this.logger.warn(
+          `[map-assets] unable to queue the callouts sync for build ${buildId}`,
+          error,
+        );
+      });
     }
 
     await this.notifications.sendCs2Build(

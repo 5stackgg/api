@@ -430,6 +430,13 @@ export class GameServerNodeService {
           );
         });
       }
+
+      await this.mapAssets.queueCalloutsSync(csBulid).catch((error) => {
+        this.logger.warn(
+          `[map-assets] unable to queue the callouts sync for build ${csBulid}`,
+          error,
+        );
+      });
     }
 
     if (transitionedFromOffline && game_server_nodes_by_pk.build_id) {

@@ -294,6 +294,36 @@ describe("UtilityCalloutsService.calloutsUrl", () => {
     expect(fetched("latest.json")).toBe(2);
   });
 
+  it("has published a build latest.json has caught up with", async () => {
+    await expect(service.hasPublished(25537370)).resolves.toBe(true);
+    await expect(service.hasPublished(25400000)).resolves.toBe(true);
+    await expect(service.hasPublished(25600000)).resolves.toBe(false);
+    expect(fetched("latest.json")).toBe(3);
+  });
+
+  it("has published nothing while latest.json is unreachable", async () => {
+    files["latest.json"] = { status: 502 };
+
+    await expect(service.hasPublished(25537370)).resolves.toBe(false);
+  });
+
+  it("never waits on a MAP_MESH_CDN mirror", async () => {
+    process.env.MAP_MESH_CDN = "https://mirror.test/maps/1";
+
+    await expect(service.hasPublished(25600000)).resolves.toBe(true);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("re-reads latest.json for a full sync", async () => {
+    (service as any).postgres = { query: jest.fn().mockResolvedValue([]) };
+    (service as any).logger = { warn: jest.fn(), log: jest.fn() };
+
+    await service.calloutsUrl("de_nuke");
+    await service.syncAll();
+
+    expect(fetched("latest.json")).toBe(2);
+  });
+
   it("syncs from the resolved URL", async () => {
     files["25000000/de_mirage.callouts.json"] = {
       body: {

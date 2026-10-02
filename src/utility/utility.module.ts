@@ -187,19 +187,14 @@ export class UtilityModule {
       },
     );
 
-    // Callouts only change when Valve patches a map, so daily is generous. The
-    // immediate call is what gets a fresh install named on its first boot
-    // rather than at 4am tomorrow.
-    void utilityMetaQueue.add(
-      UtilityJobs.SyncMapCallouts,
-      {},
-      {
-        repeat: {
-          pattern: "23 4 * * *",
-        },
-      },
-    );
-    void utilityMetaQueue.add(UtilityJobs.SyncMapCallouts, {});
+    // Callouts are synced when a node finishes updating to a new CS2 build
+    // (MapAssetsService.queueCalloutsSync). The daily schedule that used to be
+    // registered here stays in Redis until removed by its exact pattern.
+    void utilityMetaQueue
+      .removeRepeatable(UtilityJobs.SyncMapCallouts, {
+        pattern: "23 4 * * *",
+      })
+      .catch(() => {});
 
     void utilityRendersQueue.add(
       ReconcileQueuedUtilityRenders.name,

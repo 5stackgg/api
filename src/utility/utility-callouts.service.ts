@@ -77,8 +77,13 @@ export class UtilityCalloutsService {
     { rows: CalloutRow[]; expires: number }
   >();
 
-  private latest: { manifest: MapAssetsManifest | null; expires: number } = {
+  private latest: {
+    manifest: MapAssetsManifest | null;
+    build: string | null;
+    expires: number;
+  } = {
     manifest: null,
+    build: null,
     expires: 0,
   };
 
@@ -185,8 +190,10 @@ export class UtilityCalloutsService {
   // process that has never read latest.json falls back to the pinned build.
   // latest.json may name a manifest revision (<build>/manifest.r2.json), so its
   // key is followed as given.
-  private async latestManifest(): Promise<MapAssetsManifest | null> {
-    if (this.latest.expires > Date.now()) {
+  private async latestManifest(
+    refresh = false,
+  ): Promise<MapAssetsManifest | null> {
+    if (!refresh && this.latest.expires > Date.now()) {
       return this.latest.manifest;
     }
 
@@ -216,6 +223,7 @@ export class UtilityCalloutsService {
 
       this.latest = {
         manifest,
+        build: pointer.build,
         expires: Date.now() + UtilityCalloutsService.LATEST_TTL_MS,
       };
     } catch (error) {
@@ -223,7 +231,7 @@ export class UtilityCalloutsService {
         `unable to resolve the latest map assets: ${(error as Error)?.message}`,
       );
       this.latest = {
-        manifest: this.latest.manifest,
+        ...this.latest,
         expires: Date.now() + UtilityCalloutsService.LATEST_RETRY_MS,
       };
     }
@@ -231,7 +239,28 @@ export class UtilityCalloutsService {
     return this.latest.manifest;
   }
 
+  /**
+   * Whether the published map assets have caught up with a CS2 build. A node
+   * finishes its update long before the public instance has extracted and
+   * published that build, and syncing in between only re-reads the previous
+   * build's callouts.
+   */
+  public async hasPublished(buildId: number): Promise<boolean> {
+    if (process.env.MAP_MESH_CDN) {
+      return true;
+    }
+
+    await this.latestManifest(true);
+
+    const published = Number(this.latest.build);
+    return Number.isNaN(published) || published >= buildId;
+  }
+
   public async syncAll(): Promise<{ maps: number; callouts: number }> {
+    if (!process.env.MAP_MESH_CDN) {
+      await this.latestManifest(true);
+    }
+
     const maps = await this.postgres.query<Array<{ name: string }>>(
       `SELECT DISTINCT name
          FROM public.maps

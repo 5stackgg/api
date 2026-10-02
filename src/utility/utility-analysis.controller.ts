@@ -43,9 +43,8 @@ export class UtilityAnalysisController {
     };
   }
 
-  // The daily job is the normal path; this exists for the run right after a new
-  // callouts tag is published, when waiting until 4am means every throw named
-  // in between is named from the old map.
+  // A node finishing a CS2 update is the normal path; this exists for a
+  // callouts fix published outside a CS2 update, which no node would report.
   @HasuraAction()
   public async syncMapCallouts(data: { user: User }) {
     if (!data.user || !isRoleAbove(data.user.role, "administrator")) {
