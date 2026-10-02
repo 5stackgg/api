@@ -400,6 +400,52 @@ describe("DedicatedServersService.pingDedicatedServer", () => {
   });
 });
 
+describe("DedicatedServersService.getServerPlayerList", () => {
+  const build = (connected: boolean) => {
+    const rcon = {
+      connect: jest.fn(async () => ({ send: async () => "{}" })),
+      disconnect: jest.fn(),
+    };
+    const hasura = {
+      query: jest.fn(async () => ({
+        servers_by_pk: { game: "cs2", connected },
+      })),
+    };
+    const service = new DedicatedServersService(
+      { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as never,
+      { get: () => ({ namespace: "5stack" }) } as never,
+      hasura as never,
+      null as never,
+      rcon as never,
+      { getConnection: () => null } as never,
+      null as never,
+      null as never,
+      null as never,
+      null as never,
+      null as never,
+      null as never,
+    );
+
+    return { service, rcon };
+  };
+
+  it("never dials RCON on a server marked offline", async () => {
+    const { service, rcon } = build(false);
+
+    await expect(service.getServerPlayerList("server-1")).resolves.toEqual([]);
+    expect(rcon.connect).not.toHaveBeenCalled();
+  });
+
+  it("reads the roster over RCON on a connected server", async () => {
+    const { service, rcon } = build(true);
+
+    await service.getServerPlayerList("server-1");
+
+    expect(rcon.connect).toHaveBeenCalledWith("server-1");
+    expect(rcon.disconnect).toHaveBeenCalledWith("server-1");
+  });
+});
+
 describe("DedicatedServersService.pluginInstallEnvironment", () => {
   const installs = (type: string, game = "cs2") =>
     Object.fromEntries(
