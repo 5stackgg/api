@@ -129,9 +129,9 @@ export class GamePluginsService {
           hot_swappable, requires_service, requires_server_guidelines_disabled,
           config_schema, config_path, cvars, panel, wiring, pairs_with,
           map_rotation, config_cvar, config_default, config_shipped,
-          forced_cvars, synced_at)
+          forced_cvars, workshop_addons, synced_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,
-               $19,$20,$21,$22, now())
+               $19,$20,$21,$22,$23, now())
        ON CONFLICT (slug) DO UPDATE SET
          kind = EXCLUDED.kind,
          name = EXCLUDED.name,
@@ -154,6 +154,7 @@ export class GamePluginsService {
          config_default = EXCLUDED.config_default,
          config_shipped = EXCLUDED.config_shipped,
          forced_cvars = EXCLUDED.forced_cvars,
+         workshop_addons = EXCLUDED.workshop_addons,
          synced_at = now()`,
       [
         plugin.slug,
@@ -178,6 +179,7 @@ export class GamePluginsService {
         plugin.config_default ? JSON.stringify(plugin.config_default) : null,
         plugin.config_shipped ? JSON.stringify(plugin.config_shipped) : null,
         plugin.forced_cvars ?? [],
+        plugin.workshop_addons ?? [],
       ],
     );
 

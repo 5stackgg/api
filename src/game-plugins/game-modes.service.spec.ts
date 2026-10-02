@@ -465,6 +465,135 @@ describe("GameModesService server guidelines", () => {
   });
 });
 
+// A plugin's models, sounds or Panorama layouts only reach players through a
+// workshop addon AddonsManager names to them, so a server has to serve exactly
+// the addons of the plugins it ends up loading -- mode and auto-load alike.
+describe("GameModesService workshop addons", () => {
+  const build = (rows: Record<string, Array<Record<string, unknown>>>) => {
+    const seen: Array<{ sql: string; params: Array<unknown> }> = [];
+
+    const postgres = {
+      query: jest.fn(async (sql: string, params: Array<unknown> = []) => {
+        seen.push({ sql, params });
+
+        if (sql.includes("workshop_addons")) {
+          return rows.addons ?? [];
+        }
+        if (sql.includes("COALESCE(")) {
+          return [{ game_mode_id: "mode-1", game_server_node_id: "node-a" }];
+        }
+        if (sql.includes("FROM game_modes")) {
+          return [
+            {
+              id: "mode-1",
+              slug: "chaos",
+              name: "Chaos",
+              cfg: null,
+              extra_game_params: null,
+            },
+          ];
+        }
+        if (sql.includes("FROM game_mode_plugins")) {
+          return rows.modePlugins ?? [];
+        }
+        if (sql.includes("FROM game_plugin_installs")) {
+          return rows.autoLoad ?? [];
+        }
+        return [];
+      }),
+    };
+
+    const service = new GameModesService(
+      { warn: jest.fn(), log: jest.fn() } as never,
+      postgres as never,
+      {
+        getPluginRuntime: jest.fn(async () => "swiftlys2"),
+        resolvePluginRuntime: jest.fn(async () => "swiftlys2"),
+      } as never,
+      {
+        forServer: jest.fn(async () => ({
+          maps: [] as Array<never>,
+          shuffle: true,
+        })),
+      } as never,
+    );
+
+    return { service, seen };
+  };
+
+  const modePlugins: Array<Record<string, unknown>> = [
+    {
+      plugin_slug: "csroll",
+      config: null,
+      config_path: null,
+      required: true,
+      version: "1.37.3",
+    },
+  ];
+
+  const autoLoad = [{ plugin_slug: "skins", version: "2.0.0" }];
+
+  it("serves the addons of every plugin loading, in load order, each once", async () => {
+    const { service } = build({
+      modePlugins,
+      autoLoad,
+      addons: [
+        { slug: "skins", workshop_addons: ["300", "100"] },
+        { slug: "csroll", workshop_addons: ["100", "200"] },
+      ],
+    });
+
+    const resolved = await service.resolveForServer("server-1");
+
+    expect(resolved?.workshopAddons).toEqual(["100", "200", "300"]);
+    expect(service.environmentFor(resolved)).toContainEqual({
+      name: "WORKSHOP_ADDONS",
+      value: "100,200,300",
+    });
+  });
+
+  // A plugin the catalog lists addons for, on a server whose mode does not
+  // load it, is not a reason to make that server's players download anything.
+  it("asks only about the plugins this server is actually loading", async () => {
+    const { service, seen } = build({ modePlugins, autoLoad });
+
+    await service.resolveForServer("server-1");
+
+    const asked = seen.find((entry) => entry.sql.includes("workshop_addons"));
+
+    expect(asked?.params[0]).toEqual(["csroll", "skins"]);
+  });
+
+  // The registry is whatever URL the operator points at. AddonsManager drops
+  // its whole config over one entry that is not a number.
+  it("drops an id that is not a bare workshop id", async () => {
+    const { service } = build({
+      modePlugins,
+      addons: [
+        {
+          slug: "csroll",
+          workshop_addons: ["3791548068", "37 91", "../x", ""],
+        },
+      ],
+    });
+
+    const resolved = await service.resolveForServer("server-1");
+
+    expect(resolved?.workshopAddons).toEqual(["3791548068"]);
+  });
+
+  it("leaves AddonsManager off when nothing loading ships an addon", async () => {
+    const { service } = build({ modePlugins });
+
+    const resolved = await service.resolveForServer("server-1");
+
+    expect(resolved?.workshopAddons).toEqual([]);
+    expect(service.environmentFor(resolved).map((env) => env.name)).toEqual([
+      "ENABLED_PLUGINS",
+    ]);
+  });
+});
+
 describe("GameModesService.environmentFor", () => {
   const service = new GameModesService(
     null as never,
@@ -488,8 +617,8 @@ describe("GameModesService.environmentFor", () => {
         pluginConfigs: "e30=",
         missingRequired: [],
         disableServerGuidelines: false,
+        workshopAddons: [],
       }),
     ).toEqual([{ name: "PLUGIN_CONFIGS", value: "e30=" }]);
   });
 });
-

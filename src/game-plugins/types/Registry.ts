@@ -27,6 +27,8 @@ export type RegistryPlugin = {
   hot_swappable?: boolean;
   requires_service?: string | null;
   requires_server_guidelines_disabled?: boolean;
+  // Steam Workshop ids, as strings: they overflow a JS number.
+  workshop_addons?: Array<string>;
   config_schema?: Record<string, unknown>;
   config_path?: string;
   config_cvar?: string;

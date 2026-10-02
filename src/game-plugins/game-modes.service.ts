@@ -16,6 +16,7 @@ export type ResolvedGameMode = {
   pluginConfigs: string | null;
   missingRequired: Array<string>;
   disableServerGuidelines: boolean;
+  workshopAddons: Array<string>;
 };
 
 // Which kind of match is about to run. An install says which of the three it
@@ -188,7 +189,7 @@ export class GameModesService {
     mode: ResolvedGameMode | null,
     scope?: PluginScope,
   ): Promise<ResolvedGameMode | null> {
-    return await this.withServerGuidelines(
+    return await this.withPluginNeeds(
       GameModesService.withPlugins(mode, await this.autoLoadPlugins(scope)),
     );
   }
@@ -255,7 +256,7 @@ export class GameModesService {
       off,
     );
 
-    return await this.withServerGuidelines(resolved);
+    return await this.withPluginNeeds(resolved);
   }
 
   // A rotation is only played by a plugin that declares map_rotation in the
@@ -390,6 +391,7 @@ export class GameModesService {
       pluginConfigs: null,
       missingRequired: [],
       disableServerGuidelines: false,
+      workshopAddons: [],
     };
   }
 
@@ -496,6 +498,60 @@ export class GameModesService {
     return { ...mode, disableServerGuidelines: row?.disable ?? false };
   }
 
+  // What the plugins a server ends up loading ask of the server as a whole.
+  // Only answerable once that list is final: a mode's own plugins are half of
+  // it, and auto-load, overrides and a map rotation supply the rest.
+  private async withPluginNeeds(
+    mode: ResolvedGameMode | null,
+  ): Promise<ResolvedGameMode | null> {
+    return await this.withWorkshopAddons(await this.withServerGuidelines(mode));
+  }
+
+  // CS2 cannot send a player files, so a plugin's models, sounds or Panorama
+  // layouts reach them as a workshop addon, which AddonsManager names to each
+  // connecting client. The catalog says which addons a plugin needs; the server
+  // serves those of the plugins it is loading, in load order, each once.
+  //
+  // From the catalog rather than the installs, like the cvar layers: a mode can
+  // load a hand-placed plugin with no install row, and it needs its addons all
+  // the same. setup.sh holds the ids to digits again before AddonsManager sees
+  // them -- a registry is whatever URL the operator points at.
+  private async withWorkshopAddons(
+    mode: ResolvedGameMode | null,
+  ): Promise<ResolvedGameMode | null> {
+    const slugs = GameModesService.entriesOf(mode).map(GameModesService.slugOf);
+
+    if (!mode || slugs.length === 0) {
+      return mode;
+    }
+
+    const rows = await this.postgres.query<
+      Array<{ slug: string; workshop_addons: Array<string> | null }>
+    >(
+      `SELECT p.slug, p.workshop_addons
+         FROM game_plugins p
+        WHERE p.slug = ANY($1::text[])
+          AND cardinality(p.workshop_addons) > 0`,
+      [slugs],
+    );
+
+    const addonsBySlug = new Map(
+      rows.map((row) => [row.slug, row.workshop_addons ?? []]),
+    );
+
+    const addons: Array<string> = [];
+
+    for (const slug of slugs) {
+      for (const addon of addonsBySlug.get(slug) ?? []) {
+        if (/^\d+$/.test(addon) && !addons.includes(addon)) {
+          addons.push(addon);
+        }
+      }
+    }
+
+    return { ...mode, workshopAddons: addons };
+  }
+
   public async resolve(
     gameModeId: string,
     scope?: PluginScope,
@@ -582,6 +638,7 @@ export class GameModesService {
       // Set once the whole plugin list is known; a mode's own plugins are only
       // half of what a server loads.
       disableServerGuidelines: false,
+      workshopAddons: [],
     };
   }
 
@@ -876,6 +933,15 @@ export class GameModesService {
     // running server.
     if (mode.disableServerGuidelines) {
       environment.push({ name: "DISABLE_SERVER_GUIDELINES", value: "true" });
+    }
+
+    // setup.sh turns on the AddonsManager the SwiftlyS2 image ships and points
+    // it at these.
+    if (mode.workshopAddons.length > 0) {
+      environment.push({
+        name: "WORKSHOP_ADDONS",
+        value: mode.workshopAddons.join(","),
+      });
     }
 
     return environment;
