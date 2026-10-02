@@ -1260,6 +1260,7 @@ export class MatchAssistantService {
                             value: `-maxplayers ${match.max_players_per_lineup * 2 + 3} ${map.workshop_map_id ? `+map de_inferno` : `+map ${map.name}`} +game_type 0 +game_mode ${MatchAssistantService.getGameMode(match.options?.type)} +sv_password ${match.password}${gameMode?.extraGameParams ? ` ${gameMode.extraGameParams}` : ""}`,
                           },
                           { name: "SERVER_ID", value: server.id },
+                          { name: "MATCH_ID", value: matchId },
                           {
                             name: "SERVER_API_PASSWORD",
                             value: server.api_password,
