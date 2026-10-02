@@ -487,3 +487,130 @@ describe("DedicatedServersService.pluginInstallEnvironment", () => {
     );
   });
 });
+
+describe("DedicatedServersService.launchMode", () => {
+  // The Deathmatch plugin patches Valve's deathmatch rules; on stock Custom
+  // they never run and everyone spawns at their team's spawn.
+  it("boots a custom mode on the Valve mode it names", () => {
+    expect(DedicatedServersService.launchMode("Custom", "deathmatch")).toEqual(
+      ["+game_type 1", "+game_mode 2"],
+    );
+  });
+
+  it("keeps stock Custom when the mode names no Valve mode", () => {
+    expect(DedicatedServersService.launchMode("Custom", null)).toEqual([
+      "+game_type 3",
+      "+game_mode 0",
+    ]);
+  });
+
+  // CS:GO ran retakes as skirmish 12 on Custom. CS2 has no skirmishes and
+  // lists retakes as classic game mode 5.
+  it("boots a Retake server on CS2's retakes mode", () => {
+    expect(DedicatedServersService.launchMode("Retake", null)).toEqual([
+      "+game_type 0",
+      "+game_mode 5",
+    ]);
+  });
+
+  it.each([
+    ["Ranked", "+game_type 0", "+game_mode 1"],
+    ["Competitive", "+game_type 0", "+game_mode 1"],
+    ["Casual", "+game_type 0", "+game_mode 0"],
+    ["Wingman", "+game_type 0", "+game_mode 2"],
+    ["Deathmatch", "+game_type 1", "+game_mode 2"],
+    ["ArmsRace", "+game_type 1", "+game_mode 0"],
+  ])("boots a %s server as %s %s", (type, gameType, gameMode) => {
+    expect(DedicatedServersService.launchMode(type as never, null)).toEqual([
+      gameType,
+      gameMode,
+    ]);
+  });
+});
+
+describe("DedicatedServersService.withModeCfg", () => {
+  const mode = (overrides: Record<string, unknown> = {}) => ({
+    id: "mode-1",
+    slug: "deathmatch",
+    name: "Deathmatch",
+    cfg: "mp_teammates_are_enemies 1",
+    extraGameParams: null,
+    valveMode: "deathmatch",
+    enabledPlugins: "deathmatch@1.0.0",
+    pluginConfigs: null as string | null,
+    missingRequired: [] as Array<string>,
+    disableServerGuidelines: false,
+    ...overrides,
+  });
+
+  const files = (resolved: { pluginConfigs: string | null } | null) =>
+    resolved?.pluginConfigs
+      ? JSON.parse(Buffer.from(resolved.pluginConfigs, "base64").toString())
+      : {};
+
+  // A community server has no match, so nothing ever ran the mode's cvars
+  // there. CS2 execs gamemode_<mode>_server.cfg after the Valve mode's own
+  // config on every map load, which is also what keeps them after a map change.
+  it("writes a mode's cvars where CS2 runs them after its Valve mode's config", () => {
+    expect(
+      files(DedicatedServersService.withModeCfg(mode(), "Custom" as never)),
+    ).toEqual({
+      "cfg/gamemode_deathmatch_server.cfg": "mp_teammates_are_enemies 1\n",
+    });
+  });
+
+  it("uses stock Custom's hook for a mode that names no Valve mode", () => {
+    expect(
+      Object.keys(
+        files(
+          DedicatedServersService.withModeCfg(
+            mode({ valveMode: null }),
+            "Custom" as never,
+          ),
+        ),
+      ),
+    ).toEqual(["cfg/gamemode_custom_server.cfg"]);
+  });
+
+  it("keeps the plugin config files already headed to the server", () => {
+    const pluginConfigs = Buffer.from(
+      JSON.stringify({ "addons/swiftlys2/configs/dm.jsonc": "{}" }),
+    ).toString("base64");
+
+    expect(
+      files(
+        DedicatedServersService.withModeCfg(
+          mode({ pluginConfigs }),
+          "Custom" as never,
+        ),
+      ),
+    ).toEqual({
+      "addons/swiftlys2/configs/dm.jsonc": "{}",
+      "cfg/gamemode_deathmatch_server.cfg": "mp_teammates_are_enemies 1\n",
+    });
+  });
+
+  it("adds nothing for a mode without cvars", () => {
+    expect(
+      DedicatedServersService.withModeCfg(mode({ cfg: "  " }), "Custom" as never)
+        ?.pluginConfigs,
+    ).toBeNull();
+  });
+
+  // Rush runs a Valve map script and execs no server config of its own.
+  it("adds nothing on Rush, which has no server config to run them from", () => {
+    expect(
+      DedicatedServersService.withModeCfg(
+        mode({ valveMode: "rush" }),
+        "Custom" as never,
+      )?.pluginConfigs,
+    ).toBeNull();
+  });
+
+  it("leaves a server with no mode alone", () => {
+    expect(
+      DedicatedServersService.withModeCfg(null, "Casual" as never),
+    ).toBeNull();
+  });
+});
+

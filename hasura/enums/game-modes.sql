@@ -6,7 +6,7 @@
 -- Runtime compatibility is NOT declared here. It is derived from the plugins
 -- each mode selects, so a mode whose plugin has no build for this deployment
 -- reports that by name rather than booting a server with nothing loaded.
-insert into game_modes (slug, name, description, competitive_safe, enabled, cfg)
+insert into game_modes (slug, name, description, competitive_safe, enabled, cfg, valve_mode)
 values
     (
         'retakes',
@@ -19,7 +19,8 @@ values
         'mp_round_restart_delay 3' || chr(10) ||
         'mp_ignore_round_win_conditions 1' || chr(10) ||
         'mp_respawn_on_death_ct 0' || chr(10) ||
-        'mp_respawn_on_death_t 0'
+        'mp_respawn_on_death_t 0',
+        null
     ),
     (
         'deathmatch',
@@ -31,7 +32,8 @@ values
         'mp_freezetime 0' || chr(10) ||
         'mp_respawn_immunitytime 2' || chr(10) ||
         'mp_ignore_round_win_conditions 1' || chr(10) ||
-        'mp_teammates_are_enemies 1'
+        'mp_teammates_are_enemies 1',
+        'deathmatch'
     )
 on conflict (slug) do update set
     name = excluded.name,

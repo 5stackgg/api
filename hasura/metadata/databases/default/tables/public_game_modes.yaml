@@ -43,6 +43,7 @@ select_permissions:
         - competitive_safe
         - cfg
         - extra_game_params
+        - valve_mode
         - created_at
         - updated_at
       computed_fields:
@@ -64,6 +65,7 @@ select_permissions:
         - competitive_safe
         - cfg
         - extra_game_params
+        - valve_mode
         - created_at
         - updated_at
       computed_fields:
@@ -88,6 +90,7 @@ insert_permissions:
         - competitive_safe
         - cfg
         - extra_game_params
+        - valve_mode
       computed_fields:
         - supported_runtimes
         - runtime_conflicts
@@ -105,6 +108,7 @@ update_permissions:
         - competitive_safe
         - cfg
         - extra_game_params
+        - valve_mode
       computed_fields:
         - supported_runtimes
         - runtime_conflicts

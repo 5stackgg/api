@@ -11,7 +11,10 @@ import { RedisManagerService } from "src/redis/redis-manager/redis-manager.servi
 import { Redis } from "ioredis";
 import { SystemService } from "src/system/system.service";
 import { PluginRuntimeService } from "src/plugin-runtime/plugin-runtime.service";
-import { GameModesService } from "../game-plugins/game-modes.service";
+import {
+  GameModesService,
+  ResolvedGameMode,
+} from "../game-plugins/game-modes.service";
 import { MapRotationService } from "../game-plugins/map-rotation.service";
 import { NotificationsService } from "src/notifications/notifications.service";
 import { DISCORD_COLORS } from "src/notifications/utilities/constants";
@@ -226,7 +229,10 @@ export class DedicatedServersService {
 
       // A Ranked server resolves to no mode by design, so matchmaking capacity
       // always comes up on a clean plugin set.
-      const gameMode = await this.gameModesService.resolveForServer(serverId);
+      const gameMode = DedicatedServersService.withModeCfg(
+        await this.gameModesService.resolveForServer(serverId),
+        server.type,
+      );
 
       const gameModeEnvironment =
         this.gameModesService.environmentFor(gameMode);
@@ -338,9 +344,10 @@ export class DedicatedServersService {
                         value: [
                           `-maxplayers ${server.type === "Ranked" ? 16 : server.max_players}`,
                           `+map ${startMap && !startMap.workshop_map_id ? startMap.name : "de_dust2"}`,
-                          `+game_type ${this.getGameType(server.type)}`,
-                          `+game_mode ${this.getGameMode(server.type)}`,
-                          `+sv_skirmish_id ${this.getWarGameType(server.type)}`,
+                          ...DedicatedServersService.launchMode(
+                            server.type,
+                            gameMode?.valveMode,
+                          ),
                           server.connect_password
                             ? `+sv_password ${server.connect_password}`
                             : null,
@@ -658,46 +665,102 @@ export class DedicatedServersService {
     }
   }
 
-  private getGameType(type: e_server_types_enum): number {
-    switch (type) {
-      case "Ranked":
-      case "Casual":
-      case "Competitive":
-      case "Wingman":
-        return 0;
-      case "Deathmatch":
-      case "ArmsRace":
-        return 1;
-      case "Retake":
-      case "Custom":
-        return 3;
-    }
+  // game_type, game_mode and the server config each mode in CS2's
+  // gamemodes.txt execs after its own on every map load; a game mode's
+  // valve_mode is one of these keys. Rush execs no server config.
+  private static readonly VALVE_MODES: Record<
+    string,
+    { gameType: number; gameMode: number; serverCfg: string | null }
+  > = {
+    casual: { gameType: 0, gameMode: 0, serverCfg: "gamemode_casual_server" },
+    competitive: {
+      gameType: 0,
+      gameMode: 1,
+      serverCfg: "gamemode_competitive_server",
+    },
+    wingman: {
+      gameType: 0,
+      gameMode: 2,
+      serverCfg: "gamemode_competitive2v2_server",
+    },
+    retakes: { gameType: 0, gameMode: 5, serverCfg: "gamemode_casual_server" },
+    rush: { gameType: 0, gameMode: 6, serverCfg: null },
+    armsrace: {
+      gameType: 1,
+      gameMode: 0,
+      serverCfg: "gamemode_armsrace_server",
+    },
+    deathmatch: {
+      gameType: 1,
+      gameMode: 2,
+      serverCfg: "gamemode_deathmatch_server",
+    },
+    custom: { gameType: 3, gameMode: 0, serverCfg: "gamemode_custom_server" },
+  };
+
+  private static readonly SERVER_TYPE_MODES: Record<string, string> = {
+    Ranked: "competitive",
+    Competitive: "competitive",
+    Casual: "casual",
+    Practice: "casual",
+    Wingman: "wingman",
+    Deathmatch: "deathmatch",
+    ArmsRace: "armsrace",
+    Retake: "retakes",
+    Custom: "custom",
+  };
+
+  // A custom mode can name the Valve mode it is built on: the Deathmatch
+  // plugin patches Valve's deathmatch rules, which stock Custom never runs.
+  public static launchMode(
+    type: e_server_types_enum,
+    valveMode?: string | null,
+  ): Array<string> {
+    const mode = DedicatedServersService.valveModeFor(type, valveMode);
+
+    return [`+game_type ${mode.gameType}`, `+game_mode ${mode.gameMode}`];
   }
 
-  private getWarGameType(type: e_server_types_enum): number {
-    switch (type) {
-      case "Retake":
-        return 12;
-      default:
-        return 0;
-    }
+  private static valveModeFor(
+    type: e_server_types_enum,
+    valveMode?: string | null,
+  ) {
+    return (
+      DedicatedServersService.VALVE_MODES[valveMode ?? ""] ??
+      DedicatedServersService.VALVE_MODES[
+        DedicatedServersService.SERVER_TYPE_MODES[type] ?? "casual"
+      ]
+    );
   }
 
-  private getGameMode(type: e_server_types_enum): number {
-    switch (type) {
-      case "Ranked":
-      case "Competitive":
-        return 1;
-      case "ArmsRace":
-      case "Casual":
-        return 0;
-      case "Wingman":
-      case "Deathmatch":
-        return 2;
-      case "Retake":
-      case "Custom":
-        return 0;
+  // A community server has no match, so the mode's cvars ride in as the
+  // server config CS2 execs after the Valve mode's own -- on every map load,
+  // which is also what keeps them across a rotation.
+  public static withModeCfg(
+    mode: ResolvedGameMode | null,
+    type: e_server_types_enum,
+  ): ResolvedGameMode | null {
+    const serverCfg = DedicatedServersService.valveModeFor(
+      type,
+      mode?.valveMode,
+    ).serverCfg;
+
+    if (!mode?.cfg?.trim() || !serverCfg) {
+      return mode;
     }
+
+    const files: Record<string, string> = mode.pluginConfigs
+      ? JSON.parse(Buffer.from(mode.pluginConfigs, "base64").toString())
+      : {};
+
+    files[`cfg/${serverCfg}.cfg`] = mode.cfg.endsWith("\n")
+      ? mode.cfg
+      : `${mode.cfg}\n`;
+
+    return {
+      ...mode,
+      pluginConfigs: Buffer.from(JSON.stringify(files)).toString("base64"),
+    };
   }
 
   private async getServerStatusInfo(
