@@ -26,7 +26,7 @@ import {
 } from "src/broadcast-huds/broadcast-huds.service";
 import { S3Service } from "../../s3/s3.service";
 import {
-  DEFAULT_OUTRO_ACCENT,
+  outroAccentFromSetting,
   computeOutroVersion,
   outroCacheKey,
   buildOutroEnv,
@@ -399,9 +399,11 @@ export class GameStreamerService {
       const brandName = (await this.readSetting("public.brand_name")) ?? "";
       // The web themes from the dark palette only (the light-mode
       // `public.color_*` rows are deleted at boot), so this is its accent.
-      const accent =
-        (await this.readSetting("public.color_dark_tactical_amber")) ??
-        DEFAULT_OUTRO_ACCENT;
+      // Anything but an HSL triple renders the stock amber, which is then
+      // what the version hash covers.
+      const accent = outroAccentFromSetting(
+        await this.readSetting("public.color_dark_tactical_amber"),
+      );
 
       let etag = logoPath;
       try {
@@ -436,6 +438,22 @@ export class GameStreamerService {
         `resolveOutroBranding failed: ${(error as Error)?.message ?? error}`,
       );
       return {};
+    }
+  }
+
+  // The origin render-clip.mjs accepts the outro URLs from. They are signed
+  // through getPresignedUrl, which uses the demos domain only for the
+  // in-cluster store; a remote store signs against its own host.
+  private async resolveS3PublicOrigin(): Promise<string> {
+    try {
+      return await this.s3.getPresignedUrlOrigin();
+    } catch (error) {
+      this.logger.warn(
+        `failed to resolve the S3 presign origin, using the demos domain: ${
+          (error as Error)?.message ?? error
+        }`,
+      );
+      return this.appConfig.demosDomain;
     }
   }
 
@@ -918,9 +936,11 @@ export class GameStreamerService {
         name: "CLIP_BAKE_BRANDING",
         value: await this.resolveClipBakeBranding(),
       },
-      // Trusted S3 presign origin for render-clip.mjs's outro-env URL allowlist
-      // (independent of the demo source, so faceit/external demos still brand).
-      { name: "S3_PUBLIC_ORIGIN", value: this.appConfig.demosDomain },
+      // Trusted origin for render-clip.mjs's outro-env URL allowlist: the
+      // origin resolveOutroBranding's presigned URLs really carry (a remote
+      // store signs against its own host, not the demos domain). Independent
+      // of the demo source, so faceit/external demos still brand.
+      { name: "S3_PUBLIC_ORIGIN", value: await this.resolveS3PublicOrigin() },
     ];
     if (options.roundTicks != null) {
       env.push({

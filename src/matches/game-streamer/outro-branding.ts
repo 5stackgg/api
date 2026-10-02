@@ -2,6 +2,23 @@ import { createHash } from "node:crypto";
 
 export const DEFAULT_OUTRO_ACCENT = "33 94% 58%";
 
+// An HSL triple as the web saves a theme color: whole numbers from its
+// color picker ("33 94% 58%") or the decimals of its stock palette
+// ("224.3 76.3% 48%"). game-streamer checks CLIP_BRAND_ACCENT against the
+// same pattern and drops the branded outro for anything else.
+const OUTRO_ACCENT_PATTERN =
+  /^\d{1,3}(\.\d+)? \d{1,3}(\.\d+)?% \d{1,3}(\.\d+)?%$/;
+
+// The accent the outro renders with: the setting when it is such a triple
+// (trimmed), the stock amber otherwise, so the outro version covers the
+// accent that is really rendered.
+export function outroAccentFromSetting(value: string | undefined): string {
+  const accent = value?.trim();
+  return accent && OUTRO_ACCENT_PATTERN.test(accent)
+    ? accent
+    : DEFAULT_OUTRO_ACCENT;
+}
+
 export function computeOutroVersion(parts: {
   brandName: string;
   accent: string;
