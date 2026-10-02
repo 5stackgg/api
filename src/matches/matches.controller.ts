@@ -2580,17 +2580,23 @@ export class MatchesController {
    */
   @HasuraAction()
   public async checkIntoMatch(data: { user: User; match_id: string }) {
-    const { matches_by_pk } = await this.hasura.query({
-      matches_by_pk: {
-        __args: {
-          id: data.match_id,
-        },
-        status: true,
-      },
-    });
+    const session = await this.hasura.getHasuraHeaders(data.user.steam_id);
 
-    if (matches_by_pk.status !== "WaitingForCheckIn") {
+    const [match] = await this.postgres.query<
+      Array<{ status: string; can_check_in: boolean }>
+    >(
+      `SELECT m.status, can_check_in(m, $2::json) AS can_check_in
+         FROM matches m
+        WHERE m.id = $1::uuid`,
+      [data.match_id, JSON.stringify(session)],
+    );
+
+    if (match?.status !== "WaitingForCheckIn") {
       throw Error("match is not accepting check in's at this time");
+    }
+
+    if (!match.can_check_in) {
+      throw Error("you are not allowed to check in to this match");
     }
 
     // Checking in is the commitment to play, so it is the right gate: letting
