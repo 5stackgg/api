@@ -1,4 +1,5 @@
 import { e_notification_types_enum } from "generated/schema";
+import { deliveryPolicyForType } from "../push/notification-delivery";
 
 export type NotificationChannel = "push" | "in_app";
 
@@ -111,35 +112,76 @@ export const PUSH_KEYS: PreferenceKey[] = [
 ];
 
 // The in-app bell is toggleable per individual type rather than per category,
-// but only for a small hand-picked set -- everything else keeps firing with no
-// user-facing control.
+// for every type that reaches a player by steam id -- except the ones in
+// LOCKED_IN_APP_TYPES and PUSH_ONLY_TYPES.
 //
-// Every key here must be a type that carries a steam_id. Enforcement happens at
-// insert time against a known recipient list, and a role-broadcast row has no
-// such list to filter against.
+// Enforcement happens at insert time against a known recipient list, so a type
+// only belongs here if every per-player write of it goes through
+// NotificationsService.notifyPlayers or notifyActivePlayers. A role-broadcast
+// row has no such list to filter against, which is why staff types are absent.
 export const IN_APP_KEYS: PreferenceKey[] = [
-  { key: "TeamInvite", defaultEnabled: true },
-  { key: "TournamentTeamInvite", defaultEnabled: true },
-  { key: "TournamentInvite", defaultEnabled: true },
-  { key: "DraftInvite", defaultEnabled: true },
+  { key: "MatchStatusChange", defaultEnabled: true },
   { key: "MatchImported", defaultEnabled: true },
   { key: "MatchStatsReady", defaultEnabled: true },
   { key: "ClipReady", defaultEnabled: true },
-  { key: "AwardGranted", defaultEnabled: true },
-  { key: "TeammateBanned", defaultEnabled: true },
-  { key: "NewsPublished", defaultEnabled: true },
+  { key: "TournamentCreated", defaultEnabled: true },
   { key: "TournamentReminder", defaultEnabled: true },
   { key: "TournamentCheckInOpen", defaultEnabled: true },
   { key: "TournamentCheckInClosing", defaultEnabled: true },
   { key: "TournamentCheckInMissed", defaultEnabled: true },
+  { key: "TournamentPartySignup", defaultEnabled: true },
   { key: "EventReminder", defaultEnabled: true },
   { key: "SeasonEnded", defaultEnabled: true },
-  { key: "FormTeamSuggestion", defaultEnabled: true },
+  { key: "ScrimRequestReceived", defaultEnabled: true },
+  { key: "ScrimRequestCountered", defaultEnabled: true },
+  { key: "ScrimRequestAccepted", defaultEnabled: true },
+  { key: "ScrimRequestDeclined", defaultEnabled: true },
+  { key: "ScrimRequestExpired", defaultEnabled: true },
+  { key: "ScrimMatchScheduled", defaultEnabled: true },
+  { key: "ScrimMatchCanceled", defaultEnabled: true },
+  { key: "ScrimTimeChanged", defaultEnabled: true },
   { key: "ScrimAlertMatch", defaultEnabled: true },
+  { key: "LeagueProposalReceived", defaultEnabled: true },
+  { key: "LeagueProposalAccepted", defaultEnabled: true },
+  { key: "LeagueProposalDeclined", defaultEnabled: true },
   { key: "LeagueMatchUnscheduled", defaultEnabled: true },
+  { key: "LeagueRegistrationDecision", defaultEnabled: true },
+  { key: "LeagueRosterUndersized", defaultEnabled: true },
+  { key: "FormTeamSuggestion", defaultEnabled: true },
+  { key: "TeamInvite", defaultEnabled: true },
+  { key: "TournamentTeamInvite", defaultEnabled: true },
+  { key: "TournamentInvite", defaultEnabled: true },
+  { key: "DraftInvite", defaultEnabled: true },
   { key: "UtilityPracticeInvite", defaultEnabled: true },
   { key: "UtilityPracticeReady", defaultEnabled: true },
+  { key: "AwardGranted", defaultEnabled: true },
+  { key: "TeammateBanned", defaultEnabled: true },
+  { key: "NewsPublished", defaultEnabled: true },
 ];
+
+// A player's own account and safety notices always reach the bell.
+export const LOCKED_IN_APP_TYPES: e_notification_types_enum[] = [
+  "NameChangeApproved",
+  "NameChangeDenied",
+  "PlayerSanctioned",
+  "PlayerWarning",
+];
+
+// Rings are written with in_app = false, and chat writes no rows at all.
+export const PUSH_ONLY_TYPES: e_notification_types_enum[] = [
+  "MatchFound",
+  "AdminCall",
+  "ChatMessage",
+  "MatchChatMessage",
+];
+
+export type BellControl = "toggle" | "locked" | "push_only";
+
+export type CategoryType = {
+  type: string;
+  bell: BellControl;
+  ignoresQuietHours: boolean;
+};
 
 const PUSH_CATEGORY_BY_TYPE: Record<string, string> = Object.fromEntries(
   Object.entries(PUSH_CATEGORIES).flatMap(([category, types]) =>
@@ -161,13 +203,37 @@ export function inAppKeyForType(type: string): PreferenceKey | null {
   return IN_APP_KEY_BY_NAME.get(type) ?? null;
 }
 
+export function bellControlForType(type: string): BellControl | null {
+  if (IN_APP_KEY_BY_NAME.has(type)) {
+    return "toggle";
+  }
+
+  if ((PUSH_ONLY_TYPES as string[]).includes(type)) {
+    return "push_only";
+  }
+
+  if (
+    (LOCKED_IN_APP_TYPES as string[]).includes(type) ||
+    pushCategoryForType(type)?.adminOnly
+  ) {
+    return "locked";
+  }
+
+  return null;
+}
+
+export function typesForCategory(category: string): CategoryType[] {
+  return (PUSH_CATEGORIES[category] ?? []).map((type) => ({
+    type,
+    bell: bellControlForType(type) ?? "locked",
+    ignoresQuietHours: Boolean(deliveryPolicyForType(type)?.ignoreQuietHours),
+  }));
+}
+
 export function keysForChannel(channel: NotificationChannel): PreferenceKey[] {
   return channel === "push" ? PUSH_KEYS : IN_APP_KEYS;
 }
 
-export function isKnownKey(
-  channel: NotificationChannel,
-  key: string,
-): boolean {
+export function isKnownKey(channel: NotificationChannel, key: string): boolean {
   return keysForChannel(channel).some((entry) => entry.key === key);
 }
