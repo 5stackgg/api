@@ -59,6 +59,7 @@ describe("GameModesService auto-load plugins", () => {
     // No mode, so nothing a mode would have contributed comes along with it.
     expect(resolved?.cfg).toBeNull();
     expect(resolved?.extraGameParams).toBeNull();
+    expect(resolved?.valveMode).toBeNull();
   });
 
   it("returns nothing when there is neither a mode nor an auto-load plugin", async () => {
@@ -94,6 +95,34 @@ describe("GameModesService auto-load plugins", () => {
 
     expect(resolved?.enabledPlugins).toEqual("retakes@2.0.0,stats@1.0.0");
     expect(resolved?.cfg).toEqual("mp_freezetime 3");
+  });
+
+  it("carries the Valve mode the mode is built on", async () => {
+    const { service } = build({
+      serverMode: [{ game_mode_id: "mode-1" }],
+      mode: [
+        {
+          id: "mode-1",
+          slug: "deathmatch",
+          name: "Deathmatch",
+          cfg: null,
+          extra_game_params: null,
+          valve_mode: "deathmatch",
+        },
+      ],
+      modePlugins: [
+        {
+          plugin_slug: "deathmatch",
+          config: null,
+          config_path: null,
+          version: "1.0.0",
+        },
+      ],
+    });
+
+    const resolved = await service.resolveForServer("server-1");
+
+    expect(resolved?.valveMode).toEqual("deathmatch");
   });
 
   it("lets the mode's version win when both name the same plugin", async () => {
@@ -435,3 +464,32 @@ describe("GameModesService server guidelines", () => {
     expect(asked?.params[0]).toEqual(["inventory-simulator"]);
   });
 });
+
+describe("GameModesService.environmentFor", () => {
+  const service = new GameModesService(
+    null as never,
+    null as never,
+    null as never,
+    null as never,
+  );
+
+  // A mode can be nothing but cvars; its config file still has to reach the
+  // server even though there is no plugin to load.
+  it("writes a mode's files even when it loads no plugins", () => {
+    expect(
+      service.environmentFor({
+        id: "mode-1",
+        slug: "fast-rounds",
+        name: "Fast Rounds",
+        cfg: "mp_roundtime 1",
+        extraGameParams: null,
+        valveMode: null,
+        enabledPlugins: "",
+        pluginConfigs: "e30=",
+        missingRequired: [],
+        disableServerGuidelines: false,
+      }),
+    ).toEqual([{ name: "PLUGIN_CONFIGS", value: "e30=" }]);
+  });
+});
+

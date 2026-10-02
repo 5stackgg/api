@@ -11,6 +11,7 @@ export type ResolvedGameMode = {
   name: string;
   cfg: string | null;
   extraGameParams: string | null;
+  valveMode: string | null;
   enabledPlugins: string;
   pluginConfigs: string | null;
   missingRequired: Array<string>;
@@ -43,6 +44,7 @@ type ModeRow = {
   name: string;
   cfg: string | null;
   extra_game_params: string | null;
+  valve_mode: string | null;
 };
 
 type ModePluginRow = {
@@ -373,6 +375,7 @@ export class GameModesService {
       name: "",
       cfg: null,
       extraGameParams: null,
+      valveMode: null,
       enabledPlugins: "",
       pluginConfigs: null,
       missingRequired: [],
@@ -488,7 +491,7 @@ export class GameModesService {
     scope?: PluginScope,
   ): Promise<ResolvedGameMode | null> {
     const [mode] = await this.postgres.query<Array<ModeRow>>(
-      `SELECT id, slug, name, cfg, extra_game_params
+      `SELECT id, slug, name, cfg, extra_game_params, valve_mode
          FROM game_modes
         WHERE id = $1 AND enabled = true AND archived_at IS NULL`,
       [gameModeId],
@@ -559,6 +562,7 @@ export class GameModesService {
       name: mode.name,
       cfg: mode.cfg,
       extraGameParams: mode.extra_game_params,
+      valveMode: mode.valve_mode,
       enabledPlugins: enabled.join(","),
       pluginConfigs:
         Object.keys(configs).length > 0
@@ -676,8 +680,11 @@ export class GameModesService {
   public environmentFor(
     mode: ResolvedGameMode | null,
   ): Array<{ name: string; value: string }> {
+    // A cvar-only mode loads nothing but still has its config file to write.
     if (!mode?.enabledPlugins) {
-      return [];
+      return mode?.pluginConfigs
+        ? [{ name: "PLUGIN_CONFIGS", value: mode.pluginConfigs }]
+        : [];
     }
 
     const environment = [

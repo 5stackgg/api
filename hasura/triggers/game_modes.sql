@@ -133,3 +133,37 @@ $$;
 
 DROP TRIGGER IF EXISTS tbd_game_modes ON public.game_modes;
 CREATE TRIGGER tbd_game_modes BEFORE DELETE ON public.game_modes FOR EACH ROW EXECUTE FUNCTION public.tbd_game_modes();
+
+-- A system mode is part of 5Stack itself: the utility system books every
+-- practice match on utility-practice. Its cvars can be edited, but it cannot be
+-- deleted, retired, disabled or renamed out from under that.
+CREATE OR REPLACE FUNCTION public.tbud_game_modes_system() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        IF OLD.system THEN
+            RAISE EXCEPTION 'Game mode "%" is built into 5Stack and cannot be deleted', OLD.name
+                USING ERRCODE = '22000';
+        END IF;
+
+        RETURN OLD;
+    END IF;
+
+    IF OLD.system AND (
+        NEW.system IS DISTINCT FROM OLD.system
+        OR NEW.slug IS DISTINCT FROM OLD.slug
+        OR NEW.archived_at IS NOT NULL
+        OR NEW.enabled = false
+    ) THEN
+        RAISE EXCEPTION 'Game mode "%" is built into 5Stack and cannot be archived, disabled or renamed', OLD.name
+            USING ERRCODE = '22000';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tbud_game_modes_system ON public.game_modes;
+CREATE TRIGGER tbud_game_modes_system BEFORE UPDATE OR DELETE ON public.game_modes FOR EACH ROW EXECUTE FUNCTION public.tbud_game_modes_system();
+
