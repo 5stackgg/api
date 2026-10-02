@@ -156,10 +156,16 @@ export class GameModesService {
     }
 
     if (!matchId && row?.is_community_server) {
-      return await this.withServerPlugins(serverId, mode, scope);
+      return await this.withInstallConfigs(
+        await this.withServerPlugins(serverId, mode, scope),
+        scope.runtime,
+      );
     }
 
-    return await this.withAutoLoad(mode, scope);
+    return await this.withInstallConfigs(
+      await this.withAutoLoad(mode, scope),
+      scope.runtime,
+    );
   }
 
   // What a server would boot with if it ran this mode right now. Auto-load
@@ -593,6 +599,62 @@ export class GameModesService {
     return "custom";
   }
 
+  // A plugin's config file as set on its page goes to every server that loads
+  // the plugin. A mode's or a rotation's file at the same path is laid over it,
+  // being the more specific of the two.
+  private async withInstallConfigs(
+    resolved: ResolvedGameMode | null,
+    runtime: string,
+  ): Promise<ResolvedGameMode | null> {
+    const slugs = GameModesService.entriesOf(resolved).map(
+      GameModesService.slugOf,
+    );
+
+    if (!resolved || slugs.length === 0) {
+      return resolved;
+    }
+
+    const rows = await this.postgres.query<
+      Array<{ config: unknown; config_path: string }>
+    >(
+      `SELECT i.config, p.config_path
+         FROM game_plugins p
+         INNER JOIN game_plugin_installs i ON i.plugin_slug = p.slug
+        WHERE p.slug = ANY($1::text[])
+          AND i.enabled = true
+          AND i.config IS NOT NULL
+          AND p.config_path IS NOT NULL`,
+      [slugs],
+    );
+
+    if (rows.length === 0) {
+      return resolved;
+    }
+
+    const files = Object.fromEntries(
+      rows.map((row) => [
+        row.config_path.replace("{runtime}", runtime),
+        JSON.stringify(row.config, null, 2),
+      ]),
+    );
+
+    return {
+      ...resolved,
+      pluginConfigs: GameModesService.withConfigFiles(
+        Buffer.from(JSON.stringify(files)).toString("base64"),
+        GameModesService.configFilesOf(resolved),
+      ),
+    };
+  }
+
+  private static configFilesOf(
+    mode: ResolvedGameMode | null,
+  ): Record<string, string> {
+    return mode?.pluginConfigs
+      ? JSON.parse(Buffer.from(mode.pluginConfigs, "base64").toString())
+      : {};
+  }
+
   // The cvars each loading plugin carries, in the order the plugins load.
   //
   // Keyed off what the mode actually resolved to rather than off the install
@@ -613,18 +675,51 @@ export class GameModesService {
     }
 
     const rows = await this.postgres.query<
-      Array<{ plugin_slug: string; cfg: string }>
+      Array<{
+        plugin_slug: string;
+        cfg: string | null;
+        config_cvar: string | null;
+        config_path: string | null;
+      }>
     >(
-      `SELECT plugin_slug, cfg
-         FROM game_plugin_installs
-        WHERE plugin_slug = ANY($1::text[])
-          AND enabled = true
-          AND cfg IS NOT NULL
-          AND btrim(cfg) <> ''`,
+      // From the catalog, not the installs: a hand-placed plugin a mode loads
+      // has no install row, and its file still needs the cvar pointing at it.
+      `SELECT p.slug AS plugin_slug,
+              CASE WHEN i.enabled THEN i.cfg END AS cfg,
+              p.config_cvar,
+              p.config_path
+         FROM game_plugins p
+         LEFT JOIN game_plugin_installs i ON i.plugin_slug = p.slug
+        WHERE p.slug = ANY($1::text[])`,
       [slugs],
     );
 
-    const cfgs = new Map(rows.map((row) => [row.plugin_slug, row.cfg]));
+    const written = new Set(Object.keys(GameModesService.configFilesOf(mode)));
+
+    const cfgs = new Map<string, string>();
+
+    for (const row of rows) {
+      const lines = row.cfg?.trim() ? [row.cfg] : [];
+
+      // A plugin that finds its file through a cvar reads its own copy until
+      // told otherwise, so the cvar comes with the file wherever it is written.
+      const path = ["swiftlys2", "counterstrikesharp"]
+        .map((runtime) => row.config_path?.replace("{runtime}", runtime))
+        .find((candidate) => candidate && written.has(candidate));
+
+      if (row.config_cvar && path) {
+        lines.push(`${row.config_cvar} "${path}"`);
+      }
+
+      if (lines.length > 0) {
+        cfgs.set(
+          row.plugin_slug,
+          lines.length === 1
+            ? lines[0]
+            : lines.map((line) => line.replace(/\s+$/, "")).join("\n"),
+        );
+      }
+    }
 
     return slugs
       .filter((slug) => cfgs.has(slug))

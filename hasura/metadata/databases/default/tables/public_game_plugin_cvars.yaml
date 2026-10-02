@@ -1,0 +1,22 @@
+table:
+  name: game_plugin_cvars
+  schema: public
+object_relationships:
+  - name: plugin
+    using:
+      foreign_key_constraint_on: plugin_slug
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - plugin_slug
+        - name
+        - runtime
+        - version
+        - kind
+        - default_value
+        - description
+        - flags
+        - reported_at
+      filter: {}
+    comment: ""

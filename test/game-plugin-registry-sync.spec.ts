@@ -108,6 +108,37 @@ describe("game plugin registry sync (SQL-driven)", () => {
     expect(versions.map((row) => row.version)).toEqual(["2.0.0"]);
   });
 
+  it("keeps what the registry says about the plugin's config", async () => {
+    Object.assign(published[0], {
+      cvars: ["dm_modes_file", "dm_replenish_health"],
+      forced_cvars: ["mp_timelimit", "bot_quota"],
+      config_path: "addons/swiftlys2/configs/plugins/Deathmatch/modes.json",
+      config_cvar: "dm_modes_file",
+      config_default: [{ name: "Pistols", weapons: ["deagle"], duration: 300 }],
+      config_shipped: {
+        path: "addons/swiftlys2/plugins/Deathmatch/resources/configs/default.json",
+        repo_path: "resources/configs/default.json",
+      },
+    });
+
+    await service.syncRegistry();
+
+    const [plugin] = await postgres.query<Array<Record<string, unknown>>>(
+      `SELECT config_cvar, config_default, config_shipped, forced_cvars
+         FROM game_plugins WHERE slug = 'retakes'`,
+    );
+
+    expect(plugin).toEqual({
+      config_cvar: "dm_modes_file",
+      config_default: [{ name: "Pistols", weapons: ["deagle"], duration: 300 }],
+      config_shipped: {
+        path: "addons/swiftlys2/plugins/Deathmatch/resources/configs/default.json",
+        repo_path: "resources/configs/default.json",
+      },
+      forced_cvars: ["mp_timelimit", "bot_quota"],
+    });
+  });
+
   it("still prunes a registry plugin that stopped being published", async () => {
     await postgres.query(
       `INSERT INTO game_plugins (slug, kind, name, author, description)

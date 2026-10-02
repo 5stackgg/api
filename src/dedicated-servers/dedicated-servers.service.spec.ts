@@ -20,6 +20,7 @@ describe("DedicatedServersService.rebuildDedicatedServer", () => {
     null as never,
     null as never,
     postgres as never,
+    null as never,
   );
 
   const steps: Array<string> = [];
@@ -188,6 +189,8 @@ describe("DedicatedServersService.pingDedicatedServer", () => {
   let reachable: boolean;
   let hasura: { query: jest.Mock; mutation: jest.Mock };
   let notifications: { send: jest.Mock };
+  let pluginCvars: { harvest: jest.Mock };
+  let rcon: Record<string, jest.Mock>;
   let service: DedicatedServersService;
 
   beforeEach(() => {
@@ -210,7 +213,8 @@ describe("DedicatedServersService.pingDedicatedServer", () => {
       }),
     };
     notifications = { send: jest.fn().mockResolvedValue(undefined) };
-    const rcon = {
+    pluginCvars = { harvest: jest.fn().mockResolvedValue(undefined) };
+    rcon = {
       connect: jest.fn(async () =>
         reachable
           ? {
@@ -226,6 +230,7 @@ describe("DedicatedServersService.pingDedicatedServer", () => {
           : null,
       ),
       disconnect: jest.fn(),
+      listCvars: jest.fn(async () => []),
     };
 
     service = new DedicatedServersService(
@@ -241,6 +246,7 @@ describe("DedicatedServersService.pingDedicatedServer", () => {
       null as never,
       notifications as never,
       null as never,
+      pluginCvars as never,
     );
   });
 
@@ -274,6 +280,56 @@ describe("DedicatedServersService.pingDedicatedServer", () => {
 
   it("marks a reachable server connected", async () => {
     row.connected = false;
+
+    await service.pingDedicatedServer("server-1");
+
+    expect(row.connected).toBe(true);
+  });
+
+  it("reads plugin cvars over the open connection before closing it", async () => {
+    const order: Array<string> = [];
+    pluginCvars.harvest.mockImplementation(
+      async (_: string, list: (name: string) => Promise<unknown>) => {
+        await list("dm_replenish_health");
+        order.push("harvest");
+      },
+    );
+    rcon.disconnect.mockImplementation(async () => {
+      order.push("disconnect");
+    });
+
+    await service.pingDedicatedServer("server-1");
+
+    expect(rcon.listCvars).toHaveBeenCalledWith(
+      "server-1",
+      "dm_replenish_health",
+    );
+    expect(order).toEqual(["harvest", "disconnect"]);
+  });
+
+  it("tells the harvest a server that just came up has restarted", async () => {
+    row.connected = false;
+
+    await service.pingDedicatedServer("server-1");
+
+    expect(pluginCvars.harvest).toHaveBeenCalledWith(
+      "server-1",
+      expect.any(Function),
+      { restarted: true },
+    );
+  });
+
+  it("does not ask an unreachable server about its plugins", async () => {
+    reachable = false;
+
+    await service.pingDedicatedServer("server-1");
+
+    expect(pluginCvars.harvest).not.toHaveBeenCalled();
+  });
+
+  it("still marks the server connected when reading its cvars fails", async () => {
+    row.connected = false;
+    pluginCvars.harvest.mockRejectedValue(new Error("rcon dropped"));
 
     await service.pingDedicatedServer("server-1");
 
@@ -419,6 +475,7 @@ describe("DedicatedServersService.getServerPlayerList", () => {
       null as never,
       rcon as never,
       { getConnection: () => null } as never,
+      null as never,
       null as never,
       null as never,
       null as never,
@@ -709,6 +766,7 @@ describe("DedicatedServersService.setupDedicatedServer", () => {
       } as never,
       gameModes as never,
       { forServer: jest.fn().mockResolvedValue({ maps: [] }) } as never,
+      null as never,
       null as never,
       null as never,
     );

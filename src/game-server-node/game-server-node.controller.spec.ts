@@ -32,6 +32,7 @@ describe("GameServerNodeController ping disk alerts", () => {
       queue as any,
       queue as any,
       {} as any,
+      {} as any,
     );
   });
 

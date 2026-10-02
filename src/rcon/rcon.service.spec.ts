@@ -102,3 +102,80 @@ describe("RconService connect failure", () => {
     expect(notifications.send).not.toHaveBeenCalled();
   });
 });
+
+describe("RconService.listCvars", () => {
+  const service = new RconService(
+    {} as any,
+    {} as any,
+    {} as any,
+    { warn: jest.fn(), log: jest.fn(), error: jest.fn() } as any,
+    {} as any,
+    { getConnection: () => ({}) } as any,
+    {} as any,
+  );
+
+  const answer = (output: string) => {
+    const send = jest.fn().mockResolvedValue(output);
+    jest.spyOn(service, "connect").mockResolvedValue({ send } as any);
+    return send;
+  };
+
+  // A plugin's cvar can hold a URL. Splitting the row on every colon cut the
+  // value at "https" and pushed the rest of it into the flags.
+  it("keeps a value that contains colons whole", async () => {
+    const send = answer(
+      "invsim_url                               : https://inventory.cstrike.app : sv, release      : Inventory Simulator API URL",
+    );
+
+    await expect(service.listCvars("server-1", "invsim_url")).resolves.toEqual([
+      {
+        name: "invsim_url",
+        kind: "https://inventory.cstrike.app",
+        flags: "sv, release",
+        description: "Inventory Simulator API URL",
+      },
+    ]);
+    expect(send).toHaveBeenCalledWith("Cvarlist invsim_url");
+  });
+
+  it("reads an empty value, empty flags and a command", async () => {
+    answer(
+      [
+        "cvar list",
+        "dm_pro_ratio                             :          : sv               : Target K/D ratio.",
+        "dm_replenish_health                      : 10       :                  : Amount of health replenished on kill.",
+        "sw_guns                                  : cmd      : sv               : Display available weapons.",
+        "--- 3 convars/concommands for [dm_] ---",
+      ].join("\n"),
+    );
+
+    await expect(service.listCvars("server-1", "dm_")).resolves.toEqual([
+      {
+        name: "dm_pro_ratio",
+        kind: "",
+        flags: "sv",
+        description: "Target K/D ratio.",
+      },
+      {
+        name: "dm_replenish_health",
+        kind: "10",
+        flags: "",
+        description: "Amount of health replenished on kill.",
+      },
+      {
+        name: "sw_guns",
+        kind: "cmd",
+        flags: "sv",
+        description: "Display available weapons.",
+      },
+    ]);
+  });
+
+  it("fails instead of answering for a server it cannot reach", async () => {
+    jest.spyOn(service, "connect").mockResolvedValue(null);
+
+    await expect(service.listCvars("server-1", "dm_")).rejects.toThrow(
+      "unable to connect",
+    );
+  });
+});

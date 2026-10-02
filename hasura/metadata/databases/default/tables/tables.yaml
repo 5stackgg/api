@@ -87,6 +87,7 @@
 - "!include public_friends.yaml"
 - "!include public_game_mode_plugins.yaml"
 - "!include public_game_modes.yaml"
+- "!include public_game_plugin_cvars.yaml"
 - "!include public_game_plugin_installs.yaml"
 - "!include public_game_plugin_versions.yaml"
 - "!include public_game_plugins.yaml"

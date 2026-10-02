@@ -16,6 +16,13 @@ array_relationships:
         table:
           name: game_mode_plugins
           schema: public
+  - name: reported_cvars
+    using:
+      foreign_key_constraint_on:
+        column: plugin_slug
+        table:
+          name: game_plugin_cvars
+          schema: public
   - name: node_installs
     using:
       manual_configuration:
@@ -60,7 +67,11 @@ select_permissions:
         - source
         - config_schema
         - config_path
+        - config_cvar
+        - config_default
+        - config_shipped
         - cvars
+        - forced_cvars
         - map_rotation
         - pairs_with
         - panel
@@ -92,7 +103,11 @@ insert_permissions:
         - source
         - config_schema
         - config_path
+        - config_cvar
+        - config_default
+        - config_shipped
         - cvars
+        - forced_cvars
         - map_rotation
         - pairs_with
         - panel
@@ -121,7 +136,11 @@ update_permissions:
         - source
         - config_schema
         - config_path
+        - config_cvar
+        - config_default
+        - config_shipped
         - cvars
+        - forced_cvars
         - map_rotation
         - pairs_with
         - panel
