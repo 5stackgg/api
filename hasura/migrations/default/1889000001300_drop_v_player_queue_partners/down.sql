@@ -1,9 +1,3 @@
--- Ordered pairs (both directions) so a profile filters on steam_id alone.
---
--- Joined on party_id AND same match, never party_id alone: a 5stack party_id is
--- the lobby id and survives across matches, so party_id by itself would fuse
--- every match that lobby ever played into one pair. Not narrowed to a single
--- lineup either — a lobby that fills the whole match is split across both.
 CREATE OR REPLACE VIEW public.v_player_queue_partners AS
  SELECT a.steam_id,
         b.steam_id AS partner_steam_id,
