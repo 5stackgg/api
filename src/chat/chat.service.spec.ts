@@ -47,6 +47,8 @@ describe("ChatService direct messages", () => {
   // What a block committed between a send's access check and its insert does
   // to that insert.
   let dmInsertBlocked: boolean;
+  // Whether the tournament's room is still open, as the database judges it.
+  let tournamentChatOpen: boolean;
   // The one direct message the fake database holds, if a test put one there.
   let directMessage:
     | {
@@ -72,6 +74,10 @@ describe("ChatService direct messages", () => {
 
       if (sql.includes("public.is_gagged")) {
         return [{ gagged }];
+      }
+
+      if (sql.includes("AS chat_open")) {
+        return [{ chat_open: tournamentChatOpen }];
       }
 
       if (sql.includes("SELECT 1 FROM public.chat_message_deletions")) {
@@ -444,6 +450,7 @@ describe("ChatService direct messages", () => {
     directReactions = null;
     directReactionFailure = undefined;
     dmInsertBlocked = false;
+    tournamentChatOpen = true;
     blocks = [];
     rcon.send.mockResolvedValue(undefined);
     rcon.connect.mockResolvedValue(rcon);
@@ -580,6 +587,23 @@ describe("ChatService direct messages", () => {
       expect(await join(ME)).toBe(false);
     });
 
+    it("keeps a rostered player out once the room has closed", async () => {
+      tournament.roster = [ME];
+      tournamentChatOpen = false;
+
+      expect(await join(ME)).toBe(false);
+    });
+
+    it("asks the database whether a finished tournament's room is still open", async () => {
+      tournament.roster = [ME];
+
+      await join(ME);
+
+      expect(
+        queries.find(({ sql }) => sql.includes("AS chat_open"))?.bindings,
+      ).toEqual(["t-1", ChatService.FINISHED_TOURNAMENT_CHAT_DAYS]);
+    });
+
     // the message write is the awaited step; the broadcast after it is
     // deliberately fire-and-forget
     const posted = () =>
@@ -596,6 +620,21 @@ describe("ChatService direct messages", () => {
         "t-1",
         { steam_id: ME, name: "Someone", role } as any,
         "still here",
+      );
+
+      expect(posted()).toBe(false);
+    });
+
+    it("stops posting once the room has closed", async () => {
+      redis.hget.mockResolvedValue(JSON.stringify({ steam_id: ME }));
+      tournament.roster = [ME];
+      tournamentChatOpen = false;
+
+      await service.sendMessageToChat(
+        ChatLobbyType.Tournament,
+        "t-1",
+        { steam_id: ME, name: "Someone", role } as any,
+        "one more thing",
       );
 
       expect(posted()).toBe(false);

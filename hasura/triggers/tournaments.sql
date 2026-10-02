@@ -231,6 +231,9 @@ BEGIN
             ELSE
                 -- No action needed for other status changes
         END CASE;
+
+        -- After the CASE, which can turn a start into CancelledMinTeams.
+        NEW.finished_at := CASE WHEN NEW.status = 'Finished' THEN now() END;
     END IF;
 
     RETURN NEW;
@@ -301,6 +304,10 @@ CREATE OR REPLACE FUNCTION public.tbi_tournaments() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
+    IF NEW.status = 'Finished' AND NEW.finished_at IS NULL THEN
+        NEW.finished_at := now();
+    END IF;
+
     IF NEW.discord_notifications_enabled IS NULL THEN
         IF EXISTS (
             SELECT 1
