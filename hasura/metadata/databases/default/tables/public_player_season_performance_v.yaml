@@ -1,0 +1,39 @@
+table:
+  name: player_season_performance_v
+  schema: public
+object_relationships:
+  - name: season
+    using:
+      manual_configuration:
+        column_mapping:
+          season_id: id
+        insertion_order: null
+        remote_table:
+          name: seasons
+          schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - steam_id
+        - season_id
+        - season_starts_at
+        - rounds
+        - aim_rating
+        - positioning_rating
+        - utility_rating
+        - accuracy_score
+        - hs_score
+        - spotted_score
+        - crosshair_score
+        - ttd_score
+        - counter_strafe_score
+        - survival_score
+        - traded_score
+        - kast_score
+        - flash_assists_score
+        - blind_score
+        - util_eff_score
+      filter: {}
+      allow_aggregations: true
+    comment: ""

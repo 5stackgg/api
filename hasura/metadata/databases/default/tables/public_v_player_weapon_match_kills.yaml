@@ -1,0 +1,25 @@
+table:
+  name: v_player_weapon_match_kills
+  schema: public
+object_relationships:
+  - name: match
+    using:
+      manual_configuration:
+        column_mapping:
+          match_id: id
+        insertion_order: null
+        remote_table:
+          name: matches
+          schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - player_steam_id
+        - match_id
+        - with
+        - kill_count
+        - rounds
+      filter: {}
+      allow_aggregations: true
+    comment: ""
