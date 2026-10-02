@@ -645,6 +645,18 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       });
     });
 
+    it("tells the game server which match it runs, for its crash reports", async () => {
+      await (service as any).assignOnDemandServer("match-1");
+
+      const [container] =
+        createNamespacedJob.mock.calls[0][0].body.spec.template.spec.containers;
+
+      expect(container.env).toContainEqual({
+        name: "MATCH_ID",
+        value: "match-1",
+      });
+    });
+
     it("holds the pool lock past a teardown but not past the retries", async () => {
       await (service as any).assignOnDemandServer("match-1");
 
