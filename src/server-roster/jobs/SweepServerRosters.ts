@@ -28,7 +28,10 @@ export class SweepServerRosters extends WorkerHost {
       return;
     }
 
-    await this.roster.clearCounts(closed.map((row) => row.server_id));
+    const serverIds = closed.map((row) => row.server_id);
+
+    await this.roster.clearCounts(serverIds);
+    await this.roster.rosterChanged(serverIds);
 
     this.logger.log(
       `closed the sessions of ${closed.length} server(s) whose roster went quiet`,

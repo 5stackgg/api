@@ -58,6 +58,14 @@ class FakeRedis {
     return fields.map((field) => this.hashes.get(key)?.get(field) ?? null);
   }
 
+  async hincrby(key: string, field: string, by: number) {
+    const hash = this.hashes.get(key) ?? new Map<string, string>();
+    const next = Number(hash.get(field) ?? 0) + by;
+    hash.set(field, String(next));
+    this.hashes.set(key, hash);
+    return next;
+  }
+
   async hgetall(key: string) {
     return Object.fromEntries(this.hashes.get(key) ?? new Map());
   }
@@ -121,7 +129,7 @@ class FakeRedis {
         return [];
       },
     };
-    for (const command of ["del", "zadd", "hset", "expire"]) {
+    for (const command of ["del", "zadd", "hset", "hincrby", "expire"]) {
       chain[command] = (...args: Array<any>) => {
         queued.push(() => (this as any)[command](...args));
         return chain;
@@ -726,6 +734,26 @@ describe("server player sessions (SQL-driven)", () => {
         kills: 9,
       });
       expect(board.you).toMatchObject({ rank: 2, steam_id: MIKA });
+    });
+
+    // A cached board used to keep its numbers for two minutes whatever happened
+    // on the server in the meantime.
+    it("rebuilds the board as soon as someone leaves", async () => {
+      const before = await stats.leaderboard(serverId, "week", "kills", 10);
+      expect(before.entries[0].steam_id).toBe(NYX);
+
+      await roster.apply(
+        serverId,
+        [
+          player(NYX, { kills: 9 }),
+          player(STRANGER, { kills: 30 }),
+          player(SHADOW, { kills: 50 }),
+        ],
+        [left(MIKA, 20)],
+      );
+
+      const after = await stats.leaderboard(serverId, "week", "kills", 10);
+      expect(after.entries[0]).toMatchObject({ steam_id: MIKA, kills: 20 });
     });
 
     it("ranks by time played", async () => {

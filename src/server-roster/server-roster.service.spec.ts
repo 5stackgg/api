@@ -179,6 +179,62 @@ describe("ServerRosterService.apply", () => {
   });
 });
 
+describe("ServerRosterService.apply roster version", () => {
+  const SERVER_ID = "11111111-1111-1111-1111-111111111111";
+
+  function serviceWith(previous: string | null, online: number) {
+    const multi = { hincrby: jest.fn(), exec: jest.fn().mockResolvedValue([]) };
+    multi.hincrby.mockReturnValue(multi);
+
+    const service = new ServerRosterService(
+      { warn: jest.fn() } as never,
+      { query: jest.fn().mockResolvedValue([{ online }]) } as never,
+      {
+        getConnection: () => ({
+          hget: jest.fn().mockResolvedValue(previous),
+          hset: jest.fn(),
+          sendCommand: jest.fn(),
+          multi: () => multi,
+        }),
+      } as never,
+    );
+
+    return { service, multi };
+  }
+
+  const player = { steam_id: "76561198041234567", conn: "a" };
+
+  it("bumps the version when the number of players changes", async () => {
+    const { service, multi } = serviceWith("0", 1);
+
+    await service.apply(SERVER_ID, [player], []);
+
+    expect(multi.hincrby).toHaveBeenCalledWith(
+      ServerRosterService.VERSIONS_KEY,
+      SERVER_ID,
+      1,
+    );
+  });
+
+  it("bumps the version when someone left, even if someone else joined", async () => {
+    const { service, multi } = serviceWith("1", 1);
+
+    await service.apply(SERVER_ID, [player], [
+      { steam_id: "76561198041234568", conn: "b", kills: 0, deaths: 0 },
+    ]);
+
+    expect(multi.hincrby).toHaveBeenCalled();
+  });
+
+  it("leaves the version alone when nobody joined or left", async () => {
+    const { service, multi } = serviceWith("1", 1);
+
+    await service.apply(SERVER_ID, [player], []);
+
+    expect(multi.hincrby).not.toHaveBeenCalled();
+  });
+});
+
 describe("PruneServerPlayerSessions.clampRetentionDays", () => {
   it.each([
     [undefined, 7],
