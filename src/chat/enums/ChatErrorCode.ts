@@ -8,4 +8,12 @@ export enum ChatErrorCode {
   NotFound = "not_found",
   WindowClosed = "window_closed",
   RateLimited = "rate_limited",
+  TooLarge = "too_large",
+  UnsupportedType = "unsupported_type",
+  TooManyPending = "too_many_pending",
+  Disabled = "disabled",
+  Unavailable = "unavailable",
+  QuotaExceeded = "quota_exceeded",
+  Busy = "busy",
+  AlreadySent = "already_sent",
 }

@@ -1,5 +1,7 @@
 import { e_player_roles_enum } from "generated";
 import { ChatReactions } from "./ChatReactions";
+import { ChatAttachment } from "./ChatAttachment";
+import { ChatGif } from "./ChatGif";
 
 export type ChatMessageSource = "web" | "game";
 
@@ -14,6 +16,8 @@ export interface ChatMessage {
   // Added when a message is sent to clients, never stored in its JSON: an
   // edit's compare-and-set would otherwise contend with every reaction.
   reactions?: ChatReactions;
+  attachments?: ChatAttachment[];
+  gif?: ChatGif;
   from: {
     role: e_player_roles_enum;
     name: string;

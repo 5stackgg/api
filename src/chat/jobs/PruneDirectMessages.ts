@@ -5,6 +5,7 @@ import { UseQueue } from "../../utilities/QueueProcessors";
 import { ChatQueues } from "../enums/ChatQueues";
 import { PostgresService } from "../../postgres/postgres.service";
 import { SystemSettingName } from "../../system/enums/SystemSettingName";
+import { ChatAttachmentsService } from "../chat-attachments.service";
 
 const DEFAULT_RETENTION_DAYS = 365;
 
@@ -20,6 +21,7 @@ export class PruneDirectMessages extends WorkerHost {
   constructor(
     private readonly logger: Logger,
     private readonly postgres: PostgresService,
+    private readonly attachments: ChatAttachmentsService,
   ) {
     super();
   }
@@ -54,6 +56,10 @@ export class PruneDirectMessages extends WorkerHost {
         `pruned ${deleted.length} direct message(s) older than ${days} days`,
       );
     }
+
+    // Deleting a message marks its files due (hasura/triggers/direct_messages),
+    // so they go in the same run rather than at the next sweep.
+    await this.attachments.removeExpired();
   }
 
   private async retentionDays(): Promise<number> {

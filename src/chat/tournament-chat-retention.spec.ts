@@ -34,6 +34,13 @@ describe("tournament chat retention", () => {
       { getConnection: () => redis } as any,
       { sendChatMessage: jest.fn() } as any,
       { blockedAmong: jest.fn(async () => new Map()) } as any,
+      {
+        claim: jest.fn(),
+        expireMessage: jest.fn(async () => {}),
+        markDeleted: jest.fn(async () => {}),
+        moveRoom: jest.fn(async () => {}),
+      } as any,
+      { enabled: jest.fn(async () => false) } as any,
     );
 
     await service.sendMessageToChat(

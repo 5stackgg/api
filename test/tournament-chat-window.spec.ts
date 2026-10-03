@@ -67,6 +67,13 @@ describe("finished tournament chat (SQL-driven)", () => {
       { getConnection: () => redis } as any,
       { sendChatMessage: jest.fn(async () => {}) } as any,
       new PlayerBlocksService(postgres),
+      {
+        claim: jest.fn(),
+        expireMessage: jest.fn(async () => {}),
+        markDeleted: jest.fn(async () => {}),
+        moveRoom: jest.fn(async () => {}),
+      } as any,
+      { enabled: jest.fn(async () => false) } as any,
     );
   }, 600_000);
 

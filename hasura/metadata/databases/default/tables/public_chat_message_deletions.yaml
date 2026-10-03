@@ -22,6 +22,8 @@ select_permissions:
         - source
         - deleted_by_steam_id
         - deleted_at
+        - attachments
+        - gif
       filter: {}
       allow_aggregations: true
     comment: Evidence of moderated website chat. Written only by the API.
@@ -38,6 +40,8 @@ select_permissions:
         - source
         - deleted_by_steam_id
         - deleted_at
+        - attachments
+        - gif
       filter:
         room_type:
           _neq: organizers

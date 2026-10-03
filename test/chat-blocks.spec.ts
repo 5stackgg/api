@@ -123,6 +123,13 @@ describe("chat blocks (SQL-driven)", () => {
         editChatMessage: async () => {},
       } as any,
       blocks,
+      {
+        claim: jest.fn(),
+        expireMessage: jest.fn(async () => {}),
+        markDeleted: jest.fn(async () => {}),
+        moveRoom: jest.fn(async () => {}),
+      } as any,
+      { enabled: jest.fn(async () => false) } as any,
     );
   }, 600_000);
 

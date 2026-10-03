@@ -151,6 +151,51 @@ describe("hasura table metadata", () => {
 
   // A warning is a private note between the player and staff; every other
   // sanction stays on the public record.
+  // A secret setting is kept from administrators by its name alone, so a role
+  // that could rename the row could move it out of the list and read it.
+  describe("secret settings", () => {
+    const SECRETS = ["web_push_private_key", "giphy_api_key"];
+
+    const settings = () =>
+      tables.find(({ file }) => file === "public_settings.yaml")?.metadata;
+
+    it("never shows a secret to an administrator", () => {
+      const hidden =
+        blocksByRole(settings(), "select_permissions").get("administrator")
+          ?.filter?.name?._nin ?? [];
+
+      expect(hidden).toEqual(expect.arrayContaining(SECRETS));
+    });
+
+    it("never lets any role rename a setting", () => {
+      const renamers = (settings()?.update_permissions ?? [])
+        .filter((entry: Record<string, any>) =>
+          (entry.permission?.columns ?? []).includes("name"),
+        )
+        .map((entry: { role: string }) => entry.role);
+
+      expect(renamers).toEqual([]);
+    });
+  });
+
+  describe("chat message deletions", () => {
+    it("shows staff the files and GIF a deleted message carried", () => {
+      const deletions = tables.find(
+        ({ file }) => file === "public_chat_message_deletions.yaml",
+      )?.metadata;
+
+      for (const [role, permission] of blocksByRole(
+        deletions,
+        "select_permissions",
+      )) {
+        expect([role, permission.columns]).toEqual([
+          role,
+          expect.arrayContaining(["attachments", "gif"]),
+        ]);
+      }
+    });
+  });
+
   describe("player_sanctions warnings", () => {
     const sanctions = () =>
       tables.find(({ file }) => file === "public_player_sanctions.yaml")

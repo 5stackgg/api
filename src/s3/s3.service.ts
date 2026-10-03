@@ -8,6 +8,7 @@ import {
   CompleteMultipartUploadCommand,
   CreateMultipartUploadCommand,
   DeleteObjectsCommand,
+  ListObjectsV2Command,
   ListObjectVersionsCommand,
   ListPartsCommand,
   S3Client,
@@ -49,6 +50,8 @@ const importESM = new Function("specifier", "return import(specifier)") as <T>(
 
 @Injectable()
 export class S3Service implements OnModuleDestroy {
+  public static PART_IDLE_TIMEOUT_MS = 30_000;
+
   private bucket: string;
   private config: S3Config;
   private modules?: Promise<S3Modules>;
@@ -342,6 +345,24 @@ export class S3Service implements OnModuleDestroy {
     prefix: string,
     bucket: string = this.bucket,
   ): Promise<number> {
+    return await this.sweepPrefix(prefix, bucket, false);
+  }
+
+  // DeleteObjects refuses keys inside a 200, so only a strict sweep notices.
+  // For a caller whose own row is the only record of the files: it must keep
+  // that row and try again rather than forget objects still being billed.
+  public async removePrefixStrictly(
+    prefix: string,
+    bucket: string = this.bucket,
+  ): Promise<number> {
+    return await this.sweepPrefix(prefix, bucket, true);
+  }
+
+  private async sweepPrefix(
+    prefix: string,
+    bucket: string,
+    strict: boolean,
+  ): Promise<number> {
     const client = this.raw();
 
     let removed = 0;
@@ -375,12 +396,26 @@ export class S3Service implements OnModuleDestroy {
 
       for (let i = 0; i < entries.length; i += 1000) {
         const batch = entries.slice(i, i + 1000);
-        await client.send(
+        const result = await client.send(
           new DeleteObjectsCommand({
             Bucket: bucket,
             Delete: { Objects: batch },
           }),
         );
+
+        const [failure] = result?.Errors ?? [];
+
+        if (failure) {
+          const message =
+            `unable to remove ${result.Errors.length} object(s) under ${prefix}: ${failure.Code} ${failure.Message ?? ""}`.trim();
+
+          if (strict) {
+            throw new Error(message);
+          }
+
+          this.logger.warn(message);
+        }
+
         removed += batch.length;
       }
 
@@ -391,6 +426,38 @@ export class S3Service implements OnModuleDestroy {
     } while (keyMarker || versionIdMarker);
 
     return removed;
+  }
+
+  // The "folders" directly under a prefix, without listing what is in them.
+  public async listPrefixes(
+    prefix: string,
+    bucket: string = this.bucket,
+  ): Promise<string[]> {
+    const client = this.raw();
+
+    const prefixes: string[] = [];
+    let token: string | undefined;
+
+    do {
+      const listed = await client.send(
+        new ListObjectsV2Command({
+          Bucket: bucket,
+          Prefix: prefix,
+          Delimiter: "/",
+          ContinuationToken: token,
+        }),
+      );
+
+      for (const common of listed.CommonPrefixes ?? []) {
+        if (common.Prefix) {
+          prefixes.push(common.Prefix);
+        }
+      }
+
+      token = listed.IsTruncated ? listed.NextContinuationToken : undefined;
+    } while (token);
+
+    return prefixes;
   }
 
   public async removeKeys(
@@ -500,6 +567,60 @@ export class S3Service implements OnModuleDestroy {
       }),
       { expiresIn: expires },
     );
+  }
+
+  // Streamed through with its length rather than buffered. Checksums only
+  // where an operation requires one: by default the SDK would wrap a stream
+  // in an aws-chunked body with a trailing checksum, which not every
+  // S3-compatible store accepts.
+  public async uploadPart(
+    key: string,
+    uploadId: string,
+    partNumber: number,
+    body: Readable | Buffer,
+    length: number,
+    abortSignal?: AbortSignal,
+    bucket: string = this.bucket,
+  ): Promise<void> {
+    await this.streamingClient().send(
+      new UploadPartCommand({
+        Bucket: bucket,
+        Key: key,
+        UploadId: uploadId,
+        PartNumber: partNumber,
+        Body: body,
+        ContentLength: length,
+      }),
+      { abortSignal },
+    );
+  }
+
+  private streamingClient(): S3Client {
+    const cached = this.rawClients.get("streaming");
+    if (cached) {
+      return cached;
+    }
+
+    const client = new S3Client({
+      endpoint: this.endpointFor(false),
+      region: this.config.region,
+      forcePathStyle: this.forcePathStyle,
+      credentials: this.credentials,
+      requestChecksumCalculation: "WHEN_REQUIRED",
+      // A streamed body cannot be sent twice.
+      maxAttempts: 1,
+      // Idle, not total: a slow sender is fine, a store that stops answering
+      // is not -- it holds a player's upload slot and a socket on both ends.
+      // requestTimeout would only log a warning here.
+      requestHandler: {
+        connectionTimeout: 10_000,
+        socketTimeout: S3Service.PART_IDLE_TIMEOUT_MS,
+      },
+    });
+
+    this.rawClients.set("streaming", client);
+
+    return client;
   }
 
   public async completeMultipartUpload(

@@ -17,6 +17,12 @@ import { PlayerBlocksModule } from "src/player-blocks/player-blocks.module";
 import { ChatQueues } from "./enums/ChatQueues";
 import { PruneDirectMessages } from "./jobs/PruneDirectMessages";
 import { BackfillDirectMessages } from "./jobs/BackfillDirectMessages";
+import { RemoveExpiredChatAttachments } from "./jobs/RemoveExpiredChatAttachments";
+import { SweepChatAttachments } from "./jobs/SweepChatAttachments";
+import { ChatAttachmentsService } from "./chat-attachments.service";
+import { ChatGifsService } from "./chat-gifs.service";
+import { ChatMediaController } from "./chat-media.controller";
+import { S3Module } from "src/s3/s3.module";
 
 @Module({
   imports: [
@@ -26,6 +32,7 @@ import { BackfillDirectMessages } from "./jobs/BackfillDirectMessages";
     forwardRef(() => RconModule),
     NotificationsModule,
     PlayerBlocksModule,
+    S3Module,
     BullModule.registerQueue({
       name: ChatQueues.ChatMaintenance,
     }),
@@ -37,13 +44,17 @@ import { BackfillDirectMessages } from "./jobs/BackfillDirectMessages";
   providers: [
     ChatService,
     ChatGateway,
+    ChatAttachmentsService,
+    ChatGifsService,
     PruneDirectMessages,
     BackfillDirectMessages,
+    RemoveExpiredChatAttachments,
+    SweepChatAttachments,
     ...getQueuesProcessors("Chat"),
     loggerFactory(),
   ],
   exports: [ChatService],
-  controllers: [ChatController],
+  controllers: [ChatController, ChatMediaController],
 })
 export class ChatModule implements OnModuleInit {
   constructor(
@@ -76,6 +87,26 @@ export class ChatModule implements OnModuleInit {
           // Retention is measured in days; sweeping hourly is already far more
           // often than the boundary it is enforcing moves.
           pattern: "17 * * * *",
+        },
+      },
+    );
+
+    void this.maintenanceQueue.add(
+      RemoveExpiredChatAttachments.name,
+      {},
+      {
+        repeat: {
+          pattern: "*/10 * * * *",
+        },
+      },
+    );
+
+    void this.maintenanceQueue.add(
+      SweepChatAttachments.name,
+      {},
+      {
+        repeat: {
+          pattern: "41 4 * * *",
         },
       },
     );

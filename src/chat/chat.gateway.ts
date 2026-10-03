@@ -98,9 +98,11 @@ export class ChatGateway {
     @MessageBody()
     data: {
       id: string;
-      message: unknown;
+      message?: unknown;
       type: ChatLobbyType;
       requestId?: string;
+      attachments?: unknown;
+      gif?: unknown;
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
@@ -117,7 +119,15 @@ export class ChatGateway {
     const requestId =
       typeof data.requestId === "string" ? data.requestId : undefined;
 
-    const parsed = ChatService.messageText(data.message);
+    const media =
+      data.attachments !== undefined || data.gif !== undefined
+        ? { attachments: data.attachments, gif: data.gif }
+        : undefined;
+
+    const parsed = ChatService.messageText(
+      data.message,
+      ChatService.hasMedia(media),
+    );
 
     if ("error" in parsed) {
       if (parsed.error === ChatErrorCode.TooLong) {
@@ -131,6 +141,9 @@ export class ChatGateway {
       data.id,
       client.user,
       parsed.text,
+      false,
+      "web",
+      media,
     );
 
     // Only a message the room accepted may reach the game server: the relay
