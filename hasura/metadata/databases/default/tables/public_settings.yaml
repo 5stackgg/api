@@ -19,6 +19,7 @@ select_permissions:
         name:
           _nin:
             - web_push_private_key
+            - giphy_api_key
     comment: ""
   - role: guest
     permission:
@@ -33,7 +34,6 @@ update_permissions:
   - role: administrator
     permission:
       columns:
-        - name
         - value
       filter: {}
       check: {}

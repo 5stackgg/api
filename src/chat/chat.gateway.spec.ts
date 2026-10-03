@@ -94,7 +94,79 @@ describe("ChatGateway lobby:chat", () => {
         "t-1",
         expect.objectContaining({ steam_id: "1" }),
         "hello",
+        false,
+        "web",
+        undefined,
       );
+    });
+
+    it("sends attachments that came without any text", async () => {
+      await gateway.lobby(
+        {
+          id: "lobby-1",
+          type: ChatLobbyType.MatchMaking,
+          message: "",
+          attachments: ["a-1", "a-2"],
+        },
+        client(),
+      );
+
+      expect(chat.sendMessageToChat).toHaveBeenCalledWith(
+        ChatLobbyType.MatchMaking,
+        "lobby-1",
+        expect.objectContaining({ steam_id: "1" }),
+        "",
+        false,
+        "web",
+        { attachments: ["a-1", "a-2"], gif: undefined },
+      );
+    });
+
+    it("sends a GIF that came without any text", async () => {
+      const gif = { id: "abc123", width: 480, height: 270 };
+
+      await gateway.lobby(
+        { id: "lobby-1", type: ChatLobbyType.MatchMaking, gif } as any,
+        client(),
+      );
+
+      expect(chat.sendMessageToChat).toHaveBeenCalledWith(
+        ChatLobbyType.MatchMaking,
+        "lobby-1",
+        expect.objectContaining({ steam_id: "1" }),
+        "",
+        false,
+        "web",
+        { attachments: undefined, gif },
+      );
+    });
+
+    it("tells the sender a captioned upload is too long", async () => {
+      const socket = client();
+
+      await gateway.lobby(
+        {
+          id: "lobby-1",
+          type: ChatLobbyType.MatchMaking,
+          message: "a".repeat(ChatService.MAX_MESSAGE_LENGTH + 1),
+          attachments: ["a-1"],
+          requestId: "r-9",
+        },
+        socket,
+      );
+
+      expect(chat.sendMessageToChat).not.toHaveBeenCalled();
+      expect(sent(socket)).toEqual([
+        {
+          event: "chat:error",
+          data: {
+            code: ChatErrorCode.TooLong,
+            action: "send",
+            max: ChatService.MAX_MESSAGE_LENGTH,
+            requestId: "r-9",
+          },
+        },
+      ]);
     });
   });
 
@@ -160,6 +232,9 @@ describe("ChatGateway lobby:chat", () => {
         "m-1",
         expect.anything(),
         message,
+        false,
+        "web",
+        undefined,
       );
     });
   });

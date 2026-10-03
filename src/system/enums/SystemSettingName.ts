@@ -13,6 +13,14 @@ export enum SystemSettingName {
   // Days, not seconds: DMs are swept rather than expired, because they live in
   // postgres. 0 keeps them forever.
   ChatRetentionDirectDays = "public.chat_retention_direct_days",
+  ChatAttachmentMaxMb = "chat_attachment_max_mb",
+  ChatAttachmentDailyMb = "chat_attachment_daily_mb",
+  // Calls to GIPHY per hour across the whole panel: the key is one quota.
+  GiphyHourlyLimit = "giphy_hourly_limit",
+  // Write-only for administrators: public_settings.yaml leaves it out of their
+  // select permission, and searches go through the api so it never reaches a
+  // browser.
+  GiphyApiKey = "giphy_api_key",
   DemoNetworkLimiter = "demo_network_limiter",
   PublicDefaultModels = "public.default_models",
   VetoPickTimeout = "public.veto_pick_timeout",

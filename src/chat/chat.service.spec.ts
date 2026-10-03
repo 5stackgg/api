@@ -463,6 +463,13 @@ describe("ChatService direct messages", () => {
       { getConnection: () => redis } as any,
       push as any,
       playerBlocks as any,
+      {
+        claim: jest.fn(),
+        expireMessage: jest.fn(async () => {}),
+        markDeleted: jest.fn(async () => {}),
+        moveRoom: jest.fn(async () => {}),
+      } as any,
+      { enabled: jest.fn(async () => false) } as any,
     );
   });
 
@@ -1086,7 +1093,13 @@ describe("ChatService direct messages", () => {
           service.sendMessageToChat(ChatLobbyType.Direct, room, player(), "hi"),
         ).resolves.toEqual({ accepted: true, messageId: expect.any(String) });
 
-        expect(dmInserts().at(0)?.bindings.slice(1)).toEqual([room, ME, "hi"]);
+        expect(dmInserts().at(0)?.bindings.slice(1)).toEqual([
+          room,
+          ME,
+          "hi",
+          null,
+          null,
+        ]);
 
         const incoming = redis.publish.mock.calls
           .map(([, payload]) => JSON.parse(payload))
@@ -1462,6 +1475,8 @@ describe("ChatService direct messages", () => {
         "2025-01-01T00:00:00.000Z",
         "web",
         ME,
+        null,
+        null,
       ]);
     });
 
@@ -2137,6 +2152,8 @@ describe("ChatService direct messages", () => {
           expect.any(String),
           "web",
           ME,
+          null,
+          null,
         ]);
         expect(push.retractChatMessage).toHaveBeenCalledWith(MESSAGE_ID);
       });

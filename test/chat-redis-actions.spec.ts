@@ -83,6 +83,13 @@ describe("chat edits and self deletes (SQL-driven)", () => {
       { getConnection: () => redis } as any,
       push as any,
       new PlayerBlocksService(postgres),
+      {
+        claim: jest.fn(),
+        expireMessage: jest.fn(async () => {}),
+        markDeleted: jest.fn(async () => {}),
+        moveRoom: jest.fn(async () => {}),
+      } as any,
+      { enabled: jest.fn(async () => false) } as any,
     );
   }, 600_000);
 
@@ -1134,6 +1141,13 @@ describe("chat edits and self deletes (SQL-driven)", () => {
         { getConnection: () => redis } as any,
         push as any,
         new PlayerBlocksService(postgres),
+        {
+          claim: jest.fn(),
+          expireMessage: jest.fn(async () => {}),
+        markDeleted: jest.fn(async () => {}),
+          moveRoom: jest.fn(async () => {}),
+        } as any,
+        { enabled: jest.fn(async () => false) } as any,
       );
 
       return { gateway: new ChatGateway(service), hasura: stub, rcon, connect };

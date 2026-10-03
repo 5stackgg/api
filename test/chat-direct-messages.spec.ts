@@ -64,6 +64,13 @@ describe("direct messages (SQL-driven)", () => {
       { getConnection: () => redis } as any,
       push as any,
       new PlayerBlocksService(postgres),
+      {
+        claim: jest.fn(),
+        expireMessage: jest.fn(async () => {}),
+        markDeleted: jest.fn(async () => {}),
+        moveRoom: jest.fn(async () => {}),
+      } as any,
+      { enabled: jest.fn(async () => false) } as any,
     );
   }, 600_000);
 
@@ -335,7 +342,10 @@ describe("direct messages (SQL-driven)", () => {
   });
 
   describe("retention", () => {
-    const prune = () => new PruneDirectMessages(logger as any, postgres);
+    const prune = () =>
+      new PruneDirectMessages(logger as any, postgres, {
+        removeExpired: jest.fn(async () => 0),
+      } as any);
 
     const setRetention = (days: number) =>
       postgres.query(
@@ -783,7 +793,9 @@ describe("direct messages (SQL-driven)", () => {
         `UPDATE direct_messages SET created_at = now() - interval '400 days'`,
       );
 
-      await new PruneDirectMessages(logger as any, postgres).process({} as any);
+      await new PruneDirectMessages(logger as any, postgres, {
+        removeExpired: jest.fn(async () => 0),
+      } as any).process({} as any);
 
       expect(await rows()).toEqual([]);
     });

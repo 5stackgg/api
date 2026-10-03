@@ -30,6 +30,19 @@ import { ChatReactions } from "./types/ChatReactions";
 import { ChatReactResult } from "./types/ChatReactResult";
 import { MatchChatArchiveEntry } from "./types/MatchChatArchiveEntry";
 import { MatchChatLog } from "./types/MatchChatLog";
+import { ChatAttachment } from "./types/ChatAttachment";
+import { ChatGif } from "./types/ChatGif";
+import {
+  ChatAttachmentClaim,
+  ChatAttachmentRow,
+  ChatAttachmentsService,
+} from "./chat-attachments.service";
+import { ChatGifsService } from "./chat-gifs.service";
+
+export interface ChatMessageMedia {
+  attachments?: unknown;
+  gif?: unknown;
+}
 
 @Injectable()
 export class ChatService {
@@ -459,6 +472,8 @@ export class ChatService {
     private readonly redisManager: RedisManagerService,
     private readonly pushNotifications: PushNotificationsService,
     private readonly playerBlocks: PlayerBlocksService,
+    private readonly attachments: ChatAttachmentsService,
+    private readonly gifs: ChatGifsService,
   ) {
     this.redis = this.redisManager.getConnection();
   }
@@ -1030,16 +1045,22 @@ export class ChatService {
 
   // What a player typed on the website, or why it cannot be sent. Lines relayed
   // from the game are not held to this: the game has already limited them.
+  // A message carrying files or a GIF needs no text.
   public static messageText(
     raw: unknown,
+    allowEmpty = false,
   ): { text: string } | { error: ChatErrorCode } {
+    if (allowEmpty && (raw === undefined || raw === null)) {
+      return { text: "" };
+    }
+
     if (typeof raw !== "string") {
       return { error: ChatErrorCode.Invalid };
     }
 
     const text = raw.trim();
 
-    if (text.length === 0) {
+    if (text.length === 0 && !allowEmpty) {
       return { error: ChatErrorCode.Invalid };
     }
 
@@ -1060,6 +1081,72 @@ export class ChatService {
     );
   }
 
+  public static hasMedia(media?: ChatMessageMedia): boolean {
+    return (
+      (Array.isArray(media?.attachments) && media.attachments.length > 0) ||
+      (media?.gif !== undefined && media?.gif !== null)
+    );
+  }
+
+  // The ids of files the composer uploaded, or a GIPHY GIF -- never both, and
+  // never more than a message holds.
+  public static messageMedia(
+    media?: ChatMessageMedia,
+  ):
+    | { attachmentIds: string[]; gif: ChatGif | null }
+    | { error: ChatErrorCode } {
+    const raw = media?.attachments ?? [];
+    const hasGif = media?.gif !== undefined && media?.gif !== null;
+
+    if (!Array.isArray(raw)) {
+      return { error: ChatErrorCode.Invalid };
+    }
+
+    if (
+      raw.length > ChatAttachmentsService.MAX_PER_MESSAGE ||
+      raw.some((id) => typeof id !== "string" || !ChatService.UUID.test(id))
+    ) {
+      return { error: ChatErrorCode.Invalid };
+    }
+
+    // Postgres hands ids back lowercase, and the claim matches on them.
+    const ids = (raw as string[]).map((id) => id.toLowerCase());
+
+    if (new Set(ids).size !== ids.length) {
+      return { error: ChatErrorCode.Invalid };
+    }
+
+    if (!hasGif) {
+      return { attachmentIds: ids, gif: null };
+    }
+
+    const gif = ChatGifsService.gif(media.gif);
+
+    if (!gif || raw.length > 0) {
+      return { error: ChatErrorCode.Invalid };
+    }
+
+    return { attachmentIds: [], gif };
+  }
+
+  // What a push says for a message: its text, or what it carries when there
+  // is none.
+  public static previewText(
+    text: string,
+    attachments: number,
+    gif: boolean,
+  ): string {
+    if (text) {
+      return text;
+    }
+
+    if (gif) {
+      return "GIF";
+    }
+
+    return attachments === 1 ? "Attachment" : `${attachments} attachments`;
+  }
+
   public async sendMessageToChat(
     type: ChatLobbyType,
     id: string,
@@ -1067,11 +1154,26 @@ export class ChatService {
     _message: string,
     skipCheck = false,
     source: ChatMessageSource = "web",
+    _media?: ChatMessageMedia,
   ): Promise<ChatSendResult> {
     let text = _message;
+    let attachmentIds: string[] = [];
+    let gif: ChatGif | null = null;
 
     if (source === "web") {
-      const parsed = ChatService.messageText(_message);
+      const media = ChatService.messageMedia(_media);
+
+      if ("error" in media) {
+        return { accepted: false, code: media.error };
+      }
+
+      attachmentIds = media.attachmentIds;
+      gif = media.gif;
+
+      const parsed = ChatService.messageText(
+        _message,
+        attachmentIds.length > 0 || gif !== null,
+      );
 
       if ("error" in parsed) {
         return { accepted: false, code: parsed.error };
@@ -1090,6 +1192,12 @@ export class ChatService {
       text = parsed.text;
     }
 
+    const hasMedia = attachmentIds.length > 0 || gif !== null;
+
+    if (hasMedia && !ChatAttachmentsService.allowsAttachments(type)) {
+      return { accepted: false, code: ChatErrorCode.NotAllowed };
+    }
+
     if (skipCheck === false && !(await this.canPostIn(type, id, player))) {
       return { accepted: false, code: ChatErrorCode.NotAllowed };
     }
@@ -1103,6 +1211,10 @@ export class ChatService {
       (await this.isGagged(player.steam_id))
     ) {
       return { accepted: false, code: ChatErrorCode.Gagged };
+    }
+
+    if (gif && !(await this.gifs.enabled())) {
+      return { accepted: false, code: ChatErrorCode.NotAllowed };
     }
 
     const name = await this.redis.get(
@@ -1128,28 +1240,110 @@ export class ChatService {
         avatar_url: player.avatar_url,
         profile_url: player.profile_url,
       },
+      ...(gif ? { gif } : {}),
+    };
+
+    const claim = {
+      type,
+      roomId: id,
+      steamId: String(player.steam_id),
+      messageId: message.id,
+      expiresAt: ChatAttachmentsService.expiresOnSend(
+        type,
+        this.ttlFor(type),
+        timestamp,
+      ),
     };
 
     if (type === ChatLobbyType.Direct) {
-      if (!(await this.storeDirectMessage(id, message))) {
-        return { accepted: false, code: ChatErrorCode.NotAllowed };
+      const refusal = await this.storeDirectMessage(
+        id,
+        message,
+        attachmentIds,
+        claim,
+      );
+
+      if (refusal) {
+        return {
+          accepted: false,
+          code: await this.claimRefusal(refusal, attachmentIds, claim),
+        };
       }
     } else {
       const messageKey = `chat_${type}_${id}`;
-      // Keyed by id and not `${steam_id}:${now}`, which silently dropped a
-      // message when the same player landed two within the same millisecond.
-      const messageField = message.id;
-      await this.redis.hset(messageKey, messageField, JSON.stringify(message));
 
-      await this.redis.sendCommand(
-        new Redis.Command("HEXPIRE", [
+      const store = async () => {
+        // Keyed by id and not `${steam_id}:${now}`, which silently dropped a
+        // message when the same player landed two within the same millisecond.
+        const messageField = message.id;
+        await this.redis.hset(
           messageKey,
-          this.ttlFor(type),
-          "FIELDS",
-          1,
           messageField,
-        ]),
-      );
+          JSON.stringify(message),
+        );
+
+        await this.redis.sendCommand(
+          new Redis.Command("HEXPIRE", [
+            messageKey,
+            this.ttlFor(type),
+            "FIELDS",
+            1,
+            messageField,
+          ]),
+        );
+      };
+
+      if (attachmentIds.length > 0) {
+        // The claim commits only once the message is stored, so a write that
+        // fails gives the files back rather than binding them to nothing. The
+        // message goes in first, so whatever fails after it -- its expiry, the
+        // commit -- takes it back out again.
+        let written = false;
+        let refused: boolean;
+
+        try {
+          refused = await this.postgres.transaction(async (client) => {
+            const claimed = await this.attachments.claim(
+              attachmentIds,
+              claim,
+              client,
+            );
+
+            if (!claimed) {
+              return true;
+            }
+
+            message.attachments = claimed;
+            written = true;
+            await store();
+
+            return false;
+          });
+        } catch (error) {
+          if (written) {
+            await this.redis.hdel(messageKey, message.id).catch(() => {
+              this.logger.warn(
+                `unable to take back ${type}:${id} message ${message.id}`,
+              );
+            });
+          }
+
+          throw error;
+        }
+
+        if (refused) {
+          return {
+            accepted: false,
+            code: await this.claimRefusal(
+              ChatErrorCode.Invalid,
+              attachmentIds,
+              claim,
+            ),
+          };
+        }
+      } else {
+        await store();
+      }
     }
 
     const outgoing: ChatMessage = { ...message, reactions: {} };
@@ -1175,7 +1369,11 @@ export class ChatService {
       id,
       player,
       message.from.name,
-      text,
+      ChatService.previewText(
+        text,
+        message.attachments?.length ?? 0,
+        !!message.gif,
+      ),
       message.id,
     ).catch((error) => {
       this.logger.warn(`unable to notify ${type}:${id} of a message`, error);
@@ -1219,6 +1417,125 @@ export class ChatService {
 
   private static readonly UUID =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  private static readonly ATTACHMENT_ACCESS_TTL_SECONDS = 60;
+
+  // Whether a player may start uploading into a room: the same rule as
+  // sending to it, so nothing is uploaded that could never be sent.
+  public async attachmentRefusal(
+    type: ChatLobbyType,
+    id: string,
+    user: User,
+  ): Promise<ChatErrorCode | null> {
+    if (!ChatAttachmentsService.allowsAttachments(type)) {
+      return ChatErrorCode.NotAllowed;
+    }
+
+    const current = await this.getCurrentUser(String(user.steam_id));
+
+    if (!current || !(await this.canPostIn(type, id, current))) {
+      return ChatErrorCode.NotAllowed;
+    }
+
+    if (
+      type !== ChatLobbyType.Direct &&
+      (await this.isGagged(current.steam_id))
+    ) {
+      return ChatErrorCode.Gagged;
+    }
+
+    return null;
+  }
+
+  // A send whose answer never arrived is retried with the same files. The
+  // first one landed, so the retry is told so rather than that it failed.
+  private async claimRefusal(
+    refusal: ChatErrorCode,
+    attachmentIds: string[],
+    claim: ChatAttachmentClaim,
+  ): Promise<ChatErrorCode> {
+    if (
+      refusal === ChatErrorCode.Invalid &&
+      attachmentIds.length > 0 &&
+      (await this.attachments.sentBy(attachmentIds, claim))
+    ) {
+      return ChatErrorCode.AlreadySent;
+    }
+
+    return refusal;
+  }
+
+  // Judged on who the player is now, not on the role their session was
+  // signed in with.
+  public async canViewAttachment(
+    row: ChatAttachmentRow,
+    sessionUser: User | undefined,
+  ): Promise<boolean> {
+    if (!sessionUser?.steam_id) {
+      return false;
+    }
+
+    const current = await this.attachmentViewer(String(sessionUser.steam_id));
+
+    if (!current) {
+      return false;
+    }
+
+    return await ChatAttachmentsService.canView(row, current, () =>
+      this.canViewRoom(row.room_type, row.room_id, current),
+    );
+  }
+
+  // The row is read fresh on every request, so a deleted file goes dark at
+  // once; who the viewer is only changes with their role, and is kept for the
+  // same minute as their room access.
+  private async attachmentViewer(steamId: string): Promise<User | undefined> {
+    const cacheKey = `chat:attachment-viewer:${steamId}`;
+    const cached = await this.redis.get(cacheKey);
+
+    if (cached !== null) {
+      return JSON.parse(cached) as User;
+    }
+
+    const current = await this.getCurrentUser(steamId);
+
+    if (current) {
+      await this.redis.set(
+        cacheKey,
+        JSON.stringify(current),
+        "EX",
+        ChatService.ATTACHMENT_ACCESS_TTL_SECONDS,
+      );
+    }
+
+    return current;
+  }
+
+  // Asked for every image and every range of a video, so the answer is kept
+  // for a minute rather than going back to hasura each time.
+  private async canViewRoom(
+    type: ChatLobbyType,
+    id: string,
+    user: User,
+  ): Promise<boolean> {
+    const cacheKey = `chat:attachment-access:${user.steam_id}:${type}:${id}`;
+    const cached = await this.redis.get(cacheKey);
+
+    if (cached !== null) {
+      return cached === "1";
+    }
+
+    const allowed = await this.canAccessLobby(type, id, user);
+
+    await this.redis.set(
+      cacheKey,
+      allowed ? "1" : "0",
+      "EX",
+      ChatService.ATTACHMENT_ACCESS_TTL_SECONDS,
+    );
+
+    return allowed;
+  }
 
   public async deleteMessage(
     type: ChatLobbyType,
@@ -1289,7 +1606,30 @@ export class ChatService {
 
     await this.retractNotifications(type, id, messageId);
 
+    await this.removeAttachments(type, id, messageId);
+
     return { deleted: true };
+  }
+
+  // A group room's files stay as evidence until they expire, hidden from the
+  // room; a direct message's go at once. Never allowed to fail the delete: a
+  // file left behind still expires, and the sweep takes it then.
+  private async removeAttachments(
+    type: ChatLobbyType,
+    id: string,
+    messageId: string,
+  ) {
+    const removal =
+      type === ChatLobbyType.Direct
+        ? this.attachments.expireMessage(type, id, messageId)
+        : this.attachments.markDeleted(type, id, messageId);
+
+    await removal.catch((error) => {
+      this.logger.warn(
+        `unable to remove the files of ${type}:${id} message ${messageId}`,
+        error,
+      );
+    });
   }
 
   private async deleteRefusal(
@@ -1757,6 +2097,8 @@ export class ChatService {
 
     await this.retractNotifications(ChatLobbyType.Direct, roomId, messageId);
 
+    await this.removeAttachments(ChatLobbyType.Direct, roomId, messageId);
+
     return { deleted: true };
   }
 
@@ -1865,11 +2207,12 @@ export class ChatService {
     await this.postgres.query(
       `INSERT INTO public.chat_message_deletions
               (message_id, room_type, room_id, author_steam_id, message,
-               message_created_at, source, deleted_by_steam_id)
+               message_created_at, source, deleted_by_steam_id,
+               attachments, gif)
             SELECT $1::uuid, $2, $3,
                    (SELECT steam_id FROM public.players
                      WHERE steam_id = $4::bigint),
-                   $5, $6::timestamptz, $7, $8::bigint
+                   $5, $6::timestamptz, $7, $8::bigint, $9::jsonb, $10::jsonb
        ON CONFLICT (room_type, room_id, message_id) DO NOTHING`,
       [
         messageId,
@@ -1880,6 +2223,10 @@ export class ChatService {
         ChatService.messageCreatedAt(message),
         message.source ?? null,
         deletedBy.steam_id,
+        message.attachments?.length
+          ? JSON.stringify(message.attachments)
+          : null,
+        message.gif ? JSON.stringify(message.gif) : null,
       ],
     );
   }
@@ -2403,28 +2750,77 @@ export class ChatService {
   //
   // A block committed after the send's access check still stops the insert,
   // and with it the rail, the delivery and the notification.
+  //
+  // Its files are claimed in the same transaction, so a refused insert gives
+  // them back.
   private async storeDirectMessage(
     roomId: string,
-    message: { id: string; message: string; from: User },
-  ): Promise<boolean> {
+    message: ChatMessage,
+    attachmentIds: string[],
+    claim: ChatAttachmentClaim,
+  ): Promise<ChatErrorCode | null> {
     const parties = parseDirectRoomId(roomId);
 
     if (!parties) {
-      return false;
+      return ChatErrorCode.NotAllowed;
     }
 
-    const stored = await this.postgres.query<Array<{ id: string }>>(
-      `INSERT INTO public.direct_messages (id, room_id, from_steam_id, message)
-            SELECT $1::uuid, $2, $3::bigint, $4
-             WHERE NOT public.is_blocked_either_way(
-                     split_part($2, ':', 1)::bigint,
-                     split_part($2, ':', 2)::bigint)
-         RETURNING id::text AS id`,
-      [message.id, roomId, message.from.steam_id, message.message],
-    );
+    try {
+      const refusal = await this.postgres.transaction(async (client) => {
+        let attachments: ChatAttachment[] = [];
 
-    if (stored.length === 0) {
-      return false;
+        if (attachmentIds.length > 0) {
+          const claimed = await this.attachments.claim(
+            attachmentIds,
+            claim,
+            client,
+          );
+
+          if (!claimed) {
+            return ChatErrorCode.Invalid;
+          }
+
+          attachments = claimed;
+        }
+
+        const { rows } = await client.query(
+          `INSERT INTO public.direct_messages
+                  (id, room_id, from_steam_id, message, attachments, gif)
+                SELECT $1::uuid, $2, $3::bigint, $4, $5::jsonb, $6::jsonb
+                 WHERE NOT public.is_blocked_either_way(
+                         split_part($2, ':', 1)::bigint,
+                         split_part($2, ':', 2)::bigint)
+             RETURNING id::text AS id`,
+          [
+            message.id,
+            roomId,
+            message.from.steam_id,
+            message.message,
+            attachments.length > 0 ? JSON.stringify(attachments) : null,
+            message.gif ? JSON.stringify(message.gif) : null,
+          ],
+        );
+
+        if (rows.length === 0) {
+          throw ChatService.DIRECT_MESSAGE_REFUSED;
+        }
+
+        if (attachments.length > 0) {
+          message.attachments = attachments;
+        }
+
+        return null;
+      });
+
+      if (refusal) {
+        return refusal;
+      }
+    } catch (error) {
+      if (error === ChatService.DIRECT_MESSAGE_REFUSED) {
+        return ChatErrorCode.NotAllowed;
+      }
+
+      throw error;
     }
 
     // A message puts the conversation back on the bar, even if it was removed
@@ -2452,8 +2848,13 @@ export class ChatService {
 
     await this.enforceDirectBarLimit(parties);
 
-    return true;
+    return null;
   }
+
+  // Thrown to roll back a claim whose message the block check refused.
+  private static readonly DIRECT_MESSAGE_REFUSED = new Error(
+    "direct message refused",
+  );
 
   // How many conversations the rail holds. Past this the quietest one drops
   // off -- it still exists, and comes back the moment that person writes.
@@ -2550,6 +2951,8 @@ export class ChatService {
         created_at: Date;
         edited_at: Date | null;
         reactions: ChatReactions | null;
+        attachments: ChatAttachment[] | null;
+        gif: ChatGif | null;
         steam_id: string;
         name: string;
         role: e_player_roles_enum;
@@ -2558,7 +2961,7 @@ export class ChatService {
       }>
     >(
       `SELECT dm.id::text AS id, dm.message, dm.created_at, dm.edited_at,
-              reactions.reactions,
+              dm.attachments, dm.gif, reactions.reactions,
               p.steam_id::text AS steam_id, p.name, p.role::text AS role,
               p.avatar_url, p.profile_url
          FROM public.direct_messages dm
@@ -2581,6 +2984,8 @@ export class ChatService {
           ? { edited_at: new Date(row.edited_at).toISOString() }
           : {}),
         reactions: ChatService.orderedReactions(row.reactions),
+        ...(row.attachments ? { attachments: row.attachments } : {}),
+        ...(row.gif ? { gif: row.gif } : {}),
         from: {
           role: row.role,
           name: row.name,
@@ -3437,6 +3842,25 @@ export class ChatService {
     )) as string[];
 
     await this.removeLobby(fromType, fromId);
+
+    await this.attachments
+      .moveRoom(
+        fromType,
+        fromId,
+        toType,
+        toId,
+        ChatAttachmentsService.expiresOnSend(
+          toType,
+          this.ttlFor(toType),
+          new Date(),
+        ),
+      )
+      .catch((error) => {
+        this.logger.warn(
+          `unable to move the files of ${fromType}:${fromId} to ${toType}:${toId}`,
+          error,
+        );
+      });
 
     if (!Array.isArray(moved) || moved.length === 0) {
       return;

@@ -121,6 +121,14 @@ describe("match chat archive (SQL-driven)", () => {
         editChatMessage: jest.fn(async () => {}),
       } as any,
       new PlayerBlocksService(postgres),
+      {
+        claim: jest.fn(),
+        sentBy: jest.fn(async () => false),
+        expireMessage: jest.fn(async () => {}),
+        markDeleted: jest.fn(async () => {}),
+        moveRoom: jest.fn(async () => {}),
+      } as any,
+      { enabled: jest.fn(async () => false) } as any,
     );
   }, 600_000);
 

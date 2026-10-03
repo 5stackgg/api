@@ -134,3 +134,67 @@ describe("S3Service presigned url routing", () => {
     },
   );
 });
+
+describe("S3Service.removePrefix", () => {
+  const withClient = (deleted: Record<string, unknown>) => {
+    const service = build("rustfs", "9000", false);
+    const send = jest.fn(async (command: { constructor: { name: string } }) =>
+      command.constructor.name === "ListObjectVersionsCommand"
+        ? {
+            Versions: [
+              {
+                Key: "chat-attachments/rooms/2026-10-01/a-1/file",
+                VersionId: "v1",
+              },
+            ],
+            IsTruncated: false,
+          }
+        : deleted,
+    );
+
+    (service as any).rawClients.set("internal", { send, destroy: jest.fn() });
+
+    return { service, send };
+  };
+
+  it("counts what it removed", async () => {
+    const { service } = withClient({});
+
+    await expect(
+      service.removePrefix("chat-attachments/rooms/2026-10-01/a-1/"),
+    ).resolves.toBe(1);
+  });
+
+  const refused = {
+    Errors: [
+      {
+        Key: "chat-attachments/rooms/2026-10-01/a-1/file",
+        Code: "AccessDenied",
+        Message: "no deleteFiles capability",
+      },
+    ],
+  };
+
+  // Match, clip and event deletes have always carried on past a key the store
+  // refused; they log it rather than fail half way through.
+  it("logs a key the store refused, and carries on", async () => {
+    const { service } = withClient(refused);
+    const warn = jest.spyOn((service as any).logger, "warn");
+
+    await expect(
+      service.removePrefix("chat-attachments/rooms/2026-10-01/a-1/"),
+    ).resolves.toBe(1);
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/AccessDenied/));
+  });
+
+  // DeleteObjects answers 200 even when it removed nothing. A caller whose
+  // row is the only record of the file has to know, or it forgets a file that
+  // is still being billed.
+  it("fails a strict sweep when the store refused any of it", async () => {
+    const { service } = withClient(refused);
+
+    await expect(
+      service.removePrefixStrictly("chat-attachments/rooms/2026-10-01/a-1/"),
+    ).rejects.toThrow(/AccessDenied/);
+  });
+});
