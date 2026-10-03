@@ -3978,6 +3978,11 @@ input bytea_comparison_exp {
 columns and relationships of "chat_message_deletions"
 """
 type chat_message_deletions {
+  attachments(
+    """JSON select path"""
+    path: String
+  ): jsonb
+
   """An object relationship"""
   author: players
   author_steam_id: bigint
@@ -3986,6 +3991,10 @@ type chat_message_deletions {
   """An object relationship"""
   deleted_by: players
   deleted_by_steam_id: bigint
+  gif(
+    """JSON select path"""
+    path: String
+  ): jsonb
   id: uuid!
   message: String!
   message_created_at: timestamptz
@@ -4020,6 +4029,12 @@ type chat_message_deletions_aggregate_fields {
   variance: chat_message_deletions_variance_fields
 }
 
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input chat_message_deletions_append_input {
+  attachments: jsonb
+  gif: jsonb
+}
+
 """aggregate avg on columns"""
 type chat_message_deletions_avg_fields {
   author_steam_id: Float
@@ -4033,11 +4048,13 @@ input chat_message_deletions_bool_exp {
   _and: [chat_message_deletions_bool_exp!]
   _not: chat_message_deletions_bool_exp
   _or: [chat_message_deletions_bool_exp!]
+  attachments: jsonb_comparison_exp
   author: players_bool_exp
   author_steam_id: bigint_comparison_exp
   deleted_at: timestamptz_comparison_exp
   deleted_by: players_bool_exp
   deleted_by_steam_id: bigint_comparison_exp
+  gif: jsonb_comparison_exp
   id: uuid_comparison_exp
   message: String_comparison_exp
   message_created_at: timestamptz_comparison_exp
@@ -4063,6 +4080,30 @@ enum chat_message_deletions_constraint {
 }
 
 """
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input chat_message_deletions_delete_at_path_input {
+  attachments: [String!]
+  gif: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input chat_message_deletions_delete_elem_input {
+  attachments: Int
+  gif: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input chat_message_deletions_delete_key_input {
+  attachments: String
+  gif: String
+}
+
+"""
 input type for incrementing numeric columns in table "chat_message_deletions"
 """
 input chat_message_deletions_inc_input {
@@ -4074,11 +4115,13 @@ input chat_message_deletions_inc_input {
 input type for inserting data into table "chat_message_deletions"
 """
 input chat_message_deletions_insert_input {
+  attachments: jsonb
   author: players_obj_rel_insert_input
   author_steam_id: bigint
   deleted_at: timestamptz
   deleted_by: players_obj_rel_insert_input
   deleted_by_steam_id: bigint
+  gif: jsonb
   id: uuid
   message: String
   message_created_at: timestamptz
@@ -4138,11 +4181,13 @@ input chat_message_deletions_on_conflict {
 
 """Ordering options when selecting data from "chat_message_deletions"."""
 input chat_message_deletions_order_by {
+  attachments: order_by
   author: players_order_by
   author_steam_id: order_by
   deleted_at: order_by
   deleted_by: players_order_by
   deleted_by_steam_id: order_by
+  gif: order_by
   id: order_by
   message: order_by
   message_created_at: order_by
@@ -4157,10 +4202,19 @@ input chat_message_deletions_pk_columns_input {
   id: uuid!
 }
 
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input chat_message_deletions_prepend_input {
+  attachments: jsonb
+  gif: jsonb
+}
+
 """
 select columns of table "chat_message_deletions"
 """
 enum chat_message_deletions_select_column {
+  """column name"""
+  attachments
+
   """column name"""
   author_steam_id
 
@@ -4169,6 +4223,9 @@ enum chat_message_deletions_select_column {
 
   """column name"""
   deleted_by_steam_id
+
+  """column name"""
+  gif
 
   """column name"""
   id
@@ -4196,9 +4253,11 @@ enum chat_message_deletions_select_column {
 input type for updating data in table "chat_message_deletions"
 """
 input chat_message_deletions_set_input {
+  attachments: jsonb
   author_steam_id: bigint
   deleted_at: timestamptz
   deleted_by_steam_id: bigint
+  gif: jsonb
   id: uuid
   message: String
   message_created_at: timestamptz
@@ -4239,9 +4298,11 @@ input chat_message_deletions_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input chat_message_deletions_stream_cursor_value_input {
+  attachments: jsonb
   author_steam_id: bigint
   deleted_at: timestamptz
   deleted_by_steam_id: bigint
+  gif: jsonb
   id: uuid
   message: String
   message_created_at: timestamptz
@@ -4262,6 +4323,9 @@ update columns of table "chat_message_deletions"
 """
 enum chat_message_deletions_update_column {
   """column name"""
+  attachments
+
+  """column name"""
   author_steam_id
 
   """column name"""
@@ -4269,6 +4333,9 @@ enum chat_message_deletions_update_column {
 
   """column name"""
   deleted_by_steam_id
+
+  """column name"""
+  gif
 
   """column name"""
   id
@@ -4293,8 +4360,29 @@ enum chat_message_deletions_update_column {
 }
 
 input chat_message_deletions_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: chat_message_deletions_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: chat_message_deletions_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: chat_message_deletions_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: chat_message_deletions_delete_key_input
+
   """increments the numeric columns with given value of the filtered values"""
   _inc: chat_message_deletions_inc_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: chat_message_deletions_prepend_input
 
   """sets the columns of the filtered rows to the given values"""
   _set: chat_message_deletions_set_input
@@ -6816,9 +6904,17 @@ type direct_message_reactions_variance_fields {
 columns and relationships of "direct_messages"
 """
 type direct_messages {
+  attachments(
+    """JSON select path"""
+    path: String
+  ): jsonb
   created_at: timestamptz!
   edited_at: timestamptz
   from_steam_id: bigint!
+  gif(
+    """JSON select path"""
+    path: String
+  ): jsonb
   id: uuid!
   message: String!
   room_id: String!
@@ -6850,6 +6946,12 @@ type direct_messages_aggregate_fields {
   variance: direct_messages_variance_fields
 }
 
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input direct_messages_append_input {
+  attachments: jsonb
+  gif: jsonb
+}
+
 """aggregate avg on columns"""
 type direct_messages_avg_fields {
   from_steam_id: Float
@@ -6863,9 +6965,11 @@ input direct_messages_bool_exp {
   _and: [direct_messages_bool_exp!]
   _not: direct_messages_bool_exp
   _or: [direct_messages_bool_exp!]
+  attachments: jsonb_comparison_exp
   created_at: timestamptz_comparison_exp
   edited_at: timestamptz_comparison_exp
   from_steam_id: bigint_comparison_exp
+  gif: jsonb_comparison_exp
   id: uuid_comparison_exp
   message: String_comparison_exp
   room_id: String_comparison_exp
@@ -6883,6 +6987,30 @@ enum direct_messages_constraint {
 }
 
 """
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input direct_messages_delete_at_path_input {
+  attachments: [String!]
+  gif: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input direct_messages_delete_elem_input {
+  attachments: Int
+  gif: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input direct_messages_delete_key_input {
+  attachments: String
+  gif: String
+}
+
+"""
 input type for incrementing numeric columns in table "direct_messages"
 """
 input direct_messages_inc_input {
@@ -6894,9 +7022,11 @@ input direct_messages_inc_input {
 input type for inserting data into table "direct_messages"
 """
 input direct_messages_insert_input {
+  attachments: jsonb
   created_at: timestamptz
   edited_at: timestamptz
   from_steam_id: bigint
+  gif: jsonb
   id: uuid
   message: String
   room_id: String
@@ -6947,9 +7077,11 @@ input direct_messages_on_conflict {
 
 """Ordering options when selecting data from "direct_messages"."""
 input direct_messages_order_by {
+  attachments: order_by
   created_at: order_by
   edited_at: order_by
   from_steam_id: order_by
+  gif: order_by
   id: order_by
   message: order_by
   room_id: order_by
@@ -6961,10 +7093,19 @@ input direct_messages_pk_columns_input {
   id: uuid!
 }
 
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input direct_messages_prepend_input {
+  attachments: jsonb
+  gif: jsonb
+}
+
 """
 select columns of table "direct_messages"
 """
 enum direct_messages_select_column {
+  """column name"""
+  attachments
+
   """column name"""
   created_at
 
@@ -6973,6 +7114,9 @@ enum direct_messages_select_column {
 
   """column name"""
   from_steam_id
+
+  """column name"""
+  gif
 
   """column name"""
   id
@@ -6991,9 +7135,11 @@ enum direct_messages_select_column {
 input type for updating data in table "direct_messages"
 """
 input direct_messages_set_input {
+  attachments: jsonb
   created_at: timestamptz
   edited_at: timestamptz
   from_steam_id: bigint
+  gif: jsonb
   id: uuid
   message: String
   room_id: String
@@ -7031,9 +7177,11 @@ input direct_messages_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input direct_messages_stream_cursor_value_input {
+  attachments: jsonb
   created_at: timestamptz
   edited_at: timestamptz
   from_steam_id: bigint
+  gif: jsonb
   id: uuid
   message: String
   room_id: String
@@ -7051,6 +7199,9 @@ update columns of table "direct_messages"
 """
 enum direct_messages_update_column {
   """column name"""
+  attachments
+
+  """column name"""
   created_at
 
   """column name"""
@@ -7058,6 +7209,9 @@ enum direct_messages_update_column {
 
   """column name"""
   from_steam_id
+
+  """column name"""
+  gif
 
   """column name"""
   id
@@ -7073,8 +7227,29 @@ enum direct_messages_update_column {
 }
 
 input direct_messages_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: direct_messages_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: direct_messages_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: direct_messages_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: direct_messages_delete_key_input
+
   """increments the numeric columns with given value of the filtered values"""
   _inc: direct_messages_inc_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: direct_messages_prepend_input
 
   """sets the columns of the filtered rows to the given values"""
   _set: direct_messages_set_input
@@ -26566,6 +26741,7 @@ type game_plugins {
     """JSON select path"""
     path: String
   ): jsonb
+  workshop_addons: [String!]!
 }
 
 """
@@ -26658,6 +26834,7 @@ input game_plugins_bool_exp {
   versions: game_plugin_versions_bool_exp
   versions_aggregate: game_plugin_versions_aggregate_bool_exp
   wiring: jsonb_comparison_exp
+  workshop_addons: String_array_comparison_exp
 }
 
 """
@@ -26738,6 +26915,7 @@ input game_plugins_insert_input {
   verified: Boolean
   versions: game_plugin_versions_arr_rel_insert_input
   wiring: jsonb
+  workshop_addons: [String!]
 }
 
 """aggregate max on columns"""
@@ -26769,6 +26947,7 @@ type game_plugins_max_fields {
   A computed field, executes function "game_plugin_target_node_count"
   """
   target_node_count: Int
+  workshop_addons: [String!]
 }
 
 """aggregate min on columns"""
@@ -26800,6 +26979,7 @@ type game_plugins_min_fields {
   A computed field, executes function "game_plugin_target_node_count"
   """
   target_node_count: Int
+  workshop_addons: [String!]
 }
 
 """
@@ -26865,6 +27045,7 @@ input game_plugins_order_by {
   verified: order_by
   versions_aggregate: game_plugin_versions_aggregate_order_by
   wiring: order_by
+  workshop_addons: order_by
 }
 
 """primary key columns input for table: game_plugins"""
@@ -26957,6 +27138,9 @@ enum game_plugins_select_column {
 
   """column name"""
   wiring
+
+  """column name"""
+  workshop_addons
 }
 
 """
@@ -26987,6 +27171,7 @@ input game_plugins_set_input {
   tags: [String!]
   verified: Boolean
   wiring: jsonb
+  workshop_addons: [String!]
 }
 
 """aggregate stddev on columns"""
@@ -27065,6 +27250,7 @@ input game_plugins_stream_cursor_value_input {
   tags: [String!]
   verified: Boolean
   wiring: jsonb
+  workshop_addons: [String!]
 }
 
 """aggregate sum on columns"""
@@ -27155,6 +27341,9 @@ enum game_plugins_update_column {
 
   """column name"""
   wiring
+
+  """column name"""
+  workshop_addons
 }
 
 input game_plugins_updates {
@@ -55985,8 +56174,29 @@ type mutation_root {
   update data of the table: "chat_message_deletions"
   """
   update_chat_message_deletions(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: chat_message_deletions_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: chat_message_deletions_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: chat_message_deletions_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: chat_message_deletions_delete_key_input
+
     """increments the numeric columns with given value of the filtered values"""
     _inc: chat_message_deletions_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: chat_message_deletions_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: chat_message_deletions_set_input
@@ -55999,8 +56209,29 @@ type mutation_root {
   update single row of the table: "chat_message_deletions"
   """
   update_chat_message_deletions_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: chat_message_deletions_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: chat_message_deletions_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: chat_message_deletions_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: chat_message_deletions_delete_key_input
+
     """increments the numeric columns with given value of the filtered values"""
     _inc: chat_message_deletions_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: chat_message_deletions_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: chat_message_deletions_set_input
@@ -56341,8 +56572,29 @@ type mutation_root {
   update data of the table: "direct_messages"
   """
   update_direct_messages(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: direct_messages_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: direct_messages_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: direct_messages_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: direct_messages_delete_key_input
+
     """increments the numeric columns with given value of the filtered values"""
     _inc: direct_messages_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: direct_messages_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: direct_messages_set_input
@@ -56355,8 +56607,29 @@ type mutation_root {
   update single row of the table: "direct_messages"
   """
   update_direct_messages_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: direct_messages_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: direct_messages_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: direct_messages_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: direct_messages_delete_key_input
+
     """increments the numeric columns with given value of the filtered values"""
     _inc: direct_messages_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: direct_messages_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: direct_messages_set_input
@@ -131917,6 +132190,7 @@ type tournaments {
 
   """An object relationship"""
   e_tournament_status: e_tournament_status!
+  finished_at: timestamptz
 
   """An array relationship"""
   free_agents(
@@ -132565,6 +132839,7 @@ input tournaments_bool_exp {
   discord_voice_enabled: Boolean_comparison_exp
   discord_webhook: String_comparison_exp
   e_tournament_status: e_tournament_status_bool_exp
+  finished_at: timestamptz_comparison_exp
   free_agents: tournament_free_agents_bool_exp
   free_agents_aggregate: tournament_free_agents_aggregate_bool_exp
   has_min_teams: Boolean_comparison_exp
@@ -132690,6 +132965,7 @@ input tournaments_insert_input {
   discord_voice_enabled: Boolean
   discord_webhook: String
   e_tournament_status: e_tournament_status_obj_rel_insert_input
+  finished_at: timestamptz
   free_agents: tournament_free_agents_arr_rel_insert_input
   homepage: String
   id: uuid
@@ -132750,6 +133026,7 @@ type tournaments_max_fields {
   discord_guild_id: String
   discord_role_id: String
   discord_webhook: String
+  finished_at: timestamptz
   homepage: String
   id: uuid
   latitude: float8
@@ -132801,6 +133078,7 @@ input tournaments_max_order_by {
   discord_guild_id: order_by
   discord_role_id: order_by
   discord_webhook: order_by
+  finished_at: order_by
   homepage: order_by
   id: order_by
   latitude: order_by
@@ -132840,6 +133118,7 @@ type tournaments_min_fields {
   discord_guild_id: String
   discord_role_id: String
   discord_webhook: String
+  finished_at: timestamptz
   homepage: String
   id: uuid
   latitude: float8
@@ -132891,6 +133170,7 @@ input tournaments_min_order_by {
   discord_guild_id: order_by
   discord_role_id: order_by
   discord_webhook: order_by
+  finished_at: order_by
   homepage: order_by
   id: order_by
   latitude: order_by
@@ -132984,6 +133264,7 @@ input tournaments_order_by {
   discord_voice_enabled: order_by
   discord_webhook: order_by
   e_tournament_status: e_tournament_status_order_by
+  finished_at: order_by
   free_agents_aggregate: tournament_free_agents_aggregate_order_by
   has_min_teams: order_by
   homepage: order_by
@@ -133119,6 +133400,9 @@ enum tournaments_select_column {
 
   """column name"""
   discord_webhook
+
+  """column name"""
+  finished_at
 
   """column name"""
   homepage
@@ -133439,6 +133723,7 @@ input tournaments_set_input {
   discord_role_id: String
   discord_voice_enabled: Boolean
   discord_webhook: String
+  finished_at: timestamptz
   homepage: String
   id: uuid
   invite_only: Boolean
@@ -133648,6 +133933,7 @@ input tournaments_stream_cursor_value_input {
   discord_role_id: String
   discord_voice_enabled: Boolean
   discord_webhook: String
+  finished_at: timestamptz
   homepage: String
   id: uuid
   invite_only: Boolean
@@ -133807,6 +134093,9 @@ enum tournaments_update_column {
 
   """column name"""
   discord_webhook
+
+  """column name"""
+  finished_at
 
   """column name"""
   homepage
