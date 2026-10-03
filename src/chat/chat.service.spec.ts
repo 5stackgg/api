@@ -2798,7 +2798,7 @@ describe("ChatService direct messages", () => {
     // test/chat-redis-actions.spec.ts; this is what the service does around it.
     it("hands the move all four keys, then re-sends history with the reactions it carried", async () => {
       hashes[REACTIONS] = { [MESSAGE_ID]: JSON.stringify({ fire: [ME] }) };
-      redis.eval.mockResolvedValueOnce(1);
+      redis.eval.mockResolvedValueOnce([MESSAGE_ID, hashes[ROOM][MESSAGE_ID]]);
 
       await service.migrateLobbyMessages(
         ChatLobbyType.Draft,
@@ -3416,7 +3416,9 @@ describe("ChatService direct messages", () => {
         say(FRIEND, "from friend");
         say(STRANGER, "from stranger");
         blocks = [[ME, FRIEND]];
-        redis.eval.mockResolvedValueOnce(2);
+        redis.eval.mockResolvedValueOnce(
+          Object.entries(hashes["chat_match_m-1"]).flat(),
+        );
 
         await service.migrateLobbyMessages(
           ChatLobbyType.Draft,
@@ -3450,7 +3452,9 @@ describe("ChatService direct messages", () => {
 
       it("logs a re-send whose block lookup fails instead of leaving it unhandled", async () => {
         say(FRIEND, "from friend");
-        redis.eval.mockResolvedValueOnce(1);
+        redis.eval.mockResolvedValueOnce(
+          Object.entries(hashes["chat_match_m-1"]).flat(),
+        );
         playerBlocks.blockedAmong.mockRejectedValueOnce(
           new Error("pool timeout"),
         );

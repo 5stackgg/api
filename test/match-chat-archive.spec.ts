@@ -350,6 +350,71 @@ describe("match chat archive (SQL-driven)", () => {
       });
     });
 
+    it("archives a line that reached the draft just before the move", async () => {
+      const late = "7f1d0c2e-8b1a-4c6e-9f00-000000000004";
+      const run = redis.eval.bind(redis) as (
+        ...args: any[]
+      ) => Promise<unknown>;
+      jest.spyOn(redis, "eval").mockImplementation((async (...args: any[]) => {
+        if (String(args[2]) === `chat_${ChatLobbyType.Draft}_draft-4`) {
+          await redis.hset(
+            `chat_${ChatLobbyType.Draft}_draft-4`,
+            late,
+            JSON.stringify({
+              id: late,
+              message: "last word",
+              timestamp: new Date().toISOString(),
+              source: "web",
+              from: { role: "user", name: "Player", steam_id: player },
+            }),
+          );
+        }
+        return run(...args);
+      }) as any);
+
+      await chat.migrateLobbyMessages(
+        ChatLobbyType.Draft,
+        "draft-4",
+        ChatLobbyType.Match,
+        match.id,
+      );
+
+      expect(await entry(late)).toMatchObject({ message: "last word" });
+    });
+
+    it("moves a draft's chat even when its lines cannot be read first", async () => {
+      const id = "7f1d0c2e-8b1a-4c6e-9f00-000000000005";
+      await redis.hset(
+        `chat_${ChatLobbyType.Draft}_draft-5`,
+        id,
+        JSON.stringify({
+          id,
+          message: "moving",
+          timestamp: new Date().toISOString(),
+          source: "web",
+          from: { role: "user", name: "Player", steam_id: player },
+        }),
+      );
+      const read = redis.hgetall.bind(redis);
+      jest.spyOn(redis, "hgetall").mockImplementation((async (key: string) => {
+        if (key.startsWith(`chat_${ChatLobbyType.Draft}_`)) {
+          throw new Error("read failed");
+        }
+        return read(key);
+      }) as any);
+
+      await chat.migrateLobbyMessages(
+        ChatLobbyType.Draft,
+        "draft-5",
+        ChatLobbyType.Match,
+        match.id,
+      );
+
+      expect(
+        await redis.hexists(`chat_${ChatLobbyType.Match}_${match.id}`, id),
+      ).toBe(1);
+    });
+
     it("stops at its cap and says it was cut short", async () => {
       ChatService.MATCH_CHAT_ARCHIVE_MAX_ENTRIES = 2;
 
@@ -415,8 +480,8 @@ describe("match chat archive (SQL-driven)", () => {
 
     it("moves its expiry again when the match is restarted", async () => {
       await chat.anchorMatchArchive(match.id);
-      await redis.expire(`chat:archive:${match.id}`, 100);
       await chat.reopenMatchArchive(match.id);
+      await redis.expire(`chat:archive:${match.id}`, 100);
 
       await say(ChatLobbyType.Match, match.id, opponent, "again");
 
@@ -654,32 +719,202 @@ describe("match chat archive (SQL-driven)", () => {
         "web",
       );
 
-      const remove = () =>
-        chat.deleteMessage(ChatLobbyType.Match, match.id, id, as(admin));
-
-      let deletedDuring = false;
-      const read = redis.hget.bind(redis);
-      jest.spyOn(redis, "hget").mockImplementation((async (
-        key: string,
-        field: string,
-      ) => {
-        const value = await read(key, field);
-        if (key.startsWith("chat:archive:") && !deletedDuring) {
-          deletedDuring = true;
-          await remove();
+      // The delete lands after the edit has changed the live room and before
+      // the edit reaches the archive.
+      let interleaved = false;
+      const run = redis.eval.bind(redis) as (
+        ...args: any[]
+      ) => Promise<unknown>;
+      jest.spyOn(redis, "eval").mockImplementation((async (...args: any[]) => {
+        const archiving =
+          String(args[2]).startsWith("chat:archive:") &&
+          String(args[0]).includes("table.insert");
+        if (archiving && !interleaved) {
+          interleaved = true;
+          await chat.deleteMessage(
+            ChatLobbyType.Match,
+            match.id,
+            id,
+            as(admin),
+          );
         }
-        return value;
+        return run(...args);
       }) as any);
 
       await edit(id, "fixed");
 
-      if (!deletedDuring) {
-        jest.restoreAllMocks();
-        await remove();
+      expect(interleaved).toBe(true);
+      expect(await entry(id)).toMatchObject({
+        message: "fixed",
+        edits: [{ message: "typo" }],
+      });
+      expect(typeof (await entry(id)).deleted_at).toBe("string");
+    });
+
+    it("applies the same edit once, however often it arrives", async () => {
+      const id = await say(ChatLobbyType.Match, match.id, organizer, "typo");
+      const at = new Date().toISOString();
+
+      await (chat as any).archiveEdit(
+        ChatLobbyType.Match,
+        match.id,
+        id,
+        "fixed",
+        at,
+      );
+      await (chat as any).archiveEdit(
+        ChatLobbyType.Match,
+        match.id,
+        id,
+        "fixed",
+        at,
+      );
+
+      expect(await entry(id)).toMatchObject({
+        message: "fixed",
+        edited_at: at,
+        edits: [{ message: "typo" }],
+      });
+    });
+
+    it("never lets an older edit overwrite a newer one", async () => {
+      const id = await say(ChatLobbyType.Match, match.id, organizer, "typo");
+      const earlier = new Date(Date.now() - 1000).toISOString();
+      const later = new Date().toISOString();
+
+      await (chat as any).archiveEdit(
+        ChatLobbyType.Match,
+        match.id,
+        id,
+        "second",
+        later,
+      );
+      await (chat as any).archiveEdit(
+        ChatLobbyType.Match,
+        match.id,
+        id,
+        "first",
+        earlier,
+      );
+
+      expect(await entry(id)).toMatchObject({
+        message: "second",
+        edited_at: later,
+        edits: [{ message: "typo" }],
+      });
+    });
+
+    it("records when each version was written", async () => {
+      const id = await say(ChatLobbyType.Match, match.id, organizer, "one");
+      const sent = (await entry(id)).timestamp;
+      const second = new Date(Date.now() + 1000).toISOString();
+      const third = new Date(Date.now() + 2000).toISOString();
+
+      await (chat as any).archiveEdit(
+        ChatLobbyType.Match,
+        match.id,
+        id,
+        "two",
+        second,
+      );
+      await (chat as any).archiveEdit(
+        ChatLobbyType.Match,
+        match.id,
+        id,
+        "three",
+        third,
+      );
+
+      expect(await entry(id)).toMatchObject({
+        message: "three",
+        edited_at: third,
+        edits: [
+          { message: "one", written_at: sent },
+          { message: "two", written_at: second },
+        ],
+      });
+    });
+
+    it("keeps an entry under its size cap, the original included", async () => {
+      const id = await say(
+        ChatLobbyType.Match,
+        match.id,
+        organizer,
+        "\u0001".repeat(2000),
+        "web",
+      );
+      await edit(id, "\u0002".repeat(2000));
+
+      const raw = await redis.hget(`chat:archive:${match.id}`, id);
+      const { message, edits } = JSON.parse(raw!);
+
+      expect(Buffer.byteLength(raw!)).toBeLessThanOrEqual(
+        ChatService.MATCH_CHAT_ARCHIVE_MAX_ENTRY_BYTES,
+      );
+      expect(message).toBe("\u0002".repeat(2000));
+      expect(edits[0].message).toMatch(/^\u0001+ \[truncated\]$/);
+    });
+
+    it("keeps the whole archive under its byte cap through mass edits", async () => {
+      ChatService.MATCH_CHAT_ARCHIVE_MAX_ENTRIES = 3;
+      ChatService.MATCH_CHAT_ARCHIVE_MAX_BYTES = 20_000;
+
+      const lines = [];
+      for (let n = 0; n < 4; n++) {
+        lines.push(
+          await say(
+            ChatLobbyType.Match,
+            match.id,
+            organizer,
+            `line ${n}`,
+            "web",
+          ),
+        );
       }
 
-      expect(await entry(id)).toMatchObject({ message: "fixed" });
-      expect(typeof (await entry(id)).deleted_at).toBe("string");
+      for (const id of lines) {
+        for (let round = 0; round < 6; round++) {
+          await redis.del(`chat:edit-rate:${organizer}`);
+          await edit(id, `"\\${round}`.repeat(500).slice(0, 2000));
+        }
+      }
+
+      const stored = await redis.hgetall(`chat:archive:${match.id}`);
+      const used = Object.entries(stored)
+        .filter(([field]) => !field.startsWith("~"))
+        .reduce((total, [, raw]) => total + Buffer.byteLength(raw), 0);
+
+      expect(used).toBeLessThanOrEqual(20_000);
+      expect(stored["~truncated"]).toBe("1");
+    });
+
+    it("turns a broken surrogate into a replacement character, so the line can still be edited and deleted", async () => {
+      const web = await say(
+        ChatLobbyType.Match,
+        match.id,
+        organizer,
+        "nice \uD83D shot",
+        "web",
+      );
+      const game = await say(
+        ChatLobbyType.Match,
+        match.id,
+        opponent,
+        "gg \uDE00",
+      );
+
+      expect(
+        JSON.parse(
+          (await redis.hget(`chat_${ChatLobbyType.Match}_${match.id}`, web))!,
+        ).message,
+      ).toBe("nice \uFFFD shot");
+      expect((await entry(game)).message).toBe("gg \uFFFD");
+
+      await edit(web, "nice shot");
+      await chat.deleteMessage(ChatLobbyType.Match, match.id, game, as(admin));
+
+      expect(await entry(web)).toMatchObject({ message: "nice shot" });
+      expect(typeof (await entry(game)).deleted_at).toBe("string");
     });
 
     it("keeps a deleted line, marked", async () => {

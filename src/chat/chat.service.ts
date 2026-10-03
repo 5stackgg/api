@@ -118,7 +118,7 @@ export class ChatService {
       end
     end
     redis.call('DEL', KEYS[1], KEYS[3])
-    return #messages / 2
+    return messages
   `;
 
   // The web maps each id to its glyph; laugh is 😂.
@@ -297,19 +297,43 @@ export class ChatService {
   `;
 
   // One step, so an edit and a moderator's delete landing together both
-  // survive. The original text stays first; the oldest of the rest go when
-  // there are too many, or when the entry outgrows its byte cap.
+  // survive. An edit no newer than the entry's own is a resend or arrived out
+  // of order, and is dropped. The original text stays first; the oldest of the
+  // rest go when there are too many or the entry outgrows its byte cap, and if
+  // the original and the latest alone are still too big, the original is cut.
+  // Past the archive's own cap only the original is kept besides the edit.
   private static readonly ARCHIVE_EDIT_SCRIPT = `
     local raw = redis.call('HGET', KEYS[1], ARGV[1])
     if not raw then
       return 0
     end
     local entry = cjson.decode(raw)
+    if type(entry.edited_at) == 'string' and entry.edited_at >= ARGV[3] then
+      return 0
+    end
+    local marker = ' [truncated]'
+    local function cut(text, keep)
+      if text:sub(-#marker) == marker then
+        text = text:sub(1, -#marker - 1)
+      end
+      while keep > 0 do
+        local byte = text:byte(keep + 1)
+        if byte == nil or byte < 128 or byte >= 192 then
+          break
+        end
+        keep = keep - 1
+      end
+      return text:sub(1, keep) .. marker
+    end
     local edits = entry.edits
     if type(edits) ~= 'table' then
       edits = {}
     end
-    table.insert(edits, { message = entry.message, edited_at = ARGV[3] })
+    local writtenAt = entry.edited_at
+    if type(writtenAt) ~= 'string' then
+      writtenAt = entry.timestamp
+    end
+    table.insert(edits, { message = entry.message, written_at = writtenAt })
     while #edits > tonumber(ARGV[4]) + 1 do
       table.remove(edits, 2)
     end
@@ -321,7 +345,27 @@ export class ChatService {
       table.remove(entry.edits, 2)
       encoded = cjson.encode(entry)
     end
+    local tries = 0
+    while #encoded > tonumber(ARGV[5]) and tries < 32 do
+      tries = tries + 1
+      local original = entry.edits[1]
+      if #original.message > 64 then
+        original.message = cut(original.message, math.floor(#original.message / 2))
+      else
+        entry.message = cut(entry.message, math.floor(#entry.message / 2))
+      end
+      encoded = cjson.encode(entry)
+    end
     local bytes = tonumber(redis.call('HGET', KEYS[1], '~bytes') or '0')
+    if bytes + #encoded - #raw > tonumber(ARGV[6]) then
+      redis.call('HSET', KEYS[1], '~truncated', '1')
+      entry.edits = { entry.edits[1] }
+      entry.history_truncated = true
+      encoded = cjson.encode(entry)
+      if bytes + #encoded - #raw > tonumber(ARGV[6]) then
+        return 0
+      end
+    end
     redis.call('HSET', KEYS[1], ARGV[1], encoded,
       '~bytes', bytes + #encoded - #raw)
     return 1
@@ -1003,7 +1047,17 @@ export class ChatService {
       return { error: ChatErrorCode.TooLong };
     }
 
-    return { text };
+    return { text: ChatService.wellFormed(text) };
+  }
+
+  // A lone UTF-16 surrogate survives JSON.stringify as an escape that Redis's
+  // cjson refuses to decode, so a line carrying one could never be edited or
+  // deleted in the archive.
+  private static wellFormed(text: string): string {
+    return text.replace(
+      /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g,
+      "\uFFFD",
+    );
   }
 
   public async sendMessageToChat(
@@ -1109,7 +1163,7 @@ export class ChatService {
       },
     );
 
-    await this.archiveMessages(type, id, [message]);
+    await this.archiveMessages(type, id, () => [message]);
 
     if (type === ChatLobbyType.Direct) {
       void this.deliverDirectMessage(id, player, outgoing);
@@ -1230,7 +1284,7 @@ export class ChatService {
       ChatService.ARCHIVE_DELETE_SCRIPT,
       new Date().toISOString(),
       String(current.steam_id),
-      current.name,
+      ChatService.wellFormed(current.name ?? ""),
     );
 
     await this.retractNotifications(type, id, messageId);
@@ -1597,16 +1651,7 @@ export class ChatService {
           editedAt,
         );
 
-        await this.updateArchivedMessage(
-          type,
-          id,
-          messageId,
-          ChatService.ARCHIVE_EDIT_SCRIPT,
-          text,
-          editedAt,
-          ChatService.MATCH_CHAT_ARCHIVE_KEPT_EDITS,
-          ChatService.MATCH_CHAT_ARCHIVE_MAX_ENTRY_BYTES,
-        );
+        await this.archiveEdit(type, id, messageId, text, editedAt);
 
         return announced;
       }
@@ -3252,7 +3297,7 @@ export class ChatService {
   private async archiveMessages(
     type: ChatLobbyType,
     id: string,
-    messages: ChatMessage[],
+    load: () => ChatMessage[],
   ) {
     const target = ChatService.archiveRoom(type, id);
 
@@ -3263,30 +3308,77 @@ export class ChatService {
     const key = ChatService.archiveKey(target.matchId);
 
     await this.archiveSafely(target.matchId, async () => {
-      for (const message of messages) {
+      for (const message of load()) {
         await this.redis.eval(
           ChatService.ARCHIVE_APPEND_SCRIPT,
           1,
           key,
           message.id,
-          JSON.stringify({
+          ChatService.archiveEntryJson({
             id: message.id,
             room: target.room,
-            message: message.message,
+            message: ChatService.wellFormed(message.message),
             timestamp: message.timestamp,
             source: message.source,
             from: {
               steam_id: String(message.from.steam_id),
-              name: message.from.name,
+              name: ChatService.wellFormed(message.from.name ?? ""),
             },
             ...(message.edited_at ? { edited_at: message.edited_at } : {}),
-          } satisfies MatchChatArchiveEntry),
+          }),
           ChatService.MATCH_CHAT_ARCHIVE_MAX_ENTRIES,
           ChatService.MATCH_CHAT_ARCHIVE_MAX_BYTES,
           ChatService.MATCH_CHAT_ARCHIVE_TTL,
         );
       }
     });
+  }
+
+  // Halved by whole code points, never through a surrogate pair, until the
+  // entry fits its byte cap.
+  private static archiveEntryJson(entry: MatchChatArchiveEntry): string {
+    const marker = " [truncated]";
+    let json = JSON.stringify(entry);
+
+    while (
+      Buffer.byteLength(json) >
+        ChatService.MATCH_CHAT_ARCHIVE_MAX_ENTRY_BYTES &&
+      entry.message.length > 0
+    ) {
+      const points = Array.from(
+        entry.message.endsWith(marker)
+          ? entry.message.slice(0, -marker.length)
+          : entry.message,
+      );
+      entry = {
+        ...entry,
+        message:
+          points.slice(0, Math.floor(points.length / 2)).join("") + marker,
+      };
+      json = JSON.stringify(entry);
+    }
+
+    return json;
+  }
+
+  private async archiveEdit(
+    type: ChatLobbyType,
+    id: string,
+    messageId: string,
+    text: string,
+    editedAt: string,
+  ) {
+    await this.updateArchivedMessage(
+      type,
+      id,
+      messageId,
+      ChatService.ARCHIVE_EDIT_SCRIPT,
+      ChatService.wellFormed(text),
+      editedAt,
+      ChatService.MATCH_CHAT_ARCHIVE_KEPT_EDITS,
+      ChatService.MATCH_CHAT_ARCHIVE_MAX_ENTRY_BYTES,
+      ChatService.MATCH_CHAT_ARCHIVE_MAX_BYTES,
+    );
   }
 
   private async updateArchivedMessage(
@@ -3334,11 +3426,7 @@ export class ChatService {
     toType: ChatLobbyType,
     toId: string,
   ) {
-    // Read before the move: afterwards the room also holds what it already
-    // had, which the archive keeps from when it was said.
-    const moving = await this.getRoomMessages(fromType, fromId);
-
-    const moved = await this.redis.eval(
+    const moved = (await this.redis.eval(
       ChatService.MOVE_ROOM_MESSAGES_SCRIPT,
       4,
       `chat_${fromType}_${fromId}`,
@@ -3346,11 +3434,11 @@ export class ChatService {
       ChatService.reactionsKey(fromType, fromId),
       ChatService.reactionsKey(toType, toId),
       this.ttlFor(toType),
-    );
+    )) as string[];
 
     await this.removeLobby(fromType, fromId);
 
-    if (moved === 0) {
+    if (!Array.isArray(moved) || moved.length === 0) {
       return;
     }
 
@@ -3360,6 +3448,12 @@ export class ChatService {
       this.logger.warn(`unable to re-send history to ${toType}:${toId}`, error);
     });
 
-    await this.archiveMessages(toType, toId, moving);
+    // Only what this move carried: the room also holds lines the archive
+    // already has, with their edits.
+    await this.archiveMessages(toType, toId, () =>
+      moved
+        .filter((_, index) => index % 2 === 1)
+        .map((raw) => JSON.parse(raw) as ChatMessage),
+    );
   }
 }

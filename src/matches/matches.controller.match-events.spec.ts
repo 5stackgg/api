@@ -27,6 +27,7 @@ describe("MatchesController — match_events on-demand servers", () => {
   >;
   let currentMatch: Record<string, unknown>;
   let chat: Record<string, jest.Mock>;
+  let tournamentVoice: Record<string, jest.Mock>;
 
   const stopJobs = () =>
     scheduledMatchesQueue.add.mock.calls.filter(
@@ -132,6 +133,10 @@ describe("MatchesController — match_events on-demand servers", () => {
       playoutSeconds: jest.fn(async () => 0),
     };
     inPlayMaps = [];
+    tournamentVoice = {
+      createMatchVoiceChannels: jest.fn(),
+      movePlayersToMatchChannels: jest.fn(),
+    };
     chat = {
       removeLobby: jest.fn(),
       removeMatchArchive: jest.fn(),
@@ -165,10 +170,7 @@ describe("MatchesController — match_events on-demand servers", () => {
       scheduledMatchesQueue as any,
       {} as any,
       matchRelay as any,
-      {
-        createMatchVoiceChannels: jest.fn(),
-        movePlayersToMatchChannels: jest.fn(),
-      } as any,
+      tournamentVoice as any,
       gameStreamer as any,
       {} as any,
       { resumeAllPausedBatches: jest.fn() } as any,
@@ -214,6 +216,22 @@ describe("MatchesController — match_events on-demand servers", () => {
       } as any);
 
       expect(chat.anchorMatchArchive).not.toHaveBeenCalled();
+    });
+
+    it("slides again even when the match's voice channels cannot be made", async () => {
+      tournamentVoice.createMatchVoiceChannels.mockRejectedValue(
+        new Error("discord unavailable"),
+      );
+
+      await controller
+        .match_events({
+          op: "UPDATE",
+          old: row({ status: "Canceled" }),
+          new: row({ status: "WaitingForCheckIn" }),
+        } as any)
+        .catch((): void => undefined);
+
+      expect(chat.reopenMatchArchive).toHaveBeenCalledWith("match-1");
     });
 
     it("slides again when an ended match is started again", async () => {
