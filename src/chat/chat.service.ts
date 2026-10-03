@@ -8,6 +8,7 @@ import { RconService } from "../rcon/rcon.service";
 import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketClient";
 import { ChatLobbyType } from "./enums/ChatLobbyTypes";
 import {
+  e_match_status_enum,
   e_notification_types_enum,
   e_player_roles_enum,
   e_tournament_free_agent_statuses_enum,
@@ -27,6 +28,8 @@ import { ChatDeleteResult } from "./types/ChatDeleteResult";
 import { ChatEditResult } from "./types/ChatEditResult";
 import { ChatReactions } from "./types/ChatReactions";
 import { ChatReactResult } from "./types/ChatReactResult";
+import { MatchChatArchiveEntry } from "./types/MatchChatArchiveEntry";
+import { MatchChatLog } from "./types/MatchChatLog";
 
 @Injectable()
 export class ChatService {
@@ -115,7 +118,7 @@ export class ChatService {
       end
     end
     redis.call('DEL', KEYS[1], KEYS[3])
-    return #messages / 2
+    return messages
   `;
 
   // The web maps each id to its glyph; laugh is 😂.
@@ -254,6 +257,154 @@ export class ChatService {
   // they left the pool.
   private static readonly TOURNAMENT_CHAT_FREE_AGENT_STATUSES: e_tournament_free_agent_statuses_enum[] =
     ["registered", "waitlisted"];
+
+  // Every match and team room line is copied here for staff to review after
+  // the live rooms, which keep their own short lifetime, have expired. It is
+  // no lobby type, so nothing can join it; the chat log is the only way in.
+  // Bookkeeping lives in the same hash under fields starting with "~", which a
+  // message id (a uuid) never does.
+  public static readonly MATCH_CHAT_ARCHIVE_TTL = 60 * 60 * 24 * 7;
+
+  public static MATCH_CHAT_ARCHIVE_MAX_ENTRIES = 5000;
+
+  public static MATCH_CHAT_ARCHIVE_MAX_BYTES = 8 * 1024 * 1024;
+
+  public static readonly MATCH_CHAT_ARCHIVE_MAX_ENTRY_BYTES = 16 * 1024;
+
+  // Besides the original text, which is always kept.
+  private static readonly MATCH_CHAT_ARCHIVE_KEPT_EDITS = 4;
+
+  // Once the match has ended (~ended), a write no longer moves the expiry: the
+  // archive goes a week after the end however long people keep talking.
+  private static readonly ARCHIVE_APPEND_SCRIPT = `
+    if redis.call('HEXISTS', KEYS[1], ARGV[1]) == 1 then
+      return 1
+    end
+    local count = tonumber(redis.call('HGET', KEYS[1], '~count') or '0')
+    local bytes = tonumber(redis.call('HGET', KEYS[1], '~bytes') or '0')
+    local stored = 0
+    if count >= tonumber(ARGV[3]) or bytes + #ARGV[2] > tonumber(ARGV[4]) then
+      redis.call('HSET', KEYS[1], '~truncated', '1')
+    else
+      redis.call('HSET', KEYS[1], ARGV[1], ARGV[2],
+        '~count', count + 1, '~bytes', bytes + #ARGV[2])
+      stored = 1
+    end
+    if redis.call('HEXISTS', KEYS[1], '~ended') == 0 then
+      redis.call('EXPIRE', KEYS[1], ARGV[5])
+    end
+    return stored
+  `;
+
+  // One step, so an edit and a moderator's delete landing together both
+  // survive. An edit no newer than the entry's own is a resend or arrived out
+  // of order, and is dropped. The original text stays first; the oldest of the
+  // rest go when there are too many or the entry outgrows its byte cap, and if
+  // the original and the latest alone are still too big, the original is cut.
+  // Past the archive's own cap only the original is kept besides the edit.
+  private static readonly ARCHIVE_EDIT_SCRIPT = `
+    local raw = redis.call('HGET', KEYS[1], ARGV[1])
+    if not raw then
+      return 0
+    end
+    local entry = cjson.decode(raw)
+    if type(entry.edited_at) == 'string' and entry.edited_at >= ARGV[3] then
+      return 0
+    end
+    local marker = ' [truncated]'
+    local function cut(text, keep)
+      if text:sub(-#marker) == marker then
+        text = text:sub(1, -#marker - 1)
+      end
+      while keep > 0 do
+        local byte = text:byte(keep + 1)
+        if byte == nil or byte < 128 or byte >= 192 then
+          break
+        end
+        keep = keep - 1
+      end
+      return text:sub(1, keep) .. marker
+    end
+    local edits = entry.edits
+    if type(edits) ~= 'table' then
+      edits = {}
+    end
+    local writtenAt = entry.edited_at
+    if type(writtenAt) ~= 'string' then
+      writtenAt = entry.timestamp
+    end
+    table.insert(edits, { message = entry.message, written_at = writtenAt })
+    while #edits > tonumber(ARGV[4]) + 1 do
+      table.remove(edits, 2)
+    end
+    entry.edits = edits
+    entry.message = ARGV[2]
+    entry.edited_at = ARGV[3]
+    local encoded = cjson.encode(entry)
+    while #encoded > tonumber(ARGV[5]) and #entry.edits > 1 do
+      table.remove(entry.edits, 2)
+      encoded = cjson.encode(entry)
+    end
+    local tries = 0
+    while #encoded > tonumber(ARGV[5]) and tries < 32 do
+      tries = tries + 1
+      local original = entry.edits[1]
+      if #original.message > 64 then
+        original.message = cut(original.message, math.floor(#original.message / 2))
+      else
+        entry.message = cut(entry.message, math.floor(#entry.message / 2))
+      end
+      encoded = cjson.encode(entry)
+    end
+    local bytes = tonumber(redis.call('HGET', KEYS[1], '~bytes') or '0')
+    if bytes + #encoded - #raw > tonumber(ARGV[6]) then
+      redis.call('HSET', KEYS[1], '~truncated', '1')
+      entry.edits = { entry.edits[1] }
+      entry.history_truncated = true
+      encoded = cjson.encode(entry)
+      if bytes + #encoded - #raw > tonumber(ARGV[6]) then
+        return 0
+      end
+    end
+    redis.call('HSET', KEYS[1], ARGV[1], encoded,
+      '~bytes', bytes + #encoded - #raw)
+    return 1
+  `;
+
+  private static readonly ARCHIVE_DELETE_SCRIPT = `
+    local raw = redis.call('HGET', KEYS[1], ARGV[1])
+    if not raw then
+      return 0
+    end
+    local entry = cjson.decode(raw)
+    entry.deleted_at = ARGV[2]
+    entry.deleted_by = { steam_id = ARGV[3], name = ARGV[4] }
+    local encoded = cjson.encode(entry)
+    local bytes = tonumber(redis.call('HGET', KEYS[1], '~bytes') or '0')
+    redis.call('HSET', KEYS[1], ARGV[1], encoded,
+      '~bytes', bytes + #encoded - #raw)
+    return 1
+  `;
+
+  private static readonly ARCHIVE_ANCHOR_SCRIPT = `
+    redis.call('HSET', KEYS[1], '~ended', '1')
+    redis.call('EXPIRE', KEYS[1], ARGV[1])
+    return 1
+  `;
+
+  private static readonly ARCHIVE_REOPEN_SCRIPT = `
+    redis.call('HDEL', KEYS[1], '~ended')
+    redis.call('EXPIRE', KEYS[1], ARGV[1])
+    return 1
+  `;
+
+  private static readonly MATCH_CHAT_LOG_STATUSES: e_match_status_enum[] = [
+    "Finished",
+    "Tie",
+    "Canceled",
+    "Forfeit",
+    "Surrendered",
+  ];
 
   // Which setting governs which room's lifetime, and what it falls back to.
   // Read from system/ on boot and whenever a setting changes, so there is one
@@ -896,7 +1047,17 @@ export class ChatService {
       return { error: ChatErrorCode.TooLong };
     }
 
-    return { text };
+    return { text: ChatService.wellFormed(text) };
+  }
+
+  // A lone UTF-16 surrogate survives JSON.stringify as an escape that Redis's
+  // cjson refuses to decode, so a line carrying one could never be edited or
+  // deleted in the archive.
+  private static wellFormed(text: string): string {
+    return text.replace(
+      /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g,
+      "\uFFFD",
+    );
   }
 
   public async sendMessageToChat(
@@ -1001,6 +1162,8 @@ export class ChatService {
         );
       },
     );
+
+    await this.archiveMessages(type, id, () => [message]);
 
     if (type === ChatLobbyType.Direct) {
       void this.deliverDirectMessage(id, player, outgoing);
@@ -1114,6 +1277,16 @@ export class ChatService {
 
     void this.to(type, id, "deleted", { id: messageId });
 
+    await this.updateArchivedMessage(
+      type,
+      id,
+      messageId,
+      ChatService.ARCHIVE_DELETE_SCRIPT,
+      new Date().toISOString(),
+      String(current.steam_id),
+      ChatService.wellFormed(current.name ?? ""),
+    );
+
     await this.retractNotifications(type, id, messageId);
 
     return { deleted: true };
@@ -1183,6 +1356,16 @@ export class ChatService {
 
     if (!ChatService.UUID.test(messageId)) {
       return { edited: false, code: ChatErrorCode.NotFound };
+    }
+
+    if (
+      !(await this.withinRate(
+        `chat:edit-rate:${user.steam_id}`,
+        ChatService.MESSAGE_RATE_LIMIT,
+        ChatService.MESSAGE_RATE_WINDOW_MS,
+      ))
+    ) {
+      return { edited: false, code: ChatErrorCode.RateLimited };
     }
 
     if (type === ChatLobbyType.Direct) {
@@ -1459,7 +1642,7 @@ export class ChatService {
       );
 
       if (swapped === 1) {
-        return await this.announceEdit(
+        const announced = await this.announceEdit(
           type,
           id,
           messageId,
@@ -1467,6 +1650,10 @@ export class ChatService {
           text,
           editedAt,
         );
+
+        await this.archiveEdit(type, id, messageId, text, editedAt);
+
+        return announced;
       }
 
       await this.discardEdit(auditId);
@@ -2959,6 +3146,265 @@ export class ChatService {
     await this.redis.hdel(lobbyKey, steamId);
   }
 
+  // Staff at match organizer and above, by the role held now, once the match
+  // has ended. Someone who took part (on a lineup or coaching now, or seen
+  // writing in a team room) gets all chat only. Blocks are not applied:
+  // reviewing a match means seeing every line of it.
+  public async matchChatLog(
+    matchId: string,
+    user: User | undefined,
+  ): Promise<MatchChatLog | null> {
+    if (!user?.steam_id || !ChatService.UUID.test(matchId)) {
+      return null;
+    }
+
+    const current = await this.getCurrentUser(user.steam_id);
+
+    if (!current || !isRoleAbove(current.role, "match_organizer")) {
+      return null;
+    }
+
+    const viewer = String(current.steam_id);
+
+    const [match] = await this.postgres.query<
+      Array<{
+        status: e_match_status_enum;
+        lineup_1_id: string | null;
+        lineup_2_id: string | null;
+        on_lineup: boolean;
+      }>
+    >(
+      `SELECT m.status, m.lineup_1_id::text, m.lineup_2_id::text,
+              EXISTS (
+                SELECT 1 FROM public.match_lineup_players mlp
+                 WHERE mlp.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
+                   AND mlp.steam_id = $2::bigint
+              ) OR EXISTS (
+                SELECT 1 FROM public.match_lineups ml
+                 WHERE ml.id IN (m.lineup_1_id, m.lineup_2_id)
+                   AND ml.coach_steam_id = $2::bigint
+              ) AS on_lineup
+         FROM public.matches m
+        WHERE m.id = $1::uuid`,
+      [matchId, viewer],
+    );
+
+    if (!match || !ChatService.MATCH_CHAT_LOG_STATUSES.includes(match.status)) {
+      return null;
+    }
+
+    const key = ChatService.archiveKey(matchId);
+
+    const [stored, expiresAt] = await Promise.all([
+      this.redis.hgetall(key),
+      this.redis.call("PEXPIRETIME", key) as Promise<number>,
+    ]);
+
+    const entries = Object.entries(stored)
+      .filter(([field]) => !field.startsWith("~"))
+      .map(([, raw]) => JSON.parse(raw) as MatchChatArchiveEntry)
+      .sort(
+        (a, b) =>
+          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+      );
+
+    const withheld =
+      match.on_lineup ||
+      entries.some(
+        (entry) => entry.room !== "match" && entry.from?.steam_id === viewer,
+      );
+
+    return {
+      match: entries.filter((entry) => entry.room === "match"),
+      teams: withheld
+        ? []
+        : [match.lineup_1_id, match.lineup_2_id]
+            .filter((lineupId): lineupId is string => !!lineupId)
+            .map((lineupId) => ({
+              lineup_id: lineupId,
+              messages: entries.filter((entry) => entry.room === lineupId),
+            })),
+      team_chat_withheld: withheld,
+      archive_truncated: stored["~truncated"] === "1",
+      expires_at: expiresAt > 0 ? new Date(expiresAt).toISOString() : null,
+    };
+  }
+
+  public async anchorMatchArchive(matchId: string) {
+    await this.archiveSafely(matchId, () =>
+      this.redis.eval(
+        ChatService.ARCHIVE_ANCHOR_SCRIPT,
+        1,
+        ChatService.archiveKey(matchId),
+        ChatService.MATCH_CHAT_ARCHIVE_TTL,
+      ),
+    );
+  }
+
+  public async reopenMatchArchive(matchId: string) {
+    await this.archiveSafely(matchId, () =>
+      this.redis.eval(
+        ChatService.ARCHIVE_REOPEN_SCRIPT,
+        1,
+        ChatService.archiveKey(matchId),
+        ChatService.MATCH_CHAT_ARCHIVE_TTL,
+      ),
+    );
+  }
+
+  public async removeMatchArchive(matchId: string) {
+    await this.archiveSafely(matchId, () =>
+      this.redis.del(ChatService.archiveKey(matchId)),
+    );
+  }
+
+  // The archive is for review afterwards; nothing about it may stop a line
+  // being delivered, edited, deleted or moved.
+  private async archiveSafely(matchId: string, work: () => Promise<unknown>) {
+    try {
+      await work();
+    } catch (error) {
+      this.logger.warn(
+        `unable to update the chat archive of ${matchId}`,
+        error,
+      );
+    }
+  }
+
+  private static archiveKey(matchId: string) {
+    return `chat:archive:${matchId}`;
+  }
+
+  private static archiveRoom(
+    type: ChatLobbyType,
+    id: string,
+  ): { matchId: string; room: string } | null {
+    if (type === ChatLobbyType.Match) {
+      return { matchId: id, room: "match" };
+    }
+
+    if (type === ChatLobbyType.MatchTeam) {
+      const [matchId, lineupId] = id.split(":");
+
+      if (matchId && lineupId) {
+        return { matchId, room: lineupId };
+      }
+    }
+
+    return null;
+  }
+
+  private async archiveMessages(
+    type: ChatLobbyType,
+    id: string,
+    load: () => ChatMessage[],
+  ) {
+    const target = ChatService.archiveRoom(type, id);
+
+    if (!target) {
+      return;
+    }
+
+    const key = ChatService.archiveKey(target.matchId);
+
+    await this.archiveSafely(target.matchId, async () => {
+      for (const message of load()) {
+        await this.redis.eval(
+          ChatService.ARCHIVE_APPEND_SCRIPT,
+          1,
+          key,
+          message.id,
+          ChatService.archiveEntryJson({
+            id: message.id,
+            room: target.room,
+            message: ChatService.wellFormed(message.message),
+            timestamp: message.timestamp,
+            source: message.source,
+            from: {
+              steam_id: String(message.from.steam_id),
+              name: ChatService.wellFormed(message.from.name ?? ""),
+            },
+            ...(message.edited_at ? { edited_at: message.edited_at } : {}),
+          }),
+          ChatService.MATCH_CHAT_ARCHIVE_MAX_ENTRIES,
+          ChatService.MATCH_CHAT_ARCHIVE_MAX_BYTES,
+          ChatService.MATCH_CHAT_ARCHIVE_TTL,
+        );
+      }
+    });
+  }
+
+  // Halved by whole code points, never through a surrogate pair, until the
+  // entry fits its byte cap.
+  private static archiveEntryJson(entry: MatchChatArchiveEntry): string {
+    const marker = " [truncated]";
+    let json = JSON.stringify(entry);
+
+    while (
+      Buffer.byteLength(json) >
+        ChatService.MATCH_CHAT_ARCHIVE_MAX_ENTRY_BYTES &&
+      entry.message.length > 0
+    ) {
+      const points = Array.from(
+        entry.message.endsWith(marker)
+          ? entry.message.slice(0, -marker.length)
+          : entry.message,
+      );
+      entry = {
+        ...entry,
+        message:
+          points.slice(0, Math.floor(points.length / 2)).join("") + marker,
+      };
+      json = JSON.stringify(entry);
+    }
+
+    return json;
+  }
+
+  private async archiveEdit(
+    type: ChatLobbyType,
+    id: string,
+    messageId: string,
+    text: string,
+    editedAt: string,
+  ) {
+    await this.updateArchivedMessage(
+      type,
+      id,
+      messageId,
+      ChatService.ARCHIVE_EDIT_SCRIPT,
+      ChatService.wellFormed(text),
+      editedAt,
+      ChatService.MATCH_CHAT_ARCHIVE_KEPT_EDITS,
+      ChatService.MATCH_CHAT_ARCHIVE_MAX_ENTRY_BYTES,
+      ChatService.MATCH_CHAT_ARCHIVE_MAX_BYTES,
+    );
+  }
+
+  private async updateArchivedMessage(
+    type: ChatLobbyType,
+    id: string,
+    messageId: string,
+    script: string,
+    ...args: Array<string | number>
+  ) {
+    const target = ChatService.archiveRoom(type, id);
+
+    if (!target) {
+      return;
+    }
+
+    await this.archiveSafely(target.matchId, () =>
+      this.redis.eval(
+        script,
+        1,
+        ChatService.archiveKey(target.matchId),
+        messageId,
+        ...args,
+      ),
+    );
+  }
+
   private async getAllUsersInLobby(type: ChatLobbyType, id: string) {
     const lobbyKey = this.getLobbyKey(type, id);
     const users = await this.redis.hgetall(lobbyKey);
@@ -2980,7 +3426,7 @@ export class ChatService {
     toType: ChatLobbyType,
     toId: string,
   ) {
-    const moved = await this.redis.eval(
+    const moved = (await this.redis.eval(
       ChatService.MOVE_ROOM_MESSAGES_SCRIPT,
       4,
       `chat_${fromType}_${fromId}`,
@@ -2988,11 +3434,11 @@ export class ChatService {
       ChatService.reactionsKey(fromType, fromId),
       ChatService.reactionsKey(toType, toId),
       this.ttlFor(toType),
-    );
+    )) as string[];
 
     await this.removeLobby(fromType, fromId);
 
-    if (moved === 0) {
+    if (!Array.isArray(moved) || moved.length === 0) {
       return;
     }
 
@@ -3001,5 +3447,13 @@ export class ChatService {
     void this.resendHistory(toType, toId, messages).catch((error) => {
       this.logger.warn(`unable to re-send history to ${toType}:${toId}`, error);
     });
+
+    // Only what this move carried: the room also holds lines the archive
+    // already has, with their edits.
+    await this.archiveMessages(toType, toId, () =>
+      moved
+        .filter((_, index) => index % 2 === 1)
+        .map((raw) => JSON.parse(raw) as ChatMessage),
+    );
   }
 }

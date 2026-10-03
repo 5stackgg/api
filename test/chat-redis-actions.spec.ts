@@ -292,6 +292,8 @@ describe("chat edits and self deletes (SQL-driven)", () => {
     for (let round = 0; round < 25; round++) {
       const matchId = randomUUID();
       const id = await place(matchId, user);
+      // Twenty-five edits in a row would trip the edit rate limit.
+      await redis.del(`chat:edit-rate:${user.steam_id}`);
 
       const [edited, deleted] = await Promise.all([
         edit(matchId, id, user),

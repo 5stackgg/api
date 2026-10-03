@@ -715,6 +715,22 @@ export class MatchesController {
       await this.stopEndedMatchServer(data, matchId, endedServerId);
     }
 
+    // Ahead of the Discord calls below, any of which can throw and end this.
+    if (data.op === "UPDATE" && data.old.status !== data.new.status) {
+      const ended = MatchesController.TERMINAL_STATUSES.includes(
+        data.new.status as string,
+      );
+      const wasEnded = MatchesController.TERMINAL_STATUSES.includes(
+        data.old.status as string,
+      );
+
+      if (ended && !wasEnded) {
+        await this.chatService.anchorMatchArchive(matchId);
+      } else if (wasEnded && !ended) {
+        await this.chatService.reopenMatchArchive(matchId);
+      }
+    }
+
     if (
       data.op === "UPDATE" &&
       data.new.status === "WaitingForServer" &&
@@ -788,6 +804,7 @@ export class MatchesController {
 
     if (data.op === "DELETE") {
       await this.chatService.removeLobby(ChatLobbyType.Match, matchId);
+      await this.chatService.removeMatchArchive(matchId);
 
       // No grace window here, unlike a match that merely ended: there is no
       // match left to have just played, and the roster the channel is built
