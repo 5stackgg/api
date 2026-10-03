@@ -3,6 +3,7 @@ import { GenericContainer, StartedTestContainer } from "testcontainers";
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { ChatService } from "./../src/chat/chat.service";
 import { ChatLobbyType } from "./../src/chat/enums/ChatLobbyTypes";
+import { ChatErrorCode } from "./../src/chat/enums/ChatErrorCode";
 import { PlayerBlocksService } from "./../src/player-blocks/player-blocks.service";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
@@ -42,12 +43,20 @@ describe("match chat archive (SQL-driven)", () => {
       }
 
       if (query.matches_by_pk) {
-        const [row] = await postgres.query<Array<{ in_lineup: boolean }>>(
+        const [row] = await postgres.query<
+          Array<{ in_lineup: boolean; staff: boolean }>
+        >(
           `SELECT EXISTS (
                     SELECT 1 FROM match_lineup_players mlp
                      WHERE mlp.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
                        AND mlp.steam_id = $2::bigint
-                  ) AS in_lineup
+                  ) AS in_lineup,
+                  EXISTS (
+                    SELECT 1 FROM players p
+                     WHERE p.steam_id = $2::bigint
+                       AND p.role IN ('match_organizer', 'tournament_organizer',
+                                      'administrator')
+                  ) AS staff
              FROM matches m WHERE m.id = $1`,
           [query.matches_by_pk.__args.id, viewer],
         );
@@ -55,7 +64,7 @@ describe("match chat archive (SQL-driven)", () => {
           matches_by_pk: row
             ? {
                 is_coach: false,
-                is_organizer: false,
+                is_organizer: row.staff || null,
                 is_in_lineup: row.in_lineup,
               }
             : null,
@@ -120,6 +129,17 @@ describe("match chat archive (SQL-driven)", () => {
     await container?.stop();
     await db?.stop();
   });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    ChatService.MATCH_CHAT_ARCHIVE_MAX_ENTRIES = defaults.entries;
+    ChatService.MATCH_CHAT_ARCHIVE_MAX_BYTES = defaults.bytes;
+  });
+
+  const defaults = {
+    entries: ChatService.MATCH_CHAT_ARCHIVE_MAX_ENTRIES,
+    bytes: ChatService.MATCH_CHAT_ARCHIVE_MAX_BYTES,
+  };
 
   beforeEach(async () => {
     await redis.flushall();
@@ -197,9 +217,9 @@ describe("match chat archive (SQL-driven)", () => {
   };
 
   const archive = async () =>
-    Object.values(await redis.hgetall(`chat:archive:${match.id}`)).map((raw) =>
-      JSON.parse(raw),
-    );
+    Object.entries(await redis.hgetall(`chat:archive:${match.id}`))
+      .filter(([field]) => !field.startsWith("~"))
+      .map(([, raw]) => JSON.parse(raw));
 
   const entry = async (id: string) =>
     (await archive()).find((line) => line.id === id);
@@ -208,6 +228,25 @@ describe("match chat archive (SQL-driven)", () => {
     chat.matchChatLog(match.id, as(steamId, role));
 
   const ids = (lines: Array<{ id: string }>) => lines.map(({ id }) => id);
+
+  const edit = (id: string, text: string, steamId = organizer) =>
+    chat.editMessage(ChatLobbyType.Match, match.id, id, as(steamId), text);
+
+  // Any command aimed at an archive key fails, the way it would with redis
+  // refusing writes to it; the live rooms are untouched.
+  const breakArchive = () => {
+    for (const command of ["hset", "hget", "expire", "eval", "hgetall"]) {
+      const original = (redis as any)[command].bind(redis);
+      jest.spyOn(redis as any, command).mockImplementation((...args: any[]) => {
+        const keys =
+          command === "eval" ? args.slice(2, 2 + Number(args[1])) : [args[0]];
+        if (keys.some((key) => String(key).startsWith("chat:archive:"))) {
+          return Promise.reject(new Error("archive unavailable"));
+        }
+        return original(...args);
+      });
+    }
+  };
 
   describe("writing", () => {
     it("keeps every line from the match room and both team rooms, from the web and the game", async () => {
@@ -269,6 +308,210 @@ describe("match chat archive (SQL-driven)", () => {
       });
     });
 
+    it("archives only the draft's lines, keeping what the room already had", async () => {
+      const kept = await say(
+        ChatLobbyType.Match,
+        match.id,
+        organizer,
+        "typo",
+        "web",
+      );
+      await edit(kept, "fixed");
+
+      const moved = "7f1d0c2e-8b1a-4c6e-9f00-000000000002";
+      const editedAt = new Date().toISOString();
+      await redis.hset(
+        `chat_${ChatLobbyType.Draft}_draft-2`,
+        moved,
+        JSON.stringify({
+          id: moved,
+          message: "pick me now",
+          timestamp: new Date().toISOString(),
+          edited_at: editedAt,
+          source: "web",
+          from: { role: "user", name: "Player", steam_id: player },
+        }),
+      );
+
+      await chat.migrateLobbyMessages(
+        ChatLobbyType.Draft,
+        "draft-2",
+        ChatLobbyType.Match,
+        match.id,
+      );
+
+      expect(await entry(kept)).toMatchObject({
+        message: "fixed",
+        edits: [{ message: "typo" }],
+      });
+      expect(await entry(moved)).toMatchObject({
+        message: "pick me now",
+        edited_at: editedAt,
+      });
+    });
+
+    it("stops at its cap and says it was cut short", async () => {
+      ChatService.MATCH_CHAT_ARCHIVE_MAX_ENTRIES = 2;
+
+      const first = await say(ChatLobbyType.Match, match.id, organizer, "1");
+      const second = await say(ChatLobbyType.Match, match.id, organizer, "2");
+      await say(ChatLobbyType.Match, match.id, organizer, "3");
+      await status("Finished");
+
+      const read = await log(admin, "administrator");
+
+      expect(ids(read!.match).sort()).toEqual([first, second].sort());
+      expect(read!.archive_truncated).toBe(true);
+    });
+
+    it("stops at its byte cap too", async () => {
+      ChatService.MATCH_CHAT_ARCHIVE_MAX_BYTES = 600;
+
+      await say(ChatLobbyType.Match, match.id, organizer, "a".repeat(200));
+      await say(ChatLobbyType.Match, match.id, organizer, "b".repeat(200));
+      await say(ChatLobbyType.Match, match.id, organizer, "c".repeat(200));
+      await status("Finished");
+
+      const read = await log(admin, "administrator");
+
+      expect(read!.match.length).toBeLessThan(3);
+      expect(read!.archive_truncated).toBe(true);
+    });
+
+    it("says nothing was cut when nothing was", async () => {
+      await say(ChatLobbyType.Match, match.id, organizer, "gg");
+      await status("Finished");
+
+      expect((await log(admin, "administrator"))!.archive_truncated).toBe(
+        false,
+      );
+    });
+
+    it("stops moving its expiry once the match has ended", async () => {
+      await say(ChatLobbyType.Match, match.id, organizer, "gg");
+      await chat.anchorMatchArchive(match.id);
+      await redis.expire(`chat:archive:${match.id}`, 100);
+
+      await say(ChatLobbyType.Match, match.id, opponent, "wp");
+
+      expect(await redis.ttl(`chat:archive:${match.id}`)).toBeLessThanOrEqual(
+        100,
+      );
+    });
+
+    it("anchors a week from the end, even with nothing said yet", async () => {
+      await chat.anchorMatchArchive(match.id);
+
+      const ttl = await redis.ttl(`chat:archive:${match.id}`);
+      expect(ttl).toBeGreaterThan(SEVEN_DAYS - 60);
+
+      await redis.expire(`chat:archive:${match.id}`, 100);
+      await say(ChatLobbyType.Match, match.id, opponent, "wp");
+
+      expect(await redis.ttl(`chat:archive:${match.id}`)).toBeLessThanOrEqual(
+        100,
+      );
+    });
+
+    it("moves its expiry again when the match is restarted", async () => {
+      await chat.anchorMatchArchive(match.id);
+      await redis.expire(`chat:archive:${match.id}`, 100);
+      await chat.reopenMatchArchive(match.id);
+
+      await say(ChatLobbyType.Match, match.id, opponent, "again");
+
+      expect(await redis.ttl(`chat:archive:${match.id}`)).toBeGreaterThan(
+        SEVEN_DAYS - 60,
+      );
+    });
+
+    it("goes with its match", async () => {
+      await say(ChatLobbyType.Match, match.id, organizer, "gg");
+
+      await chat.removeMatchArchive(match.id);
+
+      expect(await redis.exists(`chat:archive:${match.id}`)).toBe(0);
+    });
+
+    describe("when the archive cannot be written", () => {
+      beforeEach(breakArchive);
+
+      it("still delivers a line from the web and from the game", async () => {
+        const web = await chat.sendMessageToChat(
+          ChatLobbyType.Match,
+          match.id,
+          as(organizer),
+          "from the site",
+          true,
+          "web",
+        );
+        const game = await chat.sendMessageToChat(
+          ChatLobbyType.MatchTeam,
+          teamRoom(match.lineup_1_id),
+          as(player),
+          "from the game",
+          true,
+          "game",
+        );
+
+        expect(web).toMatchObject({ accepted: true });
+        expect(game).toMatchObject({ accepted: true });
+        expect(
+          await redis.hlen(`chat_${ChatLobbyType.Match}_${match.id}`),
+        ).toBe(1);
+      });
+
+      it("still edits and deletes", async () => {
+        const typo = await say(
+          ChatLobbyType.Match,
+          match.id,
+          organizer,
+          "typo",
+          "web",
+        );
+        const nasty = await say(
+          ChatLobbyType.Match,
+          match.id,
+          organizer,
+          "nasty",
+          "web",
+        );
+
+        await expect(edit(typo, "fixed")).resolves.toMatchObject({
+          edited: true,
+        });
+        await expect(
+          chat.deleteMessage(ChatLobbyType.Match, match.id, nasty, as(admin)),
+        ).resolves.toEqual({ deleted: true });
+      });
+
+      it("still moves a finished draft's chat into the match", async () => {
+        const id = "7f1d0c2e-8b1a-4c6e-9f00-000000000003";
+        await redis.hset(
+          `chat_${ChatLobbyType.Draft}_draft-3`,
+          id,
+          JSON.stringify({
+            id,
+            message: "moving",
+            timestamp: new Date().toISOString(),
+            source: "web",
+            from: { role: "user", name: "Player", steam_id: player },
+          }),
+        );
+
+        await chat.migrateLobbyMessages(
+          ChatLobbyType.Draft,
+          "draft-3",
+          ChatLobbyType.Match,
+          match.id,
+        );
+
+        expect(
+          await redis.hexists(`chat_${ChatLobbyType.Match}_${match.id}`, id),
+        ).toBe(1);
+      });
+    });
+
     it("leaves other rooms out", async () => {
       await chat.sendMessageToChat(
         ChatLobbyType.Organizer,
@@ -326,6 +569,119 @@ describe("match chat archive (SQL-driven)", () => {
       expect(typeof (await entry(id)).edited_at).toBe("string");
     });
 
+    it("rate limits edits the way it limits sends", async () => {
+      const id = await say(
+        ChatLobbyType.Match,
+        match.id,
+        organizer,
+        "typo",
+        "web",
+      );
+
+      const results = [];
+      for (
+        let attempt = 0;
+        attempt < ChatService.MESSAGE_RATE_LIMIT + 1;
+        attempt++
+      ) {
+        results.push(await edit(id, `fix ${attempt}`));
+      }
+
+      expect(results.at(-1)).toEqual({
+        edited: false,
+        code: ChatErrorCode.RateLimited,
+      });
+      expect(results.slice(0, -1).every(({ edited }) => edited)).toBe(true);
+    });
+
+    it("keeps the original text and the last four edits, no more", async () => {
+      const id = await say(
+        ChatLobbyType.Match,
+        match.id,
+        organizer,
+        "original",
+        "web",
+      );
+
+      for (let attempt = 1; attempt <= 7; attempt++) {
+        await redis.del(`chat:edit-rate:${organizer}`);
+        await edit(id, `edit ${attempt}`);
+      }
+
+      const { message, edits } = await entry(id);
+
+      expect(message).toBe("edit 7");
+      expect(edits.map((each: { message: string }) => each.message)).toEqual([
+        "original",
+        "edit 3",
+        "edit 4",
+        "edit 5",
+        "edit 6",
+      ]);
+    });
+
+    it("keeps an entry under its size cap however long the edits", async () => {
+      const long = (letter: string) => letter.repeat(2000);
+      const id = await say(
+        ChatLobbyType.Match,
+        match.id,
+        organizer,
+        long("原"),
+        "web",
+      );
+
+      for (const letter of ["一", "二", "三", "四", "五"]) {
+        await redis.del(`chat:edit-rate:${organizer}`);
+        await edit(id, long(letter));
+      }
+
+      const raw = await redis.hget(`chat:archive:${match.id}`, id);
+      const { message, edits } = JSON.parse(raw!);
+
+      expect(Buffer.byteLength(raw!)).toBeLessThanOrEqual(
+        ChatService.MATCH_CHAT_ARCHIVE_MAX_ENTRY_BYTES,
+      );
+      expect(message).toBe(long("五"));
+      expect(edits[0].message).toBe(long("原"));
+    });
+
+    it("never loses a moderator's delete to an edit landing at the same time", async () => {
+      const id = await say(
+        ChatLobbyType.Match,
+        match.id,
+        organizer,
+        "typo",
+        "web",
+      );
+
+      const remove = () =>
+        chat.deleteMessage(ChatLobbyType.Match, match.id, id, as(admin));
+
+      let deletedDuring = false;
+      const read = redis.hget.bind(redis);
+      jest.spyOn(redis, "hget").mockImplementation((async (
+        key: string,
+        field: string,
+      ) => {
+        const value = await read(key, field);
+        if (key.startsWith("chat:archive:") && !deletedDuring) {
+          deletedDuring = true;
+          await remove();
+        }
+        return value;
+      }) as any);
+
+      await edit(id, "fixed");
+
+      if (!deletedDuring) {
+        jest.restoreAllMocks();
+        await remove();
+      }
+
+      expect(await entry(id)).toMatchObject({ message: "fixed" });
+      expect(typeof (await entry(id)).deleted_at).toBe("string");
+    });
+
     it("keeps a deleted line, marked", async () => {
       const id = await say(
         ChatLobbyType.Match,
@@ -344,7 +700,7 @@ describe("match chat archive (SQL-driven)", () => {
       ).toBeNull();
       expect(await entry(id)).toMatchObject({
         message: "something nasty",
-        deleted_by: organizer,
+        deleted_by: { steam_id: organizer, name: "Organizer" },
       });
       expect(typeof (await entry(id)).deleted_at).toBe("string");
     });
@@ -394,6 +750,33 @@ describe("match chat archive (SQL-driven)", () => {
 
     it("is closed while the match is being played", async () => {
       expect(await log(admin, "administrator")).toBeNull();
+    });
+
+    it("opens at match organizer for someone who took no part", async () => {
+      const staff = await fx.player("Staff");
+      await setRole(staff, "match_organizer");
+      await status("Finished");
+
+      const read = await log(staff, "match_organizer");
+
+      expect(read!.teams).toHaveLength(2);
+      expect(read!.team_chat_withheld).toBe(false);
+    });
+
+    it("is closed to a moderator, the role just below", async () => {
+      const staff = await fx.player("Staff");
+      await setRole(staff, "moderator");
+      await status("Finished");
+
+      expect(await log(staff, "moderator")).toBeNull();
+    });
+
+    it("is closed to a match organizer demoted to moderator", async () => {
+      const staff = await fx.player("Staff");
+      await setRole(staff, "moderator");
+      await status("Finished");
+
+      expect(await log(staff, "match_organizer")).toBeNull();
     });
 
     it("is closed below match organizer, organizer of the match or not", async () => {
@@ -532,12 +915,35 @@ describe("match chat archive (SQL-driven)", () => {
         .flatMap(({ data }) => data.messages);
     };
 
-    it("never hands out the archive", async () => {
-      await say(ChatLobbyType.Match, match.id, opponent, "gl");
-      await redis.del(`chat_${ChatLobbyType.Match}_${match.id}`);
+    it("never hands out an archived line once its live room has gone", async () => {
+      await setRole(admin, "administrator");
+      const all = await say(ChatLobbyType.Match, match.id, opponent, "gl");
+      const team = await say(
+        ChatLobbyType.MatchTeam,
+        teamRoom(match.lineup_2_id),
+        opponent,
+        "rush B",
+      );
+      await redis.del(
+        `chat_${ChatLobbyType.Match}_${match.id}`,
+        `chat_${ChatLobbyType.MatchTeam}_${teamRoom(match.lineup_2_id)}`,
+      );
 
-      expect(await join("archive", match.id, admin)).toEqual([]);
-      expect(await join(ChatLobbyType.Match, match.id, organizer)).toEqual([]);
+      expect(ids(await archive())).toEqual(expect.arrayContaining([all, team]));
+
+      const served = [
+        ...(await join(ChatLobbyType.Match, match.id, organizer)),
+        ...(await join(ChatLobbyType.Match, match.id, admin)),
+        ...(await join(
+          ChatLobbyType.MatchTeam,
+          teamRoom(match.lineup_2_id),
+          opponent,
+        )),
+        ...(await join("archive", match.id, admin)),
+      ];
+
+      expect(ids(served)).not.toContain(all);
+      expect(ids(served)).not.toContain(team);
     });
   });
 });

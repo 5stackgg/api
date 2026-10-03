@@ -1914,7 +1914,9 @@ describe("ChatService direct messages", () => {
 
       it("keeps the audit row when the swap fails outright, since it may have applied", async () => {
         store();
-        redis.eval.mockRejectedValueOnce(new Error("connection reset"));
+        redis.eval
+          .mockResolvedValueOnce(1)
+          .mockRejectedValueOnce(new Error("connection reset"));
 
         await expect(edit()).rejects.toThrow("connection reset");
 

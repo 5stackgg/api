@@ -261,7 +261,98 @@ export class ChatService {
   // Every match and team room line is copied here for staff to review after
   // the live rooms, which keep their own short lifetime, have expired. It is
   // no lobby type, so nothing can join it; the chat log is the only way in.
+  // Bookkeeping lives in the same hash under fields starting with "~", which a
+  // message id (a uuid) never does.
   public static readonly MATCH_CHAT_ARCHIVE_TTL = 60 * 60 * 24 * 7;
+
+  public static MATCH_CHAT_ARCHIVE_MAX_ENTRIES = 5000;
+
+  public static MATCH_CHAT_ARCHIVE_MAX_BYTES = 8 * 1024 * 1024;
+
+  public static readonly MATCH_CHAT_ARCHIVE_MAX_ENTRY_BYTES = 16 * 1024;
+
+  // Besides the original text, which is always kept.
+  private static readonly MATCH_CHAT_ARCHIVE_KEPT_EDITS = 4;
+
+  // Once the match has ended (~ended), a write no longer moves the expiry: the
+  // archive goes a week after the end however long people keep talking.
+  private static readonly ARCHIVE_APPEND_SCRIPT = `
+    if redis.call('HEXISTS', KEYS[1], ARGV[1]) == 1 then
+      return 1
+    end
+    local count = tonumber(redis.call('HGET', KEYS[1], '~count') or '0')
+    local bytes = tonumber(redis.call('HGET', KEYS[1], '~bytes') or '0')
+    local stored = 0
+    if count >= tonumber(ARGV[3]) or bytes + #ARGV[2] > tonumber(ARGV[4]) then
+      redis.call('HSET', KEYS[1], '~truncated', '1')
+    else
+      redis.call('HSET', KEYS[1], ARGV[1], ARGV[2],
+        '~count', count + 1, '~bytes', bytes + #ARGV[2])
+      stored = 1
+    end
+    if redis.call('HEXISTS', KEYS[1], '~ended') == 0 then
+      redis.call('EXPIRE', KEYS[1], ARGV[5])
+    end
+    return stored
+  `;
+
+  // One step, so an edit and a moderator's delete landing together both
+  // survive. The original text stays first; the oldest of the rest go when
+  // there are too many, or when the entry outgrows its byte cap.
+  private static readonly ARCHIVE_EDIT_SCRIPT = `
+    local raw = redis.call('HGET', KEYS[1], ARGV[1])
+    if not raw then
+      return 0
+    end
+    local entry = cjson.decode(raw)
+    local edits = entry.edits
+    if type(edits) ~= 'table' then
+      edits = {}
+    end
+    table.insert(edits, { message = entry.message, edited_at = ARGV[3] })
+    while #edits > tonumber(ARGV[4]) + 1 do
+      table.remove(edits, 2)
+    end
+    entry.edits = edits
+    entry.message = ARGV[2]
+    entry.edited_at = ARGV[3]
+    local encoded = cjson.encode(entry)
+    while #encoded > tonumber(ARGV[5]) and #entry.edits > 1 do
+      table.remove(entry.edits, 2)
+      encoded = cjson.encode(entry)
+    end
+    local bytes = tonumber(redis.call('HGET', KEYS[1], '~bytes') or '0')
+    redis.call('HSET', KEYS[1], ARGV[1], encoded,
+      '~bytes', bytes + #encoded - #raw)
+    return 1
+  `;
+
+  private static readonly ARCHIVE_DELETE_SCRIPT = `
+    local raw = redis.call('HGET', KEYS[1], ARGV[1])
+    if not raw then
+      return 0
+    end
+    local entry = cjson.decode(raw)
+    entry.deleted_at = ARGV[2]
+    entry.deleted_by = { steam_id = ARGV[3], name = ARGV[4] }
+    local encoded = cjson.encode(entry)
+    local bytes = tonumber(redis.call('HGET', KEYS[1], '~bytes') or '0')
+    redis.call('HSET', KEYS[1], ARGV[1], encoded,
+      '~bytes', bytes + #encoded - #raw)
+    return 1
+  `;
+
+  private static readonly ARCHIVE_ANCHOR_SCRIPT = `
+    redis.call('HSET', KEYS[1], '~ended', '1')
+    redis.call('EXPIRE', KEYS[1], ARGV[1])
+    return 1
+  `;
+
+  private static readonly ARCHIVE_REOPEN_SCRIPT = `
+    redis.call('HDEL', KEYS[1], '~ended')
+    redis.call('EXPIRE', KEYS[1], ARGV[1])
+    return 1
+  `;
 
   private static readonly MATCH_CHAT_LOG_STATUSES: e_match_status_enum[] = [
     "Finished",
@@ -1005,8 +1096,6 @@ export class ChatService {
           messageField,
         ]),
       );
-
-      await this.archiveMessages(type, id, [message]);
     }
 
     const outgoing: ChatMessage = { ...message, reactions: {} };
@@ -1019,6 +1108,8 @@ export class ChatService {
         );
       },
     );
+
+    await this.archiveMessages(type, id, [message]);
 
     if (type === ChatLobbyType.Direct) {
       void this.deliverDirectMessage(id, player, outgoing);
@@ -1116,12 +1207,6 @@ export class ChatService {
     // abuse and deleting it would leave nothing behind.
     await this.recordDeletion(type, id, messageId, message, current);
 
-    await this.updateArchivedMessage(type, id, messageId, (entry) => ({
-      ...entry,
-      deleted_at: new Date().toISOString(),
-      deleted_by: String(current.steam_id),
-    }));
-
     await this.redis.hdel(messageKey, messageId);
 
     // Never allowed to stop the delete being announced: left behind, the
@@ -1137,6 +1222,16 @@ export class ChatService {
       });
 
     void this.to(type, id, "deleted", { id: messageId });
+
+    await this.updateArchivedMessage(
+      type,
+      id,
+      messageId,
+      ChatService.ARCHIVE_DELETE_SCRIPT,
+      new Date().toISOString(),
+      String(current.steam_id),
+      current.name,
+    );
 
     await this.retractNotifications(type, id, messageId);
 
@@ -1207,6 +1302,16 @@ export class ChatService {
 
     if (!ChatService.UUID.test(messageId)) {
       return { edited: false, code: ChatErrorCode.NotFound };
+    }
+
+    if (
+      !(await this.withinRate(
+        `chat:edit-rate:${user.steam_id}`,
+        ChatService.MESSAGE_RATE_LIMIT,
+        ChatService.MESSAGE_RATE_WINDOW_MS,
+      ))
+    ) {
+      return { edited: false, code: ChatErrorCode.RateLimited };
     }
 
     if (type === ChatLobbyType.Direct) {
@@ -1483,17 +1588,7 @@ export class ChatService {
       );
 
       if (swapped === 1) {
-        await this.updateArchivedMessage(type, id, messageId, (entry) => ({
-          ...entry,
-          message: text,
-          edited_at: editedAt,
-          edits: [
-            ...(entry.edits ?? []),
-            { message: entry.message, edited_at: editedAt },
-          ],
-        }));
-
-        return await this.announceEdit(
+        const announced = await this.announceEdit(
           type,
           id,
           messageId,
@@ -1501,6 +1596,19 @@ export class ChatService {
           text,
           editedAt,
         );
+
+        await this.updateArchivedMessage(
+          type,
+          id,
+          messageId,
+          ChatService.ARCHIVE_EDIT_SCRIPT,
+          text,
+          editedAt,
+          ChatService.MATCH_CHAT_ARCHIVE_KEPT_EDITS,
+          ChatService.MATCH_CHAT_ARCHIVE_MAX_ENTRY_BYTES,
+        );
+
+        return announced;
       }
 
       await this.discardEdit(auditId);
@@ -3047,8 +3155,9 @@ export class ChatService {
       this.redis.call("PEXPIRETIME", key) as Promise<number>,
     ]);
 
-    const entries = Object.values(stored)
-      .map((raw) => JSON.parse(raw) as MatchChatArchiveEntry)
+    const entries = Object.entries(stored)
+      .filter(([field]) => !field.startsWith("~"))
+      .map(([, raw]) => JSON.parse(raw) as MatchChatArchiveEntry)
       .sort(
         (a, b) =>
           new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
@@ -3071,8 +3180,50 @@ export class ChatService {
               messages: entries.filter((entry) => entry.room === lineupId),
             })),
       team_chat_withheld: withheld,
+      archive_truncated: stored["~truncated"] === "1",
       expires_at: expiresAt > 0 ? new Date(expiresAt).toISOString() : null,
     };
+  }
+
+  public async anchorMatchArchive(matchId: string) {
+    await this.archiveSafely(matchId, () =>
+      this.redis.eval(
+        ChatService.ARCHIVE_ANCHOR_SCRIPT,
+        1,
+        ChatService.archiveKey(matchId),
+        ChatService.MATCH_CHAT_ARCHIVE_TTL,
+      ),
+    );
+  }
+
+  public async reopenMatchArchive(matchId: string) {
+    await this.archiveSafely(matchId, () =>
+      this.redis.eval(
+        ChatService.ARCHIVE_REOPEN_SCRIPT,
+        1,
+        ChatService.archiveKey(matchId),
+        ChatService.MATCH_CHAT_ARCHIVE_TTL,
+      ),
+    );
+  }
+
+  public async removeMatchArchive(matchId: string) {
+    await this.archiveSafely(matchId, () =>
+      this.redis.del(ChatService.archiveKey(matchId)),
+    );
+  }
+
+  // The archive is for review afterwards; nothing about it may stop a line
+  // being delivered, edited, deleted or moved.
+  private async archiveSafely(matchId: string, work: () => Promise<unknown>) {
+    try {
+      await work();
+    } catch (error) {
+      this.logger.warn(
+        `unable to update the chat archive of ${matchId}`,
+        error,
+      );
+    }
   }
 
   private static archiveKey(matchId: string) {
@@ -3105,16 +3256,18 @@ export class ChatService {
   ) {
     const target = ChatService.archiveRoom(type, id);
 
-    if (!target || messages.length === 0) {
+    if (!target) {
       return;
     }
 
     const key = ChatService.archiveKey(target.matchId);
 
-    await this.redis.hset(
-      key,
-      Object.fromEntries(
-        messages.map((message): [string, string] => [
+    await this.archiveSafely(target.matchId, async () => {
+      for (const message of messages) {
+        await this.redis.eval(
+          ChatService.ARCHIVE_APPEND_SCRIPT,
+          1,
+          key,
           message.id,
           JSON.stringify({
             id: message.id,
@@ -3126,18 +3279,22 @@ export class ChatService {
               steam_id: String(message.from.steam_id),
               name: message.from.name,
             },
+            ...(message.edited_at ? { edited_at: message.edited_at } : {}),
           } satisfies MatchChatArchiveEntry),
-        ]),
-      ),
-    );
-    await this.redis.expire(key, ChatService.MATCH_CHAT_ARCHIVE_TTL);
+          ChatService.MATCH_CHAT_ARCHIVE_MAX_ENTRIES,
+          ChatService.MATCH_CHAT_ARCHIVE_MAX_BYTES,
+          ChatService.MATCH_CHAT_ARCHIVE_TTL,
+        );
+      }
+    });
   }
 
   private async updateArchivedMessage(
     type: ChatLobbyType,
     id: string,
     messageId: string,
-    change: (entry: MatchChatArchiveEntry) => MatchChatArchiveEntry,
+    script: string,
+    ...args: Array<string | number>
   ) {
     const target = ChatService.archiveRoom(type, id);
 
@@ -3145,19 +3302,15 @@ export class ChatService {
       return;
     }
 
-    const key = ChatService.archiveKey(target.matchId);
-    const raw = await this.redis.hget(key, messageId);
-
-    if (!raw) {
-      return;
-    }
-
-    await this.redis.hset(
-      key,
-      messageId,
-      JSON.stringify(change(JSON.parse(raw))),
+    await this.archiveSafely(target.matchId, () =>
+      this.redis.eval(
+        script,
+        1,
+        ChatService.archiveKey(target.matchId),
+        messageId,
+        ...args,
+      ),
     );
-    await this.redis.expire(key, ChatService.MATCH_CHAT_ARCHIVE_TTL);
   }
 
   private async getAllUsersInLobby(type: ChatLobbyType, id: string) {
@@ -3181,6 +3334,10 @@ export class ChatService {
     toType: ChatLobbyType,
     toId: string,
   ) {
+    // Read before the move: afterwards the room also holds what it already
+    // had, which the archive keeps from when it was said.
+    const moving = await this.getRoomMessages(fromType, fromId);
+
     const moved = await this.redis.eval(
       ChatService.MOVE_ROOM_MESSAGES_SCRIPT,
       4,
@@ -3199,10 +3356,10 @@ export class ChatService {
 
     const messages = await this.getRoomMessages(toType, toId);
 
-    await this.archiveMessages(toType, toId, messages);
-
     void this.resendHistory(toType, toId, messages).catch((error) => {
       this.logger.warn(`unable to re-send history to ${toType}:${toId}`, error);
     });
+
+    await this.archiveMessages(toType, toId, moving);
   }
 }

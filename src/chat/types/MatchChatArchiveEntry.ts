@@ -15,5 +15,8 @@ export interface MatchChatArchiveEntry {
   // Each earlier text, with when it was replaced.
   edits?: Array<{ message: string; edited_at: string }>;
   deleted_at?: string;
-  deleted_by?: string;
+  deleted_by?: {
+    steam_id: string;
+    name: string;
+  };
 }
