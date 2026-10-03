@@ -8,6 +8,7 @@ import { RconService } from "../rcon/rcon.service";
 import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketClient";
 import { ChatLobbyType } from "./enums/ChatLobbyTypes";
 import {
+  e_match_status_enum,
   e_notification_types_enum,
   e_player_roles_enum,
   e_tournament_free_agent_statuses_enum,
@@ -27,6 +28,8 @@ import { ChatDeleteResult } from "./types/ChatDeleteResult";
 import { ChatEditResult } from "./types/ChatEditResult";
 import { ChatReactions } from "./types/ChatReactions";
 import { ChatReactResult } from "./types/ChatReactResult";
+import { MatchChatArchiveEntry } from "./types/MatchChatArchiveEntry";
+import { MatchChatLog } from "./types/MatchChatLog";
 
 @Injectable()
 export class ChatService {
@@ -254,6 +257,19 @@ export class ChatService {
   // they left the pool.
   private static readonly TOURNAMENT_CHAT_FREE_AGENT_STATUSES: e_tournament_free_agent_statuses_enum[] =
     ["registered", "waitlisted"];
+
+  // Every match and team room line is copied here for staff to review after
+  // the live rooms, which keep their own short lifetime, have expired. It is
+  // no lobby type, so nothing can join it; the chat log is the only way in.
+  public static readonly MATCH_CHAT_ARCHIVE_TTL = 60 * 60 * 24 * 7;
+
+  private static readonly MATCH_CHAT_LOG_STATUSES: e_match_status_enum[] = [
+    "Finished",
+    "Tie",
+    "Canceled",
+    "Forfeit",
+    "Surrendered",
+  ];
 
   // Which setting governs which room's lifetime, and what it falls back to.
   // Read from system/ on boot and whenever a setting changes, so there is one
@@ -989,6 +1005,8 @@ export class ChatService {
           messageField,
         ]),
       );
+
+      await this.archiveMessages(type, id, [message]);
     }
 
     const outgoing: ChatMessage = { ...message, reactions: {} };
@@ -1097,6 +1115,12 @@ export class ChatService {
     // An author removing their own message is audited the same way, or posting
     // abuse and deleting it would leave nothing behind.
     await this.recordDeletion(type, id, messageId, message, current);
+
+    await this.updateArchivedMessage(type, id, messageId, (entry) => ({
+      ...entry,
+      deleted_at: new Date().toISOString(),
+      deleted_by: String(current.steam_id),
+    }));
 
     await this.redis.hdel(messageKey, messageId);
 
@@ -1459,6 +1483,16 @@ export class ChatService {
       );
 
       if (swapped === 1) {
+        await this.updateArchivedMessage(type, id, messageId, (entry) => ({
+          ...entry,
+          message: text,
+          edited_at: editedAt,
+          edits: [
+            ...(entry.edits ?? []),
+            { message: entry.message, edited_at: editedAt },
+          ],
+        }));
+
         return await this.announceEdit(
           type,
           id,
@@ -2959,6 +2993,173 @@ export class ChatService {
     await this.redis.hdel(lobbyKey, steamId);
   }
 
+  // Staff at match organizer and above, by the role held now, once the match
+  // has ended. Someone who took part (on a lineup or coaching now, or seen
+  // writing in a team room) gets all chat only. Blocks are not applied:
+  // reviewing a match means seeing every line of it.
+  public async matchChatLog(
+    matchId: string,
+    user: User | undefined,
+  ): Promise<MatchChatLog | null> {
+    if (!user?.steam_id || !ChatService.UUID.test(matchId)) {
+      return null;
+    }
+
+    const current = await this.getCurrentUser(user.steam_id);
+
+    if (!current || !isRoleAbove(current.role, "match_organizer")) {
+      return null;
+    }
+
+    const viewer = String(current.steam_id);
+
+    const [match] = await this.postgres.query<
+      Array<{
+        status: e_match_status_enum;
+        lineup_1_id: string | null;
+        lineup_2_id: string | null;
+        on_lineup: boolean;
+      }>
+    >(
+      `SELECT m.status, m.lineup_1_id::text, m.lineup_2_id::text,
+              EXISTS (
+                SELECT 1 FROM public.match_lineup_players mlp
+                 WHERE mlp.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
+                   AND mlp.steam_id = $2::bigint
+              ) OR EXISTS (
+                SELECT 1 FROM public.match_lineups ml
+                 WHERE ml.id IN (m.lineup_1_id, m.lineup_2_id)
+                   AND ml.coach_steam_id = $2::bigint
+              ) AS on_lineup
+         FROM public.matches m
+        WHERE m.id = $1::uuid`,
+      [matchId, viewer],
+    );
+
+    if (!match || !ChatService.MATCH_CHAT_LOG_STATUSES.includes(match.status)) {
+      return null;
+    }
+
+    const key = ChatService.archiveKey(matchId);
+
+    const [stored, expiresAt] = await Promise.all([
+      this.redis.hgetall(key),
+      this.redis.call("PEXPIRETIME", key) as Promise<number>,
+    ]);
+
+    const entries = Object.values(stored)
+      .map((raw) => JSON.parse(raw) as MatchChatArchiveEntry)
+      .sort(
+        (a, b) =>
+          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+      );
+
+    const withheld =
+      match.on_lineup ||
+      entries.some(
+        (entry) => entry.room !== "match" && entry.from?.steam_id === viewer,
+      );
+
+    return {
+      match: entries.filter((entry) => entry.room === "match"),
+      teams: withheld
+        ? []
+        : [match.lineup_1_id, match.lineup_2_id]
+            .filter((lineupId): lineupId is string => !!lineupId)
+            .map((lineupId) => ({
+              lineup_id: lineupId,
+              messages: entries.filter((entry) => entry.room === lineupId),
+            })),
+      team_chat_withheld: withheld,
+      expires_at: expiresAt > 0 ? new Date(expiresAt).toISOString() : null,
+    };
+  }
+
+  private static archiveKey(matchId: string) {
+    return `chat:archive:${matchId}`;
+  }
+
+  private static archiveRoom(
+    type: ChatLobbyType,
+    id: string,
+  ): { matchId: string; room: string } | null {
+    if (type === ChatLobbyType.Match) {
+      return { matchId: id, room: "match" };
+    }
+
+    if (type === ChatLobbyType.MatchTeam) {
+      const [matchId, lineupId] = id.split(":");
+
+      if (matchId && lineupId) {
+        return { matchId, room: lineupId };
+      }
+    }
+
+    return null;
+  }
+
+  private async archiveMessages(
+    type: ChatLobbyType,
+    id: string,
+    messages: ChatMessage[],
+  ) {
+    const target = ChatService.archiveRoom(type, id);
+
+    if (!target || messages.length === 0) {
+      return;
+    }
+
+    const key = ChatService.archiveKey(target.matchId);
+
+    await this.redis.hset(
+      key,
+      Object.fromEntries(
+        messages.map((message): [string, string] => [
+          message.id,
+          JSON.stringify({
+            id: message.id,
+            room: target.room,
+            message: message.message,
+            timestamp: message.timestamp,
+            source: message.source,
+            from: {
+              steam_id: String(message.from.steam_id),
+              name: message.from.name,
+            },
+          } satisfies MatchChatArchiveEntry),
+        ]),
+      ),
+    );
+    await this.redis.expire(key, ChatService.MATCH_CHAT_ARCHIVE_TTL);
+  }
+
+  private async updateArchivedMessage(
+    type: ChatLobbyType,
+    id: string,
+    messageId: string,
+    change: (entry: MatchChatArchiveEntry) => MatchChatArchiveEntry,
+  ) {
+    const target = ChatService.archiveRoom(type, id);
+
+    if (!target) {
+      return;
+    }
+
+    const key = ChatService.archiveKey(target.matchId);
+    const raw = await this.redis.hget(key, messageId);
+
+    if (!raw) {
+      return;
+    }
+
+    await this.redis.hset(
+      key,
+      messageId,
+      JSON.stringify(change(JSON.parse(raw))),
+    );
+    await this.redis.expire(key, ChatService.MATCH_CHAT_ARCHIVE_TTL);
+  }
+
   private async getAllUsersInLobby(type: ChatLobbyType, id: string) {
     const lobbyKey = this.getLobbyKey(type, id);
     const users = await this.redis.hgetall(lobbyKey);
@@ -2997,6 +3198,8 @@ export class ChatService {
     }
 
     const messages = await this.getRoomMessages(toType, toId);
+
+    await this.archiveMessages(toType, toId, messages);
 
     void this.resendHistory(toType, toId, messages).catch((error) => {
       this.logger.warn(`unable to re-send history to ${toType}:${toId}`, error);

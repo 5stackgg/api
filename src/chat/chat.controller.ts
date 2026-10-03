@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Param,
   Put,
@@ -14,6 +15,7 @@ import { ChatService } from "./chat.service";
 import { lobbies_set_input } from "generated/schema";
 import { HasuraEventData } from "src/hasura/types/HasuraEventData";
 import { ChatLobbyType } from "./enums/ChatLobbyTypes";
+import { MatchChatLog } from "./types/MatchChatLog";
 
 @Controller("chat")
 export class ChatController {
@@ -76,6 +78,21 @@ export class ChatController {
     return {
       threads: await this.chatService.getReadState(request.user),
     };
+  }
+
+  @Get("matches/:matchId/log")
+  @UseGuards(SteamGuard)
+  public async matchChatLog(
+    @Req() request: Request,
+    @Param("matchId") matchId: string,
+  ): Promise<MatchChatLog> {
+    const log = await this.chatService.matchChatLog(matchId, request.user);
+
+    if (!log) {
+      throw new ForbiddenException();
+    }
+
+    return log;
   }
 
   @HasuraEvent()
