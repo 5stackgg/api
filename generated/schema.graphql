@@ -37625,6 +37625,7 @@ type match_clips {
   file: String
   id: uuid!
   kills_count: Int
+  knife_kills_count: Int!
 
   """An object relationship"""
   match_map: match_maps!
@@ -37757,6 +37758,7 @@ input match_clips_arr_rel_insert_input {
 type match_clips_avg_fields {
   duration_ms: Float
   kills_count: Float
+  knife_kills_count: Float
   round: Float
   size: Float
   target_steam_id: Float
@@ -37770,6 +37772,7 @@ order by avg() on columns of table "match_clips"
 input match_clips_avg_order_by {
   duration_ms: order_by
   kills_count: order_by
+  knife_kills_count: order_by
   round: order_by
   size: order_by
   target_steam_id: order_by
@@ -37790,6 +37793,7 @@ input match_clips_bool_exp {
   file: String_comparison_exp
   id: uuid_comparison_exp
   kills_count: Int_comparison_exp
+  knife_kills_count: Int_comparison_exp
   match_map: match_maps_bool_exp
   match_map_demo: match_map_demos_bool_exp
   match_map_demo_id: uuid_comparison_exp
@@ -37825,6 +37829,7 @@ input type for incrementing numeric columns in table "match_clips"
 input match_clips_inc_input {
   duration_ms: Int
   kills_count: Int
+  knife_kills_count: Int
   round: Int
   size: bigint
   target_steam_id: bigint
@@ -37841,6 +37846,7 @@ input match_clips_insert_input {
   file: String
   id: uuid
   kills_count: Int
+  knife_kills_count: Int
   match_map: match_maps_obj_rel_insert_input
   match_map_demo: match_map_demos_obj_rel_insert_input
   match_map_demo_id: uuid
@@ -37870,6 +37876,7 @@ type match_clips_max_fields {
   file: String
   id: uuid
   kills_count: Int
+  knife_kills_count: Int
   match_map_demo_id: uuid
   match_map_id: uuid
   round: Int
@@ -37895,6 +37902,7 @@ input match_clips_max_order_by {
   file: order_by
   id: order_by
   kills_count: order_by
+  knife_kills_count: order_by
   match_map_demo_id: order_by
   match_map_id: order_by
   round: order_by
@@ -37918,6 +37926,7 @@ type match_clips_min_fields {
   file: String
   id: uuid
   kills_count: Int
+  knife_kills_count: Int
   match_map_demo_id: uuid
   match_map_id: uuid
   round: Int
@@ -37943,6 +37952,7 @@ input match_clips_min_order_by {
   file: order_by
   id: order_by
   kills_count: order_by
+  knife_kills_count: order_by
   match_map_demo_id: order_by
   match_map_id: order_by
   round: order_by
@@ -37992,6 +38002,7 @@ input match_clips_order_by {
   file: order_by
   id: order_by
   kills_count: order_by
+  knife_kills_count: order_by
   match_map: match_maps_order_by
   match_map_demo: match_map_demos_order_by
   match_map_demo_id: order_by
@@ -38035,6 +38046,9 @@ enum match_clips_select_column {
   kills_count
 
   """column name"""
+  knife_kills_count
+
+  """column name"""
   match_map_demo_id
 
   """column name"""
@@ -38074,6 +38088,7 @@ input match_clips_set_input {
   file: String
   id: uuid
   kills_count: Int
+  knife_kills_count: Int
   match_map_demo_id: uuid
   match_map_id: uuid
   round: Int
@@ -38090,6 +38105,7 @@ input match_clips_set_input {
 type match_clips_stddev_fields {
   duration_ms: Float
   kills_count: Float
+  knife_kills_count: Float
   round: Float
   size: Float
   target_steam_id: Float
@@ -38103,6 +38119,7 @@ order by stddev() on columns of table "match_clips"
 input match_clips_stddev_order_by {
   duration_ms: order_by
   kills_count: order_by
+  knife_kills_count: order_by
   round: order_by
   size: order_by
   target_steam_id: order_by
@@ -38114,6 +38131,7 @@ input match_clips_stddev_order_by {
 type match_clips_stddev_pop_fields {
   duration_ms: Float
   kills_count: Float
+  knife_kills_count: Float
   round: Float
   size: Float
   target_steam_id: Float
@@ -38127,6 +38145,7 @@ order by stddev_pop() on columns of table "match_clips"
 input match_clips_stddev_pop_order_by {
   duration_ms: order_by
   kills_count: order_by
+  knife_kills_count: order_by
   round: order_by
   size: order_by
   target_steam_id: order_by
@@ -38138,6 +38157,7 @@ input match_clips_stddev_pop_order_by {
 type match_clips_stddev_samp_fields {
   duration_ms: Float
   kills_count: Float
+  knife_kills_count: Float
   round: Float
   size: Float
   target_steam_id: Float
@@ -38151,6 +38171,7 @@ order by stddev_samp() on columns of table "match_clips"
 input match_clips_stddev_samp_order_by {
   duration_ms: order_by
   kills_count: order_by
+  knife_kills_count: order_by
   round: order_by
   size: order_by
   target_steam_id: order_by
@@ -38176,6 +38197,7 @@ input match_clips_stream_cursor_value_input {
   file: String
   id: uuid
   kills_count: Int
+  knife_kills_count: Int
   match_map_demo_id: uuid
   match_map_id: uuid
   round: Int
@@ -38192,6 +38214,7 @@ input match_clips_stream_cursor_value_input {
 type match_clips_sum_fields {
   duration_ms: Int
   kills_count: Int
+  knife_kills_count: Int
   round: Int
   size: bigint
   target_steam_id: bigint
@@ -38205,6 +38228,7 @@ order by sum() on columns of table "match_clips"
 input match_clips_sum_order_by {
   duration_ms: order_by
   kills_count: order_by
+  knife_kills_count: order_by
   round: order_by
   size: order_by
   target_steam_id: order_by
@@ -38230,6 +38254,9 @@ enum match_clips_update_column {
 
   """column name"""
   kills_count
+
+  """column name"""
+  knife_kills_count
 
   """column name"""
   match_map_demo_id
@@ -38277,6 +38304,7 @@ input match_clips_updates {
 type match_clips_var_pop_fields {
   duration_ms: Float
   kills_count: Float
+  knife_kills_count: Float
   round: Float
   size: Float
   target_steam_id: Float
@@ -38290,6 +38318,7 @@ order by var_pop() on columns of table "match_clips"
 input match_clips_var_pop_order_by {
   duration_ms: order_by
   kills_count: order_by
+  knife_kills_count: order_by
   round: order_by
   size: order_by
   target_steam_id: order_by
@@ -38301,6 +38330,7 @@ input match_clips_var_pop_order_by {
 type match_clips_var_samp_fields {
   duration_ms: Float
   kills_count: Float
+  knife_kills_count: Float
   round: Float
   size: Float
   target_steam_id: Float
@@ -38314,6 +38344,7 @@ order by var_samp() on columns of table "match_clips"
 input match_clips_var_samp_order_by {
   duration_ms: order_by
   kills_count: order_by
+  knife_kills_count: order_by
   round: order_by
   size: order_by
   target_steam_id: order_by
@@ -38325,6 +38356,7 @@ input match_clips_var_samp_order_by {
 type match_clips_variance_fields {
   duration_ms: Float
   kills_count: Float
+  knife_kills_count: Float
   round: Float
   size: Float
   target_steam_id: Float
@@ -38338,6 +38370,7 @@ order by variance() on columns of table "match_clips"
 input match_clips_variance_order_by {
   duration_ms: order_by
   kills_count: order_by
+  knife_kills_count: order_by
   round: order_by
   size: order_by
   target_steam_id: order_by

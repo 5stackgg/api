@@ -1687,19 +1687,20 @@ export class ClipsService {
     }
   }
 
+  // Knife kills count every knife in the footage, appended knife reels
+  // included, so they can lift a clip above others with the same kills.
   private async countKillsForSpec(
     matchMapId: string,
     spec: ClipSpec | null,
     targetSteamId: string | null,
-  ): Promise<number | null> {
+  ): Promise<{ kills: number | null; knifeKills: number }> {
     const segments = spec?.segments ?? [];
-    if (segments.length === 0) return null;
+    if (segments.length === 0) return { kills: null, knifeKills: 0 };
 
     // A best-round reel with knife kills from other rounds appended counts
     // only the round, so the footage over-counts it.
-    if (typeof spec?.kills_count === "number") {
-      return spec.kills_count;
-    }
+    const specKills =
+      typeof spec?.kills_count === "number" ? spec.kills_count : null;
 
     try {
       const { match_map_demos } = await this.hasura.query({
@@ -1714,25 +1715,28 @@ export class ClipsService {
           tick: number;
           killer?: string;
           victim?: string;
+          weapon?: string;
         }>,
       );
-      if (kills.length === 0) return 0;
 
       let count = 0;
+      let knifeKills = 0;
       for (const k of kills) {
         if (typeof k.tick !== "number") continue;
         if (targetSteamId && String(k.killer) !== targetSteamId) continue;
         const inSegment = segments.some(
           (s) => k.tick >= s.start_tick && k.tick <= s.end_tick,
         );
-        if (inSegment) count++;
+        if (!inSegment) continue;
+        count++;
+        if ((k.weapon ?? "").toLowerCase().includes("knife")) knifeKills++;
       }
-      return count;
+      return { kills: specKills ?? count, knifeKills };
     } catch (error) {
       this.logger.warn(
         `[clip] kills count failed for match_map ${matchMapId}: ${(error as Error)?.message}`,
       );
-      return null;
+      return { kills: specKills, knifeKills: 0 };
     }
   }
 
@@ -1883,7 +1887,7 @@ export class ClipsService {
 
     const visibility = spec?.visibility ?? "private";
 
-    const killsCount = await this.countKillsForSpec(
+    const { kills: killsCount, knifeKills } = await this.countKillsForSpec(
       row.match_map_id,
       spec,
       targetSteamId,
@@ -1908,6 +1912,7 @@ export class ClipsService {
             file: key,
             thumbnail_url: thumbnailUrl,
             kills_count: killsCount,
+            knife_kills_count: knifeKills,
             round,
             visibility,
             size: videoSize + thumbnailSize,

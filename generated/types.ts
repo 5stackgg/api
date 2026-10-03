@@ -55176,6 +55176,9 @@ export default {
             "kills_count": [
                 44
             ],
+            "knife_kills_count": [
+                44
+            ],
             "match_map": [
                 3477
             ],
@@ -55408,6 +55411,9 @@ export default {
             "kills_count": [
                 33
             ],
+            "knife_kills_count": [
+                33
+            ],
             "round": [
                 33
             ],
@@ -55432,6 +55438,9 @@ export default {
                 3877
             ],
             "kills_count": [
+                3877
+            ],
+            "knife_kills_count": [
                 3877
             ],
             "round": [
@@ -55479,6 +55488,9 @@ export default {
                 7243
             ],
             "kills_count": [
+                45
+            ],
+            "knife_kills_count": [
                 45
             ],
             "match_map": [
@@ -55544,6 +55556,9 @@ export default {
             "kills_count": [
                 44
             ],
+            "knife_kills_count": [
+                44
+            ],
             "round": [
                 44
             ],
@@ -55577,6 +55592,9 @@ export default {
                 7241
             ],
             "kills_count": [
+                44
+            ],
+            "knife_kills_count": [
                 44
             ],
             "match_map": [
@@ -55647,6 +55665,9 @@ export default {
             "kills_count": [
                 44
             ],
+            "knife_kills_count": [
+                44
+            ],
             "match_map_demo_id": [
                 7241
             ],
@@ -55695,6 +55716,9 @@ export default {
                 3877
             ],
             "kills_count": [
+                3877
+            ],
+            "knife_kills_count": [
                 3877
             ],
             "match_map_demo_id": [
@@ -55747,6 +55771,9 @@ export default {
             "kills_count": [
                 44
             ],
+            "knife_kills_count": [
+                44
+            ],
             "match_map_demo_id": [
                 7241
             ],
@@ -55795,6 +55822,9 @@ export default {
                 3877
             ],
             "kills_count": [
+                3877
+            ],
+            "knife_kills_count": [
                 3877
             ],
             "match_map_demo_id": [
@@ -55883,6 +55913,9 @@ export default {
             "kills_count": [
                 3877
             ],
+            "knife_kills_count": [
+                3877
+            ],
             "match_map": [
                 3497
             ],
@@ -55960,6 +55993,9 @@ export default {
             "kills_count": [
                 44
             ],
+            "knife_kills_count": [
+                44
+            ],
             "match_map_demo_id": [
                 7241
             ],
@@ -56001,6 +56037,9 @@ export default {
             "kills_count": [
                 33
             ],
+            "knife_kills_count": [
+                33
+            ],
             "round": [
                 33
             ],
@@ -56025,6 +56064,9 @@ export default {
                 3877
             ],
             "kills_count": [
+                3877
+            ],
+            "knife_kills_count": [
                 3877
             ],
             "round": [
@@ -56053,6 +56095,9 @@ export default {
             "kills_count": [
                 33
             ],
+            "knife_kills_count": [
+                33
+            ],
             "round": [
                 33
             ],
@@ -56077,6 +56122,9 @@ export default {
                 3877
             ],
             "kills_count": [
+                3877
+            ],
+            "knife_kills_count": [
                 3877
             ],
             "round": [
@@ -56105,6 +56153,9 @@ export default {
             "kills_count": [
                 33
             ],
+            "knife_kills_count": [
+                33
+            ],
             "round": [
                 33
             ],
@@ -56129,6 +56180,9 @@ export default {
                 3877
             ],
             "kills_count": [
+                3877
+            ],
+            "knife_kills_count": [
                 3877
             ],
             "round": [
@@ -56177,6 +56231,9 @@ export default {
             "kills_count": [
                 44
             ],
+            "knife_kills_count": [
+                44
+            ],
             "match_map_demo_id": [
                 7241
             ],
@@ -56218,6 +56275,9 @@ export default {
             "kills_count": [
                 44
             ],
+            "knife_kills_count": [
+                44
+            ],
             "round": [
                 44
             ],
@@ -56242,6 +56302,9 @@ export default {
                 3877
             ],
             "kills_count": [
+                3877
+            ],
+            "knife_kills_count": [
                 3877
             ],
             "round": [
@@ -56285,6 +56348,9 @@ export default {
             "kills_count": [
                 33
             ],
+            "knife_kills_count": [
+                33
+            ],
             "round": [
                 33
             ],
@@ -56309,6 +56375,9 @@ export default {
                 3877
             ],
             "kills_count": [
+                3877
+            ],
+            "knife_kills_count": [
                 3877
             ],
             "round": [
@@ -56337,6 +56406,9 @@ export default {
             "kills_count": [
                 33
             ],
+            "knife_kills_count": [
+                33
+            ],
             "round": [
                 33
             ],
@@ -56361,6 +56433,9 @@ export default {
                 3877
             ],
             "kills_count": [
+                3877
+            ],
+            "knife_kills_count": [
                 3877
             ],
             "round": [
@@ -56389,6 +56464,9 @@ export default {
             "kills_count": [
                 33
             ],
+            "knife_kills_count": [
+                33
+            ],
             "round": [
                 33
             ],
@@ -56413,6 +56491,9 @@ export default {
                 3877
             ],
             "kills_count": [
+                3877
+            ],
+            "knife_kills_count": [
                 3877
             ],
             "round": [

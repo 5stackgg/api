@@ -163,7 +163,7 @@ describe("ClipsService", () => {
         "76561198000000009",
       );
 
-      expect(count).toBe(4);
+      expect(count).toEqual({ kills: 4, knifeKills: 1 });
     });
 
     it("still counts the footage for specs without a kill count", async () => {
@@ -193,7 +193,45 @@ describe("ClipsService", () => {
         "76561198000000009",
       );
 
-      expect(count).toBe(5);
+      expect(count).toEqual({ kills: 5, knifeKills: 1 });
+    });
+
+    it("counts only the target's knife kills inside the footage", async () => {
+      const kill = (
+        tick: number,
+        weapon: string,
+        killer = "76561198000000009",
+      ) => ({
+        tick,
+        weapon,
+        killer,
+        victim: "76561198000000001",
+      });
+      hasura.query.mockResolvedValueOnce({
+        match_map_demos: [
+          {
+            kills: [
+              kill(1000, "knife_karambit"),
+              kill(1100, "ak47"),
+              kill(1200, "knife", "76561198000000002"),
+              kill(5000, "knife_butterfly"),
+            ],
+          },
+        ],
+      });
+
+      const count = await (service as any).countKillsForSpec(
+        "map-1",
+        {
+          match_map_id: "map-1",
+          segments: [{ start_tick: 808, end_tick: 1428 }],
+          output: { format: "mp4", resolution: "1080p", fps: 60 },
+          destination: "library",
+        },
+        "76561198000000009",
+      );
+
+      expect(count).toEqual({ kills: 2, knifeKills: 1 });
     });
   });
 
