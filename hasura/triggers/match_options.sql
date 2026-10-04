@@ -37,6 +37,14 @@ BEGIN
             IF (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text = 'user' THEN
                 RAISE EXCEPTION 'Cannot assign the Lan region' USING ERRCODE = '22000';
             END IF;
+
+            -- A match is played on the LAN or online, never vetoed between them.
+            IF EXISTS (
+                SELECT 1 FROM server_regions
+                WHERE value = ANY(NEW.regions) AND is_lan = false
+            ) THEN
+                RAISE EXCEPTION 'LAN and online regions cannot be mixed' USING ERRCODE = '22000';
+            END IF;
         END IF;
     END IF;
 
@@ -117,6 +125,18 @@ BEGIN
 
     IF (NEW.game_mode_id IS DISTINCT FROM OLD.game_mode_id) THEN
         PERFORM assert_game_mode_selectable(NEW.game_mode_id);
+    END IF;
+
+    IF NEW.regions IS DISTINCT FROM OLD.regions
+        AND EXISTS (
+            SELECT 1 FROM server_regions
+            WHERE value = ANY(NEW.regions) AND is_lan = true
+        )
+        AND EXISTS (
+            SELECT 1 FROM server_regions
+            WHERE value = ANY(NEW.regions) AND is_lan = false
+        ) THEN
+        RAISE EXCEPTION 'LAN and online regions cannot be mixed' USING ERRCODE = '22000';
     END IF;
 
     RETURN NEW;

@@ -216,6 +216,14 @@ export class MatchmakingGateway {
         );
       }
 
+      // A queue is LAN or online, never both.
+      const isLanRegion = (value: string) =>
+        server_regions.find((server_region) => server_region.value === value)
+          ?.is_lan === true;
+      if (regions.some(isLanRegion) && !regions.every(isLanRegion)) {
+        throw new JoinQueueError("LAN and online regions cannot be mixed");
+      }
+
       const { type } = data;
 
       if (!type) {
