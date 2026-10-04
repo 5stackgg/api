@@ -78,6 +78,10 @@ type Query {
   webPushStatus: WebPushStatusOutput
 }
 
+type Query {
+  siteContent: SiteContentOutput!
+}
+
 type Mutation {
   bakeShaders(
     game_server_node_id: uuid!
@@ -2837,4 +2841,11 @@ type PlayerCommunityIpMatch {
   last_seen_at: timestamptz
   online: Boolean!
   ip: String!
+}
+
+type SiteContentOutput {
+  tournaments: Boolean!
+  events: Boolean!
+  news: Boolean!
+  highlights: Boolean!
 }
