@@ -1,0 +1,45 @@
+table:
+  name: player_dismissals
+  schema: public
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        player_steam_id:
+          _eq: X-Hasura-User-Id
+      columns:
+        - key
+        - value
+        - dismissed_at
+    comment: player_steam_id is stamped from the session by tbi_player_dismissals_steam_id
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - key
+        - value
+        - dismissed_at
+      filter:
+        player_steam_id:
+          _eq: X-Hasura-User-Id
+    comment: Only your own dismissals
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - value
+        - dismissed_at
+      filter:
+        player_steam_id:
+          _eq: X-Hasura-User-Id
+      check:
+        player_steam_id:
+          _eq: X-Hasura-User-Id
+    comment: Lets a dismissal be upserted (on_conflict needs an update permission)
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        player_steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ""
