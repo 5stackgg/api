@@ -157,6 +157,13 @@ actions:
     permissions:
       - role: administrator
     comment: Web push setup status for the application settings page; never returns the private key
+  - name: siteContent
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+    permissions:
+      - role: guest
+    comment: Which view-only sections (tournaments, events, news, highlights) have anything a guest can see
   - name: bakeShaders
     definition:
       kind: synchronous
@@ -2135,6 +2142,7 @@ custom_types:
     - name: UtilityDriftScanOutput
     - name: WebPushPlatformCount
     - name: WebPushStatusOutput
+    - name: SiteContentOutput
     - name: ScanStartedOutput
     - name: OrphanObject
     - name: OrphanScanResultOutput
