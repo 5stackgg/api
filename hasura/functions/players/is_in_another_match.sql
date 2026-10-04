@@ -7,7 +7,8 @@ AS $$
         SELECT 1
         FROM get_player_matches(player) AS pm
         WHERE (
-            pm.status IN ('Live', 'Veto', 'WaitingForCheckIn', 'WaitingForServer')
+            pm.status IN ('Veto', 'WaitingForCheckIn', 'WaitingForServer')
+            OR (pm.status = 'Live' AND NOT match_series_decided(pm.id))
             -- A scheduled match only ties the player up once it's within an hour
             -- of kickoff; before that they're free to play other matches.
             OR (

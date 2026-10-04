@@ -12,7 +12,6 @@ DECLARE
     match_winning_lineup_id UUID;
     lineup_1_wins INT := 0;
     lineup_2_wins INT := 0;
-    final_advantage INT := 0;
     match_map public.match_maps;
 BEGIN
     -- Retrieve match best_of value
@@ -34,38 +33,7 @@ BEGIN
             RETURN;
         END IF;
 
-        -- Winner-bracket advantage: when this match is the grand final of a
-        -- double-elimination stage, the winner-bracket team starts with a map-point
-        -- head start. Stays 0 (inert) for every other match.
-        -- The grand final is stored as path 'WB' at round wb_rounds+1 with no parent
-        -- (generate_double_elimination_bracket); 'GF' is only a round_best_of settings
-        -- key, never a stored path. A parentless WB bracket is NOT enough on its
-        -- own: a DE stage that passes 2+ teams to a next stage never creates a GF,
-        -- leaving each group's WB final parentless too — only the real GF has an
-        -- LB feeder as a child. assign_team_to_bracket_slot orders the WB feeder
-        -- ahead of the LB feeder, so the winner-bracket team is always slot 1 /
-        -- tournament_team_id_1, which schedule_tournament_match maps to lineup_1.
-        SELECT COALESCE(ts.final_map_advantage, 0)
-        INTO final_advantage
-        FROM tournament_brackets tb
-        INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
-        WHERE tb.match_id = _match_map.match_id
-          AND ts.type = 'DoubleElimination'
-          AND tb.parent_bracket_id IS NULL
-          AND COALESCE(tb.path, 'WB') = 'WB'
-          AND EXISTS (
-              SELECT 1
-              FROM tournament_brackets lb
-              WHERE lb.parent_bracket_id = tb.id
-                AND lb.path = 'LB'
-          );
-
-        -- Clamp below the win threshold: at or above it the winner-bracket team
-        -- would take the match on the first finished map, even one it lost.
-        lineup_1_wins := LEAST(
-            COALESCE(final_advantage, 0),
-            CEIL(match_best_of / 2.0)::int - 1
-        );
+        lineup_1_wins := match_final_map_advantage(_match_map.match_id);
 
         -- Only Finished maps count: an in-progress map's latest round snapshot
         -- would otherwise credit a map win to whoever is momentarily ahead.

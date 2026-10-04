@@ -440,6 +440,58 @@ describe("match scoring from rounds (SQL-driven)", () => {
       expect(after.ended_at).not.toBeNull();
       expect(await cancelsAt(match.id)).toBeNull();
     });
+
+    describe("is_in_another_match", () => {
+      const inAnotherMatch = async (steam: string) => {
+        const [row] = await postgres.query<Array<{ v: boolean }>>(
+          "SELECT is_in_another_match(p) AS v FROM players p WHERE steam_id = $1",
+          [steam],
+        );
+        return row.v;
+      };
+
+      it("frees the players once the deciding map is waiting on TV", async () => {
+        const match = await createLiveMatch(3);
+        const player = await fx.lineupPlayer(match.lineup_1_id);
+
+        await recordScore(match.mapIds[0], 13, 7);
+        await finishMap(match.mapIds[0]);
+
+        await setMapStatus(match.mapIds[1], "Live");
+        await recordScore(match.mapIds[1], 13, 5);
+        expect(await inAnotherMatch(player)).toBe(true);
+
+        for (const status of ["WaitingForTV", "UploadingDemo"]) {
+          await setMapStatus(match.mapIds[1], status);
+          expect((await matchRow(match.id)).status).toBe("Live");
+          expect(await inAnotherMatch(player)).toBe(false);
+        }
+      });
+
+      it("keeps the players while the series still has maps to play", async () => {
+        const match = await createLiveMatch(3);
+        const player = await fx.lineupPlayer(match.lineup_1_id);
+
+        await setMapStatus(match.mapIds[0], "Live");
+        await recordScore(match.mapIds[0], 13, 7);
+        await setMapStatus(match.mapIds[0], "WaitingForTV");
+
+        expect(await inAnotherMatch(player)).toBe(true);
+      });
+
+      it("counts the grand-final advantage toward the decided series", async () => {
+        const match = await createLiveMatch(3);
+        await linkDoubleElimFinal(match.id, 1);
+        const player = await fx.lineupPlayer(match.lineup_2_id);
+
+        await setMapStatus(match.mapIds[0], "Live");
+        await recordScore(match.mapIds[0], 13, 7);
+        expect(await inAnotherMatch(player)).toBe(true);
+
+        await setMapStatus(match.mapIds[0], "WaitingForTV");
+        expect(await inAnotherMatch(player)).toBe(false);
+      });
+    });
   });
 
   it("finishing the map stamps the map's ended_at", async () => {

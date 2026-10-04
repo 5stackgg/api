@@ -2077,6 +2077,7 @@ export class UtilityPracticeService {
                  WHERE mlp.steam_id = p.steam_id
                    AND m.source <> 'practice'
                    AND m.status = ANY ($2::text[])
+                   AND NOT (m.status = 'Live' AND public.match_series_decided(m.id))
               ) AS in_another_match
          FROM public.players p
         WHERE p.steam_id = $1`,
