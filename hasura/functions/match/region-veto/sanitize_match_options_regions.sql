@@ -27,6 +27,18 @@ BEGIN
         _sanitized_regions := ARRAY[]::text[];
     END IF;
 
+    -- A list holding both kinds predates the no-mixing rule: a LAN match stays
+    -- on the LAN.
+    IF EXISTS (
+        SELECT 1 FROM server_regions sr
+        WHERE sr.value = ANY(_sanitized_regions) AND sr.is_lan = true
+    ) THEN
+        SELECT array_agg(u.region ORDER BY u.ordinality) INTO _sanitized_regions
+        FROM unnest(_sanitized_regions) WITH ORDINALITY AS u(region, ordinality)
+        INNER JOIN server_regions sr ON sr.value = u.region
+        WHERE sr.is_lan = true;
+    END IF;
+
     IF COALESCE(array_length(_sanitized_regions, 1), 0) = 0 THEN
         SELECT array_agg(sr.value ORDER BY sr.value) INTO _sanitized_regions
         FROM server_regions sr
