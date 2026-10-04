@@ -53,18 +53,6 @@ BEGIN
         RETURN _team_name;
     END IF;
 
-    SELECT COALESCE(NULLIF(p.name, ''), mlp.placeholder_name)
-    INTO _team_name
-    FROM match_lineup_players mlp
-    LEFT JOIN players p ON p.steam_id = mlp.steam_id
-    WHERE mlp.match_lineup_id = match_lineup.id
-      AND mlp.captain = true
-    LIMIT 1;
-
-    IF _team_name IS NOT NULL THEN
-        RETURN _team_name || '''s Team';
-    END IF;
-
     IF match_lineup.id = _lineup_1_id THEN
         RETURN 'Team 1';
     ELSE
