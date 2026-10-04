@@ -1,3 +1,5 @@
+import { readFileSync } from "fs";
+import { join } from "path";
 import { Logger } from "@nestjs/common";
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { AwardsService } from "./../src/awards/awards.service";
@@ -369,6 +371,194 @@ describe("awards (SQL-driven)", () => {
       expect(Number(total)).toBe(roster.length);
     });
 
+    describe("a tournament's placement awards", () => {
+      const unplacedEntry = async (tournamentId: string) => {
+        const [entry] = await postgres.query<
+          Array<{ id: string; team_id: string }>
+        >(
+          `SELECT tt.id, tt.team_id FROM tournament_teams tt
+            WHERE tt.tournament_id = $1
+              AND NOT EXISTS (
+                SELECT 1 FROM award_recipients ar
+                 WHERE ar.tournament_team_id = tt.id
+              )
+            ORDER BY tt.id
+            LIMIT 1`,
+          [tournamentId],
+        );
+        return entry;
+      };
+
+      const placementsOf = async (awardId: string, tournamentTeamId: string) =>
+        (
+          await postgres.query<Array<{ placement: number | null }>>(
+            `SELECT placement FROM award_recipients
+              WHERE award_id = $1 AND tournament_team_id = $2`,
+            [awardId, tournamentTeamId],
+          )
+        ).map((row) => row.placement);
+
+      it("places a hand-granted bronze on 3rd", async () => {
+        const t = await playedOutCup();
+        const bronze = await systemAward("tournament_bronze");
+        const entry = await unplacedEntry(t.id);
+
+        await awardsController().grantAward({
+          award_id: bronze,
+          team_id: entry.team_id,
+          tournament_id: t.id,
+          user: user(await fx.player(), "administrator"),
+        });
+
+        const placements = await placementsOf(bronze, entry.id);
+        expect(placements.length).toBeGreaterThan(1);
+        expect(new Set(placements)).toEqual(new Set([3]));
+      });
+
+      it("places the award a tournament configured for a placement", async () => {
+        const t = await playedOutCup();
+        const thirdPlace = await createAward("Cup Third Place", "special");
+        await postgres.query(
+          `INSERT INTO tournament_awards (tournament_id, placement, award_id)
+            VALUES ($1, 3, $2)`,
+          [t.id, thirdPlace],
+        );
+        const entry = await unplacedEntry(t.id);
+        const [{ player_steam_id }] = await postgres.query<
+          Array<{ player_steam_id: string }>
+        >(
+          `SELECT player_steam_id::text FROM tournament_team_roster
+            WHERE tournament_team_id = $1 LIMIT 1`,
+          [entry.id],
+        );
+
+        await awardsController().grantAward({
+          award_id: thirdPlace,
+          player_steam_id,
+          tournament_id: t.id,
+          user: user(await fx.player(), "administrator"),
+        });
+
+        expect(await placementsOf(thirdPlace, entry.id)).toEqual([3]);
+      });
+
+      it("leaves an award no placement resolves to without one", async () => {
+        const t = await playedOutCup();
+        const karambit = await createAward("Golden Karambit", "special");
+        const [{ player_steam_id, tournament_team_id }] = await postgres.query<
+          Array<{ player_steam_id: string; tournament_team_id: string }>
+        >(
+          `SELECT player_steam_id::text, tournament_team_id FROM award_recipients
+            WHERE tournament_id = $1 AND placement = 1
+              AND player_steam_id IS NOT NULL
+            LIMIT 1`,
+          [t.id],
+        );
+
+        await awardsController().grantAward({
+          award_id: karambit,
+          player_steam_id,
+          tournament_id: t.id,
+          user: user(await fx.player(), "administrator"),
+        });
+
+        expect(await placementsOf(karambit, tournament_team_id)).toEqual([
+          null,
+        ]);
+      });
+
+      it("refuses a placement the recipient already holds", async () => {
+        const t = await playedOutCup();
+        const gold = await systemAward("tournament_gold");
+        const [{ player_steam_id }] = await postgres.query<
+          Array<{ player_steam_id: string }>
+        >(
+          `SELECT player_steam_id::text FROM award_recipients
+            WHERE tournament_id = $1 AND placement = 1
+              AND player_steam_id IS NOT NULL
+            LIMIT 1`,
+          [t.id],
+        );
+
+        await expect(
+          awardsController().grantAward({
+            award_id: gold,
+            player_steam_id,
+            tournament_id: t.id,
+            user: user(await fx.player(), "administrator"),
+          }),
+        ).rejects.toThrow(/already granted/i);
+      });
+
+      it("backfills the placement onto bronzes granted before it was recorded", async () => {
+        const t = await playedOutCup();
+        const bronze = await systemAward("tournament_bronze");
+        const karambit = await createAward("Golden Karambit", "special");
+        const entry = await unplacedEntry(t.id);
+        const [{ player_steam_id }] = await postgres.query<
+          Array<{ player_steam_id: string }>
+        >(
+          `SELECT player_steam_id::text FROM tournament_team_roster
+            WHERE tournament_team_id = $1 LIMIT 1`,
+          [entry.id],
+        );
+
+        const gold = await systemAward("tournament_gold");
+        const [champion] = await postgres.query<
+          Array<{ player_steam_id: string; tournament_team_id: string }>
+        >(
+          `SELECT player_steam_id::text, tournament_team_id FROM award_recipients
+            WHERE tournament_id = $1 AND placement = 1
+              AND player_steam_id IS NOT NULL
+            LIMIT 1`,
+          [t.id],
+        );
+
+        const legacyGrant = (
+          awardId: string,
+          seat: { player_steam_id: string; tournament_team_id: string },
+        ) =>
+          postgres.query(
+            `INSERT INTO award_recipients
+                (award_id, tournament_id, tournament_team_id, player_steam_id, source)
+              VALUES ($1, $2, $3, $4, 'manual')`,
+            [awardId, t.id, seat.tournament_team_id, seat.player_steam_id],
+          );
+
+        const seat = { player_steam_id, tournament_team_id: entry.id };
+        for (const awardId of [bronze, bronze, karambit]) {
+          await legacyGrant(awardId, seat);
+        }
+        // Already holds the calculated gold, so it cannot take placement 1 too.
+        await legacyGrant(gold, champion);
+
+        await postgres.query(
+          readFileSync(
+            join(
+              __dirname,
+              "../hasura/migrations/default/1890000000600_award_recipients_manual_placement/up.sql",
+            ),
+            "utf8",
+          ),
+        );
+
+        expect((await placementsOf(bronze, entry.id)).sort()).toEqual([
+          3,
+          null,
+        ]);
+        expect(await placementsOf(karambit, entry.id)).toEqual([null]);
+
+        const [{ manual_golds }] = await postgres.query<
+          Array<{ manual_golds: Array<number | null> }>
+        >(
+          `SELECT array_agg(placement) AS manual_golds FROM award_recipients
+            WHERE award_id = $1 AND player_steam_id = $2 AND source = 'manual'`,
+          [gold, champion.player_steam_id],
+        );
+        expect(manual_golds).toEqual([null]);
+      });
+    });
+
     it("refuses a tournament team without its tournament", async () => {
       const awardId = await createAward("Orphan");
       const steamId = await fx.player();
@@ -692,20 +882,22 @@ describe("awards (SQL-driven)", () => {
 
     it("counts a tier once per tournament however often it was granted there", async () => {
       const t = await playedOutCup();
-      const [{ player_steam_id: steam }] = await postgres.query<
-        Array<{ player_steam_id: string }>
-      >(
-        `SELECT r.player_steam_id::text FROM tournament_team_roster r
-          WHERE r.tournament_id = $1
-            AND NOT EXISTS (
-              SELECT 1 FROM award_recipients ar
-               WHERE ar.tournament_id = r.tournament_id
-                 AND ar.player_steam_id = r.player_steam_id
-                 AND ar.placement IN (0, 1)
-            )
-          LIMIT 1`,
-        [t.id],
-      );
+      const [{ player_steam_id: steam, tournament_team_id }] =
+        await postgres.query<
+          Array<{ player_steam_id: string; tournament_team_id: string }>
+        >(
+          `SELECT r.player_steam_id::text, r.tournament_team_id
+             FROM tournament_team_roster r
+            WHERE r.tournament_id = $1
+              AND NOT EXISTS (
+                SELECT 1 FROM award_recipients ar
+                 WHERE ar.tournament_id = r.tournament_id
+                   AND ar.player_steam_id = r.player_steam_id
+                   AND ar.placement IN (0, 1)
+              )
+            LIMIT 1`,
+          [t.id],
+        );
       const before = (await medalBoard()).get(steam) ?? {
         mvp: 0,
         gold: 0,
@@ -714,13 +906,20 @@ describe("awards (SQL-driven)", () => {
       };
       const gold = await systemAward("tournament_gold");
 
-      for (let i = 0; i < 3; i++) {
-        await awardsController().grantAward({
-          award_id: gold,
-          player_steam_id: steam,
-          tournament_id: t.id,
-          user: user(await fx.player(), "administrator"),
-        });
+      await awardsController().grantAward({
+        award_id: gold,
+        player_steam_id: steam,
+        tournament_id: t.id,
+        user: user(await fx.player(), "administrator"),
+      });
+      // Repeats can only be older grants, which were stored without a placement.
+      for (let i = 0; i < 2; i++) {
+        await postgres.query(
+          `INSERT INTO award_recipients
+              (award_id, tournament_id, tournament_team_id, player_steam_id, source)
+            VALUES ($1, $2, $3, $4, 'manual')`,
+          [gold, t.id, tournament_team_id, steam],
+        );
       }
       await grant({ award_id: gold, player_steam_id: steam });
 
@@ -1254,7 +1453,7 @@ describe("awards (SQL-driven)", () => {
 
       it("refuses an organizer below the floor granting to themselves or their own team", async () => {
         const t = await playedOutCup();
-        const awardId = await systemAward("tournament_gold");
+        const awardId = await createAward("Self Pick");
         const { player_steam_id, team_id } = await rosterOf(t.id);
         const teammate = String(player_steam_id);
         await postgres.query(

@@ -1,0 +1,2 @@
+-- A backfilled placement is indistinguishable from one granted after this
+-- migration, so there is nothing safe to put back.

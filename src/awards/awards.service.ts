@@ -194,20 +194,28 @@ export class AwardsService {
     await this.requireAward(input.award_id);
 
     let tournamentTeamId: string | null = null;
+    let placement: number | null = null;
     if (input.tournament_id) {
       tournamentTeamId = await this.resolveTournamentTeam(
         input.tournament_id,
         input.player_steam_id ?? null,
         input.team_id ?? null,
       );
+      placement = await this.tournamentPlacementFor(
+        input.tournament_id,
+        input.award_id,
+      );
     }
 
+    // A conflict here is the recipient already holding this placement in the
+    // tournament, calculated or hand-granted.
     const [granted] = await this.postgres.query<Array<{ id: string }>>(
       `INSERT INTO public.award_recipients
           (award_id, player_steam_id, team_id, tournament_id, tournament_team_id,
-           event_id, season_id, league_season_id,
+           placement, event_id, season_id, league_season_id,
            source, awarded_by_steam_id, note)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'manual', $9, $10)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'manual', $10, $11)
+        ON CONFLICT DO NOTHING
         RETURNING *`,
       [
         input.award_id,
@@ -215,6 +223,7 @@ export class AwardsService {
         input.team_id ?? null,
         input.tournament_id ?? null,
         tournamentTeamId,
+        placement,
         input.event_id ?? null,
         input.season_id ?? null,
         input.league_season_id ?? null,
@@ -223,11 +232,19 @@ export class AwardsService {
       ],
     );
 
+    if (!granted) {
+      throw new BadRequestException("Award already granted to this recipient");
+    }
+
     if (input.team_id) {
       // grantToRoster inserts the roster in one statement rather than looping
       // back through here, so a team grant has to be notified from its own
       // returned rows.
-      const roster = await this.grantToRoster(input, tournamentTeamId);
+      const roster = await this.grantToRoster(
+        input,
+        tournamentTeamId,
+        placement,
+      );
 
       void this.notifyAwarded(
         roster.map((recipient) => recipient.player_steam_id),
@@ -611,6 +628,7 @@ export class AwardsService {
   private async grantToRoster(
     input: GrantAwardInput,
     tournamentTeamId: string | null,
+    placement: number | null,
   ): Promise<Array<{ id: string; player_steam_id: string }>> {
     // RETURNING, so only the players who actually received the award are
     // notified -- the NOT EXISTS below skips anyone who already held it, and
@@ -620,9 +638,9 @@ export class AwardsService {
     >(
       `INSERT INTO public.award_recipients
           (award_id, player_steam_id, tournament_id, tournament_team_id,
-           event_id, season_id, league_season_id,
+           placement, event_id, season_id, league_season_id,
            source, awarded_by_steam_id, note)
-        SELECT $1, roster.player_steam_id, $2, $3, $4, $5, $6, 'manual', $7, $8
+        SELECT $1, roster.player_steam_id, $2, $3, $10, $4, $5, $6, 'manual', $7, $8
           FROM public.team_roster roster
          WHERE roster.team_id = $9
            AND roster.role <> 'Invite'
@@ -635,6 +653,7 @@ export class AwardsService {
                 AND held.season_id IS NOT DISTINCT FROM $5
                 AND held.league_season_id IS NOT DISTINCT FROM $6
            )
+        ON CONFLICT DO NOTHING
         RETURNING id, player_steam_id::text AS player_steam_id`,
       [
         input.award_id,
@@ -646,8 +665,28 @@ export class AwardsService {
         input.awarded_by_steam_id,
         input.note ?? null,
         input.team_id,
+        placement,
       ],
     );
+  }
+
+  // Granting a tournament's 1st/2nd/3rd award by hand is the organizer
+  // deciding that placement, so the row carries it and lands on the podium.
+  // The MVP stays with the calculation: a tournament holds exactly one.
+  private async tournamentPlacementFor(
+    tournamentId: string,
+    awardId: string,
+  ): Promise<number | null> {
+    const [row] = await this.postgres.query<Array<{ placement: number }>>(
+      `SELECT placement
+         FROM unnest(ARRAY[1, 2, 3]) AS placement
+        WHERE public.resolve_tournament_award($1, placement) = $2
+        ORDER BY placement
+        LIMIT 1`,
+      [tournamentId, awardId],
+    );
+
+    return row?.placement ?? null;
   }
 
   // A tournament-scoped grant must name the entry the recipient played as: it
