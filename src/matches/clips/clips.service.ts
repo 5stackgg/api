@@ -1881,7 +1881,9 @@ export class ClipsService {
       }
     }
 
-    const visibility = spec?.visibility ?? "private";
+    // Auto-clips set visibility from auto_clip_default_visibility; manual
+    // clips (editor, presets) leave it unset and are public by default.
+    const visibility = spec?.visibility ?? "public";
 
     const killsCount = await this.countKillsForSpec(
       row.match_map_id,
