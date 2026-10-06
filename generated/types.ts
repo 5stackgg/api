@@ -118312,9 +118312,6 @@ export default {
             "game_server_node_id": [
                 101
             ],
-            "hibernating": [
-                6
-            ],
             "host": [
                 101
             ],
@@ -118894,9 +118891,6 @@ export default {
             "game_server_node_id": [
                 103
             ],
-            "hibernating": [
-                7
-            ],
             "host": [
                 103
             ],
@@ -119090,9 +119084,6 @@ export default {
             ],
             "game_server_node_id": [
                 101
-            ],
-            "hibernating": [
-                6
             ],
             "host": [
                 101
@@ -119584,9 +119575,6 @@ export default {
             "game_server_node_id": [
                 3877
             ],
-            "hibernating": [
-                3877
-            ],
             "host": [
                 3877
             ],
@@ -119730,9 +119718,6 @@ export default {
             ],
             "game_server_node_id": [
                 101
-            ],
-            "hibernating": [
-                6
             ],
             "host": [
                 101
@@ -119935,9 +119920,6 @@ export default {
             ],
             "game_server_node_id": [
                 101
-            ],
-            "hibernating": [
-                6
             ],
             "host": [
                 101
