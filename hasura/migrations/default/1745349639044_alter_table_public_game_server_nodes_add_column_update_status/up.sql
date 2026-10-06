@@ -1,2 +1,2 @@
-alter table "public"."game_server_nodes" add column "update_status" text
+alter table "public"."game_server_nodes" add column if not exists "update_status" text
  null;

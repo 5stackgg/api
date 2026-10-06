@@ -1,8 +1,8 @@
-CREATE TABLE "public"."game_server_nodes" ("id" text NOT NULL DEFAULT gen_random_uuid(), "public_ip" inet, "start_port_range" integer, "end_port_range" integer, "region" text DEFAULT 'Lan', "status" text DEFAULT 'Setup', "enabled" boolean NOT NULL DEFAULT true, PRIMARY KEY ("id") );
+CREATE TABLE IF NOT EXISTS "public"."game_server_nodes" ("id" text NOT NULL DEFAULT gen_random_uuid(), "public_ip" inet, "start_port_range" integer, "end_port_range" integer, "region" text DEFAULT 'Lan', "status" text DEFAULT 'Setup', "enabled" boolean NOT NULL DEFAULT true, PRIMARY KEY ("id") );
 
-CREATE TABLE "public"."e_server_regions" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value") );
+CREATE TABLE IF NOT EXISTS "public"."e_server_regions" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value") );
 
-CREATE TABLE "public"."e_game_server_node_statuses" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value") );
+CREATE TABLE IF NOT EXISTS "public"."e_game_server_node_statuses" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value") );
 
 alter table "public"."game_server_nodes"
   add constraint "game_server_nodes_region_fkey"
@@ -17,7 +17,7 @@ alter table "public"."game_server_nodes"
   ("value") on update cascade on delete restrict;
 alter table "public"."game_server_nodes" alter column "enabled" set default 'false';
 
-alter table "public"."servers" add column "game_server_node_id" text
+alter table "public"."servers" add column if not exists "game_server_node_id" text
  null;
 
 alter table "public"."servers"
@@ -26,8 +26,8 @@ alter table "public"."servers"
   references "public"."game_server_nodes"
   ("id") on update cascade on delete restrict;
 
-alter table "public"."servers" drop column "is_on_demand" cascade;
-alter table "public"."servers" add column "reserved_by_match_id" uuid
+alter table "public"."servers" drop column if exists "is_on_demand" cascade;
+alter table "public"."servers" add column if not exists "reserved_by_match_id" uuid
  null;
 
 alter table "public"."servers"

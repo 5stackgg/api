@@ -37,7 +37,7 @@ BEGIN
      WHERE tgrelid = 'public.player_sanctions'::regclass
        AND NOT tgisinternal;
 
-    CREATE TABLE public.player_sanctions_plain (
+    CREATE TABLE IF NOT EXISTS public.player_sanctions_plain (
         id uuid NOT NULL DEFAULT gen_random_uuid(),
         player_steam_id bigint NOT NULL,
         type text NOT NULL,
@@ -77,16 +77,16 @@ BEGIN
         FOREIGN KEY (type) REFERENCES public.e_sanction_types(value)
         ON UPDATE CASCADE ON DELETE RESTRICT;
 
-    CREATE INDEX idx_player_sanctions_steam_type
+    CREATE INDEX IF NOT EXISTS idx_player_sanctions_steam_type
         ON public.player_sanctions (player_steam_id, type);
 
-    CREATE INDEX idx_player_sanctions_one_auto_ban
+    CREATE INDEX IF NOT EXISTS idx_player_sanctions_one_auto_ban
         ON public.player_sanctions (player_steam_id)
         WHERE type = 'ban' AND sanctioned_by_steam_id IS NULL;
 
     -- TimescaleDB created this one implicitly for the partitioning column.
     -- Kept because the moderation screens still order sanctions by recency.
-    CREATE INDEX player_sanctions_created_at_idx
+    CREATE INDEX IF NOT EXISTS player_sanctions_created_at_idx
         ON public.player_sanctions (created_at DESC);
 
     FOREACH trigger_definition IN ARRAY trigger_definitions LOOP

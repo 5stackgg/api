@@ -2,14 +2,14 @@ SET check_function_bodies = false;
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE TABLE public.teams (
+CREATE TABLE IF NOT EXISTS public.teams (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name text NOT NULL,
     short_name text NOT NULL,
     owner_steam_id bigint NOT NULL
 );
 
-CREATE TABLE public.matches (
+CREATE TABLE IF NOT EXISTS public.matches (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     server_id uuid,
     label text,
@@ -24,7 +24,7 @@ CREATE TABLE public.matches (
     lineup_2_id uuid NOT NULL
 );
 
-CREATE TABLE public.tournaments (
+CREATE TABLE IF NOT EXISTS public.tournaments (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name text NOT NULL,
     description text,
@@ -34,7 +34,7 @@ CREATE TABLE public.tournaments (
     match_options_id uuid NOT NULL
 );
 
-CREATE TABLE public.match_map_veto_picks (
+CREATE TABLE IF NOT EXISTS public.match_map_veto_picks (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     match_id uuid NOT NULL,
     type text NOT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE public.match_map_veto_picks (
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-CREATE TABLE public.match_lineup_players (
+CREATE TABLE IF NOT EXISTS public.match_lineup_players (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     steam_id bigint,
     match_lineup_id uuid NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE public.match_lineup_players (
 );
 COMMENT ON TABLE public.match_lineup_players IS 'relational table for assigning a players to a match and lineup';
 
-CREATE TABLE public.match_maps (
+CREATE TABLE IF NOT EXISTS public.match_maps (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     match_id uuid NOT NULL,
     map_id uuid NOT NULL,
@@ -69,14 +69,14 @@ CREATE TABLE public.match_maps (
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-CREATE TABLE public.tournament_team_roster (
+CREATE TABLE IF NOT EXISTS public.tournament_team_roster (
     tournament_team_id uuid NOT NULL,
     player_steam_id bigint NOT NULL,
     tournament_id uuid NOT NULL,
     role text DEFAULT 'Member'::text NOT NULL
 );
 
-CREATE TABLE public.players (
+CREATE TABLE IF NOT EXISTS public.players (
     steam_id bigint NOT NULL,
     name text NOT NULL,
     profile_url text,
@@ -86,7 +86,7 @@ CREATE TABLE public.players (
     role text DEFAULT 'user'::text NOT NULL
 );
 
-CREATE TABLE public.servers (
+CREATE TABLE IF NOT EXISTS public.servers (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     host text NOT NULL,
     label text NOT NULL,
@@ -98,14 +98,14 @@ CREATE TABLE public.servers (
     api_password uuid DEFAULT gen_random_uuid() NOT NULL
 );
 
-CREATE TABLE public.match_lineups (
+CREATE TABLE IF NOT EXISTS public.match_lineups (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     team_id uuid,
     coach_steam_id bigint
 );
 COMMENT ON TABLE public.match_lineups IS 'relational table for assigning a team to a match and lineup';
 
-CREATE TABLE public.match_options (
+CREATE TABLE IF NOT EXISTS public.match_options (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     overtime boolean NOT NULL,
     knife_round boolean NOT NULL,
@@ -120,7 +120,7 @@ CREATE TABLE public.match_options (
     type text DEFAULT 'competitive'::text NOT NULL
 );
 
-CREATE TABLE public.player_damages (
+CREATE TABLE IF NOT EXISTS public.player_damages (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     match_id uuid NOT NULL,
     match_map_id uuid NOT NULL,
@@ -142,7 +142,7 @@ CREATE TABLE public.player_damages (
     attacked_location_coordinates text
 );
 
-CREATE TABLE public.tournament_brackets (
+CREATE TABLE IF NOT EXISTS public.tournament_brackets (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tournament_stage_id uuid NOT NULL,
     match_id uuid,
@@ -154,7 +154,7 @@ CREATE TABLE public.tournament_brackets (
     match_number integer
 );
 
-CREATE TABLE public.team_invites (
+CREATE TABLE IF NOT EXISTS public.team_invites (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     team_id uuid NOT NULL,
     steam_id bigint NOT NULL,
@@ -162,69 +162,69 @@ CREATE TABLE public.team_invites (
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-CREATE TABLE public._map_pool (
+CREATE TABLE IF NOT EXISTS public._map_pool (
     map_id uuid NOT NULL,
     map_pool_id uuid NOT NULL
 );
-CREATE TABLE public.e_map_pool_types (
+CREATE TABLE IF NOT EXISTS public.e_map_pool_types (
     value text NOT NULL,
     description text
 );
-CREATE TABLE public.e_match_map_status (
+CREATE TABLE IF NOT EXISTS public.e_match_map_status (
     value text NOT NULL,
     description text NOT NULL
 );
-CREATE TABLE public.e_match_status (
+CREATE TABLE IF NOT EXISTS public.e_match_status (
     value text NOT NULL,
     description text NOT NULL
 );
-CREATE TABLE public.e_match_types (
+CREATE TABLE IF NOT EXISTS public.e_match_types (
     value text NOT NULL,
     description text NOT NULL
 );
-CREATE TABLE public.e_objective_types (
+CREATE TABLE IF NOT EXISTS public.e_objective_types (
     value text NOT NULL,
     description text NOT NULL
 );
-CREATE TABLE public.e_player_roles (
+CREATE TABLE IF NOT EXISTS public.e_player_roles (
     value text NOT NULL,
     description text NOT NULL
 );
-CREATE TABLE public.e_sides (
+CREATE TABLE IF NOT EXISTS public.e_sides (
     value text NOT NULL,
     description text NOT NULL
 );
-CREATE TABLE public.e_team_roles (
+CREATE TABLE IF NOT EXISTS public.e_team_roles (
     value text NOT NULL,
     description text NOT NULL
 );
-CREATE TABLE public.e_timeout_settings (
+CREATE TABLE IF NOT EXISTS public.e_timeout_settings (
     value text NOT NULL,
     description text NOT NULL
 );
-CREATE TABLE public.e_tournament_stage_types (
+CREATE TABLE IF NOT EXISTS public.e_tournament_stage_types (
     value text NOT NULL,
     description text NOT NULL
 );
-CREATE TABLE public.e_tournament_status (
+CREATE TABLE IF NOT EXISTS public.e_tournament_status (
     value text NOT NULL,
     description text NOT NULL
 );
-CREATE TABLE public.e_utility_types (
+CREATE TABLE IF NOT EXISTS public.e_utility_types (
     value text NOT NULL,
     description text NOT NULL
 );
-CREATE TABLE public.e_veto_pick_types (
+CREATE TABLE IF NOT EXISTS public.e_veto_pick_types (
     value text NOT NULL,
     description text NOT NULL
 );
-CREATE TABLE public.map_pools (
+CREATE TABLE IF NOT EXISTS public.map_pools (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     type text NOT NULL,
     enabled boolean DEFAULT true NOT NULL,
     seed boolean DEFAULT false NOT NULL
 );
-CREATE TABLE public.maps (
+CREATE TABLE IF NOT EXISTS public.maps (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name text NOT NULL,
     type text NOT NULL,
@@ -233,14 +233,14 @@ CREATE TABLE public.maps (
     poster text,
     patch text
 );
-CREATE TABLE public.match_map_demos (
+CREATE TABLE IF NOT EXISTS public.match_map_demos (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     file text NOT NULL,
     match_id uuid NOT NULL,
     match_map_id uuid NOT NULL,
     size integer NOT NULL
 );
-CREATE TABLE public.match_map_rounds (
+CREATE TABLE IF NOT EXISTS public.match_map_rounds (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     match_map_id uuid NOT NULL,
     round integer NOT NULL,
@@ -253,7 +253,7 @@ CREATE TABLE public.match_map_rounds (
     lineup_2_timeouts_available integer NOT NULL,
     backup_file text
 );
-CREATE TABLE public.player_assists (
+CREATE TABLE IF NOT EXISTS public.player_assists (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     match_id uuid NOT NULL,
     match_map_id uuid NOT NULL,
@@ -265,7 +265,7 @@ CREATE TABLE public.player_assists (
     attacked_team text NOT NULL,
     flash boolean DEFAULT false NOT NULL
 );
-CREATE TABLE public.player_flashes (
+CREATE TABLE IF NOT EXISTS public.player_flashes (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     match_id uuid NOT NULL,
     match_map_id uuid NOT NULL,
@@ -276,7 +276,7 @@ CREATE TABLE public.player_flashes (
     duration numeric NOT NULL,
     team_flash boolean NOT NULL
 );
-CREATE TABLE public.player_kills (
+CREATE TABLE IF NOT EXISTS public.player_kills (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     match_id uuid NOT NULL,
     match_map_id uuid NOT NULL,
@@ -300,7 +300,7 @@ CREATE TABLE public.player_kills (
     thru_wall boolean DEFAULT false NOT NULL,
     in_air boolean DEFAULT false NOT NULL
 );
-CREATE TABLE public.player_objectives (
+CREATE TABLE IF NOT EXISTS public.player_objectives (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     match_id uuid NOT NULL,
     match_map_id uuid NOT NULL,
@@ -309,7 +309,7 @@ CREATE TABLE public.player_objectives (
     round integer NOT NULL,
     type text NOT NULL
 );
-CREATE TABLE public.player_unused_utility (
+CREATE TABLE IF NOT EXISTS public.player_unused_utility (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     match_id uuid NOT NULL,
     match_map_id uuid NOT NULL,
@@ -317,7 +317,7 @@ CREATE TABLE public.player_unused_utility (
     round integer NOT NULL,
     unused integer NOT NULL
 );
-CREATE TABLE public.player_utility (
+CREATE TABLE IF NOT EXISTS public.player_utility (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     match_id uuid NOT NULL,
     match_map_id uuid NOT NULL,
@@ -327,16 +327,16 @@ CREATE TABLE public.player_utility (
     attacker_steam_id bigint NOT NULL,
     attacker_location_coordinates text
 );
-CREATE TABLE public.team_roster (
+CREATE TABLE IF NOT EXISTS public.team_roster (
     player_steam_id bigint NOT NULL,
     team_id uuid NOT NULL,
     role text DEFAULT 'Pending'::text NOT NULL
 );
-CREATE TABLE public.tournament_organizers (
+CREATE TABLE IF NOT EXISTS public.tournament_organizers (
     steam_id bigint NOT NULL,
     tournament_id uuid NOT NULL
 );
-CREATE TABLE public.tournament_stages (
+CREATE TABLE IF NOT EXISTS public.tournament_stages (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tournament_id uuid NOT NULL,
     type text NOT NULL,
@@ -345,7 +345,7 @@ CREATE TABLE public.tournament_stages (
     min_teams integer NOT NULL,
     max_teams integer NOT NULL
 );
-CREATE TABLE public.tournament_teams (
+CREATE TABLE IF NOT EXISTS public.tournament_teams (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     team_id uuid,
     tournament_id uuid NOT NULL,
@@ -475,16 +475,16 @@ ALTER TABLE ONLY public.tournaments
     ADD CONSTRAINT tournaments_match_options_id_key UNIQUE (match_options_id);
 ALTER TABLE ONLY public.tournaments
     ADD CONSTRAINT tournaments_pkey PRIMARY KEY (id);
-CREATE INDEX assists_player_match ON public.player_assists USING btree (attacker_steam_id, match_id);
-CREATE INDEX damage_player_match ON public.player_damages USING btree (attacker_steam_id, match_id);
-CREATE INDEX deaths_player_match ON public.player_kills USING btree (attacked_steam_id, match_id);
-CREATE INDEX demo_match ON public.match_map_demos USING btree (match_id);
-CREATE INDEX flashes_player_match ON public.player_flashes USING btree (attacker_steam_id, match_id);
-CREATE INDEX kills_player_match ON public.player_kills USING btree (attacker_steam_id, match_id);
-CREATE INDEX objectives_player_match ON public.player_objectives USING btree (player_steam_id, match_id);
-CREATE INDEX unused_utility_player_match ON public.player_unused_utility USING btree (player_steam_id, match_id);
-CREATE INDEX utility_player_match ON public.player_utility USING btree (attacker_steam_id, match_id);
-CREATE INDEX veto_match ON public.match_map_veto_picks USING btree (match_id);
+CREATE INDEX IF NOT EXISTS assists_player_match ON public.player_assists USING btree (attacker_steam_id, match_id);
+CREATE INDEX IF NOT EXISTS damage_player_match ON public.player_damages USING btree (attacker_steam_id, match_id);
+CREATE INDEX IF NOT EXISTS deaths_player_match ON public.player_kills USING btree (attacked_steam_id, match_id);
+CREATE INDEX IF NOT EXISTS demo_match ON public.match_map_demos USING btree (match_id);
+CREATE INDEX IF NOT EXISTS flashes_player_match ON public.player_flashes USING btree (attacker_steam_id, match_id);
+CREATE INDEX IF NOT EXISTS kills_player_match ON public.player_kills USING btree (attacker_steam_id, match_id);
+CREATE INDEX IF NOT EXISTS objectives_player_match ON public.player_objectives USING btree (player_steam_id, match_id);
+CREATE INDEX IF NOT EXISTS unused_utility_player_match ON public.player_unused_utility USING btree (player_steam_id, match_id);
+CREATE INDEX IF NOT EXISTS utility_player_match ON public.player_utility USING btree (attacker_steam_id, match_id);
+CREATE INDEX IF NOT EXISTS veto_match ON public.match_map_veto_picks USING btree (match_id);
 
 ALTER TABLE ONLY public._map_pool
     ADD CONSTRAINT map_pool_map_id_fkey FOREIGN KEY (map_id) REFERENCES public.maps(id) ON UPDATE CASCADE ON DELETE CASCADE;

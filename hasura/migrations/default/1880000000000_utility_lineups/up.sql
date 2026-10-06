@@ -261,22 +261,33 @@ $do$;
 -- during a match but not for one that grants server access on a public link.
 -- Crockford base32 over gen_random_bytes: 10 chars, 50 bits, no ambiguous
 -- glyphs. 256 % 32 == 0, so the modulo is unbiased.
-CREATE OR REPLACE FUNCTION public.generate_utility_invite_code() RETURNS text
-    LANGUAGE plpgsql
-    VOLATILE
-    AS $fn$
-DECLARE
-    alphabet constant text := '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-    source bytea := gen_random_bytes(10);
-    code text := '';
-    i int;
+-- Seeded like generate_invite_code() above: the maintained definition is
+-- hasura/functions/utility/generate_utility_invite_code.sql, applied after
+-- migrations, and the column default below needs the function to exist.
+DO $do$
 BEGIN
-    FOR i IN 0..9 LOOP
-        code := code || substr(alphabet, (get_byte(source, i) % 32) + 1, 1);
-    END LOOP;
-    RETURN code;
-END;
-$fn$;
+    IF to_regprocedure('public.generate_utility_invite_code()') IS NULL THEN
+        EXECUTE $fn$
+            CREATE FUNCTION public.generate_utility_invite_code() RETURNS text
+                LANGUAGE plpgsql
+                VOLATILE
+                AS $body$
+            DECLARE
+                alphabet constant text := '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+                source bytea := gen_random_bytes(10);
+                code text := '';
+                i int;
+            BEGIN
+                FOR i IN 0..9 LOOP
+                    code := code || substr(alphabet, (get_byte(source, i) % 32) + 1, 1);
+                END LOOP;
+                RETURN code;
+            END;
+            $body$;
+        $fn$;
+    END IF;
+END
+$do$;
 
 CREATE TABLE IF NOT EXISTS "public"."utility_practice_sessions" (
     "id" uuid NOT NULL DEFAULT gen_random_uuid(),

@@ -1,2 +1,2 @@
-alter table "public"."servers" add column "plugin_version" text
+alter table "public"."servers" add column if not exists "plugin_version" text
  null;

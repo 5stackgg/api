@@ -1,4 +1,4 @@
-CREATE TABLE "public"."match_invites" (
+CREATE TABLE IF NOT EXISTS "public"."match_invites" (
     "id" uuid NOT NULL DEFAULT gen_random_uuid(),
     "match_id" uuid NOT NULL,
     "steam_id" bigint NOT NULL,

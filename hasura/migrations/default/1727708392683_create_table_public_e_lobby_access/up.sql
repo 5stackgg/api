@@ -1,4 +1,4 @@
-CREATE TABLE "public"."e_lobby_access" ("value" text NOT NULL, "description" Text NOT NULL, PRIMARY KEY ("value") );
+CREATE TABLE IF NOT EXISTS "public"."e_lobby_access" ("value" text NOT NULL, "description" Text NOT NULL, PRIMARY KEY ("value") );
 
 
 alter table "public"."match_options"

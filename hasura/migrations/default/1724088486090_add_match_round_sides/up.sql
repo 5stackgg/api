@@ -1,5 +1,5 @@
 
-alter table "public"."match_map_rounds" add column "lineup_1_side" text
+alter table "public"."match_map_rounds" add column if not exists "lineup_1_side" text
  not null;
 
 alter table "public"."match_map_rounds"
@@ -8,7 +8,7 @@ alter table "public"."match_map_rounds"
   references "public"."e_sides"
   ("value") on update cascade on delete restrict;
 
-alter table "public"."match_map_rounds" add column "lineup_2_side" text
+alter table "public"."match_map_rounds" add column if not exists "lineup_2_side" text
  not null;
 
 alter table "public"."match_map_rounds"

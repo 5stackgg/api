@@ -1,2 +1,2 @@
 ALTER TABLE public.game_server_nodes
-  ADD COLUMN cpu_warnings jsonb;
+  ADD COLUMN IF NOT EXISTS cpu_warnings jsonb;

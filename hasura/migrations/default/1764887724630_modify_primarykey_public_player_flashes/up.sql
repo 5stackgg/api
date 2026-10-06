@@ -11,7 +11,7 @@ DELETE FROM player_flashes WHERE id IN (
     WHERE t.rn > 1
 );
 
-ALTER TABLE "public"."player_flashes" DROP CONSTRAINT "player_flashes_pkey";
+ALTER TABLE "public"."player_flashes" DROP CONSTRAINT IF EXISTS "player_flashes_pkey";
 
 ALTER TABLE "public"."player_flashes"
     ADD CONSTRAINT "player_flashes_pkey" PRIMARY KEY ("match_map_id", "time", "attacker_steam_id", "attacked_steam_id");

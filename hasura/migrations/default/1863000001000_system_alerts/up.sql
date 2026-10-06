@@ -1,4 +1,4 @@
-CREATE TABLE "public"."e_system_alert_types" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value"), UNIQUE ("value"));
+CREATE TABLE IF NOT EXISTS "public"."e_system_alert_types" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value"), UNIQUE ("value"));
 
 INSERT INTO "public"."e_system_alert_types" ("value", "description") VALUES
   ('info', 'Informational'),
@@ -6,7 +6,7 @@ INSERT INTO "public"."e_system_alert_types" ("value", "description") VALUES
   ('critical', 'Critical')
 ON CONFLICT (value) DO NOTHING;
 
-CREATE TABLE "public"."system_alerts" (
+CREATE TABLE IF NOT EXISTS "public"."system_alerts" (
   "id" uuid NOT NULL DEFAULT gen_random_uuid(),
   "type" text NOT NULL DEFAULT 'info',
   "title" text,

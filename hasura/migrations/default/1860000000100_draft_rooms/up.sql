@@ -1,4 +1,4 @@
-CREATE TABLE "public"."e_draft_game_status" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value"), UNIQUE ("value"));
+CREATE TABLE IF NOT EXISTS "public"."e_draft_game_status" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value"), UNIQUE ("value"));
 
 INSERT INTO "public"."e_draft_game_status" ("value", "description") VALUES
   ('Open', 'Accepting Players'),
@@ -10,7 +10,7 @@ INSERT INTO "public"."e_draft_game_status" ("value", "description") VALUES
   ('Canceled', 'Canceled')
 ON CONFLICT (value) DO NOTHING;
 
-CREATE TABLE "public"."e_draft_game_captain_selection" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value"), UNIQUE ("value"));
+CREATE TABLE IF NOT EXISTS "public"."e_draft_game_captain_selection" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value"), UNIQUE ("value"));
 
 INSERT INTO "public"."e_draft_game_captain_selection" ("value", "description") VALUES
   ('TopEloTwo', 'Top 2 by Rank'),
@@ -18,14 +18,14 @@ INSERT INTO "public"."e_draft_game_captain_selection" ("value", "description") V
   ('RandomTwo', 'Random Two')
 ON CONFLICT (value) DO NOTHING;
 
-CREATE TABLE "public"."e_draft_game_draft_order" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value"), UNIQUE ("value"));
+CREATE TABLE IF NOT EXISTS "public"."e_draft_game_draft_order" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value"), UNIQUE ("value"));
 
 INSERT INTO "public"."e_draft_game_draft_order" ("value", "description") VALUES
   ('Snake', 'Snake (1-2-2-2-1)'),
   ('Alternating', 'Alternating')
 ON CONFLICT (value) DO NOTHING;
 
-CREATE TABLE "public"."e_draft_game_mode" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value"), UNIQUE ("value"));
+CREATE TABLE IF NOT EXISTS "public"."e_draft_game_mode" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value"), UNIQUE ("value"));
 
 INSERT INTO "public"."e_draft_game_mode" ("value", "description") VALUES
   ('Captains', 'Two Captains Draft'),
@@ -34,7 +34,7 @@ INSERT INTO "public"."e_draft_game_mode" ("value", "description") VALUES
   ('Teams', 'Pre-Made Teams')
 ON CONFLICT (value) DO NOTHING;
 
-CREATE TABLE "public"."e_draft_game_player_status" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value"), UNIQUE ("value"));
+CREATE TABLE IF NOT EXISTS "public"."e_draft_game_player_status" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value"), UNIQUE ("value"));
 
 INSERT INTO "public"."e_draft_game_player_status" ("value", "description") VALUES
   ('Accepted', 'Player Accepted Into Game'),
@@ -42,7 +42,7 @@ INSERT INTO "public"."e_draft_game_player_status" ("value", "description") VALUE
   ('Waitlist', 'Player On Waitlist')
 ON CONFLICT (value) DO NOTHING;
 
-CREATE TABLE "public"."draft_games" (
+CREATE TABLE IF NOT EXISTS "public"."draft_games" (
   "id" uuid NOT NULL DEFAULT gen_random_uuid(),
   "host_steam_id" bigint NOT NULL,
   "status" text NOT NULL DEFAULT 'Open',
@@ -131,16 +131,16 @@ alter table "public"."draft_games"
   foreign key ("team_2_id")
   references "public"."teams" ("id") on update cascade on delete set null;
 
-CREATE INDEX "draft_games_status_idx" ON "public"."draft_games" ("status");
-CREATE INDEX "draft_games_host_steam_id_idx" ON "public"."draft_games" ("host_steam_id");
-CREATE INDEX "draft_games_map_pool_id_idx" ON "public"."draft_games" ("map_pool_id");
-CREATE INDEX "draft_games_match_options_id_idx" ON "public"."draft_games" ("match_options_id");
-CREATE INDEX "draft_games_match_id_idx" ON "public"."draft_games" ("match_id");
-CREATE INDEX "draft_games_team_1_id_idx" ON "public"."draft_games" ("team_1_id");
-CREATE INDEX "draft_games_team_2_id_idx" ON "public"."draft_games" ("team_2_id");
-CREATE UNIQUE INDEX "draft_games_invite_code_key" ON "public"."draft_games" ("invite_code");
+CREATE INDEX IF NOT EXISTS "draft_games_status_idx" ON "public"."draft_games" ("status");
+CREATE INDEX IF NOT EXISTS "draft_games_host_steam_id_idx" ON "public"."draft_games" ("host_steam_id");
+CREATE INDEX IF NOT EXISTS "draft_games_map_pool_id_idx" ON "public"."draft_games" ("map_pool_id");
+CREATE INDEX IF NOT EXISTS "draft_games_match_options_id_idx" ON "public"."draft_games" ("match_options_id");
+CREATE INDEX IF NOT EXISTS "draft_games_match_id_idx" ON "public"."draft_games" ("match_id");
+CREATE INDEX IF NOT EXISTS "draft_games_team_1_id_idx" ON "public"."draft_games" ("team_1_id");
+CREATE INDEX IF NOT EXISTS "draft_games_team_2_id_idx" ON "public"."draft_games" ("team_2_id");
+CREATE UNIQUE INDEX IF NOT EXISTS "draft_games_invite_code_key" ON "public"."draft_games" ("invite_code");
 
-CREATE TABLE "public"."draft_game_players" (
+CREATE TABLE IF NOT EXISTS "public"."draft_game_players" (
   "draft_game_id" uuid NOT NULL,
   "steam_id" bigint NOT NULL,
   "status" text NOT NULL DEFAULT 'Accepted',
@@ -155,10 +155,10 @@ CREATE TABLE "public"."draft_game_players" (
   FOREIGN KEY ("status") REFERENCES "public"."e_draft_game_player_status" ("value") ON UPDATE cascade ON DELETE restrict
 );
 
-CREATE INDEX "draft_game_players_steam_id_idx" ON "public"."draft_game_players" ("steam_id");
-CREATE UNIQUE INDEX "draft_game_players_captain_lineup_key" ON "public"."draft_game_players" ("draft_game_id", "lineup") WHERE "is_captain";
+CREATE INDEX IF NOT EXISTS "draft_game_players_steam_id_idx" ON "public"."draft_game_players" ("steam_id");
+CREATE UNIQUE INDEX IF NOT EXISTS "draft_game_players_captain_lineup_key" ON "public"."draft_game_players" ("draft_game_id", "lineup") WHERE "is_captain";
 
-CREATE TABLE "public"."draft_game_picks" (
+CREATE TABLE IF NOT EXISTS "public"."draft_game_picks" (
   "id" uuid NOT NULL DEFAULT gen_random_uuid(),
   "draft_game_id" uuid NOT NULL,
   "captain_steam_id" bigint NOT NULL,
@@ -172,6 +172,6 @@ CREATE TABLE "public"."draft_game_picks" (
   FOREIGN KEY ("picked_steam_id") REFERENCES "public"."players" ("steam_id") ON UPDATE cascade ON DELETE cascade
 );
 
-CREATE INDEX "draft_game_picks_draft_game_id_idx" ON "public"."draft_game_picks" ("draft_game_id");
-CREATE INDEX "draft_game_picks_captain_steam_id_idx" ON "public"."draft_game_picks" ("captain_steam_id");
-CREATE INDEX "draft_game_picks_picked_steam_id_idx" ON "public"."draft_game_picks" ("picked_steam_id");
+CREATE INDEX IF NOT EXISTS "draft_game_picks_draft_game_id_idx" ON "public"."draft_game_picks" ("draft_game_id");
+CREATE INDEX IF NOT EXISTS "draft_game_picks_captain_steam_id_idx" ON "public"."draft_game_picks" ("captain_steam_id");
+CREATE INDEX IF NOT EXISTS "draft_game_picks_picked_steam_id_idx" ON "public"."draft_game_picks" ("picked_steam_id");

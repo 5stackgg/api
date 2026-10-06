@@ -1,4 +1,4 @@
-alter table "public"."servers" drop constraint "servers_game_server_node_fkey",
+alter table "public"."servers" drop constraint if exists "servers_game_server_node_fkey",
   add constraint "servers_game_server_node_id_fkey"
   foreign key ("game_server_node_id")
   references "public"."game_server_nodes"

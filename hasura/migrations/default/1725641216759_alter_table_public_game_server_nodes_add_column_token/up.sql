@@ -1,2 +1,2 @@
-alter table "public"."game_server_nodes" add column "token" text
+alter table "public"."game_server_nodes" add column if not exists "token" text
  null;

@@ -1,1 +1,1 @@
-alter table "public"."servers" add column "rcon_status" boolean;
+alter table "public"."servers" add column if not exists "rcon_status" boolean;

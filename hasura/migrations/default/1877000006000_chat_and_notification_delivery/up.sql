@@ -57,7 +57,7 @@ ALTER TABLE "public"."direct_messages"
 -- Dropped rather than IF NOT EXISTS: the old index of this name has no `seq`.
 DROP INDEX IF EXISTS "public"."direct_messages_room_id_created_at_idx";
 
-CREATE INDEX "direct_messages_room_id_created_at_idx"
+CREATE INDEX IF NOT EXISTS "direct_messages_room_id_created_at_idx"
     ON "public"."direct_messages" ("room_id", "created_at" DESC, "seq" DESC);
 
 -- One row per (room, participant), so an inbox is one indexed read rather than

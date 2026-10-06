@@ -5,7 +5,7 @@
 -- "auto-add organizer to lineup_1" fallback is correctly skipped for
 -- tournament matches.
 alter table "public"."tournament_brackets"
-  drop constraint "tournament_brackets_match_id_fkey",
+  drop constraint if exists "tournament_brackets_match_id_fkey",
   add constraint "tournament_brackets_match_id_fkey"
     foreign key ("match_id")
     references "public"."matches" ("id")

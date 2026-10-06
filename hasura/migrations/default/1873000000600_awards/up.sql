@@ -112,7 +112,7 @@ BEGIN
            SET source = CASE WHEN manual THEN 'manual' ELSE 'tournament' END
          WHERE source IS NULL;
 
-        ALTER TABLE public.award_recipients DROP COLUMN manual;
+        ALTER TABLE public.award_recipients DROP COLUMN IF EXISTS manual;
     END IF;
 END $$;
 

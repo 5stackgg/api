@@ -1,4 +1,4 @@
-CREATE TABLE "public"."e_game_cfg_types" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value") );
+CREATE TABLE IF NOT EXISTS "public"."e_game_cfg_types" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value") );
 
 insert into e_game_cfg_types ("value", "description") values
     ('Base', 'Base game configuration'),
@@ -9,7 +9,7 @@ insert into e_game_cfg_types ("value", "description") values
     ('Duel', 'Duel game configuration')
 on conflict(value) do update set "description" = EXCLUDED."description";
 
-alter table "public"."match_type_cfgs" drop constraint "match_type_cfgs_type_fkey";
+alter table "public"."match_type_cfgs" drop constraint if exists "match_type_cfgs_type_fkey";
 
 alter table "public"."match_type_cfgs"
   add constraint "match_type_cfgs_type_fkey"

@@ -1,1 +1,1 @@
-alter table "public"."servers" add column "game" text null default 'cs2';
+alter table "public"."servers" add column if not exists "game" text null default 'cs2';

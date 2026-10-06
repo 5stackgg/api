@@ -10,7 +10,7 @@ DELETE FROM player_objectives WHERE id IN (
     WHERE t.rn > 1
 );
 
-ALTER TABLE "public"."player_objectives" DROP CONSTRAINT "player_objectives_pkey";
+ALTER TABLE "public"."player_objectives" DROP CONSTRAINT IF EXISTS "player_objectives_pkey";
 
 ALTER TABLE "public"."player_objectives"
     ADD CONSTRAINT "player_objectives_pkey" PRIMARY KEY ("match_map_id", "time", "player_steam_id");

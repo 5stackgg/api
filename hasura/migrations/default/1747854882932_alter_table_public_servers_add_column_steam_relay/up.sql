@@ -1,2 +1,2 @@
-alter table "public"."servers" add column "steam_relay" text
+alter table "public"."servers" add column if not exists "steam_relay" text
  null;

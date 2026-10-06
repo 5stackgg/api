@@ -1,4 +1,4 @@
-ALTER TABLE public.teams ADD COLUMN created_at timestamptz;
+ALTER TABLE public.teams ADD COLUMN IF NOT EXISTS created_at timestamptz;
 
 -- Teams made before this column existed get their earliest trace: the first
 -- match they played or the first invite they sent. A team with neither stays

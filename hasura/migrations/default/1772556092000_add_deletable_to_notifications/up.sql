@@ -1,1 +1,1 @@
-ALTER TABLE "public"."notifications" ADD COLUMN "deletable" boolean NOT NULL DEFAULT true;
+ALTER TABLE "public"."notifications" ADD COLUMN IF NOT EXISTS "deletable" boolean NOT NULL DEFAULT true;
