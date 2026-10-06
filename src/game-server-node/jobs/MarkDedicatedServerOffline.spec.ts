@@ -70,6 +70,7 @@ describe("MarkDedicatedServerOffline", () => {
 
     expect(offlineWrite()).toEqual({
       connected: false,
+      hibernating: false,
       offline_at: expect.any(String),
     });
     expect(notifications.send).toHaveBeenCalledWith(

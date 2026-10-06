@@ -57,6 +57,7 @@ export class MarkDedicatedServerOffline extends WorkerHost {
           },
           _set: {
             connected: false,
+            hibernating: false,
             offline_at: server.offline_at ?? new Date().toISOString(),
           },
         },

@@ -102775,6 +102775,7 @@ type servers {
   """An object relationship"""
   game_server_node: game_server_nodes
   game_server_node_id: String
+  hibernating: Boolean!
   host: String!
   id: uuid!
   is_dedicated: Boolean!
@@ -103113,6 +103114,7 @@ input servers_bool_exp {
   game_mode_id: uuid_comparison_exp
   game_server_node: game_server_nodes_bool_exp
   game_server_node_id: String_comparison_exp
+  hibernating: Boolean_comparison_exp
   host: String_comparison_exp
   id: uuid_comparison_exp
   is_dedicated: Boolean_comparison_exp
@@ -103214,6 +103216,7 @@ input servers_insert_input {
   game_mode_id: uuid
   game_server_node: game_server_nodes_obj_rel_insert_input
   game_server_node_id: String
+  hibernating: Boolean
   host: String
   id: uuid
   is_dedicated: Boolean
@@ -103427,6 +103430,7 @@ input servers_order_by {
   game_mode_id: order_by
   game_server_node: game_server_nodes_order_by
   game_server_node_id: order_by
+  hibernating: order_by
   host: order_by
   id: order_by
   is_dedicated: order_by
@@ -103505,6 +103509,7 @@ enum servers_select_column {
   """column name"""
   game_server_node_id
 
+  hibernating
   """column name"""
   host
 
@@ -103588,6 +103593,7 @@ enum servers_select_column_servers_aggregate_bool_exp_bool_and_arguments_columns
   """column name"""
   enabled
 
+  hibernating
   """column name"""
   is_dedicated
 
@@ -103611,6 +103617,7 @@ enum servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_columns 
   """column name"""
   enabled
 
+  hibernating
   """column name"""
   is_dedicated
 
@@ -103636,6 +103643,7 @@ input servers_set_input {
   game: String
   game_mode_id: uuid
   game_server_node_id: String
+  hibernating: Boolean
   host: String
   id: uuid
   is_dedicated: Boolean
@@ -103733,6 +103741,7 @@ input servers_stream_cursor_value_input {
   game: String
   game_mode_id: uuid
   game_server_node_id: String
+  hibernating: Boolean
   host: String
   id: uuid
   is_dedicated: Boolean
@@ -103811,6 +103820,7 @@ enum servers_update_column {
   """column name"""
   game_server_node_id
 
+  hibernating
   """column name"""
   host
 

@@ -124,6 +124,7 @@ select_permissions:
         - enabled
         - game
         - game_server_node_id
+        - hibernating
         - host
         - id
         - is_dedicated
@@ -157,6 +158,7 @@ select_permissions:
         - connected
         - enabled
         - game
+        - hibernating
         - host
         - id
         - label
@@ -190,6 +192,7 @@ select_permissions:
         - enabled
         - game
         - game_server_node_id
+        - hibernating
         - host
         - id
         - is_dedicated
