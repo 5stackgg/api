@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Get,
   Param,
+  Post,
   Put,
   Req,
   UseGuards,
@@ -48,6 +49,19 @@ export class ChatController {
       request.user,
       body?.open !== false,
     );
+
+    return { success: true };
+  }
+
+  // Decline a message request. Only the recipient's side changes, so the
+  // sender is never told.
+  @Post("direct/conversations/:roomId/decline")
+  @UseGuards(SteamGuard)
+  public async declineRequest(
+    @Req() request: Request,
+    @Param("roomId") roomId: string,
+  ) {
+    await this.chatService.declineDirectRequest(roomId, request.user);
 
     return { success: true };
   }

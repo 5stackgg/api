@@ -16,4 +16,6 @@ export enum ChatErrorCode {
   QuotaExceeded = "quota_exceeded",
   Busy = "busy",
   AlreadySent = "already_sent",
+  // A message request is out and the other side has not replied to it yet.
+  AwaitingReply = "awaiting_reply",
 }

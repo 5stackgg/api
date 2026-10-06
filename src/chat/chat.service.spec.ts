@@ -47,6 +47,12 @@ describe("ChatService direct messages", () => {
   // What a block committed between a send's access check and its insert does
   // to that insert.
   let dmInsertBlocked: boolean;
+  // Whether the other side of a direct room takes message requests, and why
+  // direct_message_refusal turns a non-friend's send down (null: it does not).
+  let takesRequests: boolean;
+  let requestRefusal: string | null;
+  // Runs as the direct message is inserted -- after the send's checks.
+  let onDirectMessageInsert: (() => void) | undefined;
   // Whether the tournament's room is still open, as the database judges it.
   let tournamentChatOpen: boolean;
   // The one direct message the fake database holds, if a test put one there.
@@ -74,6 +80,34 @@ describe("ChatService direct messages", () => {
 
       if (sql.includes("public.is_gagged")) {
         return [{ gagged }];
+      }
+
+      if (sql.includes("public.can_view_direct_room")) {
+        const [roomId, viewer] = bindings.map(String);
+        const other = roomId.split(":").find((party) => party !== viewer);
+
+        return [
+          {
+            allowed:
+              !blockedEitherWay(viewer, other) &&
+              (areFriends(viewer, other) || takesRequests),
+          },
+        ];
+      }
+
+      if (sql.includes("public.direct_message_refusal($1")) {
+        const [roomId, from] = bindings.map(String);
+        const to = roomId.split(":").find((party) => party !== from);
+
+        return [
+          {
+            reason: blockedEitherWay(from, to)
+              ? "blocked"
+              : areFriends(from, to)
+                ? null
+                : requestRefusal,
+          },
+        ];
       }
 
       if (sql.includes("AS chat_open")) {
@@ -105,7 +139,21 @@ describe("ChatService direct messages", () => {
       }
 
       if (sql.includes("INSERT INTO public.direct_messages")) {
+        onDirectMessageInsert?.();
         return dmInsertBlocked ? [] : [{ id: bindings[0] }];
+      }
+
+      if (sql.includes("INSERT INTO public.direct_conversations")) {
+        const [, parties, from] = bindings;
+
+        return parties.map((party: string) => ({
+          steam_id: String(party),
+          accepted_at:
+            String(party) === String(from) ||
+            areFriends(String(parties[0]), String(parties[1]))
+              ? new Date()
+              : null,
+        }));
       }
 
       if (sql.includes("INSERT INTO public.chat_message_edits")) {
@@ -178,6 +226,14 @@ describe("ChatService direct messages", () => {
 
   // [blocker, blocked]
   let blocks: Array<[string, string]>;
+
+  const blockedEitherWay = (a: string, b: string) =>
+    blocks.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
+
+  const areFriends = (a: string, b: string) =>
+    acceptedFriendships.some(
+      ([x, y]) => (x === a && y === b) || (x === b && y === a),
+    );
 
   const playerBlocks = {
     hasBlocked: jest.fn(async (blocker: string, blocked: string) =>
@@ -450,6 +506,9 @@ describe("ChatService direct messages", () => {
     directReactions = null;
     directReactionFailure = undefined;
     dmInsertBlocked = false;
+    takesRequests = true;
+    requestRefusal = null;
+    onDirectMessageInsert = undefined;
     tournamentChatOpen = true;
     blocks = [];
     rcon.send.mockResolvedValue(undefined);
@@ -502,10 +561,24 @@ describe("ChatService direct messages", () => {
       expect(joined()).toBe(true);
     });
 
-    it("refuses a pair with no accepted friendship", async () => {
-      // The room id is just a sorted pair of steam ids, so anyone can compute
-      // one for anyone. The friendship is the only real gate.
+    it("lets a stranger in when the other side takes message requests", async () => {
       acceptedFriendships = [];
+
+      await service.joinMatchLobby(
+        client(ME),
+        ChatLobbyType.Direct,
+        directRoomId(ME, STRANGER),
+      );
+
+      expect(joined()).toBe(true);
+    });
+
+    it("refuses a stranger when the other side only takes friends", async () => {
+      // The room id is just a sorted pair of steam ids, so anyone can compute
+      // one for anyone. Without a friendship or a conversation, the other
+      // side's request setting is the gate.
+      acceptedFriendships = [];
+      takesRequests = false;
 
       await service.joinMatchLobby(
         client(ME),
@@ -532,6 +605,7 @@ describe("ChatService direct messages", () => {
       // Deliberately unlike Draft and Organizer, which do let organizers in --
       // those are group rooms, a DM is a private conversation.
       acceptedFriendships = [];
+      takesRequests = false;
       role = "administrator";
 
       await service.joinMatchLobby(
@@ -1109,11 +1183,12 @@ describe("ChatService direct messages", () => {
         expect(incoming.data.message.source).toBe("web");
       });
 
-      it("stops a conversation the moment the friendship ends", async () => {
-        // Still seated in the room -- presence outlives the unfriend by up to
-        // a day, so it cannot be what decides this.
+      it("holds a request to one message until it is answered", async () => {
+        // Still seated in the room -- presence outlives the request by up to a
+        // day, so it cannot be what decides this.
         seatIn(ME);
         acceptedFriendships = [];
+        requestRefusal = "awaiting_reply";
 
         await expect(
           service.sendMessageToChat(
@@ -1124,11 +1199,81 @@ describe("ChatService direct messages", () => {
           ),
         ).resolves.toEqual({
           accepted: false,
+          code: ChatErrorCode.AwaitingReply,
+        });
+        expect(dmInserts()).toHaveLength(0);
+      });
+
+      it("turns a stranger away when the other side only takes friends", async () => {
+        seatIn(ME);
+        acceptedFriendships = [];
+        requestRefusal = "requests_off";
+
+        await expect(
+          service.sendMessageToChat(
+            ChatLobbyType.Direct,
+            room,
+            player(),
+            "hello",
+          ),
+        ).resolves.toEqual({
+          accepted: false,
           code: ChatErrorCode.NotAllowed,
         });
-
         expect(dmInserts()).toHaveLength(0);
-        expect(redis.publish).not.toHaveBeenCalled();
+      });
+
+      it("checks the request rule under a lock on the conversation", async () => {
+        seatIn(ME);
+
+        await service.sendMessageToChat(
+          ChatLobbyType.Direct,
+          room,
+          player(),
+          "hi",
+        );
+
+        const lock = queries.findIndex(({ sql }) =>
+          sql.includes("pg_advisory_xact_lock"),
+        );
+        const check = queries.findIndex(({ sql }) =>
+          sql.includes("public.direct_message_refusal"),
+        );
+
+        expect(queries[lock].bindings).toEqual([`direct:${room}`]);
+        const insert = queries.findIndex(({ sql }) =>
+          sql.includes("INSERT INTO public.direct_messages"),
+        );
+
+        expect(lock).toBeLessThan(check);
+        expect(check).toBeLessThan(insert);
+      });
+
+      it("delivers a message request quietly, flagged as one", async () => {
+        seatIn(ME);
+        acceptedFriendships = [];
+
+        await expect(
+          service.sendMessageToChat(
+            ChatLobbyType.Direct,
+            room,
+            player(),
+            "hey, good game",
+          ),
+        ).resolves.toMatchObject({ accepted: true });
+        await new Promise((resolve) => setImmediate(resolve));
+        await new Promise((resolve) => setImmediate(resolve));
+
+        expect(
+          redis.publish.mock.calls.map(([, payload]) => JSON.parse(payload)),
+        ).toEqual([
+          expect.objectContaining({
+            steamId: FRIEND,
+            event: "direct:incoming",
+            data: expect.objectContaining({ request: true }),
+          }),
+        ]);
+        expect(push.sendChatMessage).not.toHaveBeenCalled();
       });
 
       it("hands back history stamped as website messages", async () => {
@@ -2311,9 +2456,9 @@ describe("ChatService direct messages", () => {
         expect(statements("DELETE FROM")).toHaveLength(0);
       });
 
-      it("refuses once the friendship is gone, before reading anything", async () => {
+      it("refuses once either side blocks, before reading anything", async () => {
         hold();
-        acceptedFriendships = [];
+        blocks = [[FRIEND, ME]];
 
         await expect(editDirect()).resolves.toEqual({
           edited: false,
@@ -2323,7 +2468,11 @@ describe("ChatService direct messages", () => {
           deleted: false,
           code: ChatErrorCode.NotAllowed,
         });
-        expect(queries).toHaveLength(0);
+        expect(
+          queries.filter(
+            ({ sql }) => !sql.includes("public.can_view_direct_room"),
+          ),
+        ).toHaveLength(0);
       });
 
       it("answers not_found for a message that is not there", async () => {
@@ -2335,6 +2484,10 @@ describe("ChatService direct messages", () => {
 
       it("says why when the row changed between the read and the write", async () => {
         hold();
+        // The access check reads first; the row vanishes under the read after.
+        postgres.query.mockImplementationOnce(
+          postgres.query.getMockImplementation(),
+        );
         postgres.query.mockImplementationOnce(async (sql, bindings) => {
           queries.push({ sql, bindings });
           const row = { author: ME, open: true };
@@ -2924,8 +3077,8 @@ describe("ChatService direct messages", () => {
         ).toBe(false);
       });
 
-      it("refuses once the friendship is gone", async () => {
-        acceptedFriendships = [];
+      it("refuses once either side blocks", async () => {
+        blocks = [[FRIEND, ME]];
 
         await expect(reactDirect()).resolves.toEqual({
           toggled: false,
@@ -3356,8 +3509,10 @@ describe("ChatService direct messages", () => {
     });
 
     it("keeps a direct message from a player its recipient has just blocked", async () => {
-      blocks = [[FRIEND, ME]];
-      playerBlocks.isBlockedEitherWay.mockResolvedValueOnce(false);
+      // The block lands after the send's checks, as the message goes in.
+      onDirectMessageInsert = () => {
+        blocks = [[FRIEND, ME]];
+      };
 
       await expect(
         service.sendMessageToChat(ChatLobbyType.Direct, room, as(ME), "hi"),
@@ -3386,7 +3541,10 @@ describe("ChatService direct messages", () => {
       await service.joinMatchLobby(client(ME), ChatLobbyType.Direct, room);
 
       expect(redis.eval).toHaveBeenCalled();
-      expect(playerBlocks.isBlockedEitherWay).toHaveBeenCalledWith(ME, FRIEND);
+      expect(
+        queries.find(({ sql }) => sql.includes("public.can_view_direct_room"))
+          ?.bindings,
+      ).toEqual([room, ME]);
     });
 
     describe("history", () => {

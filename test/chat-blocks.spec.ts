@@ -694,7 +694,10 @@ describe("chat blocks (SQL-driven)", () => {
         [room],
       );
       friendshipOverride = true;
-      jest.spyOn(blocks, "isBlockedEitherWay").mockResolvedValueOnce(false);
+      // The access check reads the block in SQL now, so it is the check that
+      // is made to miss it -- leaving the refusal inside the send's
+      // transaction to catch it.
+      jest.spyOn(chat as any, "canAccessLobby").mockResolvedValueOnce(true);
       publish.mockClear();
 
       await expect(

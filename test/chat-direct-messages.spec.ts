@@ -52,9 +52,9 @@ describe("direct messages (SQL-driven)", () => {
     chat = new ChatService(
       logger as any,
       {} as any,
-      // Reading a thread is gated on the same friendship joining is. Who is
-      // allowed in is chat.service.spec's subject; this one is about what the
-      // SQL does once they are.
+      // Who may open and write in a conversation is decided in SQL now
+      // (can_view_direct_room, direct_message_refusal), against the real
+      // friends table this suite fills in.
       {
         query: jest
           .fn()
@@ -84,10 +84,12 @@ describe("direct messages (SQL-driven)", () => {
     await postgres.query("DELETE FROM direct_messages");
     await postgres.query("DELETE FROM direct_conversations");
     await postgres.query("DELETE FROM chat_read_state");
+    await postgres.query("DELETE FROM friends");
     await postgres.query("DELETE FROM players");
   });
 
-  const say = (roomId: string, from: string, message: string) =>
+  // Sends as a stranger: the pair is not made friends first.
+  const send = (roomId: string, from: string, message: string) =>
     chat.sendMessageToChat(
       ChatLobbyType.Direct,
       roomId,
@@ -96,6 +98,22 @@ describe("direct messages (SQL-driven)", () => {
       // Membership is the gateway's job; this is about what lands in postgres.
       true,
     );
+
+  const befriend = (roomId: string) =>
+    postgres.query(
+      `INSERT INTO friends (player_steam_id, other_player_steam_id, status)
+            VALUES (split_part($1, ':', 1)::bigint,
+                    split_part($1, ':', 2)::bigint, 'Accepted')
+       ON CONFLICT DO NOTHING`,
+      [roomId],
+    );
+
+  // Most of this suite is about a conversation between friends; message
+  // requests between strangers have their own block below.
+  const say = async (roomId: string, from: string, message: string) => {
+    await befriend(roomId);
+    return send(roomId, from, message);
+  };
 
   it("keeps a conversation across both participants", async () => {
     const me = await fx.player();
@@ -888,6 +906,263 @@ describe("direct messages (SQL-driven)", () => {
 
       await postgres.query(migration("up.sql"));
       expect(await hasColumn()).toBe(true);
+    });
+  });
+
+  describe("message requests", () => {
+    const inbox = async (steamId: string) =>
+      await chat.getDirectConversations({ steam_id: steamId } as any);
+
+    const rowOf = async (roomId: string, steamId: string) => {
+      const [row] = await postgres.query<
+        Array<{
+          accepted: boolean;
+          declined: boolean;
+          is_open: boolean;
+        }>
+      >(
+        `SELECT accepted_at IS NOT NULL AS accepted,
+                declined_at IS NOT NULL AS declined,
+                is_open
+           FROM direct_conversations
+          WHERE room_id = $1 AND steam_id = $2::bigint`,
+        [roomId, steamId],
+      );
+      return row;
+    };
+
+    const messageCount = async (roomId: string) => {
+      const [{ count }] = await postgres.query<Array<{ count: number }>>(
+        "SELECT count(*)::int AS count FROM direct_messages WHERE room_id = $1",
+        [roomId],
+      );
+      return count;
+    };
+
+    it("lands a stranger's first message as a request, off the recipient's bar", async () => {
+      const sender = await fx.player();
+      const recipient = await fx.player();
+      const room = directRoomId(sender, recipient);
+
+      await expect(send(room, sender, "good game")).resolves.toMatchObject({
+        accepted: true,
+      });
+
+      expect(await rowOf(room, sender)).toEqual({
+        accepted: true,
+        declined: false,
+        is_open: true,
+      });
+      expect(await rowOf(room, recipient)).toEqual({
+        accepted: false,
+        declined: false,
+        is_open: false,
+      });
+
+      const [theirs] = await inbox(recipient);
+      expect(theirs).toMatchObject({
+        roomId: room,
+        request: true,
+        awaitingReply: false,
+        unread: 1,
+      });
+
+      const [mine] = await inbox(sender);
+      expect(mine).toMatchObject({
+        roomId: room,
+        request: false,
+        awaitingReply: true,
+      });
+    });
+
+    it("holds the sender to one message until it is answered", async () => {
+      const sender = await fx.player();
+      const recipient = await fx.player();
+      const room = directRoomId(sender, recipient);
+
+      await send(room, sender, "hey");
+
+      await expect(send(room, sender, "hello??")).resolves.toEqual({
+        accepted: false,
+        code: ChatErrorCode.AwaitingReply,
+      });
+      expect(await messageCount(room)).toBe(1);
+    });
+
+    it("lets only one of two racing first messages through", async () => {
+      const sender = await fx.player();
+      const recipient = await fx.player();
+      const room = directRoomId(sender, recipient);
+
+      const results = await Promise.all([
+        send(room, sender, "one"),
+        send(room, sender, "two"),
+      ]);
+
+      expect(results.filter((result) => result.accepted)).toHaveLength(1);
+      expect(await messageCount(room)).toBe(1);
+    });
+
+    it("accepts the request when the recipient replies", async () => {
+      const sender = await fx.player();
+      const recipient = await fx.player();
+      const room = directRoomId(sender, recipient);
+
+      await send(room, sender, "hey");
+      await expect(send(room, recipient, "hi!")).resolves.toMatchObject({
+        accepted: true,
+      });
+
+      expect(await rowOf(room, recipient)).toMatchObject({
+        accepted: true,
+        is_open: true,
+      });
+      await expect(send(room, sender, "great")).resolves.toMatchObject({
+        accepted: true,
+      });
+
+      const [theirs] = await inbox(recipient);
+      const [mine] = await inbox(sender);
+      expect(theirs).toMatchObject({ request: false, awaitingReply: false });
+      expect(mine).toMatchObject({ request: false, awaitingReply: false });
+    });
+
+    it("keeps an accepted conversation going without a friendship", async () => {
+      const sender = await fx.player();
+      const recipient = await fx.player();
+      const room = directRoomId(sender, recipient);
+
+      await send(room, sender, "hey");
+      await send(room, recipient, "hi");
+
+      for (const from of [sender, recipient, sender]) {
+        await expect(send(room, from, "still here")).resolves.toMatchObject({
+          accepted: true,
+        });
+      }
+    });
+
+    it("hides a declined request from the recipient without telling the sender", async () => {
+      const sender = await fx.player();
+      const recipient = await fx.player();
+      const room = directRoomId(sender, recipient);
+
+      await send(room, sender, "buy my skins");
+      await chat.declineDirectRequest(room, { steam_id: recipient } as any);
+
+      expect(await inbox(recipient)).toEqual([]);
+
+      const [mine] = await inbox(sender);
+      expect(mine).toMatchObject({ roomId: room, awaitingReply: true });
+      expect(mine.peer.name).not.toBeNull();
+
+      await expect(send(room, sender, "please")).resolves.toEqual({
+        accepted: false,
+        code: ChatErrorCode.AwaitingReply,
+      });
+    });
+
+    it("brings a declined request back, accepted, when the recipient writes", async () => {
+      const sender = await fx.player();
+      const recipient = await fx.player();
+      const room = directRoomId(sender, recipient);
+
+      await send(room, sender, "hey");
+      await chat.declineDirectRequest(room, { steam_id: recipient } as any);
+      await send(room, recipient, "changed my mind");
+
+      expect(await rowOf(room, recipient)).toEqual({
+        accepted: true,
+        declined: false,
+        is_open: true,
+      });
+      expect((await inbox(recipient))[0]).toMatchObject({
+        roomId: room,
+        request: false,
+      });
+    });
+
+    it("leaves an accepted conversation alone when asked to decline it", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+
+      await say(room, me, "hi");
+      await chat.declineDirectRequest(room, { steam_id: friend } as any);
+
+      expect(await rowOf(room, friend)).toMatchObject({
+        accepted: true,
+        declined: false,
+      });
+    });
+
+    it("turns strangers away from a player who has requests off", async () => {
+      const sender = await fx.player();
+      const recipient = await fx.player();
+      const room = directRoomId(sender, recipient);
+
+      await postgres.query(
+        "UPDATE players SET allow_message_requests = false WHERE steam_id = $1",
+        [recipient],
+      );
+
+      await expect(send(room, sender, "hey")).resolves.toEqual({
+        accepted: false,
+        code: ChatErrorCode.NotAllowed,
+      });
+      expect(await messageCount(room)).toBe(0);
+
+      // Friends are not requests, so the setting does not reach them.
+      await expect(say(room, sender, "hey friend")).resolves.toMatchObject({
+        accepted: true,
+      });
+    });
+
+    it("opens a room to a stranger only while the other side takes requests", async () => {
+      const viewer = await fx.player();
+      const other = await fx.player();
+      const room = directRoomId(viewer, other);
+
+      const canView = async () => {
+        const [{ allowed }] = await postgres.query<
+          Array<{ allowed: boolean }>
+        >("SELECT public.can_view_direct_room($1, $2::bigint) AS allowed", [
+          room,
+          viewer,
+        ]);
+        return allowed;
+      };
+
+      expect(await canView()).toBe(true);
+
+      await postgres.query(
+        "UPDATE players SET allow_message_requests = false WHERE steam_id = $1",
+        [other],
+      );
+      expect(await canView()).toBe(false);
+
+      // A conversation that already exists stays open to both sides.
+      await postgres.query(
+        "UPDATE players SET allow_message_requests = true WHERE steam_id = $1",
+        [other],
+      );
+      await send(room, viewer, "hey");
+      await postgres.query(
+        "UPDATE players SET allow_message_requests = false WHERE steam_id = $1",
+        [other],
+      );
+      expect(await canView()).toBe(true);
+    });
+
+    it("sends no push for a request", async () => {
+      const sender = await fx.player();
+      const recipient = await fx.player();
+      const room = directRoomId(sender, recipient);
+
+      await send(room, sender, "hey");
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(push.sendChatMessage).not.toHaveBeenCalled();
     });
   });
 });

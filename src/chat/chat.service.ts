@@ -767,47 +767,18 @@ export class ChatService {
 
         // Being one of the two parties is not on its own an authorization:
         // anyone can build the id for any pair of steam ids, since it is just
-        // their sorted pair. The friendship is the only thing standing between
-        // this and unsolicited messages from strangers.
+        // their sorted pair. Friends may open it; so may anyone the other side
+        // takes message requests from, and either side of a conversation that
+        // already exists. Sending is held to direct_message_refusal on top.
         //
         // No administrator bypass, unlike Draft/Organizer above -- those are
         // group rooms an organizer runs, this is a private conversation.
-        const otherSteamId = parties.find(
-          (party) => party !== String(user.steam_id),
+        const [access] = await this.postgres.query<Array<{ allowed: boolean }>>(
+          "SELECT public.can_view_direct_room($1, $2::bigint) AS allowed",
+          [id, user.steam_id],
         );
 
-        const { friends } = await this.hasuraService.query({
-          friends: {
-            __args: {
-              where: {
-                status: { _eq: "Accepted" },
-                _or: [
-                  {
-                    player_steam_id: { _eq: user.steam_id },
-                    other_player_steam_id: { _eq: otherSteamId },
-                  },
-                  {
-                    player_steam_id: { _eq: otherSteamId },
-                    other_player_steam_id: { _eq: user.steam_id },
-                  },
-                ],
-              },
-              limit: 1,
-            },
-            status: true,
-          },
-        });
-
-        if (friends.length === 0) {
-          return false;
-        }
-
-        if (
-          await this.playerBlocks.isBlockedEitherWay(
-            String(user.steam_id),
-            otherSteamId,
-          )
-        ) {
+        if (!access?.allowed) {
           return false;
         }
 
@@ -1255,13 +1226,19 @@ export class ChatService {
       ),
     };
 
+    // A first message to someone who is not a friend is a request: it waits in
+    // their requests, quietly, rather than notifying them.
+    let directRequest = false;
+
     if (type === ChatLobbyType.Direct) {
-      const refusal = await this.storeDirectMessage(
+      const { refusal, request } = await this.storeDirectMessage(
         id,
         message,
         attachmentIds,
         claim,
       );
+
+      directRequest = request;
 
       if (refusal) {
         return {
@@ -1360,7 +1337,11 @@ export class ChatService {
     await this.archiveMessages(type, id, () => [message]);
 
     if (type === ChatLobbyType.Direct) {
-      void this.deliverDirectMessage(id, player, outgoing);
+      void this.deliverDirectMessage(id, player, outgoing, directRequest);
+    }
+
+    if (directRequest) {
+      return { accepted: true, messageId: message.id };
     }
 
     // Best effort, and never allowed to take a message delivery down with it.
@@ -2700,6 +2681,7 @@ export class ChatService {
     id: string,
     sender: User,
     message: Record<string, any>,
+    request = false,
   ) {
     const parties = parseDirectRoomId(id);
 
@@ -2727,6 +2709,7 @@ export class ChatService {
             roomId: id,
             from: message.from,
             message,
+            request,
           },
         }),
       );
@@ -2758,15 +2741,36 @@ export class ChatService {
     message: ChatMessage,
     attachmentIds: string[],
     claim: ChatAttachmentClaim,
-  ): Promise<ChatErrorCode | null> {
+  ): Promise<{ refusal: ChatErrorCode | null; request: boolean }> {
     const parties = parseDirectRoomId(roomId);
 
     if (!parties) {
-      return ChatErrorCode.NotAllowed;
+      return { refusal: ChatErrorCode.NotAllowed, request: false };
     }
 
     try {
       const refusal = await this.postgres.transaction(async (client) => {
+        // Held to commit, so two sends racing to be someone's one request
+        // cannot both find no earlier message.
+        await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
+          `direct:${roomId}`,
+        ]);
+
+        const {
+          rows: [{ reason }],
+        } = await client.query(
+          "SELECT public.direct_message_refusal($1, $2::bigint) AS reason",
+          [roomId, message.from.steam_id],
+        );
+
+        if (reason === "awaiting_reply") {
+          return ChatErrorCode.AwaitingReply;
+        }
+
+        if (reason) {
+          return ChatErrorCode.NotAllowed;
+        }
+
         let attachments: ChatAttachment[] = [];
 
         if (attachmentIds.length > 0) {
@@ -2813,11 +2817,11 @@ export class ChatService {
       });
 
       if (refusal) {
-        return refusal;
+        return { refusal, request: false };
       }
     } catch (error) {
       if (error === ChatService.DIRECT_MESSAGE_REFUSED) {
-        return ChatErrorCode.NotAllowed;
+        return { refusal: ChatErrorCode.NotAllowed, request: false };
       }
 
       throw error;
@@ -2827,28 +2831,61 @@ export class ChatService {
     // from it -- someone writing to you is exactly when you want to see them
     // again. It only jumps to the top when it was off the bar; a conversation
     // already sitting where the player put it stays there.
-    await this.postgres.query(
-      `INSERT INTO public.direct_conversations
-              (room_id, steam_id, last_message_at, is_open, position)
-            SELECT $1, party.steam_id, now(), true,
+    //
+    // Sending accepts the conversation for the sender, and a friendship accepts
+    // it for both. Anything else leaves the recipient's row unaccepted: a
+    // request, kept off their bar until they reply.
+    const rows = await this.postgres.query<
+      Array<{ steam_id: string; accepted_at: Date | null }>
+    >(
+      `WITH incoming AS (
+         SELECT party.steam_id,
+                CASE
+                  WHEN party.steam_id = $3::bigint
+                    OR public.are_friends(($2::bigint[])[1], ($2::bigint[])[2])
+                  THEN now()
+                END AS accepted_at
+           FROM unnest($2::bigint[]) AS party(steam_id)
+       )
+       INSERT INTO public.direct_conversations
+              (room_id, steam_id, last_message_at, is_open, position,
+               accepted_at)
+            SELECT $1, incoming.steam_id, now(),
+                   incoming.accepted_at IS NOT NULL,
                    COALESCE((SELECT min(existing.position) - 1
                                FROM public.direct_conversations existing
-                              WHERE existing.steam_id = party.steam_id), 0)
-              FROM unnest($2::bigint[]) AS party(steam_id)
+                              WHERE existing.steam_id = incoming.steam_id), 0),
+                   incoming.accepted_at
+              FROM incoming
        ON CONFLICT (room_id, steam_id) DO UPDATE
                SET last_message_at = EXCLUDED.last_message_at,
-                   is_open = true,
+                   accepted_at = COALESCE(public.direct_conversations.accepted_at,
+                                          EXCLUDED.accepted_at),
+                   declined_at = CASE
+                     WHEN EXCLUDED.accepted_at IS NOT NULL THEN NULL
+                     ELSE public.direct_conversations.declined_at
+                   END,
+                   is_open = public.direct_conversations.is_open
+                     OR COALESCE(public.direct_conversations.accepted_at,
+                                 EXCLUDED.accepted_at) IS NOT NULL,
                    position = CASE
                      WHEN public.direct_conversations.is_open
                        THEN public.direct_conversations.position
                      ELSE EXCLUDED.position
-                   END`,
-      [roomId, parties],
+                   END
+       RETURNING steam_id::text AS steam_id, accepted_at`,
+      [roomId, parties, message.from.steam_id],
     );
 
     await this.enforceDirectBarLimit(parties);
 
-    return null;
+    return {
+      refusal: null,
+      request: rows.some(
+        (row) =>
+          row.steam_id !== String(message.from.steam_id) && !row.accepted_at,
+      ),
+    };
   }
 
   // Thrown to roll back a claim whose message the block check refused.
@@ -2880,6 +2917,34 @@ export class ChatService {
           AND ranked.steam_id = dc.steam_id
           AND ranked.rank > $2::int`,
       [steamIds, ChatService.MAX_DIRECT_TABS],
+    );
+  }
+
+  // Turns a message request down. The row stays, hidden, so the sender's own
+  // conversation still resolves who it is with -- they are not told, and their
+  // one message stays spent. Writing to them later brings it back, accepted.
+  public async declineDirectRequest(roomId: string, user: User): Promise<void> {
+    const parties = parseDirectRoomId(roomId);
+
+    if (!parties || !parties.includes(String(user.steam_id))) {
+      return;
+    }
+
+    await this.postgres.query(
+      `UPDATE public.direct_conversations
+          SET declined_at = now(),
+              is_open = false
+        WHERE room_id = $1
+          AND steam_id = $2::bigint
+          AND accepted_at IS NULL`,
+      [roomId, user.steam_id],
+    );
+
+    await this.postgres.query(
+      `INSERT INTO public.chat_read_state (steam_id, thread, last_read_at)
+            VALUES ($1::bigint, $2, now())
+       ON CONFLICT (steam_id, thread) DO UPDATE SET last_read_at = now()`,
+      [user.steam_id, chatThreadKey(ChatLobbyType.Direct, roomId)],
     );
   }
 
@@ -3056,12 +3121,18 @@ export class ChatService {
         peer_name: string | null;
         peer_avatar_url: string | null;
         peer_profile_url: string | null;
+        request: boolean;
+        awaiting_reply: boolean;
       }>
     >(
       `SELECT dc.room_id,
               dc.last_message_at,
               dc.is_open,
               dc.position,
+              dc.accepted_at IS NULL AS request,
+              (dc.accepted_at IS NOT NULL
+                 AND public.direct_message_refusal(dc.room_id, dc.steam_id)
+                     IS NOT DISTINCT FROM 'awaiting_reply') AS awaiting_reply,
               (SELECT count(*)
                  FROM public.direct_messages dm
                 WHERE dm.room_id = dc.room_id
@@ -3083,6 +3154,7 @@ export class ChatService {
           AND other.steam_id <> dc.steam_id
     LEFT JOIN public.players peer ON peer.steam_id = other.steam_id
         WHERE dc.steam_id = $1::bigint
+          AND dc.declined_at IS NULL
           -- Only the blocker's rail: the other side's stays as it was, so it
           -- does not tell them. The room id is directRoomId()'s.
           AND NOT EXISTS (
@@ -3094,9 +3166,12 @@ export class ChatService {
                    || ':' ||
                    GREATEST(pb.blocker_steam_id, pb.blocked_steam_id)::text
           )
-        -- The rail's own order. last_message_at only breaks ties between rows
-        -- that have never been arranged relative to each other.
-        ORDER BY dc.position ASC, dc.last_message_at DESC
+        -- The rail's own order, requests after it. last_message_at only breaks
+        -- ties between rows that have never been arranged relative to each
+        -- other.
+        ORDER BY (dc.accepted_at IS NULL) ASC,
+                 dc.position ASC,
+                 dc.last_message_at DESC
         LIMIT 100`,
       [user.steam_id],
     );
@@ -3106,6 +3181,10 @@ export class ChatService {
       isOpen: row.is_open,
       position: row.position,
       unread: Number(row.unread ?? 0),
+      // Waiting on this player: a message request they have not replied to.
+      request: row.request,
+      // This player's request is out and the other side has not replied.
+      awaitingReply: row.awaiting_reply,
       peer: {
         // The join finds nobody when the counterpart's own row is missing --
         // a deleted player takes theirs with it and leaves yours behind. The
