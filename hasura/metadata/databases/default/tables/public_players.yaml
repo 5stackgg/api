@@ -460,6 +460,7 @@ select_permissions:
         - role
         - roster_image_url
         - show_match_ready_modal
+        - allow_message_requests
         - steam_id
         - vac_banned
         - vac_ban_count
@@ -513,6 +514,7 @@ select_permissions:
         - role
         - roster_image_url
         - show_match_ready_modal
+        - allow_message_requests
         - steam_id
         - vac_banned
         - vac_ban_count
@@ -568,6 +570,7 @@ select_permissions:
         - role
         - roster_image_url
         - show_match_ready_modal
+        - allow_message_requests
         - steam_id
         - vac_banned
         - vac_ban_count
@@ -615,6 +618,7 @@ update_permissions:
         - profile_url
         - role
         - show_match_ready_modal
+        - allow_message_requests
       filter: {}
       check: null
     comment: ""
@@ -625,6 +629,7 @@ update_permissions:
         - language
         - last_read_news_at
         - show_match_ready_modal
+        - allow_message_requests
       filter:
         steam_id:
           _eq: X-Hasura-User-Id

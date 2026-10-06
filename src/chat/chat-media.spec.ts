@@ -54,6 +54,15 @@ describe("ChatService attachments and GIFs", () => {
       return [{ id: bindings[0] }];
     }
 
+    // Friends, so the room is open to both and every send is allowed.
+    if (sql.includes("public.can_view_direct_room")) {
+      return [{ allowed: true }];
+    }
+
+    if (sql.includes("public.direct_message_refusal($1")) {
+      return [{ reason: null }];
+    }
+
     return [];
   };
 
@@ -712,6 +721,10 @@ describe("ChatService attachments and GIFs", () => {
 
           if (sql.includes("DELETE FROM public.direct_messages")) {
             return [{ id: MESSAGE_ID }];
+          }
+
+          if (sql.includes("public.can_view_direct_room")) {
+            return [{ allowed: true }];
           }
 
           return [];
