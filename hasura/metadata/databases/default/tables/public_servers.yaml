@@ -98,6 +98,7 @@ insert_permissions:
       columns:
         - connect_password
         - enabled
+        - featured
         - game
         - game_server_node_id
         - host
@@ -122,6 +123,7 @@ select_permissions:
         - connect_password
         - connected
         - enabled
+        - featured
         - game
         - game_server_node_id
         - hibernating
@@ -157,6 +159,7 @@ select_permissions:
       columns:
         - connected
         - enabled
+        - featured
         - game
         - hibernating
         - host
@@ -190,6 +193,7 @@ select_permissions:
         - boot_status_detail
         - connected
         - enabled
+        - featured
         - game
         - game_server_node_id
         - hibernating
@@ -226,6 +230,7 @@ update_permissions:
       columns:
         - connect_password
         - enabled
+        - featured
         - game
         - host
         - is_dedicated
