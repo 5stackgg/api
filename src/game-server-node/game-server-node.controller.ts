@@ -830,6 +830,12 @@ UNIT
       pluginRuntime: string;
     };
 
+    // Plugins that can hibernate say so, and name the match they have loaded.
+    const { hibernating, matchId: loadedMatchId } = request.query as {
+      hibernating?: string;
+      matchId?: string;
+    };
+
     if (steamRelay && !steamID) {
       return;
     }
@@ -857,6 +863,7 @@ UNIT
         is_dedicated: true,
         game_server_node_id: true,
         current_match: {
+          id: true,
           current_match_map_id: true,
           match_maps: {
             id: true,
@@ -872,6 +879,27 @@ UNIT
     if (!server) {
       throw Error("server not found");
     }
+
+    if (hibernating === "true") {
+      await this.cache.put(
+        RconService.hibernatingCacheKey(String(serverId)),
+        true,
+        RconService.HIBERNATING_SECONDS,
+      );
+    } else if (hibernating === "false") {
+      await this.cache.forget(
+        RconService.hibernatingCacheKey(String(serverId)),
+      );
+    }
+
+    // RCON cannot push `get_match` to a hibernating server, so the ping it
+    // sends anyway is answered instead: it fetches its match when the one it
+    // has loaded is not the one it has been given.
+    const reply = {
+      get_match:
+        loadedMatchId !== undefined &&
+        (server.current_match?.id ?? "") !== loadedMatchId,
+    };
 
     // A disabled node-managed server is being torn down; refuse to bring it
     // back online. External servers keep running independently, so a disabled
@@ -928,7 +956,7 @@ UNIT
         map !== currentMap?.map.workshop_map_id
       ) {
         this.logger.warn(`server is still loading the map`);
-        return;
+        return reply;
       }
     }
 
@@ -994,6 +1022,8 @@ UNIT
         jobId,
       },
     );
+
+    return reply;
   }
 
   // SwiftlyS2 routes `sw plugins list` to its own log sink and answers RCON with

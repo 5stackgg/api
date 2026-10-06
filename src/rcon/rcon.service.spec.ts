@@ -17,6 +17,7 @@ describe("RconService connect failure", () => {
   let hasura: { query: jest.Mock; mutation: jest.Mock };
   let notifications: { send: jest.Mock };
   let service: RconService;
+  let hibernating: boolean;
 
   const dedicatedServer = (enabled: boolean, type = "Ranked") => ({
     host: "10.0.0.1",
@@ -35,6 +36,7 @@ describe("RconService connect failure", () => {
 
   beforeEach(() => {
     graceRemaining = -2;
+    hibernating = false;
     hasura = {
       query: jest.fn(),
       mutation: jest.fn().mockResolvedValue({}),
@@ -49,7 +51,12 @@ describe("RconService connect failure", () => {
       {
         getConnection: () => ({ pttl: jest.fn(async () => graceRemaining) }),
       } as any,
-      {} as any,
+      {
+        has: jest.fn(
+          async (key: string) =>
+            hibernating && key === RconService.hibernatingCacheKey("server-1"),
+        ),
+      } as any,
     );
   });
 
@@ -99,6 +106,17 @@ describe("RconService connect failure", () => {
     await service.connect("server-1");
 
     expect(hasura.mutation).toHaveBeenCalled();
+    expect(notifications.send).not.toHaveBeenCalled();
+  });
+
+  // A hibernating server answers no RCON at all, and says so on its ping.
+  it("does not count a hibernating server's silence as a failure", async () => {
+    hasura.query.mockResolvedValue({ servers_by_pk: dedicatedServer(true) });
+    hibernating = true;
+
+    await service.connect("server-1");
+
+    expect(hasura.mutation).not.toHaveBeenCalled();
     expect(notifications.send).not.toHaveBeenCalled();
   });
 });

@@ -70,3 +70,108 @@ describe("GameServerNodeController ping disk alerts", () => {
     expect(notifications.send).not.toHaveBeenCalled();
   });
 });
+
+// RCON does not reach a hibernating server, so its own ping is answered instead.
+describe("GameServerNodeController server ping reply", () => {
+  let hasura: { query: jest.Mock; mutation: jest.Mock };
+  let cache: { put: jest.Mock; forget: jest.Mock };
+  let controller: GameServerNodeController;
+
+  const server = (currentMatchId: string | null) => ({
+    plugin_version: "1.0.0",
+    plugin_runtime: "swiftlys2",
+    connected: true,
+    enabled: true,
+    steam_relay: null as null,
+    is_dedicated: true,
+    game_server_node_id: null as null,
+    current_match: currentMatchId
+      ? {
+          id: currentMatchId,
+          current_match_map_id: null as null,
+          match_maps: [] as unknown[],
+        }
+      : null,
+  });
+
+  const ping = (query: Record<string, string>) =>
+    controller.ping({
+      params: { serverId: "server-1" },
+      query: { map: "de_overpass", pluginVersion: "1.0.0", ...query },
+    } as any);
+
+  beforeEach(() => {
+    hasura = {
+      query: jest.fn(),
+      mutation: jest.fn().mockResolvedValue({}),
+    };
+    cache = { put: jest.fn(), forget: jest.fn() };
+    const queue = { add: jest.fn(), remove: jest.fn() };
+
+    controller = new GameServerNodeController(
+      { warn: jest.fn(), log: jest.fn() } as any,
+      {} as any,
+      { get: jest.fn().mockReturnValue({}) } as any,
+      hasura as any,
+      cache as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      queue as any,
+      queue as any,
+      {} as any,
+      queue as any,
+      queue as any,
+      {} as any,
+      {} as any,
+    );
+  });
+
+  it("tells a server with nothing loaded that a match is waiting", async () => {
+    hasura.query.mockResolvedValue({ servers_by_pk: server("match-1") });
+
+    expect(await ping({ matchId: "", hibernating: "true" })).toEqual({
+      get_match: true,
+    });
+  });
+
+  it("has nothing to say once the server has that match loaded", async () => {
+    hasura.query.mockResolvedValue({ servers_by_pk: server("match-1") });
+
+    expect(await ping({ matchId: "match-1" })).toEqual({ get_match: false });
+  });
+
+  it("has nothing to say to an idle server with no match", async () => {
+    hasura.query.mockResolvedValue({ servers_by_pk: server(null) });
+
+    expect(await ping({ matchId: "" })).toEqual({ get_match: false });
+  });
+
+  it("tells a server to drop a match it no longer has", async () => {
+    hasura.query.mockResolvedValue({ servers_by_pk: server(null) });
+
+    expect(await ping({ matchId: "match-1" })).toEqual({ get_match: true });
+  });
+
+  it("never asks a plugin that does not name its match", async () => {
+    hasura.query.mockResolvedValue({ servers_by_pk: server("match-1") });
+
+    expect(await ping({})).toEqual({ get_match: false });
+  });
+
+  it("remembers a hibernating server only for as long as it says so", async () => {
+    hasura.query.mockResolvedValue({ servers_by_pk: server(null) });
+
+    await ping({ hibernating: "true" });
+    expect(cache.put).toHaveBeenCalledWith(
+      "server:server-1:hibernating",
+      true,
+      expect.any(Number),
+    );
+
+    await ping({ hibernating: "false" });
+    expect(cache.forget).toHaveBeenCalledWith("server:server-1:hibernating");
+  });
+});

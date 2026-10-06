@@ -26,6 +26,14 @@ export class RconService {
   private CONNECTION_TIMEOUT = 3 * 1000;
   private readonly GENERATE_CVARS_CACHE_KEY = "generate_cvars";
 
+  // Set by the server's own ping. A hibernating server does not answer RCON at
+  // all, which is how it is meant to behave rather than a fault to report.
+  public static readonly HIBERNATING_SECONDS = 45;
+
+  public static hibernatingCacheKey(serverId: string) {
+    return `server:${serverId}:hibernating`;
+  }
+
   private connections: Record<string, RconClient> = {};
   private connectTimeouts: Record<string, NodeJS.Timeout> = {};
 
@@ -198,7 +206,11 @@ export class RconService {
         this.logger.warn("Error during RCON cleanup:", cleanupError);
       }
 
-      if (server.rcon_status && server.is_dedicated) {
+      if (
+        server.rcon_status &&
+        server.is_dedicated &&
+        !(await this.cache.has(RconService.hibernatingCacheKey(serverId)))
+      ) {
         void this.hasuraService.mutation({
           update_servers_by_pk: {
             __args: {
