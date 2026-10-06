@@ -852,6 +852,7 @@ UNIT
         plugin_version: true,
         plugin_runtime: true,
         connected: true,
+        hibernating: true,
         enabled: true,
         steam_relay: true,
         is_dedicated: true,
@@ -884,6 +885,7 @@ UNIT
               pk_columns: { id: serverId },
               _set: {
                 connected: false,
+                hibernating: false,
                 offline_at: new Date().toISOString(),
               },
             },
@@ -895,6 +897,26 @@ UNIT
       const jobId = `server-offline.${serverId}`;
       await this.gameUpdateQueue.remove(jobId);
       return;
+    }
+
+    // A server sleeping until someone connects is healthy, and says so on its
+    // ping. Plugins from before this never send the flag and read as awake.
+    const hibernating = request.query.hibernating === "true";
+
+    if (server.hibernating !== hibernating) {
+      await this.hasura.mutation({
+        update_servers_by_pk: {
+          __args: {
+            pk_columns: {
+              id: serverId,
+            },
+            _set: {
+              hibernating,
+            },
+          },
+          __typename: true,
+        },
+      });
     }
 
     if (

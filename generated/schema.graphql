@@ -757,6 +757,13 @@ type SetupGameServeOutput {
   link: String!
 }
 
+type SiteContentOutput {
+  events: Boolean!
+  highlights: Boolean!
+  news: Boolean!
+  tournaments: Boolean!
+}
+
 type SteamMatchHistoryLinkOutput {
   error: String
   success: Boolean!
@@ -49563,6 +49570,19 @@ type mutation_root {
   delete_player_damages_by_pk(id: uuid!, match_map_id: uuid!, time: timestamptz!): player_damages
 
   """
+  delete data from the table: "player_dismissals"
+  """
+  delete_player_dismissals(
+    """filter the rows which have to be deleted"""
+    where: player_dismissals_bool_exp!
+  ): player_dismissals_mutation_response
+
+  """
+  delete single row from the table: "player_dismissals"
+  """
+  delete_player_dismissals_by_pk(key: String!, player_steam_id: bigint!): player_dismissals
+
+  """
   delete data from the table: "player_elo"
   """
   delete_player_elo(
@@ -53681,6 +53701,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: player_damages_on_conflict
   ): player_damages
+
+  """
+  insert data into the table: "player_dismissals"
+  """
+  insert_player_dismissals(
+    """the rows to be inserted"""
+    objects: [player_dismissals_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: player_dismissals_on_conflict
+  ): player_dismissals_mutation_response
+
+  """
+  insert a single row into the table: "player_dismissals"
+  """
+  insert_player_dismissals_one(
+    """the row to be inserted"""
+    object: player_dismissals_insert_input!
+
+    """upsert condition"""
+    on_conflict: player_dismissals_on_conflict
+  ): player_dismissals
 
   """
   insert data into the table: "player_elo"
@@ -60912,6 +60954,82 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [player_damages_updates!]!
   ): [player_damages_mutation_response]
+
+  """
+  update data of the table: "player_dismissals"
+  """
+  update_player_dismissals(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: player_dismissals_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: player_dismissals_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: player_dismissals_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: player_dismissals_delete_key_input
+
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_dismissals_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: player_dismissals_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_dismissals_set_input
+
+    """filter the rows which have to be updated"""
+    where: player_dismissals_bool_exp!
+  ): player_dismissals_mutation_response
+
+  """
+  update single row of the table: "player_dismissals"
+  """
+  update_player_dismissals_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: player_dismissals_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: player_dismissals_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: player_dismissals_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: player_dismissals_delete_key_input
+
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_dismissals_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: player_dismissals_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_dismissals_set_input
+    pk_columns: player_dismissals_pk_columns_input!
+  ): player_dismissals
+
+  """
+  update multiples rows of table: "player_dismissals"
+  """
+  update_player_dismissals_many(
+    """updates to execute, in order"""
+    updates: [player_dismissals_updates!]!
+  ): [player_dismissals_mutation_response]
 
   """
   update data of the table: "player_elo"
@@ -70033,6 +70151,298 @@ input player_damages_variance_order_by {
   damage_armor: order_by
   health: order_by
   round: order_by
+}
+
+"""
+columns and relationships of "player_dismissals"
+"""
+type player_dismissals {
+  dismissed_at: timestamptz!
+  key: String!
+  player_steam_id: bigint!
+  value(
+    """JSON select path"""
+    path: String
+  ): jsonb
+}
+
+"""
+aggregated selection of "player_dismissals"
+"""
+type player_dismissals_aggregate {
+  aggregate: player_dismissals_aggregate_fields
+  nodes: [player_dismissals!]!
+}
+
+"""
+aggregate fields of "player_dismissals"
+"""
+type player_dismissals_aggregate_fields {
+  avg: player_dismissals_avg_fields
+  count(columns: [player_dismissals_select_column!], distinct: Boolean): Int!
+  max: player_dismissals_max_fields
+  min: player_dismissals_min_fields
+  stddev: player_dismissals_stddev_fields
+  stddev_pop: player_dismissals_stddev_pop_fields
+  stddev_samp: player_dismissals_stddev_samp_fields
+  sum: player_dismissals_sum_fields
+  var_pop: player_dismissals_var_pop_fields
+  var_samp: player_dismissals_var_samp_fields
+  variance: player_dismissals_variance_fields
+}
+
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input player_dismissals_append_input {
+  value: jsonb
+}
+
+"""aggregate avg on columns"""
+type player_dismissals_avg_fields {
+  player_steam_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "player_dismissals". All fields are combined with a logical 'AND'.
+"""
+input player_dismissals_bool_exp {
+  _and: [player_dismissals_bool_exp!]
+  _not: player_dismissals_bool_exp
+  _or: [player_dismissals_bool_exp!]
+  dismissed_at: timestamptz_comparison_exp
+  key: String_comparison_exp
+  player_steam_id: bigint_comparison_exp
+  value: jsonb_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "player_dismissals"
+"""
+enum player_dismissals_constraint {
+  """
+  unique or primary key constraint on columns "player_steam_id", "key"
+  """
+  player_dismissals_pkey
+}
+
+"""
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input player_dismissals_delete_at_path_input {
+  value: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input player_dismissals_delete_elem_input {
+  value: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input player_dismissals_delete_key_input {
+  value: String
+}
+
+"""
+input type for incrementing numeric columns in table "player_dismissals"
+"""
+input player_dismissals_inc_input {
+  player_steam_id: bigint
+}
+
+"""
+input type for inserting data into table "player_dismissals"
+"""
+input player_dismissals_insert_input {
+  dismissed_at: timestamptz
+  key: String
+  player_steam_id: bigint
+  value: jsonb
+}
+
+"""aggregate max on columns"""
+type player_dismissals_max_fields {
+  dismissed_at: timestamptz
+  key: String
+  player_steam_id: bigint
+}
+
+"""aggregate min on columns"""
+type player_dismissals_min_fields {
+  dismissed_at: timestamptz
+  key: String
+  player_steam_id: bigint
+}
+
+"""
+response of any mutation on the table "player_dismissals"
+"""
+type player_dismissals_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [player_dismissals!]!
+}
+
+"""
+on_conflict condition type for table "player_dismissals"
+"""
+input player_dismissals_on_conflict {
+  constraint: player_dismissals_constraint!
+  update_columns: [player_dismissals_update_column!]! = []
+  where: player_dismissals_bool_exp
+}
+
+"""Ordering options when selecting data from "player_dismissals"."""
+input player_dismissals_order_by {
+  dismissed_at: order_by
+  key: order_by
+  player_steam_id: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: player_dismissals"""
+input player_dismissals_pk_columns_input {
+  key: String!
+  player_steam_id: bigint!
+}
+
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input player_dismissals_prepend_input {
+  value: jsonb
+}
+
+"""
+select columns of table "player_dismissals"
+"""
+enum player_dismissals_select_column {
+  """column name"""
+  dismissed_at
+
+  """column name"""
+  key
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "player_dismissals"
+"""
+input player_dismissals_set_input {
+  dismissed_at: timestamptz
+  key: String
+  player_steam_id: bigint
+  value: jsonb
+}
+
+"""aggregate stddev on columns"""
+type player_dismissals_stddev_fields {
+  player_steam_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type player_dismissals_stddev_pop_fields {
+  player_steam_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type player_dismissals_stddev_samp_fields {
+  player_steam_id: Float
+}
+
+"""
+Streaming cursor of the table "player_dismissals"
+"""
+input player_dismissals_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: player_dismissals_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input player_dismissals_stream_cursor_value_input {
+  dismissed_at: timestamptz
+  key: String
+  player_steam_id: bigint
+  value: jsonb
+}
+
+"""aggregate sum on columns"""
+type player_dismissals_sum_fields {
+  player_steam_id: bigint
+}
+
+"""
+update columns of table "player_dismissals"
+"""
+enum player_dismissals_update_column {
+  """column name"""
+  dismissed_at
+
+  """column name"""
+  key
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  value
+}
+
+input player_dismissals_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: player_dismissals_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: player_dismissals_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: player_dismissals_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: player_dismissals_delete_key_input
+
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: player_dismissals_inc_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: player_dismissals_prepend_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: player_dismissals_set_input
+
+  """filter the rows which have to be updated"""
+  where: player_dismissals_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type player_dismissals_var_pop_fields {
+  player_steam_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type player_dismissals_var_samp_fields {
+  player_steam_id: Float
+}
+
+"""aggregate variance on columns"""
+type player_dismissals_variance_fields {
+  player_steam_id: Float
 }
 
 """
@@ -93452,6 +93862,51 @@ type query_root {
   player_damages_by_pk(id: uuid!, match_map_id: uuid!, time: timestamptz!): player_damages
 
   """
+  fetch data from the table: "player_dismissals"
+  """
+  player_dismissals(
+    """distinct select on columns"""
+    distinct_on: [player_dismissals_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_dismissals_order_by!]
+
+    """filter the rows returned"""
+    where: player_dismissals_bool_exp
+  ): [player_dismissals!]!
+
+  """
+  fetch aggregated fields from the table: "player_dismissals"
+  """
+  player_dismissals_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_dismissals_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_dismissals_order_by!]
+
+    """filter the rows returned"""
+    where: player_dismissals_bool_exp
+  ): player_dismissals_aggregate!
+
+  """
+  fetch data from the table: "player_dismissals" using primary key columns
+  """
+  player_dismissals_by_pk(key: String!, player_steam_id: bigint!): player_dismissals
+
+  """
   fetch data from the table: "player_elo"
   """
   player_elo(
@@ -95073,6 +95528,11 @@ type query_root {
 
   """fetch data from the table: "settings" using primary key columns"""
   settings_by_pk(name: String!): settings
+
+  """
+  Which view-only sections (tournaments, events, news, highlights) have anything a guest can see
+  """
+  siteContent: SiteContentOutput!
 
   """Steam presence bot admin dashboard status"""
   steamPresenceAdminStatus: SteamPresenceAdminStatusOutput!
@@ -102775,6 +103235,7 @@ type servers {
   """An object relationship"""
   game_server_node: game_server_nodes
   game_server_node_id: String
+  hibernating: Boolean!
   host: String!
   id: uuid!
   is_dedicated: Boolean!
@@ -103113,6 +103574,7 @@ input servers_bool_exp {
   game_mode_id: uuid_comparison_exp
   game_server_node: game_server_nodes_bool_exp
   game_server_node_id: String_comparison_exp
+  hibernating: Boolean_comparison_exp
   host: String_comparison_exp
   id: uuid_comparison_exp
   is_dedicated: Boolean_comparison_exp
@@ -103214,6 +103676,7 @@ input servers_insert_input {
   game_mode_id: uuid
   game_server_node: game_server_nodes_obj_rel_insert_input
   game_server_node_id: String
+  hibernating: Boolean
   host: String
   id: uuid
   is_dedicated: Boolean
@@ -103427,6 +103890,7 @@ input servers_order_by {
   game_mode_id: order_by
   game_server_node: game_server_nodes_order_by
   game_server_node_id: order_by
+  hibernating: order_by
   host: order_by
   id: order_by
   is_dedicated: order_by
@@ -103504,6 +103968,9 @@ enum servers_select_column {
 
   """column name"""
   game_server_node_id
+
+  """column name"""
+  hibernating
 
   """column name"""
   host
@@ -103589,6 +104056,9 @@ enum servers_select_column_servers_aggregate_bool_exp_bool_and_arguments_columns
   enabled
 
   """column name"""
+  hibernating
+
+  """column name"""
   is_dedicated
 
   """column name"""
@@ -103610,6 +104080,9 @@ enum servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_columns 
 
   """column name"""
   enabled
+
+  """column name"""
+  hibernating
 
   """column name"""
   is_dedicated
@@ -103636,6 +104109,7 @@ input servers_set_input {
   game: String
   game_mode_id: uuid
   game_server_node_id: String
+  hibernating: Boolean
   host: String
   id: uuid
   is_dedicated: Boolean
@@ -103733,6 +104207,7 @@ input servers_stream_cursor_value_input {
   game: String
   game_mode_id: uuid
   game_server_node_id: String
+  hibernating: Boolean
   host: String
   id: uuid
   is_dedicated: Boolean
@@ -103810,6 +104285,9 @@ enum servers_update_column {
 
   """column name"""
   game_server_node_id
+
+  """column name"""
+  hibernating
 
   """column name"""
   host
@@ -113083,6 +113561,65 @@ type subscription_root {
     """filter the rows returned"""
     where: player_damages_bool_exp
   ): [player_damages!]!
+
+  """
+  fetch data from the table: "player_dismissals"
+  """
+  player_dismissals(
+    """distinct select on columns"""
+    distinct_on: [player_dismissals_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_dismissals_order_by!]
+
+    """filter the rows returned"""
+    where: player_dismissals_bool_exp
+  ): [player_dismissals!]!
+
+  """
+  fetch aggregated fields from the table: "player_dismissals"
+  """
+  player_dismissals_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_dismissals_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_dismissals_order_by!]
+
+    """filter the rows returned"""
+    where: player_dismissals_bool_exp
+  ): player_dismissals_aggregate!
+
+  """
+  fetch data from the table: "player_dismissals" using primary key columns
+  """
+  player_dismissals_by_pk(key: String!, player_steam_id: bigint!): player_dismissals
+
+  """
+  fetch data from the table in a streaming manner: "player_dismissals"
+  """
+  player_dismissals_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [player_dismissals_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: player_dismissals_bool_exp
+  ): [player_dismissals!]!
 
   """
   fetch data from the table: "player_elo"
@@ -123449,6 +123986,7 @@ type teams {
   """An object relationship"""
   captain: players
   captain_steam_id: bigint
+  created_at: timestamptz
   id: uuid!
 
   """An array relationship"""
@@ -123487,6 +124025,11 @@ type teams {
     where: team_invites_bool_exp
   ): team_invites_aggregate!
   is_organization: Boolean!
+
+  """
+  A computed field, executes function "team_last_match_at"
+  """
+  last_match_at: timestamptz
 
   """An array relationship"""
   match_lineups(
@@ -123782,10 +124325,12 @@ input teams_bool_exp {
   can_remove: Boolean_comparison_exp
   captain: players_bool_exp
   captain_steam_id: bigint_comparison_exp
+  created_at: timestamptz_comparison_exp
   id: uuid_comparison_exp
   invites: team_invites_bool_exp
   invites_aggregate: team_invites_aggregate_bool_exp
   is_organization: Boolean_comparison_exp
+  last_match_at: timestamptz_comparison_exp
   match_lineups: match_lineups_bool_exp
   match_lineups_aggregate: match_lineups_aggregate_bool_exp
   matches: matches_bool_exp
@@ -123836,6 +124381,7 @@ input teams_insert_input {
   awards: award_recipients_arr_rel_insert_input
   captain: players_obj_rel_insert_input
   captain_steam_id: bigint
+  created_at: timestamptz
   id: uuid
   invites: team_invites_arr_rel_insert_input
   is_organization: Boolean
@@ -123856,7 +124402,13 @@ input teams_insert_input {
 type teams_max_fields {
   avatar_url: String
   captain_steam_id: bigint
+  created_at: timestamptz
   id: uuid
+
+  """
+  A computed field, executes function "team_last_match_at"
+  """
+  last_match_at: timestamptz
   name: String
   owner_steam_id: bigint
 
@@ -123873,6 +124425,7 @@ order by max() on columns of table "teams"
 input teams_max_order_by {
   avatar_url: order_by
   captain_steam_id: order_by
+  created_at: order_by
   id: order_by
   name: order_by
   owner_steam_id: order_by
@@ -123883,7 +124436,13 @@ input teams_max_order_by {
 type teams_min_fields {
   avatar_url: String
   captain_steam_id: bigint
+  created_at: timestamptz
   id: uuid
+
+  """
+  A computed field, executes function "team_last_match_at"
+  """
+  last_match_at: timestamptz
   name: String
   owner_steam_id: bigint
 
@@ -123900,6 +124459,7 @@ order by min() on columns of table "teams"
 input teams_min_order_by {
   avatar_url: order_by
   captain_steam_id: order_by
+  created_at: order_by
   id: order_by
   name: order_by
   owner_steam_id: order_by
@@ -123946,9 +124506,11 @@ input teams_order_by {
   can_remove: order_by
   captain: players_order_by
   captain_steam_id: order_by
+  created_at: order_by
   id: order_by
   invites_aggregate: team_invites_aggregate_order_by
   is_organization: order_by
+  last_match_at: order_by
   match_lineups_aggregate: match_lineups_aggregate_order_by
   matches_aggregate: matches_aggregate_order_by
   name: order_by
@@ -123978,6 +124540,9 @@ enum teams_select_column {
 
   """column name"""
   captain_steam_id
+
+  """column name"""
+  created_at
 
   """column name"""
   id
@@ -124017,6 +124582,7 @@ input type for updating data in table "teams"
 input teams_set_input {
   avatar_url: String
   captain_steam_id: bigint
+  created_at: timestamptz
   id: uuid
   is_organization: Boolean
   name: String
@@ -124081,6 +124647,7 @@ input teams_stream_cursor_input {
 input teams_stream_cursor_value_input {
   avatar_url: String
   captain_steam_id: bigint
+  created_at: timestamptz
   id: uuid
   is_organization: Boolean
   name: String
@@ -124111,6 +124678,9 @@ enum teams_update_column {
 
   """column name"""
   captain_steam_id
+
+  """column name"""
+  created_at
 
   """column name"""
   id
