@@ -22,11 +22,15 @@ export class MatchServerMiddlewareMiddleware implements NestMiddleware {
       return next();
     }
 
-    let matchId: string | undefined;
-    let serverId: string | undefined;
+    // The handler acts on the server or match in its route, so that is the one
+    // to authorize. The body only names it when the route does not.
+    const named =
+      request.params.matchId || request.params.serverId
+        ? request.params
+        : request.body;
 
-    matchId = request.body?.matchId || (request.params.matchId as string);
-    serverId = request.body?.serverId || (request.params.serverId as string);
+    const matchId = named?.matchId as string | undefined;
+    const serverId = named?.serverId as string | undefined;
 
     if (!matchId && !serverId) {
       return response.status(401).end();
