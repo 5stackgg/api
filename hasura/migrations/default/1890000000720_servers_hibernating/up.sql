@@ -1,1 +1,1 @@
-ALTER TABLE public.servers ADD COLUMN hibernating boolean NOT NULL DEFAULT false;
+ALTER TABLE public.servers ADD COLUMN IF NOT EXISTS hibernating boolean NOT NULL DEFAULT false;
