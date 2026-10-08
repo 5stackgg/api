@@ -201,7 +201,11 @@ export class BatchUtilityRenderJob extends WorkerHost {
         const { jobName, nodeId } = await this.gameStreamer.dispatchNadePreviews(
           mapName,
           connection.match_id,
-          { addr: connection.addr, password: connection.password },
+          {
+            addr: connection.addr,
+            password: connection.password,
+            nodeId: connection.node_id,
+          },
           inFlight.map((render) => ({
             job_id: render.id,
             session_token: render.session_token,

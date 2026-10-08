@@ -243,6 +243,51 @@ describe("MatchAssistantService", () => {
   // countFreeOnDemandServers answers zero for "everything is busy" and for
   // "there is no node here", and only the second is hopeless -- the practice
   // start reads this to decide whether queuing could ever help.
+  describe("render practice servers", () => {
+    const nodeWhere = async (isRender: boolean) => {
+      hasura.query.mockImplementation(async (query: any) => {
+        if (query.matches_by_pk) {
+          return {
+            matches_by_pk: {
+              source: "practice",
+              region: null,
+              match_maps: [{ map: { name: "de_mirage" }, order: 1 }],
+            },
+          };
+        }
+        if (query.utility_practice_sessions) {
+          return {
+            utility_practice_sessions: isRender ? [{ id: "session-1" }] : [],
+          };
+        }
+        return { game_server_nodes: [] };
+      });
+
+      expect(
+        await (service as any).assignOnDemandServer("match-1"),
+      ).toBe(false);
+
+      const nodesQuery = hasura.query.mock.calls.find(
+        ([query]) => query.game_server_nodes,
+      )[0];
+      return nodesQuery.game_server_nodes.__args.where;
+    };
+
+    it("boots a render's server only on a node that can also run its pod", async () => {
+      const where = await nodeWhere(true);
+
+      expect(where.gpu).toEqual({ _eq: true });
+      expect(where.gpu_rendering_enabled).toEqual({ _eq: true });
+    });
+
+    it("leaves a human practice server free to boot on any node", async () => {
+      const where = await nodeWhere(false);
+
+      expect(where.gpu).toBeUndefined();
+      expect(where.gpu_rendering_enabled).toBeUndefined();
+    });
+  });
+
   describe("hasOnDemandNodes", () => {
     it("is false when no node in the region can take a pod", async () => {
       hasura.query.mockResolvedValue({ game_server_nodes: [] });

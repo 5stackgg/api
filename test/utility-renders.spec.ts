@@ -210,6 +210,55 @@ describe("utility lineup renders (SQL-driven)", () => {
     });
   });
 
+  describe("render GPU claim", () => {
+    const GPU_NODE = "render-gpu-node";
+    const CPU_NODE = "render-cpu-node";
+
+    beforeEach(async () => {
+      await postgres.query(
+        "DELETE FROM game_server_nodes WHERE id = ANY($1::text[])",
+        [[GPU_NODE, CPU_NODE]],
+      );
+      const region = await fx.region("RenderRegion");
+      await postgres.query(
+        `INSERT INTO game_server_nodes (id, status, enabled, region, gpu)
+         VALUES ($1, 'Online', true, $3, true), ($2, 'Online', true, $3, false)`,
+        [GPU_NODE, CPU_NODE, region],
+      );
+    });
+
+    const claim = async (nodeId: string) => {
+      const [row] = await postgres.query<Array<{ id: string | null }>>(
+        "SELECT public.claim_gpu_node_for_render($1) AS id",
+        [nodeId],
+      );
+      return row.id;
+    };
+
+    it("takes the practice server's own node when its GPU is free", async () => {
+      expect(await claim(GPU_NODE)).toBe(GPU_NODE);
+    });
+
+    it("never hands out a node without a GPU", async () => {
+      expect(await claim(CPU_NODE)).toBeNull();
+    });
+
+    it("holds the node for an in-flight render against every other GPU claim", async () => {
+      const id = await lineup();
+      const [render] = await queueRender(id, "rendering");
+      await postgres.query(
+        "UPDATE utility_lineup_renders SET game_server_node_id = $2 WHERE id = $1::uuid",
+        [render.id, GPU_NODE],
+      );
+
+      expect(await claim(GPU_NODE)).toBeNull();
+      const [live] = await postgres.query<Array<{ id: string | null }>>(
+        "SELECT public.claim_free_gpu_node() AS id",
+      );
+      expect(live.id).not.toBe(GPU_NODE);
+    });
+  });
+
   describe("render practice sessions", () => {
     it("does not count against the host's one-live-session limit", async () => {
       const host = await fx.player();

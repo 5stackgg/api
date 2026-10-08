@@ -21,15 +21,20 @@ import { GameStreamerService } from "./game-streamer.service";
 describe("GameStreamerService — nade previews", () => {
   let service: GameStreamerService;
   let postgres: { query: jest.Mock; transaction: jest.Mock };
+  let claimClient: { query: jest.Mock };
   let hasura: { query: jest.Mock; mutation: jest.Mock };
   let steamAccounts: { claim: jest.Mock; release: jest.Mock };
   let logger: { log: jest.Mock; warn: jest.Mock; error: jest.Mock };
 
+  let gameServers: Record<string, unknown>;
   const config = {
-    get: (key: string) =>
-      key === "gameServers"
-        ? { namespace: "test", gameStreamerImage: "5stack/game-streamer" }
-        : ({} as any),
+    get: (key: string) => (key === "gameServers" ? gameServers : ({} as any)),
+  };
+
+  const CONNECT = {
+    addr: "1.2.3.4:27015",
+    password: "server-pw",
+    nodeId: "node-A",
   };
 
   const JOBS = [
@@ -49,20 +54,39 @@ describe("GameStreamerService — nade previews", () => {
     return Object.fromEntries(env.map((entry) => [entry.name, entry.value]));
   };
 
+  const makeService = () =>
+    new GameStreamerService(
+      logger as any,
+      config as any,
+      hasura as any,
+      postgres as any,
+      { getConnection: jest.fn() } as any,
+      {} as any,
+      {} as any,
+      steamAccounts as any,
+      { resolveDefault: jest.fn().mockResolvedValue(null) } as any,
+    );
+
   beforeEach(() => {
+    gameServers = {
+      namespace: "test",
+      gameStreamerImage: "5stack/game-streamer",
+      utilityRenderStreamerImage: null,
+    };
     createNamespacedJob.mockReset();
     readNamespacedJob.mockReset();
     // "absent" — nothing already running for this map.
     readNamespacedJob.mockRejectedValue({ code: 404 });
 
+    claimClient = {
+      query: jest
+        .fn()
+        .mockResolvedValue({ rows: [{ game_server_node_id: "node-A" }] }),
+    };
     postgres = {
       query: jest.fn().mockResolvedValue([]),
       transaction: jest.fn(async (fn: (client: unknown) => unknown) =>
-        fn({
-          query: jest
-            .fn()
-            .mockResolvedValue({ rows: [{ game_server_node_id: "node-A" }] }),
-        }),
+        fn(claimClient),
       ),
     };
     hasura = {
@@ -77,17 +101,7 @@ describe("GameStreamerService — nade previews", () => {
     };
     logger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
 
-    service = new GameStreamerService(
-      logger as any,
-      config as any,
-      hasura as any,
-      postgres as any,
-      { getConnection: jest.fn() } as any,
-      {} as any,
-      {} as any,
-      steamAccounts as any,
-      { resolveDefault: jest.fn().mockResolvedValue(null) } as any,
-    );
+    service = makeService();
   });
 
   describe("GetNadeRenderJobName", () => {
@@ -111,7 +125,7 @@ describe("GameStreamerService — nade previews", () => {
       const result = await service.dispatchNadePreviews(
         "de_mirage",
         "match-1",
-        { addr: "1.2.3.4:27015", password: "server-pw" },
+        CONNECT,
         JOBS,
       );
 
@@ -135,11 +149,40 @@ describe("GameStreamerService — nade previews", () => {
       ]);
     });
 
+    it("claims the GPU on the practice server's own node", async () => {
+      await service.dispatchNadePreviews("de_mirage", "match-1", CONNECT, JOBS);
+
+      const claimQuery = claimClient.query.mock.calls[0];
+      expect(claimQuery[0]).toContain("claim_gpu_node_for_render($2)");
+      expect(claimQuery[1]).toEqual(["de_mirage", "node-A"]);
+    });
+
+    it("films with the render-only streamer image when one is set", async () => {
+      gameServers.utilityRenderStreamerImage = "5stack/game-streamer:dev";
+      service = makeService();
+
+      await service.dispatchNadePreviews("de_mirage", "match-1", CONNECT, JOBS);
+
+      const body = createNamespacedJob.mock.calls[0][0].body;
+      expect(body.spec.template.spec.containers[0].image).toBe(
+        "5stack/game-streamer:dev",
+      );
+    });
+
+    it("keeps the shared streamer image when no render image is set", async () => {
+      await service.dispatchNadePreviews("de_mirage", "match-1", CONNECT, JOBS);
+
+      const body = createNamespacedJob.mock.calls[0][0].body;
+      expect(body.spec.template.spec.containers[0].image).toBe(
+        "5stack/game-streamer",
+      );
+    });
+
     it("sets NADE_BATCH_MODE so the pod never posts to the match's streamer status", async () => {
       await service.dispatchNadePreviews(
         "de_mirage",
         "match-1",
-        { addr: "1.2.3.4:27015", password: "server-pw" },
+        CONNECT,
         JOBS,
       );
 
@@ -153,7 +196,7 @@ describe("GameStreamerService — nade previews", () => {
         service.dispatchNadePreviews(
           "de_mirage",
           "match-1",
-          { addr: "1.2.3.4:27015", password: "server-pw" },
+          CONNECT,
           JOBS,
         ),
       ).rejects.toThrow("k8s said no");
@@ -170,7 +213,7 @@ describe("GameStreamerService — nade previews", () => {
         service.dispatchNadePreviews(
           "de_mirage",
           "match-1",
-          { addr: "1.2.3.4:27015", password: "server-pw" },
+          CONNECT,
           [],
         ),
       ).rejects.toThrow("no nade render jobs");
@@ -185,7 +228,7 @@ describe("GameStreamerService — nade previews", () => {
         service.dispatchNadePreviews(
           "de_mirage",
           "match-1",
-          { addr: "1.2.3.4:27015", password: "server-pw" },
+          CONNECT,
           JOBS,
         ),
       ).rejects.toThrow("already running");

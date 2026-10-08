@@ -58,6 +58,7 @@ describe("BatchUtilityRenderJob", () => {
         password: "pw",
         match_id: "match-1",
         plugin_runtime: "swiftlys2",
+        node_id: "node-A",
       }),
       endRenderSession: jest.fn(),
     };
@@ -287,7 +288,11 @@ describe("BatchUtilityRenderJob", () => {
       gameStreamer.dispatchNadePreviews.mock.calls[0];
     expect(mapName).toBe("de_mirage");
     expect(matchId).toBe("match-1");
-    expect(connect).toEqual({ addr: "1.2.3.4:27015", password: "pw" });
+    expect(connect).toEqual({
+      addr: "1.2.3.4:27015",
+      password: "pw",
+      nodeId: "node-A",
+    });
     expect(jobs).toEqual([
       {
         job_id: "render-1",

@@ -2569,7 +2569,7 @@ export class GameStreamerService {
   public async dispatchNadePreviews(
     mapName: string,
     matchId: string,
-    connect: { addr: string; password: string },
+    connect: { addr: string; password: string; nodeId: string },
     jobs: Array<{ job_id: string; session_token: string; spec: unknown }>,
   ): Promise<{ jobName: string; nodeId: string }> {
     if (jobs.length === 0) {
@@ -2580,6 +2580,7 @@ export class GameStreamerService {
     const { nodeId, steamAccount } = await this.claimGpuForNadeRenders(
       mapName,
       jobName,
+      connect.nodeId,
     );
 
     const env: V1EnvVar[] = [
@@ -2675,13 +2676,15 @@ export class GameStreamerService {
     await this.steamAccounts.release(jobName);
   }
 
+  // Only the practice server's own node: the pod connects to it over loopback.
   private async claimGpuForNadeRenders(
     mapName: string,
     jobName: string,
+    serverNodeId: string,
   ): Promise<GpuClaim> {
     return this.postgres.transaction(async (client) => {
       const result = await client.query(
-        `WITH chosen AS (SELECT claim_free_gpu_node_for_batch() AS id)
+        `WITH chosen AS (SELECT claim_gpu_node_for_render($2) AS id)
          UPDATE utility_lineup_renders
             SET game_server_node_id = chosen.id
            FROM chosen
@@ -2690,7 +2693,7 @@ export class GameStreamerService {
             AND utility_lineup_renders.game_server_node_id IS NULL
             AND chosen.id IS NOT NULL
          RETURNING utility_lineup_renders.game_server_node_id`,
-        [mapName],
+        [mapName, serverNodeId],
       );
 
       const nodeId = result.rows[0]?.game_server_node_id as string | undefined;
@@ -3583,7 +3586,10 @@ export class GameStreamerService {
               {
                 name: containerName,
                 // Override via GAME_STREAMER_IMAGE (see configs/game-servers.ts).
-                image: this.gameServerConfig.gameStreamerImage,
+                image:
+                  (mode === "nade-previews" &&
+                    this.gameServerConfig.utilityRenderStreamerImage) ||
+                  this.gameServerConfig.gameStreamerImage,
                 // Mutable tag; force each pod start to resolve the latest digest.
                 imagePullPolicy: "Always",
                 securityContext: { privileged: true },
