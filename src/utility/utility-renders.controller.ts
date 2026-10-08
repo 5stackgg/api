@@ -303,7 +303,12 @@ export class UtilityRendersController {
     }
 
     try {
-      const result = await this.renders.uploadStill(jobId, kind, request);
+      const result = await this.renders.uploadStill(
+        jobId,
+        kind,
+        request,
+        request.headers["content-type"],
+      );
       return response.status(201).json(result);
     } catch (error) {
       this.logger.error(

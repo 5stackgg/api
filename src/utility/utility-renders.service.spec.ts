@@ -6,19 +6,28 @@ const LINEUP = {
   map_name: "de_mirage",
   utility_type: "Smoke",
   side: "TERRORIST",
-  origin_x: 1, origin_y: 2, origin_z: 3,
+  origin_x: 1,
+  origin_y: 2,
+  origin_z: 3,
   eye_z: 64,
-  view_yaw: 90, view_pitch: -20,
+  view_yaw: 90,
+  view_pitch: -20,
   technique: "Jump",
   throw_strength: "Full",
   jump_throw_bind: true,
-  land_x: 10, land_y: 20, land_z: 30,
+  land_x: 10,
+  land_y: 20,
+  land_z: 30,
   flight_time_ms: 2400,
   confidence: "exact",
   visibility: "Public",
   archived_at: null as Date | null,
-  initial_pos_x: 1, initial_pos_y: 2, initial_pos_z: 3,
-  initial_vel_x: 100, initial_vel_y: 0, initial_vel_z: 50,
+  initial_pos_x: 1,
+  initial_pos_y: 2,
+  initial_pos_z: 3,
+  initial_vel_x: 100,
+  initial_vel_y: 0,
+  initial_vel_z: 50,
   preview_file: null as string | null,
   author_steam_id: "76561198000000001",
   public_reviewed_by: "76561198000000002",
@@ -164,8 +173,14 @@ describe("UtilityRendersService", () => {
     });
 
     it("coalesces within-stage ticks onto one entry and keeps the first at", async () => {
-      const first = { status: "booting", at: "2026-01-01T00:00:00.000Z", boot_stage: "downloading_cs2" };
-      postgres.query.mockResolvedValueOnce(row([first])).mockResolvedValueOnce([]);
+      const first = {
+        status: "booting",
+        at: "2026-01-01T00:00:00.000Z",
+        boot_stage: "downloading_cs2",
+      };
+      postgres.query
+        .mockResolvedValueOnce(row([first]))
+        .mockResolvedValueOnce([]);
 
       await service.reportStatus("render-1", {
         status: "booting",
@@ -185,8 +200,14 @@ describe("UtilityRendersService", () => {
     });
 
     it("pushes a fresh entry when the stage changes", async () => {
-      const first = { status: "booting", at: "2026-01-01T00:00:00.000Z", boot_stage: "downloading_cs2" };
-      postgres.query.mockResolvedValueOnce(row([first])).mockResolvedValueOnce([]);
+      const first = {
+        status: "booting",
+        at: "2026-01-01T00:00:00.000Z",
+        boot_stage: "downloading_cs2",
+      };
+      postgres.query
+        .mockResolvedValueOnce(row([first]))
+        .mockResolvedValueOnce([]);
 
       await service.reportStatus("render-1", {
         status: "booting",
@@ -203,7 +224,10 @@ describe("UtilityRendersService", () => {
     it("still writes a real status transition to the row", async () => {
       postgres.query.mockResolvedValueOnce(row([])).mockResolvedValueOnce([]);
 
-      await service.reportStatus("render-1", { status: "rendering", progress: 0.3 });
+      await service.reportStatus("render-1", {
+        status: "rendering",
+        progress: 0.3,
+      });
 
       const [sql, bindings] = postgres.query.mock.calls[1];
       expect(sql).toMatch(/SET status = \$2/);
@@ -227,7 +251,10 @@ describe("UtilityRendersService", () => {
       expect(updates).toHaveLength(2);
       for (const [, bindings] of updates) {
         expect(JSON.parse(bindings[1])).toEqual([
-          expect.objectContaining({ status: "booting", boot_stage: "server_starting" }),
+          expect.objectContaining({
+            status: "booting",
+            boot_stage: "server_starting",
+          }),
         ]);
       }
     });
@@ -309,9 +336,7 @@ describe("UtilityRendersService", () => {
     });
 
     it("does not double-queue when the in-flight index refuses the insert", async () => {
-      postgres.query
-        .mockResolvedValueOnce([LINEUP])
-        .mockResolvedValueOnce([]);
+      postgres.query.mockResolvedValueOnce([LINEUP]).mockResolvedValueOnce([]);
 
       const result = await service.enqueue(LINEUP.id);
 
@@ -637,6 +662,24 @@ describe("UtilityRendersService", () => {
       });
     });
 
+    it("records a webp still over a jpeg one of the same kind", async () => {
+      uploading();
+      s3.has.mockImplementation(async (key: string) =>
+        [
+          `clips/utility/${LINEUP.id}/job-1/aim_close.webp`,
+          `clips/utility/${LINEUP.id}/job-1/aim_close.jpg`,
+          `clips/utility/${LINEUP.id}/job-1/landing.jpg`,
+        ].includes(key),
+      );
+
+      await service.finalizeUpload("job-1", {} as any, null);
+
+      expect(JSON.parse(lineupUpdate()[4])).toEqual({
+        aim_close: `clips/utility/${LINEUP.id}/job-1/aim_close.webp`,
+        landing: `clips/utility/${LINEUP.id}/job-1/landing.jpg`,
+      });
+    });
+
     it("never pairs a new clip with an older render's stills", async () => {
       postgres.query
         .mockResolvedValueOnce([
@@ -688,6 +731,43 @@ describe("UtilityRendersService", () => {
         "image/jpeg",
       );
       expect(result.key).toBe(`clips/utility/${LINEUP.id}/job-1/aim_close.jpg`);
+    });
+
+    it("stores a webp still as webp", async () => {
+      postgres.query.mockResolvedValueOnce([
+        { utility_lineup_id: LINEUP.id, status: "rendering" },
+      ]);
+
+      const stream = {} as any;
+      const result = await service.uploadStill(
+        "job-1",
+        "aim_close",
+        stream,
+        "image/webp",
+      );
+
+      expect(s3.put).toHaveBeenCalledWith(
+        `clips/utility/${LINEUP.id}/job-1/aim_close.webp`,
+        stream,
+        "image/webp",
+      );
+      expect(result.key).toBe(
+        `clips/utility/${LINEUP.id}/job-1/aim_close.webp`,
+      );
+    });
+
+    it("stores anything that is not webp as jpeg", async () => {
+      postgres.query.mockResolvedValueOnce([
+        { utility_lineup_id: LINEUP.id, status: "rendering" },
+      ]);
+
+      await service.uploadStill("job-1", "aim", {} as any, "text/html");
+
+      expect(s3.put).toHaveBeenCalledWith(
+        `clips/utility/${LINEUP.id}/job-1/aim.jpg`,
+        expect.anything(),
+        "image/jpeg",
+      );
     });
 
     it("refuses a still for a cancelled render", async () => {

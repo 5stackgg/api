@@ -34,6 +34,13 @@ export const UTILITY_RENDER_STILLS = [
 
 export type UtilityRenderStill = (typeof UTILITY_RENDER_STILLS)[number];
 
+// The pod sends the aim stills lossless as webp; webp wins over a jpeg of the
+// same kind, which only an older pod sends.
+export const UTILITY_RENDER_STILL_FORMATS = ["webp", "jpg"] as const;
+
+export type UtilityRenderStillFormat =
+  (typeof UTILITY_RENDER_STILL_FORMATS)[number];
+
 export type UtilityRenderRow = {
   id: string;
   utility_lineup_id: string;
@@ -124,8 +131,17 @@ export class UtilityRendersService {
     lineupId: string,
     renderId: string,
     kind: UtilityRenderStill,
+    format: UtilityRenderStillFormat = "jpg",
   ): string {
-    return `clips/utility/${lineupId}/${renderId}/${kind}.jpg`;
+    return `clips/utility/${lineupId}/${renderId}/${kind}.${format}`;
+  }
+
+  public static stillFormat(
+    contentType?: string | null,
+  ): UtilityRenderStillFormat {
+    return contentType?.split(";")[0].trim().toLowerCase() === "image/webp"
+      ? "webp"
+      : "jpg";
   }
 
   public static isStill(kind: string): kind is UtilityRenderStill {
@@ -241,7 +257,12 @@ export class UtilityRendersService {
 
     await this.dispatchMap(lineup.map_name);
 
-    return { queued: true, render_id: row.id, status: row.status, reason: null };
+    return {
+      queued: true,
+      render_id: row.id,
+      status: row.status,
+      reason: null,
+    };
   }
 
   /**
@@ -635,7 +656,8 @@ export class UtilityRendersService {
         progress,
         body.error ? String(body.error).slice(0, 500) : null,
         body.skip_reason ? String(body.skip_reason).slice(0, 500) : null,
-        typeof body.duration_ms === "number" && Number.isFinite(body.duration_ms)
+        typeof body.duration_ms === "number" &&
+        Number.isFinite(body.duration_ms)
           ? Math.round(body.duration_ms)
           : null,
         terminal,
@@ -669,7 +691,10 @@ export class UtilityRendersService {
   // leaves it: the server row points back at the match while it is reserved.
   public async bootStatusForMatch(
     matchId: string,
-  ): Promise<{ boot_status: string | null; boot_status_detail: string | null } | null> {
+  ): Promise<{
+    boot_status: string | null;
+    boot_status_detail: string | null;
+  } | null> {
     const [row] = await this.postgres.query<
       Array<{ boot_status: string | null; boot_status_detail: string | null }>
     >(
@@ -789,6 +814,7 @@ export class UtilityRendersService {
     jobId: string,
     kind: UtilityRenderStill,
     fileStream: Readable,
+    contentType?: string | null,
   ): Promise<{ key: string }> {
     const [row] = await this.postgres.query<
       Array<{ utility_lineup_id: string; status: string }>
@@ -804,12 +830,18 @@ export class UtilityRendersService {
       throw new Error(`render is ${row.status}`);
     }
 
+    const format = UtilityRendersService.stillFormat(contentType);
     const key = UtilityRendersService.GetPreviewStillS3Key(
       row.utility_lineup_id,
       jobId,
       kind,
+      format,
     );
-    await this.s3.put(key, fileStream, "image/jpeg");
+    await this.s3.put(
+      key,
+      fileStream,
+      format === "webp" ? "image/webp" : "image/jpeg",
+    );
 
     return { key };
   }
@@ -838,7 +870,10 @@ export class UtilityRendersService {
       throw new Error(`render is ${row.status}`);
     }
 
-    const key = UtilityRendersService.GetPreviewS3Key(row.utility_lineup_id, jobId);
+    const key = UtilityRendersService.GetPreviewS3Key(
+      row.utility_lineup_id,
+      jobId,
+    );
     await this.s3.put(key, fileStream, "video/mp4");
 
     const thumbnailKey = UtilityRendersService.GetPreviewThumbnailS3Key(
@@ -872,19 +907,23 @@ export class UtilityRendersService {
 
     const stills: Partial<Record<UtilityRenderStill, string>> = {};
     for (const kind of UTILITY_RENDER_STILLS) {
-      const stillKey = UtilityRendersService.GetPreviewStillS3Key(
-        row.utility_lineup_id,
-        jobId,
-        kind,
-      );
-      try {
-        if (await this.s3.has(stillKey)) {
-          stills[kind] = stillKey;
-        }
-      } catch (error) {
-        this.logger.warn(
-          `[utility-render ${jobId}] ${kind} still check failed: ${(error as Error)?.message}`,
+      for (const format of UTILITY_RENDER_STILL_FORMATS) {
+        const stillKey = UtilityRendersService.GetPreviewStillS3Key(
+          row.utility_lineup_id,
+          jobId,
+          kind,
+          format,
         );
+        try {
+          if (await this.s3.has(stillKey)) {
+            stills[kind] = stillKey;
+            break;
+          }
+        } catch (error) {
+          this.logger.warn(
+            `[utility-render ${jobId}] ${kind} still check failed: ${(error as Error)?.message}`,
+          );
+        }
       }
     }
 
