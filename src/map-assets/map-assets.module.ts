@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
-import { BullModule } from "@nestjs/bullmq";
+import { BullModule, InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
 import { BullBoardModule } from "@bull-board/nestjs";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { PostgresModule } from "../postgres/postgres.module";
@@ -11,6 +12,7 @@ import { MapAssetsQueues } from "./enums/MapAssetsQueues";
 import { UtilityQueues } from "../utility/enums/UtilityQueues";
 import { MapAssetsService } from "./map-assets.service";
 import { BuildMapAssets } from "./jobs/BuildMapAssets";
+import { ReconcileMapAssetBuilds } from "./jobs/ReconcileMapAssetBuilds";
 
 @Module({
   imports: [
@@ -20,6 +22,9 @@ import { BuildMapAssets } from "./jobs/BuildMapAssets";
     BullModule.registerQueue(
       {
         name: MapAssetsQueues.BuildMapAssets,
+      },
+      {
+        name: MapAssetsQueues.ReconcileMapAssetBuilds,
       },
       {
         name: UtilityQueues.UtilityMeta,
@@ -33,9 +38,29 @@ import { BuildMapAssets } from "./jobs/BuildMapAssets";
   providers: [
     MapAssetsService,
     BuildMapAssets,
+    ReconcileMapAssetBuilds,
     ...getQueuesProcessors("MapAssets"),
     loggerFactory(),
   ],
   exports: [MapAssetsService],
 })
-export class MapAssetsModule {}
+export class MapAssetsModule {
+  constructor(
+    @InjectQueue(MapAssetsQueues.ReconcileMapAssetBuilds)
+    reconcileQueue: Queue,
+  ) {
+    if (process.env.RUN_MIGRATIONS) {
+      return;
+    }
+
+    void reconcileQueue.add(
+      ReconcileMapAssetBuilds.name,
+      {},
+      {
+        repeat: {
+          pattern: "*/5 * * * *",
+        },
+      },
+    );
+  }
+}

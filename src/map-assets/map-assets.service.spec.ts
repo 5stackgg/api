@@ -11,6 +11,7 @@ describe("MapAssetsService", () => {
     existing: string | null;
     previous: { build_id: string; maps: Record<string, unknown> } | null;
     maps: Array<string>;
+    stranded: Array<Record<string, string | null>>;
   };
 
   let db: Db;
@@ -36,9 +37,16 @@ describe("MapAssetsService", () => {
       existing: null,
       previous: null,
       maps: [],
+      stranded: [],
     };
     postgres = {
       query: jest.fn(async (sql: string, params: Array<unknown>) => {
+        if (sql.includes("LEFT JOIN public.players")) {
+          return db.stranded;
+        }
+        if (sql.includes("RETURNING status")) {
+          return [{ status: "Partial" }];
+        }
         if (sql.includes("FROM public.settings")) {
           return db.autoBuild === null ? [] : [{ value: db.autoBuild }];
         }
@@ -689,6 +697,26 @@ describe("MapAssetsService", () => {
       expect(outcome.status).toBe("Published");
     });
 
+    it("reads the result of a Job that finished while the api was down", async () => {
+      db.existing = "Building";
+      loggingService.getJobStatus.mockResolvedValue({ succeeded: 1 });
+
+      const outcome = await service.build("node-1", "25537370");
+
+      expect(batchApi.deleteNamespacedJob).not.toHaveBeenCalled();
+      expect(batchApi.createNamespacedJob).not.toHaveBeenCalled();
+      expect(outcome.status).toBe("Published");
+    });
+
+    it("still replaces a finished Job left over from an earlier run", async () => {
+      db.existing = "Pending";
+      loggingService.getJobStatus.mockResolvedValue({ succeeded: 1 });
+
+      await service.build("node-1", "25537370");
+
+      expect(batchApi.createNamespacedJob).toHaveBeenCalled();
+    });
+
     it("marks the build failed when the job cannot be created", async () => {
       loggingService.getJobStatus.mockResolvedValueOnce(undefined);
       batchApi.createNamespacedJob.mockRejectedValueOnce(
@@ -699,6 +727,118 @@ describe("MapAssetsService", () => {
 
       expect(outcome).toMatchObject({ status: "Failed", error: "forbidden" });
       expect(finalUpdate().sql).toContain("UPDATE public.map_asset_builds");
+    });
+  });
+
+  describe("reconcileStrandedBuilds", () => {
+    const stranded = (fields: Record<string, string | null> = {}) => ({
+      build_id: "25738536",
+      status: "Building",
+      game_server_node_id: "dev",
+      trigger: "manual",
+      requested_by_steam_id: "76561198000000001",
+      requested_by_name: "rawr",
+      ...fields,
+    });
+
+    const queueJob = (state: string, failedReason?: string) => ({
+      getState: jest.fn().mockResolvedValue(state),
+      remove: jest.fn().mockResolvedValue(undefined),
+      failedReason,
+    });
+
+    const settleCall = () =>
+      postgres.query.mock.calls.find(([sql]) =>
+        String(sql).includes("RETURNING status"),
+      );
+
+    it("hands a build whose queue job is gone back to its running k8s Job", async () => {
+      db.stranded = [stranded()];
+      loggingService.getJobStatus.mockResolvedValue({ active: 1 });
+
+      await service.reconcileStrandedBuilds();
+
+      expect(loggingService.getJobStatus).toHaveBeenCalledWith(
+        "map-assets-25738536",
+      );
+      expect(queue.add).toHaveBeenCalledWith(
+        "BuildMapAssets",
+        {
+          gameServerNodeId: "dev",
+          buildId: "25738536",
+          trigger: "manual",
+          requestedBy: "76561198000000001",
+          requestedByName: "rawr",
+        },
+        expect.objectContaining({ jobId: "map-assets.25738536" }),
+      );
+      expect(settleCall()).toBeUndefined();
+    });
+
+    it("leaves a build alone while its queue job is alive", async () => {
+      db.stranded = [stranded()];
+      queue.getJob.mockResolvedValue(queueJob("active"));
+
+      await service.reconcileStrandedBuilds();
+
+      expect(loggingService.getJobStatus).not.toHaveBeenCalled();
+      expect(queue.add).not.toHaveBeenCalled();
+      expect(settleCall()).toBeUndefined();
+    });
+
+    it("clears a failed queue job so the new one is not ignored", async () => {
+      const failed = queueJob(
+        "failed",
+        "job stalled more than allowable limit",
+      );
+      db.stranded = [stranded()];
+      queue.getJob.mockResolvedValue(failed);
+      loggingService.getJobStatus.mockResolvedValue({ succeeded: 1 });
+
+      await service.reconcileStrandedBuilds();
+
+      expect(failed.remove).toHaveBeenCalled();
+      expect(queue.add).toHaveBeenCalled();
+    });
+
+    it("settles a build whose k8s Job is gone to what it last published", async () => {
+      db.stranded = [stranded()];
+      loggingService.getJobStatus.mockResolvedValue(undefined);
+
+      await service.reconcileStrandedBuilds();
+
+      const [sql, params] = settleCall();
+      expect(String(sql)).toContain("WHEN maps IS NULL THEN 'Failed'");
+      expect(String(sql)).toContain("THEN 'Partial'");
+      expect(params).toEqual([
+        "25738536",
+        "The build was interrupted: its queue job ended without recording a result",
+        "5 minutes",
+      ]);
+      expect(queue.add).not.toHaveBeenCalled();
+    });
+
+    it("carries the queue job's failure onto the row", async () => {
+      db.stranded = [stranded()];
+      queue.getJob.mockResolvedValue(
+        queueJob("failed", "job stalled more than allowable limit"),
+      );
+      loggingService.getJobStatus.mockResolvedValue(undefined);
+
+      await service.reconcileStrandedBuilds();
+
+      expect(settleCall()[1][1]).toBe("job stalled more than allowable limit");
+    });
+
+    it("never starts a build that was still only queued", async () => {
+      db.stranded = [stranded({ status: "Pending" })];
+      loggingService.getJobStatus.mockResolvedValue({ succeeded: 1 });
+
+      await service.reconcileStrandedBuilds();
+
+      expect(loggingService.getJobStatus).not.toHaveBeenCalled();
+      expect(queue.add).not.toHaveBeenCalled();
+      expect(settleCall()).toBeDefined();
     });
   });
 

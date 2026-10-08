@@ -124,6 +124,15 @@ export class MapAssetsService {
 
   private static readonly MAX_LOG_CHARS = 3000;
 
+  // A row is written just before its queue job is added.
+  private static readonly STRANDED_GRACE = "5 minutes";
+
+  private static readonly FINISHED_QUEUE_STATES = new Set([
+    "completed",
+    "failed",
+    "unknown",
+  ]);
+
   private readonly namespace: string;
   private readonly coreApi: CoreV1Api;
   private readonly batchApi: BatchV1Api;
@@ -543,6 +552,95 @@ export class MapAssetsService {
     }
   }
 
+  // A row only leaves Pending/Building from inside its queue job, and every
+  // api restart mid-build is a stall: past BullMQ's stall limit the job is
+  // failed and removed without running any of our code. A Building row whose
+  // k8s Job still exists goes back on the queue, where build() attaches to it;
+  // any other row falls back to what the build last published, or Failed.
+  public async reconcileStrandedBuilds(): Promise<void> {
+    const rows = await this.postgres.query<
+      Array<{
+        build_id: string;
+        status: MapAssetBuildStatus;
+        game_server_node_id: string | null;
+        trigger: MapAssetBuildRun["trigger"] | null;
+        requested_by_steam_id: string | null;
+        requested_by_name: string | null;
+      }>
+    >(
+      `SELECT b.build_id, b.status, b.game_server_node_id, b.trigger,
+              b.requested_by_steam_id::text AS requested_by_steam_id,
+              p.name AS requested_by_name
+         FROM public.map_asset_builds b
+         LEFT JOIN public.players p ON p.steam_id = b.requested_by_steam_id
+        WHERE b.status IN ('Pending', 'Building')
+          AND b.updated_at < now() - $1::interval`,
+      [MapAssetsService.STRANDED_GRACE],
+    );
+
+    for (const row of rows) {
+      const job = await this.queue.getJob(
+        MapAssetsService.GET_QUEUE_JOB_ID(row.build_id),
+      );
+      if (
+        job &&
+        !MapAssetsService.FINISHED_QUEUE_STATES.has(await job.getState())
+      ) {
+        continue;
+      }
+      await job?.remove();
+
+      const k8sJob =
+        row.status === "Building" && row.game_server_node_id
+          ? await this.loggingService.getJobStatus(
+              MapAssetsService.GET_JOB_NAME(row.build_id),
+            )
+          : undefined;
+
+      if (k8sJob) {
+        await this.enqueue(row.game_server_node_id, row.build_id, {
+          trigger: row.trigger ?? "auto",
+          requestedBy: row.requested_by_steam_id,
+          requestedByName: row.requested_by_name,
+        });
+        this.logger.warn(
+          `[map-assets] build ${row.build_id} lost its queue job; attached a new one to its k8s Job`,
+        );
+        continue;
+      }
+
+      const [settled] = await this.postgres.query<
+        Array<{ status: MapAssetBuildStatus }>
+      >(
+        `UPDATE public.map_asset_builds
+            SET status = CASE
+                  WHEN maps IS NULL THEN 'Failed'
+                  WHEN jsonb_array_length(COALESCE(failed, '[]'::jsonb))
+                     + jsonb_array_length(COALESCE(failed_view, '[]'::jsonb)) > 0
+                    THEN 'Partial'
+                  ELSE 'Published'
+                END,
+                error = $2,
+                finished_at = now()
+          WHERE build_id = $1
+            AND status IN ('Pending', 'Building')
+            AND updated_at < now() - $3::interval
+          RETURNING status`,
+        [
+          row.build_id,
+          job?.failedReason ??
+            "The build was interrupted: its queue job ended without recording a result",
+          MapAssetsService.STRANDED_GRACE,
+        ],
+      );
+      if (settled) {
+        this.logger.warn(
+          `[map-assets] settled stranded build ${row.build_id} as ${settled.status}`,
+        );
+      }
+    }
+  }
+
   // A job that is still running is attached to rather than replaced: the api
   // restarting mid-build hands the BullMQ job back as stalled, and killing an
   // hour of extraction to start it again would be the wrong answer.
@@ -584,7 +682,14 @@ export class MapAssetsService {
     try {
       const existing = await this.loggingService.getJobStatus(jobName);
 
-      if (!existing?.active || existing.succeeded || existing.failed) {
+      // A fresh run arrives Pending, so a Building row is this run coming back
+      // after the api went down; a Job that finished meanwhile holds its result.
+      const resuming = prior?.status === "Building" && !!existing;
+
+      if (
+        !resuming &&
+        (!existing?.active || existing.succeeded || existing.failed)
+      ) {
         await this.startJob(gameServerNodeId, buildId, force);
       }
 
