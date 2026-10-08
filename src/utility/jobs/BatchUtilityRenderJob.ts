@@ -133,7 +133,10 @@ export class BatchUtilityRenderJob extends WorkerHost {
     if (!job.data.dispatched) {
       const session = await this.practice.session(job.data.sessionId);
 
-      if (!session || !UtilityPracticeService.LIVE_STATUSES.includes(session.status)) {
+      if (
+        !session ||
+        !UtilityPracticeService.LIVE_STATUSES.includes(session.status)
+      ) {
         await this.renders.failRenders(
           inFlight.map((render) => render.id),
           await this.withServerLog(
@@ -218,26 +221,27 @@ export class BatchUtilityRenderJob extends WorkerHost {
         "dispatching_pod",
       );
       try {
-        const { jobName, nodeId } = await this.gameStreamer.dispatchNadePreviews(
-          mapName,
-          connection.match_id,
-          {
-            addr: connection.addr,
-            password: connection.password,
-            nodeId: connection.node_id,
-          },
-          inFlight.map((render) => ({
-            job_id: render.id,
-            session_token: render.session_token,
-            // Stamped here rather than at enqueue: it is a fact about the
-            // server that ended up filming, and the pod refuses anything but
-            // SwiftlyS2 -- it is the only runtime that can re-emit a throw.
-            spec: {
-              ...(render.spec as UtilityRenderSpec),
-              plugin_runtime: connection.plugin_runtime,
+        const { jobName, nodeId } =
+          await this.gameStreamer.dispatchNadePreviews(
+            mapName,
+            connection.match_id,
+            {
+              addr: connection.addr,
+              password: connection.password,
+              nodeId: connection.node_id,
             },
-          })),
-        );
+            inFlight.map((render) => ({
+              job_id: render.id,
+              session_token: render.session_token,
+              // Stamped here rather than at enqueue: it is a fact about the
+              // server that ended up filming, and the pod refuses anything but
+              // SwiftlyS2 -- it is the only runtime that can re-emit a throw.
+              spec: {
+                ...(render.spec as UtilityRenderSpec),
+                plugin_runtime: connection.plugin_runtime,
+              },
+            })),
+          );
         await this.renders.attachJobName(
           inFlight.map((render) => render.id),
           jobName,
@@ -319,8 +323,7 @@ export class BatchUtilityRenderJob extends WorkerHost {
           : "render pod no longer present (Job deleted)");
 
     // Anything approved after this pod was dispatched was never in its batch.
-    // Left queued, ReconcileQueuedUtilityRenders picks it up on its next pass;
-    // failed here it would need a moderator to cancel it by hand, because the
+    // Failed here it would need a moderator to cancel it by hand, because the
     // in-flight unique index refuses a second row for the same lineup.
     const dispatchedIds = job.data.dispatchedIds;
     const attempted = dispatchedIds
@@ -330,13 +333,23 @@ export class BatchUtilityRenderJob extends WorkerHost {
 
     this.logger.warn(
       `${tag} pod ${podState} with ${attempted.length} lineup(s) still in flight — ${reason}` +
-        (untouched > 0 ? ` (${untouched} queued after dispatch, left alone)` : ""),
+        (untouched > 0
+          ? ` (${untouched} queued after dispatch, left alone)`
+          : ""),
     );
     await this.renders.failRenders(
       attempted.map((render) => render.id),
       reason,
     );
     await this.releaseSession(job);
+
+    // Those are this job's to film next: their own dispatch was dropped as a
+    // duplicate of this job while it was live, so ending here would leave them
+    // queued until the five-minute reconcile -- which is what a cancel followed
+    // straight by a retry looked like.
+    if (untouched > 0) {
+      return this.delayUntilNext(job, CHECK_DELAY_MS);
+    }
   }
 
   // The practice server goes back to the pool the moment the batch is over --

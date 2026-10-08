@@ -195,7 +195,9 @@ describe("BatchUtilityRenderJob", () => {
       }) as any,
     );
 
-    expect(matchAssistant.getMatchServerLogTail).toHaveBeenCalledWith("match-1");
+    expect(matchAssistant.getMatchServerLogTail).toHaveBeenCalledWith(
+      "match-1",
+    );
     expect(renders.failRenders).toHaveBeenCalledWith(
       [RENDER.id],
       "practice server did not become ready in time — swiftlys2: unable to load gamedata",
@@ -307,7 +309,11 @@ describe("BatchUtilityRenderJob", () => {
   });
 
   it("puts a lineup approved while the server booted on the session before filming it", async () => {
-    const late = { ...RENDER, id: "render-late", utility_lineup_id: "lineup-2" };
+    const late = {
+      ...RENDER,
+      id: "render-late",
+      utility_lineup_id: "lineup-2",
+    };
     renders.inFlightForMap.mockResolvedValue([RENDER, late]);
     const bull = makeJob({
       mapName: "de_mirage",
@@ -476,11 +482,35 @@ describe("BatchUtilityRenderJob", () => {
       dispatchedIds: ["render-1"],
     });
 
-    await job.process(bull as any);
+    await expect(job.process(bull as any)).rejects.toBeInstanceOf(DelayedError);
 
     expect(renders.failRenders).toHaveBeenCalledWith(
       ["render-1"],
       "render pod exited before reporting terminal status",
+    );
+  });
+
+  // A cancel kills the pod, and the retry is queued while this job is still
+  // winding the old batch down -- its own add() was dropped as a duplicate of
+  // this very job, so nothing else is coming for it for up to five minutes.
+  it("goes straight on to a render queued behind the batch it lost", async () => {
+    const retry = { ...RENDER, id: "render-2" };
+    renders.inFlightForMap.mockResolvedValueOnce([retry]);
+    gameStreamer.getNadeRenderPodState.mockResolvedValueOnce("absent");
+    const bull = makeJob({
+      mapName: "de_mirage",
+      sessionId: "session-1",
+      dispatched: true,
+      dispatchedIds: ["render-1"],
+    });
+
+    await expect(job.process(bull as any)).rejects.toBeInstanceOf(DelayedError);
+
+    expect(practice.endRenderSession).toHaveBeenCalledWith("session-1");
+    expect(bull.updateData).toHaveBeenLastCalledWith({ mapName: "de_mirage" });
+    expect(renders.failRenders).not.toHaveBeenCalledWith(
+      expect.arrayContaining(["render-2"]),
+      expect.anything(),
     );
   });
 
