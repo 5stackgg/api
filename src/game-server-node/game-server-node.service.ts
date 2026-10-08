@@ -372,7 +372,10 @@ export class GameServerNodeService {
         cpuGovernorInfo,
       ) ||
       game_server_nodes_by_pk.token ||
-      !isJsonEqual(game_server_nodes_by_pk.cpu_frequency_info, cpuFrequencyInfo) ||
+      !isJsonEqual(
+        game_server_nodes_by_pk.cpu_frequency_info,
+        cpuFrequencyInfo,
+      ) ||
       !isJsonEqual(game_server_nodes_by_pk.cpu_warnings, cpuWarnings)
     ) {
       await this.hasura.mutation({
@@ -1217,6 +1220,15 @@ export class GameServerNodeService {
 
   private static readonly GAMEDATA_LOCK_TTL_S = 60 * 60;
 
+  // A validation finishes in seconds; one still running past this is dead.
+  private static readonly GAMEDATA_STRANDED_AFTER = "5 minutes";
+
+  private static readonly FINISHED_QUEUE_STATES = new Set([
+    "completed",
+    "failed",
+    "unknown",
+  ]);
+
   private static sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
@@ -1665,6 +1677,117 @@ export class GameServerNodeService {
     }
 
     return false;
+  }
+
+  // A run killed with the api (every hot-swap reload is one) leaves its row
+  // running, its lock held for an hour, and for an automatic run the chained
+  // map-asset build never queued. With no queue job left to finish it, the
+  // run is queued again; a build no node can validate any more falls back to
+  // its last result.
+  public async reconcileStrandedGamedataValidations(): Promise<void> {
+    const rows = await this.postgres.query<
+      Array<{
+        build_id: number;
+        branch: string;
+        game_server_node_id: string | null;
+        trigger: BuildRunTrigger | null;
+        requested_by_steam_id: string | null;
+        requested_by_name: string | null;
+      }>
+    >(
+      `SELECT v.build_id, v.branch, v.game_server_node_id, v.trigger,
+              v.requested_by_steam_id::text AS requested_by_steam_id,
+              p.name AS requested_by_name
+         FROM public.gamedata_signature_validations v
+         LEFT JOIN public.players p ON p.steam_id = v.requested_by_steam_id
+        WHERE v.status = 'running'
+          AND v.started_at < now() - $1::interval`,
+      [GameServerNodeService.GAMEDATA_STRANDED_AFTER],
+    );
+
+    for (const row of rows) {
+      const trigger = row.trigger ?? "auto";
+      const jobIds = [
+        `validate.${row.build_id}.auto`,
+        `validate.${row.build_id}.manual`,
+      ];
+      const jobs = await Promise.all(
+        jobIds.map((jobId) => this.validateGamedataQueue.getJob(jobId)),
+      );
+      const states = await Promise.all(
+        jobs.filter(Boolean).map((job) => job.getState()),
+      );
+      if (
+        states.some(
+          (state) => !GameServerNodeService.FINISHED_QUEUE_STATES.has(state),
+        )
+      ) {
+        continue;
+      }
+
+      await Promise.all(jobs.filter(Boolean).map((job) => job.remove()));
+      await this.redis.del(
+        GameServerNodeService.gamedataLockKey(row.build_id, row.branch),
+      );
+
+      const gameServerNodeId = await this.resolveBuildNode(
+        row.build_id,
+        row.game_server_node_id,
+      )
+        .catch(() => this.resolveBuildNode(row.build_id))
+        .catch((): null => null);
+
+      if (gameServerNodeId) {
+        await this.validateGamedataQueue.add(
+          "ValidateGamedata",
+          {
+            gameServerNodeId,
+            buildId: row.build_id,
+            branch: row.branch,
+            trigger,
+            requestedBy: row.requested_by_steam_id,
+            requestedByName: row.requested_by_name,
+            buildMapAssets: trigger === "auto",
+          },
+          {
+            jobId: `validate.${row.build_id}.${trigger}`,
+            attempts: 1,
+            removeOnComplete: true,
+            removeOnFail: true,
+          },
+        );
+        this.logger.warn(
+          `[validate-gamedata] run for build ${row.build_id} died mid-validation; queued it again on ${gameServerNodeId}`,
+        );
+        continue;
+      }
+
+      await this.postgres.query(
+        `UPDATE public.gamedata_signature_validations
+            SET status = CASE
+                  WHEN results ->> 'status' IN ('pass', 'fail', 'error')
+                    THEN results ->> 'status'
+                  ELSE 'error'
+                END,
+                validated_at = CASE WHEN results IS NULL THEN now() END,
+                results = COALESCE(
+                  results,
+                  jsonb_build_object(
+                    'status', 'error',
+                    'broken', '[]'::jsonb,
+                    'error', $3::text
+                  )
+                )
+          WHERE build_id = $1
+            AND branch = $2
+            AND status = 'running'`,
+        [
+          row.build_id,
+          row.branch,
+          "The validation was interrupted and no node on this build can run it again",
+        ],
+      );
+    }
   }
 
   // Status alerts are only worth raising for a node something depends on.

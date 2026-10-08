@@ -325,6 +325,156 @@ describe("CS2 build history (SQL-driven)", () => {
     });
   });
 
+  describe("stranded validations", () => {
+    const strand = async ({
+      buildId = 25537370,
+      node = "node-a",
+      trigger = "auto",
+      requestedBy = null,
+      startedAgo = "10 minutes",
+      results = null,
+    }: {
+      buildId?: number;
+      node?: string;
+      trigger?: string;
+      requestedBy?: string | null;
+      startedAgo?: string;
+      results?: Record<string, unknown> | null;
+    } = {}) => {
+      await postgres.query(
+        `INSERT INTO gamedata_signature_validations
+           (build_id, branch, status, started_at, game_server_node_id,
+            trigger, requested_by_steam_id, results)
+         VALUES ($1, 'public', 'running', now() - $2::interval, $3, $4, $5,
+                 $6::jsonb)`,
+        [
+          buildId,
+          startedAgo,
+          node,
+          trigger,
+          requestedBy,
+          results && JSON.stringify(results),
+        ],
+      );
+    };
+
+    const reconcile = (jobs: Record<string, string> = {}) => {
+      const queue = {
+        add: jest.fn().mockResolvedValue({}),
+        getJob: jest.fn(async (id: string) =>
+          jobs[id]
+            ? { getState: async () => jobs[id], remove: jest.fn() }
+            : undefined,
+        ),
+      };
+      const nodes = service();
+      (nodes as any).validateGamedataQueue = queue;
+      return { queue, done: nodes.reconcileStrandedGamedataValidations() };
+    };
+
+    it("queues a run that died with the api again and frees its lock", async () => {
+      await strand();
+
+      const { queue, done } = reconcile();
+      await done;
+
+      expect(redis.del).toHaveBeenCalledWith(
+        "gamedata:validate:lock:25537370:public",
+      );
+      expect(queue.add).toHaveBeenCalledWith(
+        "ValidateGamedata",
+        {
+          gameServerNodeId: "node-a",
+          buildId: 25537370,
+          branch: "public",
+          trigger: "auto",
+          requestedBy: null,
+          requestedByName: null,
+          buildMapAssets: true,
+        },
+        expect.objectContaining({ jobId: "validate.25537370.auto" }),
+      );
+    });
+
+    it("keeps who asked for a manual run, without chaining map assets", async () => {
+      await postgres.query(
+        `INSERT INTO players (steam_id, name) VALUES (76561198000000001, 'Luke')
+         ON CONFLICT (steam_id) DO NOTHING`,
+      );
+      await strand({ trigger: "manual", requestedBy: "76561198000000001" });
+
+      const { queue, done } = reconcile();
+      await done;
+
+      expect(queue.add.mock.calls[0][1]).toMatchObject({
+        trigger: "manual",
+        requestedBy: "76561198000000001",
+        requestedByName: "Luke",
+        buildMapAssets: false,
+      });
+      expect(queue.add.mock.calls[0][2]).toMatchObject({
+        jobId: "validate.25537370.manual",
+      });
+    });
+
+    it("moves to another node when the one it ran on went offline", async () => {
+      await strand({ node: "node-off" });
+
+      const { queue, done } = reconcile();
+      await done;
+
+      expect(["node-a", "node-b"]).toContain(
+        queue.add.mock.calls[0][1].gameServerNodeId,
+      );
+    });
+
+    it("leaves a run alone while its queue job is still alive", async () => {
+      await strand();
+
+      const { queue, done } = reconcile({ "validate.25537370.auto": "active" });
+      await done;
+
+      expect(queue.add).not.toHaveBeenCalled();
+      expect(redis.del).not.toHaveBeenCalled();
+    });
+
+    it("leaves a run that only just started alone", async () => {
+      await strand({ startedAgo: "30 seconds" });
+
+      const { queue, done } = reconcile();
+      await done;
+
+      expect(queue.getJob).not.toHaveBeenCalled();
+      expect((await validation(25537370)).status).toBe("running");
+    });
+
+    it("falls back to the last result when no node can run the build", async () => {
+      await strand({
+        buildId: 25000000,
+        results: { status: "fail", broken: [], results: [] },
+      });
+      await strand({ buildId: 25000001 });
+
+      const { queue, done } = reconcile();
+      await done;
+
+      expect(queue.add).not.toHaveBeenCalled();
+      expect(await validation(25000000)).toMatchObject({
+        status: "fail",
+        validated_at: null,
+      });
+      const lost = await validation(25000001);
+      expect(lost.status).toBe("error");
+      expect(lost.validated_at).toBeInstanceOf(Date);
+      const [{ results }] = await postgres.query<
+        Array<{ results: { error: string } }>
+      >(
+        `SELECT results FROM gamedata_signature_validations WHERE build_id = 25000001`,
+      );
+      expect(results.error).toContain("interrupted");
+    });
+  });
+
   describe("resolveBuildNode", () => {
     it("picks an online node on the build", async () => {
       await expect(service().resolveBuildNode(25537370)).resolves.toBe(
