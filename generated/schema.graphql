@@ -6411,6 +6411,8 @@ type db_backups_variance_fields {
 columns and relationships of "direct_conversations"
 """
 type direct_conversations {
+  accepted_at: timestamptz
+  declined_at: timestamptz
   is_open: Boolean!
   last_message_at: timestamptz!
   position: Int!
@@ -6456,6 +6458,8 @@ input direct_conversations_bool_exp {
   _and: [direct_conversations_bool_exp!]
   _not: direct_conversations_bool_exp
   _or: [direct_conversations_bool_exp!]
+  accepted_at: timestamptz_comparison_exp
+  declined_at: timestamptz_comparison_exp
   is_open: Boolean_comparison_exp
   last_message_at: timestamptz_comparison_exp
   position: Int_comparison_exp
@@ -6485,6 +6489,8 @@ input direct_conversations_inc_input {
 input type for inserting data into table "direct_conversations"
 """
 input direct_conversations_insert_input {
+  accepted_at: timestamptz
+  declined_at: timestamptz
   is_open: Boolean
   last_message_at: timestamptz
   position: Int
@@ -6494,6 +6500,8 @@ input direct_conversations_insert_input {
 
 """aggregate max on columns"""
 type direct_conversations_max_fields {
+  accepted_at: timestamptz
+  declined_at: timestamptz
   last_message_at: timestamptz
   position: Int
   room_id: String
@@ -6502,6 +6510,8 @@ type direct_conversations_max_fields {
 
 """aggregate min on columns"""
 type direct_conversations_min_fields {
+  accepted_at: timestamptz
+  declined_at: timestamptz
   last_message_at: timestamptz
   position: Int
   room_id: String
@@ -6530,6 +6540,8 @@ input direct_conversations_on_conflict {
 
 """Ordering options when selecting data from "direct_conversations"."""
 input direct_conversations_order_by {
+  accepted_at: order_by
+  declined_at: order_by
   is_open: order_by
   last_message_at: order_by
   position: order_by
@@ -6547,6 +6559,12 @@ input direct_conversations_pk_columns_input {
 select columns of table "direct_conversations"
 """
 enum direct_conversations_select_column {
+  """column name"""
+  accepted_at
+
+  """column name"""
+  declined_at
+
   """column name"""
   is_open
 
@@ -6567,6 +6585,8 @@ enum direct_conversations_select_column {
 input type for updating data in table "direct_conversations"
 """
 input direct_conversations_set_input {
+  accepted_at: timestamptz
+  declined_at: timestamptz
   is_open: Boolean
   last_message_at: timestamptz
   position: Int
@@ -6605,6 +6625,8 @@ input direct_conversations_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input direct_conversations_stream_cursor_value_input {
+  accepted_at: timestamptz
+  declined_at: timestamptz
   is_open: Boolean
   last_message_at: timestamptz
   position: Int
@@ -6622,6 +6644,12 @@ type direct_conversations_sum_fields {
 update columns of table "direct_conversations"
 """
 enum direct_conversations_update_column {
+  """column name"""
+  accepted_at
+
+  """column name"""
+  declined_at
+
   """column name"""
   is_open
 
@@ -83932,6 +83960,7 @@ type players {
     """filter the rows returned"""
     where: player_aim_weapon_stats_bool_exp
   ): player_aim_weapon_stats_aggregate!
+  allow_message_requests: Boolean!
 
   """An array relationship"""
   assists(
@@ -85573,6 +85602,7 @@ input players_bool_exp {
   abandoned_matches_aggregate: abandoned_matches_aggregate_bool_exp
   aim_weapon_stats: player_aim_weapon_stats_bool_exp
   aim_weapon_stats_aggregate: player_aim_weapon_stats_aggregate_bool_exp
+  allow_message_requests: Boolean_comparison_exp
   assists: player_assists_bool_exp
   assists_aggregate: player_assists_aggregate_bool_exp
   assited_by_players: player_assists_bool_exp
@@ -85747,6 +85777,7 @@ input type for inserting data into table "players"
 input players_insert_input {
   abandoned_matches: abandoned_matches_arr_rel_insert_input
   aim_weapon_stats: player_aim_weapon_stats_arr_rel_insert_input
+  allow_message_requests: Boolean
   assists: player_assists_arr_rel_insert_input
   assited_by_players: player_assists_arr_rel_insert_input
   avatar_url: String
@@ -86060,6 +86091,7 @@ input players_on_conflict {
 input players_order_by {
   abandoned_matches_aggregate: abandoned_matches_aggregate_order_by
   aim_weapon_stats_aggregate: player_aim_weapon_stats_aggregate_order_by
+  allow_message_requests: order_by
   assists_aggregate: player_assists_aggregate_order_by
   assited_by_players_aggregate: player_assists_aggregate_order_by
   avatar_url: order_by
@@ -86168,6 +86200,9 @@ select columns of table "players"
 """
 enum players_select_column {
   """column name"""
+  allow_message_requests
+
+  """column name"""
   avatar_url
 
   """column name"""
@@ -86265,6 +86300,7 @@ enum players_select_column {
 input type for updating data in table "players"
 """
 input players_set_input {
+  allow_message_requests: Boolean
   avatar_url: String
   country: String
   created_at: timestamptz
@@ -86509,6 +86545,7 @@ input players_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input players_stream_cursor_value_input {
+  allow_message_requests: Boolean
   avatar_url: String
   country: String
   created_at: timestamptz
@@ -86612,6 +86649,9 @@ type players_sum_fields {
 update columns of table "players"
 """
 enum players_update_column {
+  """column name"""
+  allow_message_requests
+
   """column name"""
   avatar_url
 
@@ -103226,6 +103266,7 @@ type servers {
   """An object relationship"""
   current_match: matches
   enabled: Boolean!
+  featured: Boolean!
   game: String
 
   """An object relationship"""
@@ -103569,6 +103610,7 @@ input servers_bool_exp {
   connection_string: String_comparison_exp
   current_match: matches_bool_exp
   enabled: Boolean_comparison_exp
+  featured: Boolean_comparison_exp
   game: String_comparison_exp
   game_mode: game_modes_bool_exp
   game_mode_id: uuid_comparison_exp
@@ -103671,6 +103713,7 @@ input servers_insert_input {
   connected: Boolean
   current_match: matches_obj_rel_insert_input
   enabled: Boolean
+  featured: Boolean
   game: String
   game_mode: game_modes_obj_rel_insert_input
   game_mode_id: uuid
@@ -103885,6 +103928,7 @@ input servers_order_by {
   connection_string: order_by
   current_match: matches_order_by
   enabled: order_by
+  featured: order_by
   game: order_by
   game_mode: game_modes_order_by
   game_mode_id: order_by
@@ -103959,6 +104003,9 @@ enum servers_select_column {
 
   """column name"""
   enabled
+
+  """column name"""
+  featured
 
   """column name"""
   game
@@ -104056,6 +104103,9 @@ enum servers_select_column_servers_aggregate_bool_exp_bool_and_arguments_columns
   enabled
 
   """column name"""
+  featured
+
+  """column name"""
   hibernating
 
   """column name"""
@@ -104082,6 +104132,9 @@ enum servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_columns 
   enabled
 
   """column name"""
+  featured
+
+  """column name"""
   hibernating
 
   """column name"""
@@ -104106,6 +104159,7 @@ input servers_set_input {
   connect_password: String
   connected: Boolean
   enabled: Boolean
+  featured: Boolean
   game: String
   game_mode_id: uuid
   game_server_node_id: String
@@ -104204,6 +104258,7 @@ input servers_stream_cursor_value_input {
   connect_password: String
   connected: Boolean
   enabled: Boolean
+  featured: Boolean
   game: String
   game_mode_id: uuid
   game_server_node_id: String
@@ -104276,6 +104331,9 @@ enum servers_update_column {
 
   """column name"""
   enabled
+
+  """column name"""
+  featured
 
   """column name"""
   game

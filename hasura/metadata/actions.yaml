@@ -1813,6 +1813,7 @@ actions:
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
     permissions:
+      - role: guest
       - role: administrator
       - role: tournament_organizer
       - role: match_organizer
