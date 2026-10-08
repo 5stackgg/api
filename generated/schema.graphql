@@ -140819,6 +140819,10 @@ columns and relationships of "utility_lineups"
 """
 type utility_lineups {
   aim_tolerance: float8!
+  approach(
+    """JSON select path"""
+    path: String
+  ): jsonb
   archived_at: timestamptz
 
   """An object relationship"""
@@ -140957,6 +140961,18 @@ type utility_lineups {
   preview_duration_ms: Int
   preview_file: String
   preview_rendered_at: timestamptz
+  preview_stills(
+    """JSON select path"""
+    path: String
+  ): jsonb
+
+  """
+  A computed field, executes function "utility_lineup_preview_stills_url"
+  """
+  preview_stills_url(
+    """JSON select path"""
+    path: String
+  ): jsonb
   preview_thumbnail: String
 
   """
@@ -141297,6 +141313,8 @@ input utility_lineups_aggregate_order_by {
 
 """append existing jsonb value of filtered columns with new jsonb value"""
 input utility_lineups_append_input {
+  approach: jsonb
+  preview_stills: jsonb
   trajectory_preview: jsonb
 }
 
@@ -141393,6 +141411,7 @@ input utility_lineups_bool_exp {
   _not: utility_lineups_bool_exp
   _or: [utility_lineups_bool_exp!]
   aim_tolerance: float8_comparison_exp
+  approach: jsonb_comparison_exp
   archived_at: timestamptz_comparison_exp
   author: players_bool_exp
   author_steam_id: bigint_comparison_exp
@@ -141439,6 +141458,8 @@ input utility_lineups_bool_exp {
   preview_duration_ms: Int_comparison_exp
   preview_file: String_comparison_exp
   preview_rendered_at: timestamptz_comparison_exp
+  preview_stills: jsonb_comparison_exp
+  preview_stills_url: jsonb_comparison_exp
   preview_thumbnail: String_comparison_exp
   preview_thumbnail_url: String_comparison_exp
   preview_url: String_comparison_exp
@@ -141500,6 +141521,8 @@ enum utility_lineups_constraint {
 delete the field or element with specified path (for JSON arrays, negative integers count from the end)
 """
 input utility_lineups_delete_at_path_input {
+  approach: [String!]
+  preview_stills: [String!]
   trajectory_preview: [String!]
 }
 
@@ -141507,6 +141530,8 @@ input utility_lineups_delete_at_path_input {
 delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
 """
 input utility_lineups_delete_elem_input {
+  approach: Int
+  preview_stills: Int
   trajectory_preview: Int
 }
 
@@ -141514,6 +141539,8 @@ input utility_lineups_delete_elem_input {
 delete key/value pair or string element. key/value pairs are matched based on their key value
 """
 input utility_lineups_delete_key_input {
+  approach: String
+  preview_stills: String
   trajectory_preview: String
 }
 
@@ -141558,6 +141585,7 @@ input type for inserting data into table "utility_lineups"
 """
 input utility_lineups_insert_input {
   aim_tolerance: float8
+  approach: jsonb
   archived_at: timestamptz
   author: players_obj_rel_insert_input
   author_steam_id: bigint
@@ -141596,6 +141624,7 @@ input utility_lineups_insert_input {
   preview_duration_ms: Int
   preview_file: String
   preview_rendered_at: timestamptz
+  preview_stills: jsonb
   preview_thumbnail: String
   progress: utility_lineup_progress_arr_rel_insert_input
   public_requested_at: timestamptz
@@ -141945,6 +141974,7 @@ input utility_lineups_on_conflict {
 """Ordering options when selecting data from "utility_lineups"."""
 input utility_lineups_order_by {
   aim_tolerance: order_by
+  approach: order_by
   archived_at: order_by
   author: players_order_by
   author_steam_id: order_by
@@ -141989,6 +142019,8 @@ input utility_lineups_order_by {
   preview_duration_ms: order_by
   preview_file: order_by
   preview_rendered_at: order_by
+  preview_stills: order_by
+  preview_stills_url: order_by
   preview_thumbnail: order_by
   preview_thumbnail_url: order_by
   preview_url: order_by
@@ -142034,6 +142066,8 @@ input utility_lineups_pk_columns_input {
 
 """prepend existing jsonb value of filtered columns with new jsonb value"""
 input utility_lineups_prepend_input {
+  approach: jsonb
+  preview_stills: jsonb
   trajectory_preview: jsonb
 }
 
@@ -142043,6 +142077,9 @@ select columns of table "utility_lineups"
 enum utility_lineups_select_column {
   """column name"""
   aim_tolerance
+
+  """column name"""
+  approach
 
   """column name"""
   archived_at
@@ -142148,6 +142185,9 @@ enum utility_lineups_select_column {
 
   """column name"""
   preview_rendered_at
+
+  """column name"""
+  preview_stills
 
   """column name"""
   preview_thumbnail
@@ -142724,6 +142764,7 @@ input type for updating data in table "utility_lineups"
 """
 input utility_lineups_set_input {
   aim_tolerance: float8
+  approach: jsonb
   archived_at: timestamptz
   author_steam_id: bigint
   confidence: String
@@ -142758,6 +142799,7 @@ input utility_lineups_set_input {
   preview_duration_ms: Int
   preview_file: String
   preview_rendered_at: timestamptz
+  preview_stills: jsonb
   preview_thumbnail: String
   public_requested_at: timestamptz
   public_review_note: String
@@ -143026,6 +143068,7 @@ input utility_lineups_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input utility_lineups_stream_cursor_value_input {
   aim_tolerance: float8
+  approach: jsonb
   archived_at: timestamptz
   author_steam_id: bigint
   confidence: String
@@ -143061,6 +143104,7 @@ input utility_lineups_stream_cursor_value_input {
   preview_duration_ms: Int
   preview_file: String
   preview_rendered_at: timestamptz
+  preview_stills: jsonb
   preview_thumbnail: String
   public_requested_at: timestamptz
   public_review_note: String
@@ -143173,6 +143217,9 @@ enum utility_lineups_update_column {
   aim_tolerance
 
   """column name"""
+  approach
+
+  """column name"""
   archived_at
 
   """column name"""
@@ -143273,6 +143320,9 @@ enum utility_lineups_update_column {
 
   """column name"""
   preview_rendered_at
+
+  """column name"""
+  preview_stills
 
   """column name"""
   preview_thumbnail

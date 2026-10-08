@@ -152954,6 +152954,14 @@ export default {
             "aim_tolerance": [
                 2261
             ],
+            "approach": [
+                2637,
+                {
+                    "path": [
+                        102
+                    ]
+                }
+            ],
             "archived_at": [
                 5840
             ],
@@ -153167,6 +153175,22 @@ export default {
             ],
             "preview_rendered_at": [
                 5840
+            ],
+            "preview_stills": [
+                2637,
+                {
+                    "path": [
+                        102
+                    ]
+                }
+            ],
+            "preview_stills_url": [
+                2637,
+                {
+                    "path": [
+                        102
+                    ]
+                }
             ],
             "preview_thumbnail": [
                 102
@@ -153793,6 +153817,12 @@ export default {
             ]
         },
         "utility_lineups_append_input": {
+            "approach": [
+                2637
+            ],
+            "preview_stills": [
+                2637
+            ],
             "trajectory_preview": [
                 2637
             ],
@@ -154017,6 +154047,9 @@ export default {
             "aim_tolerance": [
                 2262
             ],
+            "approach": [
+                2639
+            ],
             "archived_at": [
                 5841
             ],
@@ -154155,6 +154188,12 @@ export default {
             "preview_rendered_at": [
                 5841
             ],
+            "preview_stills": [
+                2639
+            ],
+            "preview_stills_url": [
+                2639
+            ],
             "preview_thumbnail": [
                 104
             ],
@@ -154281,6 +154320,12 @@ export default {
         },
         "utility_lineups_constraint": {},
         "utility_lineups_delete_at_path_input": {
+            "approach": [
+                102
+            ],
+            "preview_stills": [
+                102
+            ],
             "trajectory_preview": [
                 102
             ],
@@ -154289,6 +154334,12 @@ export default {
             ]
         },
         "utility_lineups_delete_elem_input": {
+            "approach": [
+                44
+            ],
+            "preview_stills": [
+                44
+            ],
             "trajectory_preview": [
                 44
             ],
@@ -154297,6 +154348,12 @@ export default {
             ]
         },
         "utility_lineups_delete_key_input": {
+            "approach": [
+                102
+            ],
+            "preview_stills": [
+                102
+            ],
             "trajectory_preview": [
                 102
             ],
@@ -154402,6 +154459,9 @@ export default {
         "utility_lineups_insert_input": {
             "aim_tolerance": [
                 2261
+            ],
+            "approach": [
+                2637
             ],
             "archived_at": [
                 5840
@@ -154516,6 +154576,9 @@ export default {
             ],
             "preview_rendered_at": [
                 5840
+            ],
+            "preview_stills": [
+                2637
             ],
             "preview_thumbnail": [
                 102
@@ -155367,6 +155430,9 @@ export default {
             "aim_tolerance": [
                 3878
             ],
+            "approach": [
+                3878
+            ],
             "archived_at": [
                 3878
             ],
@@ -155499,6 +155565,12 @@ export default {
             "preview_rendered_at": [
                 3878
             ],
+            "preview_stills": [
+                3878
+            ],
+            "preview_stills_url": [
+                3878
+            ],
             "preview_thumbnail": [
                 3878
             ],
@@ -155620,6 +155692,12 @@ export default {
             ]
         },
         "utility_lineups_prepend_input": {
+            "approach": [
+                2637
+            ],
+            "preview_stills": [
+                2637
+            ],
             "trajectory_preview": [
                 2637
             ],
@@ -155641,6 +155719,9 @@ export default {
         "utility_lineups_set_input": {
             "aim_tolerance": [
                 2261
+            ],
+            "approach": [
+                2637
             ],
             "archived_at": [
                 5840
@@ -155743,6 +155824,9 @@ export default {
             ],
             "preview_rendered_at": [
                 5840
+            ],
+            "preview_stills": [
+                2637
             ],
             "preview_thumbnail": [
                 102
@@ -156423,6 +156507,9 @@ export default {
             "aim_tolerance": [
                 2261
             ],
+            "approach": [
+                2637
+            ],
             "archived_at": [
                 5840
             ],
@@ -156527,6 +156614,9 @@ export default {
             ],
             "preview_rendered_at": [
                 5840
+            ],
+            "preview_stills": [
+                2637
             ],
             "preview_thumbnail": [
                 102
