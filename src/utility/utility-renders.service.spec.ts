@@ -680,6 +680,26 @@ describe("UtilityRendersService", () => {
       });
     });
 
+    it("retires the lineup's older finished renders once the new one is up", async () => {
+      uploading();
+
+      await service.finalizeUpload("job-1", {} as any, null);
+
+      const retire = postgres.query.mock.calls.find(([sql]) =>
+        /DELETE FROM public\.utility_lineup_renders/.test(String(sql)),
+      );
+      expect(retire).toBeDefined();
+      expect(String(retire[0])).toMatch(/id <> \$2::uuid/);
+      expect(String(retire[0])).toMatch(
+        /NOT \(status = ANY\(\$3::text\[\]\)\)/,
+      );
+      expect(retire[1]).toEqual([
+        LINEUP.id,
+        "job-1",
+        ["queued", "rendering", "uploading"],
+      ]);
+    });
+
     it("never pairs a new clip with an older render's stills", async () => {
       postgres.query
         .mockResolvedValueOnce([
@@ -713,6 +733,84 @@ describe("UtilityRendersService", () => {
         service.finalizeUpload("job-1", {} as any, null),
       ).rejects.toThrow("render is done");
       expect(s3.put).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("deletePreview", () => {
+    const current = `clips/utility/${LINEUP.id}/render-new.mp4`;
+
+    it("takes the preview with the render whose clip it is, whatever else is done", async () => {
+      postgres.query
+        .mockResolvedValueOnce([
+          {
+            utility_lineup_id: LINEUP.id,
+            status: "done",
+            preview_file: current,
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            preview_file: current,
+            preview_thumbnail: `clips/utility/${LINEUP.id}/render-new.jpg`,
+            preview_stills: {
+              aim: `clips/utility/${LINEUP.id}/render-new/aim.webp`,
+            },
+          },
+        ])
+        .mockResolvedValueOnce([{ id: "render-new" }]);
+      s3.remove = jest.fn();
+
+      await expect(service.deletePreview("render-new")).resolves.toBe(true);
+
+      expect(
+        postgres.query.mock.calls.some(([sql]) =>
+          String(sql).includes("UPDATE public.utility_lineups"),
+        ),
+      ).toBe(true);
+      expect(s3.remove).toHaveBeenCalledWith(current);
+      expect(s3.remove).toHaveBeenCalledWith(
+        `clips/utility/${LINEUP.id}/render-new/aim.webp`,
+      );
+    });
+
+    it("leaves the preview alone when an older render is deleted", async () => {
+      postgres.query
+        .mockResolvedValueOnce([
+          {
+            utility_lineup_id: LINEUP.id,
+            status: "done",
+            preview_file: current,
+          },
+        ])
+        .mockResolvedValueOnce([{ id: "render-old" }]);
+      s3.remove = jest.fn();
+
+      await expect(service.deletePreview("render-old")).resolves.toBe(true);
+
+      expect(
+        postgres.query.mock.calls.some(([sql]) =>
+          String(sql).includes("UPDATE public.utility_lineups"),
+        ),
+      ).toBe(false);
+      expect(s3.remove).not.toHaveBeenCalled();
+    });
+
+    it("keeps a preview from before per-render keys with its only done render", async () => {
+      postgres.query
+        .mockResolvedValueOnce([
+          {
+            utility_lineup_id: LINEUP.id,
+            status: "done",
+            preview_file: `clips/utility/${LINEUP.id}.mp4`,
+          },
+        ])
+        .mockResolvedValueOnce([{ count: "1" }])
+        .mockResolvedValueOnce([{ id: "render-old" }]);
+      s3.remove = jest.fn();
+
+      await service.deletePreview("render-old");
+
+      expect(s3.remove).not.toHaveBeenCalled();
     });
   });
 

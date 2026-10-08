@@ -319,26 +319,32 @@ export class UtilityRendersService {
     }
   }
 
-  public async deletePreview(renderId: string): Promise<boolean> {
-    const [row] = await this.postgres.query<
-      Array<{ utility_lineup_id: string; status: string }>
-    >(
-      `SELECT utility_lineup_id::text AS utility_lineup_id, status
-         FROM public.utility_lineup_renders
-        WHERE id = $1::uuid`,
-      [renderId],
-    );
-
-    if (!row) return false;
-
-    // In flight -> cancel first (stops the pod's callbacks landing on a row
-    // that is about to vanish); the caller can delete again once it settles.
-    if (UTILITY_RENDER_IN_FLIGHT.includes(row.status as never)) {
-      await this.cancel(renderId);
+  // A lineup carries one preview, and since clips are keyed per render the
+  // preview names the render that made it. One from before that is keyed on
+  // the lineup alone: it belongs to the lineup's only done render.
+  private async ownsPreview(
+    renderId: string,
+    row: {
+      utility_lineup_id: string;
+      status: string;
+      preview_file: string | null;
+    },
+  ): Promise<boolean> {
+    if (row.status !== "done" || !row.preview_file) {
+      return false;
     }
 
-    // A lineup carries one preview. If this render owns it (a done render, and
-    // no OTHER done render for the same lineup is keeping it alive), drop it.
+    if (
+      row.preview_file ===
+      UtilityRendersService.GetPreviewS3Key(row.utility_lineup_id, renderId)
+    ) {
+      return true;
+    }
+
+    if (row.preview_file !== `clips/utility/${row.utility_lineup_id}.mp4`) {
+      return false;
+    }
+
     const [others] = await this.postgres.query<Array<{ count: string }>>(
       `SELECT COUNT(*) AS count
          FROM public.utility_lineup_renders
@@ -348,7 +354,36 @@ export class UtilityRendersService {
       [row.utility_lineup_id, renderId],
     );
 
-    if (row.status === "done" && Number(others?.count ?? 0) === 0) {
+    return Number(others?.count ?? 0) === 0;
+  }
+
+  public async deletePreview(renderId: string): Promise<boolean> {
+    const [row] = await this.postgres.query<
+      Array<{
+        utility_lineup_id: string;
+        status: string;
+        preview_file: string | null;
+      }>
+    >(
+      `SELECT r.utility_lineup_id::text AS utility_lineup_id, r.status,
+              l.preview_file
+         FROM public.utility_lineup_renders r
+         LEFT JOIN public.utility_lineups l ON l.id = r.utility_lineup_id
+        WHERE r.id = $1::uuid`,
+      [renderId],
+    );
+
+    if (!row) {
+      return false;
+    }
+
+    // In flight -> cancel first (stops the pod's callbacks landing on a row
+    // that is about to vanish); the caller can delete again once it settles.
+    if (UTILITY_RENDER_IN_FLIGHT.includes(row.status as never)) {
+      await this.cancel(renderId);
+    }
+
+    if (await this.ownsPreview(renderId, row)) {
       const [lineup] = await this.postgres.query<
         Array<{
           preview_file: string | null;
@@ -689,9 +724,7 @@ export class UtilityRendersService {
 
   // The practice server's own boot readout, keyed the way the assignment
   // leaves it: the server row points back at the match while it is reserved.
-  public async bootStatusForMatch(
-    matchId: string,
-  ): Promise<{
+  public async bootStatusForMatch(matchId: string): Promise<{
     boot_status: string | null;
     boot_status_detail: string | null;
   } | null> {
@@ -949,6 +982,17 @@ export class UtilityRendersService {
           SET duration_ms = COALESCE($2::int, duration_ms)
         WHERE id = $1::uuid`,
       [jobId, durationMs],
+    );
+
+    // A lineup shows one preview, so the attempts before this one -- the old
+    // preview's render, earlier failures -- are history the queue no longer
+    // needs; their files were swapped out above.
+    await this.postgres.query(
+      `DELETE FROM public.utility_lineup_renders
+        WHERE utility_lineup_id = $1::uuid
+          AND id <> $2::uuid
+          AND NOT (status = ANY($3::text[]))`,
+      [row.utility_lineup_id, jobId, [...UTILITY_RENDER_IN_FLIGHT]],
     );
 
     const current = new Set([key, ...Object.values(stills)]);
