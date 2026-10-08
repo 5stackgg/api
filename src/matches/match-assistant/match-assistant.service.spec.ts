@@ -23,6 +23,7 @@ describe("MatchAssistantService", () => {
     add: jest.Mock;
     getDelayed: jest.Mock;
   };
+  let postgres: { query: jest.Mock };
 
   // Every "we could not get you a server" write goes out as one conditional
   // update_matches, so the assertions read the statement rather than a status
@@ -50,6 +51,7 @@ describe("MatchAssistantService", () => {
       add: jest.fn(),
       getDelayed: jest.fn(async (): Promise<unknown[]> => []),
     };
+    postgres = { query: jest.fn().mockResolvedValue([{ id: "node-A" }]) };
 
     service = new MatchAssistantService(
       {
@@ -87,6 +89,7 @@ describe("MatchAssistantService", () => {
       } as any,
       queue as any,
       scheduledMatchesQueue as any,
+      postgres as any,
     );
   });
 
@@ -278,6 +281,7 @@ describe("MatchAssistantService", () => {
 
       expect(where.gpu).toEqual({ _eq: true });
       expect(where.gpu_rendering_enabled).toEqual({ _eq: true });
+      expect(where.id).toEqual({ _in: ["node-A"] });
     });
 
     it("puts a render's server in render mode and leaves human practice alone", async () => {
@@ -290,6 +294,8 @@ describe("MatchAssistantService", () => {
 
       expect((await env(true)).UTILITY_RENDER_MODE).toBe("true");
       expect((await env(false)).UTILITY_RENDER_MODE).toBeUndefined();
+      expect((await env(true)).HUD_WORKSHOP_ID).toBe("");
+      expect((await env(false)).HUD_WORKSHOP_ID).toBeUndefined();
     });
 
     it("leaves a human practice server free to boot on any node", async () => {
@@ -297,6 +303,7 @@ describe("MatchAssistantService", () => {
 
       expect(where.gpu).toBeUndefined();
       expect(where.gpu_rendering_enabled).toBeUndefined();
+      expect(where.id).toBeUndefined();
     });
   });
 

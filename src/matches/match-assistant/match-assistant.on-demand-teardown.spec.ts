@@ -140,6 +140,7 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       } as any,
       queue as any,
       scheduledMatchesQueue as any,
+      { query: jest.fn().mockResolvedValue([]) } as any,
     );
   });
 

@@ -47,7 +47,7 @@ describe("UtilityRendersService.batchJobId", () => {
 describe("UtilityRendersService", () => {
   let service: UtilityRendersService;
   let postgres: { query: jest.Mock };
-  let s3: { put: jest.Mock; has: jest.Mock };
+  let s3: { put: jest.Mock; has: jest.Mock; remove?: jest.Mock };
   let queue: { add: jest.Mock };
   let logger: { log: jest.Mock; warn: jest.Mock; error: jest.Mock };
 
@@ -488,14 +488,24 @@ describe("UtilityRendersService", () => {
   });
 
   describe("finalizeUpload", () => {
-    it("streams to S3 and only then repoints the lineup", async () => {
+    const uploading = () =>
       postgres.query
         .mockResolvedValueOnce([
           { utility_lineup_id: LINEUP.id, status: "uploading" },
         ])
+        .mockResolvedValueOnce([{ preview_stills: null }])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
-      s3.has.mockResolvedValueOnce(true);
+    const lineupUpdate = () =>
+      postgres.query.mock.calls.find(([sql]) =>
+        String(sql).includes("UPDATE public.utility_lineups"),
+      )[1];
+
+    it("streams to S3 and only then repoints the lineup", async () => {
+      uploading();
+      s3.has.mockImplementation(
+        async (key: string) => key === `clips/utility/${LINEUP.id}.jpg`,
+      );
 
       const stream = {} as any;
       const result = await service.finalizeUpload("job-1", stream, 4200);
@@ -506,58 +516,59 @@ describe("UtilityRendersService", () => {
         "video/mp4",
       );
       expect(result.file).toBe(`clips/utility/${LINEUP.id}.mp4`);
-      const updateBindings = postgres.query.mock.calls[1][1];
+      const updateBindings = lineupUpdate();
       expect(updateBindings[1]).toBe(`clips/utility/${LINEUP.id}.mp4`);
       expect(updateBindings[2]).toBe(`clips/utility/${LINEUP.id}.jpg`);
       expect(updateBindings[3]).toBe(4200);
     });
 
     it("leaves the thumbnail alone when the pod never uploaded one", async () => {
-      postgres.query
-        .mockResolvedValueOnce([
-          { utility_lineup_id: LINEUP.id, status: "uploading" },
-        ])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([]);
+      uploading();
 
       await service.finalizeUpload("job-1", {} as any, null);
 
-      expect(postgres.query.mock.calls[1][1][2]).toBeNull();
+      expect(lineupUpdate()[2]).toBeNull();
     });
 
-    it("records the stills the pod uploaded alongside the clip", async () => {
-      postgres.query
-        .mockResolvedValueOnce([
-          { utility_lineup_id: LINEUP.id, status: "uploading" },
-        ])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([]);
+    it("records the stills this render uploaded alongside its clip", async () => {
+      uploading();
       s3.has.mockImplementation(async (key: string) =>
         [
-          `clips/utility/${LINEUP.id}/stance.jpg`,
-          `clips/utility/${LINEUP.id}/landing.jpg`,
+          `clips/utility/${LINEUP.id}/job-1/stance.jpg`,
+          `clips/utility/${LINEUP.id}/job-1/landing.jpg`,
         ].includes(key),
       );
 
       await service.finalizeUpload("job-1", {} as any, null);
 
-      expect(JSON.parse(postgres.query.mock.calls[1][1][4])).toEqual({
-        stance: `clips/utility/${LINEUP.id}/stance.jpg`,
-        landing: `clips/utility/${LINEUP.id}/landing.jpg`,
+      expect(JSON.parse(lineupUpdate()[4])).toEqual({
+        stance: `clips/utility/${LINEUP.id}/job-1/stance.jpg`,
+        landing: `clips/utility/${LINEUP.id}/job-1/landing.jpg`,
       });
     });
 
-    it("keeps the previous stills when this render filmed none", async () => {
+    it("never pairs a new clip with an older render's stills", async () => {
       postgres.query
         .mockResolvedValueOnce([
           { utility_lineup_id: LINEUP.id, status: "uploading" },
         ])
+        .mockResolvedValueOnce([
+          {
+            preview_stills: {
+              aim: `clips/utility/${LINEUP.id}/job-0/aim.jpg`,
+            },
+          },
+        ])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
+      s3.remove = jest.fn();
 
       await service.finalizeUpload("job-1", {} as any, null);
 
-      expect(postgres.query.mock.calls[1][1][4]).toBeNull();
+      expect(lineupUpdate()[4]).toBeNull();
+      expect(s3.remove).toHaveBeenCalledWith(
+        `clips/utility/${LINEUP.id}/job-0/aim.jpg`,
+      );
     });
 
     it("refuses to overwrite a finished render", async () => {
@@ -582,11 +593,11 @@ describe("UtilityRendersService", () => {
       const result = await service.uploadStill("job-1", "aim_close", stream);
 
       expect(s3.put).toHaveBeenCalledWith(
-        `clips/utility/${LINEUP.id}/aim_close.jpg`,
+        `clips/utility/${LINEUP.id}/job-1/aim_close.jpg`,
         stream,
         "image/jpeg",
       );
-      expect(result.key).toBe(`clips/utility/${LINEUP.id}/aim_close.jpg`);
+      expect(result.key).toBe(`clips/utility/${LINEUP.id}/job-1/aim_close.jpg`);
     });
 
     it("refuses a still for a cancelled render", async () => {

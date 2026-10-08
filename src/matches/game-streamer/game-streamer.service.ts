@@ -2550,6 +2550,22 @@ export class GameStreamerService {
     return parts.length > 0 ? parts.join(" — ").slice(0, 500) : null;
   }
 
+  // A render books its server on the node its pod will run on, so there is
+  // nothing to book until one of those has its GPU free.
+  public async freeRenderGpuNodeIds(): Promise<Array<string>> {
+    const rows = await this.postgres.query<Array<{ id: string }>>(
+      `SELECT id
+         FROM public.game_server_nodes
+        WHERE gpu = true
+          AND enabled = true
+          AND gpu_rendering_enabled = true
+          AND status IN ('Online', 'NotAcceptingNewMatches')
+          AND id NOT IN (SELECT * FROM public.gpu_busy_node_ids())
+          AND id NOT IN (SELECT * FROM public.gpu_batch_blocked_node_ids())`,
+    );
+    return rows.map((row) => row.id);
+  }
+
   public async killNadeRenderPod(mapName: string): Promise<void> {
     const jobName = GameStreamerService.GetNadeRenderJobName(mapName);
     try {
@@ -2578,7 +2594,7 @@ export class GameStreamerService {
 
     const jobName = GameStreamerService.GetNadeRenderJobName(mapName);
     const { nodeId, steamAccount } = await this.claimGpuForNadeRenders(
-      mapName,
+      jobs.map((job) => job.job_id),
       jobName,
       connect.nodeId,
     );
@@ -2665,8 +2681,10 @@ export class GameStreamerService {
   }
 
   // Only the practice server's own node: the pod connects to it over loopback.
+  // Only the rows going into this pod: one approved since the batch read its
+  // queue would otherwise carry the node without ever being filmed.
   private async claimGpuForNadeRenders(
-    mapName: string,
+    renderIds: Array<string>,
     jobName: string,
     serverNodeId: string,
   ): Promise<GpuClaim> {
@@ -2674,14 +2692,14 @@ export class GameStreamerService {
       const result = await client.query(
         `WITH chosen AS (SELECT claim_gpu_node_for_render($2) AS id)
          UPDATE utility_lineup_renders
-            SET game_server_node_id = chosen.id
+            SET game_server_node_id = chosen.id,
+                last_status_at = now()
            FROM chosen
-          WHERE utility_lineup_renders.map_name = $1
+          WHERE utility_lineup_renders.id = ANY($1::uuid[])
             AND utility_lineup_renders.status IN ('queued','rendering','uploading')
-            AND utility_lineup_renders.game_server_node_id IS NULL
             AND chosen.id IS NOT NULL
          RETURNING utility_lineup_renders.game_server_node_id`,
-        [mapName, serverNodeId],
+        [renderIds, serverNodeId],
       );
 
       const nodeId = result.rows[0]?.game_server_node_id as string | undefined;

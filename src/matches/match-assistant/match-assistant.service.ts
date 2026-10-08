@@ -33,6 +33,7 @@ import { FailedToCreateOnDemandServer } from "../errors/FailedToCreateOnDemandSe
 import { LoggingService } from "src/k8s/logging/logging.service";
 import type { MatchServerBootDiagnostic } from "src/k8s/logging/bootDiagnostics";
 import { SystemSettingName } from "src/system/enums/SystemSettingName";
+import { PostgresService } from "src/postgres/postgres.service";
 
 @Injectable()
 export class MatchAssistantService {
@@ -97,6 +98,7 @@ export class MatchAssistantService {
     @InjectQueue(MatchQueues.MatchServers) private queue: Queue,
     @InjectQueue(MatchQueues.ScheduledMatches)
     private scheduledMatchesQueue: Queue,
+    private readonly postgres: PostgresService,
   ) {
     this.appConfig = this.config.get<AppConfig>("app");
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
@@ -912,6 +914,7 @@ export class MatchAssistantService {
       ? {
           gpu: { _eq: true },
           gpu_rendering_enabled: { _eq: true },
+          id: { _in: await this.freeRenderGpuNodeIds() },
         }
       : {};
 
@@ -1182,8 +1185,11 @@ export class MatchAssistantService {
             matchId,
           );
 
-          const gameModeEnvironment =
-            this.gameModesService.environmentFor(gameMode);
+          // A render pod's cs2 would stop on a "Confirm Workshop Download"
+          // prompt nobody is there to click, and it has no use for any addon.
+          const gameModeEnvironment = this.gameModesService
+            .environmentFor(gameMode)
+            .filter((entry) => !(isRender && entry.name === "WORKSHOP_ADDONS"));
 
           const createdJob = await batch.createNamespacedJob({
             namespace: this.namespace,
@@ -1485,6 +1491,18 @@ export class MatchAssistantService {
     return (utility_practice_sessions ?? []).length > 0;
   }
 
+  // Same predicate as the render pod's GPU claim, so the server never lands on
+  // a node whose GPU something else is already using.
+  private async freeRenderGpuNodeIds(): Promise<Array<string>> {
+    const rows = await this.postgres.query<Array<{ id: string }>>(
+      `SELECT id
+         FROM public.game_server_nodes
+        WHERE id NOT IN (SELECT * FROM public.gpu_busy_node_ids())
+          AND id NOT IN (SELECT * FROM public.gpu_batch_blocked_node_ids())`,
+    );
+    return rows.map((row) => row.id);
+  }
+
   private async utilityPracticeServerEnv(isRender = false) {
     return [
       { name: "INSTALL_5STACK_PLUGIN", value: "false" },
@@ -1498,8 +1516,14 @@ export class MatchAssistantService {
         name: "UTILITY_URL",
         value: this.appConfig.apiDomain,
       },
-      // The plugin directs the render pod's shot and draws nothing over it.
-      ...(isRender ? [{ name: "UTILITY_RENDER_MODE", value: "true" }] : []),
+      // The plugin directs the render pod's shot and draws nothing over it --
+      // so no HUD addon either, whose workshop download would stall the pod.
+      ...(isRender
+        ? [
+            { name: "UTILITY_RENDER_MODE", value: "true" },
+            { name: "HUD_WORKSHOP_ID", value: "" },
+          ]
+        : []),
     ];
   }
 

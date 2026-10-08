@@ -154,7 +154,7 @@ describe("GameStreamerService — nade previews", () => {
 
       const claimQuery = claimClient.query.mock.calls[0];
       expect(claimQuery[0]).toContain("claim_gpu_node_for_render($2)");
-      expect(claimQuery[1]).toEqual(["de_mirage", "node-A"]);
+      expect(claimQuery[1]).toEqual([["render-1"], "node-A"]);
     });
 
     it("films with the render-only streamer image when one is set", async () => {

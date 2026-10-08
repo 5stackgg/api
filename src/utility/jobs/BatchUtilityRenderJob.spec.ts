@@ -69,6 +69,7 @@ describe("BatchUtilityRenderJob", () => {
       getNadeRenderPodState: jest.fn().mockResolvedValue("running"),
       promotePendingLiveStreams: jest.fn().mockResolvedValue({ promoted: [] }),
       getNadeRenderPodFailureReason: jest.fn().mockResolvedValue(null),
+      freeRenderGpuNodeIds: jest.fn().mockResolvedValue(["node-A"]),
     };
     matchAssistant = {
       getMatchServerLogTail: jest.fn().mockResolvedValue(null),
@@ -245,6 +246,36 @@ describe("BatchUtilityRenderJob", () => {
       "session-1",
     );
     expect(bull.data.sessionId).toBe("session-1");
+  });
+
+  it("books nothing while no GPU is free to film on", async () => {
+    gameStreamer.freeRenderGpuNodeIds.mockResolvedValueOnce([]);
+    const bull = makeJob({ mapName: "de_mirage" });
+
+    await expect(job.process(bull as any)).rejects.toBeInstanceOf(DelayedError);
+
+    expect(practice.startForRender).not.toHaveBeenCalled();
+    expect(renders.failRenders).not.toHaveBeenCalled();
+  });
+
+  it("gives up on a GPU that stays busy and frees the practice server", async () => {
+    gameStreamer.dispatchNadePreviews.mockRejectedValueOnce(
+      new NoGpuAvailableError(),
+    );
+    const bull = makeJob({
+      mapName: "de_mirage",
+      sessionId: "session-1",
+      bookedAt: Date.now(),
+      gpuWaitSince: Date.now() - 11 * 60 * 1000,
+    });
+
+    await job.process(bull as any);
+
+    expect(renders.failRenders).toHaveBeenCalledWith(
+      ["render-1"],
+      expect.stringContaining("never came free"),
+    );
+    expect(practice.endRenderSession).toHaveBeenCalled();
   });
 
   it("retries instead of failing when no practice server is free", async () => {

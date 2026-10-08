@@ -25,6 +25,9 @@ const SERVER_BUSY_RETRY_MS = 60_000;
 // The practice server is booted on demand; the pod's own wait for it is only
 // 300s, so waiting for Ready here is cheaper than a GPU sitting idle.
 const SERVER_READY_TIMEOUT_MS = 10 * 60 * 1000;
+// The server is already up and held for this batch; a GPU on its node that
+// stays busy this long is not coming back in time to be worth the wait.
+const GPU_WAIT_TIMEOUT_MS = 10 * 60 * 1000;
 
 type JobData = {
   mapName: string;
@@ -36,6 +39,7 @@ type JobData = {
   // render that was never attempted.
   dispatchedIds?: Array<string>;
   bookedAt?: number;
+  gpuWaitSince?: number;
   // The wedge log is captured once per booking, two minutes in -- early
   // enough to read while it is still stuck, cheap enough to not spam k8s.
   podLogNoted?: boolean;
@@ -85,6 +89,15 @@ export class BatchUtilityRenderJob extends WorkerHost {
           message,
         );
         return;
+      }
+
+      if ((await this.gameStreamer.freeRenderGpuNodeIds()).length === 0) {
+        this.logger.log(`${tag} no GPU free to film on yet`);
+        await this.renders.stampBootStage(
+          inFlight.map((render) => render.id),
+          "booking_server:NoGpuAvailable",
+        );
+        return this.delayUntilNext(job, GPU_BUSY_RETRY_MS);
       }
 
       let session;
@@ -232,6 +245,18 @@ export class BatchUtilityRenderJob extends WorkerHost {
         );
       } catch (error) {
         if (error instanceof NoGpuAvailableError) {
+          const waitingSince = job.data.gpuWaitSince ?? Date.now();
+          if (Date.now() - waitingSince > GPU_WAIT_TIMEOUT_MS) {
+            await this.renders.failRenders(
+              inFlight.map((render) => render.id),
+              "the GPU on the practice server's node never came free",
+            );
+            await this.releaseSession(job);
+            return;
+          }
+          if (job.data.gpuWaitSince === undefined) {
+            await job.updateData({ ...job.data, gpuWaitSince: waitingSince });
+          }
           // Say it on the row, not at debug level: this retried invisibly for
           // minutes while the GPU block list counted the render's own
           // practice match against it.

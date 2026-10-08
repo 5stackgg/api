@@ -19,10 +19,14 @@ as $$
    where status in ('queued', 'rendering', 'uploading')
      and game_server_node_id is not null
   union
+  -- Bounded by the last word from the pod: a row orphaned with a node on it
+  -- (a pod that died without a terminal status) must not hold the GPU from
+  -- every live stream for good.
   select game_server_node_id
     from utility_lineup_renders
    where status in ('queued', 'rendering', 'uploading')
      and game_server_node_id is not null
+     and last_status_at > now() - interval '15 minutes'
 $$;
 
 -- Render-only: nodes running a live match while

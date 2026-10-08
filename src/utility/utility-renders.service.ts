@@ -110,11 +110,14 @@ export class UtilityRendersService {
     return `clips/utility/${lineupId}.jpg`;
   }
 
+  // Per render, unlike the clip: a still a re-render failed to upload must
+  // not be filled in with the previous render's frame.
   public static GetPreviewStillS3Key(
     lineupId: string,
+    renderId: string,
     kind: UtilityRenderStill,
   ): string {
-    return `clips/utility/${lineupId}/${kind}.jpg`;
+    return `clips/utility/${lineupId}/${renderId}/${kind}.jpg`;
   }
 
   public static isStill(kind: string): kind is UtilityRenderStill {
@@ -274,6 +277,18 @@ export class UtilityRendersService {
    * objects are keyed on the lineup, so a lineup has exactly one live preview;
    * clearing its columns and removing the two objects is the whole teardown.
    */
+  private async removeStills(keys: Array<string>): Promise<void> {
+    for (const key of keys) {
+      try {
+        await this.s3.remove(key);
+      } catch (error) {
+        this.logger.warn(
+          `[utility-render] could not remove ${key}: ${(error as Error)?.message}`,
+        );
+      }
+    }
+  }
+
   public async deletePreview(renderId: string): Promise<boolean> {
     const [row] = await this.postgres.query<
       Array<{ utility_lineup_id: string; status: string }>
@@ -304,15 +319,22 @@ export class UtilityRendersService {
     );
 
     if (row.status === "done" && Number(others?.count ?? 0) === 0) {
-      await this.postgres.query(
-        `UPDATE public.utility_lineups
+      const [lineup] = await this.postgres.query<
+        Array<{ preview_stills: Record<string, string> | null }>
+      >(
+        `UPDATE public.utility_lineups l
             SET preview_file = NULL,
                 preview_thumbnail = NULL,
                 preview_duration_ms = NULL,
+                preview_stills = NULL,
                 preview_rendered_at = NULL
-          WHERE id = $1::uuid`,
+           FROM (SELECT id, preview_stills FROM public.utility_lineups
+                  WHERE id = $1::uuid) old
+          WHERE l.id = old.id
+      RETURNING old.preview_stills`,
         [row.utility_lineup_id],
       );
+      await this.removeStills(Object.values(lineup?.preview_stills ?? {}));
       for (const key of [
         UtilityRendersService.GetPreviewS3Key(row.utility_lineup_id),
         UtilityRendersService.GetPreviewThumbnailS3Key(row.utility_lineup_id),
@@ -776,6 +798,7 @@ export class UtilityRendersService {
 
     const key = UtilityRendersService.GetPreviewStillS3Key(
       row.utility_lineup_id,
+      jobId,
       kind,
     );
     await this.s3.put(key, fileStream, "image/jpeg");
@@ -825,10 +848,18 @@ export class UtilityRendersService {
       );
     }
 
+    const [previous] = await this.postgres.query<
+      Array<{ preview_stills: Record<string, string> | null }>
+    >(
+      `SELECT preview_stills FROM public.utility_lineups WHERE id = $1::uuid`,
+      [row.utility_lineup_id],
+    );
+
     const stills: Partial<Record<UtilityRenderStill, string>> = {};
     for (const kind of UTILITY_RENDER_STILLS) {
       const stillKey = UtilityRendersService.GetPreviewStillS3Key(
         row.utility_lineup_id,
+        jobId,
         kind,
       );
       try {
@@ -847,7 +878,7 @@ export class UtilityRendersService {
           SET preview_file = $2,
               preview_thumbnail = COALESCE($3, preview_thumbnail),
               preview_duration_ms = COALESCE($4::int, preview_duration_ms),
-              preview_stills = COALESCE($5::jsonb, preview_stills),
+              preview_stills = $5::jsonb,
               preview_rendered_at = now()
         WHERE id = $1::uuid`,
       [
@@ -864,6 +895,13 @@ export class UtilityRendersService {
           SET duration_ms = COALESCE($2::int, duration_ms)
         WHERE id = $1::uuid`,
       [jobId, durationMs],
+    );
+
+    const current = new Set(Object.values(stills));
+    await this.removeStills(
+      Object.values(previous?.preview_stills ?? {}).filter(
+        (key) => !current.has(key),
+      ),
     );
 
     return { lineupId: row.utility_lineup_id, file: key };

@@ -301,6 +301,20 @@ describe("utility lineup renders (SQL-driven)", () => {
       );
       expect(live.id).not.toBe(GPU_NODE);
     });
+
+    it("lets go of a node once the render on it has gone quiet", async () => {
+      const id = await lineup();
+      const [render] = await queueRender(id, "rendering");
+      await postgres.query(
+        `UPDATE utility_lineup_renders
+            SET game_server_node_id = $2,
+                last_status_at = now() - interval '16 minutes'
+          WHERE id = $1::uuid`,
+        [render.id, GPU_NODE],
+      );
+
+      expect(await claim(GPU_NODE)).toBe(GPU_NODE);
+    });
   });
 
   describe("render practice sessions", () => {
