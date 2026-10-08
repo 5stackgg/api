@@ -230,21 +230,27 @@ describe("MapAssetsService", () => {
       expect(queue.add).not.toHaveBeenCalled();
     });
 
-    it.each([null, "false"])(
-      "stays off until map_assets_auto_build is turned on (%s)",
-      async (value) => {
-        db.autoBuild = value;
+    it("stays off once map_assets_auto_build is turned off", async () => {
+      db.autoBuild = "false";
 
-        await expect(service.queueBuild("node-1", 25537370)).resolves.toBe(
-          false,
-        );
-        expect(postgres.query.mock.calls[0][1]).toEqual([
-          "map_assets_auto_build",
-        ]);
-        expect(sqlCalls()).toHaveLength(1);
-        expect(queue.add).not.toHaveBeenCalled();
-      },
-    );
+      await expect(service.queueBuild("node-1", 25537370)).resolves.toBe(false);
+      expect(postgres.query.mock.calls[0][1]).toEqual([
+        "map_assets_auto_build",
+      ]);
+      expect(sqlCalls()).toHaveLength(1);
+      expect(queue.add).not.toHaveBeenCalled();
+    });
+
+    it("builds when map_assets_auto_build was never set", async () => {
+      db.autoBuild = null;
+
+      await expect(service.queueBuild("node-1", 25537370)).resolves.toBe(true);
+      expect(queue.add).toHaveBeenCalledWith(
+        "BuildMapAssets",
+        { gameServerNodeId: "node-1", buildId: "25537370", trigger: "auto" },
+        expect.anything(),
+      );
+    });
 
     it("ignores a build that is not the current one", async () => {
       db.current = false;
