@@ -101,16 +101,20 @@ export class UtilityRendersService {
     private readonly renderQueue: Queue,
   ) {}
 
-  // Keyed on the LINEUP, not the render job: a re-render replaces the clip in
-  // place, so nothing has to go back and repoint the lineup, and the old object
-  // never lingers. The clips/ prefix is the only one the Cloudflare worker's
-  // route patterns match -- a utility/ prefix would 404 in the browser.
-  public static GetPreviewS3Key(lineupId: string): string {
-    return `clips/utility/${lineupId}.mp4`;
+  // Keyed per render: Cloudflare caches clips/ ignoring the query string, so a
+  // re-render written over the same key kept serving the first clip for the
+  // cache's 30 days whatever the ?v= said. finalizeUpload removes the previous
+  // render's objects. The clips/ prefix is the only one the worker's route
+  // patterns match -- a utility/ prefix would 404 in the browser.
+  public static GetPreviewS3Key(lineupId: string, renderId: string): string {
+    return `clips/utility/${lineupId}/${renderId}.mp4`;
   }
 
-  public static GetPreviewThumbnailS3Key(lineupId: string): string {
-    return `clips/utility/${lineupId}.jpg`;
+  public static GetPreviewThumbnailS3Key(
+    lineupId: string,
+    renderId: string,
+  ): string {
+    return `clips/utility/${lineupId}/${renderId}.jpg`;
   }
 
   // Per render, unlike the clip: a still a re-render failed to upload must
@@ -324,7 +328,11 @@ export class UtilityRendersService {
 
     if (row.status === "done" && Number(others?.count ?? 0) === 0) {
       const [lineup] = await this.postgres.query<
-        Array<{ preview_stills: Record<string, string> | null }>
+        Array<{
+          preview_file: string | null;
+          preview_thumbnail: string | null;
+          preview_stills: Record<string, string> | null;
+        }>
       >(
         `UPDATE public.utility_lineups l
             SET preview_file = NULL,
@@ -332,25 +340,19 @@ export class UtilityRendersService {
                 preview_duration_ms = NULL,
                 preview_stills = NULL,
                 preview_rendered_at = NULL
-           FROM (SELECT id, preview_stills FROM public.utility_lineups
+           FROM (SELECT id, preview_file, preview_thumbnail, preview_stills
+                   FROM public.utility_lineups
                   WHERE id = $1::uuid) old
           WHERE l.id = old.id
-      RETURNING old.preview_stills`,
+      RETURNING old.preview_file, old.preview_thumbnail, old.preview_stills`,
         [row.utility_lineup_id],
       );
-      await this.removeStills(Object.values(lineup?.preview_stills ?? {}));
-      for (const key of [
-        UtilityRendersService.GetPreviewS3Key(row.utility_lineup_id),
-        UtilityRendersService.GetPreviewThumbnailS3Key(row.utility_lineup_id),
-      ]) {
-        try {
-          await this.s3.remove(key);
-        } catch (error) {
-          this.logger.warn(
-            `[utility-render] could not remove ${key}: ${(error as Error)?.message}`,
-          );
-        }
-      }
+      await this.removeStills([
+        ...Object.values(lineup?.preview_stills ?? {}),
+        ...[lineup?.preview_file, lineup?.preview_thumbnail].filter(
+          (key): key is string => !!key,
+        ),
+      ]);
     }
 
     const deleted = await this.postgres.query<Array<{ id: string }>>(
@@ -775,6 +777,7 @@ export class UtilityRendersService {
 
     const key = UtilityRendersService.GetPreviewThumbnailS3Key(
       row.utility_lineup_id,
+      jobId,
     );
     await this.s3.put(key, fileStream, "image/jpeg");
 
@@ -834,11 +837,12 @@ export class UtilityRendersService {
       throw new Error(`render is ${row.status}`);
     }
 
-    const key = UtilityRendersService.GetPreviewS3Key(row.utility_lineup_id);
+    const key = UtilityRendersService.GetPreviewS3Key(row.utility_lineup_id, jobId);
     await this.s3.put(key, fileStream, "video/mp4");
 
     const thumbnailKey = UtilityRendersService.GetPreviewThumbnailS3Key(
       row.utility_lineup_id,
+      jobId,
     );
 
     let thumbnail: string | null = null;
@@ -853,9 +857,15 @@ export class UtilityRendersService {
     }
 
     const [previous] = await this.postgres.query<
-      Array<{ preview_stills: Record<string, string> | null }>
+      Array<{
+        preview_file: string | null;
+        preview_thumbnail: string | null;
+        preview_stills: Record<string, string> | null;
+      }>
     >(
-      `SELECT preview_stills FROM public.utility_lineups WHERE id = $1::uuid`,
+      `SELECT preview_file, preview_thumbnail, preview_stills
+         FROM public.utility_lineups
+        WHERE id = $1::uuid`,
       [row.utility_lineup_id],
     );
 
@@ -901,11 +911,17 @@ export class UtilityRendersService {
       [jobId, durationMs],
     );
 
-    const current = new Set(Object.values(stills));
+    const current = new Set([key, ...Object.values(stills)]);
+    if (thumbnail) {
+      current.add(thumbnail);
+    }
     await this.removeStills(
-      Object.values(previous?.preview_stills ?? {}).filter(
-        (key) => !current.has(key),
-      ),
+      [
+        ...Object.values(previous?.preview_stills ?? {}),
+        ...[previous?.preview_file, previous?.preview_thumbnail].filter(
+          (old): old is string => !!old,
+        ),
+      ].filter((old) => !current.has(old)),
     );
 
     return { lineupId: row.utility_lineup_id, file: key };

@@ -571,22 +571,45 @@ describe("UtilityRendersService", () => {
     it("streams to S3 and only then repoints the lineup", async () => {
       uploading();
       s3.has.mockImplementation(
-        async (key: string) => key === `clips/utility/${LINEUP.id}.jpg`,
+        async (key: string) => key === `clips/utility/${LINEUP.id}/job-1.jpg`,
       );
 
       const stream = {} as any;
       const result = await service.finalizeUpload("job-1", stream, 4200);
 
       expect(s3.put).toHaveBeenCalledWith(
-        `clips/utility/${LINEUP.id}.mp4`,
+        `clips/utility/${LINEUP.id}/job-1.mp4`,
         stream,
         "video/mp4",
       );
-      expect(result.file).toBe(`clips/utility/${LINEUP.id}.mp4`);
+      expect(result.file).toBe(`clips/utility/${LINEUP.id}/job-1.mp4`);
       const updateBindings = lineupUpdate();
-      expect(updateBindings[1]).toBe(`clips/utility/${LINEUP.id}.mp4`);
-      expect(updateBindings[2]).toBe(`clips/utility/${LINEUP.id}.jpg`);
+      expect(updateBindings[1]).toBe(`clips/utility/${LINEUP.id}/job-1.mp4`);
+      expect(updateBindings[2]).toBe(`clips/utility/${LINEUP.id}/job-1.jpg`);
       expect(updateBindings[3]).toBe(4200);
+    });
+
+    it("never serves a re-render from the previous render's cached key", async () => {
+      postgres.query
+        .mockResolvedValueOnce([
+          { utility_lineup_id: LINEUP.id, status: "uploading" },
+        ])
+        .mockResolvedValueOnce([
+          {
+            preview_file: `clips/utility/${LINEUP.id}.mp4`,
+            preview_thumbnail: `clips/utility/${LINEUP.id}.jpg`,
+            preview_stills: null,
+          },
+        ])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
+      s3.remove = jest.fn();
+
+      const result = await service.finalizeUpload("job-2", {} as any, null);
+
+      expect(result.file).not.toBe(`clips/utility/${LINEUP.id}.mp4`);
+      expect(s3.remove).toHaveBeenCalledWith(`clips/utility/${LINEUP.id}.mp4`);
+      expect(s3.remove).toHaveBeenCalledWith(`clips/utility/${LINEUP.id}.jpg`);
     });
 
     it("leaves the thumbnail alone when the pod never uploaded one", async () => {
@@ -686,12 +709,15 @@ describe("UtilityRendersService", () => {
   });
 
   describe("s3 keys", () => {
-    it("keys on the lineup so a re-render replaces the clip in place", () => {
-      expect(UtilityRendersService.GetPreviewS3Key("abc")).toBe(
-        "clips/utility/abc.mp4",
+    it("keys each render apart, under the worker's clips/ prefix", () => {
+      expect(UtilityRendersService.GetPreviewS3Key("abc", "r1")).toBe(
+        "clips/utility/abc/r1.mp4",
       );
-      expect(UtilityRendersService.GetPreviewThumbnailS3Key("abc")).toBe(
-        "clips/utility/abc.jpg",
+      expect(UtilityRendersService.GetPreviewThumbnailS3Key("abc", "r1")).toBe(
+        "clips/utility/abc/r1.jpg",
+      );
+      expect(UtilityRendersService.GetPreviewS3Key("abc", "r2")).not.toBe(
+        UtilityRendersService.GetPreviewS3Key("abc", "r1"),
       );
     });
   });
