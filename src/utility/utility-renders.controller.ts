@@ -201,7 +201,7 @@ export class UtilityRendersController {
       return response.status(400).json({ error: "status required" });
     }
 
-    this.logger.log(
+    this.logger.debug(
       `[utility-render ${jobId}] status POST: ${JSON.stringify(body)}`,
     );
 

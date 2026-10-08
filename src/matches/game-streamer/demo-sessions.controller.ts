@@ -30,7 +30,7 @@ export class DemoSessionsController {
     @Body() body: GameStreamerStatusDto,
     @Res() response: Response,
   ) {
-    this.logger.log(
+    this.logger.debug(
       `[demo ${sessionId}] status POST: ${JSON.stringify(body ?? {})}`,
     );
 

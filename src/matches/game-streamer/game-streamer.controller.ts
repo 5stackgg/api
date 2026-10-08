@@ -36,7 +36,9 @@ export class GameStreamerController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    this.logger.log(`[${matchId}] status POST: ${JSON.stringify(body ?? {})}`);
+    this.logger.debug(
+      `[${matchId}] status POST: ${JSON.stringify(body ?? {})}`,
+    );
 
     if (
       !(await this.gameStreamer.validateStatusOriginAuth(
@@ -111,7 +113,10 @@ export class GameStreamerController {
     @Res() response: Response,
   ) {
     const requireLogin = await this.streamAccess.requireLoginForLiveStreams();
-    if (requireLogin && !(await this.streamAccess.authorize(request, matchId))) {
+    if (
+      requireLogin &&
+      !(await this.streamAccess.authorize(request, matchId))
+    ) {
       return response.status(403).end();
     }
 

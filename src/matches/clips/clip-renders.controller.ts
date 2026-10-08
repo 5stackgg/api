@@ -85,7 +85,7 @@ export class ClipRendersController {
     @Res() response: Response,
   ) {
     if (body?.status !== "booting") {
-      this.logger.log(
+      this.logger.debug(
         `[clip ${jobId}] status POST: ${JSON.stringify(body ?? {})}`,
       );
     }
