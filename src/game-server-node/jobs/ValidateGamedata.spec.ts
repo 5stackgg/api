@@ -55,6 +55,7 @@ describe("ValidateGamedata", () => {
 
   const run = (data: Record<string, unknown>) =>
     job.process({
+      id: "validate.25537370.manual",
       data: { gameServerNodeId: "node-1", buildId: 25537370, ...data },
     } as any);
 
@@ -105,6 +106,7 @@ describe("ValidateGamedata", () => {
       25537370,
       "public",
       { trigger: "manual", requestedBy: "76561198000000001" },
+      "validate.25537370.manual",
     );
   });
 

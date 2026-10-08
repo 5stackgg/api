@@ -12,7 +12,12 @@ import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 describe("CS2 build history (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
-  let redis: { set: jest.Mock; del: jest.Mock; exists: jest.Mock };
+  let redis: {
+    set: jest.Mock;
+    get: jest.Mock;
+    del: jest.Mock;
+    exists: jest.Mock;
+  };
 
   beforeAll(async () => {
     db = await bootMigratedDb("Cs2BuildHistoryTest");
@@ -46,6 +51,7 @@ describe("CS2 build history (SQL-driven)", () => {
     );
     redis = {
       set: jest.fn().mockResolvedValue("OK"),
+      get: jest.fn().mockResolvedValue(null),
       del: jest.fn().mockResolvedValue(1),
       exists: jest.fn().mockResolvedValue(0),
     };
@@ -192,13 +198,79 @@ describe("CS2 build history (SQL-driven)", () => {
     });
   });
 
-  it("leaves the row alone when another run holds the lock", async () => {
-    redis.set.mockResolvedValueOnce(null);
+  describe("the validation lock", () => {
+    const AUTO = "validate.25537370.auto";
+    const MANUAL = "validate.25537370.manual";
 
-    await expect(
-      service().validateGamedata("node-a", 25537370),
-    ).resolves.toBeNull();
-    expect(await validation(25537370)).toBeUndefined();
+    const heldBy = (holder: string, holderState?: string) => {
+      redis.set.mockResolvedValueOnce(null);
+      redis.get.mockResolvedValue(holder);
+      const nodes = service();
+      (nodes as any).validateGamedataQueue = {
+        getJob: jest.fn(async (id: string) =>
+          id === holder && holderState
+            ? { getState: async () => holderState }
+            : undefined,
+        ),
+      };
+      return nodes;
+    };
+
+    it("leaves the row alone while another live job holds it", async () => {
+      await expect(
+        heldBy(MANUAL, "active").validateGamedata(
+          "node-a",
+          25537370,
+          "public",
+          { trigger: "auto" },
+          AUTO,
+        ),
+      ).resolves.toBeNull();
+      expect(await validation(25537370)).toBeUndefined();
+    });
+
+    it("is taken back by the same job when BullMQ re-runs it after a stall", async () => {
+      await expect(
+        heldBy(AUTO, "active").validateGamedata(
+          "node-a",
+          25537370,
+          "public",
+          { trigger: "auto" },
+          AUTO,
+        ),
+      ).resolves.not.toBeNull();
+      expect((await validation(25537370)).status).toBe("pass");
+      expect(redis.set).toHaveBeenLastCalledWith(
+        "gamedata:validate:lock:25537370:public",
+        AUTO,
+        "EX",
+        3600,
+      );
+    });
+
+    it("is taken over from a job that is gone", async () => {
+      await expect(
+        heldBy(AUTO).validateGamedata(
+          "node-a",
+          25537370,
+          "public",
+          { trigger: "manual" },
+          MANUAL,
+        ),
+      ).resolves.not.toBeNull();
+      expect((await validation(25537370)).status).toBe("pass");
+    });
+
+    it("does not count as a run in progress once its job is gone", async () => {
+      redis.exists.mockResolvedValue(1);
+
+      await expect(
+        heldBy(AUTO).gamedataValidationActive(25537370),
+      ).resolves.toBe(false);
+      await expect(
+        heldBy(AUTO, "waiting").gamedataValidationActive(25537370),
+      ).resolves.toBe(true);
+    });
   });
 
   it("only knows automatic and manual triggers", async () => {
@@ -322,6 +394,157 @@ describe("CS2 build history (SQL-driven)", () => {
       await service().validateGamedata("node-a", 25537370);
 
       await expect(auto({ add: jest.fn() })).resolves.toBe(false);
+    });
+  });
+
+  describe("stranded validations", () => {
+    const strand = async ({
+      buildId = 25537370,
+      node = "node-a",
+      trigger = "auto",
+      requestedBy = null,
+      startedAgo = "10 minutes",
+      results = null,
+    }: {
+      buildId?: number;
+      node?: string;
+      trigger?: string;
+      requestedBy?: string | null;
+      startedAgo?: string;
+      results?: Record<string, unknown> | null;
+    } = {}) => {
+      await postgres.query(
+        `INSERT INTO gamedata_signature_validations
+           (build_id, branch, status, started_at, game_server_node_id,
+            trigger, requested_by_steam_id, results)
+         VALUES ($1, 'public', 'running', now() - $2::interval, $3, $4, $5,
+                 $6::jsonb)`,
+        [
+          buildId,
+          startedAgo,
+          node,
+          trigger,
+          requestedBy,
+          results && JSON.stringify(results),
+        ],
+      );
+    };
+
+    const reconcile = (jobs: Record<string, string> = {}) => {
+      const queue = {
+        add: jest.fn().mockResolvedValue({}),
+        remove: jest.fn().mockResolvedValue(0),
+        getJob: jest.fn(async (id: string) =>
+          jobs[id]
+            ? { getState: async () => jobs[id], remove: jest.fn() }
+            : undefined,
+        ),
+      };
+      const nodes = service();
+      (nodes as any).validateGamedataQueue = queue;
+      return { queue, done: nodes.reconcileStrandedGamedataValidations() };
+    };
+
+    it("queues a run that died with the api again and frees its lock", async () => {
+      await strand();
+
+      const { queue, done } = reconcile();
+      await done;
+
+      expect(redis.del).toHaveBeenCalledWith(
+        "gamedata:validate:lock:25537370:public",
+      );
+      expect(queue.add).toHaveBeenCalledWith(
+        "ValidateGamedata",
+        {
+          gameServerNodeId: "node-a",
+          buildId: 25537370,
+          branch: "public",
+          trigger: "auto",
+          requestedBy: null,
+          requestedByName: null,
+          buildMapAssets: true,
+        },
+        expect.objectContaining({ jobId: "validate.25537370.auto" }),
+      );
+    });
+
+    it("keeps who asked for a manual run, without chaining map assets", async () => {
+      await postgres.query(
+        `INSERT INTO players (steam_id, name) VALUES (76561198000000001, 'Luke')
+         ON CONFLICT (steam_id) DO NOTHING`,
+      );
+      await strand({ trigger: "manual", requestedBy: "76561198000000001" });
+
+      const { queue, done } = reconcile();
+      await done;
+
+      expect(queue.add.mock.calls[0][1]).toMatchObject({
+        trigger: "manual",
+        requestedBy: "76561198000000001",
+        requestedByName: "Luke",
+        buildMapAssets: false,
+      });
+      expect(queue.add.mock.calls[0][2]).toMatchObject({
+        jobId: "validate.25537370.manual",
+      });
+    });
+
+    it("moves to another node when the one it ran on went offline", async () => {
+      await strand({ node: "node-off" });
+
+      const { queue, done } = reconcile();
+      await done;
+
+      expect(["node-a", "node-b"]).toContain(
+        queue.add.mock.calls[0][1].gameServerNodeId,
+      );
+    });
+
+    it("leaves a run alone while its queue job is still alive", async () => {
+      await strand();
+
+      const { queue, done } = reconcile({ "validate.25537370.auto": "active" });
+      await done;
+
+      expect(queue.add).not.toHaveBeenCalled();
+      expect(redis.del).not.toHaveBeenCalled();
+    });
+
+    it("leaves a run that only just started alone", async () => {
+      await strand({ startedAgo: "30 seconds" });
+
+      const { queue, done } = reconcile();
+      await done;
+
+      expect(queue.getJob).not.toHaveBeenCalled();
+      expect((await validation(25537370)).status).toBe("running");
+    });
+
+    it("falls back to the last result when no node can run the build", async () => {
+      await strand({
+        buildId: 25000000,
+        results: { status: "fail", broken: [], results: [] },
+      });
+      await strand({ buildId: 25000001 });
+
+      const { queue, done } = reconcile();
+      await done;
+
+      expect(queue.add).not.toHaveBeenCalled();
+      expect(await validation(25000000)).toMatchObject({
+        status: "fail",
+        validated_at: null,
+      });
+      const lost = await validation(25000001);
+      expect(lost.status).toBe("error");
+      expect(lost.validated_at).toBeInstanceOf(Date);
+      const [{ results }] = await postgres.query<
+        Array<{ results: { error: string } }>
+      >(
+        `SELECT results FROM gamedata_signature_validations WHERE build_id = 25000001`,
+      );
+      expect(results.error).toContain("interrupted");
     });
   });
 

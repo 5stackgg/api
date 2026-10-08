@@ -1,7 +1,10 @@
 import { WorkerHost } from "@nestjs/bullmq";
 import { Job } from "bullmq";
 import { Logger } from "@nestjs/common";
-import { UseQueue } from "../../utilities/QueueProcessors";
+import {
+  RESUMABLE_JOB_MAX_STALLS,
+  UseQueue,
+} from "../../utilities/QueueProcessors";
 import { GameServerQueues } from "../enums/GameServerQueues";
 import { NotificationsService } from "src/notifications/notifications.service";
 import { DISCORD_COLORS } from "src/notifications/utilities/constants";
@@ -33,7 +36,9 @@ const RUNTIME_LABELS: Record<string, string> = {
   [UNKNOWN_RUNTIME]: "Unknown Runtime",
 };
 
-@UseQueue("GameServerNode", GameServerQueues.ValidateGamedata)
+@UseQueue("GameServerNode", GameServerQueues.ValidateGamedata, {
+  maxStalledCount: RESUMABLE_JOB_MAX_STALLS,
+})
 export class ValidateGamedata extends WorkerHost {
   private static readonly LIST_LIMIT = 10;
 
@@ -77,6 +82,7 @@ export class ValidateGamedata extends WorkerHost {
         trigger: job.data.trigger ?? "manual",
         requestedBy: job.data.requestedBy ?? null,
       },
+      job.id,
     );
 
     if (!outcome) {

@@ -1,4 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { randomUUID } from "crypto";
 import { HasuraService } from "../hasura/hasura.service";
 import { e_game_server_node_statuses_enum } from "../../generated";
 import {
@@ -372,7 +373,10 @@ export class GameServerNodeService {
         cpuGovernorInfo,
       ) ||
       game_server_nodes_by_pk.token ||
-      !isJsonEqual(game_server_nodes_by_pk.cpu_frequency_info, cpuFrequencyInfo) ||
+      !isJsonEqual(
+        game_server_nodes_by_pk.cpu_frequency_info,
+        cpuFrequencyInfo,
+      ) ||
       !isJsonEqual(game_server_nodes_by_pk.cpu_warnings, cpuWarnings)
     ) {
       await this.hasura.mutation({
@@ -1217,6 +1221,15 @@ export class GameServerNodeService {
 
   private static readonly GAMEDATA_LOCK_TTL_S = 60 * 60;
 
+  // A validation finishes in seconds; one still running past this is dead.
+  private static readonly GAMEDATA_STRANDED_AFTER = "5 minutes";
+
+  private static readonly FINISHED_QUEUE_STATES = new Set([
+    "completed",
+    "failed",
+    "unknown",
+  ]);
+
   private static sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
@@ -1284,16 +1297,10 @@ export class GameServerNodeService {
     buildId: number,
     branch = "public",
     run: BuildRun = { trigger: "manual" },
+    lockOwner: string = randomUUID(),
   ): Promise<GamedataValidationOutcome | null> {
     const lockKey = GameServerNodeService.gamedataLockKey(buildId, branch);
-    const acquired = await this.redis.set(
-      lockKey,
-      1,
-      "EX",
-      GameServerNodeService.GAMEDATA_LOCK_TTL_S,
-      "NX",
-    );
-    if (acquired === null) {
+    if (!(await this.acquireGamedataLock(lockKey, lockOwner))) {
       this.logger.warn(
         `[validate-gamedata] validation already running for build ${buildId} (${branch})`,
       );
@@ -1409,6 +1416,36 @@ export class GameServerNodeService {
     } finally {
       await this.redis.del(lockKey);
     }
+  }
+
+  // The lock holds the id of the queue job running the validation. A job
+  // killed with the api comes back from BullMQ as stalled under the same id,
+  // and a holder whose job is gone died with the api: either may take the
+  // lock rather than wait out its hour.
+  private async acquireGamedataLock(
+    lockKey: string,
+    owner: string,
+  ): Promise<boolean> {
+    const ttl = GameServerNodeService.GAMEDATA_LOCK_TTL_S;
+    if ((await this.redis.set(lockKey, owner, "EX", ttl, "NX")) !== null) {
+      return true;
+    }
+
+    const holder = await this.redis.get(lockKey);
+    if (holder && holder !== owner && (await this.gamedataJobAlive(holder))) {
+      return false;
+    }
+
+    await this.redis.set(lockKey, owner, "EX", ttl);
+    return true;
+  }
+
+  private async gamedataJobAlive(jobId: string): Promise<boolean> {
+    const job = await this.validateGamedataQueue.getJob(jobId);
+    return (
+      !!job &&
+      !GameServerNodeService.FINISHED_QUEUE_STATES.has(await job.getState())
+    );
   }
 
   private async runGamedataValidation(
@@ -1643,28 +1680,118 @@ export class GameServerNodeService {
     };
   }
 
-  public async gamedataValidationActive(
-    buildId: number,
-    branch = "public",
-  ): Promise<boolean> {
-    if (
-      await this.redis.exists(
-        GameServerNodeService.gamedataLockKey(buildId, branch),
-      )
-    ) {
-      return true;
-    }
-
-    for (const jobId of [
-      `validate.${buildId}.auto`,
-      `validate.${buildId}.manual`,
-    ]) {
-      if (await this.validateGamedataQueue.getJob(jobId)) {
+  public async gamedataValidationActive(buildId: number): Promise<boolean> {
+    for (const jobId of GameServerNodeService.gamedataJobIds(buildId)) {
+      if (await this.gamedataJobAlive(jobId)) {
         return true;
       }
     }
 
     return false;
+  }
+
+  private static gamedataJobIds(buildId: number) {
+    return [`validate.${buildId}.auto`, `validate.${buildId}.manual`];
+  }
+
+  // BullMQ re-runs a validation killed with the api, but one it gave up on or
+  // lost leaves its row running and, for an automatic run, the chained
+  // map-asset build never queued. Such a run is queued again; a build no node
+  // can validate any more falls back to its last result.
+  public async reconcileStrandedGamedataValidations(): Promise<void> {
+    const rows = await this.postgres.query<
+      Array<{
+        build_id: number;
+        branch: string;
+        game_server_node_id: string | null;
+        trigger: BuildRunTrigger | null;
+        requested_by_steam_id: string | null;
+        requested_by_name: string | null;
+      }>
+    >(
+      `SELECT v.build_id, v.branch, v.game_server_node_id, v.trigger,
+              v.requested_by_steam_id::text AS requested_by_steam_id,
+              p.name AS requested_by_name
+         FROM public.gamedata_signature_validations v
+         LEFT JOIN public.players p ON p.steam_id = v.requested_by_steam_id
+        WHERE v.status = 'running'
+          AND v.started_at < now() - $1::interval`,
+      [GameServerNodeService.GAMEDATA_STRANDED_AFTER],
+    );
+
+    for (const row of rows) {
+      const trigger = row.trigger ?? "auto";
+      if (await this.gamedataValidationActive(row.build_id)) {
+        continue;
+      }
+
+      await Promise.all(
+        GameServerNodeService.gamedataJobIds(row.build_id).map((jobId) =>
+          this.validateGamedataQueue.remove(jobId),
+        ),
+      );
+      await this.redis.del(
+        GameServerNodeService.gamedataLockKey(row.build_id, row.branch),
+      );
+
+      const gameServerNodeId = await this.resolveBuildNode(
+        row.build_id,
+        row.game_server_node_id,
+      )
+        .catch(() => this.resolveBuildNode(row.build_id))
+        .catch((): null => null);
+
+      if (gameServerNodeId) {
+        await this.validateGamedataQueue.add(
+          "ValidateGamedata",
+          {
+            gameServerNodeId,
+            buildId: row.build_id,
+            branch: row.branch,
+            trigger,
+            requestedBy: row.requested_by_steam_id,
+            requestedByName: row.requested_by_name,
+            buildMapAssets: trigger === "auto",
+          },
+          {
+            jobId: `validate.${row.build_id}.${trigger}`,
+            attempts: 1,
+            removeOnComplete: true,
+            removeOnFail: true,
+          },
+        );
+        this.logger.warn(
+          `[validate-gamedata] run for build ${row.build_id} died mid-validation; queued it again on ${gameServerNodeId}`,
+        );
+        continue;
+      }
+
+      await this.postgres.query(
+        `UPDATE public.gamedata_signature_validations
+            SET status = CASE
+                  WHEN results ->> 'status' IN ('pass', 'fail', 'error')
+                    THEN results ->> 'status'
+                  ELSE 'error'
+                END,
+                validated_at = CASE WHEN results IS NULL THEN now() END,
+                results = COALESCE(
+                  results,
+                  jsonb_build_object(
+                    'status', 'error',
+                    'broken', '[]'::jsonb,
+                    'error', $3::text
+                  )
+                )
+          WHERE build_id = $1
+            AND branch = $2
+            AND status = 'running'`,
+        [
+          row.build_id,
+          row.branch,
+          "The validation was interrupted and no node on this build can run it again",
+        ],
+      );
+    }
   }
 
   // Status alerts are only worth raising for a node something depends on.

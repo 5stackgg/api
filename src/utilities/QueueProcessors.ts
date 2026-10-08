@@ -41,7 +41,12 @@ type Modules =
 export type UseQueueOptions = {
   concurrency?: number;
   limiter?: { max: number; duration: number };
+  maxStalledCount?: number;
 };
+
+// Every api restart mid-job is a stall, and BullMQ fails a job on its second
+// one by default. A job that picks up where it left off can ride out many.
+export const RESUMABLE_JOB_MAX_STALLS = 20;
 
 export const UseQueue = (
   module: Modules,
@@ -75,15 +80,15 @@ export const UseQueue = (
     Reflect.defineMetadata("jobs", jobs, QueueProcessors);
 
     if (!processors[module][queue]) {
-      const processorOptions: {
-        concurrency?: number;
-        limiter?: { max: number; duration: number };
-      } = {};
+      const processorOptions: UseQueueOptions = {};
       if (typeof options.concurrency === "number") {
         processorOptions.concurrency = options.concurrency;
       }
       if (options.limiter) {
         processorOptions.limiter = options.limiter;
+      }
+      if (typeof options.maxStalledCount === "number") {
+        processorOptions.maxStalledCount = options.maxStalledCount;
       }
       const processorDecorator =
         Object.keys(processorOptions).length > 0
