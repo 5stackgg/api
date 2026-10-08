@@ -9,6 +9,10 @@ const LINEUP = {
   origin_x: 1, origin_y: 2, origin_z: 3,
   eye_z: 64,
   view_yaw: 90, view_pitch: -20,
+  technique: "Jump",
+  throw_strength: "Full",
+  jump_throw_bind: true,
+  land_x: 10, land_y: 20, land_z: 30,
   flight_time_ms: 2400,
   confidence: "exact",
   visibility: "Public",
@@ -297,15 +301,15 @@ describe("UtilityRendersService", () => {
       expect(result.reason).toMatch(/'derived'/);
     });
 
-    it("skips a nameless lineup — the plugin resolves by name only", async () => {
+    it("films a nameless lineup — the pod stages it by id", async () => {
       postgres.query
         .mockResolvedValueOnce([{ ...LINEUP, name: "  " }])
-        .mockResolvedValueOnce([{ id: "render-5", status: "skipped" }]);
+        .mockResolvedValueOnce([{ id: "render-5", status: "queued" }]);
 
       const result = await service.enqueue(LINEUP.id);
 
-      expect(result.status).toBe("skipped");
-      expect(result.reason).toMatch(/no name/);
+      expect(result.queued).toBe(true);
+      expect(postgres.query.mock.calls[1][1][5]).toBe("queued");
     });
 
     it("hosts the practice session on the reviewer, falling back to the author", async () => {
@@ -332,6 +336,19 @@ describe("UtilityRendersService", () => {
         has_seed: true,
         confidence: "exact",
         output: { resolution: "1080p", fps: 60 },
+      });
+    });
+
+    it("tells the pod how to act the throw out and where it lands", () => {
+      const spec = UtilityRendersService.buildSpec(LINEUP as any);
+
+      expect(spec).toMatchObject({
+        technique: "Jump",
+        throw_strength: "Full",
+        jump_throw_bind: true,
+        land_x: 10,
+        land_y: 20,
+        land_z: 30,
       });
     });
 
@@ -455,6 +472,19 @@ describe("UtilityRendersService", () => {
 
       expect(postgres.query).toHaveBeenCalledTimes(1);
     });
+
+    it("never puts a cancelled render back in flight", async () => {
+      postgres.query.mockResolvedValueOnce([
+        { status: "cancelled", status_history: [] },
+      ]);
+
+      await service.reportStatus("job-1", {
+        status: "rendering",
+        progress: 0.7,
+      });
+
+      expect(postgres.query).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("finalizeUpload", () => {
@@ -495,6 +525,41 @@ describe("UtilityRendersService", () => {
       expect(postgres.query.mock.calls[1][1][2]).toBeNull();
     });
 
+    it("records the stills the pod uploaded alongside the clip", async () => {
+      postgres.query
+        .mockResolvedValueOnce([
+          { utility_lineup_id: LINEUP.id, status: "uploading" },
+        ])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
+      s3.has.mockImplementation(async (key: string) =>
+        [
+          `clips/utility/${LINEUP.id}/stance.jpg`,
+          `clips/utility/${LINEUP.id}/landing.jpg`,
+        ].includes(key),
+      );
+
+      await service.finalizeUpload("job-1", {} as any, null);
+
+      expect(JSON.parse(postgres.query.mock.calls[1][1][4])).toEqual({
+        stance: `clips/utility/${LINEUP.id}/stance.jpg`,
+        landing: `clips/utility/${LINEUP.id}/landing.jpg`,
+      });
+    });
+
+    it("keeps the previous stills when this render filmed none", async () => {
+      postgres.query
+        .mockResolvedValueOnce([
+          { utility_lineup_id: LINEUP.id, status: "uploading" },
+        ])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
+
+      await service.finalizeUpload("job-1", {} as any, null);
+
+      expect(postgres.query.mock.calls[1][1][4]).toBeNull();
+    });
+
     it("refuses to overwrite a finished render", async () => {
       postgres.query.mockResolvedValueOnce([
         { utility_lineup_id: LINEUP.id, status: "done" },
@@ -504,6 +569,40 @@ describe("UtilityRendersService", () => {
         service.finalizeUpload("job-1", {} as any, null),
       ).rejects.toThrow("render is done");
       expect(s3.put).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("uploadStill", () => {
+    it("stores a still under the lineup's clip prefix", async () => {
+      postgres.query.mockResolvedValueOnce([
+        { utility_lineup_id: LINEUP.id, status: "rendering" },
+      ]);
+
+      const stream = {} as any;
+      const result = await service.uploadStill("job-1", "aim_close", stream);
+
+      expect(s3.put).toHaveBeenCalledWith(
+        `clips/utility/${LINEUP.id}/aim_close.jpg`,
+        stream,
+        "image/jpeg",
+      );
+      expect(result.key).toBe(`clips/utility/${LINEUP.id}/aim_close.jpg`);
+    });
+
+    it("refuses a still for a cancelled render", async () => {
+      postgres.query.mockResolvedValueOnce([
+        { utility_lineup_id: LINEUP.id, status: "cancelled" },
+      ]);
+
+      await expect(
+        service.uploadStill("job-1", "aim", {} as any),
+      ).rejects.toThrow("render is cancelled");
+      expect(s3.put).not.toHaveBeenCalled();
+    });
+
+    it("only knows the stills the director films", () => {
+      expect(UtilityRendersService.isStill("landing")).toBe(true);
+      expect(UtilityRendersService.isStill("../../etc")).toBe(false);
     });
   });
 

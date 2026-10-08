@@ -19,6 +19,18 @@ export const UTILITY_RENDER_IN_FLIGHT = [
 
 const STATUS_HISTORY_CAP = 50;
 
+const UTILITY_RENDER_TERMINAL = ["done", "error", "skipped", "cancelled"];
+
+// The stills the render director calls for, in the order it films them.
+export const UTILITY_RENDER_STILLS = [
+  "stance",
+  "aim",
+  "aim_close",
+  "landing",
+] as const;
+
+export type UtilityRenderStill = (typeof UTILITY_RENDER_STILLS)[number];
+
 export type UtilityRenderRow = {
   id: string;
   utility_lineup_id: string;
@@ -55,6 +67,12 @@ type LineupSpecRow = {
   eye_z: number | null;
   view_yaw: number;
   view_pitch: number;
+  technique: string;
+  throw_strength: string | null;
+  jump_throw_bind: boolean;
+  land_x: number;
+  land_y: number;
+  land_z: number;
   flight_time_ms: number | null;
   confidence: string;
   visibility: string;
@@ -92,6 +110,17 @@ export class UtilityRendersService {
     return `clips/utility/${lineupId}.jpg`;
   }
 
+  public static GetPreviewStillS3Key(
+    lineupId: string,
+    kind: UtilityRenderStill,
+  ): string {
+    return `clips/utility/${lineupId}/${kind}.jpg`;
+  }
+
+  public static isStill(kind: string): kind is UtilityRenderStill {
+    return (UTILITY_RENDER_STILLS as ReadonlyArray<string>).includes(kind);
+  }
+
   // One BullMQ job per map, because one server session films one map: the pod
   // skips any lineup whose map_name differs from the session's.
   //
@@ -120,6 +149,8 @@ export class UtilityRendersService {
       `SELECT l.id::text AS id, l.name, l.map_name, l.utility_type, l.side,
               l.origin_x, l.origin_y, l.origin_z, l.eye_z,
               l.view_yaw, l.view_pitch, l.flight_time_ms, l.confidence,
+              l.technique, l.throw_strength, l.jump_throw_bind,
+              l.land_x, l.land_y, l.land_z,
               l.visibility, l.archived_at,
               l.initial_pos_x, l.initial_pos_y, l.initial_pos_z,
               l.initial_vel_x, l.initial_vel_y, l.initial_vel_z,
@@ -545,9 +576,17 @@ export class UtilityRendersService {
         ? body.progress
         : null;
 
-    const terminal = ["done", "error", "skipped", "cancelled"].includes(
-      body.status,
-    );
+    // A pod mid-job never learns it was cancelled; without this its next
+    // progress post would put the row back in flight and the upload after it
+    // would be accepted.
+    if (UTILITY_RENDER_TERMINAL.includes(current.status)) {
+      this.logger.warn(
+        `[utility-render ${jobId}] ignoring ${body.status} on a ${current.status} render`,
+      );
+      return;
+    }
+
+    const terminal = UTILITY_RENDER_TERMINAL.includes(body.status);
 
     await this.postgres.query(
       `UPDATE public.utility_lineup_renders
@@ -704,12 +743,40 @@ export class UtilityRendersService {
     );
 
     if (!row) throw new Error(`utility render ${jobId} not found`);
-    if (["cancelled", "error", "done", "skipped"].includes(row.status)) {
+    if (UTILITY_RENDER_TERMINAL.includes(row.status)) {
       throw new Error(`render is ${row.status}`);
     }
 
     const key = UtilityRendersService.GetPreviewThumbnailS3Key(
       row.utility_lineup_id,
+    );
+    await this.s3.put(key, fileStream, "image/jpeg");
+
+    return { key };
+  }
+
+  public async uploadStill(
+    jobId: string,
+    kind: UtilityRenderStill,
+    fileStream: Readable,
+  ): Promise<{ key: string }> {
+    const [row] = await this.postgres.query<
+      Array<{ utility_lineup_id: string; status: string }>
+    >(
+      `SELECT utility_lineup_id::text AS utility_lineup_id, status
+         FROM public.utility_lineup_renders
+        WHERE id = $1::uuid`,
+      [jobId],
+    );
+
+    if (!row) throw new Error(`utility render ${jobId} not found`);
+    if (UTILITY_RENDER_TERMINAL.includes(row.status)) {
+      throw new Error(`render is ${row.status}`);
+    }
+
+    const key = UtilityRendersService.GetPreviewStillS3Key(
+      row.utility_lineup_id,
+      kind,
     );
     await this.s3.put(key, fileStream, "image/jpeg");
 
@@ -736,7 +803,7 @@ export class UtilityRendersService {
     );
 
     if (!row) throw new Error(`utility render ${jobId} not found`);
-    if (["cancelled", "error", "done", "skipped"].includes(row.status)) {
+    if (UTILITY_RENDER_TERMINAL.includes(row.status)) {
       throw new Error(`render is ${row.status}`);
     }
 
@@ -758,14 +825,38 @@ export class UtilityRendersService {
       );
     }
 
+    const stills: Partial<Record<UtilityRenderStill, string>> = {};
+    for (const kind of UTILITY_RENDER_STILLS) {
+      const stillKey = UtilityRendersService.GetPreviewStillS3Key(
+        row.utility_lineup_id,
+        kind,
+      );
+      try {
+        if (await this.s3.has(stillKey)) {
+          stills[kind] = stillKey;
+        }
+      } catch (error) {
+        this.logger.warn(
+          `[utility-render ${jobId}] ${kind} still check failed: ${(error as Error)?.message}`,
+        );
+      }
+    }
+
     await this.postgres.query(
       `UPDATE public.utility_lineups
           SET preview_file = $2,
               preview_thumbnail = COALESCE($3, preview_thumbnail),
               preview_duration_ms = COALESCE($4::int, preview_duration_ms),
+              preview_stills = COALESCE($5::jsonb, preview_stills),
               preview_rendered_at = now()
         WHERE id = $1::uuid`,
-      [row.utility_lineup_id, key, thumbnail, durationMs],
+      [
+        row.utility_lineup_id,
+        key,
+        thumbnail,
+        durationMs,
+        Object.keys(stills).length > 0 ? JSON.stringify(stills) : null,
+      ],
     );
 
     await this.postgres.query(
@@ -844,6 +935,12 @@ export class UtilityRendersService {
       eye_z: lineup.eye_z === null ? null : Number(lineup.eye_z),
       view_yaw: Number(lineup.view_yaw),
       view_pitch: Number(lineup.view_pitch),
+      technique: lineup.technique,
+      throw_strength: lineup.throw_strength ?? null,
+      jump_throw_bind: lineup.jump_throw_bind === true,
+      land_x: Number(lineup.land_x),
+      land_y: Number(lineup.land_y),
+      land_z: Number(lineup.land_z),
       flight_time_ms:
         lineup.flight_time_ms === null ? null : Number(lineup.flight_time_ms),
       confidence: lineup.confidence,
@@ -861,9 +958,6 @@ export class UtilityRendersService {
   // The pod's own refusals, applied before a GPU is booked. Kept in the same
   // words the pod uses so a reviewer sees one vocabulary either way.
   public static unrenderable(lineup: LineupSpecRow): string | null {
-    if (!lineup.name || lineup.name.trim().length === 0) {
-      return "lineup has no name; the practice plugin resolves lineups by name only";
-    }
     if (!UtilityRendersService.hasSeed(lineup)) {
       return "lineup has no recorded physics seed (initial position/velocity) — the throw cannot be reproduced exactly";
     }

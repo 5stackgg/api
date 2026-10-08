@@ -275,6 +275,26 @@ describe("BatchUtilityRenderJob", () => {
     expect(gameStreamer.dispatchNadePreviews).not.toHaveBeenCalled();
   });
 
+  it("puts a lineup approved while the server booted on the session before filming it", async () => {
+    const late = { ...RENDER, id: "render-late", utility_lineup_id: "lineup-2" };
+    renders.inFlightForMap.mockResolvedValue([RENDER, late]);
+    const bull = makeJob({
+      mapName: "de_mirage",
+      sessionId: "session-1",
+      bookedAt: Date.now(),
+    });
+
+    await expect(job.process(bull as any)).rejects.toBeInstanceOf(DelayedError);
+
+    expect(renders.attachSession).toHaveBeenCalledWith(
+      ["render-1", "render-late"],
+      "session-1",
+    );
+    expect(renders.attachSession.mock.invocationCallOrder[0]).toBeLessThan(
+      gameStreamer.dispatchNadePreviews.mock.invocationCallOrder[0],
+    );
+  });
+
   it("stamps the server's plugin runtime onto every spec at dispatch", async () => {
     const bull = makeJob({
       mapName: "de_mirage",

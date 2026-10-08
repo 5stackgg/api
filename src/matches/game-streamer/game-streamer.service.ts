@@ -2584,7 +2584,6 @@ export class GameStreamerService {
     );
 
     const env: V1EnvVar[] = [
-      { name: "MATCH_ID", value: matchId },
       { name: "STATUS_API_BASE", value: resolveInClusterApiBase() },
       // Without this the shared status reporter would POST this pod's boot
       // state to /game-streamer/:match_id/status and flip the practice match
@@ -2592,17 +2591,6 @@ export class GameStreamerService {
       { name: "NADE_BATCH_MODE", value: "1" },
       { name: "NADE_CONNECT_ADDR", value: connect.addr },
       { name: "NADE_CONNECT_PASSWORD", value: connect.password },
-      // The practice plugin registers `load`/`rethrow` with registerRaw:false,
-      // so the console name (`sw_load`) is a SERVER concommand. A connected
-      // client cannot invoke it -- typed/exec'd in the client console it is
-      // dropped as an unknown command and never forwarded upstream, which is
-      // why the render's `sw_load`/`sw_rethrow` produced zero OnLoad/OnRethrow
-      // in the server plugin log. The chat form always round-trips (say ->
-      // server -> Swiftly chat hook), exactly how a real player triggers these;
-      // `/` is the silent prefix so no chat text lands in the clip. {name}
-      // expands to the lineup name (the only thing `.load` matches on).
-      { name: "NADE_CMD_LOAD", value: "say /load {name}" },
-      { name: "NADE_CMD_THROW", value: "say /rethrow" },
       {
         name: "NADE_BATCH_JOBS",
         value: JSON.stringify(

@@ -283,6 +283,36 @@ export class UtilityRendersController {
     }
   }
 
+  @Post("still/:kind")
+  public async still(
+    @Param("jobId") jobId: string,
+    @Param("kind") kind: string,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const session = await this.renders.validateRenderAuth(
+      jobId,
+      request.headers["x-origin-auth"],
+    );
+    if (!session) {
+      return response.status(401).end();
+    }
+
+    if (!UtilityRendersService.isStill(kind)) {
+      return response.status(400).json({ error: `unknown still ${kind}` });
+    }
+
+    try {
+      const result = await this.renders.uploadStill(jobId, kind, request);
+      return response.status(201).json(result);
+    } catch (error) {
+      this.logger.error(
+        `[utility-render ${jobId}] ${kind} still upload failed: ${(error as Error)?.message}`,
+      );
+      return response.status(500).json({ error: (error as Error)?.message });
+    }
+  }
+
   // curl --upload-file with --request POST: the body arrives chunked and is
   // piped to S3 as it lands, never assembled in memory alongside the other
   // upload tails the batch has in flight.

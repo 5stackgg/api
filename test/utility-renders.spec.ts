@@ -210,6 +210,50 @@ describe("utility lineup renders (SQL-driven)", () => {
     });
   });
 
+  describe("preview stills url", () => {
+    beforeEach(async () => {
+      await postgres.query(
+        `INSERT INTO settings (name, value)
+         VALUES ('cloudflare_worker_url', 'https://demo-dl.5stack.gg')
+         ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value`,
+      );
+    });
+
+    const stillsUrl = async (id: string) => {
+      const [row] = await postgres.query<Array<{ urls: Record<string, string> | null }>>(
+        "SELECT public.utility_lineup_preview_stills_url(l) AS urls FROM utility_lineups l WHERE l.id = $1::uuid",
+        [id],
+      );
+      return row.urls;
+    };
+
+    it("is null until a render filmed stills", async () => {
+      expect(await stillsUrl(await lineup())).toBeNull();
+    });
+
+    it("serves every still on the clip's own cache-buster", async () => {
+      const id = await lineup();
+      await postgres.query(
+        `UPDATE utility_lineups
+            SET preview_stills = $2::jsonb,
+                preview_rendered_at = to_timestamp(1000000)
+          WHERE id = $1::uuid`,
+        [
+          id,
+          JSON.stringify({
+            aim: `clips/utility/${id}/aim.jpg`,
+            landing: `clips/utility/${id}/landing.jpg`,
+          }),
+        ],
+      );
+
+      expect(await stillsUrl(id)).toEqual({
+        aim: `https://demo-dl.5stack.gg/clips/utility/${id}/aim.jpg?v=1000000`,
+        landing: `https://demo-dl.5stack.gg/clips/utility/${id}/landing.jpg?v=1000000`,
+      });
+    });
+  });
+
   describe("render GPU claim", () => {
     const GPU_NODE = "render-gpu-node";
     const CPU_NODE = "render-cpu-node";

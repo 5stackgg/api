@@ -280,6 +280,18 @@ describe("MatchAssistantService", () => {
       expect(where.gpu_rendering_enabled).toEqual({ _eq: true });
     });
 
+    it("puts a render's server in render mode and leaves human practice alone", async () => {
+      const env = async (isRender: boolean) =>
+        Object.fromEntries(
+          (await (service as any).utilityPracticeServerEnv(isRender)).map(
+            (entry: { name: string; value: string }) => [entry.name, entry.value],
+          ),
+        );
+
+      expect((await env(true)).UTILITY_RENDER_MODE).toBe("true");
+      expect((await env(false)).UTILITY_RENDER_MODE).toBeUndefined();
+    });
+
     it("leaves a human practice server free to boot on any node", async () => {
       const where = await nodeWhere(false);
 

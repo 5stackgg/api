@@ -1498,16 +1498,8 @@ export class MatchAssistantService {
         name: "UTILITY_URL",
         value: this.appConfig.apiDomain,
       },
-      // A render has no human to throw, so `rethrow` must EMIT the real
-      // projectile from the seed (np_ghost_projectile) or it just repositions
-      // and films a player standing still. And no trajectory line cluttering
-      // the clip (np_ghost_preview off). Human practice keeps the defaults.
-      ...(isRender
-        ? [
-            { name: "NP_GHOST_PROJECTILE", value: "true" },
-            { name: "NP_GHOST_PREVIEW", value: "false" },
-          ]
-        : []),
+      // The plugin directs the render pod's shot and draws nothing over it.
+      ...(isRender ? [{ name: "UTILITY_RENDER_MODE", value: "true" }] : []),
     ];
   }
 

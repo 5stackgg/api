@@ -189,6 +189,14 @@ describe("GameStreamerService — nade previews", () => {
       expect(envOf().NADE_BATCH_MODE).toBe("1");
     });
 
+    it("never hands the pod a lineup name to type into chat", async () => {
+      await service.dispatchNadePreviews("de_mirage", "match-1", CONNECT, JOBS);
+
+      const env = envOf();
+      expect(env.NADE_CMD_LOAD).toBeUndefined();
+      expect(env.NADE_CMD_THROW).toBeUndefined();
+    });
+
     it("hands the GPU and the Steam account back when the Job create fails", async () => {
       createNamespacedJob.mockRejectedValueOnce(new Error("k8s said no"));
 

@@ -193,6 +193,13 @@ export class BatchUtilityRenderJob extends WorkerHost {
         return this.delayUntilNext(job, CHECK_DELAY_MS);
       }
 
+      // Approved while the server was booting: the plugin serves the pod only
+      // the lineups attached to its session, so a row left off it would be
+      // staged against nothing.
+      await this.renders.attachSession(
+        inFlight.map((render) => render.id),
+        session.id,
+      );
       await this.renders.stampBootStage(
         inFlight.map((render) => render.id),
         "dispatching_pod",
