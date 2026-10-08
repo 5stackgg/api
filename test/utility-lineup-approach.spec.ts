@@ -186,15 +186,34 @@ describe("utility lineup approach (SQL-driven)", () => {
     expect(await stored(id)).toBeNull();
   });
 
-  it("gives the run-up back to the plugin in the library", async () => {
+  it("gives the run-up to a render session's library and to nobody else", async () => {
     const { ctx, author } = await context();
     const service = makeService();
 
-    await service.ingest(ctx, payload(author, { approach: APPROACH }));
+    const { id } = await service.ingest(
+      ctx,
+      payload(author, { approach: APPROACH }),
+    );
 
-    const [row] = await service.library(ctx, author);
+    const [player] = await service.library(ctx, author);
+    expect(player.approach).toBeNull();
 
-    expect(row.approach).toEqual(APPROACH);
+    const [session] = await postgres.query<Array<{ id: string }>>(
+      `INSERT INTO utility_practice_sessions (host_steam_id, map_name, is_render, match_id)
+       VALUES (NULL, 'de_mirage', true, $1::uuid)
+       RETURNING id::text AS id`,
+      [ctx.matchId],
+    );
+    await postgres.query(
+      `INSERT INTO utility_lineup_renders
+         (utility_lineup_id, requested_by_steam_id, map_name, session_token,
+          spec, status, utility_practice_session_id)
+       VALUES ($1::uuid, $2::bigint, 'de_mirage', 'tok', '{}'::jsonb, 'queued', $3::uuid)`,
+      [id, author, session.id],
+    );
+
+    const [render] = await service.library(ctx, author);
+    expect(render.approach).toEqual(APPROACH);
   });
 
   it("carries the run-up onto a fork", async () => {

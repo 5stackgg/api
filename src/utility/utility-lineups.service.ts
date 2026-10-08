@@ -468,8 +468,11 @@ export class UtilityLineupsService {
 
   // The columns the practice plugin's LineupRecord is deserialized from. Shared
   // by the player library and the render batch so the two can never drift into
-  // handing the plugin different shapes.
-  private static readonly LIBRARY_SELECT = `
+  // handing the plugin different shapes. Only a render acts the run-up out, and
+  // a full one is ~25KB on a library of up to 500 rows, so everyone else gets
+  // the column as null.
+  private static librarySelect(withApproach = false): string {
+    return `
     SELECT l.id::text AS id, l.name, l.map_name, l.utility_type, l.side,
            l.technique, l.throw_strength, l.jump_throw_bind,
            l.aim_tolerance, l.description,
@@ -479,8 +482,9 @@ export class UtilityLineupsService {
            l.initial_vel_x, l.initial_vel_y, l.initial_vel_z,
            l.flight_time_ms, l.visibility, l.confidence,
            l.author_steam_id::text AS author_steam_id,
-           l.approach
+           ${withApproach ? "l.approach" : "NULL::jsonb AS approach"}
       FROM public.utility_lineups l`;
+  }
 
   // Null when this match is not a render session, which is what keeps the
   // player path exactly as it was.
@@ -525,7 +529,7 @@ export class UtilityLineupsService {
 
     if (renderLineupIds) {
       return this.postgres.query<Array<UtilityLibraryRow>>(
-        `${UtilityLineupsService.LIBRARY_SELECT}
+        `${UtilityLineupsService.librarySelect(true)}
           WHERE l.id = ANY($1::uuid[])
             AND l.map_name = $2
             AND l.archived_at IS NULL
@@ -543,7 +547,7 @@ export class UtilityLineupsService {
     }
 
     const rows = await this.postgres.query<Array<UtilityLibraryRow>>(
-      `${UtilityLineupsService.LIBRARY_SELECT}
+      `${UtilityLineupsService.librarySelect()}
         WHERE l.map_name = $1
           AND l.archived_at IS NULL
           AND (
@@ -659,7 +663,7 @@ export class UtilityLineupsService {
     // Visibility was checked when the send was accepted; this re-checks the map
     // and the archive, which can both change while an entry is still held.
     const sent = await this.postgres.query<Array<UtilityLibraryRow>>(
-      `${UtilityLineupsService.LIBRARY_SELECT}
+      `${UtilityLineupsService.librarySelect()}
         WHERE l.id = ANY($1::uuid[])
           AND l.map_name = $2
           AND l.archived_at IS NULL`,

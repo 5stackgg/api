@@ -104,6 +104,20 @@ describe("GameStreamerService — nade previews", () => {
     service = makeService();
   });
 
+  it("holds the spec port for a shader bake, so no streamer shares its node", () => {
+    const body = (service as any).buildJobSpec(
+      "warm-node-a",
+      "",
+      "warm-shaders",
+      "node-A",
+      [],
+    );
+
+    expect(body.spec.template.spec.containers[0].ports).toEqual([
+      { name: "spec", containerPort: 1350 },
+    ]);
+  });
+
   describe("GetNadeRenderJobName", () => {
     it("is one pod per map, and a legal k8s name", () => {
       expect(GameStreamerService.GetNadeRenderJobName("de_mirage")).toBe(

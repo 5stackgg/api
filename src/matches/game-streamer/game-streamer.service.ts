@@ -3517,11 +3517,15 @@ export class GameStreamerService {
               : mode === "warm-shaders"
                 ? ["warm-shaders"]
                 : ["create-clips"];
+    // With hostNetwork a declared port is a host port, which is what stops the
+    // scheduler putting two streamer pods on one node. A shader bake runs the
+    // same spec-server on :1350 and has to be counted too.
     const exposesSpecPorts =
       mode === "live" ||
       mode === "demo" ||
       mode === "batch-highlights" ||
-      mode === "nade-previews";
+      mode === "nade-previews" ||
+      mode === "warm-shaders";
 
     const labels: Record<string, string> = {
       app: "game-streamer",
