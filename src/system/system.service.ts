@@ -53,6 +53,11 @@ export class SystemService {
     return SystemService.RESERVED_DEPLOYMENTS.includes(name);
   }
 
+  public static readonly IMPORTED_HIGHLIGHT_SETTINGS = [
+    SystemSettingName.AutoGenerateMatchClips,
+    SystemSettingName.AutoGenerateMatchClipsImported,
+  ];
+
   constructor(
     private readonly cache: CacheService,
     private readonly hasura: HasuraService,
@@ -188,6 +193,8 @@ export class SystemService {
         },
       });
 
+      await this.syncImportedHighlightsSupport();
+
       this.featuresDetected = true;
     } catch (error) {
       this.logger.warn("Error detecting features", error);
@@ -195,6 +202,35 @@ export class SystemService {
         void this.detectFeatures();
       }, 5000);
     }
+  }
+
+  public async syncImportedHighlightsSupport() {
+    const values = await Promise.all(
+      SystemService.IMPORTED_HIGHLIGHT_SETTINGS.map((name) =>
+        this.getSetting<string>(name, "false"),
+      ),
+    );
+
+    // "1" counts as on because ClipsService.readBoolSetting reads it that way.
+    const supported = values.every(
+      (value) => value === "true" || value === "1",
+    );
+
+    await this.hasura.mutation({
+      insert_settings_one: {
+        __args: {
+          object: {
+            name: SystemSettingName.SupportsImportedHighlights,
+            value: supported.toString(),
+          },
+          on_conflict: {
+            constraint: "settings_pkey",
+            update_columns: ["value"],
+          },
+        },
+        __typename: true,
+      },
+    });
   }
 
   public async updateServices() {

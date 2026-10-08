@@ -382,6 +382,18 @@ export class SystemController {
       }
     }
 
+    for (const setting of SystemService.IMPORTED_HIGHLIGHT_SETTINGS) {
+      if (
+        (data.new.name === setting || data.old.name === setting) &&
+        (data.op === "INSERT" ||
+          data.op === "DELETE" ||
+          data.new.value !== data.old.value)
+      ) {
+        await this.system.syncImportedHighlightsSupport();
+        break;
+      }
+    }
+
     await this.system.updateDefaultOptions();
   }
 }

@@ -174,3 +174,73 @@ describe("SystemController names", () => {
     });
   });
 });
+
+describe("SystemController settings event", () => {
+  let controller: SystemController;
+  let system: {
+    syncImportedHighlightsSupport: jest.Mock;
+    updateDefaultOptions: jest.Mock;
+  };
+
+  const changed = (name: string, from: string, to: string) =>
+    controller.settings({
+      op: "UPDATE",
+      old: { name, value: from },
+      new: { name, value: to },
+    });
+
+  beforeEach(() => {
+    system = {
+      syncImportedHighlightsSupport: jest.fn(),
+      updateDefaultOptions: jest.fn(),
+    };
+
+    controller = new SystemController(
+      system as any,
+      {} as any,
+      {} as any,
+      { updateDemoNetworkLimiters: jest.fn() } as any,
+      {} as any,
+      { updateChatMessageTTL: jest.fn() } as any,
+    );
+  });
+
+  it.each(["auto_generate_match_clips", "auto_generate_match_clips_imported"])(
+    "re-derives imported highlight support when %s changes",
+    async (name) => {
+      await changed(name, "false", "true");
+
+      expect(system.syncImportedHighlightsSupport).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it("re-derives it when a toggle row is first written", async () => {
+    await controller.settings({
+      op: "INSERT",
+      old: {},
+      new: { name: "auto_generate_match_clips_imported", value: "true" },
+    });
+
+    expect(system.syncImportedHighlightsSupport).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves it alone when a toggle is saved unchanged", async () => {
+    await changed("auto_generate_match_clips", "true", "true");
+
+    expect(system.syncImportedHighlightsSupport).not.toHaveBeenCalled();
+  });
+
+  // The derived row is a settings row too, so writing it re-enters this
+  // handler; reacting to it would loop.
+  it("does not react to the row it writes", async () => {
+    await changed("public.supports_imported_highlights", "false", "true");
+
+    expect(system.syncImportedHighlightsSupport).not.toHaveBeenCalled();
+  });
+
+  it("ignores unrelated settings", async () => {
+    await changed("public.news_enabled", "false", "true");
+
+    expect(system.syncImportedHighlightsSupport).not.toHaveBeenCalled();
+  });
+});

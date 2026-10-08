@@ -82,6 +82,12 @@ export enum SystemSettingName {
   DefaultHudMode = "default_hud_mode",
   ClipFps = "clip_fps",
   ClipResolution = "clip_resolution",
+  AutoGenerateMatchClips = "auto_generate_match_clips",
+  AutoGenerateMatchClipsImported = "auto_generate_match_clips_imported",
+  // Written by the api, never by an admin: both toggles above are admin-only,
+  // and a browser still has to know whether linking an account gets a player
+  // highlights before it offers that.
+  SupportsImportedHighlights = "public.supports_imported_highlights",
   // VAPID identifies this panel to the browser push services. The keypair is
   // self-generated -- there is no vendor to register with -- so it is stored
   // here rather than demanding an env var of every operator. The private half
