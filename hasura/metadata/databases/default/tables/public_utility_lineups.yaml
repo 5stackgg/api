@@ -220,6 +220,7 @@ select_permissions:
         - initial_vel_x
         - initial_vel_y
         - initial_vel_z
+        - approach
         - flight_time_ms
         - name
         - description
@@ -302,6 +303,7 @@ select_permissions:
         - initial_vel_x
         - initial_vel_y
         - initial_vel_z
+        - approach
         - flight_time_ms
         - name
         - description
@@ -381,6 +383,7 @@ select_permissions:
         - initial_vel_x
         - initial_vel_y
         - initial_vel_z
+        - approach
         - flight_time_ms
         - name
         - description

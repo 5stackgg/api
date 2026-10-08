@@ -8,6 +8,7 @@ import { S3Service } from "../s3/s3.service";
 import { timingSafeStringEqual } from "../utilities/timingSafeStringEqual";
 import { UtilityJobs } from "./enums/UtilityJobs";
 import { UtilityQueues } from "./enums/UtilityQueues";
+import { UtilityApproachPoint } from "./types/UtilityApproachPoint";
 import { UtilityRenderSpec } from "./types/UtilityRenderSpec";
 import { UtilityRenderStatusDto } from "./types/UtilityRenderStatusDto";
 
@@ -86,6 +87,7 @@ type LineupSpecRow = {
   preview_file: string | null;
   author_steam_id: string;
   public_reviewed_by: string | null;
+  approach: Array<UtilityApproachPoint> | null;
 };
 
 @Injectable()
@@ -159,7 +161,8 @@ export class UtilityRendersService {
               l.initial_vel_x, l.initial_vel_y, l.initial_vel_z,
               l.preview_file,
               l.author_steam_id::text AS author_steam_id,
-              l.public_reviewed_by::text AS public_reviewed_by
+              l.public_reviewed_by::text AS public_reviewed_by,
+              l.approach
          FROM public.utility_lineups l
         WHERE l.id = $1::uuid`,
       [lineupId],
@@ -989,6 +992,10 @@ export class UtilityRendersService {
       initial_vel_x: UtilityRendersService.num(lineup.initial_vel_x),
       initial_vel_y: UtilityRendersService.num(lineup.initial_vel_y),
       initial_vel_z: UtilityRendersService.num(lineup.initial_vel_z),
+      approach:
+        Array.isArray(lineup.approach) && lineup.approach.length > 0
+          ? lineup.approach
+          : null,
       output: { resolution: "1080p", fps: 60 },
     };
   }

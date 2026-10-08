@@ -12,6 +12,7 @@ import {
   UtilityTrajectoryPoint,
 } from "./utility-artifacts.service";
 import { UtilityCalloutsService } from "./utility-callouts.service";
+import { UtilityApproachPoint } from "./types/UtilityApproachPoint";
 
 export type UtilityIngestPayload = {
   match_id?: string;
@@ -44,6 +45,7 @@ export type UtilityIngestPayload = {
   description?: string | null;
   tick_rate?: number;
   path?: Array<{ tick?: number; x?: number; y?: number; z?: number }>;
+  approach?: Array<Partial<UtilityApproachPoint>> | null;
 };
 
 // What the plugin reports after a throw made with a lineup loaded. `success`
@@ -130,6 +132,7 @@ export type UtilityLibraryRow = {
   flight_time_ms: number | null;
   visibility: string;
   author_steam_id: string;
+  approach: Array<UtilityApproachPoint> | null;
 };
 
 /**
@@ -165,6 +168,8 @@ export class UtilityLineupsService {
   public static readonly MIN_FLIGHT_MS = 50;
   public static readonly MAX_FLIGHT_MS = 15000;
   public static readonly MAX_PATH_POINTS = 256;
+  public static readonly MAX_APPROACH_POINTS = 128;
+  public static readonly MAX_APPROACH_MS = 5000;
   // sv_maxvelocity is 3500 and a grenade leaves the hand at a few hundred
   // units/sec, so twice the engine's own ceiling is generous and still rejects
   // a seed that is not a velocity at all.
@@ -354,6 +359,8 @@ export class UtilityLineupsService {
 
     const seed = this.seed(payload);
 
+    const approach = this.approach(payload.approach, author);
+
     await this.assertRateLimits(context, author);
 
     const repair = await this.claimableRepair(
@@ -371,14 +378,14 @@ export class UtilityLineupsService {
           initial_vel_x, initial_vel_y, initial_vel_z,
           name, description, visibility, author_steam_id,
           origin_source, source_match_id, confidence, trajectory_preview,
-          forked_from_utility_lineup_id)
+          forked_from_utility_lineup_id, approach)
        VALUES ($1, $2, $3, $4, $5, $6,
                $7, $8, $9, $10, $11, $12,
                $13, $14, $15, $16,
                $17, $18, $19, $20, $21, $22,
                $23, $24, 'Private', $25,
                'plugin', $26::uuid, $27, $28::jsonb,
-               $29::uuid)
+               $29::uuid, $30::jsonb)
        RETURNING id::text AS id`,
       [
         context.mapName,
@@ -427,6 +434,7 @@ export class UtilityLineupsService {
         seed ? "exact" : UtilityLineupsService.DEFAULT_PLUGIN_CONFIDENCE,
         JSON.stringify(UtilityLineupsService.preview(path)),
         repair?.utility_lineup_id ?? null,
+        approach ? JSON.stringify(approach) : null,
       ],
     );
 
@@ -470,7 +478,8 @@ export class UtilityLineupsService {
            l.initial_pos_x, l.initial_pos_y, l.initial_pos_z,
            l.initial_vel_x, l.initial_vel_y, l.initial_vel_z,
            l.flight_time_ms, l.visibility, l.confidence,
-           l.author_steam_id::text AS author_steam_id
+           l.author_steam_id::text AS author_steam_id,
+           l.approach
       FROM public.utility_lineups l`;
 
   // Null when this match is not a render session, which is what keeps the
@@ -1220,7 +1229,7 @@ export class UtilityLineupsService {
           initial_vel_x, initial_vel_y, initial_vel_z,
           name, description, tags, visibility, author_steam_id,
           origin_source, forked_from_utility_lineup_id, confidence,
-          trajectory_preview)
+          trajectory_preview, approach)
        SELECT l.map_name, l.workshop_map_id, l.utility_type, l.side, l.technique,
               l.throw_strength, l.jump_throw_bind, l.aim_tolerance,
               l.origin_x, l.origin_y, l.origin_z, l.eye_z,
@@ -1229,7 +1238,8 @@ export class UtilityLineupsService {
               l.initial_pos_x, l.initial_pos_y, l.initial_pos_z,
               l.initial_vel_x, l.initial_vel_y, l.initial_vel_z,
               COALESCE($2, l.name), l.description, l.tags, 'Private',
-              $3::bigint, 'fork', l.id, l.confidence, l.trajectory_preview
+              $3::bigint, 'fork', l.id, l.confidence, l.trajectory_preview,
+              l.approach
          FROM public.utility_lineups l
         WHERE l.id = $1::uuid
           AND public.can_view_utility_lineup(l, $4::json)
@@ -1443,6 +1453,134 @@ export class UtilityLineupsService {
       return {
         tick: Number.isFinite(point?.tick) ? Number(point.tick) : index,
         ...resolved,
+      };
+    });
+  }
+
+  // Dropped rather than refused, unlike everything else here: the run-up only
+  // sharpens a render, and refusing the save over it would lose the lineup.
+  private approach(
+    value: unknown,
+    author: string,
+  ): Array<UtilityApproachPoint> | null {
+    try {
+      return UtilityLineupsService.parseApproach(value);
+    } catch (error) {
+      this.logger.warn(
+        `utility ingest: dropped the run-up of a lineup by ${author}: ${(error as Error)?.message}`,
+      );
+      return null;
+    }
+  }
+
+  // Strict typeof checks rather than finite(): Number(null) is 0, and a hole
+  // read as zero is a run-up that passes through the world origin.
+  public static parseApproach(
+    value: unknown,
+  ): Array<UtilityApproachPoint> | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    if (!Array.isArray(value)) {
+      throw Error("approach is not an array");
+    }
+
+    if (value.length > UtilityLineupsService.MAX_APPROACH_POINTS) {
+      throw Error("approach has too many samples");
+    }
+
+    if (value.length === 0) {
+      return null;
+    }
+
+    let previous = -Infinity;
+
+    return value.map((sample, index): UtilityApproachPoint => {
+      const label = `approach[${index}]`;
+
+      for (const key of [
+        "t",
+        "x",
+        "y",
+        "z",
+        "vx",
+        "vy",
+        "vz",
+        "pitch",
+        "yaw",
+        "buttons",
+      ]) {
+        if (
+          typeof sample?.[key] !== "number" ||
+          !Number.isFinite(sample[key])
+        ) {
+          throw Error(`${label}.${key} is not a finite number`);
+        }
+      }
+
+      if (
+        typeof sample.on_ground !== "boolean" ||
+        typeof sample.ducked !== "boolean"
+      ) {
+        throw Error(`${label} has no on_ground or ducked`);
+      }
+
+      if (
+        !Number.isInteger(sample.t) ||
+        sample.t > 0 ||
+        sample.t < -UtilityLineupsService.MAX_APPROACH_MS
+      ) {
+        throw Error(`${label}.t is out of range`);
+      }
+
+      if (sample.t <= previous) {
+        throw Error(`${label}.t is out of order`);
+      }
+
+      previous = sample.t;
+
+      const position = UtilityLineupsService.point(
+        sample.x,
+        sample.y,
+        sample.z,
+        label,
+      );
+
+      if (
+        Math.hypot(sample.vx, sample.vy, sample.vz) >
+        UtilityLineupsService.MAX_VELOCITY
+      ) {
+        throw Error(`${label} is faster than the engine allows`);
+      }
+
+      if (sample.pitch < -90 || sample.pitch > 90) {
+        throw Error(`${label}.pitch is out of range`);
+      }
+
+      if (Math.abs(sample.yaw) > 360) {
+        throw Error(`${label}.yaw is out of range`);
+      }
+
+      if (
+        !Number.isInteger(sample.buttons) ||
+        sample.buttons < 0 ||
+        sample.buttons > 0xffffffff
+      ) {
+        throw Error(`${label}.buttons is not a button mask`);
+      }
+
+      return {
+        t: sample.t,
+        ...position,
+        vx: sample.vx,
+        vy: sample.vy,
+        vz: sample.vz,
+        pitch: sample.pitch,
+        yaw: sample.yaw,
+        buttons: sample.buttons,
+        on_ground: sample.on_ground,
+        ducked: sample.ducked,
       };
     });
   }

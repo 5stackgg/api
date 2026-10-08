@@ -24,6 +24,37 @@ const LINEUP = {
   public_reviewed_by: "76561198000000002",
 };
 
+const APPROACH = [
+  {
+    t: -16,
+    x: 10,
+    y: 20,
+    z: 30,
+    vx: 250,
+    vy: -12.5,
+    vz: 0,
+    pitch: -3.5,
+    yaw: 90,
+    buttons: 1024,
+    on_ground: true,
+    ducked: false,
+  },
+  {
+    t: 0,
+    x: 14,
+    y: 20,
+    z: 31.5,
+    vx: 240,
+    vy: 0,
+    vz: 301,
+    pitch: -4,
+    yaw: 91.5,
+    buttons: 1026,
+    on_ground: false,
+    ducked: true,
+  },
+];
+
 // BullMQ builds its redis keys with ':' and refuses a custom id containing one,
 // which is not a validation the type system can catch -- it throws at add() time,
 // after the render row is already inserted, leaving it queued with no batch.
@@ -228,6 +259,18 @@ describe("UtilityRendersService", () => {
       );
     });
 
+    it("reads the run-up off the lineup into the stored spec", async () => {
+      postgres.query
+        .mockResolvedValueOnce([{ ...LINEUP, approach: APPROACH }])
+        .mockResolvedValueOnce([{ id: "render-3", status: "queued" }]);
+
+      await service.enqueue(LINEUP.id);
+
+      expect(postgres.query.mock.calls[0][0]).toMatch(/l\.approach/);
+      const [, bindings] = postgres.query.mock.calls[1];
+      expect(JSON.parse(bindings[4]).approach).toEqual(APPROACH);
+    });
+
     it("refuses a lineup that is not public", async () => {
       postgres.query.mockResolvedValueOnce([
         { ...LINEUP, visibility: "Private" },
@@ -350,6 +393,30 @@ describe("UtilityRendersService", () => {
         land_y: 20,
         land_z: 30,
       });
+    });
+
+    it("hands the pod the run-up to act out", () => {
+      const spec = UtilityRendersService.buildSpec({
+        ...LINEUP,
+        approach: APPROACH,
+      } as any);
+
+      expect(spec.approach).toEqual(APPROACH);
+      expect(JSON.parse(JSON.stringify(spec)).approach).toEqual(APPROACH);
+    });
+
+    it("says a throw made standing still has no run-up", () => {
+      expect(
+        UtilityRendersService.buildSpec({ ...LINEUP, approach: null } as any)
+          .approach,
+      ).toBeNull();
+      expect(
+        UtilityRendersService.buildSpec({ ...LINEUP, approach: [] } as any)
+          .approach,
+      ).toBeNull();
+      expect(
+        UtilityRendersService.buildSpec(LINEUP as any).approach,
+      ).toBeNull();
     });
 
     it("calls a zero-velocity seed no seed at all", () => {

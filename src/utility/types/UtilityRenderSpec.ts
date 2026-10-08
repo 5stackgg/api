@@ -1,3 +1,5 @@
+import { UtilityApproachPoint } from "./UtilityApproachPoint";
+
 // The job payload the render pod reads. Key names are the game-streamer's
 // contract (src/lib/clip-helpers.mjs `nade-fields`), which mirrors the
 // utility_lineups column names -- so a row splats into it.
@@ -42,6 +44,10 @@ export interface UtilityRenderSpec {
   initial_vel_x?: number | null;
   initial_vel_y?: number | null;
   initial_vel_z?: number | null;
+
+  // The run-up to act out before the release, oldest first. Null for a throw
+  // made standing still, and for every lineup recorded before it was kept.
+  approach?: Array<UtilityApproachPoint> | null;
 
   output: {
     resolution: "720p" | "1080p";
