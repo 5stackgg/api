@@ -216,7 +216,7 @@ describe("MapAssetsService", () => {
     it("is sized for Source2Viewer but bounded so the node's game servers keep running", () => {
       expect(container.resources).toEqual({
         requests: { cpu: "1", memory: "4Gi", "ephemeral-storage": "6Gi" },
-        limits: { cpu: "2", memory: "8Gi", "ephemeral-storage": "14Gi" },
+        limits: { cpu: "2", memory: "16Gi", "ephemeral-storage": "14Gi" },
       });
     });
   });

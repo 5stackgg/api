@@ -345,6 +345,9 @@ export class MapAssetsService {
                 ],
                 // Source2Viewer peaks around 5 GB on rush_001, and the exports
                 // it writes before simplification are several GB on disk.
+                // .NET caps its heap at 75% of the limit: at 8Gi the render
+                // worlds of de_boulder (over 2 GiB as glTF) and de_stronghold
+                // ran out of memory.
                 resources: {
                   requests: {
                     cpu: "1",
@@ -353,7 +356,7 @@ export class MapAssetsService {
                   },
                   limits: {
                     cpu: "2",
-                    memory: "8Gi",
+                    memory: "16Gi",
                     "ephemeral-storage": "14Gi",
                   },
                 },
