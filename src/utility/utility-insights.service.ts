@@ -389,7 +389,7 @@ export class UtilityInsightsService {
   // two hundred times has a habit; the library must not hand that habit to
   // everybody else as the lineup's pattern.
   public async missPattern(
-    user: User,
+    user: User | undefined,
     input: { utility_lineup_id: string },
   ): Promise<UtilityMissPatternOutput> {
     const lineupId = String(input.utility_lineup_id ?? "");
@@ -691,10 +691,10 @@ export class UtilityInsightsService {
   private static readonly UUID =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-  private static session(user: User): string {
+  private static session(user: User | undefined): string {
     return JSON.stringify({
-      "x-hasura-role": user.role,
-      "x-hasura-user-id": user.steam_id,
+      "x-hasura-role": user?.role ?? "guest",
+      ...(user?.steam_id ? { "x-hasura-user-id": user.steam_id } : {}),
     });
   }
 

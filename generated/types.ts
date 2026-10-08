@@ -11955,6 +11955,12 @@ export default {
             ]
         },
         "direct_conversations": {
+            "accepted_at": [
+                5840
+            ],
+            "declined_at": [
+                5840
+            ],
             "is_open": [
                 6
             ],
@@ -12053,6 +12059,12 @@ export default {
             "_or": [
                 568
             ],
+            "accepted_at": [
+                5841
+            ],
+            "declined_at": [
+                5841
+            ],
             "is_open": [
                 7
             ],
@@ -12085,6 +12097,12 @@ export default {
             ]
         },
         "direct_conversations_insert_input": {
+            "accepted_at": [
+                5840
+            ],
+            "declined_at": [
+                5840
+            ],
             "is_open": [
                 6
             ],
@@ -12105,6 +12123,12 @@ export default {
             ]
         },
         "direct_conversations_max_fields": {
+            "accepted_at": [
+                5840
+            ],
+            "declined_at": [
+                5840
+            ],
             "last_message_at": [
                 5840
             ],
@@ -12122,6 +12146,12 @@ export default {
             ]
         },
         "direct_conversations_min_fields": {
+            "accepted_at": [
+                5840
+            ],
+            "declined_at": [
+                5840
+            ],
             "last_message_at": [
                 5840
             ],
@@ -12164,6 +12194,12 @@ export default {
             ]
         },
         "direct_conversations_order_by": {
+            "accepted_at": [
+                3878
+            ],
+            "declined_at": [
+                3878
+            ],
             "is_open": [
                 3878
             ],
@@ -12196,6 +12232,12 @@ export default {
         },
         "direct_conversations_select_column": {},
         "direct_conversations_set_input": {
+            "accepted_at": [
+                5840
+            ],
+            "declined_at": [
+                5840
+            ],
             "is_open": [
                 6
             ],
@@ -12260,6 +12302,12 @@ export default {
             ]
         },
         "direct_conversations_stream_cursor_value_input": {
+            "accepted_at": [
+                5840
+            ],
+            "declined_at": [
+                5840
+            ],
             "is_open": [
                 6
             ],
@@ -107797,6 +107845,9 @@ export default {
                     ]
                 }
             ],
+            "allow_message_requests": [
+                6
+            ],
             "assists": [
                 4016,
                 {
@@ -109793,6 +109844,9 @@ export default {
             "aim_weapon_stats_aggregate": [
                 3977
             ],
+            "allow_message_requests": [
+                7
+            ],
             "assists": [
                 4027
             ],
@@ -110229,6 +110283,9 @@ export default {
             ],
             "aim_weapon_stats": [
                 3981
+            ],
+            "allow_message_requests": [
+                6
             ],
             "assists": [
                 4024
@@ -110734,6 +110791,9 @@ export default {
             "aim_weapon_stats_aggregate": [
                 3980
             ],
+            "allow_message_requests": [
+                3878
+            ],
             "assists_aggregate": [
                 4023
             ],
@@ -111036,6 +111096,9 @@ export default {
         },
         "players_select_column": {},
         "players_set_input": {
+            "allow_message_requests": [
+                6
+            ],
             "avatar_url": [
                 102
             ],
@@ -111322,6 +111385,9 @@ export default {
             ]
         },
         "players_stream_cursor_value_input": {
+            "allow_message_requests": [
+                6
+            ],
             "avatar_url": [
                 102
             ],
@@ -118710,6 +118776,9 @@ export default {
             "enabled": [
                 6
             ],
+            "featured": [
+                6
+            ],
             "game": [
                 102
             ],
@@ -119292,6 +119361,9 @@ export default {
             "enabled": [
                 7
             ],
+            "featured": [
+                7
+            ],
             "game": [
                 104
             ],
@@ -119487,6 +119559,9 @@ export default {
                 3682
             ],
             "enabled": [
+                6
+            ],
+            "featured": [
                 6
             ],
             "game": [
@@ -119982,6 +120057,9 @@ export default {
             "enabled": [
                 3878
             ],
+            "featured": [
+                3878
+            ],
             "game": [
                 3878
             ],
@@ -120133,6 +120211,9 @@ export default {
                 6
             ],
             "enabled": [
+                6
+            ],
+            "featured": [
                 6
             ],
             "game": [
@@ -120338,6 +120419,9 @@ export default {
                 6
             ],
             "enabled": [
+                6
+            ],
+            "featured": [
                 6
             ],
             "game": [

@@ -25,7 +25,7 @@ export class UtilityInsightsController {
 
   @HasuraAction()
   public async utilityLineupMissPattern(data: {
-    user: User;
+    user?: User;
     utility_lineup_id: string;
   }) {
     return await this.insights.missPattern(data.user, {
