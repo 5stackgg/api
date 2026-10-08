@@ -25,6 +25,9 @@ const SERVER_BUSY_RETRY_MS = 60_000;
 // The practice server is booted on demand; the pod's own wait for it is only
 // 300s, so waiting for Ready here is cheaper than a GPU sitting idle.
 const SERVER_READY_TIMEOUT_MS = 10 * 60 * 1000;
+// The server is already up and held for this batch; a GPU on its node that
+// stays busy this long is not coming back in time to be worth the wait.
+const GPU_WAIT_TIMEOUT_MS = 10 * 60 * 1000;
 
 type JobData = {
   mapName: string;
@@ -36,6 +39,7 @@ type JobData = {
   // render that was never attempted.
   dispatchedIds?: Array<string>;
   bookedAt?: number;
+  gpuWaitSince?: number;
   // The wedge log is captured once per booking, two minutes in -- early
   // enough to read while it is still stuck, cheap enough to not spam k8s.
   podLogNoted?: boolean;
@@ -87,6 +91,15 @@ export class BatchUtilityRenderJob extends WorkerHost {
         return;
       }
 
+      if ((await this.gameStreamer.freeRenderGpuNodeIds()).length === 0) {
+        this.logger.log(`${tag} no GPU free to film on yet`);
+        await this.renders.stampBootStage(
+          inFlight.map((render) => render.id),
+          "booking_server:NoGpuAvailable",
+        );
+        return this.delayUntilNext(job, GPU_BUSY_RETRY_MS);
+      }
+
       let session;
       try {
         session = await this.practice.startForRender({
@@ -120,7 +133,10 @@ export class BatchUtilityRenderJob extends WorkerHost {
     if (!job.data.dispatched) {
       const session = await this.practice.session(job.data.sessionId);
 
-      if (!session || !UtilityPracticeService.LIVE_STATUSES.includes(session.status)) {
+      if (
+        !session ||
+        !UtilityPracticeService.LIVE_STATUSES.includes(session.status)
+      ) {
         await this.renders.failRenders(
           inFlight.map((render) => render.id),
           await this.withServerLog(
@@ -193,27 +209,39 @@ export class BatchUtilityRenderJob extends WorkerHost {
         return this.delayUntilNext(job, CHECK_DELAY_MS);
       }
 
+      // Approved while the server was booting: the plugin serves the pod only
+      // the lineups attached to its session, so a row left off it would be
+      // staged against nothing.
+      await this.renders.attachSession(
+        inFlight.map((render) => render.id),
+        session.id,
+      );
       await this.renders.stampBootStage(
         inFlight.map((render) => render.id),
         "dispatching_pod",
       );
       try {
-        const { jobName, nodeId } = await this.gameStreamer.dispatchNadePreviews(
-          mapName,
-          connection.match_id,
-          { addr: connection.addr, password: connection.password },
-          inFlight.map((render) => ({
-            job_id: render.id,
-            session_token: render.session_token,
-            // Stamped here rather than at enqueue: it is a fact about the
-            // server that ended up filming, and the pod refuses anything but
-            // SwiftlyS2 -- it is the only runtime that can re-emit a throw.
-            spec: {
-              ...(render.spec as UtilityRenderSpec),
-              plugin_runtime: connection.plugin_runtime,
+        const { jobName, nodeId } =
+          await this.gameStreamer.dispatchNadePreviews(
+            mapName,
+            connection.match_id,
+            {
+              addr: connection.addr,
+              password: connection.password,
+              nodeId: connection.node_id,
             },
-          })),
-        );
+            inFlight.map((render) => ({
+              job_id: render.id,
+              session_token: render.session_token,
+              // Stamped here rather than at enqueue: it is a fact about the
+              // server that ended up filming, and the pod refuses anything but
+              // SwiftlyS2 -- it is the only runtime that can re-emit a throw.
+              spec: {
+                ...(render.spec as UtilityRenderSpec),
+                plugin_runtime: connection.plugin_runtime,
+              },
+            })),
+          );
         await this.renders.attachJobName(
           inFlight.map((render) => render.id),
           jobName,
@@ -221,6 +249,18 @@ export class BatchUtilityRenderJob extends WorkerHost {
         );
       } catch (error) {
         if (error instanceof NoGpuAvailableError) {
+          const waitingSince = job.data.gpuWaitSince ?? Date.now();
+          if (Date.now() - waitingSince > GPU_WAIT_TIMEOUT_MS) {
+            await this.renders.failRenders(
+              inFlight.map((render) => render.id),
+              "the GPU on the practice server's node never came free",
+            );
+            await this.releaseSession(job);
+            return;
+          }
+          if (job.data.gpuWaitSince === undefined) {
+            await job.updateData({ ...job.data, gpuWaitSince: waitingSince });
+          }
           // Say it on the row, not at debug level: this retried invisibly for
           // minutes while the GPU block list counted the render's own
           // practice match against it.
@@ -283,8 +323,7 @@ export class BatchUtilityRenderJob extends WorkerHost {
           : "render pod no longer present (Job deleted)");
 
     // Anything approved after this pod was dispatched was never in its batch.
-    // Left queued, ReconcileQueuedUtilityRenders picks it up on its next pass;
-    // failed here it would need a moderator to cancel it by hand, because the
+    // Failed here it would need a moderator to cancel it by hand, because the
     // in-flight unique index refuses a second row for the same lineup.
     const dispatchedIds = job.data.dispatchedIds;
     const attempted = dispatchedIds
@@ -294,13 +333,23 @@ export class BatchUtilityRenderJob extends WorkerHost {
 
     this.logger.warn(
       `${tag} pod ${podState} with ${attempted.length} lineup(s) still in flight — ${reason}` +
-        (untouched > 0 ? ` (${untouched} queued after dispatch, left alone)` : ""),
+        (untouched > 0
+          ? ` (${untouched} queued after dispatch, left alone)`
+          : ""),
     );
     await this.renders.failRenders(
       attempted.map((render) => render.id),
       reason,
     );
     await this.releaseSession(job);
+
+    // Those are this job's to film next: their own dispatch was dropped as a
+    // duplicate of this job while it was live, so ending here would leave them
+    // queued until the five-minute reconcile -- which is what a cancel followed
+    // straight by a retry looked like.
+    if (untouched > 0) {
+      return this.delayUntilNext(job, CHECK_DELAY_MS);
+    }
   }
 
   // The practice server goes back to the pool the moment the batch is over --

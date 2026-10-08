@@ -145,6 +145,7 @@ describe("MatchAssistantService — reconciling on-demand server Jobs", () => {
       {} as any,
       { add: jest.fn() } as any,
       { add: jest.fn(), getDelayed: jest.fn() } as any,
+      { query: jest.fn().mockResolvedValue([]) } as any,
     );
   });
 

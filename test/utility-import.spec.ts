@@ -16,6 +16,7 @@ describe("utility lineup seeding (SQL-driven)", () => {
   let postgres: PostgresService;
   let fx: Fixtures;
   let removed: Array<string>;
+  let previews: Array<string>;
 
   const ORIGIN = { x: -1912, y: 922, z: -167 };
   const LAND = { x: -560, y: 320, z: -140 };
@@ -32,6 +33,7 @@ describe("utility lineup seeding (SQL-driven)", () => {
 
   beforeEach(async () => {
     removed = [];
+    previews = [];
     await postgres.query("DELETE FROM utility_lineups");
     await postgres.query("DELETE FROM players");
     await postgres.query(
@@ -48,6 +50,9 @@ describe("utility lineup seeding (SQL-driven)", () => {
     return new UtilityImportService(new Logger("UtilityImportTest"), postgres, {
       removeTrajectories: jest.fn(async (id: string): Promise<void> => {
         removed.push(id);
+      }),
+      removePreview: jest.fn(async (id: string): Promise<void> => {
+        previews.push(id);
       }),
     } as unknown as never);
   }
@@ -459,6 +464,18 @@ describe("utility lineup seeding (SQL-driven)", () => {
       expect(removed).toHaveLength(1);
       // A seeded lineup never had one, so purging that source touches nothing.
       expect(await rows()).toHaveLength(2);
+    });
+
+    it("clears the rendered previews of a source that has them", async () => {
+      const op = await fx.player();
+      await seeded(op);
+      await postgres.query(
+        "UPDATE utility_lineups SET preview_file = 'clips/utility/x/y.mp4' WHERE origin_source = 'editor'",
+      );
+
+      await service().purgeSource(admin(op), { origin_source: "editor" });
+
+      expect(previews).toHaveLength(1);
     });
 
     it("refuses a source that is not one", async () => {

@@ -100,6 +100,11 @@ computed_fields:
       function:
         name: utility_lineup_preview_thumbnail_url
         schema: public
+  - name: preview_stills_url
+    definition:
+      function:
+        name: utility_lineup_preview_stills_url
+        schema: public
 insert_permissions:
   - role: user
     permission:
@@ -215,6 +220,7 @@ select_permissions:
         - initial_vel_x
         - initial_vel_y
         - initial_vel_z
+        - approach
         - flight_time_ms
         - name
         - description
@@ -249,6 +255,7 @@ select_permissions:
         - preview_file
         - preview_thumbnail
         - preview_duration_ms
+        - preview_stills
         - preview_rendered_at
       computed_fields:
         - can_view
@@ -258,6 +265,7 @@ select_permissions:
         - difficulty
         - preview_url
         - preview_thumbnail_url
+        - preview_stills_url
       filter:
         _and:
           - visibility:
@@ -295,6 +303,7 @@ select_permissions:
         - initial_vel_x
         - initial_vel_y
         - initial_vel_z
+        - approach
         - flight_time_ms
         - name
         - description
@@ -329,6 +338,7 @@ select_permissions:
         - preview_file
         - preview_thumbnail
         - preview_duration_ms
+        - preview_stills
         - preview_rendered_at
       computed_fields:
         - can_view
@@ -338,6 +348,7 @@ select_permissions:
         - difficulty
         - preview_url
         - preview_thumbnail_url
+        - preview_stills_url
       filter:
         can_view:
           _eq: true
@@ -372,6 +383,7 @@ select_permissions:
         - initial_vel_x
         - initial_vel_y
         - initial_vel_z
+        - approach
         - flight_time_ms
         - name
         - description
@@ -406,6 +418,7 @@ select_permissions:
         - preview_file
         - preview_thumbnail
         - preview_duration_ms
+        - preview_stills
         - preview_rendered_at
       computed_fields:
         - can_view
@@ -415,6 +428,7 @@ select_permissions:
         - difficulty
         - preview_url
         - preview_thumbnail_url
+        - preview_stills_url
       filter: {}
       allow_aggregations: true
     comment: ''

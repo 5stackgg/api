@@ -12,6 +12,7 @@ import { RedisManagerService } from "./redis/redis-manager/redis-manager.service
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "./configs/types/AppConfig";
 import { HasuraService } from "./hasura/hasura.service";
+import { logLevels } from "./utilities/LoggerFactory";
 
 /**
  * Increase the max listeners, based on load we may need to increase this
@@ -38,7 +39,9 @@ async function bootstrap() {
   //     return;
   // }
 
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    logger: logLevels(),
+  });
   app.disable("x-powered-by");
 
   app.useBodyParser("json", { limit: "50mb" });

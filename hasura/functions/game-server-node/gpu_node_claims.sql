@@ -18,6 +18,15 @@ as $$
     from clip_render_jobs
    where status in ('queued', 'rendering', 'uploading')
      and game_server_node_id is not null
+  union
+  -- Bounded by the last word from the pod: a row orphaned with a node on it
+  -- (a pod that died without a terminal status) must not hold the GPU from
+  -- every live stream for good.
+  select game_server_node_id
+    from utility_lineup_renders
+   where status in ('queued', 'rendering', 'uploading')
+     and game_server_node_id is not null
+     and last_status_at > now() - interval '15 minutes'
 $$;
 
 -- Render-only: nodes running a live match while
@@ -94,4 +103,22 @@ as $$
    order by id
    for update skip locked
    limit 1
+$$;
+
+-- A render pod reaches its practice server over loopback, so the GPU it
+-- takes has to be on the server's own node; any other free GPU is useless.
+create or replace function public.claim_gpu_node_for_render(p_node_id text)
+  returns text
+  language sql
+as $$
+  select id
+    from game_server_nodes
+   where id = p_node_id
+     and gpu = true
+     and enabled = true
+     and gpu_rendering_enabled = true
+     and status in ('Online', 'NotAcceptingNewMatches')
+     and id not in (select * from gpu_busy_node_ids())
+     and id not in (select * from gpu_batch_blocked_node_ids())
+   for update skip locked
 $$;

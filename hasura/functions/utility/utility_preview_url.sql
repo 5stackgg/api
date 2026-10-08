@@ -62,3 +62,43 @@ CREATE OR REPLACE FUNCTION public.utility_lineup_preview_thumbnail_url(utility_l
         RETURN CONCAT(worker_url, '/', utility_lineups.preview_thumbnail, '?v=', version);
     END;
 $$;
+
+-- kind -> url for each still, on the clip's own cache-buster: a re-render
+-- writes the same keys.
+CREATE OR REPLACE FUNCTION public.utility_lineup_preview_stills_url(utility_lineups public.utility_lineups)
+    RETURNS jsonb
+    LANGUAGE plpgsql STABLE
+    AS $$
+    DECLARE
+        worker_url text;
+        version text;
+        still record;
+        urls jsonb := '{}'::jsonb;
+    BEGIN
+        IF utility_lineups.preview_stills IS NULL THEN
+            RETURN NULL;
+        END IF;
+
+        version := COALESCE(
+            EXTRACT(EPOCH FROM utility_lineups.preview_rendered_at)::bigint::text,
+            '0'
+        );
+
+        SELECT value INTO worker_url
+        FROM settings
+        WHERE name = 'cloudflare_worker_url';
+
+        IF worker_url IS NULL THEN
+            RETURN NULL;
+        END IF;
+
+        FOR still IN SELECT key, value FROM jsonb_each_text(utility_lineups.preview_stills) LOOP
+            urls := urls || jsonb_build_object(
+                still.key,
+                CONCAT(worker_url, '/', still.value, '?v=', version)
+            );
+        END LOOP;
+
+        RETURN urls;
+    END;
+$$;

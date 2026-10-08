@@ -8,6 +8,7 @@ import { S3Service } from "../s3/s3.service";
 import { timingSafeStringEqual } from "../utilities/timingSafeStringEqual";
 import { UtilityJobs } from "./enums/UtilityJobs";
 import { UtilityQueues } from "./enums/UtilityQueues";
+import { UtilityApproachPoint } from "./types/UtilityApproachPoint";
 import { UtilityRenderSpec } from "./types/UtilityRenderSpec";
 import { UtilityRenderStatusDto } from "./types/UtilityRenderStatusDto";
 
@@ -18,6 +19,27 @@ export const UTILITY_RENDER_IN_FLIGHT = [
 ] as const;
 
 const STATUS_HISTORY_CAP = 50;
+
+const UTILITY_RENDER_TERMINAL = ["done", "error", "skipped", "cancelled"];
+
+// The stills the render director calls for, in the order it films them.
+export const UTILITY_RENDER_STILLS = [
+  "stance",
+  "stance_eyes",
+  "aim",
+  "aim_pin",
+  "aim_close",
+  "landing",
+] as const;
+
+export type UtilityRenderStill = (typeof UTILITY_RENDER_STILLS)[number];
+
+// The pod sends the aim stills lossless as webp; webp wins over a jpeg of the
+// same kind, which only an older pod sends.
+export const UTILITY_RENDER_STILL_FORMATS = ["webp", "jpg"] as const;
+
+export type UtilityRenderStillFormat =
+  (typeof UTILITY_RENDER_STILL_FORMATS)[number];
 
 export type UtilityRenderRow = {
   id: string;
@@ -55,6 +77,12 @@ type LineupSpecRow = {
   eye_z: number | null;
   view_yaw: number;
   view_pitch: number;
+  technique: string;
+  throw_strength: string | null;
+  jump_throw_bind: boolean;
+  land_x: number;
+  land_y: number;
+  land_z: number;
   flight_time_ms: number | null;
   confidence: string;
   visibility: string;
@@ -68,6 +96,7 @@ type LineupSpecRow = {
   preview_file: string | null;
   author_steam_id: string;
   public_reviewed_by: string | null;
+  approach: Array<UtilityApproachPoint> | null;
 };
 
 @Injectable()
@@ -80,16 +109,55 @@ export class UtilityRendersService {
     private readonly renderQueue: Queue,
   ) {}
 
-  // Keyed on the LINEUP, not the render job: a re-render replaces the clip in
-  // place, so nothing has to go back and repoint the lineup, and the old object
-  // never lingers. The clips/ prefix is the only one the Cloudflare worker's
-  // route patterns match -- a utility/ prefix would 404 in the browser.
-  public static GetPreviewS3Key(lineupId: string): string {
-    return `clips/utility/${lineupId}.mp4`;
+  // Keyed per render: Cloudflare caches clips/ ignoring the query string, so a
+  // re-render written over the same key kept serving the first clip for the
+  // cache's 30 days whatever the ?v= said. finalizeUpload removes the previous
+  // render's objects. The clips/ prefix is the only one the worker's route
+  // patterns match -- a utility/ prefix would 404 in the browser.
+  public static GetPreviewS3Key(lineupId: string, renderId: string): string {
+    return `clips/utility/${lineupId}/${renderId}.mp4`;
   }
 
-  public static GetPreviewThumbnailS3Key(lineupId: string): string {
-    return `clips/utility/${lineupId}.jpg`;
+  public static GetPreviewThumbnailS3Key(
+    lineupId: string,
+    renderId: string,
+  ): string {
+    return `clips/utility/${lineupId}/${renderId}.jpg`;
+  }
+
+  // Per render, unlike the clip: a still a re-render failed to upload must
+  // not be filled in with the previous render's frame.
+  public static GetPreviewStillS3Key(
+    lineupId: string,
+    renderId: string,
+    kind: UtilityRenderStill,
+    format: UtilityRenderStillFormat = "jpg",
+  ): string {
+    return `clips/utility/${lineupId}/${renderId}/${kind}.${format}`;
+  }
+
+  public static stillFormat(
+    contentType?: string | null,
+  ): UtilityRenderStillFormat {
+    return contentType?.split(";")[0].trim().toLowerCase() === "image/webp"
+      ? "webp"
+      : "jpg";
+  }
+
+  // Everything one render uploaded: `<render>.mp4`, `<render>.jpg` and the
+  // stills under `<render>/`.
+  public static GetRenderS3Prefix(lineupId: string, renderId: string): string {
+    return `clips/utility/${lineupId}/${renderId}`;
+  }
+
+  // Every preview a lineup ever had, including one from before clips were
+  // keyed per render (`<lineup>.mp4`).
+  public static GetLineupPreviewS3Prefix(lineupId: string): string {
+    return `clips/utility/${lineupId}`;
+  }
+
+  public static isStill(kind: string): kind is UtilityRenderStill {
+    return (UTILITY_RENDER_STILLS as ReadonlyArray<string>).includes(kind);
   }
 
   // One BullMQ job per map, because one server session films one map: the pod
@@ -120,12 +188,15 @@ export class UtilityRendersService {
       `SELECT l.id::text AS id, l.name, l.map_name, l.utility_type, l.side,
               l.origin_x, l.origin_y, l.origin_z, l.eye_z,
               l.view_yaw, l.view_pitch, l.flight_time_ms, l.confidence,
+              l.technique, l.throw_strength, l.jump_throw_bind,
+              l.land_x, l.land_y, l.land_z,
               l.visibility, l.archived_at,
               l.initial_pos_x, l.initial_pos_y, l.initial_pos_z,
               l.initial_vel_x, l.initial_vel_y, l.initial_vel_z,
               l.preview_file,
               l.author_steam_id::text AS author_steam_id,
-              l.public_reviewed_by::text AS public_reviewed_by
+              l.public_reviewed_by::text AS public_reviewed_by,
+              l.approach
          FROM public.utility_lineups l
         WHERE l.id = $1::uuid`,
       [lineupId],
@@ -184,6 +255,22 @@ export class UtilityRendersService {
       return this.refused("a render for this lineup is already in flight");
     }
 
+    // A new attempt replaces the lineup's earlier cancelled and failed ones in
+    // the queue; two rows for one lineup read as two things happening. The
+    // done row is the preview still on show, so it stays until this one lands.
+    const replaced = await this.postgres.query<Array<{ id: string }>>(
+      `DELETE FROM public.utility_lineup_renders
+        WHERE utility_lineup_id = $1::uuid
+          AND id <> $2::uuid
+          AND NOT (status = ANY($3::text[]))
+      RETURNING id::text AS id`,
+      [lineup.id, row.id, [...UTILITY_RENDER_IN_FLIGHT, "done"]],
+    );
+    await this.removeRenderFiles(
+      lineup.id,
+      (replaced ?? []).map((old) => old.id),
+    );
+
     if (refusal) {
       this.logger.log(
         `[utility-render ${row.id}] ${lineup.map_name} "${lineup.name}" cannot be filmed: ${refusal}`,
@@ -198,7 +285,12 @@ export class UtilityRendersService {
 
     await this.dispatchMap(lineup.map_name);
 
-    return { queued: true, render_id: row.id, status: row.status, reason: null };
+    return {
+      queued: true,
+      render_id: row.id,
+      status: row.status,
+      reason: null,
+    };
   }
 
   /**
@@ -243,26 +335,50 @@ export class UtilityRendersService {
    * objects are keyed on the lineup, so a lineup has exactly one live preview;
    * clearing its columns and removing the two objects is the whole teardown.
    */
-  public async deletePreview(renderId: string): Promise<boolean> {
-    const [row] = await this.postgres.query<
-      Array<{ utility_lineup_id: string; status: string }>
-    >(
-      `SELECT utility_lineup_id::text AS utility_lineup_id, status
-         FROM public.utility_lineup_renders
-        WHERE id = $1::uuid`,
-      [renderId],
-    );
+  private async removeStills(keys: Array<string>): Promise<void> {
+    for (const key of keys) {
+      try {
+        await this.s3.remove(key);
+      } catch (error) {
+        this.logger.warn(
+          `[utility-render] could not remove ${key}: ${(error as Error)?.message}`,
+        );
+      }
+    }
+  }
 
-    if (!row) return false;
-
-    // In flight -> cancel first (stops the pod's callbacks landing on a row
-    // that is about to vanish); the caller can delete again once it settles.
-    if (UTILITY_RENDER_IN_FLIGHT.includes(row.status as never)) {
-      await this.cancel(renderId);
+  // A lineup carries one preview, and since clips are keyed per render the
+  // preview names the render that made it. One from before that is keyed on
+  // the lineup alone: it belongs to the lineup's only done render.
+  private async ownsPreview(
+    renderId: string,
+    row: {
+      utility_lineup_id: string;
+      status: string;
+      preview_file: string | null;
+    },
+  ): Promise<boolean> {
+    if (!row.preview_file) {
+      return false;
     }
 
-    // A lineup carries one preview. If this render owns it (a done render, and
-    // no OTHER done render for the same lineup is keeping it alive), drop it.
+    // By the key alone, whatever the row says: the clip goes live a moment
+    // before the pod reports done.
+    if (
+      row.preview_file ===
+      UtilityRendersService.GetPreviewS3Key(row.utility_lineup_id, renderId)
+    ) {
+      return true;
+    }
+
+    if (row.status !== "done") {
+      return false;
+    }
+
+    if (row.preview_file !== `clips/utility/${row.utility_lineup_id}.mp4`) {
+      return false;
+    }
+
     const [others] = await this.postgres.query<Array<{ count: string }>>(
       `SELECT COUNT(*) AS count
          FROM public.utility_lineup_renders
@@ -272,29 +388,86 @@ export class UtilityRendersService {
       [row.utility_lineup_id, renderId],
     );
 
-    if (row.status === "done" && Number(others?.count ?? 0) === 0) {
-      await this.postgres.query(
-        `UPDATE public.utility_lineups
+    return Number(others?.count ?? 0) === 0;
+  }
+
+  private async removeRenderFiles(
+    lineupId: string,
+    renderIds: Array<string>,
+  ): Promise<void> {
+    for (const renderId of renderIds) {
+      const prefix = UtilityRendersService.GetRenderS3Prefix(
+        lineupId,
+        renderId,
+      );
+      try {
+        await this.s3.removePrefix(prefix);
+      } catch (error) {
+        this.logger.warn(
+          `[utility-render] could not sweep ${prefix}: ${(error as Error)?.message}`,
+        );
+      }
+    }
+  }
+
+  public async deletePreview(renderId: string): Promise<boolean> {
+    const [row] = await this.postgres.query<
+      Array<{
+        utility_lineup_id: string;
+        status: string;
+        preview_file: string | null;
+      }>
+    >(
+      `SELECT r.utility_lineup_id::text AS utility_lineup_id, r.status,
+              l.preview_file
+         FROM public.utility_lineup_renders r
+         LEFT JOIN public.utility_lineups l ON l.id = r.utility_lineup_id
+        WHERE r.id = $1::uuid`,
+      [renderId],
+    );
+
+    if (!row) {
+      return false;
+    }
+
+    // In flight -> cancel first (stops the pod's callbacks landing on a row
+    // that is about to vanish); the caller can delete again once it settles.
+    if (UTILITY_RENDER_IN_FLIGHT.includes(row.status as never)) {
+      await this.cancel(renderId);
+    }
+
+    if (await this.ownsPreview(renderId, row)) {
+      const [lineup] = await this.postgres.query<
+        Array<{
+          preview_file: string | null;
+          preview_thumbnail: string | null;
+          preview_stills: Record<string, string> | null;
+        }>
+      >(
+        `UPDATE public.utility_lineups l
             SET preview_file = NULL,
                 preview_thumbnail = NULL,
                 preview_duration_ms = NULL,
+                preview_stills = NULL,
                 preview_rendered_at = NULL
-          WHERE id = $1::uuid`,
+           FROM (SELECT id, preview_file, preview_thumbnail, preview_stills
+                   FROM public.utility_lineups
+                  WHERE id = $1::uuid) old
+          WHERE l.id = old.id
+      RETURNING old.preview_file, old.preview_thumbnail, old.preview_stills`,
         [row.utility_lineup_id],
       );
-      for (const key of [
-        UtilityRendersService.GetPreviewS3Key(row.utility_lineup_id),
-        UtilityRendersService.GetPreviewThumbnailS3Key(row.utility_lineup_id),
-      ]) {
-        try {
-          await this.s3.remove(key);
-        } catch (error) {
-          this.logger.warn(
-            `[utility-render] could not remove ${key}: ${(error as Error)?.message}`,
-          );
-        }
-      }
+      await this.removeStills([
+        ...Object.values(lineup?.preview_stills ?? {}),
+        ...[lineup?.preview_file, lineup?.preview_thumbnail].filter(
+          (key): key is string => !!key,
+        ),
+      ]);
     }
+
+    // Whatever this render uploaded goes with it: a failed one may have got
+    // its stills up before the clip, and nothing else points at them.
+    await this.removeRenderFiles(row.utility_lineup_id, [renderId]);
 
     const deleted = await this.postgres.query<Array<{ id: string }>>(
       `DELETE FROM public.utility_lineup_renders
@@ -306,11 +479,43 @@ export class UtilityRendersService {
   }
 
   public async clearFinished(): Promise<number> {
-    const rows = await this.postgres.query<Array<{ id: string }>>(
+    const rows = await this.postgres.query<
+      Array<{ id: string; utility_lineup_id: string }>
+    >(
       `DELETE FROM public.utility_lineup_renders
         WHERE status NOT IN ('queued', 'rendering', 'uploading')
-      RETURNING id::text AS id`,
+      RETURNING id::text AS id, utility_lineup_id::text AS utility_lineup_id`,
     );
+
+    if (rows.length === 0) {
+      return 0;
+    }
+
+    // Clearing the queue is not deleting previews: the render whose clip a
+    // lineup still shows keeps its files, every other one loses them.
+    const lineups = await this.postgres.query<
+      Array<{ id: string; preview_file: string | null }>
+    >(
+      `SELECT id::text AS id, preview_file
+         FROM public.utility_lineups
+        WHERE id = ANY($1::uuid[])`,
+      [[...new Set(rows.map((row) => row.utility_lineup_id))]],
+    );
+    const live = new Set(
+      (lineups ?? []).map((lineup) => lineup.preview_file).filter(Boolean),
+    );
+
+    for (const row of rows) {
+      if (
+        live.has(
+          UtilityRendersService.GetPreviewS3Key(row.utility_lineup_id, row.id),
+        )
+      ) {
+        continue;
+      }
+      await this.removeRenderFiles(row.utility_lineup_id, [row.id]);
+    }
+
     return rows.length;
   }
 
@@ -545,9 +750,17 @@ export class UtilityRendersService {
         ? body.progress
         : null;
 
-    const terminal = ["done", "error", "skipped", "cancelled"].includes(
-      body.status,
-    );
+    // A pod mid-job never learns it was cancelled; without this its next
+    // progress post would put the row back in flight and the upload after it
+    // would be accepted.
+    if (UTILITY_RENDER_TERMINAL.includes(current.status)) {
+      this.logger.warn(
+        `[utility-render ${jobId}] ignoring ${body.status} on a ${current.status} render`,
+      );
+      return;
+    }
+
+    const terminal = UTILITY_RENDER_TERMINAL.includes(body.status);
 
     await this.postgres.query(
       `UPDATE public.utility_lineup_renders
@@ -567,7 +780,8 @@ export class UtilityRendersService {
         progress,
         body.error ? String(body.error).slice(0, 500) : null,
         body.skip_reason ? String(body.skip_reason).slice(0, 500) : null,
-        typeof body.duration_ms === "number" && Number.isFinite(body.duration_ms)
+        typeof body.duration_ms === "number" &&
+        Number.isFinite(body.duration_ms)
           ? Math.round(body.duration_ms)
           : null,
         terminal,
@@ -599,9 +813,10 @@ export class UtilityRendersService {
 
   // The practice server's own boot readout, keyed the way the assignment
   // leaves it: the server row points back at the match while it is reserved.
-  public async bootStatusForMatch(
-    matchId: string,
-  ): Promise<{ boot_status: string | null; boot_status_detail: string | null } | null> {
+  public async bootStatusForMatch(matchId: string): Promise<{
+    boot_status: string | null;
+    boot_status_detail: string | null;
+  } | null> {
     const [row] = await this.postgres.query<
       Array<{ boot_status: string | null; boot_status_detail: string | null }>
     >(
@@ -704,14 +919,51 @@ export class UtilityRendersService {
     );
 
     if (!row) throw new Error(`utility render ${jobId} not found`);
-    if (["cancelled", "error", "done", "skipped"].includes(row.status)) {
+    if (UTILITY_RENDER_TERMINAL.includes(row.status)) {
       throw new Error(`render is ${row.status}`);
     }
 
     const key = UtilityRendersService.GetPreviewThumbnailS3Key(
       row.utility_lineup_id,
+      jobId,
     );
     await this.s3.put(key, fileStream, "image/jpeg");
+
+    return { key };
+  }
+
+  public async uploadStill(
+    jobId: string,
+    kind: UtilityRenderStill,
+    fileStream: Readable,
+    contentType?: string | null,
+  ): Promise<{ key: string }> {
+    const [row] = await this.postgres.query<
+      Array<{ utility_lineup_id: string; status: string }>
+    >(
+      `SELECT utility_lineup_id::text AS utility_lineup_id, status
+         FROM public.utility_lineup_renders
+        WHERE id = $1::uuid`,
+      [jobId],
+    );
+
+    if (!row) throw new Error(`utility render ${jobId} not found`);
+    if (UTILITY_RENDER_TERMINAL.includes(row.status)) {
+      throw new Error(`render is ${row.status}`);
+    }
+
+    const format = UtilityRendersService.stillFormat(contentType);
+    const key = UtilityRendersService.GetPreviewStillS3Key(
+      row.utility_lineup_id,
+      jobId,
+      kind,
+      format,
+    );
+    await this.s3.put(
+      key,
+      fileStream,
+      format === "webp" ? "image/webp" : "image/jpeg",
+    );
 
     return { key };
   }
@@ -736,15 +988,19 @@ export class UtilityRendersService {
     );
 
     if (!row) throw new Error(`utility render ${jobId} not found`);
-    if (["cancelled", "error", "done", "skipped"].includes(row.status)) {
+    if (UTILITY_RENDER_TERMINAL.includes(row.status)) {
       throw new Error(`render is ${row.status}`);
     }
 
-    const key = UtilityRendersService.GetPreviewS3Key(row.utility_lineup_id);
+    const key = UtilityRendersService.GetPreviewS3Key(
+      row.utility_lineup_id,
+      jobId,
+    );
     await this.s3.put(key, fileStream, "video/mp4");
 
     const thumbnailKey = UtilityRendersService.GetPreviewThumbnailS3Key(
       row.utility_lineup_id,
+      jobId,
     );
 
     let thumbnail: string | null = null;
@@ -758,14 +1014,56 @@ export class UtilityRendersService {
       );
     }
 
+    const [previous] = await this.postgres.query<
+      Array<{
+        preview_file: string | null;
+        preview_thumbnail: string | null;
+        preview_stills: Record<string, string> | null;
+      }>
+    >(
+      `SELECT preview_file, preview_thumbnail, preview_stills
+         FROM public.utility_lineups
+        WHERE id = $1::uuid`,
+      [row.utility_lineup_id],
+    );
+
+    const stills: Partial<Record<UtilityRenderStill, string>> = {};
+    for (const kind of UTILITY_RENDER_STILLS) {
+      for (const format of UTILITY_RENDER_STILL_FORMATS) {
+        const stillKey = UtilityRendersService.GetPreviewStillS3Key(
+          row.utility_lineup_id,
+          jobId,
+          kind,
+          format,
+        );
+        try {
+          if (await this.s3.has(stillKey)) {
+            stills[kind] = stillKey;
+            break;
+          }
+        } catch (error) {
+          this.logger.warn(
+            `[utility-render ${jobId}] ${kind} still check failed: ${(error as Error)?.message}`,
+          );
+        }
+      }
+    }
+
     await this.postgres.query(
       `UPDATE public.utility_lineups
           SET preview_file = $2,
               preview_thumbnail = COALESCE($3, preview_thumbnail),
               preview_duration_ms = COALESCE($4::int, preview_duration_ms),
+              preview_stills = $5::jsonb,
               preview_rendered_at = now()
         WHERE id = $1::uuid`,
-      [row.utility_lineup_id, key, thumbnail, durationMs],
+      [
+        row.utility_lineup_id,
+        key,
+        thumbnail,
+        durationMs,
+        Object.keys(stills).length > 0 ? JSON.stringify(stills) : null,
+      ],
     );
 
     await this.postgres.query(
@@ -773,6 +1071,35 @@ export class UtilityRendersService {
           SET duration_ms = COALESCE($2::int, duration_ms)
         WHERE id = $1::uuid`,
       [jobId, durationMs],
+    );
+
+    // A lineup shows one preview, so the attempts before this one -- the old
+    // preview's render, earlier failures -- are history the queue no longer
+    // needs; their files were swapped out above.
+    const retired = await this.postgres.query<Array<{ id: string }>>(
+      `DELETE FROM public.utility_lineup_renders
+        WHERE utility_lineup_id = $1::uuid
+          AND id <> $2::uuid
+          AND NOT (status = ANY($3::text[]))
+      RETURNING id::text AS id`,
+      [row.utility_lineup_id, jobId, [...UTILITY_RENDER_IN_FLIGHT]],
+    );
+    await this.removeRenderFiles(
+      row.utility_lineup_id,
+      (retired ?? []).map((old) => old.id),
+    );
+
+    const current = new Set([key, ...Object.values(stills)]);
+    if (thumbnail) {
+      current.add(thumbnail);
+    }
+    await this.removeStills(
+      [
+        ...Object.values(previous?.preview_stills ?? {}),
+        ...[previous?.preview_file, previous?.preview_thumbnail].filter(
+          (old): old is string => !!old,
+        ),
+      ].filter((old) => !current.has(old)),
     );
 
     return { lineupId: row.utility_lineup_id, file: key };
@@ -844,6 +1171,12 @@ export class UtilityRendersService {
       eye_z: lineup.eye_z === null ? null : Number(lineup.eye_z),
       view_yaw: Number(lineup.view_yaw),
       view_pitch: Number(lineup.view_pitch),
+      technique: lineup.technique,
+      throw_strength: lineup.throw_strength ?? null,
+      jump_throw_bind: lineup.jump_throw_bind === true,
+      land_x: Number(lineup.land_x),
+      land_y: Number(lineup.land_y),
+      land_z: Number(lineup.land_z),
       flight_time_ms:
         lineup.flight_time_ms === null ? null : Number(lineup.flight_time_ms),
       confidence: lineup.confidence,
@@ -854,6 +1187,10 @@ export class UtilityRendersService {
       initial_vel_x: UtilityRendersService.num(lineup.initial_vel_x),
       initial_vel_y: UtilityRendersService.num(lineup.initial_vel_y),
       initial_vel_z: UtilityRendersService.num(lineup.initial_vel_z),
+      approach:
+        Array.isArray(lineup.approach) && lineup.approach.length > 0
+          ? lineup.approach
+          : null,
       output: { resolution: "1080p", fps: 60 },
     };
   }
@@ -861,9 +1198,6 @@ export class UtilityRendersService {
   // The pod's own refusals, applied before a GPU is booked. Kept in the same
   // words the pod uses so a reviewer sees one vocabulary either way.
   public static unrenderable(lineup: LineupSpecRow): string | null {
-    if (!lineup.name || lineup.name.trim().length === 0) {
-      return "lineup has no name; the practice plugin resolves lineups by name only";
-    }
     if (!UtilityRendersService.hasSeed(lineup)) {
       return "lineup has no recorded physics seed (initial position/velocity) — the throw cannot be reproduced exactly";
     }

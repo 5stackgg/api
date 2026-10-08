@@ -2550,6 +2550,22 @@ export class GameStreamerService {
     return parts.length > 0 ? parts.join(" — ").slice(0, 500) : null;
   }
 
+  // A render books its server on the node its pod will run on, so there is
+  // nothing to book until one of those has its GPU free.
+  public async freeRenderGpuNodeIds(): Promise<Array<string>> {
+    const rows = await this.postgres.query<Array<{ id: string }>>(
+      `SELECT id
+         FROM public.game_server_nodes
+        WHERE gpu = true
+          AND enabled = true
+          AND gpu_rendering_enabled = true
+          AND status IN ('Online', 'NotAcceptingNewMatches')
+          AND id NOT IN (SELECT * FROM public.gpu_busy_node_ids())
+          AND id NOT IN (SELECT * FROM public.gpu_batch_blocked_node_ids())`,
+    );
+    return rows.map((row) => row.id);
+  }
+
   public async killNadeRenderPod(mapName: string): Promise<void> {
     const jobName = GameStreamerService.GetNadeRenderJobName(mapName);
     try {
@@ -2569,7 +2585,7 @@ export class GameStreamerService {
   public async dispatchNadePreviews(
     mapName: string,
     matchId: string,
-    connect: { addr: string; password: string },
+    connect: { addr: string; password: string; nodeId: string },
     jobs: Array<{ job_id: string; session_token: string; spec: unknown }>,
   ): Promise<{ jobName: string; nodeId: string }> {
     if (jobs.length === 0) {
@@ -2578,12 +2594,12 @@ export class GameStreamerService {
 
     const jobName = GameStreamerService.GetNadeRenderJobName(mapName);
     const { nodeId, steamAccount } = await this.claimGpuForNadeRenders(
-      mapName,
+      jobs.map((job) => job.job_id),
       jobName,
+      connect.nodeId,
     );
 
     const env: V1EnvVar[] = [
-      { name: "MATCH_ID", value: matchId },
       { name: "STATUS_API_BASE", value: resolveInClusterApiBase() },
       // Without this the shared status reporter would POST this pod's boot
       // state to /game-streamer/:match_id/status and flip the practice match
@@ -2591,17 +2607,6 @@ export class GameStreamerService {
       { name: "NADE_BATCH_MODE", value: "1" },
       { name: "NADE_CONNECT_ADDR", value: connect.addr },
       { name: "NADE_CONNECT_PASSWORD", value: connect.password },
-      // The practice plugin registers `load`/`rethrow` with registerRaw:false,
-      // so the console name (`sw_load`) is a SERVER concommand. A connected
-      // client cannot invoke it -- typed/exec'd in the client console it is
-      // dropped as an unknown command and never forwarded upstream, which is
-      // why the render's `sw_load`/`sw_rethrow` produced zero OnLoad/OnRethrow
-      // in the server plugin log. The chat form always round-trips (say ->
-      // server -> Swiftly chat hook), exactly how a real player triggers these;
-      // `/` is the silent prefix so no chat text lands in the clip. {name}
-      // expands to the lineup name (the only thing `.load` matches on).
-      { name: "NADE_CMD_LOAD", value: "say /load {name}" },
-      { name: "NADE_CMD_THROW", value: "say /rethrow" },
       {
         name: "NADE_BATCH_JOBS",
         value: JSON.stringify(
@@ -2675,22 +2680,26 @@ export class GameStreamerService {
     await this.steamAccounts.release(jobName);
   }
 
+  // Only the practice server's own node: the pod connects to it over loopback.
+  // Only the rows going into this pod: one approved since the batch read its
+  // queue would otherwise carry the node without ever being filmed.
   private async claimGpuForNadeRenders(
-    mapName: string,
+    renderIds: Array<string>,
     jobName: string,
+    serverNodeId: string,
   ): Promise<GpuClaim> {
     return this.postgres.transaction(async (client) => {
       const result = await client.query(
-        `WITH chosen AS (SELECT claim_free_gpu_node_for_batch() AS id)
+        `WITH chosen AS (SELECT claim_gpu_node_for_render($2) AS id)
          UPDATE utility_lineup_renders
-            SET game_server_node_id = chosen.id
+            SET game_server_node_id = chosen.id,
+                last_status_at = now()
            FROM chosen
-          WHERE utility_lineup_renders.map_name = $1
+          WHERE utility_lineup_renders.id = ANY($1::uuid[])
             AND utility_lineup_renders.status IN ('queued','rendering','uploading')
-            AND utility_lineup_renders.game_server_node_id IS NULL
             AND chosen.id IS NOT NULL
          RETURNING utility_lineup_renders.game_server_node_id`,
-        [mapName],
+        [renderIds, serverNodeId],
       );
 
       const nodeId = result.rows[0]?.game_server_node_id as string | undefined;
@@ -3508,11 +3517,15 @@ export class GameStreamerService {
               : mode === "warm-shaders"
                 ? ["warm-shaders"]
                 : ["create-clips"];
+    // With hostNetwork a declared port is a host port, which is what stops the
+    // scheduler putting two streamer pods on one node. A shader bake runs the
+    // same spec-server on :1350 and has to be counted too.
     const exposesSpecPorts =
       mode === "live" ||
       mode === "demo" ||
       mode === "batch-highlights" ||
-      mode === "nade-previews";
+      mode === "nade-previews" ||
+      mode === "warm-shaders";
 
     const labels: Record<string, string> = {
       app: "game-streamer",
@@ -3583,7 +3596,10 @@ export class GameStreamerService {
               {
                 name: containerName,
                 // Override via GAME_STREAMER_IMAGE (see configs/game-servers.ts).
-                image: this.gameServerConfig.gameStreamerImage,
+                image:
+                  (mode === "nade-previews" &&
+                    this.gameServerConfig.utilityRenderStreamerImage) ||
+                  this.gameServerConfig.gameStreamerImage,
                 // Mutable tag; force each pod start to resolve the latest digest.
                 imagePullPolicy: "Always",
                 securityContext: { privileged: true },

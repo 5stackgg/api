@@ -13,4 +13,6 @@ export type GameServersConfig = {
   serverImageOverride: string | null;
   pluginRuntimeImages: Record<PluginRuntime, string>;
   gameStreamerImage: string;
+  utilityRenderStreamerImage: string | null;
+  utilityRenderServerImage: string | null;
 };

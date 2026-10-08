@@ -210,6 +210,113 @@ describe("utility lineup renders (SQL-driven)", () => {
     });
   });
 
+  describe("preview stills url", () => {
+    beforeEach(async () => {
+      await postgres.query(
+        `INSERT INTO settings (name, value)
+         VALUES ('cloudflare_worker_url', 'https://demo-dl.5stack.gg')
+         ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value`,
+      );
+    });
+
+    const stillsUrl = async (id: string) => {
+      const [row] = await postgres.query<Array<{ urls: Record<string, string> | null }>>(
+        "SELECT public.utility_lineup_preview_stills_url(l) AS urls FROM utility_lineups l WHERE l.id = $1::uuid",
+        [id],
+      );
+      return row.urls;
+    };
+
+    it("is null until a render filmed stills", async () => {
+      expect(await stillsUrl(await lineup())).toBeNull();
+    });
+
+    it("serves every still on the clip's own cache-buster", async () => {
+      const id = await lineup();
+      await postgres.query(
+        `UPDATE utility_lineups
+            SET preview_stills = $2::jsonb,
+                preview_rendered_at = to_timestamp(1000000)
+          WHERE id = $1::uuid`,
+        [
+          id,
+          JSON.stringify({
+            aim: `clips/utility/${id}/aim.jpg`,
+            landing: `clips/utility/${id}/landing.jpg`,
+          }),
+        ],
+      );
+
+      expect(await stillsUrl(id)).toEqual({
+        aim: `https://demo-dl.5stack.gg/clips/utility/${id}/aim.jpg?v=1000000`,
+        landing: `https://demo-dl.5stack.gg/clips/utility/${id}/landing.jpg?v=1000000`,
+      });
+    });
+  });
+
+  describe("render GPU claim", () => {
+    const GPU_NODE = "render-gpu-node";
+    const CPU_NODE = "render-cpu-node";
+
+    beforeEach(async () => {
+      await postgres.query(
+        "DELETE FROM game_server_nodes WHERE id = ANY($1::text[])",
+        [[GPU_NODE, CPU_NODE]],
+      );
+      const region = await fx.region("RenderRegion");
+      await postgres.query(
+        `INSERT INTO game_server_nodes (id, status, enabled, region, gpu)
+         VALUES ($1, 'Online', true, $3, true), ($2, 'Online', true, $3, false)`,
+        [GPU_NODE, CPU_NODE, region],
+      );
+    });
+
+    const claim = async (nodeId: string) => {
+      const [row] = await postgres.query<Array<{ id: string | null }>>(
+        "SELECT public.claim_gpu_node_for_render($1) AS id",
+        [nodeId],
+      );
+      return row.id;
+    };
+
+    it("takes the practice server's own node when its GPU is free", async () => {
+      expect(await claim(GPU_NODE)).toBe(GPU_NODE);
+    });
+
+    it("never hands out a node without a GPU", async () => {
+      expect(await claim(CPU_NODE)).toBeNull();
+    });
+
+    it("holds the node for an in-flight render against every other GPU claim", async () => {
+      const id = await lineup();
+      const [render] = await queueRender(id, "rendering");
+      await postgres.query(
+        "UPDATE utility_lineup_renders SET game_server_node_id = $2 WHERE id = $1::uuid",
+        [render.id, GPU_NODE],
+      );
+
+      expect(await claim(GPU_NODE)).toBeNull();
+      const [live] = await postgres.query<Array<{ id: string | null }>>(
+        "SELECT public.claim_free_gpu_node() AS id",
+      );
+      expect(live.id).not.toBe(GPU_NODE);
+    });
+
+    it("lets go of a node once the render on it has gone quiet", async () => {
+      const id = await lineup();
+      const [render] = await queueRender(id, "rendering");
+      await postgres.query(
+        `UPDATE utility_lineup_renders
+            SET game_server_node_id = $2,
+                last_status_at = now() - interval '16 minutes'
+          WHERE id = $1::uuid`,
+        [render.id, GPU_NODE],
+      );
+
+      expect(await claim(GPU_NODE)).toBe(GPU_NODE);
+    });
+  });
+
   describe("render practice sessions", () => {
     it("does not count against the host's one-live-session limit", async () => {
       const host = await fx.player();

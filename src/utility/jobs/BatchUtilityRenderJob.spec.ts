@@ -58,6 +58,7 @@ describe("BatchUtilityRenderJob", () => {
         password: "pw",
         match_id: "match-1",
         plugin_runtime: "swiftlys2",
+        node_id: "node-A",
       }),
       endRenderSession: jest.fn(),
     };
@@ -68,6 +69,7 @@ describe("BatchUtilityRenderJob", () => {
       getNadeRenderPodState: jest.fn().mockResolvedValue("running"),
       promotePendingLiveStreams: jest.fn().mockResolvedValue({ promoted: [] }),
       getNadeRenderPodFailureReason: jest.fn().mockResolvedValue(null),
+      freeRenderGpuNodeIds: jest.fn().mockResolvedValue(["node-A"]),
     };
     matchAssistant = {
       getMatchServerLogTail: jest.fn().mockResolvedValue(null),
@@ -193,7 +195,9 @@ describe("BatchUtilityRenderJob", () => {
       }) as any,
     );
 
-    expect(matchAssistant.getMatchServerLogTail).toHaveBeenCalledWith("match-1");
+    expect(matchAssistant.getMatchServerLogTail).toHaveBeenCalledWith(
+      "match-1",
+    );
     expect(renders.failRenders).toHaveBeenCalledWith(
       [RENDER.id],
       "practice server did not become ready in time — swiftlys2: unable to load gamedata",
@@ -246,6 +250,36 @@ describe("BatchUtilityRenderJob", () => {
     expect(bull.data.sessionId).toBe("session-1");
   });
 
+  it("books nothing while no GPU is free to film on", async () => {
+    gameStreamer.freeRenderGpuNodeIds.mockResolvedValueOnce([]);
+    const bull = makeJob({ mapName: "de_mirage" });
+
+    await expect(job.process(bull as any)).rejects.toBeInstanceOf(DelayedError);
+
+    expect(practice.startForRender).not.toHaveBeenCalled();
+    expect(renders.failRenders).not.toHaveBeenCalled();
+  });
+
+  it("gives up on a GPU that stays busy and frees the practice server", async () => {
+    gameStreamer.dispatchNadePreviews.mockRejectedValueOnce(
+      new NoGpuAvailableError(),
+    );
+    const bull = makeJob({
+      mapName: "de_mirage",
+      sessionId: "session-1",
+      bookedAt: Date.now(),
+      gpuWaitSince: Date.now() - 11 * 60 * 1000,
+    });
+
+    await job.process(bull as any);
+
+    expect(renders.failRenders).toHaveBeenCalledWith(
+      ["render-1"],
+      expect.stringContaining("never came free"),
+    );
+    expect(practice.endRenderSession).toHaveBeenCalled();
+  });
+
   it("retries instead of failing when no practice server is free", async () => {
     practice.startForRender.mockRejectedValueOnce(
       new Error("no server available"),
@@ -274,6 +308,30 @@ describe("BatchUtilityRenderJob", () => {
     expect(gameStreamer.dispatchNadePreviews).not.toHaveBeenCalled();
   });
 
+  it("puts a lineup approved while the server booted on the session before filming it", async () => {
+    const late = {
+      ...RENDER,
+      id: "render-late",
+      utility_lineup_id: "lineup-2",
+    };
+    renders.inFlightForMap.mockResolvedValue([RENDER, late]);
+    const bull = makeJob({
+      mapName: "de_mirage",
+      sessionId: "session-1",
+      bookedAt: Date.now(),
+    });
+
+    await expect(job.process(bull as any)).rejects.toBeInstanceOf(DelayedError);
+
+    expect(renders.attachSession).toHaveBeenCalledWith(
+      ["render-1", "render-late"],
+      "session-1",
+    );
+    expect(renders.attachSession.mock.invocationCallOrder[0]).toBeLessThan(
+      gameStreamer.dispatchNadePreviews.mock.invocationCallOrder[0],
+    );
+  });
+
   it("stamps the server's plugin runtime onto every spec at dispatch", async () => {
     const bull = makeJob({
       mapName: "de_mirage",
@@ -287,7 +345,11 @@ describe("BatchUtilityRenderJob", () => {
       gameStreamer.dispatchNadePreviews.mock.calls[0];
     expect(mapName).toBe("de_mirage");
     expect(matchId).toBe("match-1");
-    expect(connect).toEqual({ addr: "1.2.3.4:27015", password: "pw" });
+    expect(connect).toEqual({
+      addr: "1.2.3.4:27015",
+      password: "pw",
+      nodeId: "node-A",
+    });
     expect(jobs).toEqual([
       {
         job_id: "render-1",
@@ -420,11 +482,35 @@ describe("BatchUtilityRenderJob", () => {
       dispatchedIds: ["render-1"],
     });
 
-    await job.process(bull as any);
+    await expect(job.process(bull as any)).rejects.toBeInstanceOf(DelayedError);
 
     expect(renders.failRenders).toHaveBeenCalledWith(
       ["render-1"],
       "render pod exited before reporting terminal status",
+    );
+  });
+
+  // A cancel kills the pod, and the retry is queued while this job is still
+  // winding the old batch down -- its own add() was dropped as a duplicate of
+  // this very job, so nothing else is coming for it for up to five minutes.
+  it("goes straight on to a render queued behind the batch it lost", async () => {
+    const retry = { ...RENDER, id: "render-2" };
+    renders.inFlightForMap.mockResolvedValueOnce([retry]);
+    gameStreamer.getNadeRenderPodState.mockResolvedValueOnce("absent");
+    const bull = makeJob({
+      mapName: "de_mirage",
+      sessionId: "session-1",
+      dispatched: true,
+      dispatchedIds: ["render-1"],
+    });
+
+    await expect(job.process(bull as any)).rejects.toBeInstanceOf(DelayedError);
+
+    expect(practice.endRenderSession).toHaveBeenCalledWith("session-1");
+    expect(bull.updateData).toHaveBeenLastCalledWith({ mapName: "de_mirage" });
+    expect(renders.failRenders).not.toHaveBeenCalledWith(
+      expect.arrayContaining(["render-2"]),
+      expect.anything(),
     );
   });
 

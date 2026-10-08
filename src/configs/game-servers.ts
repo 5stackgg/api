@@ -14,6 +14,11 @@ export default (): {
     gameStreamerImage:
       process.env.GAME_STREAMER_IMAGE ||
       "ghcr.io/5stackgg/game-streamer:latest",
+    // Utility preview renders only: a dev streamer or plugin image can be tried
+    // on renders without every live stream, demo and match server following it.
+    utilityRenderStreamerImage:
+      process.env.UTILITY_RENDER_STREAMER_IMAGE || null,
+    utilityRenderServerImage: process.env.UTILITY_RENDER_SERVER_IMAGE || null,
     namespace: "5stack",
   },
 });

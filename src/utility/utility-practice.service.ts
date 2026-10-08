@@ -334,6 +334,7 @@ export class UtilityPracticeService {
     password: string;
     match_id: string;
     plugin_runtime: string;
+    node_id: string;
   } | null> {
     // A render pod is NOT an internet player, and the address a player would
     // use is wrong for it three ways over, all proven on a live pod:
@@ -353,11 +354,13 @@ export class UtilityPracticeService {
         password: string;
         port: number | null;
         plugin_runtime: string;
+        node_id: string | null;
       }>
     >(
       `SELECT m.id::text AS match_id,
               m.password,
               srv.port,
+              srv.game_server_node_id AS node_id,
               COALESCE(n.pin_plugin_runtime, public.active_plugin_runtime())
                 AS plugin_runtime
          FROM public.utility_practice_sessions s
@@ -368,7 +371,7 @@ export class UtilityPracticeService {
       [sessionId],
     );
 
-    if (!row?.password || !row?.port) {
+    if (!row?.password || !row?.port || !row?.node_id) {
       return null;
     }
 
@@ -377,6 +380,7 @@ export class UtilityPracticeService {
       password: row.password,
       match_id: row.match_id,
       plugin_runtime: row.plugin_runtime,
+      node_id: row.node_id,
     };
   }
 

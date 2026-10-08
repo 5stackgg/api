@@ -33,6 +33,7 @@ import { FailedToCreateOnDemandServer } from "../errors/FailedToCreateOnDemandSe
 import { LoggingService } from "src/k8s/logging/logging.service";
 import type { MatchServerBootDiagnostic } from "src/k8s/logging/bootDiagnostics";
 import { SystemSettingName } from "src/system/enums/SystemSettingName";
+import { PostgresService } from "src/postgres/postgres.service";
 
 @Injectable()
 export class MatchAssistantService {
@@ -97,6 +98,7 @@ export class MatchAssistantService {
     @InjectQueue(MatchQueues.MatchServers) private queue: Queue,
     @InjectQueue(MatchQueues.ScheduledMatches)
     private scheduledMatchesQueue: Queue,
+    private readonly postgres: PostgresService,
   ) {
     this.appConfig = this.config.get<AppConfig>("app");
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
@@ -903,6 +905,19 @@ export class MatchAssistantService {
       throw Error("unable to find match");
     }
 
+    // A render pod reaches its practice server over loopback, so the server
+    // has to boot on a node the pod can be scheduled on.
+    const isRender =
+      match.source === "practice" &&
+      (await this.isRenderPracticeMatch(matchId));
+    const renderNodeFilter = isRender
+      ? {
+          gpu: { _eq: true },
+          gpu_rendering_enabled: { _eq: true },
+          id: { _in: await this.freeRenderGpuNodeIds() },
+        }
+      : {};
+
     const { game_server_nodes } = await this.hasura.query({
       game_server_nodes: {
         __args: {
@@ -916,6 +931,7 @@ export class MatchAssistantService {
             enabled_for_match_making: {
               _eq: true,
             },
+            ...renderNodeFilter,
             ...(match.region
               ? {
                   region: {
@@ -931,7 +947,7 @@ export class MatchAssistantService {
 
     if (game_server_nodes.length === 0) {
       this.logger.warn(
-        `[${matchId}] no eligible game server node (Online + enabled + matchmaking${match.region ? ` in ${match.region}` : ""}) — cannot boot an on-demand server`,
+        `[${matchId}] no eligible game server node (Online + enabled + matchmaking${isRender ? " + GPU rendering" : ""}${match.region ? ` in ${match.region}` : ""}) — cannot boot an on-demand server`,
       );
       return false;
     }
@@ -1013,6 +1029,7 @@ export class MatchAssistantService {
                       status: {
                         _eq: "Online",
                       },
+                      ...renderNodeFilter,
                     },
                     ...(match.region
                       ? [
@@ -1137,9 +1154,10 @@ export class MatchAssistantService {
           );
 
           const pluginImage =
-            await this.pluginRuntimeService.resolveGameServerPluginImage(
+            (isRender && this.gameServerConfig.utilityRenderServerImage) ||
+            (await this.pluginRuntimeService.resolveGameServerPluginImage(
               server.game_server_node,
-            );
+            ));
 
           const fivestackRanksSettingName = match.is_tournament_match
             ? "fivestack_ranks_tournaments"
@@ -1160,17 +1178,18 @@ export class MatchAssistantService {
 
           const utilityPracticeEnv =
             match.source === "practice"
-              ? await this.utilityPracticeServerEnv(
-                  await this.isRenderPracticeMatch(matchId),
-                )
+              ? await this.utilityPracticeServerEnv(isRender)
               : [];
           const gameMode = await this.gameModesService.resolveForServer(
             server.id,
             matchId,
           );
 
-          const gameModeEnvironment =
-            this.gameModesService.environmentFor(gameMode);
+          // A render pod's cs2 would stop on a "Confirm Workshop Download"
+          // prompt nobody is there to click, and it has no use for any addon.
+          const gameModeEnvironment = this.gameModesService
+            .environmentFor(gameMode)
+            .filter((entry) => !(isRender && entry.name === "WORKSHOP_ADDONS"));
 
           const createdJob = await batch.createNamespacedJob({
             namespace: this.namespace,
@@ -1472,6 +1491,18 @@ export class MatchAssistantService {
     return (utility_practice_sessions ?? []).length > 0;
   }
 
+  // Same predicate as the render pod's GPU claim, so the server never lands on
+  // a node whose GPU something else is already using.
+  private async freeRenderGpuNodeIds(): Promise<Array<string>> {
+    const rows = await this.postgres.query<Array<{ id: string }>>(
+      `SELECT id
+         FROM public.game_server_nodes
+        WHERE id NOT IN (SELECT * FROM public.gpu_busy_node_ids())
+          AND id NOT IN (SELECT * FROM public.gpu_batch_blocked_node_ids())`,
+    );
+    return rows.map((row) => row.id);
+  }
+
   private async utilityPracticeServerEnv(isRender = false) {
     return [
       { name: "INSTALL_5STACK_PLUGIN", value: "false" },
@@ -1485,14 +1516,12 @@ export class MatchAssistantService {
         name: "UTILITY_URL",
         value: this.appConfig.apiDomain,
       },
-      // A render has no human to throw, so `rethrow` must EMIT the real
-      // projectile from the seed (np_ghost_projectile) or it just repositions
-      // and films a player standing still. And no trajectory line cluttering
-      // the clip (np_ghost_preview off). Human practice keeps the defaults.
+      // The plugin directs the render pod's shot and draws nothing over it --
+      // so no HUD addon either, whose workshop download would stall the pod.
       ...(isRender
         ? [
-            { name: "NP_GHOST_PROJECTILE", value: "true" },
-            { name: "NP_GHOST_PREVIEW", value: "false" },
+            { name: "UTILITY_RENDER_MODE", value: "true" },
+            { name: "HUD_WORKSHOP_ID", value: "" },
           ]
         : []),
     ];

@@ -6,19 +6,63 @@ const LINEUP = {
   map_name: "de_mirage",
   utility_type: "Smoke",
   side: "TERRORIST",
-  origin_x: 1, origin_y: 2, origin_z: 3,
+  origin_x: 1,
+  origin_y: 2,
+  origin_z: 3,
   eye_z: 64,
-  view_yaw: 90, view_pitch: -20,
+  view_yaw: 90,
+  view_pitch: -20,
+  technique: "Jump",
+  throw_strength: "Full",
+  jump_throw_bind: true,
+  land_x: 10,
+  land_y: 20,
+  land_z: 30,
   flight_time_ms: 2400,
   confidence: "exact",
   visibility: "Public",
   archived_at: null as Date | null,
-  initial_pos_x: 1, initial_pos_y: 2, initial_pos_z: 3,
-  initial_vel_x: 100, initial_vel_y: 0, initial_vel_z: 50,
+  initial_pos_x: 1,
+  initial_pos_y: 2,
+  initial_pos_z: 3,
+  initial_vel_x: 100,
+  initial_vel_y: 0,
+  initial_vel_z: 50,
   preview_file: null as string | null,
   author_steam_id: "76561198000000001",
   public_reviewed_by: "76561198000000002",
 };
+
+const APPROACH = [
+  {
+    t: -16,
+    x: 10,
+    y: 20,
+    z: 30,
+    vx: 250,
+    vy: -12.5,
+    vz: 0,
+    pitch: -3.5,
+    yaw: 90,
+    buttons: 1024,
+    on_ground: true,
+    ducked: false,
+  },
+  {
+    t: 0,
+    x: 14,
+    y: 20,
+    z: 31.5,
+    vx: 240,
+    vy: 0,
+    vz: 301,
+    pitch: -4,
+    yaw: 91.5,
+    buttons: 1026,
+    on_ground: false,
+    ducked: true,
+  },
+];
 
 // BullMQ builds its redis keys with ':' and refuses a custom id containing one,
 // which is not a validation the type system can catch -- it throws at add() time,
@@ -43,13 +87,22 @@ describe("UtilityRendersService.batchJobId", () => {
 describe("UtilityRendersService", () => {
   let service: UtilityRendersService;
   let postgres: { query: jest.Mock };
-  let s3: { put: jest.Mock; has: jest.Mock };
+  let s3: {
+    put: jest.Mock;
+    has: jest.Mock;
+    removePrefix: jest.Mock;
+    remove?: jest.Mock;
+  };
   let queue: { add: jest.Mock };
   let logger: { log: jest.Mock; warn: jest.Mock; error: jest.Mock };
 
   beforeEach(() => {
     postgres = { query: jest.fn() };
-    s3 = { put: jest.fn(), has: jest.fn().mockResolvedValue(false) };
+    s3 = {
+      put: jest.fn(),
+      has: jest.fn().mockResolvedValue(false),
+      removePrefix: jest.fn().mockResolvedValue(0),
+    };
     queue = { add: jest.fn() };
     logger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
 
@@ -129,8 +182,14 @@ describe("UtilityRendersService", () => {
     });
 
     it("coalesces within-stage ticks onto one entry and keeps the first at", async () => {
-      const first = { status: "booting", at: "2026-01-01T00:00:00.000Z", boot_stage: "downloading_cs2" };
-      postgres.query.mockResolvedValueOnce(row([first])).mockResolvedValueOnce([]);
+      const first = {
+        status: "booting",
+        at: "2026-01-01T00:00:00.000Z",
+        boot_stage: "downloading_cs2",
+      };
+      postgres.query
+        .mockResolvedValueOnce(row([first]))
+        .mockResolvedValueOnce([]);
 
       await service.reportStatus("render-1", {
         status: "booting",
@@ -150,8 +209,14 @@ describe("UtilityRendersService", () => {
     });
 
     it("pushes a fresh entry when the stage changes", async () => {
-      const first = { status: "booting", at: "2026-01-01T00:00:00.000Z", boot_stage: "downloading_cs2" };
-      postgres.query.mockResolvedValueOnce(row([first])).mockResolvedValueOnce([]);
+      const first = {
+        status: "booting",
+        at: "2026-01-01T00:00:00.000Z",
+        boot_stage: "downloading_cs2",
+      };
+      postgres.query
+        .mockResolvedValueOnce(row([first]))
+        .mockResolvedValueOnce([]);
 
       await service.reportStatus("render-1", {
         status: "booting",
@@ -168,7 +233,10 @@ describe("UtilityRendersService", () => {
     it("still writes a real status transition to the row", async () => {
       postgres.query.mockResolvedValueOnce(row([])).mockResolvedValueOnce([]);
 
-      await service.reportStatus("render-1", { status: "rendering", progress: 0.3 });
+      await service.reportStatus("render-1", {
+        status: "rendering",
+        progress: 0.3,
+      });
 
       const [sql, bindings] = postgres.query.mock.calls[1];
       expect(sql).toMatch(/SET status = \$2/);
@@ -192,7 +260,10 @@ describe("UtilityRendersService", () => {
       expect(updates).toHaveLength(2);
       for (const [, bindings] of updates) {
         expect(JSON.parse(bindings[1])).toEqual([
-          expect.objectContaining({ status: "booting", boot_stage: "server_starting" }),
+          expect.objectContaining({
+            status: "booting",
+            boot_stage: "server_starting",
+          }),
         ]);
       }
     });
@@ -222,6 +293,49 @@ describe("UtilityRendersService", () => {
           jobId: "utility-render-batch-de_mirage",
         }),
       );
+    });
+
+    it("drops the lineup's earlier cancelled and failed attempts when a new one is queued", async () => {
+      postgres.query
+        .mockResolvedValueOnce([LINEUP])
+        .mockResolvedValueOnce([{ id: "render-2", status: "queued" }]);
+
+      await service.enqueue(LINEUP.id, { force: true });
+
+      const sweep = postgres.query.mock.calls.find(([sql]) =>
+        /DELETE FROM public\.utility_lineup_renders/.test(String(sql)),
+      );
+      expect(sweep).toBeDefined();
+      expect(sweep[1]).toEqual([
+        LINEUP.id,
+        "render-2",
+        ["queued", "rendering", "uploading", "done"],
+      ]);
+    });
+
+    it("sweeps the files of the attempts a new one replaces", async () => {
+      postgres.query
+        .mockResolvedValueOnce([LINEUP])
+        .mockResolvedValueOnce([{ id: "render-2", status: "queued" }])
+        .mockResolvedValueOnce([{ id: "render-1" }]);
+
+      await service.enqueue(LINEUP.id, { force: true });
+
+      expect(s3.removePrefix).toHaveBeenCalledWith(
+        `clips/utility/${LINEUP.id}/render-1`,
+      );
+    });
+
+    it("reads the run-up off the lineup into the stored spec", async () => {
+      postgres.query
+        .mockResolvedValueOnce([{ ...LINEUP, approach: APPROACH }])
+        .mockResolvedValueOnce([{ id: "render-3", status: "queued" }]);
+
+      await service.enqueue(LINEUP.id);
+
+      expect(postgres.query.mock.calls[0][0]).toMatch(/l\.approach/);
+      const [, bindings] = postgres.query.mock.calls[1];
+      expect(JSON.parse(bindings[4]).approach).toEqual(APPROACH);
     });
 
     it("refuses a lineup that is not public", async () => {
@@ -262,9 +376,7 @@ describe("UtilityRendersService", () => {
     });
 
     it("does not double-queue when the in-flight index refuses the insert", async () => {
-      postgres.query
-        .mockResolvedValueOnce([LINEUP])
-        .mockResolvedValueOnce([]);
+      postgres.query.mockResolvedValueOnce([LINEUP]).mockResolvedValueOnce([]);
 
       const result = await service.enqueue(LINEUP.id);
 
@@ -297,15 +409,15 @@ describe("UtilityRendersService", () => {
       expect(result.reason).toMatch(/'derived'/);
     });
 
-    it("skips a nameless lineup — the plugin resolves by name only", async () => {
+    it("films a nameless lineup — the pod stages it by id", async () => {
       postgres.query
         .mockResolvedValueOnce([{ ...LINEUP, name: "  " }])
-        .mockResolvedValueOnce([{ id: "render-5", status: "skipped" }]);
+        .mockResolvedValueOnce([{ id: "render-5", status: "queued" }]);
 
       const result = await service.enqueue(LINEUP.id);
 
-      expect(result.status).toBe("skipped");
-      expect(result.reason).toMatch(/no name/);
+      expect(result.queued).toBe(true);
+      expect(postgres.query.mock.calls[1][1][5]).toBe("queued");
     });
 
     it("hosts the practice session on the reviewer, falling back to the author", async () => {
@@ -333,6 +445,43 @@ describe("UtilityRendersService", () => {
         confidence: "exact",
         output: { resolution: "1080p", fps: 60 },
       });
+    });
+
+    it("tells the pod how to act the throw out and where it lands", () => {
+      const spec = UtilityRendersService.buildSpec(LINEUP as any);
+
+      expect(spec).toMatchObject({
+        technique: "Jump",
+        throw_strength: "Full",
+        jump_throw_bind: true,
+        land_x: 10,
+        land_y: 20,
+        land_z: 30,
+      });
+    });
+
+    it("hands the pod the run-up to act out", () => {
+      const spec = UtilityRendersService.buildSpec({
+        ...LINEUP,
+        approach: APPROACH,
+      } as any);
+
+      expect(spec.approach).toEqual(APPROACH);
+      expect(JSON.parse(JSON.stringify(spec)).approach).toEqual(APPROACH);
+    });
+
+    it("says a throw made standing still has no run-up", () => {
+      expect(
+        UtilityRendersService.buildSpec({ ...LINEUP, approach: null } as any)
+          .approach,
+      ).toBeNull();
+      expect(
+        UtilityRendersService.buildSpec({ ...LINEUP, approach: [] } as any)
+          .approach,
+      ).toBeNull();
+      expect(
+        UtilityRendersService.buildSpec(LINEUP as any).approach,
+      ).toBeNull();
     });
 
     it("calls a zero-velocity seed no seed at all", () => {
@@ -455,44 +604,180 @@ describe("UtilityRendersService", () => {
 
       expect(postgres.query).toHaveBeenCalledTimes(1);
     });
+
+    it("never puts a cancelled render back in flight", async () => {
+      postgres.query.mockResolvedValueOnce([
+        { status: "cancelled", status_history: [] },
+      ]);
+
+      await service.reportStatus("job-1", {
+        status: "rendering",
+        progress: 0.7,
+      });
+
+      expect(postgres.query).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("finalizeUpload", () => {
-    it("streams to S3 and only then repoints the lineup", async () => {
+    const uploading = () =>
       postgres.query
         .mockResolvedValueOnce([
           { utility_lineup_id: LINEUP.id, status: "uploading" },
         ])
+        .mockResolvedValueOnce([{ preview_stills: null }])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
-      s3.has.mockResolvedValueOnce(true);
+    const lineupUpdate = () =>
+      postgres.query.mock.calls.find(([sql]) =>
+        String(sql).includes("UPDATE public.utility_lineups"),
+      )[1];
+
+    it("streams to S3 and only then repoints the lineup", async () => {
+      uploading();
+      s3.has.mockImplementation(
+        async (key: string) => key === `clips/utility/${LINEUP.id}/job-1.jpg`,
+      );
 
       const stream = {} as any;
       const result = await service.finalizeUpload("job-1", stream, 4200);
 
       expect(s3.put).toHaveBeenCalledWith(
-        `clips/utility/${LINEUP.id}.mp4`,
+        `clips/utility/${LINEUP.id}/job-1.mp4`,
         stream,
         "video/mp4",
       );
-      expect(result.file).toBe(`clips/utility/${LINEUP.id}.mp4`);
-      const updateBindings = postgres.query.mock.calls[1][1];
-      expect(updateBindings[1]).toBe(`clips/utility/${LINEUP.id}.mp4`);
-      expect(updateBindings[2]).toBe(`clips/utility/${LINEUP.id}.jpg`);
+      expect(result.file).toBe(`clips/utility/${LINEUP.id}/job-1.mp4`);
+      const updateBindings = lineupUpdate();
+      expect(updateBindings[1]).toBe(`clips/utility/${LINEUP.id}/job-1.mp4`);
+      expect(updateBindings[2]).toBe(`clips/utility/${LINEUP.id}/job-1.jpg`);
       expect(updateBindings[3]).toBe(4200);
     });
 
-    it("leaves the thumbnail alone when the pod never uploaded one", async () => {
+    it("never serves a re-render from the previous render's cached key", async () => {
       postgres.query
         .mockResolvedValueOnce([
           { utility_lineup_id: LINEUP.id, status: "uploading" },
         ])
+        .mockResolvedValueOnce([
+          {
+            preview_file: `clips/utility/${LINEUP.id}.mp4`,
+            preview_thumbnail: `clips/utility/${LINEUP.id}.jpg`,
+            preview_stills: null,
+          },
+        ])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
+      s3.remove = jest.fn();
+
+      const result = await service.finalizeUpload("job-2", {} as any, null);
+
+      expect(result.file).not.toBe(`clips/utility/${LINEUP.id}.mp4`);
+      expect(s3.remove).toHaveBeenCalledWith(`clips/utility/${LINEUP.id}.mp4`);
+      expect(s3.remove).toHaveBeenCalledWith(`clips/utility/${LINEUP.id}.jpg`);
+    });
+
+    it("leaves the thumbnail alone when the pod never uploaded one", async () => {
+      uploading();
 
       await service.finalizeUpload("job-1", {} as any, null);
 
-      expect(postgres.query.mock.calls[1][1][2]).toBeNull();
+      expect(lineupUpdate()[2]).toBeNull();
+    });
+
+    it("records the stills this render uploaded alongside its clip", async () => {
+      uploading();
+      s3.has.mockImplementation(async (key: string) =>
+        [
+          `clips/utility/${LINEUP.id}/job-1/stance.jpg`,
+          `clips/utility/${LINEUP.id}/job-1/landing.jpg`,
+        ].includes(key),
+      );
+
+      await service.finalizeUpload("job-1", {} as any, null);
+
+      expect(JSON.parse(lineupUpdate()[4])).toEqual({
+        stance: `clips/utility/${LINEUP.id}/job-1/stance.jpg`,
+        landing: `clips/utility/${LINEUP.id}/job-1/landing.jpg`,
+      });
+    });
+
+    it("records a webp still over a jpeg one of the same kind", async () => {
+      uploading();
+      s3.has.mockImplementation(async (key: string) =>
+        [
+          `clips/utility/${LINEUP.id}/job-1/aim_close.webp`,
+          `clips/utility/${LINEUP.id}/job-1/aim_close.jpg`,
+          `clips/utility/${LINEUP.id}/job-1/landing.jpg`,
+        ].includes(key),
+      );
+
+      await service.finalizeUpload("job-1", {} as any, null);
+
+      expect(JSON.parse(lineupUpdate()[4])).toEqual({
+        aim_close: `clips/utility/${LINEUP.id}/job-1/aim_close.webp`,
+        landing: `clips/utility/${LINEUP.id}/job-1/landing.jpg`,
+      });
+    });
+
+    it("retires the lineup's older finished renders once the new one is up", async () => {
+      uploading();
+
+      await service.finalizeUpload("job-1", {} as any, null);
+
+      const retire = postgres.query.mock.calls.find(([sql]) =>
+        /DELETE FROM public\.utility_lineup_renders/.test(String(sql)),
+      );
+      expect(retire).toBeDefined();
+      expect(String(retire[0])).toMatch(/id <> \$2::uuid/);
+      expect(String(retire[0])).toMatch(
+        /NOT \(status = ANY\(\$3::text\[\]\)\)/,
+      );
+      expect(retire[1]).toEqual([
+        LINEUP.id,
+        "job-1",
+        ["queued", "rendering", "uploading"],
+      ]);
+    });
+
+    it("sweeps the files of the renders it retires", async () => {
+      uploading().mockResolvedValueOnce([{ id: "job-0" }, { id: "job-x" }]);
+
+      await service.finalizeUpload("job-1", {} as any, null);
+
+      expect(s3.removePrefix).toHaveBeenCalledWith(
+        `clips/utility/${LINEUP.id}/job-0`,
+      );
+      expect(s3.removePrefix).toHaveBeenCalledWith(
+        `clips/utility/${LINEUP.id}/job-x`,
+      );
+      expect(s3.removePrefix).not.toHaveBeenCalledWith(
+        `clips/utility/${LINEUP.id}/job-1`,
+      );
+    });
+
+    it("never pairs a new clip with an older render's stills", async () => {
+      postgres.query
+        .mockResolvedValueOnce([
+          { utility_lineup_id: LINEUP.id, status: "uploading" },
+        ])
+        .mockResolvedValueOnce([
+          {
+            preview_stills: {
+              aim: `clips/utility/${LINEUP.id}/job-0/aim.jpg`,
+            },
+          },
+        ])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
+      s3.remove = jest.fn();
+
+      await service.finalizeUpload("job-1", {} as any, null);
+
+      expect(lineupUpdate()[4]).toBeNull();
+      expect(s3.remove).toHaveBeenCalledWith(
+        `clips/utility/${LINEUP.id}/job-0/aim.jpg`,
+      );
     });
 
     it("refuses to overwrite a finished render", async () => {
@@ -507,13 +792,239 @@ describe("UtilityRendersService", () => {
     });
   });
 
-  describe("s3 keys", () => {
-    it("keys on the lineup so a re-render replaces the clip in place", () => {
-      expect(UtilityRendersService.GetPreviewS3Key("abc")).toBe(
-        "clips/utility/abc.mp4",
+  describe("deletePreview", () => {
+    const current = `clips/utility/${LINEUP.id}/render-new.mp4`;
+
+    it("takes the preview with the render whose clip it is, whatever else is done", async () => {
+      postgres.query
+        .mockResolvedValueOnce([
+          {
+            utility_lineup_id: LINEUP.id,
+            status: "done",
+            preview_file: current,
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            preview_file: current,
+            preview_thumbnail: `clips/utility/${LINEUP.id}/render-new.jpg`,
+            preview_stills: {
+              aim: `clips/utility/${LINEUP.id}/render-new/aim.webp`,
+            },
+          },
+        ])
+        .mockResolvedValueOnce([{ id: "render-new" }]);
+      s3.remove = jest.fn();
+
+      await expect(service.deletePreview("render-new")).resolves.toBe(true);
+
+      expect(
+        postgres.query.mock.calls.some(([sql]) =>
+          String(sql).includes("UPDATE public.utility_lineups"),
+        ),
+      ).toBe(true);
+      expect(s3.remove).toHaveBeenCalledWith(current);
+      expect(s3.remove).toHaveBeenCalledWith(
+        `clips/utility/${LINEUP.id}/render-new/aim.webp`,
       );
-      expect(UtilityRendersService.GetPreviewThumbnailS3Key("abc")).toBe(
-        "clips/utility/abc.jpg",
+    });
+
+    it("leaves the preview alone when an older render is deleted", async () => {
+      postgres.query
+        .mockResolvedValueOnce([
+          {
+            utility_lineup_id: LINEUP.id,
+            status: "done",
+            preview_file: current,
+          },
+        ])
+        .mockResolvedValueOnce([{ id: "render-old" }]);
+      s3.remove = jest.fn();
+
+      await expect(service.deletePreview("render-old")).resolves.toBe(true);
+
+      expect(
+        postgres.query.mock.calls.some(([sql]) =>
+          String(sql).includes("UPDATE public.utility_lineups"),
+        ),
+      ).toBe(false);
+      expect(s3.remove).not.toHaveBeenCalled();
+    });
+
+    it("takes the preview with a render deleted before it reported done", async () => {
+      postgres.query
+        .mockResolvedValueOnce([
+          {
+            utility_lineup_id: LINEUP.id,
+            status: "uploading",
+            preview_file: current,
+          },
+        ])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([
+          {
+            preview_file: current,
+            preview_thumbnail: null,
+            preview_stills: null,
+          },
+        ])
+        .mockResolvedValueOnce([{ id: "render-new" }]);
+      s3.remove = jest.fn();
+
+      await service.deletePreview("render-new");
+
+      expect(
+        postgres.query.mock.calls.some(([sql]) =>
+          String(sql).includes("UPDATE public.utility_lineups"),
+        ),
+      ).toBe(true);
+    });
+
+    it("sweeps the files of whichever render is deleted", async () => {
+      postgres.query
+        .mockResolvedValueOnce([
+          {
+            utility_lineup_id: LINEUP.id,
+            status: "error",
+            preview_file: current,
+          },
+        ])
+        .mockResolvedValueOnce([{ id: "render-old" }]);
+
+      await service.deletePreview("render-old");
+
+      expect(s3.removePrefix).toHaveBeenCalledWith(
+        `clips/utility/${LINEUP.id}/render-old`,
+      );
+    });
+
+    it("keeps a preview from before per-render keys with its only done render", async () => {
+      postgres.query
+        .mockResolvedValueOnce([
+          {
+            utility_lineup_id: LINEUP.id,
+            status: "done",
+            preview_file: `clips/utility/${LINEUP.id}.mp4`,
+          },
+        ])
+        .mockResolvedValueOnce([{ count: "1" }])
+        .mockResolvedValueOnce([{ id: "render-old" }]);
+      s3.remove = jest.fn();
+
+      await service.deletePreview("render-old");
+
+      expect(s3.remove).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("clearFinished", () => {
+    it("sweeps cleared renders' files but never the live preview's", async () => {
+      postgres.query
+        .mockResolvedValueOnce([
+          { id: "render-live", utility_lineup_id: LINEUP.id },
+          { id: "render-failed", utility_lineup_id: LINEUP.id },
+        ])
+        .mockResolvedValueOnce([
+          {
+            id: LINEUP.id,
+            preview_file: `clips/utility/${LINEUP.id}/render-live.mp4`,
+          },
+        ]);
+
+      await expect(service.clearFinished()).resolves.toBe(2);
+
+      expect(s3.removePrefix).toHaveBeenCalledWith(
+        `clips/utility/${LINEUP.id}/render-failed`,
+      );
+      expect(s3.removePrefix).not.toHaveBeenCalledWith(
+        `clips/utility/${LINEUP.id}/render-live`,
+      );
+    });
+  });
+
+  describe("uploadStill", () => {
+    it("stores a still under the lineup's clip prefix", async () => {
+      postgres.query.mockResolvedValueOnce([
+        { utility_lineup_id: LINEUP.id, status: "rendering" },
+      ]);
+
+      const stream = {} as any;
+      const result = await service.uploadStill("job-1", "aim_close", stream);
+
+      expect(s3.put).toHaveBeenCalledWith(
+        `clips/utility/${LINEUP.id}/job-1/aim_close.jpg`,
+        stream,
+        "image/jpeg",
+      );
+      expect(result.key).toBe(`clips/utility/${LINEUP.id}/job-1/aim_close.jpg`);
+    });
+
+    it("stores a webp still as webp", async () => {
+      postgres.query.mockResolvedValueOnce([
+        { utility_lineup_id: LINEUP.id, status: "rendering" },
+      ]);
+
+      const stream = {} as any;
+      const result = await service.uploadStill(
+        "job-1",
+        "aim_close",
+        stream,
+        "image/webp",
+      );
+
+      expect(s3.put).toHaveBeenCalledWith(
+        `clips/utility/${LINEUP.id}/job-1/aim_close.webp`,
+        stream,
+        "image/webp",
+      );
+      expect(result.key).toBe(
+        `clips/utility/${LINEUP.id}/job-1/aim_close.webp`,
+      );
+    });
+
+    it("stores anything that is not webp as jpeg", async () => {
+      postgres.query.mockResolvedValueOnce([
+        { utility_lineup_id: LINEUP.id, status: "rendering" },
+      ]);
+
+      await service.uploadStill("job-1", "aim", {} as any, "text/html");
+
+      expect(s3.put).toHaveBeenCalledWith(
+        `clips/utility/${LINEUP.id}/job-1/aim.jpg`,
+        expect.anything(),
+        "image/jpeg",
+      );
+    });
+
+    it("refuses a still for a cancelled render", async () => {
+      postgres.query.mockResolvedValueOnce([
+        { utility_lineup_id: LINEUP.id, status: "cancelled" },
+      ]);
+
+      await expect(
+        service.uploadStill("job-1", "aim", {} as any),
+      ).rejects.toThrow("render is cancelled");
+      expect(s3.put).not.toHaveBeenCalled();
+    });
+
+    it("only knows the stills the director films", () => {
+      expect(UtilityRendersService.isStill("landing")).toBe(true);
+      expect(UtilityRendersService.isStill("stance_eyes")).toBe(true);
+      expect(UtilityRendersService.isStill("aim_pin")).toBe(true);
+      expect(UtilityRendersService.isStill("../../etc")).toBe(false);
+    });
+  });
+
+  describe("s3 keys", () => {
+    it("keys each render apart, under the worker's clips/ prefix", () => {
+      expect(UtilityRendersService.GetPreviewS3Key("abc", "r1")).toBe(
+        "clips/utility/abc/r1.mp4",
+      );
+      expect(UtilityRendersService.GetPreviewThumbnailS3Key("abc", "r1")).toBe(
+        "clips/utility/abc/r1.jpg",
+      );
+      expect(UtilityRendersService.GetPreviewS3Key("abc", "r2")).not.toBe(
+        UtilityRendersService.GetPreviewS3Key("abc", "r1"),
       );
     });
   });
