@@ -130,7 +130,14 @@ describe("map asset builds (SQL-driven)", () => {
     return found;
   };
 
-  it("does not build automatically until an operator turns it on", async () => {
+  it("builds automatically unless an operator turns it off", async () => {
+    await expect(service().queueBuild("node-a", 25537370)).resolves.toBe(true);
+    expect((await row("25537370")).status).toBe("Pending");
+
+    await postgres.query("DELETE FROM map_asset_builds");
+    await postgres.query(
+      `INSERT INTO settings (name, value) VALUES ('map_assets_auto_build', 'false')`,
+    );
     await expect(service().queueBuild("node-a", 25537370)).resolves.toBe(false);
     expect(await row("25537370")).toBeUndefined();
 
@@ -375,6 +382,113 @@ describe("map asset builds (SQL-driven)", () => {
         rebuilt: [{ map: "de_mirage", reason: "vpk", assets: ["tri"] }],
         unchanged: 0,
       },
+    });
+  });
+
+  describe("stranded builds", () => {
+    const strand = async ({
+      status = "Building",
+      maps = null,
+      failed = null,
+      failedView = null,
+      requestedBy = null,
+      quietFor = "1 hour",
+    }: {
+      status?: string;
+      maps?: Record<string, unknown> | null;
+      failed?: Array<string> | null;
+      failedView?: Array<string> | null;
+      requestedBy?: string | null;
+      quietFor?: string;
+    } = {}) => {
+      await postgres.query(
+        `INSERT INTO map_asset_builds
+           (build_id, status, trigger, game_server_node_id,
+            requested_by_steam_id, started_at, maps, failed, failed_view,
+            updated_at)
+         VALUES ('25537370', $1, 'manual', 'node-a', $2,
+                 now() - $6::interval, $3::jsonb, $4::jsonb, $5::jsonb,
+                 now() - $6::interval)`,
+        [
+          status,
+          requestedBy,
+          maps && JSON.stringify(maps),
+          failed && JSON.stringify(failed),
+          failedView && JSON.stringify(failedView),
+          quietFor,
+        ],
+      );
+    };
+
+    it.each([
+      ["nothing was ever published", {}, "Failed"],
+      [
+        "a map failed its collision mesh",
+        { maps: { de_mirage: {} }, failed: ["de_anubis"], failedView: [] },
+        "Partial",
+      ],
+      [
+        "a map failed its view mesh",
+        { maps: { de_mirage: {} }, failed: [], failedView: ["de_nuke"] },
+        "Partial",
+      ],
+      [
+        "every map was published",
+        { maps: { de_mirage: {} }, failed: [], failedView: [] },
+        "Published",
+      ],
+      [
+        "the failure lists were never written",
+        { maps: { de_mirage: {} } },
+        "Published",
+      ],
+    ])(
+      "settles a build whose k8s Job is gone when %s",
+      async (_case, fields, status) => {
+        await strand(fields);
+        loggingService.getJobStatus.mockResolvedValue(undefined);
+
+        await service().reconcileStrandedBuilds();
+
+        const settled = await row("25537370");
+        expect(settled.status).toBe(status);
+        expect(settled.error).toContain("interrupted");
+        expect(settled.finished_at).toBeInstanceOf(Date);
+        expect(queue.add).not.toHaveBeenCalled();
+      },
+    );
+
+    it("hands a build back to its k8s Job with who asked for it", async () => {
+      await postgres.query(
+        `INSERT INTO players (steam_id, name) VALUES (76561198000000001, 'Luke')
+         ON CONFLICT (steam_id) DO NOTHING`,
+      );
+      await strand({ requestedBy: "76561198000000001" });
+      loggingService.getJobStatus.mockResolvedValue({ active: 1 });
+
+      await service().reconcileStrandedBuilds();
+
+      expect(queue.add).toHaveBeenCalledWith(
+        "BuildMapAssets",
+        {
+          gameServerNodeId: "node-a",
+          buildId: "25537370",
+          trigger: "manual",
+          requestedBy: "76561198000000001",
+          requestedByName: "Luke",
+        },
+        expect.objectContaining({ jobId: "map-assets.25537370" }),
+      );
+      expect((await row("25537370")).status).toBe("Building");
+    });
+
+    it("leaves a row its job only just wrote alone", async () => {
+      await strand({ quietFor: "1 minute" });
+
+      await service().reconcileStrandedBuilds();
+
+      expect(queue.getJob).not.toHaveBeenCalled();
+      expect((await row("25537370")).status).toBe("Building");
     });
   });
 
