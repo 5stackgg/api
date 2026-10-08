@@ -298,12 +298,14 @@ export class UtilityImportService {
     const withArtifacts = await this.postgres.query<Array<{ id: string }>>(
       `SELECT id::text AS id
          FROM public.utility_lineups
-        WHERE origin_source = $1 AND trajectory_file IS NOT NULL`,
+        WHERE origin_source = $1
+          AND (trajectory_file IS NOT NULL OR preview_file IS NOT NULL)`,
       [source],
     );
 
     for (const lineup of withArtifacts) {
       await this.artifacts.removeTrajectories(lineup.id);
+      await this.artifacts.removePreview(lineup.id);
     }
 
     await this.postgres.query(

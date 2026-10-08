@@ -2,6 +2,7 @@ import zlib from "zlib";
 import { Injectable, Logger } from "@nestjs/common";
 import { S3Service } from "../s3/s3.service";
 import { PostgresService } from "../postgres/postgres.service";
+import { UtilityRendersService } from "./utility-renders.service";
 import {
   DemoParserService,
   ParsedSmokeVolumeResponse,
@@ -147,7 +148,10 @@ export class UtilityArtifactsService {
     input: UtilityTrajectoryInput,
     previousKey: string | null = null,
   ): Promise<string> {
-    const key = UtilityArtifactsService.trajectoryKey(input.lineupId, Date.now());
+    const key = UtilityArtifactsService.trajectoryKey(
+      input.lineupId,
+      Date.now(),
+    );
     const resolved: UtilityTrajectoryInput = {
       ...input,
       smokeVolume: await this.resolveSmokeVolume(input),
@@ -266,6 +270,19 @@ export class UtilityArtifactsService {
   // Deleting the row leaves the blob behind, and a versioned bucket keeps every
   // cache-busted generation of it — sweep the whole prefix, not just the key
   // the row happened to be pointing at.
+  // The rendered clip, its thumbnail and every still: the lineup row is the
+  // only thing that names them, so they go when it does.
+  public async removePreview(lineupId: string): Promise<void> {
+    const prefix = UtilityRendersService.GetLineupPreviewS3Prefix(lineupId);
+    try {
+      await this.s3.removePrefix(prefix);
+    } catch (error) {
+      this.logger.warn(
+        `[utility-preview] failed to sweep ${prefix}: ${(error as Error)?.message}`,
+      );
+    }
+  }
+
   public async removeTrajectories(lineupId: string): Promise<void> {
     try {
       await this.s3.removePrefix(`utility/${lineupId}/`);

@@ -144,6 +144,18 @@ export class UtilityRendersService {
       : "jpg";
   }
 
+  // Everything one render uploaded: `<render>.mp4`, `<render>.jpg` and the
+  // stills under `<render>/`.
+  public static GetRenderS3Prefix(lineupId: string, renderId: string): string {
+    return `clips/utility/${lineupId}/${renderId}`;
+  }
+
+  // Every preview a lineup ever had, including one from before clips were
+  // keyed per render (`<lineup>.mp4`).
+  public static GetLineupPreviewS3Prefix(lineupId: string): string {
+    return `clips/utility/${lineupId}`;
+  }
+
   public static isStill(kind: string): kind is UtilityRenderStill {
     return (UTILITY_RENDER_STILLS as ReadonlyArray<string>).includes(kind);
   }
@@ -246,12 +258,17 @@ export class UtilityRendersService {
     // A new attempt replaces the lineup's earlier cancelled and failed ones in
     // the queue; two rows for one lineup read as two things happening. The
     // done row is the preview still on show, so it stays until this one lands.
-    await this.postgres.query(
+    const replaced = await this.postgres.query<Array<{ id: string }>>(
       `DELETE FROM public.utility_lineup_renders
         WHERE utility_lineup_id = $1::uuid
           AND id <> $2::uuid
-          AND NOT (status = ANY($3::text[]))`,
+          AND NOT (status = ANY($3::text[]))
+      RETURNING id::text AS id`,
       [lineup.id, row.id, [...UTILITY_RENDER_IN_FLIGHT, "done"]],
+    );
+    await this.removeRenderFiles(
+      lineup.id,
+      (replaced ?? []).map((old) => old.id),
     );
 
     if (refusal) {
@@ -341,15 +358,21 @@ export class UtilityRendersService {
       preview_file: string | null;
     },
   ): Promise<boolean> {
-    if (row.status !== "done" || !row.preview_file) {
+    if (!row.preview_file) {
       return false;
     }
 
+    // By the key alone, whatever the row says: the clip goes live a moment
+    // before the pod reports done.
     if (
       row.preview_file ===
       UtilityRendersService.GetPreviewS3Key(row.utility_lineup_id, renderId)
     ) {
       return true;
+    }
+
+    if (row.status !== "done") {
+      return false;
     }
 
     if (row.preview_file !== `clips/utility/${row.utility_lineup_id}.mp4`) {
@@ -366,6 +389,25 @@ export class UtilityRendersService {
     );
 
     return Number(others?.count ?? 0) === 0;
+  }
+
+  private async removeRenderFiles(
+    lineupId: string,
+    renderIds: Array<string>,
+  ): Promise<void> {
+    for (const renderId of renderIds) {
+      const prefix = UtilityRendersService.GetRenderS3Prefix(
+        lineupId,
+        renderId,
+      );
+      try {
+        await this.s3.removePrefix(prefix);
+      } catch (error) {
+        this.logger.warn(
+          `[utility-render] could not sweep ${prefix}: ${(error as Error)?.message}`,
+        );
+      }
+    }
   }
 
   public async deletePreview(renderId: string): Promise<boolean> {
@@ -423,6 +465,10 @@ export class UtilityRendersService {
       ]);
     }
 
+    // Whatever this render uploaded goes with it: a failed one may have got
+    // its stills up before the clip, and nothing else points at them.
+    await this.removeRenderFiles(row.utility_lineup_id, [renderId]);
+
     const deleted = await this.postgres.query<Array<{ id: string }>>(
       `DELETE FROM public.utility_lineup_renders
         WHERE id = $1::uuid
@@ -433,11 +479,43 @@ export class UtilityRendersService {
   }
 
   public async clearFinished(): Promise<number> {
-    const rows = await this.postgres.query<Array<{ id: string }>>(
+    const rows = await this.postgres.query<
+      Array<{ id: string; utility_lineup_id: string }>
+    >(
       `DELETE FROM public.utility_lineup_renders
         WHERE status NOT IN ('queued', 'rendering', 'uploading')
-      RETURNING id::text AS id`,
+      RETURNING id::text AS id, utility_lineup_id::text AS utility_lineup_id`,
     );
+
+    if (rows.length === 0) {
+      return 0;
+    }
+
+    // Clearing the queue is not deleting previews: the render whose clip a
+    // lineup still shows keeps its files, every other one loses them.
+    const lineups = await this.postgres.query<
+      Array<{ id: string; preview_file: string | null }>
+    >(
+      `SELECT id::text AS id, preview_file
+         FROM public.utility_lineups
+        WHERE id = ANY($1::uuid[])`,
+      [[...new Set(rows.map((row) => row.utility_lineup_id))]],
+    );
+    const live = new Set(
+      (lineups ?? []).map((lineup) => lineup.preview_file).filter(Boolean),
+    );
+
+    for (const row of rows) {
+      if (
+        live.has(
+          UtilityRendersService.GetPreviewS3Key(row.utility_lineup_id, row.id),
+        )
+      ) {
+        continue;
+      }
+      await this.removeRenderFiles(row.utility_lineup_id, [row.id]);
+    }
+
     return rows.length;
   }
 
@@ -998,12 +1076,17 @@ export class UtilityRendersService {
     // A lineup shows one preview, so the attempts before this one -- the old
     // preview's render, earlier failures -- are history the queue no longer
     // needs; their files were swapped out above.
-    await this.postgres.query(
+    const retired = await this.postgres.query<Array<{ id: string }>>(
       `DELETE FROM public.utility_lineup_renders
         WHERE utility_lineup_id = $1::uuid
           AND id <> $2::uuid
-          AND NOT (status = ANY($3::text[]))`,
+          AND NOT (status = ANY($3::text[]))
+      RETURNING id::text AS id`,
       [row.utility_lineup_id, jobId, [...UTILITY_RENDER_IN_FLIGHT]],
+    );
+    await this.removeRenderFiles(
+      row.utility_lineup_id,
+      (retired ?? []).map((old) => old.id),
     );
 
     const current = new Set([key, ...Object.values(stills)]);

@@ -1101,6 +1101,7 @@ export class UtilityLineupsService {
     }
 
     await this.artifacts.removeTrajectories(lineupId);
+    await this.artifacts.removePreview(lineupId);
     await this.postgres.query(
       "DELETE FROM public.utility_lineups WHERE id = $1::uuid",
       [lineupId],
