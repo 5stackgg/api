@@ -386,8 +386,8 @@ export class MapAssetsService {
     };
   }
 
-  // The automatic path, gated on the public instance and on an operator having
-  // turned it on. A build is claimed by inserting its row, so every node
+  // The automatic path, gated on the public instance and on an operator not
+  // having turned it off. A build is claimed by inserting its row, so every node
   // reporting the same new build races for one INSERT rather than queueing a
   // job each.
   public async queueBuild(
@@ -741,13 +741,15 @@ export class MapAssetsService {
     };
   }
 
+  // On unless explicitly "false": nothing seeds the row or exposes it in the
+  // web, so an opt-in default left every new build without map assets.
   private async autoBuildEnabled(): Promise<boolean> {
     const [setting] = await this.postgres.query<Array<{ value: string }>>(
       `SELECT value FROM public.settings WHERE name = $1 LIMIT 1`,
       [SystemSettingName.MapAssetsAutoBuild],
     );
 
-    return setting?.value === "true";
+    return setting?.value !== "false";
   }
 
   private async enqueue(
