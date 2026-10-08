@@ -34,7 +34,7 @@ import { GamePluginsModule } from "src/game-plugins/game-plugins.module";
 import { BakeShaders } from "./jobs/BakeShaders";
 import { ValidateGamedata } from "./jobs/ValidateGamedata";
 import { CleanupRemovedNodes } from "./jobs/CleanupRemovedNodes";
-import { ReconcileGamedataValidations } from "./jobs/ReconcileGamedataValidations";
+import { ReconcileCs2BuildRuns } from "./jobs/ReconcileCs2BuildRuns";
 import { MapAssetsModule } from "src/map-assets/map-assets.module";
 import { PostgresModule } from "src/postgres/postgres.module";
 
@@ -50,7 +50,7 @@ import { PostgresModule } from "src/postgres/postgres.module";
     BakeShaders,
     ValidateGamedata,
     CleanupRemovedNodes,
-    ReconcileGamedataValidations,
+    ReconcileCs2BuildRuns,
     ...getQueuesProcessors("GameServerNode"),
     loggerFactory(),
   ],
@@ -160,15 +160,22 @@ export class GameServerNodeModule implements OnApplicationBootstrap {
       },
     );
 
-    void queue.add(
-      ReconcileGamedataValidations.name,
-      {},
-      {
-        repeat: {
-          pattern: "*/5 * * * *",
-        },
-      },
-    );
+    // A burst of restarts pushes the sweep back to the last one.
+    void queue
+      .remove(ReconcileCs2BuildRuns.JOB_ID)
+      .catch(() => 0)
+      .then(() =>
+        queue.add(
+          ReconcileCs2BuildRuns.name,
+          {},
+          {
+            jobId: ReconcileCs2BuildRuns.JOB_ID,
+            delay: ReconcileCs2BuildRuns.DELAY_MS,
+            removeOnComplete: true,
+            removeOnFail: true,
+          },
+        ),
+      );
   }
 
   public async onApplicationBootstrap() {

@@ -1,4 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { randomUUID } from "crypto";
 import { HasuraService } from "../hasura/hasura.service";
 import { e_game_server_node_statuses_enum } from "../../generated";
 import {
@@ -1296,16 +1297,10 @@ export class GameServerNodeService {
     buildId: number,
     branch = "public",
     run: BuildRun = { trigger: "manual" },
+    lockOwner: string = randomUUID(),
   ): Promise<GamedataValidationOutcome | null> {
     const lockKey = GameServerNodeService.gamedataLockKey(buildId, branch);
-    const acquired = await this.redis.set(
-      lockKey,
-      1,
-      "EX",
-      GameServerNodeService.GAMEDATA_LOCK_TTL_S,
-      "NX",
-    );
-    if (acquired === null) {
+    if (!(await this.acquireGamedataLock(lockKey, lockOwner))) {
       this.logger.warn(
         `[validate-gamedata] validation already running for build ${buildId} (${branch})`,
       );
@@ -1421,6 +1416,36 @@ export class GameServerNodeService {
     } finally {
       await this.redis.del(lockKey);
     }
+  }
+
+  // The lock holds the id of the queue job running the validation. A job
+  // killed with the api comes back from BullMQ as stalled under the same id,
+  // and a holder whose job is gone died with the api: either may take the
+  // lock rather than wait out its hour.
+  private async acquireGamedataLock(
+    lockKey: string,
+    owner: string,
+  ): Promise<boolean> {
+    const ttl = GameServerNodeService.GAMEDATA_LOCK_TTL_S;
+    if ((await this.redis.set(lockKey, owner, "EX", ttl, "NX")) !== null) {
+      return true;
+    }
+
+    const holder = await this.redis.get(lockKey);
+    if (holder && holder !== owner && (await this.gamedataJobAlive(holder))) {
+      return false;
+    }
+
+    await this.redis.set(lockKey, owner, "EX", ttl);
+    return true;
+  }
+
+  private async gamedataJobAlive(jobId: string): Promise<boolean> {
+    const job = await this.validateGamedataQueue.getJob(jobId);
+    return (
+      !!job &&
+      !GameServerNodeService.FINISHED_QUEUE_STATES.has(await job.getState())
+    );
   }
 
   private async runGamedataValidation(
@@ -1655,23 +1680,9 @@ export class GameServerNodeService {
     };
   }
 
-  public async gamedataValidationActive(
-    buildId: number,
-    branch = "public",
-  ): Promise<boolean> {
-    if (
-      await this.redis.exists(
-        GameServerNodeService.gamedataLockKey(buildId, branch),
-      )
-    ) {
-      return true;
-    }
-
-    for (const jobId of [
-      `validate.${buildId}.auto`,
-      `validate.${buildId}.manual`,
-    ]) {
-      if (await this.validateGamedataQueue.getJob(jobId)) {
+  public async gamedataValidationActive(buildId: number): Promise<boolean> {
+    for (const jobId of GameServerNodeService.gamedataJobIds(buildId)) {
+      if (await this.gamedataJobAlive(jobId)) {
         return true;
       }
     }
@@ -1679,11 +1690,14 @@ export class GameServerNodeService {
     return false;
   }
 
-  // A run killed with the api (every hot-swap reload is one) leaves its row
-  // running, its lock held for an hour, and for an automatic run the chained
-  // map-asset build never queued. With no queue job left to finish it, the
-  // run is queued again; a build no node can validate any more falls back to
-  // its last result.
+  private static gamedataJobIds(buildId: number) {
+    return [`validate.${buildId}.auto`, `validate.${buildId}.manual`];
+  }
+
+  // BullMQ re-runs a validation killed with the api, but one it gave up on or
+  // lost leaves its row running and, for an automatic run, the chained
+  // map-asset build never queued. Such a run is queued again; a build no node
+  // can validate any more falls back to its last result.
   public async reconcileStrandedGamedataValidations(): Promise<void> {
     const rows = await this.postgres.query<
       Array<{
@@ -1707,25 +1721,15 @@ export class GameServerNodeService {
 
     for (const row of rows) {
       const trigger = row.trigger ?? "auto";
-      const jobIds = [
-        `validate.${row.build_id}.auto`,
-        `validate.${row.build_id}.manual`,
-      ];
-      const jobs = await Promise.all(
-        jobIds.map((jobId) => this.validateGamedataQueue.getJob(jobId)),
-      );
-      const states = await Promise.all(
-        jobs.filter(Boolean).map((job) => job.getState()),
-      );
-      if (
-        states.some(
-          (state) => !GameServerNodeService.FINISHED_QUEUE_STATES.has(state),
-        )
-      ) {
+      if (await this.gamedataValidationActive(row.build_id)) {
         continue;
       }
 
-      await Promise.all(jobs.filter(Boolean).map((job) => job.remove()));
+      await Promise.all(
+        GameServerNodeService.gamedataJobIds(row.build_id).map((jobId) =>
+          this.validateGamedataQueue.remove(jobId),
+        ),
+      );
       await this.redis.del(
         GameServerNodeService.gamedataLockKey(row.build_id, row.branch),
       );

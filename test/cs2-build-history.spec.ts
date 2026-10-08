@@ -12,7 +12,12 @@ import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 describe("CS2 build history (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
-  let redis: { set: jest.Mock; del: jest.Mock; exists: jest.Mock };
+  let redis: {
+    set: jest.Mock;
+    get: jest.Mock;
+    del: jest.Mock;
+    exists: jest.Mock;
+  };
 
   beforeAll(async () => {
     db = await bootMigratedDb("Cs2BuildHistoryTest");
@@ -46,6 +51,7 @@ describe("CS2 build history (SQL-driven)", () => {
     );
     redis = {
       set: jest.fn().mockResolvedValue("OK"),
+      get: jest.fn().mockResolvedValue(null),
       del: jest.fn().mockResolvedValue(1),
       exists: jest.fn().mockResolvedValue(0),
     };
@@ -192,13 +198,79 @@ describe("CS2 build history (SQL-driven)", () => {
     });
   });
 
-  it("leaves the row alone when another run holds the lock", async () => {
-    redis.set.mockResolvedValueOnce(null);
+  describe("the validation lock", () => {
+    const AUTO = "validate.25537370.auto";
+    const MANUAL = "validate.25537370.manual";
 
-    await expect(
-      service().validateGamedata("node-a", 25537370),
-    ).resolves.toBeNull();
-    expect(await validation(25537370)).toBeUndefined();
+    const heldBy = (holder: string, holderState?: string) => {
+      redis.set.mockResolvedValueOnce(null);
+      redis.get.mockResolvedValue(holder);
+      const nodes = service();
+      (nodes as any).validateGamedataQueue = {
+        getJob: jest.fn(async (id: string) =>
+          id === holder && holderState
+            ? { getState: async () => holderState }
+            : undefined,
+        ),
+      };
+      return nodes;
+    };
+
+    it("leaves the row alone while another live job holds it", async () => {
+      await expect(
+        heldBy(MANUAL, "active").validateGamedata(
+          "node-a",
+          25537370,
+          "public",
+          { trigger: "auto" },
+          AUTO,
+        ),
+      ).resolves.toBeNull();
+      expect(await validation(25537370)).toBeUndefined();
+    });
+
+    it("is taken back by the same job when BullMQ re-runs it after a stall", async () => {
+      await expect(
+        heldBy(AUTO, "active").validateGamedata(
+          "node-a",
+          25537370,
+          "public",
+          { trigger: "auto" },
+          AUTO,
+        ),
+      ).resolves.not.toBeNull();
+      expect((await validation(25537370)).status).toBe("pass");
+      expect(redis.set).toHaveBeenLastCalledWith(
+        "gamedata:validate:lock:25537370:public",
+        AUTO,
+        "EX",
+        3600,
+      );
+    });
+
+    it("is taken over from a job that is gone", async () => {
+      await expect(
+        heldBy(AUTO).validateGamedata(
+          "node-a",
+          25537370,
+          "public",
+          { trigger: "manual" },
+          MANUAL,
+        ),
+      ).resolves.not.toBeNull();
+      expect((await validation(25537370)).status).toBe("pass");
+    });
+
+    it("does not count as a run in progress once its job is gone", async () => {
+      redis.exists.mockResolvedValue(1);
+
+      await expect(
+        heldBy(AUTO).gamedataValidationActive(25537370),
+      ).resolves.toBe(false);
+      await expect(
+        heldBy(AUTO, "waiting").gamedataValidationActive(25537370),
+      ).resolves.toBe(true);
+    });
   });
 
   it("only knows automatic and manual triggers", async () => {
@@ -361,6 +433,7 @@ describe("CS2 build history (SQL-driven)", () => {
     const reconcile = (jobs: Record<string, string> = {}) => {
       const queue = {
         add: jest.fn().mockResolvedValue({}),
+        remove: jest.fn().mockResolvedValue(0),
         getJob: jest.fn(async (id: string) =>
           jobs[id]
             ? { getState: async () => jobs[id], remove: jest.fn() }

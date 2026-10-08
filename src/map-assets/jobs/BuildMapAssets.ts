@@ -1,7 +1,10 @@
 import { WorkerHost } from "@nestjs/bullmq";
 import { Job } from "bullmq";
 import { Logger } from "@nestjs/common";
-import { UseQueue } from "../../utilities/QueueProcessors";
+import {
+  RESUMABLE_JOB_MAX_STALLS,
+  UseQueue,
+} from "../../utilities/QueueProcessors";
 import { MapAssetsQueues } from "../enums/MapAssetsQueues";
 import {
   MapAssetBuildOutcome,
@@ -16,7 +19,9 @@ type BuildMapAssetsData = Partial<MapAssetBuildRun> & {
   buildId: string;
 };
 
-@UseQueue("MapAssets", MapAssetsQueues.BuildMapAssets)
+@UseQueue("MapAssets", MapAssetsQueues.BuildMapAssets, {
+  maxStalledCount: RESUMABLE_JOB_MAX_STALLS,
+})
 export class BuildMapAssets extends WorkerHost {
   private static readonly LIST_LIMIT = 10;
 
