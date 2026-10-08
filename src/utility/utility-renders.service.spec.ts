@@ -704,6 +704,7 @@ describe("UtilityRendersService", () => {
     it("only knows the stills the director films", () => {
       expect(UtilityRendersService.isStill("landing")).toBe(true);
       expect(UtilityRendersService.isStill("stance_eyes")).toBe(true);
+      expect(UtilityRendersService.isStill("aim_pin")).toBe(true);
       expect(UtilityRendersService.isStill("../../etc")).toBe(false);
     });
   });

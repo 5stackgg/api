@@ -27,6 +27,7 @@ export const UTILITY_RENDER_STILLS = [
   "stance",
   "stance_eyes",
   "aim",
+  "aim_pin",
   "aim_close",
   "landing",
 ] as const;
