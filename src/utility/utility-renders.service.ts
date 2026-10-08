@@ -243,6 +243,17 @@ export class UtilityRendersService {
       return this.refused("a render for this lineup is already in flight");
     }
 
+    // A new attempt replaces the lineup's earlier cancelled and failed ones in
+    // the queue; two rows for one lineup read as two things happening. The
+    // done row is the preview still on show, so it stays until this one lands.
+    await this.postgres.query(
+      `DELETE FROM public.utility_lineup_renders
+        WHERE utility_lineup_id = $1::uuid
+          AND id <> $2::uuid
+          AND NOT (status = ANY($3::text[]))`,
+      [lineup.id, row.id, [...UTILITY_RENDER_IN_FLIGHT, "done"]],
+    );
+
     if (refusal) {
       this.logger.log(
         `[utility-render ${row.id}] ${lineup.map_name} "${lineup.name}" cannot be filmed: ${refusal}`,

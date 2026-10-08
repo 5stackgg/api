@@ -286,6 +286,24 @@ describe("UtilityRendersService", () => {
       );
     });
 
+    it("drops the lineup's earlier cancelled and failed attempts when a new one is queued", async () => {
+      postgres.query
+        .mockResolvedValueOnce([LINEUP])
+        .mockResolvedValueOnce([{ id: "render-2", status: "queued" }]);
+
+      await service.enqueue(LINEUP.id, { force: true });
+
+      const sweep = postgres.query.mock.calls.find(([sql]) =>
+        /DELETE FROM public\.utility_lineup_renders/.test(String(sql)),
+      );
+      expect(sweep).toBeDefined();
+      expect(sweep[1]).toEqual([
+        LINEUP.id,
+        "render-2",
+        ["queued", "rendering", "uploading", "done"],
+      ]);
+    });
+
     it("reads the run-up off the lineup into the stored spec", async () => {
       postgres.query
         .mockResolvedValueOnce([{ ...LINEUP, approach: APPROACH }])
