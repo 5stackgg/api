@@ -25,6 +25,7 @@ const UTILITY_RENDER_TERMINAL = ["done", "error", "skipped", "cancelled"];
 // The stills the render director calls for, in the order it films them.
 export const UTILITY_RENDER_STILLS = [
   "stance",
+  "stance_eyes",
   "aim",
   "aim_close",
   "landing",
