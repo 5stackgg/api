@@ -185,3 +185,72 @@ describe("SystemService.setVersions", () => {
     expect(written()).toEqual({ name: "updates", value: "[]" });
   });
 });
+
+describe("SystemService.syncImportedHighlightsSupport", () => {
+  let hasura: { mutation: jest.Mock };
+  let postgres: { query: jest.Mock };
+  let system: SystemService;
+
+  const run = async (settings: Record<string, string>) => {
+    postgres.query.mockImplementation(async (_sql: string, [name]: [string]) =>
+      name in settings ? [{ value: settings[name] }] : [],
+    );
+
+    await system.syncImportedHighlightsSupport();
+
+    return hasura.mutation.mock.calls[0][0].insert_settings_one.__args.object;
+  };
+
+  beforeEach(() => {
+    hasura = { mutation: jest.fn().mockResolvedValue({}) };
+    postgres = { query: jest.fn() };
+    system = new SystemService(
+      {} as any,
+      hasura as any,
+      {} as any,
+      { warn: jest.fn(), log: jest.fn() } as any,
+      postgres as any,
+    );
+  });
+
+  it("reports support when both toggles are on", async () => {
+    expect(
+      await run({
+        auto_generate_match_clips: "true",
+        auto_generate_match_clips_imported: "true",
+      }),
+    ).toEqual({ name: "public.supports_imported_highlights", value: "true" });
+  });
+
+  it("reads 1 as on, the way the clip gate does", async () => {
+    expect(
+      await run({
+        auto_generate_match_clips: "1",
+        auto_generate_match_clips_imported: "1",
+      }),
+    ).toEqual({ name: "public.supports_imported_highlights", value: "true" });
+  });
+
+  it.each([
+    [
+      "imported matches are left out",
+      {
+        auto_generate_match_clips: "true",
+        auto_generate_match_clips_imported: "false",
+      },
+    ],
+    [
+      "auto highlights are off altogether",
+      {
+        auto_generate_match_clips: "false",
+        auto_generate_match_clips_imported: "true",
+      },
+    ],
+    ["neither toggle has ever been set", {}],
+  ])("reports no support when %s", async (_case, settings) => {
+    expect(await run(settings as Record<string, string>)).toEqual({
+      name: "public.supports_imported_highlights",
+      value: "false",
+    });
+  });
+});
