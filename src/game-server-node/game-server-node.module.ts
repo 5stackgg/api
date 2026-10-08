@@ -34,6 +34,7 @@ import { GamePluginsModule } from "src/game-plugins/game-plugins.module";
 import { BakeShaders } from "./jobs/BakeShaders";
 import { ValidateGamedata } from "./jobs/ValidateGamedata";
 import { CleanupRemovedNodes } from "./jobs/CleanupRemovedNodes";
+import { ReconcileGamedataValidations } from "./jobs/ReconcileGamedataValidations";
 import { MapAssetsModule } from "src/map-assets/map-assets.module";
 import { PostgresModule } from "src/postgres/postgres.module";
 
@@ -49,6 +50,7 @@ import { PostgresModule } from "src/postgres/postgres.module";
     BakeShaders,
     ValidateGamedata,
     CleanupRemovedNodes,
+    ReconcileGamedataValidations,
     ...getQueuesProcessors("GameServerNode"),
     loggerFactory(),
   ],
@@ -150,6 +152,16 @@ export class GameServerNodeModule implements OnApplicationBootstrap {
 
     void queue.add(
       CleanupRemovedNodes.name,
+      {},
+      {
+        repeat: {
+          pattern: "*/5 * * * *",
+        },
+      },
+    );
+
+    void queue.add(
+      ReconcileGamedataValidations.name,
       {},
       {
         repeat: {
