@@ -101,6 +101,9 @@ export class UtilityPracticeService {
   // A render batch that has not finished in this long is not going to; the
   // server it is holding is worth more than the last few clips.
   public static readonly RENDER_GRACE_MINUTES = 90;
+  // How long a render session's last lineup can have been finished before the
+  // session counts as abandoned rather than between lineups.
+  public static readonly RENDER_QUIET_MINUTES = 10;
 
   private readonly appConfig: AppConfig;
   private readonly redis: Redis;
@@ -390,6 +393,10 @@ export class UtilityPracticeService {
 
   // Backstop for a batch job that died holding a server. The batch itself ends
   // its session; this only catches the ones nothing is watching any more.
+  //
+  // "Nothing in flight" alone is not that: one session films the whole queue,
+  // and between two lineups, or across a level change, nothing of its own is
+  // in flight for a moment. So it also has to have gone quiet.
   public async reapRenderSessions(): Promise<number> {
     const stale = await this.postgres.query<Array<{ id: string }>>(
       `SELECT s.id::text AS id
@@ -401,9 +408,15 @@ export class UtilityPracticeService {
             SELECT 1
               FROM public.utility_lineup_renders r
              WHERE r.utility_practice_session_id = s.id
-               AND r.status IN ('queued', 'rendering', 'uploading')
+               AND (
+                 r.status IN ('queued', 'rendering', 'uploading')
+                 OR r.last_status_at > now() - make_interval(mins => $2)
+               )
           )`,
-      [UtilityPracticeService.RENDER_GRACE_MINUTES],
+      [
+        UtilityPracticeService.RENDER_GRACE_MINUTES,
+        UtilityPracticeService.RENDER_QUIET_MINUTES,
+      ],
     );
 
     for (const row of stale) {
@@ -1561,46 +1574,7 @@ export class UtilityPracticeService {
         input,
       );
 
-      await this.postgres.transaction(async (client) => {
-        // playbook_id goes with it: an execute is a statement about one map.
-        // last_occupied_at keeps the reaper's idle clock off the load screen --
-        // tbiu_utility_practice_sessions clears empty_since from that column.
-        await client.query(
-          `UPDATE public.utility_practice_sessions
-              SET map_name = $2,
-                  map_changing_at = now(),
-                  playbook_id = NULL,
-                  last_occupied_at = now()
-            WHERE id = $1::uuid`,
-          [session.id, map.name],
-        );
-
-        const moved = await client.query(
-          `UPDATE public.match_maps
-              SET map_id = $2::uuid
-            WHERE match_id = $1::uuid
-          RETURNING id`,
-          [session.match_id, map.id],
-        );
-
-        if (moved.rowCount !== 1) {
-          throw Error(
-            `expected exactly one match map for a practice session, moved ${moved.rowCount}`,
-          );
-        }
-
-        // The pool is what materialized that match map. Leaving it on the old
-        // map means the two disagree about what this session is for.
-        await client.query(
-          `UPDATE public._map_pool mp
-              SET map_id = $2::uuid
-             FROM public.matches m
-             INNER JOIN public.match_options mo ON mo.id = m.match_options_id
-            WHERE m.id = $1::uuid
-              AND mp.map_pool_id = mo.map_pool_id`,
-          [session.match_id, map.id],
-        );
-      });
+      await this.writeSessionMap(session, map);
 
       const sent = await this.load.changeMap({
         serverId,
@@ -1625,6 +1599,193 @@ export class UtilityPracticeService {
       return { success: true, map_name: map.name, queued: sent.queued };
     } finally {
       await this.cache.forget(lockKey);
+    }
+  }
+
+  // The three places a session's map lives, moved together.
+  private async writeSessionMap(
+    session: UtilityPracticeSession,
+    map: { id: string; name: string },
+  ): Promise<void> {
+    await this.postgres.transaction(async (client) => {
+      // playbook_id goes with it: an execute is a statement about one map.
+      // last_occupied_at keeps the reaper's idle clock off the load screen --
+      // tbiu_utility_practice_sessions clears empty_since from that column.
+      await client.query(
+        `UPDATE public.utility_practice_sessions
+            SET map_name = $2,
+                map_changing_at = now(),
+                playbook_id = NULL,
+                last_occupied_at = now()
+          WHERE id = $1::uuid`,
+        [session.id, map.name],
+      );
+
+      const moved = await client.query(
+        `UPDATE public.match_maps
+            SET map_id = $2::uuid
+          WHERE match_id = $1::uuid
+        RETURNING id`,
+        [session.match_id, map.id],
+      );
+
+      if (moved.rowCount !== 1) {
+        throw Error(
+          `expected exactly one match map for a practice session, moved ${moved.rowCount}`,
+        );
+      }
+
+      // The pool is what materialized that match map. Leaving it on the old
+      // map means the two disagree about what this session is for.
+      await client.query(
+        `UPDATE public._map_pool mp
+            SET map_id = $2::uuid
+           FROM public.matches m
+           INNER JOIN public.match_options mo ON mo.id = m.match_options_id
+          WHERE m.id = $1::uuid
+            AND mp.map_pool_id = mo.map_pool_id`,
+        [session.match_id, map.id],
+      );
+    });
+  }
+
+  /**
+   * Move a render's practice server onto the next map in its queue. The
+   * system's own counterpart to changeMap(): nobody is on a render server to
+   * warn, and nothing is stood on a lineup on the far side -- the pod stages
+   * its own.
+   */
+  public async changeRenderMap(
+    sessionId: string,
+    mapName: string,
+  ): Promise<string> {
+    const session = await this.session(sessionId);
+
+    if (
+      !session?.is_render ||
+      session.status !== "Ready" ||
+      !session.match_id
+    ) {
+      throw Error("that render session is not up");
+    }
+
+    const map = await this.resolveMapRow(mapName);
+
+    if (map.name === session.map_name) {
+      return map.name;
+    }
+
+    const lockKey = `utility:practice:map:${session.id}`;
+
+    if (
+      !(await this.cache.acquireLock(
+        lockKey,
+        UtilityPracticeService.MAP_CHANGE_LOCK_SECONDS,
+      ))
+    ) {
+      throw Error("that server is already changing map");
+    }
+
+    try {
+      const serverId = await this.serverForSession(session.match_id);
+
+      await this.writeSessionMap(session, map);
+
+      const sent = await this.load.changeMap({
+        serverId,
+        mapName: map.name,
+        workshopId: map.workshop_map_id,
+      });
+
+      if (!sent.sent) {
+        await this.abandonMapChange(session);
+        throw Error("could not reach the render's practice server");
+      }
+
+      this.logger.log(
+        `[utility-practice ${session.id}] render ${session.map_name} -> ${map.name}`,
+      );
+
+      return map.name;
+    } finally {
+      await this.cache.forget(lockKey);
+    }
+  }
+
+  /**
+   * A render session by its match, with what the pod's next request turns on:
+   * which pod it is, and whether the level the server was last sent to has
+   * finished loading.
+   */
+  public async renderSessionForMatch(matchId: string): Promise<{
+    id: string;
+    match_id: string;
+    map_name: string;
+    status: string;
+    render_job_name: string | null;
+    map_changing_seconds: number | null;
+  } | null> {
+    const [row] = await this.postgres.query<
+      Array<{
+        id: string;
+        match_id: string;
+        map_name: string;
+        status: string;
+        render_job_name: string | null;
+        map_changing_seconds: number | null;
+      }>
+    >(
+      `SELECT s.id::text AS id,
+              s.match_id::text AS match_id,
+              s.map_name,
+              s.status,
+              s.render_job_name,
+              EXTRACT(EPOCH FROM (now() - s.map_changing_at))::float8
+                AS map_changing_seconds
+         FROM public.utility_practice_sessions s
+        WHERE s.match_id = $1::uuid
+          AND s.is_render = true`,
+      [matchId],
+    );
+
+    return row ?? null;
+  }
+
+  // The pod filming on a render session. Written when it is started and again
+  // every time it asks what is next; the second is what says it is still
+  // there, and what its GPU is held on.
+  public async markRenderPod(
+    sessionId: string,
+    jobName: string,
+  ): Promise<void> {
+    await this.postgres.query(
+      `UPDATE public.utility_practice_sessions
+          SET render_job_name = $2, render_seen_at = now()
+        WHERE id = $1::uuid
+          AND is_render = true`,
+      [sessionId, jobName],
+    );
+  }
+
+  public async touchRenderPod(sessionId: string): Promise<void> {
+    await this.postgres.query(
+      `UPDATE public.utility_practice_sessions
+          SET render_seen_at = now()
+        WHERE id = $1::uuid
+          AND render_job_name IS NOT NULL`,
+      [sessionId],
+    );
+  }
+
+  // Whether a practice server can be booked on a map at all. A map that has
+  // been disabled or deleted since its lineups were recorded cannot, and that
+  // does not change by waiting.
+  public async canPracticeOn(mapName: string): Promise<boolean> {
+    try {
+      await this.resolveMapRow(mapName);
+      return true;
+    } catch {
+      return false;
     }
   }
 

@@ -99,15 +99,18 @@ export class UtilityRendersController {
 
     const result = await this.renders.cancel(data.render_id);
 
-    // Cancelling the last render of a map is cancelling the batch: nothing is
-    // coming for the practice server any more, and a booked GPU server idling
-    // until the batch job's next tick noticed was the reviewer's problem to
-    // watch. Tear both down here; the batch job's own release is the backstop
-    // and every step of it is idempotent.
-    if (result.cancelled && result.mapName) {
-      const remaining = await this.renders.inFlightForMap(result.mapName);
+    // Cancelling the last render in the queue is cancelling the batch: nothing
+    // is coming for the practice server any more, and a booked GPU server
+    // idling until the batch job's next tick noticed was the reviewer's
+    // problem to watch. Tear both down here; the batch job's own release is
+    // the backstop and every step of it is idempotent. With anything else
+    // still queued, on any map, the pod and its server are that render's next.
+    if (result.cancelled) {
+      const remaining = await this.renders.inFlight();
       if (remaining.length === 0) {
-        await this.gameStreamer.killNadeRenderPod(result.mapName);
+        if (result.jobName) {
+          await this.gameStreamer.killNadeRenderPod(result.jobName);
+        }
         if (result.sessionId) {
           await this.practice.endRenderSession(result.sessionId);
         }
@@ -136,6 +139,44 @@ export class UtilityRendersController {
     }
 
     return { cleared: await this.renders.clearFinished() };
+  }
+
+  // What the render queue page shows above the queue: which public lineups
+  // have no preview, and which have one an older render version filmed.
+  @HasuraAction()
+  public async utilityLineupRenderCoverage(data: {
+    user: User;
+    map_name?: string | null;
+  }) {
+    if (!isRoleAbove(data.user?.role, "moderator")) {
+      throw Error("only a moderator can see what the previews are missing");
+    }
+
+    return await this.renders.coverage(data.map_name || null);
+  }
+
+  @HasuraAction()
+  public async renderUtilityLineupPreviews(data: {
+    user: User;
+    scope: string;
+    map_name?: string | null;
+  }) {
+    if (!isRoleAbove(data.user?.role, "moderator")) {
+      throw Error("only a moderator can queue preview renders");
+    }
+
+    if (
+      data.scope !== "missing" &&
+      data.scope !== "outdated" &&
+      data.scope !== "all"
+    ) {
+      throw Error("scope must be missing, outdated or all");
+    }
+
+    return await this.renders.enqueueGaps(data.scope, {
+      mapName: data.map_name || null,
+      requestedBySteamId: data.user.steam_id,
+    });
   }
 
   // One batch per call so a caller can watch it progress, same as the meta
@@ -346,11 +387,24 @@ export class UtilityRendersController {
       return Number.isFinite(value) && value > 0 ? Math.round(value) : null;
     })();
 
+    // What the director said it filmed with. A pod from before renders were
+    // versioned sends nothing, and its preview is recorded as unversioned.
+    const versionHeader = request.headers["x-render-version"];
+    const renderVersion = (() => {
+      const value = Number(
+        Array.isArray(versionHeader) ? versionHeader[0] : versionHeader,
+      );
+      return Number.isInteger(value) && value > 0 && value < 100_000
+        ? value
+        : null;
+    })();
+
     try {
       const result = await this.renders.finalizeUpload(
         jobId,
         request,
         durationMs,
+        renderVersion,
       );
       return response.status(201).json(result);
     } catch (error) {

@@ -18,6 +18,59 @@ export const UTILITY_RENDER_IN_FLIGHT = [
   "uploading",
 ] as const;
 
+// The render pipeline's version: what the director in the game-server image
+// reports (RenderDirectorUtility.Version) once it films everything a preview
+// should have. A preview filmed at a lower one -- or by a build that reported
+// none -- is outdated, and the render queue page offers to film it again.
+// Bumped together with the director's.
+//   2 -- the thrower's eyes are turned without tipping his body. Every aim
+//        still before it was taken from behind and below the stance.
+export const UTILITY_RENDER_VERSION = 2;
+
+// What is recorded for a render whose pod did not say what filmed it. Not
+// NULL, which is a preview from before any of them did: this one was filmed
+// since, so it says the pipeline in use is older than the api expects.
+export const UTILITY_RENDER_VERSION_UNREPORTED = 0;
+
+export const UTILITY_RENDER_GAP_STATES = [
+  "missing",
+  "outdated",
+  "unrenderable",
+] as const;
+
+export type UtilityRenderGapState = (typeof UTILITY_RENDER_GAP_STATES)[number];
+
+export type UtilityRenderGap = {
+  id: string;
+  name: string | null;
+  map_name: string;
+  utility_type: string;
+  state: UtilityRenderGapState;
+  preview_version: number | null;
+  reason: string | null;
+};
+
+export type UtilityRenderCoverage = {
+  version: number;
+  // What the last finished render said filmed it: null when nothing has been
+  // filmed since previews were versioned. Below `version`, re-rendering an
+  // outdated preview would only produce another outdated one.
+  pipeline_version: number | null;
+  total: number;
+  current: number;
+  missing: number;
+  outdated: number;
+  queued: number;
+  unrenderable: number;
+  lineups: Array<UtilityRenderGap>;
+};
+
+// What "render everything that needs it" may take in one press, and what the
+// page lists. The press is a synchronous action with a request timeout, so it
+// takes a bite and reports the rest as skipped; pressing again takes the next.
+export const UTILITY_RENDER_BULK_LIMIT = 300;
+export const UTILITY_RENDER_GAP_LIST_LIMIT = 500;
+
 const STATUS_HISTORY_CAP = 50;
 
 const UTILITY_RENDER_TERMINAL = ["done", "error", "skipped", "cancelled"];
@@ -48,6 +101,10 @@ export type UtilityRenderRow = {
   session_token: string;
   spec: UtilityRenderSpec;
   status: string;
+  // The pod the row was handed to. Set, on a row still in flight, means a
+  // live pod has it: a pod that dies takes its rows to `error` with it.
+  k8s_job_name: string | null;
+  utility_practice_session_id: string | null;
 };
 
 type HistoryEntry = {
@@ -97,6 +154,28 @@ type LineupSpecRow = {
   author_steam_id: string;
   public_reviewed_by: string | null;
   approach: Array<UtilityApproachPoint> | null;
+};
+
+type SeedRow = Pick<
+  LineupSpecRow,
+  | "confidence"
+  | "initial_pos_x"
+  | "initial_pos_y"
+  | "initial_pos_z"
+  | "initial_vel_x"
+  | "initial_vel_y"
+  | "initial_vel_z"
+>;
+
+type CoverageRow = SeedRow & {
+  id: string;
+  name: string | null;
+  map_name: string;
+  utility_type: string;
+  preview_file: string | null;
+  preview_version: number | null;
+  in_flight: boolean;
+  map_available: boolean;
 };
 
 @Injectable()
@@ -160,17 +239,13 @@ export class UtilityRendersService {
     return (UTILITY_RENDER_STILLS as ReadonlyArray<string>).includes(kind);
   }
 
-  // One BullMQ job per map, because one server session films one map: the pod
-  // skips any lineup whose map_name differs from the session's.
+  // One job for the whole queue, so ten approvals in a row book one pod rather
+  // than ten: BullMQ drops a duplicate id while the first is live.
   //
-  // No colon in the separator: BullMQ uses ':' to build its own redis keys and
-  // rejects a custom id containing one, so `utility-render-batch:de_mirage`
-  // threw "Custom Ids cannot contain :" and left the row queued with nothing
-  // dispatched. Workshop maps put a numeric id in maps.name rather than a
-  // slug, so the sanitiser is what keeps an unexpected name from doing it again.
-  public static batchJobId(mapName: string): string {
-    return `utility-render-batch-${mapName.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
-  }
+  // No colon: BullMQ uses ':' to build its own redis keys and rejects a custom
+  // id containing one ("Custom Ids cannot contain :"), which left a row queued
+  // with nothing dispatched.
+  public static readonly WORKER_JOB_ID = "utility-render-queue";
 
   /**
    * The single door into the queue. Idempotent twice over: the partial unique
@@ -283,7 +358,7 @@ export class UtilityRendersService {
       };
     }
 
-    await this.dispatchMap(lineup.map_name);
+    await this.dispatch();
 
     return {
       queued: true,
@@ -311,21 +386,29 @@ export class UtilityRendersService {
     cancelled: boolean;
     mapName: string | null;
     sessionId: string | null;
+    jobName: string | null;
   }> {
     const [row] = await this.postgres.query<
-      Array<{ map_name: string; utility_practice_session_id: string | null }>
+      Array<{
+        map_name: string;
+        utility_practice_session_id: string | null;
+        k8s_job_name: string | null;
+      }>
     >(
       `UPDATE public.utility_lineup_renders
           SET status = 'cancelled', last_status_at = now()
         WHERE id = $1::uuid
           AND status = ANY($2::text[])
-      RETURNING map_name, utility_practice_session_id::text AS utility_practice_session_id`,
+      RETURNING map_name,
+                utility_practice_session_id::text AS utility_practice_session_id,
+                k8s_job_name`,
       [renderId, [...UTILITY_RENDER_IN_FLIGHT]],
     );
     return {
       cancelled: Boolean(row),
       mapName: row?.map_name ?? null,
       sessionId: row?.utility_practice_session_id ?? null,
+      jobName: row?.k8s_job_name ?? null,
     };
   }
 
@@ -449,7 +532,8 @@ export class UtilityRendersService {
                 preview_thumbnail = NULL,
                 preview_duration_ms = NULL,
                 preview_stills = NULL,
-                preview_rendered_at = NULL
+                preview_rendered_at = NULL,
+                preview_version = NULL
            FROM (SELECT id, preview_file, preview_thumbnail, preview_stills
                    FROM public.utility_lineups
                   WHERE id = $1::uuid) old
@@ -520,34 +604,258 @@ export class UtilityRendersService {
   }
 
   // ---------------------------------------------------------------------
+  // What the library is missing
+  // ---------------------------------------------------------------------
+
+  // Whether a preview was filmed by the pipeline as it is now. A preview that
+  // never said what filmed it predates the question.
+  public static isOutdated(previewVersion: number | null): boolean {
+    return previewVersion === null || previewVersion < UTILITY_RENDER_VERSION;
+  }
+
+  // The practice match type a lineup's map has to exist under to be booked.
+  // UtilityPracticeService.MATCH_TYPE, which cannot be imported here without
+  // a cycle.
+  private static readonly PRACTICE_MAP_TYPE = "Competitive";
+
+  private static gapState(
+    row: CoverageRow,
+  ): { state: UtilityRenderGapState; reason: string | null } | null {
+    // Checked first: a lineup that cannot be filmed is not waiting on anybody
+    // to press render, whatever it does or does not have.
+    const refusal =
+      UtilityRendersService.unrenderable(row) ??
+      (row.map_available
+        ? null
+        : "its map is not available for practice, so no server can be booked on it");
+    if (refusal) {
+      return row.preview_file ? null : { state: "unrenderable", reason: refusal };
+    }
+    if (!row.preview_file) {
+      return { state: "missing", reason: null };
+    }
+    if (UtilityRendersService.isOutdated(row.preview_version)) {
+      return { state: "outdated", reason: null };
+    }
+    return null;
+  }
+
+  private async coverageRows(
+    mapName?: string | null,
+  ): Promise<Array<CoverageRow>> {
+    return this.postgres.query<Array<CoverageRow>>(
+      `SELECT l.id::text AS id, l.name, l.map_name, l.utility_type,
+              l.confidence,
+              l.initial_pos_x, l.initial_pos_y, l.initial_pos_z,
+              l.initial_vel_x, l.initial_vel_y, l.initial_vel_z,
+              l.preview_file, l.preview_version,
+              EXISTS (
+                SELECT 1
+                  FROM public.utility_lineup_renders r
+                 WHERE r.utility_lineup_id = l.id
+                   AND r.status = ANY($2::text[])
+              ) AS in_flight,
+              EXISTS (
+                SELECT 1
+                  FROM public.maps m
+                 WHERE m.name = l.map_name
+                   AND m.type = $3
+                   AND m.enabled = true
+                   AND m.deleted_at IS NULL
+              ) AS map_available
+         FROM public.utility_lineups l
+        WHERE l.visibility = 'Public'
+          AND l.archived_at IS NULL
+          AND ($1::text IS NULL OR l.map_name = $1::text)
+        ORDER BY l.map_name ASC, l.name ASC NULLS LAST, l.id ASC`,
+      [
+        mapName ?? null,
+        [...UTILITY_RENDER_IN_FLIGHT],
+        UtilityRendersService.PRACTICE_MAP_TYPE,
+      ],
+    );
+  }
+
+  // What the last finished render reported, among those filmed since previews
+  // were versioned.
+  private async pipelineVersion(): Promise<number | null> {
+    const [row] = await this.postgres.query<
+      Array<{ render_version: number | null }>
+    >(
+      `SELECT render_version
+         FROM public.utility_lineup_renders
+        WHERE status = 'done'
+          AND render_version IS NOT NULL
+        ORDER BY last_status_at DESC NULLS LAST
+        LIMIT 1`,
+    );
+    return row?.render_version ?? null;
+  }
+
+  /**
+   * Every public lineup, sorted into what its preview needs: nothing, a first
+   * render, a newer one, or a throw that cannot be filmed at all. A lineup
+   * with a render already under way counts as queued and is not listed.
+   */
+  public async coverage(
+    mapName?: string | null,
+  ): Promise<UtilityRenderCoverage> {
+    const rows = await this.coverageRows(mapName);
+    const coverage: UtilityRenderCoverage = {
+      version: UTILITY_RENDER_VERSION,
+      pipeline_version: await this.pipelineVersion(),
+      total: rows.length,
+      current: 0,
+      missing: 0,
+      outdated: 0,
+      queued: 0,
+      unrenderable: 0,
+      lineups: [],
+    };
+
+    for (const row of rows) {
+      if (row.in_flight) {
+        coverage.queued++;
+        continue;
+      }
+
+      const gap = UtilityRendersService.gapState(row);
+
+      if (!gap) {
+        coverage.current++;
+        continue;
+      }
+
+      coverage[gap.state]++;
+
+      if (coverage.lineups.length < UTILITY_RENDER_GAP_LIST_LIMIT) {
+        coverage.lineups.push({
+          id: row.id,
+          name: row.name,
+          map_name: row.map_name,
+          utility_type: row.utility_type,
+          state: gap.state,
+          preview_version: row.preview_version,
+          reason: gap.reason,
+        });
+      }
+    }
+
+    return coverage;
+  }
+
+  /**
+   * Queue a render for everything `scope` names. Map by map, in the order the
+   * coverage lists them: the queue films in the order it was filled, and one
+   * pod walking the maps one at a time changes level once per map.
+   */
+  public async enqueueGaps(
+    scope: "missing" | "outdated" | "all",
+    options: { mapName?: string | null; requestedBySteamId: string },
+  ): Promise<{ queued: number; skipped: number }> {
+    // The pod in use reports an older version than this api expects (the
+    // images are behind it, or pinned). Filming an outdated preview again
+    // would write another outdated one, for every lineup, on every press.
+    const pipeline = await this.pipelineVersion();
+    const behind = pipeline !== null && pipeline < UTILITY_RENDER_VERSION;
+
+    if (behind && scope === "outdated") {
+      throw Error(
+        `the render pod in use films version ${pipeline}, older than version ${UTILITY_RENDER_VERSION} — re-rendering would not bring any preview up to date`,
+      );
+    }
+
+    const wanted: ReadonlyArray<UtilityRenderGapState> =
+      scope === "outdated"
+        ? ["outdated"]
+        : scope === "all" && !behind
+          ? ["missing", "outdated"]
+          : ["missing"];
+
+    const rows = (await this.coverageRows(options.mapName)).filter((row) => {
+      if (row.in_flight) {
+        return false;
+      }
+      const gap = UtilityRendersService.gapState(row);
+      return gap !== null && wanted.includes(gap.state);
+    });
+
+    let queued = 0;
+    let skipped = Math.max(0, rows.length - UTILITY_RENDER_BULK_LIMIT);
+
+    for (const row of rows.slice(0, UTILITY_RENDER_BULK_LIMIT)) {
+      try {
+        const result = await this.enqueue(row.id, {
+          requestedBySteamId: options.requestedBySteamId,
+          force: true,
+        });
+        if (result.queued) {
+          queued++;
+        } else {
+          skipped++;
+        }
+      } catch (error) {
+        skipped++;
+        this.logger.warn(
+          `[utility-render] could not queue ${row.id}: ${(error as Error)?.message}`,
+        );
+      }
+    }
+
+    this.logger.log(
+      `[utility-render] bulk ${scope}${options.mapName ? ` on ${options.mapName}` : ""}: queued ${queued}, skipped ${skipped}`,
+    );
+
+    return { queued, skipped };
+  }
+
+  // ---------------------------------------------------------------------
   // Queue reads for the batch job
   // ---------------------------------------------------------------------
 
-  public async queuedMaps(): Promise<Array<string>> {
-    const rows = await this.postgres.query<Array<{ map_name: string }>>(
-      `SELECT DISTINCT map_name
-         FROM public.utility_lineup_renders
-        WHERE status = ANY($1::text[])
-          AND paused = false`,
-      [[...UTILITY_RENDER_IN_FLIGHT]],
-    );
-    return rows.map((row) => row.map_name);
-  }
-
-  public async inFlightForMap(
-    mapName: string,
-  ): Promise<Array<UtilityRenderRow>> {
+  // The whole queue, every map, in the order it is filmed.
+  public async inFlight(): Promise<Array<UtilityRenderRow>> {
     return this.postgres.query<Array<UtilityRenderRow>>(
       `SELECT r.id::text AS id,
               r.utility_lineup_id::text AS utility_lineup_id,
-              r.map_name, r.session_token, r.spec, r.status
+              r.map_name, r.session_token, r.spec, r.status,
+              r.k8s_job_name,
+              r.utility_practice_session_id::text AS utility_practice_session_id
          FROM public.utility_lineup_renders r
-        WHERE r.map_name = $1
-          AND r.status = ANY($2::text[])
+        WHERE r.status = ANY($1::text[])
           AND r.paused = false
         ORDER BY r.sort_index ASC, r.created_at ASC`,
-      [mapName, [...UTILITY_RENDER_IN_FLIGHT]],
+      [[...UTILITY_RENDER_IN_FLIGHT]],
     );
+  }
+
+  /**
+   * Give one queued render to a pod, if nobody else has it. The guard is the
+   * whole point: the batch job and the pod's own request for more both hand
+   * rows out, and a row filmed by two pods uploads two previews.
+   */
+  public async handToPod(
+    renderId: string,
+    pod: { sessionId: string; jobName: string; nodeId: string | null },
+  ): Promise<UtilityRenderRow | null> {
+    const [row] = await this.postgres.query<Array<UtilityRenderRow>>(
+      `UPDATE public.utility_lineup_renders r
+          SET utility_practice_session_id = $2::uuid,
+              k8s_job_name = $3,
+              game_server_node_id = $4,
+              last_status_at = now()
+        WHERE r.id = $1::uuid
+          AND r.status = 'queued'
+          AND r.paused = false
+          AND r.k8s_job_name IS NULL
+      RETURNING r.id::text AS id,
+                r.utility_lineup_id::text AS utility_lineup_id,
+                r.map_name, r.session_token, r.spec, r.status,
+                r.k8s_job_name,
+                r.utility_practice_session_id::text AS utility_practice_session_id`,
+      [renderId, pod.sessionId, pod.jobName, pod.nodeId],
+    );
+    return row ?? null;
   }
 
   // The render's practice session needs a host_steam_id, and the requester is
@@ -841,6 +1149,10 @@ export class UtilityRendersService {
     renderIds: Array<string>,
     stage: string,
     progress: number | null = null,
+    // A stage a row sits in rather than passes through ("waiting its turn")
+    // is said once: the pod asks what is next between every two lineups, and
+    // re-stamping a long queue each time is a write per row per lineup.
+    options: { once?: boolean } = {},
   ): Promise<void> {
     if (renderIds.length === 0) return;
 
@@ -855,6 +1167,12 @@ export class UtilityRendersService {
 
     const at = new Date().toISOString();
     for (const row of rows) {
+      if (options.once && Array.isArray(row.status_history)) {
+        const last = row.status_history[row.status_history.length - 1];
+        if (last?.status === "booting" && last.boot_stage === stage) {
+          continue;
+        }
+      }
       const history = UtilityRendersService.appendHistory(
         Array.isArray(row.status_history) ? row.status_history : [],
         {
@@ -977,6 +1295,7 @@ export class UtilityRendersService {
     jobId: string,
     fileStream: Readable,
     durationMs: number | null,
+    renderVersion: number | null = null,
   ): Promise<{ lineupId: string; file: string }> {
     const [row] = await this.postgres.query<
       Array<{ utility_lineup_id: string; status: string }>
@@ -1055,7 +1374,8 @@ export class UtilityRendersService {
               preview_thumbnail = COALESCE($3, preview_thumbnail),
               preview_duration_ms = COALESCE($4::int, preview_duration_ms),
               preview_stills = $5::jsonb,
-              preview_rendered_at = now()
+              preview_rendered_at = now(),
+              preview_version = $6::int
         WHERE id = $1::uuid`,
       [
         row.utility_lineup_id,
@@ -1063,14 +1383,18 @@ export class UtilityRendersService {
         thumbnail,
         durationMs,
         Object.keys(stills).length > 0 ? JSON.stringify(stills) : null,
+        // Never the old preview's: a clip from a pod that did not say what
+        // filmed it is of no known version, whatever the last one was.
+        renderVersion ?? UTILITY_RENDER_VERSION_UNREPORTED,
       ],
     );
 
     await this.postgres.query(
       `UPDATE public.utility_lineup_renders
-          SET duration_ms = COALESCE($2::int, duration_ms)
+          SET duration_ms = COALESCE($2::int, duration_ms),
+              render_version = $3::int
         WHERE id = $1::uuid`,
-      [jobId, durationMs],
+      [jobId, durationMs, renderVersion ?? UTILITY_RENDER_VERSION_UNREPORTED],
     );
 
     // A lineup shows one preview, so the attempts before this one -- the old
@@ -1107,14 +1431,14 @@ export class UtilityRendersService {
 
   // ---------------------------------------------------------------------
 
-  public async dispatchMap(mapName: string): Promise<void> {
-    // jobId is the map, so ten approvals on the same map in a row queue one
-    // batch rather than ten -- BullMQ drops a duplicate id while it is live.
+  // Wakes the queue's one job, or starts it. A pod that is already filming
+  // picks the new row up by itself, so there is nothing to tell it.
+  public async dispatch(): Promise<void> {
     await this.renderQueue.add(
       UtilityJobs.BatchUtilityRenderJob,
-      { mapName },
+      {},
       {
-        jobId: UtilityRendersService.batchJobId(mapName),
+        jobId: UtilityRendersService.WORKER_JOB_ID,
         removeOnComplete: true,
         removeOnFail: true,
       },
@@ -1122,14 +1446,14 @@ export class UtilityRendersService {
   }
 
   /**
-   * A queued row is only half a booking: dispatchMap() has to have landed a
+   * A queued row is only half a booking: dispatch() has to have landed a
    * BullMQ job too. Anything between the INSERT and the add() -- an API restart,
    * a redis flush, or an add() that throws -- leaves a row queued with nothing
    * coming for it, and the in-flight unique index then refuses every retry, so
    * the lineup is wedged until someone cancels it by hand.
    *
-   * Re-dispatching is safe to repeat: the batch jobId is the map, so BullMQ
-   * drops the add outright while a job for that map is still live or delayed.
+   * Re-dispatching is safe to repeat: the queue has one job id, so BullMQ drops
+   * the add outright while that job is still live or delayed.
    */
   public async reconcileQueued(): Promise<number> {
     const rows = await this.postgres.query<Array<{ map_name: string }>>(
@@ -1138,22 +1462,23 @@ export class UtilityRendersService {
         WHERE status = 'queued'`,
     );
 
-    for (const row of rows) {
-      try {
-        await this.dispatchMap(row.map_name);
-      } catch (error) {
-        this.logger.warn(
-          `[utility-render] could not re-dispatch ${row.map_name}: ${(error as Error)?.message}`,
-        );
-      }
+    if (rows.length === 0) {
+      return 0;
     }
 
-    if (rows.length > 0) {
-      this.logger.log(
-        `[utility-render] reconciled ${rows.length} queued map(s): ` +
-          rows.map((row) => row.map_name).join(", "),
+    try {
+      await this.dispatch();
+    } catch (error) {
+      this.logger.warn(
+        `[utility-render] could not re-dispatch the queue: ${(error as Error)?.message}`,
       );
+      return 0;
     }
+
+    this.logger.log(
+      `[utility-render] reconciled ${rows.length} queued map(s): ` +
+        rows.map((row) => row.map_name).join(", "),
+    );
 
     return rows.length;
   }
@@ -1197,7 +1522,7 @@ export class UtilityRendersService {
 
   // The pod's own refusals, applied before a GPU is booked. Kept in the same
   // words the pod uses so a reviewer sees one vocabulary either way.
-  public static unrenderable(lineup: LineupSpecRow): string | null {
+  public static unrenderable(lineup: SeedRow): string | null {
     if (!UtilityRendersService.hasSeed(lineup)) {
       return "lineup has no recorded physics seed (initial position/velocity) — the throw cannot be reproduced exactly";
     }
@@ -1207,7 +1532,7 @@ export class UtilityRendersService {
     return null;
   }
 
-  private static hasSeed(lineup: LineupSpecRow): boolean {
+  private static hasSeed(lineup: SeedRow): boolean {
     const values = [
       lineup.initial_pos_x,
       lineup.initial_pos_y,

@@ -27,6 +27,22 @@ as $$
    where status in ('queued', 'rendering', 'uploading')
      and game_server_node_id is not null
      and last_status_at > now() - interval '15 minutes'
+  union
+  -- A render pod keeps its GPU between lineups: while the server changes map,
+  -- and while it waits a moment for the next one, no row is carrying the node.
+  -- The pod lives as long as its practice session, so the session holds it,
+  -- from the moment a pod is started on it. Bounded like the rows above by
+  -- the pod's last word: one that has stopped asking what to film next must
+  -- not hold the GPU from every live stream for good.
+  select srv.game_server_node_id
+    from utility_practice_sessions ups
+    join matches m on m.id = ups.match_id
+    join servers srv on srv.id = m.server_id
+   where ups.is_render = true
+     and ups.status = 'Ready'
+     and ups.render_job_name is not null
+     and ups.render_seen_at > now() - interval '15 minutes'
+     and srv.game_server_node_id is not null
 $$;
 
 -- Render-only: nodes running a live match while

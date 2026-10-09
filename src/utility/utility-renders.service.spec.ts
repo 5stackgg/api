@@ -1,4 +1,9 @@
-import { UtilityRendersService } from "./utility-renders.service";
+import {
+  UTILITY_RENDER_BULK_LIMIT,
+  UTILITY_RENDER_VERSION,
+  UTILITY_RENDER_VERSION_UNREPORTED,
+  UtilityRendersService,
+} from "./utility-renders.service";
 
 const LINEUP = {
   id: "11111111-1111-1111-1111-111111111111",
@@ -64,23 +69,12 @@ const APPROACH = [
   },
 ];
 
-// BullMQ builds its redis keys with ':' and refuses a custom id containing one,
-// which is not a validation the type system can catch -- it throws at add() time,
-// after the render row is already inserted, leaving it queued with no batch.
-describe("UtilityRendersService.batchJobId", () => {
-  it("never emits a colon, whatever the map is called", () => {
-    for (const map of ["de_mirage", "3070563536", "workshop/123/de:weird"]) {
-      expect(UtilityRendersService.batchJobId(map)).not.toContain(":");
-    }
-  });
-
-  it("still gives one id per map, so a map's approvals coalesce", () => {
-    expect(UtilityRendersService.batchJobId("de_mirage")).toBe(
-      UtilityRendersService.batchJobId("de_mirage"),
-    );
-    expect(UtilityRendersService.batchJobId("de_mirage")).not.toBe(
-      UtilityRendersService.batchJobId("de_nuke"),
-    );
+// The queue's one BullMQ job id. A custom id may not contain a colon, which is
+// not a validation the type system can catch -- it throws at add() time, after
+// the render row is already inserted, leaving it queued with no batch.
+describe("UtilityRendersService.WORKER_JOB_ID", () => {
+  it("is an id BullMQ accepts", () => {
+    expect(UtilityRendersService.WORKER_JOB_ID).not.toContain(":");
   });
 });
 
@@ -117,7 +111,9 @@ describe("UtilityRendersService", () => {
   // The wedge this exists to break: a row inserted, an add() that never landed,
   // and an in-flight unique index that then refuses every retry.
   describe("reconcileQueued", () => {
-    it("re-dispatches a batch for every map holding queued rows", async () => {
+    // One job films every map, so however many maps hold queued rows there is
+    // one thing to wake.
+    it("wakes the queue's one job when rows are queued", async () => {
       postgres.query.mockResolvedValueOnce([
         { map_name: "de_mirage" },
         { map_name: "de_nuke" },
@@ -125,11 +121,14 @@ describe("UtilityRendersService", () => {
 
       await expect(service.reconcileQueued()).resolves.toBe(2);
 
-      expect(queue.add).toHaveBeenCalledTimes(2);
-      expect(queue.add.mock.calls.map((call) => call[1])).toEqual([
-        { mapName: "de_mirage" },
-        { mapName: "de_nuke" },
-      ]);
+      expect(queue.add).toHaveBeenCalledTimes(1);
+      expect(queue.add).toHaveBeenCalledWith(
+        "BatchUtilityRenderJob",
+        {},
+        expect.objectContaining({
+          jobId: UtilityRendersService.WORKER_JOB_ID,
+        }),
+      );
     });
 
     it("does nothing when no row is queued", async () => {
@@ -139,16 +138,11 @@ describe("UtilityRendersService", () => {
       expect(queue.add).not.toHaveBeenCalled();
     });
 
-    // One bad map must not strand the others behind it.
-    it("keeps going when one map fails to dispatch", async () => {
-      postgres.query.mockResolvedValueOnce([
-        { map_name: "de_mirage" },
-        { map_name: "de_nuke" },
-      ]);
+    it("reports nothing reconciled when the queue cannot be reached", async () => {
+      postgres.query.mockResolvedValueOnce([{ map_name: "de_mirage" }]);
       queue.add.mockRejectedValueOnce(new Error("redis is down"));
 
-      await expect(service.reconcileQueued()).resolves.toBe(2);
-      expect(queue.add).toHaveBeenCalledTimes(2);
+      await expect(service.reconcileQueued()).resolves.toBe(0);
       expect(logger.warn).toHaveBeenCalled();
     });
   });
@@ -270,7 +264,7 @@ describe("UtilityRendersService", () => {
   });
 
   describe("enqueue", () => {
-    it("queues a public lineup and dispatches its map", async () => {
+    it("queues a public lineup and wakes the queue", async () => {
       postgres.query
         .mockResolvedValueOnce([LINEUP])
         .mockResolvedValueOnce([{ id: "render-1", status: "queued" }]);
@@ -288,9 +282,9 @@ describe("UtilityRendersService", () => {
       expect(bindings[6]).toBeNull();
       expect(queue.add).toHaveBeenCalledWith(
         "BatchUtilityRenderJob",
-        { mapName: "de_mirage" },
+        {},
         expect.objectContaining({
-          jobId: "utility-render-batch-de_mirage",
+          jobId: UtilityRendersService.WORKER_JOB_ID,
         }),
       );
     });
@@ -619,6 +613,262 @@ describe("UtilityRendersService", () => {
     });
   });
 
+  describe("stampBootStage", () => {
+    const waiting = { status: "booting", at: "t0", boot_stage: "waiting_turn" };
+
+    // The pod asks what is next between every two lineups; a long queue
+    // re-stamped each time is a write per row per lineup.
+    it("does not rewrite a row that already sits in a stage said once", async () => {
+      postgres.query.mockResolvedValueOnce([
+        { id: "render-1", status_history: [waiting] },
+        { id: "render-2", status_history: [] },
+      ]);
+
+      await service.stampBootStage(
+        ["render-1", "render-2"],
+        "waiting_turn",
+        null,
+        { once: true },
+      );
+
+      const updated = postgres.query.mock.calls
+        .slice(1)
+        .map(([, bindings]) => bindings[0]);
+      expect(updated).toEqual(["render-2"]);
+    });
+
+    it("keeps ticking a stage that is passed through", async () => {
+      postgres.query.mockResolvedValueOnce([
+        { id: "render-1", status_history: [waiting] },
+      ]);
+
+      await service.stampBootStage(["render-1"], "waiting_turn");
+
+      expect(postgres.query).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("what the library is missing", () => {
+    const SEED = {
+      confidence: "exact",
+      initial_pos_x: 1,
+      initial_pos_y: 2,
+      initial_pos_z: 3,
+      initial_vel_x: 100,
+      initial_vel_y: 0,
+      initial_vel_z: 50,
+    };
+    const row = (overrides: Record<string, unknown>) => ({
+      id: "lineup",
+      name: "A lineup",
+      map_name: "de_mirage",
+      utility_type: "Smoke",
+      preview_file: "clips/utility/lineup/render.mp4",
+      preview_version: UTILITY_RENDER_VERSION,
+      in_flight: false,
+      map_available: true,
+      ...SEED,
+      ...overrides,
+    });
+    const ROWS = [
+      row({ id: "current" }),
+      row({ id: "missing", preview_file: null, preview_version: null }),
+      row({ id: "older", preview_version: UTILITY_RENDER_VERSION - 1 }),
+      row({ id: "unversioned", preview_version: null }),
+      row({ id: "unreported", preview_version: UTILITY_RENDER_VERSION_UNREPORTED }),
+      row({ id: "rendering", preview_file: null, in_flight: true }),
+      row({
+        id: "no-seed",
+        preview_file: null,
+        preview_version: null,
+        initial_vel_x: null,
+      }),
+      row({
+        id: "map-gone",
+        preview_file: null,
+        preview_version: null,
+        map_available: false,
+      }),
+      row({ id: "guessed-but-filmed", confidence: "estimated" }),
+    ];
+
+    // The two reads a coverage makes, whichever order it makes them in.
+    const database = (
+      rows: Array<unknown>,
+      pipelineVersion: number | null = null,
+    ) =>
+      postgres.query.mockImplementation(async (sql: string) =>
+        String(sql).includes("FROM public.utility_lineups l")
+          ? rows
+          : pipelineVersion === null
+            ? []
+            : [{ render_version: pipelineVersion }],
+      );
+
+    it("calls a preview outdated when an older version, or none, filmed it", () => {
+      expect(UtilityRendersService.isOutdated(null)).toBe(true);
+      expect(
+        UtilityRendersService.isOutdated(UTILITY_RENDER_VERSION_UNREPORTED),
+      ).toBe(true);
+      expect(UtilityRendersService.isOutdated(UTILITY_RENDER_VERSION - 1)).toBe(
+        true,
+      );
+      expect(UtilityRendersService.isOutdated(UTILITY_RENDER_VERSION)).toBe(
+        false,
+      );
+      expect(UtilityRendersService.isOutdated(UTILITY_RENDER_VERSION + 1)).toBe(
+        false,
+      );
+    });
+
+    it("sorts every public lineup into what its preview needs", async () => {
+      database(ROWS, UTILITY_RENDER_VERSION);
+
+      const coverage = await service.coverage();
+
+      expect(coverage).toMatchObject({
+        version: UTILITY_RENDER_VERSION,
+        pipeline_version: UTILITY_RENDER_VERSION,
+        total: 9,
+        current: 2,
+        missing: 1,
+        outdated: 3,
+        queued: 1,
+        unrenderable: 2,
+      });
+      expect(
+        coverage.lineups.map((gap) => [gap.id, gap.state, gap.preview_version]),
+      ).toEqual([
+        ["missing", "missing", null],
+        ["older", "outdated", UTILITY_RENDER_VERSION - 1],
+        ["unversioned", "outdated", null],
+        ["unreported", "outdated", UTILITY_RENDER_VERSION_UNREPORTED],
+        ["no-seed", "unrenderable", null],
+        ["map-gone", "unrenderable", null],
+      ]);
+      expect(coverage.lineups[4].reason).toContain("no recorded physics seed");
+      expect(coverage.lineups[5].reason).toContain("not available for practice");
+    });
+
+    it("knows nothing about the pipeline until something has been filmed since", async () => {
+      database(ROWS);
+
+      expect((await service.coverage()).pipeline_version).toBeNull();
+    });
+
+    it("looks only at public, unarchived lineups, on one map when asked", async () => {
+      database([]);
+
+      await service.coverage("de_inferno");
+
+      const [sql, bindings] = postgres.query.mock.calls.find(([text]) =>
+        String(text).includes("FROM public.utility_lineups l"),
+      );
+      expect(sql).toContain("l.visibility = 'Public'");
+      expect(sql).toContain("l.archived_at IS NULL");
+      expect(bindings[0]).toBe("de_inferno");
+    });
+
+    describe("queueing what it is missing", () => {
+      let enqueue: jest.SpyInstance;
+
+      beforeEach(() => {
+        database(ROWS, UTILITY_RENDER_VERSION);
+        enqueue = jest.spyOn(service, "enqueue").mockResolvedValue({
+          queued: true,
+          render_id: "render",
+          status: "queued",
+          reason: null,
+        });
+      });
+
+      const queuedIds = () => enqueue.mock.calls.map(([id]) => id);
+
+      it("queues only the lineups with no preview", async () => {
+        await expect(
+          service.enqueueGaps("missing", { requestedBySteamId: "1" }),
+        ).resolves.toEqual({ queued: 1, skipped: 0 });
+
+        expect(queuedIds()).toEqual(["missing"]);
+      });
+
+      it("queues only the previews an older version filmed", async () => {
+        await service.enqueueGaps("outdated", { requestedBySteamId: "1" });
+
+        expect(queuedIds()).toEqual(["older", "unversioned", "unreported"]);
+        // An outdated lineup already has a preview, which is what a plain
+        // enqueue refuses on.
+        expect(enqueue).toHaveBeenCalledWith("older", {
+          requestedBySteamId: "1",
+          force: true,
+        });
+      });
+
+      // Never the current ones, never one already rendering, and never a
+      // throw or a map the pod could only refuse.
+      it("queues both and nothing else for all", async () => {
+        await service.enqueueGaps("all", { requestedBySteamId: "1" });
+
+        expect(queuedIds()).toEqual([
+          "missing",
+          "older",
+          "unversioned",
+          "unreported",
+        ]);
+      });
+
+      it("counts what the queue turned down", async () => {
+        enqueue.mockResolvedValueOnce({
+          queued: false,
+          render_id: null,
+          status: "refused",
+          reason: "a render for this lineup is already in flight",
+        });
+
+        await expect(
+          service.enqueueGaps("all", { requestedBySteamId: "1" }),
+        ).resolves.toEqual({ queued: 3, skipped: 1 });
+      });
+
+      // A synchronous action with a request timeout: it takes a bite and says
+      // how much it left.
+      it("takes a bounded bite of a long list and reports the rest", async () => {
+        const many = Array.from(
+          { length: UTILITY_RENDER_BULK_LIMIT + 5 },
+          (_, index) =>
+            row({ id: `m-${index}`, preview_file: null, preview_version: null }),
+        );
+        database(many, UTILITY_RENDER_VERSION);
+
+        await expect(
+          service.enqueueGaps("missing", { requestedBySteamId: "1" }),
+        ).resolves.toEqual({ queued: UTILITY_RENDER_BULK_LIMIT, skipped: 5 });
+      });
+
+      // The images are behind the api, or pinned to older ones. Every preview
+      // the pod films comes back outdated again, so "re-render outdated" would
+      // film the whole library on every press and change nothing.
+      describe("when the pod in use films an older version than the api expects", () => {
+        beforeEach(() => {
+          database(ROWS, UTILITY_RENDER_VERSION_UNREPORTED);
+        });
+
+        it("refuses to re-render the outdated ones", async () => {
+          await expect(
+            service.enqueueGaps("outdated", { requestedBySteamId: "1" }),
+          ).rejects.toThrow(/older than version/);
+          expect(enqueue).not.toHaveBeenCalled();
+        });
+
+        it("still films the ones with no preview at all", async () => {
+          await service.enqueueGaps("all", { requestedBySteamId: "1" });
+
+          expect(queuedIds()).toEqual(["missing"]);
+        });
+      });
+    });
+  });
+
   describe("finalizeUpload", () => {
     const uploading = () =>
       postgres.query
@@ -652,6 +902,37 @@ describe("UtilityRendersService", () => {
       expect(updateBindings[1]).toBe(`clips/utility/${LINEUP.id}/job-1.mp4`);
       expect(updateBindings[2]).toBe(`clips/utility/${LINEUP.id}/job-1.jpg`);
       expect(updateBindings[3]).toBe(4200);
+    });
+
+    // The version is what the director said it filmed with; the render queue
+    // page calls a preview outdated by comparing it against the api's own.
+    it("records the render version the pod reported on the lineup and the row", async () => {
+      uploading();
+
+      await service.finalizeUpload("job-1", {} as any, 4200, 2);
+
+      expect(lineupUpdate()[5]).toBe(2);
+      const rowUpdate = postgres.query.mock.calls.find(([sql]) =>
+        String(sql).includes("render_version = $3::int"),
+      );
+      expect(rowUpdate[1]).toEqual(["job-1", 4200, 2]);
+    });
+
+    // Keeping the old preview's version would call a clip from an old pod
+    // current. Not NULL either, which is a preview from before any pod said:
+    // this one says the pod in use is behind.
+    it("records a preview whose pod did not report a version as unreported", async () => {
+      uploading();
+
+      await service.finalizeUpload("job-1", {} as any, 4200);
+
+      const [sql, bindings] = postgres.query.mock.calls.find(([text]) =>
+        String(text).includes("UPDATE public.utility_lineups"),
+      );
+      expect(sql).toContain("preview_version = $6::int");
+      expect(sql).not.toMatch(/COALESCE\(\$6/);
+      expect(bindings[5]).toBe(UTILITY_RENDER_VERSION_UNREPORTED);
+      expect(UtilityRendersService.isOutdated(bindings[5])).toBe(true);
     });
 
     it("never serves a re-render from the previous render's cached key", async () => {

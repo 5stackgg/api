@@ -1,7 +1,7 @@
 import { UtilityRendersController } from "./utility-renders.controller";
 
-// Cancelling the last render of a map must take the practice server (and any
-// filming pod) down with it -- a booked GPU server idling until the batch
+// Cancelling the last render in the queue must take the practice server (and
+// any filming pod) down with it -- a booked GPU server idling until the batch
 // job's next tick was invisible money on fire.
 describe("cancelUtilityLineupRender", () => {
   const USER = { steam_id: "1", role: "administrator" } as any;
@@ -12,8 +12,9 @@ describe("cancelUtilityLineupRender", () => {
         cancelled: true,
         mapName: "de_mirage",
         sessionId: "session-1",
+        jobName: "gs-nades-queue",
       }),
-      inFlightForMap: jest.fn().mockResolvedValue([]),
+      inFlight: jest.fn().mockResolvedValue([]),
     };
     const gameStreamer = { killNadeRenderPod: jest.fn() };
     const practice = { endRenderSession: jest.fn() };
@@ -36,13 +37,19 @@ describe("cancelUtilityLineupRender", () => {
     });
 
     expect(result).toEqual({ success: true });
-    expect(gameStreamer.killNadeRenderPod).toHaveBeenCalledWith("de_mirage");
+    expect(gameStreamer.killNadeRenderPod).toHaveBeenCalledWith(
+      "gs-nades-queue",
+    );
     expect(practice.endRenderSession).toHaveBeenCalledWith("session-1");
   });
 
+  // One pod and one server film every map, so a render queued on another map
+  // needs them just as much as one on this map does.
   it("leaves the server alone while other renders still need it", async () => {
     const { controller, renders, gameStreamer, practice } = make();
-    renders.inFlightForMap.mockResolvedValueOnce([{ id: "render-2" }]);
+    renders.inFlight.mockResolvedValueOnce([
+      { id: "render-2", map_name: "de_inferno" },
+    ]);
 
     await controller.cancelUtilityLineupRender({
       user: USER,
@@ -59,6 +66,7 @@ describe("cancelUtilityLineupRender", () => {
       cancelled: false,
       mapName: null,
       sessionId: null,
+      jobName: null,
     });
 
     const result = await controller.cancelUtilityLineupRender({
@@ -67,22 +75,26 @@ describe("cancelUtilityLineupRender", () => {
     });
 
     expect(result).toEqual({ success: false });
-    expect(renders.inFlightForMap).not.toHaveBeenCalled();
+    expect(renders.inFlight).not.toHaveBeenCalled();
     expect(gameStreamer.killNadeRenderPod).not.toHaveBeenCalled();
     expect(practice.endRenderSession).not.toHaveBeenCalled();
   });
 
   it("still ends the session when no pod was ever dispatched", async () => {
-    const { controller, gameStreamer, practice } = make();
+    const { controller, renders, gameStreamer, practice } = make();
+    renders.cancel.mockResolvedValueOnce({
+      cancelled: true,
+      mapName: "de_mirage",
+      sessionId: "session-1",
+      jobName: null,
+    });
 
     await controller.cancelUtilityLineupRender({
       user: USER,
       render_id: "render-1",
     });
 
-    // killNadeRenderPod deletes by name and swallows a missing job — safe to
-    // call whether or not a pod exists.
-    expect(gameStreamer.killNadeRenderPod).toHaveBeenCalled();
+    expect(gameStreamer.killNadeRenderPod).not.toHaveBeenCalled();
     expect(practice.endRenderSession).toHaveBeenCalledWith("session-1");
   });
 });

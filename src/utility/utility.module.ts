@@ -43,6 +43,8 @@ import { UtilityPracticeModeService } from "./utility-practice-mode.service";
 import { UtilityPracticeService } from "./utility-practice.service";
 import { UtilityRendersController } from "./utility-renders.controller";
 import { UtilityRendersService } from "./utility-renders.service";
+import { UtilityRenderWorkerController } from "./utility-render-worker.controller";
+import { UtilityRenderWorkerService } from "./utility-render-worker.service";
 import { UtilityLaunchSeedService } from "./utility-launch-seed.service";
 import { UtilityController } from "./utility.controller";
 import { MineUtilityMeta } from "./jobs/MineUtilityMeta";
@@ -116,6 +118,7 @@ import { GameStreamerModule } from "../matches/game-streamer/game-streamer.modul
     UtilityPracticeModeService,
     UtilityPracticeService,
     UtilityRendersService,
+    UtilityRenderWorkerService,
     UtilityLaunchSeedService,
     BatchUtilityRenderJob,
     BatchUtilityRenderJobEvents,
@@ -137,6 +140,7 @@ import { GameStreamerModule } from "../matches/game-streamer/game-streamer.modul
     UtilityAnalysisController,
     UtilityInsightsController,
     UtilityRendersController,
+    UtilityRenderWorkerController,
     UtilityController,
   ],
   exports: [
