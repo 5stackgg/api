@@ -118,16 +118,34 @@ describe("GameStreamerService — nade previews", () => {
     ]);
   });
 
-  describe("GetNadeRenderJobName", () => {
-    it("is one pod per map, and a legal k8s name", () => {
-      expect(GameStreamerService.GetNadeRenderJobName("de_mirage")).toBe(
+  describe("the render pod's name", () => {
+    // One pod films the whole queue and follows its server from map to map,
+    // so the name says nothing about a map and a second can never be created
+    // beside the first.
+    it("is the same for every map", async () => {
+      const mirage = await service.dispatchNadePreviews(
+        "de_mirage",
+        "match-1",
+        CONNECT,
+        JOBS,
+      );
+      const dust = await service.dispatchNadePreviews(
+        "de_dust2",
+        "match-1",
+        CONNECT,
+        JOBS,
+      );
+
+      expect(mirage.jobName).toBe(GameStreamerService.NADE_RENDER_JOB_NAME);
+      expect(dust.jobName).toBe(mirage.jobName);
+    });
+
+    it("still finds a pod named for its map, from before the queue shared one", () => {
+      expect(GameStreamerService.GetLegacyNadeRenderJobName("de_mirage")).toBe(
         "gs-nades-demirage",
       );
       expect(
-        GameStreamerService.GetNadeRenderJobName("de_dust2"),
-      ).not.toEqual(GameStreamerService.GetNadeRenderJobName("de_mirage"));
-      expect(
-        GameStreamerService.GetNadeRenderJobName(
+        GameStreamerService.GetLegacyNadeRenderJobName(
           "workshop/3070315843/de_some_absurdly_long_workshop_name",
         ),
       ).toMatch(/^gs-nades-[a-z0-9]{1,24}$/);
@@ -143,7 +161,7 @@ describe("GameStreamerService — nade previews", () => {
         JOBS,
       );
 
-      expect(result).toEqual({ jobName: "gs-nades-demirage", nodeId: "node-A" });
+      expect(result).toEqual({ jobName: "gs-nades-queue", nodeId: "node-A" });
 
       const body = createNamespacedJob.mock.calls[0][0].body;
       expect(body.spec.template.spec.containers[0].args).toEqual([
@@ -223,10 +241,12 @@ describe("GameStreamerService — nade previews", () => {
         ),
       ).rejects.toThrow("k8s said no");
 
-      expect(steamAccounts.release).toHaveBeenCalledWith("gs-nades-demirage");
+      expect(steamAccounts.release).toHaveBeenCalledWith("gs-nades-queue");
+      // Only the rows this pod was given: the queue's other maps are waiting
+      // on the same pod and had no claim to drop.
       expect(postgres.query).toHaveBeenCalledWith(
-        expect.stringContaining("UPDATE utility_lineup_renders"),
-        ["de_mirage"],
+        expect.stringContaining("WHERE id = ANY($1::uuid[])"),
+        [["render-1"]],
       );
     });
 
@@ -242,13 +262,38 @@ describe("GameStreamerService — nade previews", () => {
       expect(steamAccounts.claim).not.toHaveBeenCalled();
     });
 
-    it("will not start a second pod for a map that already has one running", async () => {
+    // A finished Job lingers for a day and every pod has the same name, so
+    // there is one to reap on nearly every dispatch. Taking a Job down hands
+    // back the Steam account held under its name: reaped after the claim, the
+    // new pod logs in on an account the pool has already given to somebody.
+    it("reaps the last pod before it claims anything for the new one", async () => {
+      readNamespacedJob.mockReset();
+      readNamespacedJob
+        .mockResolvedValueOnce({ status: { succeeded: 1 } })
+        .mockRejectedValue({ code: 404 });
+      const kill = jest
+        .spyOn(service, "killNadeRenderPod")
+        .mockImplementation(async (jobName: string) => {
+          steamAccounts.release(jobName);
+        });
+
+      await service.dispatchNadePreviews("de_mirage", "match-1", CONNECT, JOBS);
+
+      expect(kill).toHaveBeenCalledWith("gs-nades-queue");
+      expect(steamAccounts.release.mock.invocationCallOrder[0]).toBeLessThan(
+        steamAccounts.claim.mock.invocationCallOrder[0],
+      );
+      expect(steamAccounts.release).toHaveBeenCalledTimes(1);
+      expect(createNamespacedJob).toHaveBeenCalledTimes(1);
+    });
+
+    it("will not start a second pod while one is already running, on any map", async () => {
       readNamespacedJob.mockReset();
       readNamespacedJob.mockResolvedValue({ status: { active: 1 } });
 
       await expect(
         service.dispatchNadePreviews(
-          "de_mirage",
+          "de_inferno",
           "match-1",
           CONNECT,
           JOBS,
@@ -256,7 +301,10 @@ describe("GameStreamerService — nade previews", () => {
       ).rejects.toThrow("already running");
 
       expect(createNamespacedJob).not.toHaveBeenCalled();
-      expect(steamAccounts.release).toHaveBeenCalledWith("gs-nades-demirage");
+      // Every pod has the same name, so a release here would hand back the
+      // Steam account the running pod is logged in with.
+      expect(steamAccounts.release).not.toHaveBeenCalled();
+      expect(steamAccounts.claim).not.toHaveBeenCalled();
     });
   });
 });

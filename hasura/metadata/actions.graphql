@@ -2585,6 +2585,46 @@ type UtilityRenderClearOutput {
   cleared: Int!
 }
 
+type Query {
+  utilityLineupRenderCoverage(
+    map_name: String
+  ): UtilityRenderCoverageOutput
+}
+
+type Mutation {
+  renderUtilityLineupPreviews(
+    scope: String!
+    map_name: String
+  ): UtilityRenderBulkOutput
+}
+
+type UtilityRenderGap {
+  id: uuid!
+  name: String
+  map_name: String!
+  utility_type: String!
+  state: String!
+  preview_version: Int
+  reason: String
+}
+
+type UtilityRenderCoverageOutput {
+  version: Int!
+  pipeline_version: Int
+  total: Int!
+  current: Int!
+  missing: Int!
+  outdated: Int!
+  queued: Int!
+  unrenderable: Int!
+  lineups: [UtilityRenderGap!]!
+}
+
+type UtilityRenderBulkOutput {
+  queued: Int!
+  skipped: Int!
+}
+
 type Mutation {
   checkIntoTournament(
     tournament_id: uuid!

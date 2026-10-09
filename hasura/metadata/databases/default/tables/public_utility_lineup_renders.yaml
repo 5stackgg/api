@@ -31,6 +31,7 @@ select_permissions:
         - error_message
         - skip_reason
         - duration_ms
+        - render_version
         - paused
         - sort_index
         - status_history

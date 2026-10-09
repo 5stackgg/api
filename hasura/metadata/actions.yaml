@@ -1887,6 +1887,24 @@ actions:
     permissions:
       - role: administrator
     comment: Drop every finished row from the lineup preview queue
+  - name: utilityLineupRenderCoverage
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: moderator
+    comment: Which public lineups have no preview, or one filmed by an older render version
+  - name: renderUtilityLineupPreviews
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: moderator
+    comment: Queue a preview render for every public lineup that is missing one or has an outdated one
   - name: checkIntoTournament
     definition:
       kind: synchronous
@@ -2220,6 +2238,9 @@ custom_types:
     - name: UtilityPurgeOutput
     - name: UtilityRenderQueueOutput
     - name: UtilityRenderClearOutput
+    - name: UtilityRenderGap
+    - name: UtilityRenderCoverageOutput
+    - name: UtilityRenderBulkOutput
     - name: ImportedWorkshopMap
     - name: ImportWorkshopCollectionOutput
     - name: ServerCommunityStats

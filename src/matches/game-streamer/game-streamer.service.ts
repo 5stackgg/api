@@ -2457,9 +2457,14 @@ export class GameStreamerService {
     }
   }
 
-  // One pod per map, because one cs2 session films one map: batch-nades.sh
-  // skips any lineup whose map_name is not the session's.
-  public static GetNadeRenderJobName(mapName: string) {
+  // One pod for the whole queue: it films a map's lineups, then follows its
+  // practice server onto the next map. One name, so a second can never start
+  // while the first is still coming down.
+  public static readonly NADE_RENDER_JOB_NAME = "gs-nades-queue";
+
+  // What a pod was called when each map had its own. Only a batch booked
+  // before the queue shared one pod still answers to it.
+  public static GetLegacyNadeRenderJobName(mapName: string) {
     return `gs-nades-${mapName
       .replace(/[^a-z0-9]/gi, "")
       .slice(0, 24)
@@ -2467,9 +2472,8 @@ export class GameStreamerService {
   }
 
   public async getNadeRenderPodState(
-    mapName: string,
+    jobName: string,
   ): Promise<"running" | "succeeded" | "failed" | "absent"> {
-    const jobName = GameStreamerService.GetNadeRenderJobName(mapName);
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const batch = kc.makeApiClient(BatchV1Api);
@@ -2493,9 +2497,8 @@ export class GameStreamerService {
   }
 
   public async getNadeRenderPodFailureReason(
-    mapName: string,
+    jobName: string,
   ): Promise<string | null> {
-    const jobName = GameStreamerService.GetNadeRenderJobName(mapName);
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const core = kc.makeApiClient(CoreV1Api);
@@ -2507,7 +2510,7 @@ export class GameStreamerService {
       });
     } catch (error) {
       this.logger.warn(
-        `[nade-renders ${mapName}] failure-reason listPods: ${(error as Error)?.message}`,
+        `[nade-renders ${jobName}] failure-reason listPods: ${(error as Error)?.message}`,
       );
       return null;
     }
@@ -2566,21 +2569,21 @@ export class GameStreamerService {
     return rows.map((row) => row.id);
   }
 
-  public async killNadeRenderPod(mapName: string): Promise<void> {
-    const jobName = GameStreamerService.GetNadeRenderJobName(mapName);
+  public async killNadeRenderPod(jobName: string): Promise<void> {
     try {
       await this.deleteJob(jobName);
     } catch (error) {
       this.logger.error(
-        `[nade-renders ${mapName}] kill failed: ${(error as Error)?.message}`,
+        `[nade-renders ${jobName}] kill failed: ${(error as Error)?.message}`,
       );
     }
   }
 
   /**
-   * Film a map's queued lineups off a live practice server. Unlike the
-   * highlight batch there is no demo to fetch: the throws only exist as rows,
-   * and the pod reproduces them live against the server it connects to.
+   * Film queued lineups off a live practice server. Unlike the highlight batch
+   * there is no demo to fetch: the throws only exist as rows, and the pod
+   * reproduces them live against the server it connects to. `jobs` is what it
+   * starts with, on `mapName`; it asks for the rest as it goes.
    */
   public async dispatchNadePreviews(
     mapName: string,
@@ -2592,9 +2595,32 @@ export class GameStreamerService {
       throw new Error("no nade render jobs to dispatch");
     }
 
-    const jobName = GameStreamerService.GetNadeRenderJobName(mapName);
+    const jobName = GameStreamerService.NADE_RENDER_JOB_NAME;
+    const renderIds = jobs.map((job) => job.job_id);
+
+    // Before anything is claimed. Every pod has the same name, and taking a
+    // Job down hands back whatever Steam account is held under it: reaping
+    // the last one after claiming would give this pod's account away, and
+    // refusing over a running one would give away the running pod's.
+    const existing = await this.getNadeRenderPodState(jobName);
+    if (existing === "running") {
+      throw new NadeRenderPodBusyError(
+        `nade render pod ${jobName} is already running`,
+      );
+    }
+    if (existing !== "absent") {
+      await this.killNadeRenderPod(jobName);
+      const deadline = Date.now() + 15_000;
+      while (Date.now() < deadline) {
+        if ((await this.getNadeRenderPodState(jobName)) === "absent") {
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+    }
+
     const { nodeId, steamAccount } = await this.claimGpuForNadeRenders(
-      jobs.map((job) => job.job_id),
+      renderIds,
       jobName,
       connect.nodeId,
     );
@@ -2624,22 +2650,6 @@ export class GameStreamerService {
     });
     env.push(...(await this.buildNodeCs2OptionsEnv(nodeId)));
 
-    const existing = await this.getNadeRenderPodState(mapName);
-    if (existing === "running") {
-      await this.releaseNadeRenderClaim(mapName, jobName);
-      throw new NadeRenderPodBusyError(
-        `nade render pod ${jobName} is already running for ${mapName}`,
-      );
-    }
-    if (existing !== "absent") {
-      await this.killNadeRenderPod(mapName);
-      const deadline = Date.now() + 15_000;
-      while (Date.now() < deadline) {
-        if ((await this.getNadeRenderPodState(mapName)) === "absent") break;
-        await new Promise((resolve) => setTimeout(resolve, 500));
-      }
-    }
-
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const batch = kc.makeApiClient(BatchV1Api);
@@ -2662,20 +2672,25 @@ export class GameStreamerService {
         ),
       });
     } catch (error) {
-      await this.releaseNadeRenderClaim(mapName, jobName);
+      await this.releaseNadeRenderClaim(renderIds, jobName);
       throw error;
     }
 
     return { jobName, nodeId };
   }
 
-  private async releaseNadeRenderClaim(mapName: string, jobName: string) {
+  // By row, not by map: the queue's other maps are waiting on the same pod and
+  // a claim dropped for all of them would be one nobody had made.
+  private async releaseNadeRenderClaim(
+    renderIds: Array<string>,
+    jobName: string,
+  ) {
     await this.postgres.query(
       `UPDATE utility_lineup_renders
           SET game_server_node_id = NULL
-        WHERE map_name = $1
+        WHERE id = ANY($1::uuid[])
           AND status IN ('queued','rendering','uploading')`,
-      [mapName],
+      [renderIds],
     );
     await this.steamAccounts.release(jobName);
   }

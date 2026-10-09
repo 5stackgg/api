@@ -257,6 +257,7 @@ select_permissions:
         - preview_duration_ms
         - preview_stills
         - preview_rendered_at
+        - preview_version
       computed_fields:
         - can_view
         - can_edit
@@ -340,6 +341,7 @@ select_permissions:
         - preview_duration_ms
         - preview_stills
         - preview_rendered_at
+        - preview_version
       computed_fields:
         - can_view
         - can_edit
@@ -420,6 +422,7 @@ select_permissions:
         - preview_duration_ms
         - preview_stills
         - preview_rendered_at
+        - preview_version
       computed_fields:
         - can_view
         - can_edit

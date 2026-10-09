@@ -1415,6 +1415,169 @@ describe("utility practice sessions (SQL-driven)", () => {
       });
     });
 
+    // One render pod films the whole queue, so its server follows it from map
+    // to map. The system's own change: nobody is on the server to warn, and
+    // nothing is stood anywhere on the far side.
+    describe("a render session", () => {
+      it("moves all three places and tells the server, with nobody queued", async () => {
+        const host = await fx.player();
+        const { matchId, sessionId, serverId } = await readyServer(
+          host,
+          27720,
+          { is_render: true },
+        );
+        const service = makeService({});
+
+        expect(await service.renderSessionForMatch(matchId)).toMatchObject({
+          id: sessionId,
+          map_name: "de_mirage",
+          status: "Ready",
+          map_changing_seconds: null,
+        });
+
+        await expect(
+          service.changeRenderMap(sessionId, "de_inferno"),
+        ).resolves.toBe("de_inferno");
+
+        expect(await mapOf(matchId)).toEqual({
+          session: "de_inferno",
+          matchMap: "de_inferno",
+          pool: "de_inferno",
+        });
+        expect(rconSent).toEqual([
+          { serverId, command: 'utility_practice_map "de_inferno"' },
+        ]);
+
+        // Still loading as far as anybody can tell: the pod is not handed a
+        // lineup until the plugin reports the level.
+        const changing = await service.renderSessionForMatch(matchId);
+        expect(changing?.map_name).toBe("de_inferno");
+        expect(changing?.map_changing_seconds).not.toBeNull();
+
+        await service.markMapLoaded(sessionId, "de_inferno");
+        expect(
+          (await service.renderSessionForMatch(matchId))?.map_changing_seconds,
+        ).toBeNull();
+      });
+
+      it("puts the map back when the server cannot be reached", async () => {
+        const host = await fx.player();
+        const { matchId, sessionId } = await readyServer(host, 27721, {
+          is_render: true,
+        });
+
+        rconReply = () => null;
+
+        await expect(
+          makeService({}).changeRenderMap(sessionId, "de_inferno"),
+        ).rejects.toThrow(/could not reach/);
+
+        expect(await mapOf(matchId)).toEqual({
+          session: "de_mirage",
+          matchMap: "de_mirage",
+          pool: "de_mirage",
+        });
+        expect(
+          (await makeService({}).renderSessionForMatch(matchId))
+            ?.map_changing_seconds,
+        ).toBeNull();
+      });
+
+      it("sends nothing when the server is already on the map", async () => {
+        const host = await fx.player();
+        const { sessionId } = await readyServer(host, 27722, {
+          is_render: true,
+        });
+
+        await expect(
+          makeService({}).changeRenderMap(sessionId, "de_mirage"),
+        ).resolves.toBe("de_mirage");
+        expect(rconSent).toEqual([]);
+      });
+
+      // The pod is a fact about the session: what the worker hands rows to
+      // and what the GPU is held on. Read off the session's render rows it
+      // vanished whenever they were deleted.
+      it("remembers the pod started on it, and when it last asked for work", async () => {
+        const host = await fx.player();
+        const { matchId, sessionId } = await readyServer(host, 27724, {
+          is_render: true,
+        });
+        const service = makeService({});
+
+        expect(
+          (await service.renderSessionForMatch(matchId))?.render_job_name,
+        ).toBeNull();
+
+        await service.markRenderPod(sessionId, "gs-nades-queue");
+        expect(
+          (await service.renderSessionForMatch(matchId))?.render_job_name,
+        ).toBe("gs-nades-queue");
+
+        await postgres.query(
+          `UPDATE utility_practice_sessions
+              SET render_seen_at = now() - interval '1 hour'
+            WHERE id = $1::uuid`,
+          [sessionId],
+        );
+        await service.touchRenderPod(sessionId);
+
+        const [row] = await postgres.query<Array<{ recent: boolean }>>(
+          `SELECT render_seen_at > now() - interval '1 minute' AS recent
+             FROM utility_practice_sessions WHERE id = $1::uuid`,
+          [sessionId],
+        );
+        expect(row.recent).toBe(true);
+      });
+
+      it("will not record a pod on somebody's own practice session", async () => {
+        const host = await fx.player();
+        const { sessionId } = await readyServer(host, 27725);
+
+        await makeService({}).markRenderPod(sessionId, "gs-nades-queue");
+
+        const [row] = await postgres.query<Array<{ pod: string | null }>>(
+          `SELECT render_job_name AS pod
+             FROM utility_practice_sessions WHERE id = $1::uuid`,
+          [sessionId],
+        );
+        expect(row.pod).toBeNull();
+      });
+
+      it("knows which maps a server can be booked on at all", async () => {
+        const service = makeService({});
+
+        await expect(service.canPracticeOn("de_mirage")).resolves.toBe(true);
+        await expect(service.canPracticeOn("de_nowhere")).resolves.toBe(false);
+
+        // Disabled since its lineups were recorded: still a map, no longer
+        // one to book.
+        await postgres.query(
+          "UPDATE maps SET enabled = false WHERE name = 'de_inferno' AND type = 'Competitive'",
+        );
+        try {
+          await expect(service.canPracticeOn("de_inferno")).resolves.toBe(
+            false,
+          );
+        } finally {
+          await postgres.query(
+            "UPDATE maps SET enabled = true WHERE name = 'de_inferno' AND type = 'Competitive'",
+          );
+        }
+      });
+
+      it("is not a way to move somebody's own practice server", async () => {
+        const host = await fx.player();
+        const { matchId, sessionId } = await readyServer(host, 27723);
+
+        await expect(
+          makeService({}).changeRenderMap(sessionId, "de_inferno"),
+        ).rejects.toThrow(/not up/);
+        expect(rconSent).toEqual([]);
+        expect(await makeService({}).renderSessionForMatch(matchId)).toBeNull();
+      });
+    });
+
     // The row would otherwise claim a map the server was never told about, and
     // every read after that is answered for a level it is not running.
     it("puts the map back when the server cannot be reached", async () => {
@@ -1648,6 +1811,92 @@ describe("utility practice sessions (SQL-driven)", () => {
         [sessionId],
       );
     }
+
+    // The backstop for a render session nothing is watching any more. One
+    // session films the whole queue, so "nothing of its own in flight" is true
+    // for a moment between every two lineups and across every level change.
+    describe("render sessions", () => {
+      async function oldRenderSession(): Promise<string> {
+        const host = await fx.player();
+        const { matchId } = await createPracticeMatch(host);
+        const sessionId = await insertSession(host, {
+          match_id: matchId,
+          status: "Ready",
+          is_render: true,
+        });
+        await postgres.query(
+          `UPDATE utility_practice_sessions
+              SET created_at = now() - make_interval(mins => $2)
+            WHERE id = $1::uuid`,
+          [sessionId, UtilityPracticeService.RENDER_GRACE_MINUTES + 5],
+        );
+        return sessionId;
+      }
+
+      async function filmed(
+        sessionId: string,
+        status: string,
+        minutesAgo: number,
+      ): Promise<void> {
+        const author = await fx.player();
+        const [lineup] = await postgres.query<Array<{ id: string }>>(
+          `INSERT INTO utility_lineups
+             (map_name, utility_type, side, technique,
+              origin_x, origin_y, origin_z, view_yaw, view_pitch,
+              land_x, land_y, land_z, name, author_steam_id, visibility)
+           VALUES ('de_mirage', 'Smoke', 'TERRORIST', 'Jump',
+                   1, 2, 3, 90, -20, 10, 20, 30, 'A main', $1::bigint, 'Private')
+           RETURNING id::text AS id`,
+          [author],
+        );
+        await postgres.query(
+          `INSERT INTO utility_lineup_renders
+             (utility_lineup_id, requested_by_steam_id, map_name, session_token,
+              spec, status, utility_practice_session_id, last_status_at)
+           VALUES ($1::uuid, $2::bigint, 'de_mirage', 'tok', '{}'::jsonb, $3,
+                   $4::uuid, now() - make_interval(mins => $5))`,
+          [lineup.id, author, status, sessionId, minutesAgo],
+        );
+      }
+
+      const live = async (sessionId: string) => {
+        const [row] = await postgres.query<Array<{ status: string }>>(
+          "SELECT status FROM utility_practice_sessions WHERE id = $1::uuid",
+          [sessionId],
+        );
+        return row.status === "Ready";
+      };
+
+      it("leaves one that finished a lineup a moment ago: it is between lineups", async () => {
+        const sessionId = await oldRenderSession();
+        await filmed(sessionId, "done", 1);
+
+        await expect(makeService({}).reapRenderSessions()).resolves.toBe(0);
+        expect(await live(sessionId)).toBe(true);
+      });
+
+      it("leaves one with a lineup still in flight, however long ago it last spoke", async () => {
+        const sessionId = await oldRenderSession();
+        await filmed(sessionId, "queued", 60);
+
+        await expect(makeService({}).reapRenderSessions()).resolves.toBe(0);
+        expect(await live(sessionId)).toBe(true);
+      });
+
+      it("ends one that has had nothing in flight and nothing to say for a while", async () => {
+        const sessionId = await oldRenderSession();
+        await filmed(
+          sessionId,
+          "done",
+          UtilityPracticeService.RENDER_QUIET_MINUTES + 1,
+        );
+
+        await expect(
+          serviceWithRealCancel().service.reapRenderSessions(),
+        ).resolves.toBe(1);
+        expect(await live(sessionId)).toBe(false);
+      });
+    });
 
     it("marks an empty session's clock and leaves it alone until it is stale", async () => {
       const host = await fx.player();
