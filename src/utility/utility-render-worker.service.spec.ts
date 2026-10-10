@@ -45,6 +45,7 @@ describe("UtilityRenderWorkerService.next", () => {
     };
     const store = new Map<string, unknown>();
     cache = {
+      has: jest.fn(async (key: string) => store.has(key)),
       get: jest.fn(async (key: string) => store.get(key)),
       put: jest.fn(async (key: string, value: unknown) => {
         store.set(key, value);
@@ -58,6 +59,8 @@ describe("UtilityRenderWorkerService.next", () => {
       handToPod: jest.fn().mockResolvedValue(HANDED),
       stampBootStage: jest.fn(),
       failRenders: jest.fn(),
+      strandedOnPod: jest.fn().mockResolvedValue([]),
+      releaseFromPod: jest.fn(),
     };
     practice = {
       renderSessionForMatch: jest.fn().mockResolvedValue(SESSION),
@@ -364,6 +367,55 @@ describe("UtilityRenderWorkerService.next", () => {
     liveStreamWaiting = true;
 
     await expect(service.next("match-1")).resolves.toEqual({ action: "done" });
+  });
+
+  // The pod asks only when it has nothing in hand. A lineup it was handed and
+  // never started did not reach it: the answer carrying it was lost on the way
+  // back. It used to sit in flight, unfilmed, until the pod exited.
+  describe("a lineup handed over that never started", () => {
+    beforeEach(() => {
+      renders.strandedOnPod.mockResolvedValue(["render-9"]);
+    });
+
+    it("goes back in the queue, before the queue is read", async () => {
+      await service.next("match-1");
+
+      expect(renders.strandedOnPod).toHaveBeenCalledWith(
+        "session-1",
+        "gs-nades-queue",
+      );
+      expect(renders.releaseFromPod).toHaveBeenCalledWith(["render-9"]);
+      expect(renders.failRenders).not.toHaveBeenCalled();
+      expect(renders.releaseFromPod.mock.invocationCallOrder[0]).toBeLessThan(
+        postgres.query.mock.invocationCallOrder[0],
+      );
+    });
+
+    // A lineup the pod cannot take would otherwise be handed to it on every
+    // request, for as long as it lived.
+    it("is failed the second time, not offered for ever", async () => {
+      await service.next("match-1");
+      await service.next("match-1");
+
+      expect(renders.releaseFromPod).toHaveBeenCalledTimes(1);
+      expect(renders.failRenders).toHaveBeenCalledWith(
+        ["render-9"],
+        "handed to the render pod twice and never started",
+      );
+    });
+
+    it("counts each lineup's chances on its own", async () => {
+      await service.next("match-1");
+      renders.strandedOnPod.mockResolvedValue(["render-9", "render-10"]);
+
+      await service.next("match-1");
+
+      expect(renders.failRenders).toHaveBeenCalledWith(
+        ["render-9"],
+        expect.any(String),
+      );
+      expect(renders.releaseFromPod).toHaveBeenLastCalledWith(["render-10"]);
+    });
   });
 
   // Not a render session's pod at all: somebody else's practice match, or a

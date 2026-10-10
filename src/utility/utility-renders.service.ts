@@ -1431,6 +1431,39 @@ export class UtilityRendersService {
 
   // ---------------------------------------------------------------------
 
+  // Rows a pod has been handed and has not started. The pod only asks what is
+  // next once it has nothing in hand, so when it asks, these never reached it.
+  public async strandedOnPod(
+    sessionId: string,
+    jobName: string,
+  ): Promise<Array<string>> {
+    const rows = await this.postgres.query<Array<{ id: string }>>(
+      `SELECT id::text AS id
+         FROM public.utility_lineup_renders
+        WHERE utility_practice_session_id = $1::uuid
+          AND k8s_job_name = $2
+          AND status = 'queued'
+          AND paused = false
+        ORDER BY sort_index ASC, created_at ASC`,
+      [sessionId, jobName],
+    );
+    return rows.map((row) => row.id);
+  }
+
+  // Back in the queue for whoever asks next, with nothing holding a GPU for it.
+  public async releaseFromPod(renderIds: Array<string>): Promise<void> {
+    if (renderIds.length === 0) return;
+    await this.postgres.query(
+      `UPDATE public.utility_lineup_renders
+          SET k8s_job_name = NULL,
+              game_server_node_id = NULL,
+              last_status_at = now()
+        WHERE id = ANY($1::uuid[])
+          AND status = 'queued'`,
+      [renderIds],
+    );
+  }
+
   // Wakes the queue's one job, or starts it. A pod that is already filming
   // picks the new row up by itself, so there is nothing to tell it.
   public async dispatch(): Promise<void> {
