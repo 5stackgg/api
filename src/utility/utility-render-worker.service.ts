@@ -50,6 +50,14 @@ export class UtilityRenderWorkerService {
     return `utility:render:idle:${sessionId}`;
   }
 
+  // How long a lineup is remembered as having been handed over once already.
+  // Long enough to outlast the pod it was handed to.
+  public static readonly SECOND_CHANCE_SECONDS = 2 * 60 * 60;
+
+  public static secondChanceKey(renderId: string): string {
+    return `utility:render:second-chance:${renderId}`;
+  }
+
   public async next(matchId: string): Promise<UtilityRenderWorkerNext> {
     const session = await this.practice.renderSessionForMatch(matchId);
 
@@ -81,6 +89,8 @@ export class UtilityRenderWorkerService {
     if (!connection) {
       return { action: "done" };
     }
+
+    await this.recoverStranded(session.id, session.render_job_name, tag);
 
     let queued = await this.unclaimed();
     const here = queued.filter((row) => row.map_name === session.map_name);
@@ -201,6 +211,63 @@ export class UtilityRenderWorkerService {
     }
 
     return this.idle(session.id, tag);
+  }
+
+  /**
+   * A lineup this pod was handed and never started. It only asks once it has
+   * nothing in hand, so the handover did not arrive: the answer carrying it was
+   * lost on the way back, or the pod could not read it. Left alone the lineup
+   * sits in flight, unfilmed, for as long as the pod lives.
+   *
+   * It goes back in the queue once. The second time it is failed: a lineup the
+   * pod cannot take would otherwise be handed to it on every request.
+   */
+  private async recoverStranded(
+    sessionId: string,
+    jobName: string,
+    tag: string,
+  ): Promise<void> {
+    const stranded = await this.renders.strandedOnPod(sessionId, jobName);
+
+    if (stranded.length === 0) {
+      return;
+    }
+
+    const again: Array<string> = [];
+    const failed: Array<string> = [];
+
+    for (const id of stranded) {
+      const key = UtilityRenderWorkerService.secondChanceKey(id);
+
+      if (await this.cache.has(key)) {
+        failed.push(id);
+        continue;
+      }
+
+      await this.cache.put(
+        key,
+        Date.now(),
+        UtilityRenderWorkerService.SECOND_CHANCE_SECONDS,
+      );
+      again.push(id);
+    }
+
+    if (again.length > 0) {
+      this.logger.warn(
+        `${tag} ${again.length} render(s) handed to ${jobName} never started — queued again`,
+      );
+      await this.renders.releaseFromPod(again);
+    }
+
+    if (failed.length > 0) {
+      this.logger.warn(
+        `${tag} ${failed.length} render(s) handed to ${jobName} twice and never started — failing them`,
+      );
+      await this.renders.failRenders(
+        failed,
+        "handed to the render pod twice and never started",
+      );
+    }
   }
 
   private async idle(

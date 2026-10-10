@@ -512,6 +512,64 @@ describe("utility lineup renders (SQL-driven)", () => {
       });
     });
 
+    // The pod asks for more only once it has nothing in hand, so a lineup it
+    // holds and has not started never reached it.
+    describe("a lineup handed over that never started", () => {
+      it("is found on its own pod and session, and only while it is still queued", async () => {
+        const [stranded] = await queueRender(await seeded({ name: "stranded" }));
+        const [filming] = await queueRender(await seeded({ name: "filming" }));
+        const [elsewhere] = await queueRender(
+          await seeded({ name: "elsewhere" }),
+        );
+        const [untouched] = await queueRender(
+          await seeded({ name: "untouched" }),
+        );
+        await renders.handToPod(stranded.id, pod("gs-nades-queue"));
+        await renders.handToPod(filming.id, pod("gs-nades-queue"));
+        await renders.handToPod(elsewhere.id, pod("gs-nades-other"));
+        await postgres.query(
+          "UPDATE utility_lineup_renders SET status = 'rendering' WHERE id = $1::uuid",
+          [filming.id],
+        );
+
+        expect(await renders.strandedOnPod(sessionId, "gs-nades-queue")).toEqual(
+          [stranded.id],
+        );
+        expect(untouched.id).toBeDefined();
+      });
+
+      it("can be handed over again once it is back in the queue", async () => {
+        const [render] = await queueRender(await seeded());
+        await renders.handToPod(render.id, pod("gs-nades-queue"));
+
+        await renders.releaseFromPod([render.id]);
+
+        expect(await renders.strandedOnPod(sessionId, "gs-nades-queue")).toEqual(
+          [],
+        );
+        expect(
+          await renders.handToPod(render.id, pod("gs-nades-queue")),
+        ).toMatchObject({ id: render.id, k8s_job_name: "gs-nades-queue" });
+      });
+
+      it("is not taken back from a pod that has started filming it", async () => {
+        const [render] = await queueRender(await seeded());
+        await renders.handToPod(render.id, pod("gs-nades-queue"));
+        await postgres.query(
+          "UPDATE utility_lineup_renders SET status = 'rendering' WHERE id = $1::uuid",
+          [render.id],
+        );
+
+        await renders.releaseFromPod([render.id]);
+
+        const [row] = await postgres.query<Array<{ k8s_job_name: string }>>(
+          "SELECT k8s_job_name FROM utility_lineup_renders WHERE id = $1::uuid",
+          [render.id],
+        );
+        expect(row.k8s_job_name).toBe("gs-nades-queue");
+      });
+    });
+
     it("reads the whole queue with who has each lineup, in filming order", async () => {
       const [late] = await queueRender(await seeded({ name: "late" }));
       const [early] = await queueRender(
