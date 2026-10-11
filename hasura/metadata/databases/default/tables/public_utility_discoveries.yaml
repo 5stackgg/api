@@ -1,0 +1,72 @@
+table:
+  name: utility_discoveries
+  schema: public
+object_relationships:
+  - name: requested_by
+    using:
+      foreign_key_constraint_on: requested_by_steam_id
+array_relationships:
+  - name: results
+    using:
+      foreign_key_constraint_on:
+        column: discovery_id
+        table:
+          name: utility_discovery_results
+          schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - id
+        - requested_by_steam_id
+        - map_name
+        - utility_type
+        - target_x
+        - target_y
+        - target_z
+        - radius
+        - area
+        - techniques
+        - strengths
+        - status
+        - predicted
+        - verified
+        - missed
+        - grenades
+        - mesh_revision
+        - error
+        - created_at
+        - started_at
+        - finished_at
+      filter:
+        requested_by_steam_id:
+          _eq: X-Hasura-User-Id
+      allow_aggregations: true
+    comment: A player sees their own discoveries.
+  - role: moderator
+    permission:
+      columns:
+        - id
+        - requested_by_steam_id
+        - map_name
+        - utility_type
+        - target_x
+        - target_y
+        - target_z
+        - radius
+        - area
+        - techniques
+        - strengths
+        - status
+        - predicted
+        - verified
+        - missed
+        - grenades
+        - mesh_revision
+        - error
+        - created_at
+        - started_at
+        - finished_at
+      filter: {}
+      allow_aggregations: true
+    comment: ''

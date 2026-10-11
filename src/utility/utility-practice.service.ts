@@ -277,6 +277,9 @@ export class UtilityPracticeService {
     // system-owned, so it never reads as this person's practice server.
     requestedBySteamId: string;
     region?: string | null;
+    // A lineup discovery: the same quiet server, throwing its proposals,
+    // with no render pod to film it and so no need for a GPU node.
+    isDiscovery?: boolean;
   }): Promise<UtilityPracticeSession> {
     if (!(await this.isEnabled())) {
       throw Error("utility practice is not enabled");
@@ -306,6 +309,7 @@ export class UtilityPracticeService {
       // A render pod is nobody's to join.
       access: "Private",
       isRender: true,
+      isDiscovery: options.isDiscovery === true,
     });
 
     try {
@@ -405,6 +409,7 @@ export class UtilityPracticeService {
       `SELECT s.id::text AS id
          FROM public.utility_practice_sessions s
         WHERE s.is_render = true
+          AND s.is_discovery = false
           AND s.status IN ('Starting', 'Ready')
           AND s.created_at < now() - make_interval(mins => $1)
           AND NOT EXISTS (
@@ -1244,6 +1249,7 @@ export class UtilityPracticeService {
       isOpen: boolean;
       access: string;
       isRender?: boolean;
+      isDiscovery?: boolean;
       notifyWhenReady?: boolean;
     },
   ): Promise<UtilityPracticeSession> {
@@ -1255,8 +1261,8 @@ export class UtilityPracticeService {
         const [row] = await this.postgres.query<Array<{ id: string }>>(
           `INSERT INTO public.utility_practice_sessions
              (host_steam_id, map_name, region, team_id, collection_id, is_open,
-              access, is_render, notify_when_ready)
-           VALUES ($1::bigint, $2, $3, $4::uuid, $5::uuid, $6, $7, $8, $9)
+              access, is_render, notify_when_ready, is_discovery)
+           VALUES ($1::bigint, $2, $3, $4::uuid, $5::uuid, $6, $7, $8, $9, $10)
            RETURNING id::text AS id`,
           [
             hostSteamId,
@@ -1268,6 +1274,7 @@ export class UtilityPracticeService {
             options.access,
             options.isRender === true,
             options.notifyWhenReady === true,
+            options.isDiscovery === true,
           ],
         );
 
@@ -1899,6 +1906,22 @@ export class UtilityPracticeService {
           AND ($2::text IS NULL OR map_name = $2::text)`,
       [sessionId, reportedMap ?? null],
     );
+  }
+
+  // The server a render or discovery session is on, for the commands the api
+  // sends it.
+  public async renderServerId(sessionId: string): Promise<string | null> {
+    const session = await this.session(sessionId);
+
+    if (!session?.match_id) {
+      return null;
+    }
+
+    try {
+      return await this.serverForSession(session.match_id);
+    } catch {
+      return null;
+    }
   }
 
   private async serverForSession(matchId: string): Promise<string> {

@@ -1,0 +1,96 @@
+table:
+  name: utility_discovery_results
+  schema: public
+object_relationships:
+  - name: discovery
+    using:
+      foreign_key_constraint_on: discovery_id
+  - name: lineup
+    using:
+      foreign_key_constraint_on: utility_lineup_id
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - id
+        - discovery_id
+        - rank
+        - technique
+        - move_direction
+        - move_gait
+        - jump_throw
+        - measured
+        - strength
+        - stand_x
+        - stand_y
+        - stand_z
+        - eye_z
+        - pitch
+        - yaw
+        - predicted_land_x
+        - predicted_land_y
+        - predicted_land_z
+        - predicted_distance
+        - predicted_spread
+        - predicted_bounces
+        - status
+        - land_x
+        - land_y
+        - land_z
+        - distance
+        - bounces
+        - flight_time_ms
+        - forgiveness
+        - grenades
+        - path
+        - is_new
+        - utility_lineup_id
+        - created_at
+        - verified_at
+      filter:
+        discovery:
+          requested_by_steam_id:
+            _eq: X-Hasura-User-Id
+      allow_aggregations: true
+    comment: The seed is left out; it travels to a server only through a saved lineup.
+  - role: moderator
+    permission:
+      columns:
+        - id
+        - discovery_id
+        - rank
+        - technique
+        - move_direction
+        - move_gait
+        - jump_throw
+        - measured
+        - strength
+        - stand_x
+        - stand_y
+        - stand_z
+        - eye_z
+        - pitch
+        - yaw
+        - predicted_land_x
+        - predicted_land_y
+        - predicted_land_z
+        - predicted_distance
+        - predicted_spread
+        - predicted_bounces
+        - status
+        - land_x
+        - land_y
+        - land_z
+        - distance
+        - bounces
+        - flight_time_ms
+        - forgiveness
+        - grenades
+        - path
+        - is_new
+        - utility_lineup_id
+        - created_at
+        - verified_at
+      filter: {}
+      allow_aggregations: true
+    comment: ''

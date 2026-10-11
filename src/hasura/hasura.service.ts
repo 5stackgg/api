@@ -309,6 +309,10 @@ export class HasuraService {
     );
 
     await this.postgresService.query(
+      "insert into settings (name, value) values ('public.utility_discoveries_per_hour', '6') on conflict (name) do nothing",
+    );
+
+    await this.postgresService.query(
       "insert into settings (name, value) values ('public.utility_import_enabled', 'false') on conflict (name) do nothing",
     );
 

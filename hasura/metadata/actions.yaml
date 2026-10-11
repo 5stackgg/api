@@ -1905,6 +1905,62 @@ actions:
       - role: administrator
       - role: moderator
     comment: Queue a preview render for every public lineup that is missing one or has an outdated one
+  - name: discoverUtilityLineups
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Find throws that land a smoke on a spot from an area, and queue them to be thrown for real
+  - name: cancelUtilityDiscovery
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Stop a lineup discovery that has not finished
+  - name: saveUtilityDiscoveryResult
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Turn a verified discovery result into a private lineup
+  - name: previewUtilitySmoke
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: The shape a smoke takes when it pops at a point on a map
   - name: checkIntoTournament
     definition:
       kind: synchronous
@@ -2148,6 +2204,8 @@ custom_types:
   enums: []
   input_objects:
     - name: SampleInput
+    - name: UtilityDiscoveryAreaInput
+    - name: UtilityDiscoveryTechniqueInput
     - name: ClipSegmentInput
     - name: ClipOverlayInput
     - name: ClipAudioInput
@@ -2161,6 +2219,9 @@ custom_types:
     - name: ServerAccessInput
   objects:
     - name: Award
+    - name: UtilityDiscoveryOutput
+    - name: UtilityDiscoverySaveOutput
+    - name: UtilitySmokePreviewOutput
     - name: AwardRecipient
     - name: TournamentAward
     - name: SteamPresenceBotAssignment

@@ -245,6 +245,51 @@ export type ParsedSmokeVolumeResponse = ParsedSmokeVolume & {
 
 export type ParsedGeometryPoint = { x: number; y: number; z: number };
 
+// POST /discover: throws a fitted flight model lands on a spot, from an area.
+export type ParsedDiscoverTechnique = {
+  direction: "" | "forward" | "back" | "left" | "right";
+  gait: "" | "walk" | "run";
+  jump_throw: boolean;
+};
+
+export type ParsedDiscoverRequest = {
+  map: string;
+  target: ParsedGeometryPoint;
+  radius: number;
+  area: { min: ParsedGeometryPoint; max: ParsedGeometryPoint; radius?: number };
+  techniques: Array<ParsedDiscoverTechnique>;
+  strengths: Array<"Full" | "Half" | "Drop">;
+  limit?: number;
+  budget_ms?: number;
+};
+
+export type ParsedDiscoverCandidate = {
+  stand: ParsedGeometryPoint;
+  eye: ParsedGeometryPoint;
+  technique: ParsedDiscoverTechnique;
+  technique_name: string;
+  measured: boolean;
+  strength: "Full" | "Half" | "Drop";
+  pitch: number;
+  yaw: number;
+  position: ParsedGeometryPoint;
+  velocity: ParsedGeometryPoint;
+  landing: ParsedGeometryPoint;
+  distance: number;
+  bounces: number;
+  seconds: number;
+  spread: number | null;
+};
+
+export type ParsedDiscoverResponse = {
+  candidates: Array<ParsedDiscoverCandidate>;
+  stands: number;
+  flights: number;
+  searched: number;
+  truncated: boolean;
+  revision: string;
+};
+
 // One end-to-end line to test. Both ends are eye positions for /sightlines and
 // feet positions for /oneway (which derives the eyes from stance itself).
 export type ParsedSightlinePair = {
@@ -779,6 +824,18 @@ export class DemoParserService {
       "/drift",
       request,
       15 * 60_000,
+    );
+  }
+
+  // The search spends its own budget and then answers; the timeout here only
+  // has to outlast that and the mesh load in front of it.
+  public async discover(
+    request: ParsedDiscoverRequest,
+  ): Promise<DemoParserResult<ParsedDiscoverResponse>> {
+    return await this.geometry<ParsedDiscoverResponse>(
+      "/discover",
+      request,
+      90_000,
     );
   }
 

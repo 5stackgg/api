@@ -22,6 +22,8 @@ import { UtilityAnalysisController } from "./utility-analysis.controller";
 import { UtilityAnalysisService } from "./utility-analysis.service";
 import { UtilityArtifactsService } from "./utility-artifacts.service";
 import { UtilityDriftService } from "./utility-drift.service";
+import { UtilityDiscoveryController } from "./utility-discovery.controller";
+import { UtilityDiscoveryService } from "./utility-discovery.service";
 import { UtilityImportService } from "./utility-import.service";
 import { UtilitySeedService } from "./utility-seed.service";
 import { UtilityInsightsController } from "./utility-insights.controller";
@@ -56,6 +58,7 @@ import {
   BatchUtilityRenderJobEvents,
 } from "./jobs/BatchUtilityRenderJob";
 import { ReconcileQueuedUtilityRenders } from "./jobs/ReconcileQueuedUtilityRenders";
+import { RunUtilityDiscovery } from "./jobs/RunUtilityDiscovery";
 import { GameStreamerModule } from "../matches/game-streamer/game-streamer.module";
 
 @Module({
@@ -84,6 +87,9 @@ import { GameStreamerModule } from "../matches/game-streamer/game-streamer.modul
     BullModule.registerQueue({
       name: UtilityQueues.UtilityRenders,
     }),
+    BullModule.registerQueue({
+      name: UtilityQueues.UtilityDiscovery,
+    }),
     BullBoardModule.forFeature({
       name: UtilityQueues.UtilityPractice,
       adapter: BullMQAdapter,
@@ -100,11 +106,16 @@ import { GameStreamerModule } from "../matches/game-streamer/game-streamer.modul
       name: UtilityQueues.UtilityRenders,
       adapter: BullMQAdapter,
     }),
+    BullBoardModule.forFeature({
+      name: UtilityQueues.UtilityDiscovery,
+      adapter: BullMQAdapter,
+    }),
   ],
   providers: [
     UtilityAnalysisService,
     UtilityArtifactsService,
     UtilityCalloutsService,
+    UtilityDiscoveryService,
     UtilityDriftService,
     UtilityImportService,
     UtilityInsightsService,
@@ -123,6 +134,7 @@ import { GameStreamerModule } from "../matches/game-streamer/game-streamer.modul
     BatchUtilityRenderJob,
     BatchUtilityRenderJobEvents,
     ReconcileQueuedUtilityRenders,
+    RunUtilityDiscovery,
     UtilitySeedService,
     UtilityPluginKeyGuard,
     ReapIdleUtilityPracticeSessions,
@@ -141,6 +153,7 @@ import { GameStreamerModule } from "../matches/game-streamer/game-streamer.modul
     UtilityInsightsController,
     UtilityRendersController,
     UtilityRenderWorkerController,
+    UtilityDiscoveryController,
     UtilityController,
   ],
   exports: [
@@ -166,6 +179,7 @@ export class UtilityModule {
     @InjectQueue(UtilityQueues.UtilityMeta) utilityMetaQueue: Queue,
     @InjectQueue(UtilityQueues.UtilityRenders) utilityRendersQueue: Queue,
     utilityRendersService: UtilityRendersService,
+    utilityDiscoveryService: UtilityDiscoveryService,
   ) {
     if (process.env.RUN_MIGRATIONS) {
       return;
@@ -214,5 +228,6 @@ export class UtilityModule {
     // INSERT and its dispatch is the case this exists for, and waiting five
     // minutes to notice would leave the lineup unrenderable the whole time.
     void utilityRendersService.reconcileQueued().catch(() => {});
+    void utilityDiscoveryService.reconcile().catch(() => {});
   }
 }
