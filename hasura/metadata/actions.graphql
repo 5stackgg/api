@@ -2973,12 +2973,15 @@ type UtilityDiscoverySaveOutput {
 }
 
 type UtilitySmokePreviewOutput {
-  ox: Float!
-  oy: Float!
-  oz: Float!
-  vs: Float!
-  dx: Int!
-  dy: Int!
-  dz: Int!
+  x: Float!
+  y: Float!
+  z: Float!
+  ox: Float
+  oy: Float
+  oz: Float
+  vs: Float
+  dx: Int
+  dy: Int
+  dz: Int
   den: String
 }

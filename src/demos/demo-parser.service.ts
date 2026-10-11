@@ -261,6 +261,7 @@ export type ParsedDiscoverRequest = {
   strengths: Array<"Full" | "Half" | "Drop">;
   limit?: number;
   budget_ms?: number;
+  snap?: boolean;
 };
 
 export type ParsedDiscoverCandidate = {
@@ -288,6 +289,7 @@ export type ParsedDiscoverResponse = {
   searched: number;
   truncated: boolean;
   revision: string;
+  target: ParsedGeometryPoint;
 };
 
 // One end-to-end line to test. Both ends are eye positions for /sightlines and
@@ -824,6 +826,17 @@ export class DemoParserService {
       "/drift",
       request,
       15 * 60_000,
+    );
+  }
+
+  public async floor(
+    mapName: string,
+    point: ParsedGeometryPoint,
+  ): Promise<DemoParserResult<{ found: boolean; z: number }>> {
+    return await this.geometry<{ found: boolean; z: number }>(
+      "/floor",
+      { map: mapName, ...point },
+      30_000,
     );
   }
 

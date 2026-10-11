@@ -29,6 +29,19 @@ describe("utility lineup discovery (SQL-driven)", () => {
   let queued: Array<string>;
   let commands: Array<string>;
   let serverId: string;
+  let smokeVolume: jest.Mock;
+
+  const SMOKE = {
+    start_tick: 0,
+    ox: -400,
+    oy: -500,
+    oz: -170,
+    vs: 8,
+    dx: 30,
+    dy: 30,
+    dz: 12,
+    den: "AAAA",
+  };
 
   beforeAll(async () => {
     db = await bootMigratedDb("UtilityDiscoveryTest");
@@ -116,6 +129,7 @@ describe("utility lineup discovery (SQL-driven)", () => {
             searched: 12,
             truncated: false,
             revision: "rev-1",
+            target: { x: -280, y: -400, z: -168 },
           }
         : options.predicted;
 
@@ -143,7 +157,13 @@ describe("utility lineup discovery (SQL-driven)", () => {
           status: options.status ?? (predicted ? 200 : 500),
           error: predicted ? null : "boom",
         })),
-        smokeVolume: jest.fn(async (): Promise<null> => null),
+        smokeVolume: (smokeVolume = jest.fn(async () => SMOKE)),
+        floor: jest.fn(async (_map: string, point: { z: number }) => ({
+          data:
+            point.z > 5000 ? { found: false, z: 0 } : { found: true, z: -168 },
+          status: 200,
+          error: null as string | null,
+        })),
       } as unknown as never,
       {
         isEnabled: jest.fn(async () => true),
@@ -306,13 +326,14 @@ describe("utility lineup discovery (SQL-driven)", () => {
       expect(queued).toEqual(["RunUtilityDiscovery"]);
 
       const [discovery] = await postgres.query<Array<any>>(
-        "SELECT status, predicted, mesh_revision FROM utility_discoveries WHERE id = $1",
+        "SELECT status, predicted, mesh_revision, target_z FROM utility_discoveries WHERE id = $1",
         [answer.discovery_id],
       );
       expect(discovery).toMatchObject({
         status: "Queued",
         predicted: 1,
         mesh_revision: "rev-1",
+        target_z: -168,
       });
 
       const [result] = await postgres.query<Array<any>>(
@@ -340,6 +361,7 @@ describe("utility lineup discovery (SQL-driven)", () => {
           searched: 1,
           truncated: false,
           revision: "",
+          target: { x: -280, y: -400, z: -168 },
         },
       }).start(user(steamId), ask());
 
@@ -357,6 +379,7 @@ describe("utility lineup discovery (SQL-driven)", () => {
           searched: 4,
           truncated: false,
           revision: "rev-1",
+          target: { x: -280, y: -400, z: -168 },
         },
       }).start(user(steamId), ask());
 
@@ -488,7 +511,7 @@ describe("utility lineup discovery (SQL-driven)", () => {
         id: discoveryId,
         map: "de_mirage",
         utility_type: "Smoke",
-        target: { x: -280, y: -400, z: -160 },
+        target: { x: -280, y: -400, z: -168 },
         radius: 40,
         max_grenades: UtilityDiscoveryService.MAX_GRENADES,
       });
@@ -612,6 +635,35 @@ describe("utility lineup discovery (SQL-driven)", () => {
       await expect(
         discoveries.save(user(steamId), resultId, "mine", "CT"),
       ).rejects.toThrow(/only a throw the server has landed/);
+    });
+  });
+
+  describe("the smoke at a spot", () => {
+    it("puts a radar pick on its floor and blooms the smoke just above it", async () => {
+      const discoveries = service();
+
+      const preview = await discoveries.smoke("de_mirage", {
+        x: -280,
+        y: -400,
+        z: 0,
+      });
+
+      expect(preview).toEqual({
+        at: { x: -280, y: -400, z: -168 },
+        volume: SMOKE,
+      });
+      expect(smokeVolume).toHaveBeenCalledWith("de_mirage", {
+        x: -280,
+        y: -400,
+        z: -168 + UtilityDiscoveryService.SMOKE_REST_LIFT,
+      });
+    });
+
+    it("answers nothing for a spot with no floor", async () => {
+      expect(
+        await service().smoke("de_mirage", { x: 0, y: 0, z: 9000 }),
+      ).toBeNull();
+      expect(smokeVolume).not.toHaveBeenCalled();
     });
   });
 

@@ -121,6 +121,7 @@ export class UtilityDiscoveryService {
   public static readonly PREDICT_BUDGET_MS = 8000;
   public static readonly MAX_PATH_POINTS = 256;
   public static readonly PATH_EVERY_TICKS = 4;
+  public static readonly SMOKE_REST_LIFT = 4;
   public static readonly WORKER_JOB_ID = "utility-discovery-queue";
 
   constructor(
@@ -179,6 +180,7 @@ export class UtilityDiscoveryService {
       ...request,
       limit: UtilityDiscoveryService.MAX_PROPOSALS,
       budget_ms: UtilityDiscoveryService.PREDICT_BUDGET_MS,
+      snap: true,
     });
 
     if (!predicted.data) {
@@ -190,6 +192,19 @@ export class UtilityDiscoveryService {
       return { discovery_id: row.id, status: "Failed", predicted: 0, message };
     }
 
+    // The spot was picked off a radar with a guessed height; the server
+    // measures its throws against the floor the search snapped it to.
+    await this.postgres.query(
+      `UPDATE public.utility_discoveries
+          SET target_z = $2, mesh_revision = $3
+        WHERE id = $1::uuid`,
+      [
+        row.id,
+        predicted.data.target?.z ?? request.target.z,
+        predicted.data.revision || null,
+      ],
+    );
+
     const candidates = predicted.data.candidates.slice(
       0,
       UtilityDiscoveryService.MAX_PROPOSALS,
@@ -199,18 +214,14 @@ export class UtilityDiscoveryService {
     if (candidates.length === 0) {
       const message = "no throw from that area lands there";
       await this.finish(row.id, "Done", null);
-      await this.postgres.query(
-        "UPDATE public.utility_discoveries SET mesh_revision = $2 WHERE id = $1::uuid",
-        [row.id, predicted.data.revision || null],
-      );
       return { discovery_id: row.id, status: "Done", predicted: 0, message };
     }
 
     await this.postgres.query(
       `UPDATE public.utility_discoveries
-          SET status = 'Queued', predicted = $2, mesh_revision = $3
+          SET status = 'Queued', predicted = $2
         WHERE id = $1::uuid AND status = 'Predicting'`,
-      [row.id, candidates.length, predicted.data.revision || null],
+      [row.id, candidates.length],
     );
     await this.dispatch();
 
@@ -855,12 +866,14 @@ export class UtilityDiscoveryService {
     }));
   }
 
-  // The bloom is the same for everybody asking about the same spot, and the
-  // flood behind it is the expensive part, so it is kept a day.
+  // A spot picked off a radar has only a guessed height, so it is put on its
+  // floor first; the page then searches from that floor. The bloom is the same
+  // for everybody asking about the same spot, and the flood behind it is the
+  // expensive part, so it is kept a day.
   public async smoke(
     mapName: string,
     point: Vec,
-  ): Promise<ParsedSmokeVolumeResponse | null> {
+  ): Promise<{ at: Vec; volume: ParsedSmokeVolumeResponse | null } | null> {
     if (
       !/^[A-Za-z0-9_./-]{1,128}$/.test(mapName) ||
       ![point.x, point.y, point.z].every(
@@ -870,15 +883,27 @@ export class UtilityDiscoveryService {
     ) {
       throw Error("that is not a point on a map");
     }
-    const key = `utility-smoke-preview:${mapName}:${Math.round(point.x / 8)}:${Math.round(point.y / 8)}:${Math.round(point.z / 8)}`;
+
+    const floor = await this.demoParser.floor(mapName, point);
+    if (!floor.data?.found) {
+      return null;
+    }
+    const at = { x: point.x, y: point.y, z: floor.data.z };
+
+    const key = `utility-smoke-preview:${mapName}:${Math.round(at.x / 8)}:${Math.round(at.y / 8)}:${Math.round(at.z / 8)}`;
     const cached = await this.cache.get(key);
     if (cached) {
-      return cached as ParsedSmokeVolumeResponse;
+      return { at, volume: cached as ParsedSmokeVolumeResponse };
     }
-    const volume = await this.demoParser.smokeVolume(mapName, point);
+    // A grenade at rest sits a few units off the floor, and the flood refuses
+    // a point on the surface itself as sealed.
+    const volume = await this.demoParser.smokeVolume(mapName, {
+      ...at,
+      z: at.z + UtilityDiscoveryService.SMOKE_REST_LIFT,
+    });
     if (volume) {
       await this.cache.put(key, volume as never, 86400);
     }
-    return volume;
+    return { at, volume };
   }
 }

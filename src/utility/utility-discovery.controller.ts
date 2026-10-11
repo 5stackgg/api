@@ -67,25 +67,28 @@ export class UtilityDiscoveryController {
     y: number;
     z: number;
   }) {
-    const volume = await this.discoveries.smoke(data.map_name, {
+    const preview = await this.discoveries.smoke(data.map_name, {
       x: data.x,
       y: data.y,
       z: data.z,
     });
 
-    if (!volume) {
+    if (!preview) {
       return null;
     }
 
+    const volume = preview.volume;
+
     return {
-      ox: volume.ox,
-      oy: volume.oy,
-      oz: volume.oz,
-      vs: volume.vs,
-      dx: volume.dx,
-      dy: volume.dy,
-      dz: volume.dz,
-      den: volume.den ?? null,
+      ...preview.at,
+      ox: volume?.ox ?? null,
+      oy: volume?.oy ?? null,
+      oz: volume?.oz ?? null,
+      vs: volume?.vs ?? null,
+      dx: volume?.dx ?? null,
+      dy: volume?.dy ?? null,
+      dz: volume?.dz ?? null,
+      den: volume?.den ?? null,
     };
   }
 
