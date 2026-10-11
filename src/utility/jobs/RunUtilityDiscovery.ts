@@ -18,8 +18,10 @@ const POLL_DELAY_MS = 5_000;
 const SERVER_BUSY_RETRY_MS = 30_000;
 const SERVER_READY_TIMEOUT_MS = 10 * 60 * 1000;
 const MAP_CHANGE_TIMEOUT_MS = 3 * 60 * 1000;
-// Nobody waits this long for a server to come free; they have moved on.
-const QUEUED_TIMEOUT_MS = 20 * 60 * 1000;
+// Nobody waits this long for a server to come free; they have moved on. Timed
+// from the first failed booking, not from the request: behind other searches
+// on a server that is working, waiting is the queue doing its job.
+const BOOKING_TIMEOUT_MS = 20 * 60 * 1000;
 // The plugin stops itself at max_seconds and reports what it has; past this it
 // has gone quiet.
 const VERIFY_GRACE_MS = 2 * 60 * 1000;
@@ -34,6 +36,7 @@ type JobData = {
   mapChangeAt?: number;
   runAttempts?: number;
   idleSince?: number;
+  bookingSince?: number;
 };
 
 @UseQueue("Utility", UtilityQueues.UtilityDiscovery, {
@@ -50,7 +53,24 @@ export class RunUtilityDiscovery extends WorkerHost {
     super();
   }
 
+  // A throw that is not BullMQ's own control flow would fail the job, and the
+  // failed job takes the session it was holding with it: the server stays up
+  // with nothing to end it, and the next job books a second one.
   async process(job: Job<JobData>): Promise<void> {
+    try {
+      await this.step(job);
+    } catch (error) {
+      if (error instanceof DelayedError) {
+        throw error;
+      }
+      this.logger.error(
+        `[utility-discovery] step failed, retrying: ${(error as Error)?.message}`,
+      );
+      await this.delayUntilNext(job, CHECK_DELAY_MS);
+    }
+  }
+
+  private async step(job: Job<JobData>): Promise<void> {
     const head = await this.discoveries.next();
 
     if (!head) {
@@ -68,22 +88,19 @@ export class RunUtilityDiscovery extends WorkerHost {
       head.utility_practice_session_id !== job.data.sessionId
     ) {
       this.logger.warn(`${tag} its server is no longer held, failing it`);
+      if (head.utility_practice_session_id) {
+        const serverId = await this.practice.renderServerId(
+          head.utility_practice_session_id,
+        );
+        if (serverId) {
+          await this.load.discovery(serverId, "cancel", head.id);
+        }
+        await this.practice.endRenderSession(head.utility_practice_session_id);
+      }
       await this.discoveries.finish(
         head.id,
         "Failed",
         "the server throwing it was lost",
-      );
-      return this.delayUntilNext(job, 0);
-    }
-
-    if (
-      head.status === "Queued" &&
-      Date.now() - new Date(head.created_at).getTime() > QUEUED_TIMEOUT_MS
-    ) {
-      await this.discoveries.finish(
-        head.id,
-        "Failed",
-        "no server came free in time, try again",
       );
       return this.delayUntilNext(job, 0);
     }
@@ -187,6 +204,19 @@ export class RunUtilityDiscovery extends WorkerHost {
       this.logger.log(
         `${tag} no server yet (${(error as Error)?.message ?? "unknown"})`,
       );
+      const since = job.data.bookingSince ?? Date.now();
+      if (Date.now() - since > BOOKING_TIMEOUT_MS) {
+        await this.discoveries.finish(
+          head.id,
+          "Failed",
+          "no server came free in time, try again",
+        );
+        await this.patch(job, { bookingSince: undefined });
+        return this.delayUntilNext(job, 0);
+      }
+      if (job.data.bookingSince === undefined) {
+        await this.patch(job, { bookingSince: since });
+      }
       return this.delayUntilNext(job, SERVER_BUSY_RETRY_MS);
     }
 
@@ -196,6 +226,7 @@ export class RunUtilityDiscovery extends WorkerHost {
       bookedAt: Date.now(),
       mapChangeAt: undefined,
       runAttempts: 0,
+      bookingSince: undefined,
     });
     return this.delayUntilNext(job, CHECK_DELAY_MS);
   }
@@ -270,6 +301,11 @@ export class RunUtilityDiscovery extends WorkerHost {
 
   private async onEmptyQueue(job: Job<JobData>): Promise<void> {
     if (!job.data.sessionId) {
+      // Started between the read above and this job ending: its own add() was
+      // dropped as a duplicate of this one.
+      if (await this.discoveries.next()) {
+        return this.delayUntilNext(job, 0);
+      }
       return;
     }
 

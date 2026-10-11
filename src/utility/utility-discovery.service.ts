@@ -108,6 +108,11 @@ const STRENGTHS = ["Full", "Half", "Drop"];
 @Injectable()
 export class UtilityDiscoveryService {
   public static readonly PER_HOUR = 6;
+  public static readonly MAX_QUEUED = 8;
+  public static readonly MAX_TECHNIQUES = 16;
+  public static readonly PREVIEWS_PER_MINUTE = 40;
+  public static readonly ALREADY_RUNNING =
+    "you already have a discovery running, wait for it to finish";
   // How many proposals one discovery throws, at most. Each is a handful of
   // grenades on a server somebody else may be queued behind.
   public static readonly MAX_PROPOSALS = 40;
@@ -155,26 +160,9 @@ export class UtilityDiscoveryService {
       throw Error("that map is not available for practice");
     }
 
-    await this.claimBudget(user.steam_id);
+    await this.assertBudget(user.steam_id);
 
-    const [row] = await this.postgres.query<Array<{ id: string }>>(
-      `INSERT INTO public.utility_discoveries
-         (requested_by_steam_id, map_name, target_x, target_y, target_z,
-          radius, area, techniques, strengths)
-       VALUES ($1::bigint, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9::text[])
-       RETURNING id::text AS id`,
-      [
-        user.steam_id,
-        request.map,
-        request.target.x,
-        request.target.y,
-        request.target.z,
-        request.radius,
-        JSON.stringify(request.area),
-        JSON.stringify(request.techniques),
-        request.strengths,
-      ],
-    );
+    const [row] = await this.insertDiscovery(user.steam_id, request);
 
     const predicted = await this.demoParser.discover({
       ...request,
@@ -317,6 +305,11 @@ export class UtilityDiscoveryService {
     if (techniques.length === 0) {
       throw Error("pick at least one way to throw");
     }
+    if (techniques.length > UtilityDiscoveryService.MAX_TECHNIQUES) {
+      throw Error(
+        `pick at most ${UtilityDiscoveryService.MAX_TECHNIQUES} ways to throw`,
+      );
+    }
 
     const strengths = [...new Set(input.strengths ?? ["Full"])].filter((s) =>
       STRENGTHS.includes(s),
@@ -343,18 +336,22 @@ export class UtilityDiscoveryService {
     return row?.value ?? null;
   }
 
-  private async claimBudget(steamId: string): Promise<void> {
-    const [active] = await this.postgres.query<Array<{ count: number }>>(
-      `SELECT count(*)::int AS count
+  private async assertBudget(steamId: string): Promise<void> {
+    const [counts] = await this.postgres.query<
+      Array<{ active: number; hour: number; queued: number }>
+    >(
+      `SELECT count(*) FILTER (WHERE requested_by_steam_id = $1::bigint
+                                 AND status = ANY($2::text[]))::int AS active,
+              count(*) FILTER (WHERE requested_by_steam_id = $1::bigint
+                                 AND created_at > now() - interval '1 hour')::int AS hour,
+              count(*) FILTER (WHERE status IN ('Queued', 'Verifying'))::int AS queued
          FROM public.utility_discoveries
         WHERE requested_by_steam_id = $1::bigint
-          AND status = ANY($2::text[])`,
+           OR status IN ('Queued', 'Verifying')`,
       [steamId, UTILITY_DISCOVERY_ACTIVE],
     );
-    if ((active?.count ?? 0) > 0) {
-      throw Error(
-        "you already have a discovery running, wait for it to finish",
-      );
+    if ((counts?.active ?? 0) > 0) {
+      throw Error(UtilityDiscoveryService.ALREADY_RUNNING);
     }
 
     const perHour = Number(
@@ -364,20 +361,47 @@ export class UtilityDiscoveryService {
       Number.isFinite(perHour) && perHour > 0
         ? perHour
         : UtilityDiscoveryService.PER_HOUR;
-
-    // The hour is part of the key, not a refreshed TTL: re-setting the TTL on
-    // every attempt walks the window ahead of somebody who never stops.
-    const hour = Math.floor(Date.now() / 3600000);
-    const key = `utility-discovery-count:${steamId}:${hour}`;
-    const used = Number(await this.cache.get(key, 0));
-
-    if (used >= cap) {
+    if ((counts?.hour ?? 0) >= cap) {
       throw Error(
         `you have used all ${cap} discoveries for this hour, try again later`,
       );
     }
 
-    await this.cache.put(key, used + 1, 7200);
+    // One server throws them in turn, a few minutes each.
+    if ((counts?.queued ?? 0) >= UtilityDiscoveryService.MAX_QUEUED) {
+      throw Error("the discovery server is busy, try again in a few minutes");
+    }
+  }
+
+  private async insertDiscovery(
+    steamId: string,
+    request: ReturnType<typeof UtilityDiscoveryService.normalize>,
+  ): Promise<Array<{ id: string }>> {
+    try {
+      return await this.postgres.query<Array<{ id: string }>>(
+        `INSERT INTO public.utility_discoveries
+           (requested_by_steam_id, map_name, target_x, target_y, target_z,
+            radius, area, techniques, strengths)
+         VALUES ($1::bigint, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9::text[])
+         RETURNING id::text AS id`,
+        [
+          steamId,
+          request.map,
+          request.target.x,
+          request.target.y,
+          request.target.z,
+          request.radius,
+          JSON.stringify(request.area),
+          JSON.stringify(request.techniques),
+          request.strengths,
+        ],
+      );
+    } catch (error) {
+      if ((error as { code?: string })?.code === "23505") {
+        throw Error(UtilityDiscoveryService.ALREADY_RUNNING);
+      }
+      throw error;
+    }
   }
 
   private async keepProposals(
@@ -592,9 +616,13 @@ export class UtilityDiscoveryService {
 
   // Only the server the discovery was sent to, and only while it is being
   // thrown: a stale or foreign server gets nothing.
+  //
+  // `late` also lets in a report that crossed the server's own "done" on the
+  // way here, for a few minutes: what it carries was thrown all the same.
   private async verifying(
     id: string,
     serverId: string,
+    late = false,
   ): Promise<{ map_name: string; target: Vec; radius: number } | null> {
     const [row] = await this.postgres.query<Array<any>>(
       `SELECT d.map_name, d.target_x, d.target_y, d.target_z, d.radius
@@ -602,9 +630,13 @@ export class UtilityDiscoveryService {
          JOIN public.utility_practice_sessions s ON s.id = d.utility_practice_session_id
          JOIN public.matches m ON m.id = s.match_id
         WHERE d.id = $1::uuid
-          AND d.status = 'Verifying'
-          AND m.server_id = $2::uuid`,
-      [id, serverId],
+          AND m.server_id = $2::uuid
+          AND (
+            d.status = 'Verifying'
+            OR ($3::boolean AND d.status IN ('Done', 'Failed')
+                AND d.finished_at > now() - interval '5 minutes')
+          )`,
+      [id, serverId, late],
     );
     if (!row) {
       return null;
@@ -680,7 +712,7 @@ export class UtilityDiscoveryService {
     serverId: string,
     outcomes: Array<UtilityDiscoveryOutcome>,
   ): Promise<number> {
-    const discovery = await this.verifying(id, serverId);
+    const discovery = await this.verifying(id, serverId, true);
     if (!discovery || !Array.isArray(outcomes)) {
       return 0;
     }
@@ -793,59 +825,89 @@ export class UtilityDiscoveryService {
       throw Error("a lineup is for the T side or the CT side");
     }
 
-    const [row] = await this.postgres.query<Array<any>>(
-      `SELECT r.*, d.map_name, d.requested_by_steam_id::text AS owner
-         FROM public.utility_discovery_results r
-         JOIN public.utility_discoveries d ON d.id = r.discovery_id
-        WHERE r.id = $1::uuid`,
-      [resultId],
-    );
-    if (!row || row.owner !== user.steam_id) {
-      throw Error("that is not one of your discoveries");
-    }
-    if (row.status !== "verified") {
-      throw Error("only a throw the server has landed can be saved");
-    }
-    if (row.utility_lineup_id) {
-      return row.utility_lineup_id;
+    const lockKey = `utility-discovery-save:${resultId}`;
+    if (!(await this.cache.acquireLock(lockKey, 60))) {
+      throw Error("that throw is already being saved");
     }
 
-    const path: Array<Vec> = Array.isArray(row.path) ? row.path : [];
-    const lineupId = await this.lineups.insertDiscovered({
-      author: user.steam_id,
-      mapName: row.map_name,
-      side,
-      technique: row.technique,
-      throwStrength: row.strength,
-      jumpThrowBind: row.jump_throw === true,
-      name: title,
-      origin: { x: row.stand_x, y: row.stand_y, z: row.stand_z },
-      eyeZ: row.eye_z,
-      yaw: row.yaw,
-      pitch: row.pitch,
-      land: { x: row.land_x, y: row.land_y, z: row.land_z },
-      flightTimeMs: row.flight_time_ms,
-      initialPosition: {
-        x: row.initial_pos_x,
-        y: row.initial_pos_y,
-        z: row.initial_pos_z,
-      },
-      initialVelocity: {
-        x: row.initial_vel_x,
-        y: row.initial_vel_y,
-        z: row.initial_vel_z,
-      },
-      path: UtilityDiscoveryService.ticked(path, row.flight_time_ms),
-    });
+    try {
+      const [row] = await this.postgres.query<Array<any>>(
+        `SELECT r.*, d.map_name, d.requested_by_steam_id::text AS owner
+           FROM public.utility_discovery_results r
+           JOIN public.utility_discoveries d ON d.id = r.discovery_id
+          WHERE r.id = $1::uuid`,
+        [resultId],
+      );
+      if (!row || row.owner !== user.steam_id) {
+        throw Error("that is not one of your discoveries");
+      }
+      if (row.status !== "verified") {
+        throw Error("only a throw the server has landed can be saved");
+      }
+      if (row.utility_lineup_id) {
+        return row.utility_lineup_id;
+      }
 
-    await this.postgres.query(
-      `UPDATE public.utility_discovery_results
-          SET utility_lineup_id = $2::uuid
-        WHERE id = $1::uuid AND utility_lineup_id IS NULL`,
-      [resultId, lineupId],
-    );
+      const path: Array<Vec> = Array.isArray(row.path) ? row.path : [];
+      const lineupId = await this.lineups.insertDiscovered({
+        author: user.steam_id,
+        mapName: row.map_name,
+        side,
+        technique: row.technique,
+        throwStrength: row.strength,
+        jumpThrowBind: row.jump_throw === true,
+        name: title,
+        description: UtilityDiscoveryService.movement(row),
+        // The server threw the seed, not a person: a walk or a run whose
+        // speed is still a guess is a throw nobody has shown a human can make.
+        confidence: row.measured === false ? "derived" : "exact",
+        origin: { x: row.stand_x, y: row.stand_y, z: row.stand_z },
+        eyeZ: row.eye_z,
+        yaw: row.yaw,
+        pitch: row.pitch,
+        land: { x: row.land_x, y: row.land_y, z: row.land_z },
+        flightTimeMs: row.flight_time_ms,
+        initialPosition: {
+          x: row.initial_pos_x,
+          y: row.initial_pos_y,
+          z: row.initial_pos_z,
+        },
+        initialVelocity: {
+          x: row.initial_vel_x,
+          y: row.initial_vel_y,
+          z: row.initial_vel_z,
+        },
+        path: UtilityDiscoveryService.ticked(path, row.flight_time_ms),
+      });
 
-    return lineupId;
+      await this.postgres.query(
+        `UPDATE public.utility_discovery_results
+            SET utility_lineup_id = $2::uuid
+          WHERE id = $1::uuid AND utility_lineup_id IS NULL`,
+        [resultId, lineupId],
+      );
+
+      return lineupId;
+    } finally {
+      await this.cache.forget(lockKey);
+    }
+  }
+
+  // A lineup has nowhere yet to say which way to move, so a moving throw says
+  // it in words.
+  public static movement(row: {
+    move_direction: string | null;
+    move_gait: string | null;
+    jump_throw: boolean;
+  }): string | null {
+    const key = { forward: "W", back: "S", left: "A", right: "D" }[
+      row.move_direction ?? ""
+    ];
+    if (!key) {
+      return null;
+    }
+    const keys = row.move_gait === "walk" ? `Shift + ${key}` : key;
+    return `Hold ${keys} while you throw${row.jump_throw ? ", with the jump throw bind" : ""}.`;
   }
 
   // The server samples every fourth tick from release and appends where the
@@ -867,10 +929,12 @@ export class UtilityDiscoveryService {
   }
 
   // A spot picked off a radar has only a guessed height, so it is put on its
-  // floor first; the page then searches from that floor. The bloom is the same
-  // for everybody asking about the same spot, and the flood behind it is the
-  // expensive part, so it is kept a day.
+  // floor first; the page then searches from that floor. Both answers are the
+  // same for everybody asking about the same spot, and the flood is the
+  // expensive part, so they are kept a day. Dragging the spot asks again on
+  // every stop, so it is also capped per player.
   public async smoke(
+    steamId: string,
     mapName: string,
     point: Vec,
   ): Promise<{ at: Vec; volume: ParsedSmokeVolumeResponse | null } | null> {
@@ -884,13 +948,35 @@ export class UtilityDiscoveryService {
       throw Error("that is not a point on a map");
     }
 
-    const floor = await this.demoParser.floor(mapName, point);
-    if (!floor.data?.found) {
+    const minute = Math.floor(Date.now() / 60000);
+    const limitKey = `utility-smoke-preview-count:${steamId}:${minute}`;
+    const used = Number(await this.cache.get(limitKey, 0)) + 1;
+    await this.cache.put(limitKey, used, 120);
+    if (used > UtilityDiscoveryService.PREVIEWS_PER_MINUTE) {
+      throw Error("slow down, try that spot again in a moment");
+    }
+
+    if (!(await this.practice.canPracticeOn(mapName))) {
+      throw Error("that map is not available for practice");
+    }
+
+    const cell = (n: number) => Math.round(n / 8);
+    const floorKey = `utility-floor:${mapName}:${cell(point.x)}:${cell(point.y)}:${cell(point.z)}`;
+    let z = (await this.cache.get(floorKey)) as number | null | undefined;
+    if (z === undefined) {
+      const floor = await this.demoParser.floor(mapName, point);
+      if (!floor.data) {
+        return null;
+      }
+      z = floor.data.found ? floor.data.z : null;
+      await this.cache.put(floorKey, z, 86400);
+    }
+    if (z === null) {
       return null;
     }
-    const at = { x: point.x, y: point.y, z: floor.data.z };
+    const at = { x: point.x, y: point.y, z };
 
-    const key = `utility-smoke-preview:${mapName}:${Math.round(at.x / 8)}:${Math.round(at.y / 8)}:${Math.round(at.z / 8)}`;
+    const key = `utility-smoke-preview:${mapName}:${cell(at.x)}:${cell(at.y)}:${cell(at.z)}`;
     const cached = await this.cache.get(key);
     if (cached) {
       return { at, volume: cached as ParsedSmokeVolumeResponse };

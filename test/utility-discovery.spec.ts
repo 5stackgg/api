@@ -87,6 +87,14 @@ describe("utility lineup discovery (SQL-driven)", () => {
         store.set(key, value);
         return true;
       }),
+      acquireLock: jest.fn(async (key: string) => {
+        if (store.has(key)) {
+          return false;
+        }
+        store.set(key, true);
+        return true;
+      }),
+      forget: jest.fn(async (key: string) => store.delete(key)),
     } as unknown as CacheService;
   }
 
@@ -427,6 +435,43 @@ describe("utility lineup discovery (SQL-driven)", () => {
       ).rejects.toThrow(/all 1 discoveries/);
     });
 
+    it("lets one of two requests at once through", async () => {
+      const steamId = await fx.player();
+      const discoveries = service();
+
+      const answers = await Promise.allSettled([
+        discoveries.start(user(steamId), ask()),
+        discoveries.start(user(steamId), ask()),
+      ]);
+
+      expect(answers.filter((a) => a.status === "fulfilled")).toHaveLength(1);
+      const [refused] = answers.filter(
+        (a) => a.status === "rejected",
+      ) as PromiseRejectedResult[];
+      expect(refused.reason.message).toMatch(
+        /already have a discovery running/,
+      );
+    });
+
+    it("turns new searches away while the queue is full", async () => {
+      for (let i = 0; i < UtilityDiscoveryService.MAX_QUEUED; i++) {
+        const other = await fx.player();
+        await postgres.query(
+          `INSERT INTO utility_discoveries
+             (requested_by_steam_id, map_name, target_x, target_y, target_z,
+              radius, area, techniques, strengths, status)
+           VALUES ($1, 'de_mirage', 0, 0, 0, 40, '{}'::jsonb, '[]'::jsonb,
+                   '{Full}', 'Queued')`,
+          [other],
+        );
+      }
+      const steamId = await fx.player();
+
+      await expect(service().start(user(steamId), ask())).rejects.toThrow(
+        /server is busy/,
+      );
+    });
+
     it("refuses a malformed ask before searching", async () => {
       const steamId = await fx.player();
 
@@ -540,6 +585,28 @@ describe("utility lineup discovery (SQL-driven)", () => {
       ).toBe(0);
     });
 
+    it("keeps results that arrive just after the server said it was done", async () => {
+      const discoveries = service();
+      const { discoveryId, resultId } = await verifyingDiscovery(discoveries);
+
+      expect(await discoveries.done(discoveryId, serverId, null)).toBe(true);
+      expect(
+        await discoveries.report(discoveryId, serverId, [outcome(resultId)]),
+      ).toBe(1);
+
+      await postgres.query(
+        "UPDATE utility_discoveries SET finished_at = now() - interval '10 minutes' WHERE id = $1",
+        [discoveryId],
+      );
+      await postgres.query(
+        "UPDATE utility_discovery_results SET status = 'predicted' WHERE id = $1",
+        [resultId],
+      );
+      expect(
+        await discoveries.report(discoveryId, serverId, [outcome(resultId)]),
+      ).toBe(0);
+    });
+
     it("records a miss and finishes when the server says it is done", async () => {
       const discoveries = service();
       const { discoveryId, resultId } = await verifyingDiscovery(discoveries);
@@ -624,6 +691,66 @@ describe("utility lineup discovery (SQL-driven)", () => {
       ).toBe(lineupId);
     });
 
+    it("saves a moving throw as derived, with the keys in words", async () => {
+      const discoveries = service({
+        predicted: {
+          candidates: [
+            candidate({
+              technique: { direction: "left", gait: "walk", jump_throw: true },
+              technique_name: "WalkJump",
+              measured: false,
+            }),
+          ],
+          stands: 1,
+          flights: 10,
+          searched: 1,
+          truncated: false,
+          revision: "rev-1",
+          target: { x: -280, y: -400, z: -168 },
+        },
+      });
+      const { steamId, discoveryId, resultId } =
+        await verifyingDiscovery(discoveries);
+      await discoveries.report(discoveryId, serverId, [outcome(resultId)]);
+
+      const lineupId = await discoveries.save(
+        user(steamId),
+        resultId,
+        "",
+        "CT",
+      );
+
+      const [lineup] = await postgres.query<Array<any>>(
+        "SELECT technique, confidence, description, jump_throw_bind FROM utility_lineups WHERE id = $1",
+        [lineupId],
+      );
+      expect(lineup).toEqual({
+        technique: "WalkJump",
+        confidence: "derived",
+        description:
+          "Hold Shift + A while you throw, with the jump throw bind.",
+        jump_throw_bind: true,
+      });
+    });
+
+    it("saves once when asked twice at once", async () => {
+      const discoveries = service();
+      const { steamId, discoveryId, resultId } =
+        await verifyingDiscovery(discoveries);
+      await discoveries.report(discoveryId, serverId, [outcome(resultId)]);
+
+      const answers = await Promise.allSettled([
+        discoveries.save(user(steamId), resultId, "one", "CT"),
+        discoveries.save(user(steamId), resultId, "two", "CT"),
+      ]);
+
+      expect(answers.filter((a) => a.status === "fulfilled")).toHaveLength(1);
+      const [{ count }] = await postgres.query<Array<{ count: number }>>(
+        "SELECT count(*)::int AS count FROM utility_lineups WHERE origin_source = 'discovery'",
+      );
+      expect(count).toBe(1);
+    });
+
     it("refuses another player's find and an unverified one", async () => {
       const discoveries = service();
       const { steamId, resultId } = await verifyingDiscovery(discoveries);
@@ -642,11 +769,15 @@ describe("utility lineup discovery (SQL-driven)", () => {
     it("puts a radar pick on its floor and blooms the smoke just above it", async () => {
       const discoveries = service();
 
-      const preview = await discoveries.smoke("de_mirage", {
-        x: -280,
-        y: -400,
-        z: 0,
-      });
+      const preview = await discoveries.smoke(
+        "76561198000000001",
+        "de_mirage",
+        {
+          x: -280,
+          y: -400,
+          z: 0,
+        },
+      );
 
       expect(preview).toEqual({
         at: { x: -280, y: -400, z: -168 },
@@ -659,9 +790,30 @@ describe("utility lineup discovery (SQL-driven)", () => {
       });
     });
 
+    it("holds one player to a number of previews a minute", async () => {
+      const discoveries = service();
+      const at = { x: -280, y: -400, z: 0 };
+
+      for (let i = 0; i < UtilityDiscoveryService.PREVIEWS_PER_MINUTE; i++) {
+        await discoveries.smoke("76561198000000001", "de_mirage", at);
+      }
+
+      await expect(
+        discoveries.smoke("76561198000000001", "de_mirage", at),
+      ).rejects.toThrow(/slow down/);
+      await expect(
+        discoveries.smoke("76561198000000002", "de_mirage", at),
+      ).resolves.not.toBeNull();
+      expect(smokeVolume).toHaveBeenCalledTimes(1);
+    });
+
     it("answers nothing for a spot with no floor", async () => {
       expect(
-        await service().smoke("de_mirage", { x: 0, y: 0, z: 9000 }),
+        await service().smoke("76561198000000001", "de_mirage", {
+          x: 0,
+          y: 0,
+          z: 9000,
+        }),
       ).toBeNull();
       expect(smokeVolume).not.toHaveBeenCalled();
     });

@@ -53,6 +53,12 @@ CREATE TABLE IF NOT EXISTS "public"."utility_discoveries" (
 CREATE INDEX IF NOT EXISTS "utility_discoveries_requested_by_idx"
     ON "public"."utility_discoveries" ("requested_by_steam_id", "created_at" DESC);
 
+-- One running discovery a player, held by the database: a check before the
+-- insert lets a burst of requests all through.
+CREATE UNIQUE INDEX IF NOT EXISTS "utility_discoveries_one_active_idx"
+    ON "public"."utility_discoveries" ("requested_by_steam_id")
+    WHERE "status" IN ('Predicting', 'Queued', 'Verifying');
+
 -- The verification queue's only read.
 CREATE INDEX IF NOT EXISTS "utility_discoveries_queue_idx"
     ON "public"."utility_discoveries" ("created_at")

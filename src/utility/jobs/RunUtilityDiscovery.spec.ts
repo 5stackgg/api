@@ -212,19 +212,54 @@ describe("RunUtilityDiscovery", () => {
       "Failed",
       "the server throwing it was lost",
     );
+    expect(load.discovery).toHaveBeenCalledWith(
+      "server-1",
+      "cancel",
+      "discovery-1",
+    );
+    expect(practice.endRenderSession).toHaveBeenCalledWith("session-0");
     expect(practice.startForRender).not.toHaveBeenCalled();
   });
 
-  it("gives up on a discovery nobody could host for twenty minutes", async () => {
-    head = { ...head!, created_at: new Date(Date.now() - 30 * 60 * 1000) };
+  it("gives up on a discovery after twenty minutes of failing to book", async () => {
+    practice.startForRender.mockRejectedValue(new Error("no server free"));
+    const bullJob = makeJob({});
 
-    await step(makeJob({}));
+    await step(bullJob);
+    expect(discoveries.finish).not.toHaveBeenCalled();
+    expect(bullJob.data.bookingSince).toBeDefined();
+
+    bullJob.data.bookingSince = Date.now() - 30 * 60 * 1000;
+    await step(bullJob);
 
     expect(discoveries.finish).toHaveBeenCalledWith(
       "discovery-1",
       "Failed",
       "no server came free in time, try again",
     );
+  });
+
+  it("waits its turn behind a working server however long the queue is", async () => {
+    head = { ...head!, created_at: new Date(Date.now() - 60 * 60 * 1000) };
+
+    await step(makeJob({ sessionId: "session-1", bookedAt: Date.now() }));
+
+    expect(discoveries.finish).not.toHaveBeenCalled();
+    expect(load.discovery).toHaveBeenCalledWith(
+      "server-1",
+      "run",
+      "discovery-1",
+    );
+  });
+
+  it("keeps its server through an error and tries again", async () => {
+    discoveries.next.mockRejectedValueOnce(new Error("connection reset"));
+    const bullJob = makeJob({ sessionId: "session-1", bookedAt: Date.now() });
+
+    await step(bullJob);
+
+    expect(bullJob.data.sessionId).toBe("session-1");
+    expect(practice.endRenderSession).not.toHaveBeenCalled();
   });
 
   it("keeps an idle server warm, then releases it", async () => {

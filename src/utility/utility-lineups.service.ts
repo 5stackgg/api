@@ -510,6 +510,8 @@ export class UtilityLineupsService {
     throwStrength: string;
     jumpThrowBind: boolean;
     name: string;
+    description: string | null;
+    confidence: "exact" | "derived";
     origin: UtilityVector;
     eyeZ: number;
     yaw: number;
@@ -529,14 +531,14 @@ export class UtilityLineupsService {
           land_x, land_y, land_z, flight_time_ms,
           initial_pos_x, initial_pos_y, initial_pos_z,
           initial_vel_x, initial_vel_y, initial_vel_z,
-          name, visibility, author_steam_id,
+          name, description, visibility, author_steam_id,
           origin_source, confidence, trajectory_preview)
        VALUES ($1, 'Smoke', $2, $3, $4, $5,
                $6, $7, $8, $9, $10, $11,
                $12, $13, $14, $15,
                $16, $17, $18, $19, $20, $21,
-               $22, 'Private', $23::bigint,
-               'discovery', 'exact', $24::jsonb)
+               $22, $25, 'Private', $23::bigint,
+               'discovery', $26, $24::jsonb)
        RETURNING id::text AS id`,
       [
         input.mapName,
@@ -571,24 +573,34 @@ export class UtilityLineupsService {
         ),
         input.author,
         JSON.stringify(UtilityLineupsService.preview(input.path)),
+        input.description,
+        input.confidence,
       ],
     );
 
+    // The row is the save; the 3D flight is extra. Failing here would leave a
+    // lineup the caller never hears about and saves a second time.
     if (input.path.length > 0) {
-      await this.artifacts.uploadTrajectory({
-        lineupId: inserted.id,
-        mapName: input.mapName,
-        utilityType: "Smoke",
-        throwerSteamId: input.author,
-        throwerTeam: input.side,
-        origin: input.origin,
-        land: input.land,
-        initialPosition: input.initialPosition,
-        initialVelocity: input.initialVelocity,
-        flightTimeMs: input.flightTimeMs,
-        tickRate: UtilityLineupsService.DEFAULT_TICK_RATE,
-        path: input.path,
-      });
+      await this.artifacts
+        .uploadTrajectory({
+          lineupId: inserted.id,
+          mapName: input.mapName,
+          utilityType: "Smoke",
+          throwerSteamId: input.author,
+          throwerTeam: input.side,
+          origin: input.origin,
+          land: input.land,
+          initialPosition: input.initialPosition,
+          initialVelocity: input.initialVelocity,
+          flightTimeMs: input.flightTimeMs,
+          tickRate: UtilityLineupsService.DEFAULT_TICK_RATE,
+          path: input.path,
+        })
+        .catch((error: Error) => {
+          this.logger.warn(
+            `[utility-discovery] lineup ${inserted.id} saved without its flight: ${error?.message}`,
+          );
+        });
     }
 
     return inserted.id;

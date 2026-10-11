@@ -67,11 +67,15 @@ export class UtilityDiscoveryController {
     y: number;
     z: number;
   }) {
-    const preview = await this.discoveries.smoke(data.map_name, {
-      x: data.x,
-      y: data.y,
-      z: data.z,
-    });
+    const preview = await this.discoveries.smoke(
+      data.user.steam_id,
+      data.map_name,
+      {
+        x: data.x,
+        y: data.y,
+        z: data.z,
+      },
+    );
 
     if (!preview) {
       return null;

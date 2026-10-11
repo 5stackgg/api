@@ -79,6 +79,27 @@ describe("UtilityDiscoveryService.normalize", () => {
     ).toThrow(/at least one way to throw/);
   });
 
+  it("refuses more ways to throw than the search takes", () => {
+    const techniques = (["forward", "back", "left", "right"] as const).flatMap(
+      (direction) =>
+        (["walk", "run"] as const).flatMap((gait) =>
+          [false, true].map((jump_throw) => ({ direction, gait, jump_throw })),
+        ),
+    );
+
+    expect(() =>
+      UtilityDiscoveryService.normalize(
+        ask({
+          techniques: [
+            { jump_throw: false },
+            { jump_throw: true },
+            ...techniques,
+          ],
+        }),
+      ),
+    ).toThrow(/at most 16/);
+  });
+
   it("keeps only real mouse buttons", () => {
     expect(
       UtilityDiscoveryService.normalize(
