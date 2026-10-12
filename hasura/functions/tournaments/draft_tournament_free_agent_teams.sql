@@ -299,8 +299,6 @@ DECLARE
     _pickup_team_ids uuid[];
     _placed_steam_ids bigint[];
     _placed_at timestamptz[];
-    _team_id uuid;
-    _seed int := 0;
 BEGIN
     SELECT * INTO _tournament FROM public.tournaments t WHERE t.id = _tournament_id;
 
@@ -357,26 +355,10 @@ BEGIN
     DELETE FROM public.tournament_teams tt
      WHERE tt.id = ANY(_pickup_team_ids);
 
-    -- assign_seeds_to_teams keeps the seeds it finds and fills the gaps, and a
-    -- smaller bracket drops every seed past its size along with its team, so
-    -- the gaps the pickup teams leave are closed up: the remaining teams keep
-    -- their order, an organizer's hand seeding included, renumbered from 1.
-    -- Ascending, one row at a time: (tournament_id, seed) is unique and checked
-    -- per row, and a team only ever moves down onto a seed already vacated.
-    FOR _team_id IN
-        SELECT tt.id
-          FROM public.tournament_teams tt
-         WHERE tt.tournament_id = _tournament_id
-           AND tt.seed IS NOT NULL
-         ORDER BY tt.seed
-    LOOP
-        _seed := _seed + 1;
-
-        UPDATE public.tournament_teams tt
-           SET seed = _seed
-         WHERE tt.id = _team_id
-           AND tt.seed IS DISTINCT FROM _seed;
-    END LOOP;
+    -- The seeds were drawn for a field the pickup teams were part of. The
+    -- teams that remain keep their order, an organizer's hand seeding
+    -- included, numbered for the field that is left.
+    PERFORM public.compact_tournament_team_seeds(_tournament_id);
 
     -- Filtered to what tbi_tournament_free_agents accepts, since its refusal
     -- would abort the status change: whoever now fails the requirements or

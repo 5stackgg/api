@@ -396,6 +396,146 @@ describe("tournaments (SQL-driven)", () => {
       expect(final.match_id).toBeNull();
     });
 
+    const seededTeams = (tournamentId: string) =>
+      postgres.query<Array<{ id: string; seed: number }>>(
+        `SELECT id, seed FROM tournament_teams
+         WHERE tournament_id = $1 AND seed IS NOT NULL ORDER BY seed`,
+        [tournamentId],
+      );
+
+    const drawnTeams = async (tournamentId: string) =>
+      (await getBrackets(tournamentId))
+        .filter((bracket) => bracket.round === 1)
+        .flatMap((bracket) => [
+          bracket.tournament_team_id_1,
+          bracket.tournament_team_id_2,
+        ])
+        .filter((teamId) => teamId !== null)
+        .sort();
+
+    const registeredCup = async (teamCount: number) => {
+      const tournament = await createTournament();
+      await setStatus(tournament.id, tournament.organizer, "RegistrationOpen");
+      const entries: Array<string> = [];
+      for (let i = 0; i < teamCount; i++) {
+        entries.push(await registerTeam(tournament.id, await createTeam()));
+      }
+      return { tournament, entries };
+    };
+
+    const setSeed = (entryId: string, seed: number) =>
+      postgres.query("UPDATE tournament_teams SET seed = $2 WHERE id = $1", [
+        entryId,
+        seed,
+      ]);
+
+    // The bracket is sized from the eligible count and a team is looked up by
+    // its exact seed, so a seed above the count is a team with no slot.
+    it("closes up the seeds a withdrawn team leaves, so every remaining team is drawn", async () => {
+      const { tournament } = await registeredCup(5);
+      await setStatus(
+        tournament.id,
+        tournament.organizer,
+        "RegistrationClosed",
+      );
+      const first = await seededTeams(tournament.id);
+      expect(first.map((team) => team.seed)).toEqual([1, 2, 3, 4, 5]);
+
+      await setStatus(tournament.id, tournament.organizer, "RegistrationOpen");
+      await postgres.query("DELETE FROM tournament_teams WHERE id = $1", [
+        first[1].id,
+      ]);
+      await setStatus(
+        tournament.id,
+        tournament.organizer,
+        "RegistrationClosed",
+      );
+
+      const second = await seededTeams(tournament.id);
+      expect(second).toEqual(
+        [first[0], first[2], first[3], first[4]].map((team, index) => ({
+          id: team.id,
+          seed: index + 1,
+        })),
+      );
+      expect(await drawnTeams(tournament.id)).toEqual(
+        second.map((team) => team.id).sort(),
+      );
+    });
+
+    it("closes up the seeds a check-in no-show leaves at a second close", async () => {
+      const { tournament } = await registeredCup(5);
+      await setStatus(
+        tournament.id,
+        tournament.organizer,
+        "RegistrationClosed",
+      );
+      const first = await seededTeams(tournament.id);
+
+      await setStatus(tournament.id, tournament.organizer, "RegistrationOpen");
+      await postgres.query(
+        `UPDATE tournaments
+            SET check_in_required = true, check_in_ends_at = now() + interval '10 minutes'
+          WHERE id = $1`,
+        [tournament.id],
+      );
+      await postgres.query(
+        `UPDATE tournament_teams
+            SET checked_in_at = CASE WHEN id = $2 THEN NULL ELSE now() END
+          WHERE tournament_id = $1`,
+        [tournament.id, first[1].id],
+      );
+      await setStatus(
+        tournament.id,
+        tournament.organizer,
+        "RegistrationClosed",
+      );
+
+      const second = await seededTeams(tournament.id);
+      expect(second).toEqual(
+        [first[0], first[2], first[3], first[4]].map((team, index) => ({
+          id: team.id,
+          seed: index + 1,
+        })),
+      );
+      expect(await drawnTeams(tournament.id)).toEqual(
+        second.map((team) => team.id).sort(),
+      );
+    });
+
+    it("draws a team an organizer seeded 0 instead of leaving it out", async () => {
+      const { tournament, entries } = await registeredCup(4);
+      await setSeed(entries[2], 0);
+
+      await setStatus(
+        tournament.id,
+        tournament.organizer,
+        "RegistrationClosed",
+      );
+
+      const seeded = await seededTeams(tournament.id);
+      expect(seeded.map((team) => team.seed)).toEqual([1, 2, 3, 4]);
+      expect(seeded[0].id).toBe(entries[2]);
+      expect(await drawnTeams(tournament.id)).toEqual([...entries].sort());
+    });
+
+    it("leaves hand seeds that fit the field exactly where the organizer put them", async () => {
+      const { tournament, entries } = await registeredCup(4);
+      await setSeed(entries[0], 1);
+      await setSeed(entries[1], 4);
+
+      await setStatus(
+        tournament.id,
+        tournament.organizer,
+        "RegistrationClosed",
+      );
+
+      const seeded = await seededTeams(tournament.id);
+      expect(seeded.map((team) => team.seed)).toEqual([1, 2, 3, 4]);
+      expect(seeded[0].id).toBe(entries[0]);
+      expect(seeded[3].id).toBe(entries[1]);
+    });
+
     it("winners propagate into the final, which finishes the tournament and grants awards", async () => {
       const { tournament } = await seedFourTeamCup();
       await setStatus(tournament.id, tournament.organizer, "Live");
