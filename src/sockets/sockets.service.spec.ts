@@ -249,3 +249,122 @@ describe("SocketsService.setupSocket", () => {
     expect(logger.error).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("SocketsService.sendMessageToSteamId", () => {
+  const OTHER = { ...USER, steam_id: "76561198000000002", name: "Other" };
+
+  afterEach(() => {
+    sessionLoad.impl = (_request, next) => next();
+  });
+
+  const settle = () => new Promise((resolve) => setImmediate(resolve));
+
+  const closeListener = (client: any) =>
+    client.on.mock.calls.find(([event]: [string]) => event === "close")[1];
+
+  async function connect(
+    service: SocketsService,
+    user: typeof USER,
+  ): Promise<any> {
+    const client = socket();
+    signIn(user);
+    await service.setupSocket(client, {} as any);
+    await settle();
+    return client;
+  }
+
+  async function publish(
+    redis: ReturnType<typeof makeService>["redis"],
+    steamId: string | number,
+    event: string,
+    data: unknown,
+  ) {
+    const onMessage = redis.on.mock.calls.find(
+      ([event]: [string]) => event === "message",
+    )[1];
+    onMessage(
+      "send-message-to-steam-id",
+      JSON.stringify({ steamId, event, data }),
+    );
+    await settle();
+  }
+
+  const sent = (event: string, data: unknown) =>
+    JSON.stringify({ event, data });
+
+  it("reaches an open socket whose presence key has expired", async () => {
+    const { service, redis } = makeService();
+    const client = await connect(service, USER);
+
+    redis.keys.mockResolvedValue([]);
+
+    await publish(redis, USER.steam_id, "matchmaking:details", { ready: 1 });
+
+    expect(client.send).toHaveBeenCalledWith(
+      sent("matchmaking:details", { ready: 1 }),
+    );
+  });
+
+  it("reaches every open tab of the player and nobody else", async () => {
+    const { service, redis } = makeService();
+    const first = await connect(service, USER);
+    const second = await connect(service, USER);
+    const other = await connect(service, OTHER);
+
+    await publish(redis, USER.steam_id, "direct:incoming", { id: 1 });
+
+    expect(first.send).toHaveBeenCalledWith(sent("direct:incoming", { id: 1 }));
+    expect(second.send).toHaveBeenCalledWith(
+      sent("direct:incoming", { id: 1 }),
+    );
+    expect(other.send).not.toHaveBeenCalled();
+  });
+
+  it("matches a steam id published as a number", async () => {
+    const { service, redis } = makeService();
+    const client = await connect(service, { ...USER, steam_id: "42" });
+
+    await publish(redis, 42, "matchmaking:details", {});
+
+    expect(client.send).toHaveBeenCalledWith(sent("matchmaking:details", {}));
+  });
+
+  it("keeps the remaining tab after another one closes", async () => {
+    const { service, redis } = makeService();
+    const closing = await connect(service, USER);
+    const staying = await connect(service, USER);
+
+    await closeListener(closing)();
+    await publish(redis, USER.steam_id, "matchmaking:details", {});
+
+    expect(closing.send).not.toHaveBeenCalled();
+    expect(staying.send).toHaveBeenCalledWith(sent("matchmaking:details", {}));
+  });
+
+  it("forgets a player once their last tab closes", async () => {
+    const { service, redis } = makeService();
+    const first = await connect(service, USER);
+    const second = await connect(service, USER);
+
+    await closeListener(first)();
+    await closeListener(second)();
+    await publish(redis, USER.steam_id, "matchmaking:details", {});
+
+    expect(first.send).not.toHaveBeenCalled();
+    expect(second.send).not.toHaveBeenCalled();
+    expect((service as any).clientsBySteamId.size).toBe(0);
+  });
+
+  it("never indexes a socket that closed while its session loaded", async () => {
+    const { service, redis } = makeService();
+    const client = socket(3);
+    signIn(USER);
+
+    await service.setupSocket(client, {} as any);
+    await settle();
+    await publish(redis, USER.steam_id, "matchmaking:details", {});
+
+    expect(client.send).not.toHaveBeenCalled();
+    expect((service as any).clientsBySteamId.size).toBe(0);
+  });
+});

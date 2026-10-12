@@ -24,6 +24,11 @@ export class SocketsService {
 
   private clients: Map<string, FiveStackWebSocketClient> = new Map();
 
+  // Delivery reads this rather than the clients:* presence keys: those live
+  // 20s and a hidden tab only pings once a minute, so they lapse while the
+  // socket is still open.
+  private clientsBySteamId: Map<string, Set<string>> = new Map();
+
   // Twice the client's ping interval, so a focus survives a missed heartbeat
   // but a closed laptop stops claiming to be reading anything within a round.
   private static readonly FOCUS_TTL_SECONDS = 40;
@@ -174,6 +179,7 @@ export class SocketsService {
     client.signalPeers = new Map();
 
     this.clients.set(client.id, client);
+    this.indexClient(client);
 
     const registered = this.register(client);
 
@@ -181,6 +187,7 @@ export class SocketsService {
 
     client.on("close", async () => {
       this.clients.delete(client.id);
+      this.unindexClient(client);
 
       void this.demoSessionWatcher.clientClosed(client.id);
 
@@ -362,30 +369,48 @@ export class SocketsService {
     client.send(JSON.stringify({ event, data }));
   }
 
+  private indexClient(client: FiveStackWebSocketClient) {
+    const steamId = String(client.user.steam_id);
+
+    let clientIds = this.clientsBySteamId.get(steamId);
+    if (!clientIds) {
+      clientIds = new Set();
+      this.clientsBySteamId.set(steamId, clientIds);
+    }
+
+    clientIds.add(client.id);
+  }
+
+  private unindexClient(client: FiveStackWebSocketClient) {
+    const steamId = String(client.user.steam_id);
+
+    const clientIds = this.clientsBySteamId.get(steamId);
+    if (!clientIds) {
+      return;
+    }
+
+    clientIds.delete(client.id);
+
+    if (clientIds.size === 0) {
+      this.clientsBySteamId.delete(steamId);
+    }
+  }
+
   private async sendMessageToSteamId(
     steamId: string,
     event: string,
     data: unknown,
   ) {
-    const clients = await this.redis.keys(
-      `${SocketsService.GET_PLAYER_CLIENTS_BY_NODE(steamId, this.nodeId)}:*`,
-    );
+    const clientIds = this.clientsBySteamId.get(String(steamId));
 
-    for (const client of clients) {
-      const [, , , clientId] = client.split(":");
+    if (!clientIds) {
+      return;
+    }
 
-      const _client = this.clients.get(clientId);
+    const message = JSON.stringify({ event, data });
 
-      if (!_client) {
-        continue;
-      }
-
-      _client.send(
-        JSON.stringify({
-          event,
-          data,
-        }),
-      );
+    for (const clientId of clientIds) {
+      this.clients.get(clientId)?.send(message);
     }
   }
 
