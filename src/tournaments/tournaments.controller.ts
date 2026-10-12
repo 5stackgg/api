@@ -938,9 +938,9 @@ export class TournamentsController {
     return { success: true };
   }
 
-  // Wider than a player's own sign-up window: the draft has not read the pool
-  // yet in any of these, so an organizer can still fix it before registration
-  // opens and while a check-in review holds the close.
+  // Wider than a player's own sign-up window: the close has not drafted the
+  // pool yet in any of these. An organizer's Draft Teams may already have, and
+  // an entry added after it is waitlisted like any late sign-up.
   private static readonly FREE_AGENT_POOL_EDITABLE = [
     "Setup",
     "RegistrationOpen",
@@ -959,11 +959,13 @@ export class TournamentsController {
 
     this.requireOrganizer(tournament);
 
-    // Under the organizer's own session, so tbi_tournament_free_agents judges
-    // invite_only (and the block check) against them instead of waving the
-    // insert through as an internal write.
+    // Under the organizer's own session: a session-less insert is an internal
+    // write, which the block check between them and the player skips.
     const added = await this.postgres.transaction(async (client) => {
-      await this.lockFreeAgentPool(client, tournament_id);
+      const { check_in_required } = await this.lockFreeAgentPool(
+        client,
+        tournament_id,
+      );
 
       await client.query(
         `DELETE FROM tournament_free_agents
@@ -973,12 +975,15 @@ export class TournamentsController {
         [tournament_id, steamId],
       );
 
+      // The organizer vouches for them. Unconfirmed past a review's deadline
+      // they would be drafted without ever checking in, or, behind a Draft
+      // Teams, waitlisted where promotion only takes players who checked in.
       const { rows } = await client.query<{ id: string }>(
-        `INSERT INTO tournament_free_agents (tournament_id, player_steam_id)
-         VALUES ($1::uuid, $2::bigint)
+        `INSERT INTO tournament_free_agents (tournament_id, player_steam_id, checked_in_at)
+         VALUES ($1::uuid, $2::bigint, CASE WHEN $3::boolean THEN now() END)
          ON CONFLICT (tournament_id, player_steam_id) DO NOTHING
          RETURNING id::text AS id`,
-        [tournament_id, steamId],
+        [tournament_id, steamId, check_in_required],
       );
 
       return rows;
@@ -1039,12 +1044,16 @@ export class TournamentsController {
     return { success: true };
   }
 
-  // FOR SHARE holds off the status change that runs the draft until this write
-  // commits. Without it a pool row written alongside the close misses the draft
-  // and sits as 'registered' waiting for one that never comes.
+  // FOR SHARE holds off every draft until this write commits: the close's
+  // status UPDATE and draft_tournament_free_agent_teams both lock the row.
+  // Without it an add lands 'registered' beside teams drafted without it, and
+  // a removal is rostered by a draft that read the pool before it.
   private async lockFreeAgentPool(client: PoolClient, tournamentId: string) {
-    const { rows } = await client.query<{ status: string }>(
-      `SELECT status FROM tournaments WHERE id = $1::uuid FOR SHARE`,
+    const { rows } = await client.query<{
+      status: string;
+      check_in_required: boolean;
+    }>(
+      `SELECT status, check_in_required FROM tournaments WHERE id = $1::uuid FOR SHARE`,
       [tournamentId],
     );
 
@@ -1055,6 +1064,8 @@ export class TournamentsController {
         "the free agent pool can only change before registration closes or during check-in review",
       );
     }
+
+    return rows[0];
   }
 
   private requireRegistrationUnlocked(tournament: TournamentAccess) {

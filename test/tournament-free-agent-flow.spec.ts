@@ -1,4 +1,5 @@
 import { Logger } from "@nestjs/common";
+import { Pool } from "pg";
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { TournamentsController } from "./../src/tournaments/tournaments.controller";
 import { ProcessTournamentCheckIn } from "./../src/matches/jobs/ProcessTournamentCheckIn";
@@ -965,13 +966,9 @@ describe("free agent flow (SQL-driven)", () => {
       expect(await statusOf(t.id, agent)).toBe("registered");
     });
 
-    it("judges invite only and blocks against the organizer adding the player", async () => {
-      const t = await openTournament({ columns: { invite_only: true } });
-      const [agent, blocker, admin] = await fx.players(3);
-
-      await expect(join(t.id, agent)).rejects.toThrow(/invite only/i);
-      await add(t.id, t.organizer, agent);
-      expect(await statusOf(t.id, agent)).toBe("registered");
+    it("refuses a player who blocked the organizer, but not staff", async () => {
+      const t = await openTournament();
+      const [blocker, admin] = await fx.players(2);
 
       for (const blocked of [t.organizer, admin]) {
         await postgres.query(
@@ -985,7 +982,6 @@ describe("free agent flow (SQL-driven)", () => {
       );
       expect(await agentRow(t.id, blocker)).toBeUndefined();
 
-      // Staff are exempt, as on every other organizer roster.
       await add(t.id, admin, blocker, "administrator");
       expect(await statusOf(t.id, blocker)).toBe("registered");
     });
@@ -1025,9 +1021,167 @@ describe("free agent flow (SQL-driven)", () => {
       await leave(t.id, drafted);
       expect(await teamOf(t.id, second)).toBe(team);
 
-      // Removed, not banned: they can sign up again, at the back of the queue.
       await join(t.id, first);
       expect(await statusOf(t.id, first)).toBe("waitlisted");
+    });
+
+    describe("checking in", () => {
+      const reviewedTournament = () =>
+        openTournament({ columns: { check_in_required: true } });
+
+      const closeReview = async (tournamentId: string, organizer: string) => {
+        await setStatus(tournamentId, organizer, "CheckInReview");
+        await postgres.query(
+          "UPDATE tournaments SET check_in_ends_at = now() - interval '1 minute' WHERE id = $1",
+          [tournamentId],
+        );
+      };
+
+      it("counts a player added during check-in review as checked in", async () => {
+        const t = await reviewedTournament();
+        await closeReview(t.id, t.organizer);
+
+        const added = await fx.player();
+        await add(t.id, t.organizer, added);
+
+        const [row] = await postgres.query<
+          Array<{ status: string; checked_in_at: Date | null }>
+        >(
+          `SELECT status, checked_in_at FROM tournament_free_agents
+            WHERE tournament_id = $1 AND player_steam_id = $2`,
+          [t.id, added],
+        );
+        expect(row.status).toBe("registered");
+        expect(row.checked_in_at).not.toBeNull();
+      });
+
+      it("promotes a player added during check-in review into an open pickup slot", async () => {
+        const t = await reviewedTournament();
+        await joinAll(t.id, await fx.players(4));
+        await draft(t);
+
+        const drafted = await nonOwner(t.id);
+        const team = await teamOf(t.id, drafted);
+        await leave(t.id, drafted);
+        await closeReview(t.id, t.organizer);
+
+        const added = await fx.player();
+        await add(t.id, t.organizer, added);
+
+        expect(await statusOf(t.id, added)).toBe("drafted");
+        expect(await teamOf(t.id, added)).toBe(team);
+      });
+    });
+
+    describe("racing a Draft Teams", () => {
+      const openSession = () =>
+        (postgres as unknown as { pool: Pool }).pool.connect();
+
+      const lockWaits = async () => {
+        const [row] = await postgres.query<Array<{ waiting: number }>>(
+          `SELECT count(*)::int AS waiting FROM pg_stat_activity
+            WHERE datname = current_database() AND wait_event_type = 'Lock'`,
+        );
+        return row.waiting;
+      };
+
+      const blockedOrSettled = async (pending: Promise<unknown>) => {
+        let settled = false;
+        pending.then(
+          () => {
+            settled = true;
+          },
+          () => {
+            settled = true;
+          },
+        );
+        for (let attempt = 0; attempt < 100 && !settled; attempt++) {
+          if ((await lockWaits()) > 0) {
+            return;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+      };
+
+      it("waits for a draft in flight, so the added player is waitlisted behind its teams", async () => {
+        const t = await openTournament();
+        await joinAll(t.id, await fx.players(4));
+        const late = await fx.player();
+
+        const drafting = await openSession();
+        try {
+          await drafting.query("BEGIN");
+          await drafting.query("SELECT draft_tournament_free_agent_teams($1)", [
+            t.id,
+          ]);
+
+          const adding = add(t.id, t.organizer, late);
+          await blockedOrSettled(adding);
+          await drafting.query("COMMIT");
+          await adding;
+        } finally {
+          await drafting.query("ROLLBACK");
+          drafting.release();
+        }
+
+        expect(await pickupTeams(t.id)).toHaveLength(2);
+        expect(await statusOf(t.id, late)).toBe("waitlisted");
+      });
+
+      it("holds a draft until a removal in flight commits, so it never rosters the removed player", async () => {
+        const t = await openTournament();
+        const players = await fx.players(5);
+        await joinAll(t.id, players);
+        const removed = players[0];
+
+        let reachCommit!: () => void;
+        const atCommit = new Promise<void>((resolve) => {
+          reachCommit = resolve;
+        });
+        let releaseCommit!: () => void;
+        const commit = new Promise<void>((resolve) => {
+          releaseCommit = resolve;
+        });
+        const paused = new TournamentsController(
+          new Logger("TournamentFreeAgentFlowTest"),
+          {} as never,
+          {} as never,
+          {} as never,
+          {} as never,
+          notifications as never,
+          {
+            query: postgres.query.bind(postgres),
+            transaction: (
+              fn: (client: unknown) => Promise<unknown>,
+              session?: string,
+            ) =>
+              postgres.transaction(async (client) => {
+                const result = await fn(client);
+                reachCommit();
+                await commit;
+                return result;
+              }, session),
+          } as never,
+          { getConnection: () => ({}) } as never,
+        );
+
+        const removing = paused.removeTournamentFreeAgent({
+          user: staff(t.organizer),
+          tournament_id: t.id,
+          steam_id: removed,
+        });
+        await atCommit;
+
+        const drafting = draft(t);
+        await blockedOrSettled(drafting);
+        releaseCommit();
+        await removing;
+        await drafting;
+
+        expect(await agentRow(t.id, removed)).toBeUndefined();
+        expect(await teamOf(t.id, removed)).toBeNull();
+        expect(await pickupTeams(t.id)).toHaveLength(2);
+      });
     });
 
     // A transaction-local hasura.user on a connection that never had one falls

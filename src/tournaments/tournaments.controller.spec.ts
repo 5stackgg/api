@@ -34,6 +34,7 @@ describe("TournamentsController registration and check-in actions", () => {
   let removedFreeAgent: Rows;
   let addedFreeAgent: Rows;
   let transactionSessions: Array<string | undefined>;
+  let transactionStatements: Array<[string, Array<unknown> | undefined]>;
   let eligible: boolean;
   let mintedCode: Record<string, unknown>;
   let codeRow: Record<string, unknown> | undefined;
@@ -85,6 +86,7 @@ describe("TournamentsController registration and check-in actions", () => {
     removedFreeAgent = [{ id: "agent-1" }];
     addedFreeAgent = [{ id: "agent-1" }];
     transactionSessions = [];
+    transactionStatements = [];
     eligible = true;
     mintedCode = { id: "code-1", code: "ABCDEFGHJK" };
     codeRow = { tournament_id: "tournament-1" };
@@ -97,7 +99,12 @@ describe("TournamentsController registration and check-in actions", () => {
       statements.push(sql);
 
       if (sql.includes("FOR SHARE")) {
-        return [{ status: tournamentRow?.status }];
+        return [
+          {
+            status: tournamentRow?.status,
+            check_in_required: tournamentRow?.check_in_required,
+          },
+        ];
       }
       if (sql.includes("is_tournament_organizer(t, $2::json)")) {
         return tournamentRow ? [tournamentRow] : [];
@@ -172,7 +179,10 @@ describe("TournamentsController registration and check-in actions", () => {
       async (fn: (client: unknown) => Promise<unknown>, session?: string) => {
         transactionSessions.push(session);
         return fn({
-          query: async (sql: string) => ({ rows: await route(sql) }),
+          query: async (sql: string, params?: Array<unknown>) => {
+            transactionStatements.push([sql, params]);
+            return { rows: await route(sql) };
+          },
         });
       },
     );
@@ -797,6 +807,30 @@ describe("TournamentsController registration and check-in actions", () => {
           );
           expect(lock).toBeGreaterThanOrEqual(0);
           expect(insert).toBeGreaterThan(lock);
+        },
+      );
+
+      it.each([true, false])(
+        "stamps the player checked in only where check-in is required (%s)",
+        async (checkInRequired) => {
+          tournamentRow = tournament({
+            is_organizer: true,
+            registration_type: "free_agents",
+            status: "CheckInReview",
+            check_in_required: checkInRequired,
+          });
+
+          await add();
+
+          const [sql, params] = transactionStatements.find(([statement]) =>
+            statement.includes("INSERT INTO tournament_free_agents"),
+          )!;
+          expect(sql).toContain("checked_in_at");
+          expect(params).toEqual([
+            "tournament-1",
+            player.steam_id,
+            checkInRequired,
+          ]);
         },
       );
 
