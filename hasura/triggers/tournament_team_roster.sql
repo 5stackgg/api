@@ -48,6 +48,20 @@ BEGIN
         RETURN OLD;
     END IF;
 
+    -- The team row serializes two removals, so neither counts the other's
+    -- player as still there. The key must stay promote_tournament_free_agent's:
+    -- a removal runs that promotion after this, and the promotion takes its lock
+    -- before the team row, so taking it here first keeps the order the same.
+    PERFORM pg_advisory_xact_lock(
+        hashtext('tournament_free_agent_promotion'),
+        hashtext(_tournament.id::text)
+    );
+
+    PERFORM 1
+        FROM tournament_teams tt
+        WHERE tt.id = OLD.tournament_team_id
+        FOR NO KEY UPDATE;
+
     _min_players := tournament_min_players_per_lineup(_tournament);
 
     SELECT COUNT(*) INTO _roster_count
@@ -266,3 +280,45 @@ CREATE TRIGGER taiud_tournament_team_roster_check_in
     AFTER INSERT OR DELETE OR UPDATE OF checked_in_at ON public.tournament_team_roster
     FOR EACH ROW
     EXECUTE FUNCTION public.taiud_tournament_team_roster_check_in();
+
+CREATE OR REPLACE FUNCTION public.taid_tournament_team_roster_lineups() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    _heir bigint;
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        -- The team's own captain and owner are its registration defaults (see
+        -- tbi_tournament_team), so they take the captaincy back first.
+        SELECT ttr.player_steam_id INTO _heir
+        FROM tournament_teams tt
+        INNER JOIN tournament_team_roster ttr ON ttr.tournament_team_id = tt.id
+        INNER JOIN players p ON p.steam_id = ttr.player_steam_id
+        LEFT JOIN teams t ON t.id = tt.team_id
+        WHERE tt.id = OLD.tournament_team_id
+          AND tt.captain_steam_id = OLD.player_steam_id
+          AND NOT is_banned(p)
+        ORDER BY COALESCE(ttr.player_steam_id = t.captain_steam_id, false) DESC,
+                 COALESCE(ttr.player_steam_id = tt.owner_steam_id, false) DESC,
+                 ttr.role = 'Admin' DESC,
+                 ttr.player_steam_id
+        LIMIT 1;
+
+        IF _heir IS NOT NULL THEN
+            UPDATE tournament_teams
+            SET captain_steam_id = _heir
+            WHERE id = OLD.tournament_team_id;
+        END IF;
+    END IF;
+
+    PERFORM refresh_unstarted_tournament_team_lineups(COALESCE(NEW.tournament_team_id, OLD.tournament_team_id), false);
+
+    RETURN NULL;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS taid_tournament_team_roster_lineups ON public.tournament_team_roster;
+CREATE TRIGGER taid_tournament_team_roster_lineups
+    AFTER INSERT OR DELETE ON public.tournament_team_roster
+    FOR EACH ROW
+    EXECUTE FUNCTION public.taid_tournament_team_roster_lineups();

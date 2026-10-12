@@ -3,6 +3,7 @@ import { Fixtures } from "./utils/fixtures";
 import { TournamentFixtures } from "./utils/tournament-fixtures";
 import {
   bootMigratedDb,
+  runAsUser,
   seedRegionWithServer,
   SqlTestDb,
 } from "./utils/sql-test-db";
@@ -33,6 +34,7 @@ describe("tournament winner reassignment (SQL-driven)", () => {
     await postgres.query("DELETE FROM tournaments");
     await postgres.query("DELETE FROM match_options");
     await postgres.query("DELETE FROM teams");
+    await postgres.query("DELETE FROM player_sanctions");
     await postgres.query("DELETE FROM players");
   });
 
@@ -158,6 +160,200 @@ describe("tournament winner reassignment (SQL-driven)", () => {
     for (const steamId of previouslyAdvanced) {
       expect(seatedAcrossFinal).not.toContain(steamId);
     }
+  });
+
+  it("does not carry the replaced team's check-ins over to the team seated in its place", async () => {
+    const { semis, final } = await semisPlayed();
+    const [finalMatch] = await postgres.query<
+      Array<{ lineup_1_id: string; lineup_2_id: string }>
+    >("SELECT lineup_1_id, lineup_2_id FROM matches WHERE id = $1", [
+      final!.match_id,
+    ]);
+    await postgres.query(
+      `UPDATE match_lineup_players SET checked_in = true
+        WHERE match_lineup_id IN ($1, $2)`,
+      [finalMatch.lineup_1_id, finalMatch.lineup_2_id],
+    );
+
+    const [semiRow] = await postgres.query<
+      Array<{ tournament_team_id_2: string }>
+    >("SELECT tournament_team_id_2 FROM tournament_brackets WHERE id = $1", [
+      semis[0].id,
+    ]);
+    const incoming = await rosterOfTournamentTeam(semiRow.tournament_team_id_2);
+
+    await tfx.winMatch(semis[0].match_id!, "lineup_2_id");
+
+    const rows = await postgres.query<
+      Array<{ steam_id: string; checked_in: boolean }>
+    >(
+      `SELECT steam_id::text, checked_in FROM match_lineup_players
+        WHERE match_lineup_id IN ($1, $2)`,
+      [finalMatch.lineup_1_id, finalMatch.lineup_2_id],
+    );
+    const incomingRows = rows.filter((row) => incoming.includes(row.steam_id));
+    expect(incomingRows).toHaveLength(incoming.length);
+    expect(incomingRows.every((row) => !row.checked_in)).toBe(true);
+    expect(
+      rows
+        .filter((row) => !incoming.includes(row.steam_id))
+        .every((row) => row.checked_in),
+    ).toBe(true);
+  });
+
+  it("re-seats a row as fresh for its new player: no inherited party, connection or discord id", async () => {
+    const { semis, final } = await semisPlayed();
+    const [finalMatch] = await postgres.query<
+      Array<{ lineup_1_id: string; lineup_2_id: string }>
+    >("SELECT lineup_1_id, lineup_2_id FROM matches WHERE id = $1", [
+      final!.match_id,
+    ]);
+    await postgres.query(
+      `UPDATE match_lineup_players
+          SET party_id = gen_random_uuid(), party_source = 'lobby',
+              is_connected = true, discord_id = 'left-behind'
+        WHERE match_lineup_id IN ($1, $2)`,
+      [finalMatch.lineup_1_id, finalMatch.lineup_2_id],
+    );
+
+    const [semiRow] = await postgres.query<
+      Array<{ tournament_team_id_2: string }>
+    >("SELECT tournament_team_id_2 FROM tournament_brackets WHERE id = $1", [
+      semis[0].id,
+    ]);
+    const [creator, mate] = await rosterOfTournamentTeam(
+      semiRow.tournament_team_id_2,
+    );
+    const lobbyId = await runAsUser(
+      postgres,
+      creator,
+      "user",
+      async (query) => {
+        const [row] = (await query(
+          "INSERT INTO lobbies (access) VALUES ('Private') RETURNING id",
+        )) as Array<{ id: string }>;
+        return row.id;
+      },
+    );
+    await postgres.query(
+      `INSERT INTO lobby_players (lobby_id, steam_id, status)
+       VALUES ($1, $2, 'Accepted')
+       ON CONFLICT (steam_id, lobby_id) DO UPDATE SET status = 'Accepted'`,
+      [lobbyId, mate],
+    );
+
+    await tfx.winMatch(semis[0].match_id!, "lineup_2_id");
+
+    const incoming = await postgres.query<
+      Array<{
+        party_id: string | null;
+        party_source: string | null;
+        is_connected: boolean;
+        discord_id: string | null;
+      }>
+    >(
+      `SELECT party_id::text, party_source, is_connected, discord_id
+         FROM match_lineup_players
+        WHERE match_lineup_id IN ($1, $2) AND steam_id = ANY($3::bigint[])`,
+      [finalMatch.lineup_1_id, finalMatch.lineup_2_id, [creator, mate]],
+    );
+    expect(incoming).toEqual([
+      {
+        party_id: lobbyId,
+        party_source: "lobby",
+        is_connected: false,
+        discord_id: null,
+      },
+      {
+        party_id: lobbyId,
+        party_source: "lobby",
+        is_connected: false,
+        discord_id: null,
+      },
+    ]);
+  });
+
+  it("refuses a reassignment that would seat the incoming team short of the minimum", async () => {
+    const { semis, final } = await semisPlayed();
+    const [finalMatch] = await postgres.query<
+      Array<{ lineup_1_id: string; lineup_2_id: string }>
+    >("SELECT lineup_1_id, lineup_2_id FROM matches WHERE id = $1", [
+      final!.match_id,
+    ]);
+    const before = [
+      await lineupSteamIds(finalMatch.lineup_1_id),
+      await lineupSteamIds(finalMatch.lineup_2_id),
+    ];
+    const [semiRow] = await postgres.query<
+      Array<{ tournament_team_id_2: string }>
+    >("SELECT tournament_team_id_2 FROM tournament_brackets WHERE id = $1", [
+      semis[0].id,
+    ]);
+    const [, banned] = await rosterOfTournamentTeam(
+      semiRow.tournament_team_id_2,
+    );
+    await postgres.query(
+      "INSERT INTO player_sanctions (player_steam_id, type) VALUES ($1, 'ban')",
+      [banned],
+    );
+
+    await expect(
+      tfx.winMatch(semis[0].match_id!, "lineup_2_id"),
+    ).rejects.toThrow(/cannot field the minimum lineup/i);
+
+    expect([
+      await lineupSteamIds(finalMatch.lineup_1_id),
+      await lineupSteamIds(finalMatch.lineup_2_id),
+    ]).toEqual(before);
+  });
+
+  it("leaves the unchanged side's hand-edited lineup alone when a winner is reassigned", async () => {
+    const { semis, final } = await semisPlayed();
+    const [finalRow] = await postgres.query<
+      Array<{
+        tournament_team_id_1: string;
+        lineup_1_id: string;
+        lineup_2_id: string;
+      }>
+    >(
+      `SELECT tb.tournament_team_id_1, m.lineup_1_id, m.lineup_2_id
+         FROM tournament_brackets tb JOIN matches m ON m.id = tb.match_id
+        WHERE tb.id = $1`,
+      [final!.id],
+    );
+    const [semi] = await postgres.query<
+      Array<{ tournament_team_id_1: string }>
+    >("SELECT tournament_team_id_1 FROM tournament_brackets WHERE id = $1", [
+      semis[1].id,
+    ]);
+    const unchanged = semi.tournament_team_id_1;
+    const lineup =
+      finalRow.tournament_team_id_1 === unchanged
+        ? finalRow.lineup_1_id
+        : finalRow.lineup_2_id;
+
+    // The organizer stands someone in for a banned player by hand.
+    const [, banned] = await rosterOfTournamentTeam(unchanged);
+    await postgres.query(
+      "INSERT INTO player_sanctions (player_steam_id, type) VALUES ($1, 'ban')",
+      [banned],
+    );
+    const standIn = await fx.player();
+    await runAsUser(postgres, standIn, "admin", async (query) => {
+      await query(
+        "DELETE FROM match_lineup_players WHERE match_lineup_id = $1 AND steam_id = $2",
+        [lineup, banned],
+      );
+      await query(
+        "INSERT INTO match_lineup_players (match_lineup_id, steam_id) VALUES ($1, $2)",
+        [lineup, standIn],
+      );
+    });
+    const before = await lineupSteamIds(lineup);
+
+    await tfx.winMatch(semis[0].match_id!, "lineup_2_id");
+
+    expect(await lineupSteamIds(lineup)).toEqual(before);
   });
 
   it("does not trip the minimum-player guard while swapping the roster", async () => {
