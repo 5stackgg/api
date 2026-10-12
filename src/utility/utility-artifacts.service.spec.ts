@@ -113,24 +113,32 @@ describe("UtilityArtifactsService smoke voxels", () => {
     expect(postgres.query).not.toHaveBeenCalled();
   });
 
+  // A demo already carries the row, so nothing is asked of the parser.
+  it("stores a row it is handed without the parser", async () => {
+    await expect(service.storeSmokeVoxelRow(LINEUP, ROW)).resolves.toBe(true);
+
+    expect(parser.smokeVoxels).not.toHaveBeenCalled();
+    expect(JSON.parse(s3.put.mock.calls[0][1].toString())).toEqual(ROW);
+    expect(postgres.query.mock.calls[0][1]).toEqual([
+      LINEUP,
+      s3.put.mock.calls[0][0],
+    ]);
+  });
+
   it("answers false rather than throwing when the upload fails", async () => {
     s3.put.mockRejectedValueOnce(new Error("bucket down"));
 
-    await expect(service.storeSmokeVoxels(LINEUP, CAPTURE)).resolves.toBe(
-      false,
-    );
+    await expect(service.storeSmokeVoxelRow(LINEUP, ROW)).resolves.toBe(false);
     expect(postgres.query).not.toHaveBeenCalled();
     expect(logger.warn).toHaveBeenCalledWith(
       expect.stringContaining("[utility-smoke-voxels]"),
     );
   });
 
-  it("takes its upload back when the lineup went while the parser worked", async () => {
+  it("takes its upload back when the lineup went before it landed", async () => {
     postgres.query.mockResolvedValueOnce([]);
 
-    await expect(service.storeSmokeVoxels(LINEUP, CAPTURE)).resolves.toBe(
-      false,
-    );
+    await expect(service.storeSmokeVoxelRow(LINEUP, ROW)).resolves.toBe(false);
     expect(s3.remove).toHaveBeenCalledWith(s3.put.mock.calls[0][0]);
   });
 });
