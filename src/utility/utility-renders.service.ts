@@ -25,7 +25,8 @@ export const UTILITY_RENDER_IN_FLIGHT = [
 // Bumped together with the director's.
 //   2 -- the thrower's eyes are turned without tipping his body. Every aim
 //        still before it was taken from behind and below the stance.
-export const UTILITY_RENDER_VERSION = 2;
+//   3 -- each smoke take records the cloud's real voxel log for the lineup.
+export const UTILITY_RENDER_VERSION = 3;
 
 // What is recorded for a render whose pod did not say what filmed it. Not
 // NULL, which is a preview from before any of them did: this one was filmed

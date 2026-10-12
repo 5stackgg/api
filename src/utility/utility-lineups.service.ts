@@ -549,6 +549,50 @@ export class UtilityLineupsService {
     return session ? [] : null;
   }
 
+  /**
+   * The smoke a render take bloomed into, replacing whatever the lineup had:
+   * the render is the throw its preview shows. Believed only from the server
+   * filming that lineup in its batch, and only for a lineup on the map that
+   * server is on.
+   */
+  public async recordRenderSmokeVoxels(
+    context: UtilityServerContext,
+    lineupId: string,
+    payload: unknown,
+  ): Promise<{ stored: boolean }> {
+    if (!UtilityLineupsService.UUID.test(lineupId)) {
+      throw Error("not a lineup id");
+    }
+
+    const batch = await this.renderBatchLineupIds(context.matchId);
+
+    if (!batch?.includes(lineupId)) {
+      throw Error("this server is not filming that lineup");
+    }
+
+    const capture = UtilityLineupsService.parseSmokeVoxels(payload);
+
+    if (!capture) {
+      throw Error("no smoke voxels");
+    }
+
+    const [lineup] = await this.postgres.query<Array<{ utility_type: string }>>(
+      `SELECT utility_type
+         FROM public.utility_lineups
+        WHERE id = $1::uuid
+          AND map_name = $2`,
+      [lineupId, context.mapName],
+    );
+
+    if (lineup?.utility_type !== "Smoke") {
+      return { stored: false };
+    }
+
+    return {
+      stored: await this.artifacts.storeSmokeVoxels(lineupId, capture),
+    };
+  }
+
   public async library(
     context: UtilityServerContext,
     steamId: string,

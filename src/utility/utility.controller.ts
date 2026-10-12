@@ -253,6 +253,32 @@ export class UtilityController {
     return new StreamableFile(await this.artifacts.readTrajectory(file));
   }
 
+  // A render take reporting the smoke it bloomed into, once the plugin has read
+  // the projectile's voxel log to the end.
+  @Post(":lineupId/smoke-voxels")
+  @UseGuards(UtilityPluginKeyGuard)
+  public async smokeVoxels(
+    @Req() request: Request,
+    @Param("lineupId") lineupId: string,
+    @Body() body: unknown,
+  ) {
+    await this.assertLibraryEnabled();
+
+    const context = await this.context(request);
+
+    try {
+      return await this.lineups.recordRenderSmokeVoxels(
+        context,
+        lineupId,
+        body,
+      );
+    } catch (error) {
+      throw new BadRequestException(
+        (error as Error)?.message ?? "invalid smoke voxels",
+      );
+    }
+  }
+
   /**
    * Change a lineup that already exists.
    *
