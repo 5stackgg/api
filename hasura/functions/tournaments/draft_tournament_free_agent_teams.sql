@@ -35,7 +35,14 @@ BEGIN
         RETURN 0;
     END IF;
 
-    _teams := public.tournament_free_agent_draft_team_count(_tournament);
+    -- One read: a sign-up landing between a count and a second read would size
+    -- the teams for one pool and fill them from another.
+    _pool_ids := public.tournament_free_agent_draft_pool(_tournament_id);
+
+    _teams := public.tournament_free_agent_draft_team_count(
+        _tournament,
+        COALESCE(array_length(_pool_ids, 1), 0)
+    );
 
     -- Before any status write, never after: waitlisting is one way (the pool
     -- only re-admits a waitlisted agent who has checked in, which needs
@@ -52,8 +59,6 @@ BEGIN
         public.tournament_min_players_per_lineup(_tournament),
         public.tournament_max_players_per_lineup(_tournament)
     );
-
-    _pool_ids := public.tournament_free_agent_draft_pool(_tournament_id);
 
     SELECT COUNT(*) INTO _existing_teams
     FROM public.tournament_teams tt
@@ -162,43 +167,51 @@ BEGIN
 END;
 $$;
 
--- The free agents the draft takes, in sign-up order.
---
 -- A free agent who also ended up on a registered roster is skipped rather
 -- than drafted: tournament_team_roster is unique per (tournament, player),
 -- so drafting them would abort the whole transition on a key violation.
 --
 -- Owning a team counts as being in the tournament even with no roster row.
+--
+-- plpgsql so the body resolves at call time: the function files load in
+-- alphabetical order, and a SQL body is checked against whatever exists then.
 CREATE OR REPLACE FUNCTION public.tournament_free_agent_draft_pool(_tournament_id uuid)
 RETURNS uuid[]
-LANGUAGE sql
+LANGUAGE plpgsql
 STABLE
 AS $$
-    SELECT array_agg(fa.id ORDER BY fa.created_at, fa.id)
-    FROM public.tournament_free_agents fa
-    WHERE fa.tournament_id = _tournament_id
-      AND (
-          fa.status = 'registered'
-          OR (fa.status = 'waitlisted' AND fa.checked_in_at IS NOT NULL)
-      )
-      AND NOT EXISTS (
-          SELECT 1
-          FROM public.tournament_team_roster ttr
-          WHERE ttr.tournament_id = _tournament_id
-            AND ttr.player_steam_id = fa.player_steam_id
-      )
-      AND NOT EXISTS (
-          SELECT 1
-          FROM public.tournament_teams tt
-          WHERE tt.tournament_id = _tournament_id
-            AND tt.owner_steam_id = fa.player_steam_id
-      );
+BEGIN
+    RETURN (
+        SELECT array_agg(fa.id ORDER BY fa.created_at, fa.id)
+        FROM public.tournament_free_agents fa
+        WHERE fa.tournament_id = _tournament_id
+          AND (
+              fa.status = 'registered'
+              OR (fa.status = 'waitlisted' AND fa.checked_in_at IS NOT NULL)
+          )
+          AND NOT EXISTS (
+              SELECT 1
+              FROM public.tournament_team_roster ttr
+              WHERE ttr.tournament_id = _tournament_id
+                AND ttr.player_steam_id = fa.player_steam_id
+          )
+          AND NOT EXISTS (
+              SELECT 1
+              FROM public.tournament_teams tt
+              WHERE tt.tournament_id = _tournament_id
+                AND tt.owner_steam_id = fa.player_steam_id
+          )
+    );
+END;
 $$;
 
--- How many pickup teams the draft would make right now. tournament_has_min_teams
--- counts them before the draft runs, so the two cannot disagree on whether a
--- pool makes the field.
-CREATE OR REPLACE FUNCTION public.tournament_free_agent_draft_team_count(_tournament public.tournaments)
+-- How many pickup teams the draft makes from a pool of _pool_size.
+-- tournament_has_min_teams counts them before the draft runs, so the two
+-- cannot disagree on whether a pool makes the field.
+CREATE OR REPLACE FUNCTION public.tournament_free_agent_draft_team_count(
+    _tournament public.tournaments,
+    _pool_size integer
+)
 RETURNS integer
 LANGUAGE plpgsql
 STABLE
@@ -238,10 +251,7 @@ BEGIN
     FROM public.tournament_teams tt
     WHERE tt.tournament_id = _tournament.id;
 
-    _teams := COALESCE(
-        array_length(public.tournament_free_agent_draft_pool(_tournament.id), 1),
-        0
-    ) / _team_size;
+    _teams := _pool_size / _team_size;
 
     -- The cap is the bracket's remaining room, not its total size: in 'both'
     -- mode the teams that registered normally have already taken their slots.
@@ -253,16 +263,17 @@ BEGIN
 END;
 $$;
 
--- Undoes the draft: its pickup teams go, and everyone it placed or passed over
--- is back in the pool in sign-up order. The draft runs once, so a field that
--- takes entries again -- reset to Setup, registration reopened -- would
--- otherwise never draft anyone who joins it.
+-- The draft runs once, so a field that takes entries again -- reset to Setup,
+-- registration reopened -- would otherwise never draft anyone who joins it.
 CREATE OR REPLACE FUNCTION public.undo_tournament_free_agent_draft(_tournament_id uuid)
 RETURNS void
 LANGUAGE plpgsql
 AS $$
 DECLARE
     _tournament public.tournaments;
+    _pickup_team_ids uuid[];
+    _placed_steam_ids bigint[];
+    _placed_at timestamptz[];
 BEGIN
     SELECT * INTO _tournament FROM public.tournaments t WHERE t.id = _tournament_id;
 
@@ -286,8 +297,61 @@ BEGIN
            )
        );
 
-    DELETE FROM public.tournament_teams tt
+    SELECT array_agg(tt.id) INTO _pickup_team_ids
+      FROM public.tournament_teams tt
      WHERE tt.tournament_id = _tournament_id
        AND tt.is_drafted;
+
+    IF _pickup_team_ids IS NULL THEN
+        RETURN;
+    END IF;
+
+    -- A captain's accepted invite or an organizer's hand placement puts a
+    -- player on a pickup roster with no pool row (or a withdrawn one). The
+    -- team's delete would drop them from the tournament, so they enter the
+    -- pool from when they joined the team.
+    SELECT array_agg(ttr.player_steam_id ORDER BY ttr.created_at, ttr.player_steam_id),
+           array_agg(ttr.created_at ORDER BY ttr.created_at, ttr.player_steam_id)
+      INTO _placed_steam_ids, _placed_at
+      FROM public.tournament_team_roster ttr
+     WHERE ttr.tournament_team_id = ANY(_pickup_team_ids)
+       AND NOT EXISTS (
+           SELECT 1 FROM public.tournament_free_agents fa
+           WHERE fa.tournament_id = _tournament_id
+             AND fa.player_steam_id = ttr.player_steam_id
+             AND fa.status <> 'withdrawn'
+       );
+
+    DELETE FROM public.tournament_free_agents fa
+     WHERE fa.tournament_id = _tournament_id
+       AND fa.status = 'withdrawn'
+       AND fa.player_steam_id = ANY(_placed_steam_ids);
+
+    DELETE FROM public.tournament_teams tt
+     WHERE tt.id = ANY(_pickup_team_ids);
+
+    -- assign_seeds_to_teams keeps the seeds it finds and fills the gaps, and a
+    -- smaller bracket drops every seed past its size along with its team. The
+    -- seeds were drawn for a field that no longer exists, an organizer's hand
+    -- seeds included: nothing tells those apart, and a kept seed beyond the
+    -- next field's size takes its team out of the bracket.
+    UPDATE public.tournament_teams tt
+       SET seed = NULL
+     WHERE tt.tournament_id = _tournament_id
+       AND tt.seed IS NOT NULL;
+
+    -- Filtered to what tbi_tournament_free_agents accepts, since its refusal
+    -- would abort the status change: whoever now fails the requirements or
+    -- owns a team stays out, as a sign-up would.
+    INSERT INTO public.tournament_free_agents (tournament_id, player_steam_id, created_at)
+    SELECT _tournament_id, placed.steam_id, placed.joined_at
+      FROM unnest(_placed_steam_ids, _placed_at) AS placed(steam_id, joined_at)
+     WHERE _tournament.registration_type <> 'teams'
+       AND public.player_meets_tournament_requirements(_tournament_id, placed.steam_id)
+       AND NOT EXISTS (
+           SELECT 1 FROM public.tournament_teams tt
+           WHERE tt.tournament_id = _tournament_id
+             AND tt.owner_steam_id = placed.steam_id
+       );
 END;
 $$;

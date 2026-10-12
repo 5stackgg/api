@@ -19,8 +19,13 @@ BEGIN
     END IF;
 
     -- A full bracket blocks a NEW intake, not an extension of the window for
-    -- teams that are already in it.
-    IF tournament.status != 'CheckInReview' AND tournament_has_max_teams(tournament) THEN
+    -- teams that are already in it. Out of RegistrationClosed or a cancel the
+    -- free agent draft is undone (tau_tournaments), so its pickup teams are not
+    -- what fills the bracket.
+    IF tournament.status != 'CheckInReview' AND tournament_has_max_teams(
+        tournament,
+        tournament.status IN ('RegistrationClosed', 'Cancelled', 'CancelledMinTeams')
+    ) THEN
         RETURN false;
     END IF;
 

@@ -43,7 +43,10 @@ BEGIN
     -- tbu_tournaments passes NEW (already Live) after drafting.
     IF tournament.registration_type IN ('free_agents', 'both')
        AND tournament.status IN ('Setup', 'RegistrationOpen', 'CheckInReview') THEN
-        total_teams := total_teams + tournament_free_agent_draft_team_count(tournament);
+        total_teams := total_teams + tournament_free_agent_draft_team_count(
+            tournament,
+            COALESCE(array_length(tournament_free_agent_draft_pool(tournament.id), 1), 0)
+        );
     END IF;
 
     -- Log validation details
