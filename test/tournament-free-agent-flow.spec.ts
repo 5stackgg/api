@@ -1170,9 +1170,34 @@ describe("free agent flow (SQL-driven)", () => {
       }
     });
 
-    // assign_seeds_to_teams keeps a seed it finds and only fills the gaps, and
-    // a smaller bracket drops every seed past its size -- with the team on it.
-    it("re-seeds the whole field after the pickup teams are undone", async () => {
+    const drawnTeams = async (tournamentId: string) => {
+      const [bracket] = await postgres.query<
+        Array<{ team_ids: Array<string> | null }>
+      >(
+        `SELECT array_agg(DISTINCT team_id) AS team_ids
+           FROM tournament_brackets tb
+           JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
+          CROSS JOIN LATERAL (VALUES (tb.tournament_team_id_1), (tb.tournament_team_id_2)) AS slot(team_id)
+          WHERE ts.tournament_id = $1 AND slot.team_id IS NOT NULL`,
+        [tournamentId],
+      );
+      return [...(bracket.team_ids ?? [])].sort();
+    };
+
+    const seedsOf = async (teamIds: Array<string>) => {
+      const rows = await postgres.query<
+        Array<{ id: string; seed: number | null }>
+      >("SELECT id, seed FROM tournament_teams WHERE id = ANY($1::uuid[])", [
+        teamIds,
+      ]);
+      return teamIds.map(
+        (teamId) => rows.find((row) => row.id === teamId)!.seed,
+      );
+    };
+
+    // A seed kept past the size of the next field has no bracket slot, so the
+    // gaps the pickup teams leave are closed up when they go.
+    it("closes up the registered teams' seeds when the pickup teams are undone, and draws the whole field", async () => {
       const t = await openTournament({
         registrationType: "both",
         maxTeams: 16,
@@ -1211,11 +1236,14 @@ describe("free agent flow (SQL-driven)", () => {
       }
 
       await setStatus(t.id, t.organizer, "RegistrationOpen");
+      expect(await seedsOf(registered)).toEqual([1, 2, 3, 4]);
+
       await leave(t.id, agents[0]);
       await leave(t.id, agents[1]);
       await setStatus(t.id, t.organizer, "RegistrationClosed");
 
       expect(await pickupTeams(t.id)).toHaveLength(3);
+      expect(await seedsOf(registered)).toEqual([1, 2, 3, 4]);
 
       const teams = await postgres.query<Array<{ id: string; seed: number }>>(
         "SELECT id, seed FROM tournament_teams WHERE tournament_id = $1 ORDER BY seed",
@@ -1223,19 +1251,133 @@ describe("free agent flow (SQL-driven)", () => {
       );
       expect(teams.map((team) => team.seed)).toEqual([1, 2, 3, 4, 5, 6, 7]);
 
-      const [bracket] = await postgres.query<
-        Array<{ team_ids: Array<string> }>
-      >(
-        `SELECT array_agg(DISTINCT team_id) AS team_ids
-           FROM tournament_brackets tb
-           JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
-          CROSS JOIN LATERAL (VALUES (tb.tournament_team_id_1), (tb.tournament_team_id_2)) AS slot(team_id)
-          WHERE ts.tournament_id = $1 AND slot.team_id IS NOT NULL`,
-        [t.id],
-      );
-      expect([...bracket.team_ids].sort()).toEqual(
+      expect(await drawnTeams(t.id)).toEqual(
         teams.map((team) => team.id).sort(),
       );
+    });
+
+    it("closes up the seeds of a team that withdrew after the undo, so every remaining team is drawn", async () => {
+      const t = await openTournament({
+        registrationType: "both",
+        maxTeams: 16,
+      });
+      const registered: Array<string> = [];
+      for (let i = 0; i < 5; i++) {
+        const [owner, member] = await fx.players(2);
+        registered.push(await registerTeam(t.id, owner, [owner, member]));
+      }
+      const agents = await fx.players(2);
+      await joinAll(t.id, agents);
+
+      await setStatus(t.id, t.organizer, "RegistrationClosed");
+      expect(await pickupTeams(t.id)).toHaveLength(1);
+
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+      const reopened = await seedsOf(registered);
+      expect([...reopened].sort()).toEqual([1, 2, 3, 4, 5]);
+
+      const withdrawn = registered[reopened.indexOf(2)];
+      await postgres.query("DELETE FROM tournament_teams WHERE id = $1", [
+        withdrawn,
+      ]);
+      await leave(t.id, agents[0]);
+      await setStatus(t.id, t.organizer, "RegistrationClosed");
+
+      expect(await pickupTeams(t.id)).toEqual([]);
+      const remaining = registered
+        .filter((teamId) => teamId !== withdrawn)
+        .sort(
+          (a, b) =>
+            reopened[registered.indexOf(a)]! - reopened[registered.indexOf(b)]!,
+        );
+      expect(await seedsOf(remaining)).toEqual([1, 2, 3, 4]);
+      expect(await drawnTeams(t.id)).toEqual([...remaining].sort());
+    });
+
+    it("undoes the draft around a seed of 0 instead of failing the reopen", async () => {
+      const t = await openTournament({
+        registrationType: "both",
+        maxTeams: 16,
+      });
+      const registered: Array<string> = [];
+      for (let i = 0; i < 4; i++) {
+        const [owner, member] = await fx.players(2);
+        registered.push(await registerTeam(t.id, owner, [owner, member]));
+      }
+      await joinAll(t.id, await fx.players(2));
+      await setStatus(t.id, t.organizer, "RegistrationClosed");
+      const [pickup] = await pickupTeams(t.id);
+
+      await postgres.query(
+        "UPDATE tournament_teams SET seed = NULL WHERE tournament_id = $1",
+        [t.id],
+      );
+      const draw: Array<[string, number]> = [
+        [registered[0], 0],
+        [registered[1], 1],
+        [registered[2], 2],
+        [registered[3], 3],
+        [pickup.id, 4],
+      ];
+      for (const [teamId, seed] of draw) {
+        await postgres.query(
+          "UPDATE tournament_teams SET seed = $2 WHERE id = $1",
+          [teamId, seed],
+        );
+      }
+
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+
+      expect(await seedsOf(registered)).toEqual([1, 2, 3, 4]);
+    });
+
+    it("keeps an organizer's seed order through the undo, and an unseeded team unseeded", async () => {
+      const t = await openTournament({
+        registrationType: "both",
+        maxTeams: 16,
+      });
+      const registered: Array<string> = [];
+      for (let i = 0; i < 4; i++) {
+        const [owner, member] = await fx.players(2);
+        registered.push(await registerTeam(t.id, owner, [owner, member]));
+      }
+      const recruiting = await fx.player();
+      const short = await registerTeam(t.id, recruiting, [recruiting]);
+      await joinAll(t.id, await fx.players(8));
+
+      await setStatus(t.id, t.organizer, "RegistrationClosed");
+      const pickups = (await pickupTeams(t.id)).map((team) => team.id);
+      expect(pickups).toHaveLength(4);
+      expect(await seedsOf([short])).toEqual([null]);
+
+      await postgres.query(
+        "UPDATE tournament_teams SET seed = NULL WHERE tournament_id = $1",
+        [t.id],
+      );
+      const draw: Array<[string, number]> = [
+        [registered[0], 8],
+        [registered[1], 2],
+        [registered[2], 6],
+        [registered[3], 4],
+        [pickups[0], 1],
+        [pickups[1], 3],
+        [pickups[2], 5],
+        [pickups[3], 7],
+      ];
+      for (const [teamId, seed] of draw) {
+        await postgres.query(
+          "UPDATE tournament_teams SET seed = $2 WHERE id = $1",
+          [teamId, seed],
+        );
+      }
+
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+
+      expect(await seedsOf([...registered, short])).toEqual([4, 1, 3, 2, null]);
+
+      await setStatus(t.id, t.organizer, "RegistrationClosed");
+
+      expect(await seedsOf(registered)).toEqual([4, 1, 3, 2]);
     });
 
     // A pickup captain's invite or an organizer's hand placement puts a player

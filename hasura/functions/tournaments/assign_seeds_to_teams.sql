@@ -43,6 +43,27 @@ BEGIN
         END
     WHERE tt.tournament_id = tournament.id;
 
+    -- update_tournament_stages sizes the bracket from the eligible count and
+    -- seed_stage looks a team up by its exact seed, so a kept seed outside
+    -- 1..count is a team with no slot: a seeded team withdrew or lost its
+    -- eligibility and nobody new took the gap, or an organizer typed one.
+    -- Seeds that all fit stay exactly where they were put, and the gaps
+    -- between them go to the unseeded teams below.
+    IF EXISTS (
+        SELECT 1
+        FROM tournament_teams tt
+        WHERE tt.tournament_id = tournament.id
+          AND tt.seed IS NOT NULL
+          AND tt.seed NOT BETWEEN 1 AND (
+              SELECT COUNT(*)
+              FROM tournament_teams eligible
+              WHERE eligible.tournament_id = tournament.id
+                AND eligible.eligible_at IS NOT NULL
+          )
+    ) THEN
+        PERFORM compact_tournament_team_seeds(tournament.id);
+    END IF;
+
     WITH eligible_count AS (
         SELECT COUNT(*) as total
         FROM tournament_teams
