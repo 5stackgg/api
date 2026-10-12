@@ -31,7 +31,6 @@ import {
   UtilityLineupsService,
   UtilityPracticeResultPayload,
   UtilityServerContext,
-  UtilitySmokeVoxelsPayload,
 } from "./utility-lineups.service";
 import { UtilityPluginKeyGuard } from "./utility-plugin-key.guard";
 import { UtilityPracticeService } from "./utility-practice.service";
@@ -252,28 +251,6 @@ export class UtilityController {
     }
 
     return new StreamableFile(await this.artifacts.readTrajectory(file));
-  }
-
-  // A render or replay throw reporting the smoke it bloomed into, once the
-  // plugin has read the projectile's voxel log to the end.
-  @Post(":lineupId/smoke-voxels")
-  @UseGuards(UtilityPluginKeyGuard)
-  public async smokeVoxels(
-    @Req() request: Request,
-    @Param("lineupId") lineupId: string,
-    @Body() body: UtilitySmokeVoxelsPayload,
-  ) {
-    await this.assertLibraryEnabled();
-
-    const context = await this.context(request);
-
-    try {
-      return await this.lineups.recordSmokeVoxels(context, lineupId, body);
-    } catch (error) {
-      throw new BadRequestException(
-        (error as Error)?.message ?? "invalid smoke voxels",
-      );
-    }
   }
 
   /**

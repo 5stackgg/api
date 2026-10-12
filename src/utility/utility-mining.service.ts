@@ -9,6 +9,7 @@ import {
 import {
   DemoParserService,
   ParsedSmokeVolume,
+  ParsedSmokeVoxels,
 } from "../demos/demo-parser.service";
 import {
   UtilityArtifactsService,
@@ -81,6 +82,9 @@ export type MinedLineup = {
   tickRate: number;
   path: Array<UtilityTrajectoryPoint>;
   smokeVolume: ParsedSmokeVolume | null;
+  // The smoke as the game simulated it, straight off the demo. Null for
+  // anything but a smoke, and for a blob from before demos carried one.
+  smokeVoxels: ParsedSmokeVoxels | null;
   // The magnitude of the release impulse, in units/sec, or null when it could
   // not be measured. The number the strength bucket was decided from, exposed
   // so a throw that fell in a gap can be looked at rather than just refused.
@@ -111,6 +115,7 @@ type BlobIndex = {
   detonated: Map<number, BlobGrenade>;
   trajectories: Map<number, TrajectoryPoints>;
   volumes: Map<number, ParsedSmokeVolume>;
+  voxels: Map<number, ParsedSmokeVoxels>;
   positions: Map<string, Array<BlobPosition>>;
 };
 
@@ -321,6 +326,11 @@ export class UtilityMiningService {
         path: mined.path,
         smokeVolume: mined.smokeVolume,
       });
+    }
+
+    // Never fails the save: storeSmokeVoxelRow logs and answers false.
+    if (mined.smokeVoxels) {
+      await this.artifacts.storeSmokeVoxelRow(inserted.id, mined.smokeVoxels);
     }
 
     if (request.collection_id) {
@@ -636,6 +646,14 @@ export class UtilityMiningService {
       }
     }
 
+    const voxels = new Map<number, ParsedSmokeVoxels>();
+
+    for (const row of blob.smoke_voxels ?? []) {
+      if (row.gid !== null && row.gid !== undefined) {
+        voxels.set(row.gid, row);
+      }
+    }
+
     const positions = new Map<string, Array<BlobPosition>>();
 
     for (const position of blob.positions ?? []) {
@@ -666,6 +684,7 @@ export class UtilityMiningService {
       detonated,
       trajectories,
       volumes,
+      voxels,
       positions,
     };
   }
@@ -788,6 +807,10 @@ export class UtilityMiningService {
       tickRate,
       path: UtilityMiningService.pathOf(points, thrown.tick),
       smokeVolume: context.volumes.get(grenadeId) ?? null,
+      smokeVoxels:
+        utilityType === "Smoke"
+          ? (context.voxels.get(grenadeId) ?? null)
+          : null,
     };
   }
 

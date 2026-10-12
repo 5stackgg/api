@@ -52,15 +52,6 @@ export type UtilityIngestPayload = {
   smoke_voxels?: UtilitySmokeVoxelCapture | null;
 };
 
-// A throw the plugin re-made from a stored lineup -- a render or a replay --
-// reporting the smoke it bloomed into.
-export type UtilitySmokeVoxelsPayload = Partial<UtilitySmokeVoxelCapture> & {
-  render?: boolean;
-  // Who threw it: the lineup has to be one that player may see, as with its
-  // trajectory. A render of this server's own batch needs no player.
-  steam_id?: string;
-};
-
 // What the plugin reports after a throw made with a lineup loaded. `success`
 // is the plugin's own verdict and is recorded nowhere: the distance is
 // recomputed here from the stored lineup, because this is the number that
@@ -505,81 +496,6 @@ export class UtilityLineupsService {
         `[utility-smoke-voxels] dropped the recorded smoke of ${lineupId} by ${author}: ${(error as Error)?.message}`,
       );
     }
-  }
-
-  /**
-   * The smoke a stored lineup bloomed into when a server threw it again.
-   *
-   * The first one a lineup gets is kept from any throw. After that only a
-   * render may replace it: a render re-records on purpose, a replay is a
-   * player practising. A render is believed only from the server filming that
-   * lineup in its batch, and a lineup only from the map the server is on --
-   * the smoke it watched could not have bloomed anywhere else.
-   */
-  public async recordSmokeVoxels(
-    context: UtilityServerContext,
-    lineupId: string,
-    payload: UtilitySmokeVoxelsPayload,
-  ): Promise<{ stored: boolean }> {
-    if (!UtilityLineupsService.UUID.test(lineupId)) {
-      throw Error("not a lineup id");
-    }
-
-    const capture = UtilityLineupsService.parseSmokeVoxels(payload);
-
-    if (!capture) {
-      throw Error("no smoke voxels");
-    }
-
-    // A render of this server's own batch may record any lineup in it;
-    // anything else is a player's throw, and like its trajectory the lineup
-    // must be one that player is here to see.
-    const inBatch =
-      payload.render === true &&
-      !!(await this.renderBatchLineupIds(context.matchId))?.includes(lineupId);
-    const steamId = String(payload.steam_id ?? "");
-
-    if (!inBatch) {
-      if (!/^\d{5,20}$/.test(steamId)) {
-        throw Error("steam_id is not a steam id");
-      }
-
-      if (!context.lineupSteamIds.includes(steamId)) {
-        throw Error("player is not in this match lineup");
-      }
-    }
-
-    const [lineup] = await this.postgres.query<
-      Array<{ utility_type: string; smoke_voxels_file: string | null }>
-    >(
-      `SELECT utility_type, smoke_voxels_file
-         FROM public.utility_lineups l
-        WHERE l.id = $1::uuid
-          AND l.map_name = $2
-          AND (
-            $3::boolean
-            OR public.can_view_utility_lineup(
-                 l,
-                 json_build_object(
-                   'x-hasura-role', 'user',
-                   'x-hasura-user-id', $4::text
-                 )
-               )
-          )`,
-      [lineupId, context.mapName, inBatch, steamId],
-    );
-
-    if (lineup?.utility_type !== "Smoke") {
-      return { stored: false };
-    }
-
-    if (lineup.smoke_voxels_file && !inBatch) {
-      return { stored: false };
-    }
-
-    return {
-      stored: await this.artifacts.storeSmokeVoxels(lineupId, capture),
-    };
   }
 
   // The columns the practice plugin's LineupRecord is deserialized from. Shared

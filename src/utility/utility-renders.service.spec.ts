@@ -72,14 +72,6 @@ const APPROACH = [
 // The queue's one BullMQ job id. A custom id may not contain a colon, which is
 // not a validation the type system can catch -- it throws at add() time, after
 // the render row is already inserted, leaving it queued with no batch.
-// v3 is what flags every preview filmed before renders recorded the real smoke
-// as outdated, so the queue re-films -- and re-records -- all of them.
-describe("UTILITY_RENDER_VERSION", () => {
-  it("is the version that records the smoke's voxels", () => {
-    expect(UTILITY_RENDER_VERSION).toBe(3);
-  });
-});
-
 describe("UtilityRendersService.WORKER_JOB_ID", () => {
   it("is an id BullMQ accepts", () => {
     expect(UtilityRendersService.WORKER_JOB_ID).not.toContain(":");

@@ -6,6 +6,7 @@ import { UtilityRendersService } from "./utility-renders.service";
 import {
   DemoParserService,
   ParsedSmokeVolumeResponse,
+  ParsedSmokeVoxels,
 } from "../demos/demo-parser.service";
 import { UtilitySmokeVoxelCapture } from "./types/UtilitySmokeVoxelCapture";
 
@@ -224,10 +225,8 @@ export class UtilityArtifactsService {
     }
   }
 
-  // The smoke the game itself simulated for this lineup, stored as the parser's
-  // row verbatim -- the viewer reads it the way it reads a demo's. False when
-  // there was nothing to store, and never a throw: a lineup without its
-  // recorded smoke still has the estimated one.
+  // The smoke the plugin recorded, rebuilt by the parser into the row a demo
+  // carries. False when there was nothing to rebuild.
   public async storeSmokeVoxels(
     lineupId: string,
     capture: UtilitySmokeVoxelCapture,
@@ -238,6 +237,16 @@ export class UtilityArtifactsService {
       return false;
     }
 
+    return await this.storeSmokeVoxelRow(lineupId, voxels);
+  }
+
+  // The smoke the game itself simulated for this lineup, stored as the row
+  // verbatim -- the viewer reads it the way it reads a demo's. Never a throw: a
+  // lineup without its recorded smoke still has the estimated one.
+  public async storeSmokeVoxelRow(
+    lineupId: string,
+    voxels: ParsedSmokeVoxels,
+  ): Promise<boolean> {
     const key = UtilityArtifactsService.smokeVoxelsKey(lineupId, Date.now());
     const body = Buffer.from(JSON.stringify(voxels));
 
@@ -259,8 +268,8 @@ export class UtilityArtifactsService {
         [lineupId, key],
       );
 
-      // Deleted while the parser was working: its sweep has already run, so
-      // nothing else would ever remove this.
+      // Deleted before this landed: its sweep has already run, so nothing else
+      // would ever remove this.
       if (!previous) {
         await this.s3.remove(key);
         return false;

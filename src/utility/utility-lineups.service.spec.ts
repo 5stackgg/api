@@ -54,13 +54,8 @@ describe("UtilityLineupsService smoke voxels", () => {
   let artifacts: { uploadTrajectory: jest.Mock; storeSmokeVoxels: jest.Mock };
   let logger: { warn: jest.Mock; log: jest.Mock; error: jest.Mock };
   let service: UtilityLineupsService;
-  // What the lineup lookup and the render batch lookup answer.
-  let lineup: { utility_type: string; smoke_voxels_file: string | null } | null;
-  let batch: Array<string>;
 
   beforeEach(() => {
-    lineup = { utility_type: "Smoke", smoke_voxels_file: null };
-    batch = [];
     postgres = {
       query: jest.fn(async (sql: string) => {
         if (sql.includes("FROM public.players")) {
@@ -74,12 +69,6 @@ describe("UtilityLineupsService smoke voxels", () => {
         }
         if (sql.includes("INSERT INTO public.utility_lineups")) {
           return [{ id: LINEUP }];
-        }
-        if (sql.includes("SELECT utility_type, smoke_voxels_file")) {
-          return lineup ? [lineup] : [];
-        }
-        if (sql.includes("INNER JOIN public.utility_lineup_renders r")) {
-          return batch.map((id) => ({ utility_lineup_id: id }));
         }
         return [];
       }),
@@ -145,141 +134,6 @@ describe("UtilityLineupsService smoke voxels", () => {
     it("records no smoke when the plugin sent none", async () => {
       await service.ingest(CONTEXT, pluginBody({ smoke_voxels: undefined }));
 
-      expect(artifacts.storeSmokeVoxels).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("recordSmokeVoxels", () => {
-    it("stores the first smoke a lineup gets from any throw", async () => {
-      await expect(
-        service.recordSmokeVoxels(CONTEXT, LINEUP, {
-          ...CAPTURE,
-          steam_id: AUTHOR,
-        }),
-      ).resolves.toEqual({ stored: true });
-
-      expect(artifacts.storeSmokeVoxels).toHaveBeenCalledWith(LINEUP, CAPTURE);
-    });
-
-    it("keeps the smoke a lineup has against a replay", async () => {
-      lineup = { utility_type: "Smoke", smoke_voxels_file: "clips/utility/x" };
-
-      await expect(
-        service.recordSmokeVoxels(CONTEXT, LINEUP, {
-          ...CAPTURE,
-          steam_id: AUTHOR,
-        }),
-      ).resolves.toEqual({ stored: false });
-      expect(artifacts.storeSmokeVoxels).not.toHaveBeenCalled();
-    });
-
-    it("re-records it from the render filming that lineup", async () => {
-      lineup = { utility_type: "Smoke", smoke_voxels_file: "clips/utility/x" };
-      batch = [LINEUP];
-
-      await expect(
-        service.recordSmokeVoxels(CONTEXT, LINEUP, {
-          ...CAPTURE,
-          steam_id: AUTHOR,
-          render: true,
-        }),
-      ).resolves.toEqual({ stored: true });
-      expect(artifacts.storeSmokeVoxels).toHaveBeenCalledWith(LINEUP, CAPTURE);
-    });
-
-    it("does not take render from a server that is not filming it", async () => {
-      lineup = { utility_type: "Smoke", smoke_voxels_file: "clips/utility/x" };
-
-      await expect(
-        service.recordSmokeVoxels(CONTEXT, LINEUP, {
-          ...CAPTURE,
-          steam_id: AUTHOR,
-          render: true,
-        }),
-      ).resolves.toEqual({ stored: false });
-      expect(artifacts.storeSmokeVoxels).not.toHaveBeenCalled();
-    });
-
-    it("ignores a lineup that is not a smoke", async () => {
-      lineup = { utility_type: "Molotov", smoke_voxels_file: null };
-
-      await expect(
-        service.recordSmokeVoxels(CONTEXT, LINEUP, {
-          ...CAPTURE,
-          steam_id: AUTHOR,
-          render: true,
-        }),
-      ).resolves.toEqual({ stored: false });
-      expect(artifacts.storeSmokeVoxels).not.toHaveBeenCalled();
-    });
-
-    it("only looks on the map the server is on", async () => {
-      lineup = null;
-
-      await expect(
-        service.recordSmokeVoxels(CONTEXT, LINEUP, {
-          ...CAPTURE,
-          steam_id: AUTHOR,
-        }),
-      ).resolves.toEqual({ stored: false });
-
-      const [, bindings] = postgres.query.mock.calls.find(([sql]) =>
-        String(sql).includes("SELECT utility_type, smoke_voxels_file"),
-      );
-      expect(bindings).toEqual([LINEUP, "de_mirage", false, AUTHOR]);
-    });
-
-    it("only records a lineup the throwing player is here to see", async () => {
-      await expect(
-        service.recordSmokeVoxels(CONTEXT, LINEUP, CAPTURE),
-      ).rejects.toThrow("steam_id");
-      await expect(
-        service.recordSmokeVoxels(CONTEXT, LINEUP, {
-          ...CAPTURE,
-          steam_id: "76561198999999999",
-        }),
-      ).rejects.toThrow("not in this match lineup");
-      expect(artifacts.storeSmokeVoxels).not.toHaveBeenCalled();
-
-      // The lookup itself asks whether that player can see the lineup.
-      lineup = null;
-      await expect(
-        service.recordSmokeVoxels(CONTEXT, LINEUP, {
-          ...CAPTURE,
-          steam_id: AUTHOR,
-        }),
-      ).resolves.toEqual({ stored: false });
-      const [sql] = postgres.query.mock.calls.find(([text]) =>
-        String(text).includes("SELECT utility_type, smoke_voxels_file"),
-      );
-      expect(sql).toContain("can_view_utility_lineup");
-    });
-
-    it("lets a render of this server's batch record without a player", async () => {
-      batch = [LINEUP];
-
-      await expect(
-        service.recordSmokeVoxels(CONTEXT, LINEUP, {
-          ...CAPTURE,
-          render: true,
-        }),
-      ).resolves.toEqual({ stored: true });
-    });
-
-    it("refuses a capture that is not one", async () => {
-      await expect(
-        service.recordSmokeVoxels(CONTEXT, LINEUP, {
-          ...CAPTURE,
-          steam_id: AUTHOR,
-          samples: [],
-        }),
-      ).rejects.toThrow("samples");
-      await expect(
-        service.recordSmokeVoxels(CONTEXT, "not-a-lineup", {
-          ...CAPTURE,
-          steam_id: AUTHOR,
-        }),
-      ).rejects.toThrow("not a lineup id");
       expect(artifacts.storeSmokeVoxels).not.toHaveBeenCalled();
     });
   });
