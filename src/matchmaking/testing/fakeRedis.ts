@@ -228,7 +228,7 @@ export class FakeRedis {
   }
 
   // Reads never create the key, and a hash goes with its last field, as in
-  // redis: the orphan sweep asks whether a lobby's details key exists at all.
+  // redis.
   async hget(key: string, field: string) {
     this.assertType(key, "hash");
     return this.hashes.get(key)?.get(field) ?? null;
@@ -256,20 +256,9 @@ export class FakeRedis {
 
   /**
    * The redis EVAL command, not javascript eval. The lua source is not
-   * interpreted - this hardcodes the scripts matchmaking runs, recognised by a
-   * command only they use. None of them awaits anything, so each runs in one
-   * go, which is the property the real scripts buy with lua.
-   *
-   * CLAIM_LOBBY_SCRIPT: while the lobby's details are the ones the pass read
-   * and it is still in one of the queue keys passed in, SET NX the lock, and
-   * on success ZREM it from all of them.
-   *
-   * REMOVE_LOBBY_SCRIPT: while the details are the ones the caller read, or
-   * are still missing, ZREM the lobby from every queue key passed in and
-   * delete its details and stamp.
-   *
-   * DROP_STRAY_ENTRIES_SCRIPT: ZREM the lobby from the queue and rank key of
-   * every region passed in that its details do not name for that type.
+   * interpreted - this hardcodes the scripts it knows, recognised by text only
+   * they contain. None of them awaits anything, so each runs in one go, which
+   * is the property the real scripts buy with lua.
    */
   async eval(script: string, numKeys: number, ...args: unknown[]) {
     const keys = args.slice(0, numKeys) as string[];
@@ -279,11 +268,17 @@ export class FakeRedis {
       return this.claimLobby(keys, argv);
     }
 
-    if (script.includes("HDEL")) {
+    if (script.includes("'details', 'confirmationId'")) {
       return this.removeLobby(keys, argv);
     }
 
-    return this.dropStrayEntries(keys, argv);
+    if (script.includes("queuedIn")) {
+      return this.dropStrayEntries(keys, argv);
+    }
+
+    throw new Error(
+      `FakeRedis does not emulate this script, test it against a real redis: ${script.trim().split("\n")[0]}`,
+    );
   }
 
   private detailsIn(key: string) {

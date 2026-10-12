@@ -862,14 +862,19 @@ export class MatchmakeService {
   private static readonly STRANDED_SIGHTING_TTL_MS = 5 * 60 * 1000;
   private static readonly STRANDED_MIN_AGE_MS = 30 * 1000;
 
-  // KEYS: the lobby's details, the last sweep's sighting of it, ARGV[5] locks,
-  // then a queue and rank key per region.
+  // KEYS: the lobby's details, the last sweep's sighting of it, its stamp's
+  // confirmation and the claim on creating that confirmation's match, ARGV[5]
+  // locks, then a queue and rank key per region.
   //
   // A leave, a join and a cancel each pass through the stranded state on their
   // way, so one look proves nothing. The first look only records what it saw.
   // The lobby is acted on when a later look, STRANDED_MIN_AGE_MS on, finds the
   // same details and stamp still stranded, with no look in between that found
   // it otherwise.
+  //
+  // A ready check that is over can still be accepted while its hash lasts, so
+  // a lobby whose ready check has a match, or a creation still running, is
+  // not stranded either.
   private static readonly HEAL_STRANDED_LOBBY_SCRIPT = `
     local locks = tonumber(ARGV[5])
 
@@ -879,12 +884,18 @@ export class MatchmakeService {
       if details ~= ARGV[2] or stamp ~= ARGV[3] then
         return false
       end
-      for i = 3, 2 + locks do
+      if redis.call('HEXISTS', KEYS[3], 'matchId') == 1 then
+        return false
+      end
+      if redis.call('PTTL', KEYS[4]) > tonumber(ARGV[9]) then
+        return false
+      end
+      for i = 5, 4 + locks do
         if redis.call('EXISTS', KEYS[i]) == 1 then
           return false
         end
       end
-      for i = 3 + locks, #KEYS do
+      for i = 5 + locks, #KEYS do
         if redis.call('ZSCORE', KEYS[i], ARGV[1]) then
           return false
         end
@@ -912,7 +923,7 @@ export class MatchmakeService {
     redis.call('DEL', KEYS[2])
     redis.call('HDEL', KEYS[1], 'confirmationId')
     if ARGV[4] == 'requeue' then
-      for i = 3 + locks, #KEYS, 2 do
+      for i = 5 + locks, #KEYS, 2 do
         redis.call('ZADD', KEYS[i], 0, ARGV[1])
         redis.call('ZADD', KEYS[i + 1], ARGV[6], ARGV[1])
       end
@@ -990,6 +1001,8 @@ export class MatchmakeService {
     const keys = [
       getMatchmakingLobbyDetailsCacheKey(lobbyId),
       sighting,
+      getMatchmakingConformationCacheKey(confirmationId),
+      this.getMatchCreationClaimKey(confirmationId),
       ...locks,
       ...regions.flatMap((region) => [
         getMatchmakingQueueCacheKey(lobby.type, region),
@@ -1010,6 +1023,7 @@ export class MatchmakeService {
         lobby?.avgRank ?? 0,
         MatchmakeService.STRANDED_SIGHTING_TTL_MS,
         MatchmakeService.STRANDED_MIN_AGE_MS,
+        MatchmakeService.CREATION_RUNNING_TTL_MS,
       )) === 1;
 
     if (!(await heal("check"))) {
@@ -1238,6 +1252,14 @@ export class MatchmakeService {
   // Outlives the cancel job and all of its retries. A ready check that becomes
   // a match is kept for as long as the match is, see createMatch.
   private static readonly READY_CHECK_TTL_SECONDS = 10 * 60;
+
+  // The claim on creating a match is taken with the ready check's ttl. While
+  // it has more than this left it is younger than the cancel job's retry
+  // budget and the creation may still be running. Past that the creation
+  // failed, and the claim only stops a second one.
+  private static readonly CREATION_RUNNING_TTL_MS =
+    MatchmakeService.READY_CHECK_TTL_SECONDS * 1000 -
+    MatchmakeService.CANCEL_RETRY_BUDGET_MS;
 
   private async setConfirmationDetails(
     region: string,

@@ -669,8 +669,6 @@ describe("MatchmakeService", () => {
       const numKeys = evalCall[1] as number;
       const keys = evalCall.slice(2, 2 + numKeys);
 
-      // Should have: 1 lock key + 1 details key + 2 regions * 2 keys (queue +
-      // rank) = 6 keys
       expect(numKeys).toBe(6);
       expect(keys[0]).toBe("matchmaking:lock:lobby-keys-test");
       expect(keys[1]).toBe(

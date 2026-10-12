@@ -44,7 +44,6 @@ describe("stranded matchmaking lobbies", () => {
   let partyOf: Map<string, string>;
   let onBusyCheck: (steamIds: string[]) => Promise<void>;
   let onRegionStats: () => Promise<void>;
-  // the regions the Play count reports on
   let statsRegions: string[];
 
   beforeAll(async () => {
@@ -306,12 +305,18 @@ describe("stranded matchmaking lobbies", () => {
     await redis.del(key, `${key}:confirmed`, lobbyLock(A), lobbyLock(B));
   }
 
+  // The ready check ended this long ago, and a claim on creating its match,
+  // which lasts ten minutes, was taken before it did.
   async function readyCheckExpired(confirmationId: string, secondsAgo: number) {
+    const key = getMatchmakingConformationCacheKey(confirmationId);
     await redis.hset(
-      getMatchmakingConformationCacheKey(confirmationId),
+      key,
       "expiresAt",
       new Date(Date.now() - secondsAgo * 1000).toISOString(),
     );
+    if (await redis.exists(`${key}:creating`)) {
+      await redis.pexpire(`${key}:creating`, (10 * 60 - secondsAgo) * 1000);
+    }
     await redis.del(lobbyLock(A), lobbyLock(B));
   }
 
@@ -567,7 +572,8 @@ describe("stranded matchmaking lobbies", () => {
       expect(await stampOf(lobbyId)).toBe(confirmationId);
     }
 
-    await readyCheckExpired(confirmationId, 10 * 60);
+    await readyCheckExpired(confirmationId, 5 * 60);
+    expect(await redis.exists(`${key}:creating`)).toBe(1);
     await sweepTwice();
 
     for (const lobbyId of [A, B]) {
@@ -588,6 +594,82 @@ describe("stranded matchmaking lobbies", () => {
     await join(A);
     expect(errorCodes(A)).toEqual([]);
     expect(await queued()).toEqual([A]);
+  });
+
+  // The hash outlives the ready check, so one that nothing cancelled can
+  // still be accepted minutes later.
+  it("leaves a ready check alone while a late accept is creating its match", async () => {
+    await join(A);
+    await join(B);
+    await runPass();
+    const [confirmationId] = readyChecks();
+    const key = getMatchmakingConformationCacheKey(confirmationId);
+
+    await readyCheckExpired(confirmationId, 5 * 60);
+    await sweep();
+
+    let finishCreating: () => void;
+    const creating = new Promise<void>((reached) => {
+      createMatch.mockImplementationOnce(() => {
+        reached();
+        return new Promise((finish) => {
+          finishCreating = () =>
+            finish({
+              id: "match-1",
+              lineup_1_id: "lineup-1",
+              lineup_2_id: "lineup-2",
+            });
+        });
+      });
+    });
+    await confirm(confirmationId, A);
+    const accepted = confirm(confirmationId, B);
+    await creating;
+
+    await aMinuteLater();
+    await sweep();
+
+    for (const lobbyId of [A, B]) {
+      expect(await detailsOf(lobbyId)).not.toBeNull();
+      expect(await stampOf(lobbyId)).toBe(confirmationId);
+    }
+    expect(await redis.hget(key, "lobbyIds")).not.toBeNull();
+
+    finishCreating();
+    await accepted;
+    await sweepTwice();
+
+    expect(await redis.hget(key, "matchId")).toBe("match-1");
+    for (const lobbyId of [A, B]) {
+      expect(await stampOf(lobbyId)).toBe(confirmationId);
+    }
+  });
+
+  it("leaves a ready check alone when its match appears as the sweep decides", async () => {
+    await join(A);
+    await join(B);
+    await runPass();
+    const [confirmationId] = readyChecks();
+    const key = getMatchmakingConformationCacheKey(confirmationId);
+
+    await readyCheckExpired(confirmationId, 5 * 60);
+    await sweep();
+    await aMinuteLater();
+
+    const hmget = redis.hmget.bind(redis) as (...args: any[]) => Promise<any>;
+    jest.spyOn(redis, "hmget").mockImplementation((async (...args: any[]) => {
+      const read = await hmget(...args);
+      await redis.hset(key, "matchId", "match-1");
+      return read;
+    }) as any);
+
+    await sweep();
+
+    for (const lobbyId of [A, B]) {
+      expect(await detailsOf(lobbyId)).not.toBeNull();
+      expect(await stampOf(lobbyId)).toBe(confirmationId);
+    }
+    expect(await redis.hget(key, "lobbyIds")).not.toBeNull();
   });
 
   it("never requeues a lobby whose player went into another match", async () => {
