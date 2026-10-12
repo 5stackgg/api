@@ -1,4 +1,5 @@
 DROP FUNCTION IF EXISTS public.refresh_tournament_match_lineup(public.matches, uuid, uuid);
+DROP FUNCTION IF EXISTS public.refresh_tournament_match_lineup(public.matches, uuid, uuid, boolean);
 
 -- Rows are re-seated IN PLACE: when a lineup's minimum equals its maximum
 -- (Duel, or substitutes off) neither delete-then-insert nor insert-then-delete
@@ -11,6 +12,10 @@ DROP FUNCTION IF EXISTS public.refresh_tournament_match_lineup(public.matches, u
 -- A player already seated on the other side of the match (an organizer's
 -- stand-in) is not taken from there.
 --
+-- A lineup is never left below the minimum: when the roster cannot keep it
+-- there (it counts a banned player, or one seated on the other side) the
+-- lineup is left as it is and false is returned.
+--
 -- The lineup captain only moves when they left the lineup or when the
 -- tournament captain was explicitly changed (_follow_captain), so a captain
 -- picked by hand for check-in survives an unrelated roster edit.
@@ -19,7 +24,7 @@ CREATE OR REPLACE FUNCTION public.refresh_tournament_match_lineup(
     _match_lineup_id uuid,
     _tournament_team_id uuid,
     _follow_captain boolean
-) RETURNS VOID
+) RETURNS boolean
     LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -95,13 +100,8 @@ BEGIN
 
     _min_players := match_min_players_per_lineup(_match);
 
-    -- tbd_tournament_team_roster refuses the removals that would get here; this
-    -- covers the rest (a reassignment into a team with a banned member), and
-    -- holds for the "admin" role that tbid_match_lineup_players waves through.
     IF cardinality(_desired) < _min_players AND cardinality(_desired) < _seated THEN
-        RAISE EXCEPTION USING
-            ERRCODE = '22000',
-            MESSAGE = 'The team cannot field the minimum lineup of ' || _min_players || ' players for its next match';
+        RETURN false;
     END IF;
 
     SELECT COALESCE(array_agg(mlp.id ORDER BY mlp.steam_id NULLS LAST, mlp.id), ARRAY[]::uuid[])
@@ -156,6 +156,8 @@ BEGIN
         WHERE match_lineup_id = _match_lineup_id
           AND captain IS DISTINCT FROM COALESCE(steam_id = _captain_steam_id, false);
     END IF;
+
+    RETURN true;
 END;
 $$;
 
@@ -217,12 +219,19 @@ BEGIN
 
         CONTINUE WHEN _lineup.tournament_team_id IS NULL;
 
-        PERFORM refresh_tournament_match_lineup(
+        -- Refused rather than left as it is: left alone, the lineup would keep
+        -- seating the team that was moved out of this slot.
+        IF NOT refresh_tournament_match_lineup(
             _match,
             _lineup.match_lineup_id,
             _lineup.tournament_team_id,
             false
-        );
+        ) THEN
+            RAISE EXCEPTION USING
+                ERRCODE = '22000',
+                MESSAGE = 'The team cannot field the minimum lineup of '
+                    || match_min_players_per_lineup(_match) || ' players for its next match';
+        END IF;
     END LOOP;
 END;
 $$;

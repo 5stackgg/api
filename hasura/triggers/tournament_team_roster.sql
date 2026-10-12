@@ -27,15 +27,12 @@ CREATE OR REPLACE FUNCTION public.tbd_tournament_team_roster() RETURNS TRIGGER
 DECLARE
     _tournament public.tournaments;
     _min_players int;
-    _seatable int;
+    _roster_count int;
 BEGIN
-    -- The team row is locked so two removals cannot both count the other's
-    -- player as still there.
     SELECT t.* INTO _tournament
         FROM tournament_teams tt
         JOIN tournaments t ON t.id = tt.tournament_id
-        WHERE tt.id = OLD.tournament_team_id
-        FOR NO KEY UPDATE OF tt;
+        WHERE tt.id = OLD.tournament_team_id;
 
     -- When the whole team (or the tournament) is being deleted its
     -- tournament_teams row is already gone by the time this cascade fires, so
@@ -44,43 +41,32 @@ BEGIN
         RETURN OLD;
     END IF;
 
-    -- Rosters are locked once registration has closed: the bracket is drawn
-    -- then, or (CheckInReview) can be redrawn by a re-admit at any moment.
-    -- Before that teams edit their lineup freely, dropping below the minimum
-    -- just makes them ineligible, and any match an early reseed drew is rebuilt
-    -- when registration closes.
-    IF _tournament.status NOT IN ('RegistrationClosed', 'CheckInReview', 'Live', 'Paused') THEN
+    -- Rosters are only locked once the bracket has been seeded. Before that
+    -- (Setup / RegistrationOpen) teams edit their lineup freely and dropping
+    -- below the minimum just makes them ineligible.
+    IF _tournament.status NOT IN ('RegistrationClosed', 'Live', 'Paused') THEN
         RETURN OLD;
     END IF;
 
-    -- Not counted below, so letting them go cannot take the team under it.
-    IF EXISTS (
-        SELECT 1
-        FROM players p
-        WHERE p.steam_id = OLD.player_steam_id
-          AND is_banned(p)
-    ) THEN
-        RETURN OLD;
-    END IF;
+    -- So two removals cannot both count the other's player as still there.
+    PERFORM 1
+        FROM tournament_teams tt
+        WHERE tt.id = OLD.tournament_team_id
+        FOR NO KEY UPDATE;
 
     _min_players := tournament_min_players_per_lineup(_tournament);
 
-    -- A banned player is never newly seated (one already seated keeps the
-    -- seat), so they cannot be counted on to hold the team at the minimum.
-    SELECT COUNT(*) INTO _seatable
+    SELECT COUNT(*) INTO _roster_count
         FROM tournament_team_roster ttr
-        INNER JOIN players p ON p.steam_id = ttr.player_steam_id
-        WHERE ttr.tournament_team_id = OLD.tournament_team_id
-          AND ttr.player_steam_id <> OLD.player_steam_id
-          AND NOT is_banned(p);
+        WHERE ttr.tournament_team_id = OLD.tournament_team_id;
 
-    -- Removing this player would strip the team's eligibility and seed, and
-    -- leave its unstarted matches short. A team can only swap a player out if
-    -- it has a substitute keeping it at or above the minimum lineup.
-    IF _seatable < _min_players THEN
+    -- Removing this player would strip the team's eligibility and seed while the
+    -- tournament is underway. A team can only swap a player out if it has a
+    -- substitute keeping it at or above the minimum lineup.
+    IF _roster_count - 1 < _min_players THEN
         RAISE EXCEPTION USING
             ERRCODE = '22000',
-            MESSAGE = 'Cannot remove player: the team would drop below the minimum lineup of ' || _min_players || ' players now that registration has closed';
+            MESSAGE = 'Cannot remove player: the team would drop below the minimum lineup of ' || _min_players || ' players while the tournament is underway';
     END IF;
 
     RETURN OLD;

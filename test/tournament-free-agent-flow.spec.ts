@@ -762,6 +762,32 @@ describe("free agent flow (SQL-driven)", () => {
       expect(await teamOf(t.id, waitlisted)).toBe(team);
     });
 
+    // No substitutes, so the pickup team sits at its minimum: the waitlist is
+    // the only way to fill the seat, and leaving the review redraws the bracket.
+    it("lets an organizer swap a drafted no-show for the waitlist while check-in is under review", async () => {
+      const t = await openTournament({ columns: { check_in_required: true } });
+      const players = await fx.players(5);
+      await joinAll(t.id, players);
+      await draft(t);
+      const waitlisted = players[4];
+      expect(await statusOf(t.id, waitlisted)).toBe("waitlisted");
+      await setStatus(t.id, t.organizer, "CheckInReview");
+
+      const noShow = await nonOwner(t.id);
+      const team = await teamOf(t.id, noShow);
+      await runAsUser(postgres, t.organizer, "tournament_organizer", (query) =>
+        query(
+          `DELETE FROM tournament_team_roster
+            WHERE tournament_id = $1 AND player_steam_id = $2`,
+          [t.id, noShow],
+        ),
+      );
+
+      expect(await statusOf(t.id, noShow)).toBe("withdrawn");
+      expect(await statusOf(t.id, waitlisted)).toBe("drafted");
+      expect(await teamOf(t.id, waitlisted)).toBe(team);
+    });
+
     it("puts a late sign-up straight into a slot a drafted player gave up", async () => {
       const t = await openTournament();
       const players = await fx.players(4);

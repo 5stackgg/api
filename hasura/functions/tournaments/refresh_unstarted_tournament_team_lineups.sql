@@ -13,24 +13,29 @@ DECLARE
     _match_lineup_id uuid;
     _match matches%ROWTYPE;
 BEGIN
-    -- Every path takes the team row, then the matches, then the lineup rows:
-    -- the roster lock and check_team_eligibility write the team row, and a
-    -- status change locks team rows before it rebuilds matches.
     SELECT tt.tournament_id, t.status
     INTO _tournament_id, _status
     FROM tournament_teams tt
     INNER JOIN tournaments t ON t.id = tt.tournament_id
-    WHERE tt.id = _tournament_team_id
-    FOR NO KEY UPDATE OF tt;
+    WHERE tt.id = _tournament_team_id;
 
     IF NOT FOUND THEN
         RETURN;
     END IF;
 
-    -- A match drawn before registration closes is rebuilt when it does.
-    IF _status IN ('Setup', 'RegistrationOpen') THEN
+    -- Matches drawn in Setup, RegistrationOpen or CheckInReview are rebuilt on
+    -- the way out of them.
+    IF _status NOT IN ('RegistrationClosed', 'Live', 'Paused') THEN
         RETURN;
     END IF;
+
+    -- The team row before the matches: check_team_eligibility writes it after
+    -- this refresh on a roster insert, and a status change locks team rows
+    -- before it rebuilds matches.
+    PERFORM 1
+    FROM tournament_teams tt
+    WHERE tt.id = _tournament_team_id
+    FOR NO KEY UPDATE;
 
     -- FOR SHARE so a match moving past check-in either waits for this write or
     -- is re-read as started and skipped. The check-in status change also locks
