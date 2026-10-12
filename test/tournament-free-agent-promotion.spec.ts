@@ -265,20 +265,30 @@ describe("free agent waitlist promotion (SQL-driven)", () => {
 
       // A separate team picked them up directly; the roster key is unique per
       // (tournament, player), so drafting them again would abort the caller's
-      // whole statement.
+      // whole statement. Joining a team normally takes them out of the pool, so
+      // the roster row is written past that trigger -- the state two racing
+      // requests can still leave behind.
       const outsider = await fx.player();
       const [other] = await postgres.query<Array<{ id: string }>>(
         `INSERT INTO tournament_teams (tournament_id, name, owner_steam_id, captain_steam_id)
          VALUES ($1, 'Outsiders', $2, $2) RETURNING id`,
         [t.id, outsider],
       );
-      await runAsUser(postgres, t.organizer, "admin", (query) =>
-        query(
+      await runAsUser(postgres, t.organizer, "admin", async (query) => {
+        await query(
+          "SELECT set_config('fivestack.free_agent_draft', 'true', true)",
+        );
+        await query(
           `INSERT INTO tournament_team_roster (tournament_team_id, player_steam_id, tournament_id)
            VALUES ($1, $2, $3)`,
           [other.id, t.players[8], t.id],
-        ),
-      );
+        );
+      });
+      expect(
+        (await agents(t.id)).find(
+          (agent) => agent.player_steam_id === t.players[8],
+        )?.status,
+      ).toBe("waitlisted");
 
       const team = await teamOf(t.id, t.players[0]);
       await removeFromRoster(t.id, t.players[0]);
@@ -292,10 +302,18 @@ describe("free agent waitlist promotion (SQL-driven)", () => {
     it("skips a waitlisted agent who owns a team in this tournament", async () => {
       const t = await draftedPool();
 
-      await postgres.query(
+      // Registering a team takes them out of the pool, so ownership is written
+      // past that trigger -- the state two racing requests can still leave
+      // behind.
+      const outsider = await fx.player();
+      const [owned] = await postgres.query<Array<{ id: string }>>(
         `INSERT INTO tournament_teams (tournament_id, name, owner_steam_id, captain_steam_id)
-         VALUES ($1, 'Owned', $2, $2)`,
-        [t.id, t.players[8]],
+         VALUES ($1, 'Owned', $2, $2) RETURNING id`,
+        [t.id, outsider],
+      );
+      await postgres.query(
+        "UPDATE tournament_teams SET owner_steam_id = $2 WHERE id = $1",
+        [owned.id, t.players[8]],
       );
 
       const team = await teamOf(t.id, t.players[0]);

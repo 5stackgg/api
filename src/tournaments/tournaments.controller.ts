@@ -883,6 +883,8 @@ export class TournamentsController {
       return await this.joinFreeAgentPoolWithLobby(tournament, data.user);
     }
 
+    await this.clearWithdrawnFreeAgents(tournament_id, [data.user.steam_id]);
+
     await this.postgres.query(
       `INSERT INTO tournament_free_agents (tournament_id, player_steam_id)
        VALUES ($1::uuid, $2::bigint)
@@ -891,6 +893,23 @@ export class TournamentsController {
     );
 
     return { success: true };
+  }
+
+  // A withdrawn row is someone who left a drafted team, and the ON CONFLICT that
+  // keeps a repeat sign-up idempotent would otherwise answer their new sign-up
+  // with success and leave them withdrawn. Gone rather than reset, so the insert
+  // runs every rule a first sign-up does and queues them at the back.
+  private async clearWithdrawnFreeAgents(
+    tournamentId: string,
+    steamIds: Array<string>,
+  ) {
+    await this.postgres.query(
+      `DELETE FROM tournament_free_agents
+        WHERE tournament_id = $1::uuid
+          AND player_steam_id = ANY($2::bigint[])
+          AND status = 'withdrawn'`,
+      [tournamentId, steamIds],
+    );
   }
 
   private static freeAgentPartyBlocker(
@@ -915,11 +934,14 @@ export class TournamentsController {
       return "has not been invited to this tournament";
     }
 
-    // Anything past 'registered' is a commitment the pool has already acted on
-    // -- a draft has placed them, passed them over, or they were removed. Folding
-    // such a row into a new party silently would build a party that the draft
-    // then treats as smaller than the lobby that formed it.
-    if (member.pool_status !== null && member.pool_status !== "registered") {
+    // A draft has already placed them or passed them over. Folding such a row
+    // into a new party silently would build a party that the draft then treats
+    // as smaller than the lobby that formed it. A withdrawn row is someone who
+    // left, and signs up again like anyone else.
+    if (
+      member.pool_status !== null &&
+      !["registered", "withdrawn"].includes(member.pool_status)
+    ) {
       return "is already committed in this tournament";
     }
 
@@ -1026,6 +1048,8 @@ export class TournamentsController {
       );
     }
 
+    await this.clearWithdrawnFreeAgents(tournament.id, steamIds);
+
     await this.postgres.query(
       `INSERT INTO tournament_free_agents (tournament_id, player_steam_id, party_id)
        SELECT $1::uuid, member.steam_id, $2::uuid
@@ -1087,20 +1111,28 @@ export class TournamentsController {
     const { tournament_id } = data;
     const tournament = await this.getTournamentAccess(tournament_id, data.user);
 
-    if (!["Setup", "RegistrationOpen"].includes(tournament.status)) {
-      throw Error("the free agent pool is closed");
-    }
+    // Only a drafted player holds a slot, and giving one up is what closes with
+    // registration. Someone still waiting holds nothing: kept on the waitlist
+    // after they asked to leave, they are promoted into a team they will not
+    // show up for.
+    const slotsOpen = ["Setup", "RegistrationOpen"].includes(tournament.status);
 
     const removed = await this.postgres.query<
       Array<{ id: string; status: string }>
     >(
       `DELETE FROM tournament_free_agents
         WHERE tournament_id = $1::uuid AND player_steam_id = $2::bigint
+          AND status <> 'withdrawn'
+          AND ($3::boolean OR status <> 'drafted')
       RETURNING id::text AS id, status`,
-      [tournament_id, data.user.steam_id],
+      [tournament_id, data.user.steam_id, slotsOpen],
     );
 
     if (removed.length === 0) {
+      if (!slotsOpen) {
+        throw Error("the free agent pool is closed");
+      }
+
       throw Error("you are not in this tournament's free agent pool");
     }
 

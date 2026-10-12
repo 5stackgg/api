@@ -12,11 +12,19 @@
 --
 -- Returns an array rather than one id because the waitlist is made of UNITS: a
 -- party promotes whole or not at all, so one call can fill more than one slot.
+--
+-- _split_parties is false for a promotion run on sign-up: a lobby that has just
+-- been told it will be drafted onto one team must not be split up the moment
+-- it joins. A solo signing up later fills the gap instead.
+--
+-- The 2-argument form is dropped explicitly: left beside the defaulted
+-- 3-argument one, every 2-argument call fails as ambiguous (42725).
 DROP FUNCTION IF EXISTS public.promote_tournament_free_agent(uuid, uuid);
 
 CREATE OR REPLACE FUNCTION public.promote_tournament_free_agent(
     _tournament_id uuid,
-    _tournament_team_id uuid
+    _tournament_team_id uuid,
+    _split_parties boolean DEFAULT true
 )
 RETURNS bigint[]
 LANGUAGE plpgsql
@@ -148,6 +156,7 @@ BEGIN
     pick AS (
         SELECT u.unit_key
           FROM units u
+         WHERE _split_parties OR u.size <= _free_slots
          ORDER BY (u.size > _free_slots), u.first_at, u.first_id
          LIMIT 1
     )

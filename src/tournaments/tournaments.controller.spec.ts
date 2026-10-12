@@ -828,8 +828,9 @@ describe("TournamentsController registration and check-in actions", () => {
   });
 
   describe("leaveTournamentAsFreeAgent", () => {
-    it("refuses once registration has closed", async () => {
+    it("keeps a drafted player in their slot once registration has closed", async () => {
       tournamentRow = tournament({ status: "RegistrationClosed" });
+      removedFreeAgent = [];
 
       await expect(
         controller.leaveTournamentAsFreeAgent({
@@ -837,6 +838,23 @@ describe("TournamentsController registration and check-in actions", () => {
           tournament_id: "tournament-1",
         }),
       ).rejects.toThrow(/pool is closed/i);
+
+      const [, params] = postgres.query.mock.calls.find(([sql]) =>
+        String(sql).includes("DELETE FROM tournament_free_agents"),
+      );
+      expect(params[2]).toBe(false);
+    });
+
+    it("lets a waitlisted player leave after registration has closed", async () => {
+      tournamentRow = tournament({ status: "RegistrationClosed" });
+      removedFreeAgent = [{ id: "agent-1", status: "waitlisted" }];
+
+      await expect(
+        controller.leaveTournamentAsFreeAgent({
+          user: player,
+          tournament_id: "tournament-1",
+        }),
+      ).resolves.toEqual({ success: true });
     });
 
     it("reports when the player was never in the pool", async () => {

@@ -566,11 +566,17 @@ describe("free agent parties (SQL-driven)", () => {
 
       // Owning a team is the collision that hard-stalled the whole
       // RegistrationClosed transition once already: the draft has to skip this
-      // member, and only this member.
-      await postgres.query(
+      // member, and only this member. Registering a team takes them out of the
+      // pool, so ownership is written past that trigger -- the state two racing
+      // requests can still leave behind.
+      const [owned] = await postgres.query<Array<{ id: string }>>(
         `INSERT INTO tournament_teams (tournament_id, name, owner_steam_id, captain_steam_id)
-         VALUES ($1, 'Owned', $2, $2)`,
-        [t.id, partied[2]],
+         VALUES ($1, 'Owned', $2, $2) RETURNING id`,
+        [t.id, await fx.player()],
+      );
+      await postgres.query(
+        "UPDATE tournament_teams SET owner_steam_id = $2 WHERE id = $1",
+        [owned.id, partied[2]],
       );
 
       // Five drafted: the two remaining party members plus the three solos, on
