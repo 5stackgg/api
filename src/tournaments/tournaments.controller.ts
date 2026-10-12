@@ -1,5 +1,6 @@
 import { Controller, Logger } from "@nestjs/common";
 import { Redis } from "ioredis";
+import { PoolClient } from "pg";
 import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { HasuraService } from "../hasura/hasura.service";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
@@ -935,6 +936,125 @@ export class TournamentsController {
     }
 
     return { success: true };
+  }
+
+  // Wider than a player's own sign-up window: the draft has not read the pool
+  // yet in any of these, so an organizer can still fix it before registration
+  // opens and while a check-in review holds the close.
+  private static readonly FREE_AGENT_POOL_EDITABLE = [
+    "Setup",
+    "RegistrationOpen",
+    "CheckInReview",
+  ];
+
+  @HasuraAction()
+  public async addTournamentFreeAgent(data: {
+    user: User;
+    tournament_id: string;
+    steam_id: string;
+  }) {
+    const { tournament_id } = data;
+    const steamId = String(data.steam_id);
+    const tournament = await this.getTournamentAccess(tournament_id, data.user);
+
+    this.requireOrganizer(tournament);
+
+    // Under the organizer's own session, so tbi_tournament_free_agents judges
+    // invite_only (and the block check) against them instead of waving the
+    // insert through as an internal write.
+    const added = await this.postgres.transaction(async (client) => {
+      await this.lockFreeAgentPool(client, tournament_id);
+
+      await client.query(
+        `DELETE FROM tournament_free_agents
+          WHERE tournament_id = $1::uuid
+            AND player_steam_id = $2::bigint
+            AND status = 'withdrawn'`,
+        [tournament_id, steamId],
+      );
+
+      const { rows } = await client.query<{ id: string }>(
+        `INSERT INTO tournament_free_agents (tournament_id, player_steam_id)
+         VALUES ($1::uuid, $2::bigint)
+         ON CONFLICT (tournament_id, player_steam_id) DO NOTHING
+         RETURNING id::text AS id`,
+        [tournament_id, steamId],
+      );
+
+      return rows;
+    }, this.hasuraSession(data.user));
+
+    if (added.length === 0) {
+      throw Error(
+        "that player is already in this tournament's free agent pool",
+      );
+    }
+
+    this.logger.log(
+      `[${tournament_id}] ${data.user.steam_id} added ${steamId} to the free agent pool`,
+    );
+
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async removeTournamentFreeAgent(data: {
+    user: User;
+    tournament_id: string;
+    steam_id: string;
+  }) {
+    const { tournament_id } = data;
+    const steamId = String(data.steam_id);
+    const tournament = await this.getTournamentAccess(tournament_id, data.user);
+
+    this.requireOrganizer(tournament);
+
+    // A drafted player holds a seat on a pickup team and comes off it through
+    // that team's roster, which is what refills the seat from the waitlist.
+    const removed = await this.postgres.transaction(async (client) => {
+      await this.lockFreeAgentPool(client, tournament_id);
+
+      const { rows } = await client.query<{ id: string }>(
+        `DELETE FROM tournament_free_agents
+          WHERE tournament_id = $1::uuid
+            AND player_steam_id = $2::bigint
+            AND status IN ('registered', 'waitlisted')
+        RETURNING id::text AS id`,
+        [tournament_id, steamId],
+      );
+
+      return rows;
+    });
+
+    if (removed.length === 0) {
+      throw Error(
+        "only a registered or waitlisted free agent can be removed from the pool",
+      );
+    }
+
+    this.logger.log(
+      `[${tournament_id}] ${data.user.steam_id} removed ${steamId} from the free agent pool`,
+    );
+
+    return { success: true };
+  }
+
+  // FOR SHARE holds off the status change that runs the draft until this write
+  // commits. Without it a pool row written alongside the close misses the draft
+  // and sits as 'registered' waiting for one that never comes.
+  private async lockFreeAgentPool(client: PoolClient, tournamentId: string) {
+    const { rows } = await client.query<{ status: string }>(
+      `SELECT status FROM tournaments WHERE id = $1::uuid FOR SHARE`,
+      [tournamentId],
+    );
+
+    if (
+      !TournamentsController.FREE_AGENT_POOL_EDITABLE.includes(rows[0]?.status)
+    ) {
+      throw Error(
+        "the free agent pool can only change before registration closes or during check-in review",
+      );
+    }
   }
 
   private requireRegistrationUnlocked(tournament: TournamentAccess) {

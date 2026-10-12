@@ -3,7 +3,12 @@ import { PostgresService } from "./../src/postgres/postgres.service";
 import { TournamentsController } from "./../src/tournaments/tournaments.controller";
 import { ProcessTournamentCheckIn } from "./../src/matches/jobs/ProcessTournamentCheckIn";
 import { Fixtures } from "./utils/fixtures";
-import { bootMigratedDb, runAsUser, SqlTestDb } from "./utils/sql-test-db";
+import {
+  bootMigratedDb,
+  endPool,
+  runAsUser,
+  SqlTestDb,
+} from "./utils/sql-test-db";
 
 // The free agent journey through the actions a player actually calls: sign up,
 // leave, get drafted or waitlisted, get promoted, check in. A player is in a
@@ -803,6 +808,287 @@ describe("free agent flow (SQL-driven)", () => {
         kept.id,
       ]);
       expect(await joined(t.id, emptied.owner_steam_id)).toBe(false);
+    });
+  });
+
+  describe("an organizer managing the pool", () => {
+    const staff = (steamId: string, role = "user") =>
+      ({ steam_id: steamId, name: "Organizer", role }) as never;
+
+    const add = (
+      tournamentId: string,
+      actor: string,
+      steamId: string,
+      role = "user",
+    ) =>
+      controller().addTournamentFreeAgent({
+        user: staff(actor, role),
+        tournament_id: tournamentId,
+        steam_id: steamId,
+      });
+
+    const remove = (tournamentId: string, actor: string, steamId: string) =>
+      controller().removeTournamentFreeAgent({
+        user: staff(actor),
+        tournament_id: tournamentId,
+        steam_id: steamId,
+      });
+
+    it("lets the organizer and a co-organizer add and remove players before the draft and during check-in review", async () => {
+      const t = await createTournament({
+        columns: { check_in_required: true },
+      });
+      const coOrganizer = await fx.player();
+      await postgres.query(
+        "INSERT INTO tournament_organizers (tournament_id, steam_id) VALUES ($1, $2)",
+        [t.id, coOrganizer],
+      );
+
+      for (const status of ["Setup", "RegistrationOpen", "CheckInReview"]) {
+        if (status !== "Setup") {
+          await setStatus(t.id, t.organizer, status);
+        }
+
+        for (const actor of [t.organizer, coOrganizer]) {
+          const agent = await fx.player();
+
+          await expect(add(t.id, actor, agent)).resolves.toEqual({
+            success: true,
+          });
+          expect(await statusOf(t.id, agent)).toBe("registered");
+
+          await expect(remove(t.id, actor, agent)).resolves.toEqual({
+            success: true,
+          });
+          expect(await agentRow(t.id, agent)).toBeUndefined();
+        }
+      }
+    });
+
+    it("leaves the pool alone once registration has closed, and once the tournament is live", async () => {
+      const t = await openTournament();
+      const players = await fx.players(9);
+      await joinAll(t.id, players);
+      const waitlisted = players[8];
+
+      for (const status of ["RegistrationClosed", "Live"]) {
+        await setStatus(t.id, t.organizer, status);
+        const [tournament] = await postgres.query<Array<{ status: string }>>(
+          "SELECT status FROM tournaments WHERE id = $1",
+          [t.id],
+        );
+        expect(tournament.status).toBe(status);
+        expect(await statusOf(t.id, waitlisted)).toBe("waitlisted");
+
+        const outsider = await fx.player();
+        await expect(add(t.id, t.organizer, outsider)).rejects.toThrow(
+          /free agent pool/i,
+        );
+        expect(await agentRow(t.id, outsider)).toBeUndefined();
+
+        await expect(remove(t.id, t.organizer, waitlisted)).rejects.toThrow(
+          /free agent pool/i,
+        );
+        expect(await statusOf(t.id, waitlisted)).toBe("waitlisted");
+      }
+    });
+
+    it("refuses anyone who does not organize this tournament", async () => {
+      const t = await openTournament();
+      const other = await openTournament();
+      const [stranger, agent, waiting] = await fx.players(3);
+      await join(t.id, waiting);
+
+      for (const actor of [stranger, other.organizer, waiting]) {
+        await expect(add(t.id, actor, agent)).rejects.toThrow(/organizer/i);
+        await expect(remove(t.id, actor, waiting)).rejects.toThrow(
+          /organizer/i,
+        );
+      }
+
+      expect(await agentRow(t.id, agent)).toBeUndefined();
+      expect(await statusOf(t.id, waiting)).toBe("registered");
+    });
+
+    it("keeps a drafted player on their pickup team", async () => {
+      const t = await openTournament();
+      await joinAll(t.id, await fx.players(4));
+      await draft(t);
+
+      const drafted = await nonOwner(t.id);
+      const team = await teamOf(t.id, drafted);
+
+      await expect(remove(t.id, t.organizer, drafted)).rejects.toThrow(
+        /registered or waitlisted/i,
+      );
+      expect(await statusOf(t.id, drafted)).toBe("drafted");
+      expect(await teamOf(t.id, drafted)).toBe(team);
+    });
+
+    it("holds an added player to the entry requirements", async () => {
+      const t = await openTournament({
+        columns: { min_role: "verified_user" },
+      });
+      const agent = await fx.player();
+
+      await expect(add(t.id, t.organizer, agent)).rejects.toThrow(
+        /entry requirements/i,
+      );
+      expect(await agentRow(t.id, agent)).toBeUndefined();
+
+      await postgres.query(
+        "UPDATE players SET role = 'verified_user' WHERE steam_id = $1",
+        [agent],
+      );
+      await add(t.id, t.organizer, agent);
+      expect(await statusOf(t.id, agent)).toBe("registered");
+    });
+
+    it("never puts a player in the tournament twice", async () => {
+      const t = await openTournament({ registrationType: "both" });
+      const [owner, member, agent] = await fx.players(3);
+      await registerTeam(t.id, owner, [owner, member]);
+      await join(t.id, agent);
+
+      await expect(add(t.id, t.organizer, member)).rejects.toThrow(
+        /already on a team/i,
+      );
+      await expect(add(t.id, t.organizer, owner)).rejects.toThrow(
+        /already have a team/i,
+      );
+      await expect(add(t.id, t.organizer, agent)).rejects.toThrow(
+        /already in/i,
+      );
+
+      expect(await agentRow(t.id, member)).toBeUndefined();
+      expect(await agentRow(t.id, owner)).toBeUndefined();
+      expect(await statusOf(t.id, agent)).toBe("registered");
+    });
+
+    it("judges invite only and blocks against the organizer adding the player", async () => {
+      const t = await openTournament({ columns: { invite_only: true } });
+      const [agent, blocker, admin] = await fx.players(3);
+
+      await expect(join(t.id, agent)).rejects.toThrow(/invite only/i);
+      await add(t.id, t.organizer, agent);
+      expect(await statusOf(t.id, agent)).toBe("registered");
+
+      for (const blocked of [t.organizer, admin]) {
+        await postgres.query(
+          "INSERT INTO player_blocks (blocker_steam_id, blocked_steam_id) VALUES ($1, $2)",
+          [blocker, blocked],
+        );
+      }
+
+      await expect(add(t.id, t.organizer, blocker)).rejects.toThrow(
+        /player_blocked/,
+      );
+      expect(await agentRow(t.id, blocker)).toBeUndefined();
+
+      // Staff are exempt, as on every other organizer roster.
+      await add(t.id, admin, blocker, "administrator");
+      expect(await statusOf(t.id, blocker)).toBe("registered");
+    });
+
+    it("waitlists a player added after the draft and promotes them into the next open slot", async () => {
+      const t = await openTournament();
+      await joinAll(t.id, await fx.players(4));
+      await draft(t);
+
+      const late = await fx.player();
+      await add(t.id, t.organizer, late);
+      expect(await statusOf(t.id, late)).toBe("waitlisted");
+
+      const drafted = await nonOwner(t.id);
+      const team = await teamOf(t.id, drafted);
+      await leave(t.id, drafted);
+
+      expect(await statusOf(t.id, late)).toBe("drafted");
+      expect(await teamOf(t.id, late)).toBe(team);
+    });
+
+    it("takes a removed player off the waitlist and promotes the one behind them", async () => {
+      const t = await openTournament();
+      await joinAll(t.id, await fx.players(4));
+      await draft(t);
+
+      const [first, second] = await fx.players(2);
+      await joinAll(t.id, [first, second]);
+      expect(await statusOf(t.id, first)).toBe("waitlisted");
+      expect(await statusOf(t.id, second)).toBe("waitlisted");
+
+      await remove(t.id, t.organizer, first);
+      expect(await agentRow(t.id, first)).toBeUndefined();
+
+      const drafted = await nonOwner(t.id);
+      const team = await teamOf(t.id, drafted);
+      await leave(t.id, drafted);
+      expect(await teamOf(t.id, second)).toBe(team);
+
+      // Removed, not banned: they can sign up again, at the back of the queue.
+      await join(t.id, first);
+      expect(await statusOf(t.id, first)).toBe("waitlisted");
+    });
+
+    // A transaction-local hasura.user on a connection that never had one falls
+    // back to '' after COMMIT or ROLLBACK, and every later
+    // current_setting('hasura.user', true)::json on it then fails. One
+    // connection, so the next query is guaranteed to land on it.
+    it("leaves its pooled connection with a parseable session whether the add lands or not", async () => {
+      const { config } = postgres as unknown as {
+        config: { connections: { default: Record<string, unknown> } };
+      };
+      const single = new PostgresService(
+        {
+          get: () => ({
+            connections: { default: { ...config.connections.default, max: 1 } },
+          }),
+        } as never,
+        new Logger("TournamentFreeAgentSingleConnection"),
+      );
+      const isolated = new TournamentsController(
+        new Logger("TournamentFreeAgentFlowTest"),
+        {} as never,
+        {} as never,
+        {} as never,
+        {} as never,
+        notifications as never,
+        single,
+        { getConnection: () => ({}) } as never,
+      );
+      const sessionParses = () =>
+        single.query(
+          "SELECT current_setting('hasura.user', true)::json AS session",
+        );
+
+      try {
+        const t = await openTournament({
+          columns: { min_role: "verified_user" },
+        });
+        const agent = await fx.player();
+
+        await expect(
+          isolated.addTournamentFreeAgent({
+            user: staff(t.organizer),
+            tournament_id: t.id,
+            steam_id: agent,
+          }),
+        ).rejects.toThrow(/entry requirements/i);
+        await expect(sessionParses()).resolves.toBeDefined();
+
+        await postgres.query(
+          "UPDATE players SET role = 'verified_user' WHERE steam_id = $1",
+          [agent],
+        );
+        await isolated.addTournamentFreeAgent({
+          user: staff(t.organizer),
+          tournament_id: t.id,
+          steam_id: agent,
+        });
+        await expect(sessionParses()).resolves.toBeDefined();
+      } finally {
+        await endPool(single);
+      }
     });
   });
 

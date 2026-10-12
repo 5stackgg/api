@@ -10,6 +10,7 @@ DROP FUNCTION IF EXISTS public.tbi_tournament_team_invites();
 DROP TRIGGER IF EXISTS tbi_event_players_not_blocked ON public.event_players;
 DROP TRIGGER IF EXISTS tbi_event_organizers_not_blocked ON public.event_organizers;
 DROP TRIGGER IF EXISTS tbi_tournament_organizers_not_blocked ON public.tournament_organizers;
+DROP TRIGGER IF EXISTS tbi_tournament_free_agents_not_blocked ON public.tournament_free_agents;
 DROP FUNCTION IF EXISTS public.tbi_assert_session_not_blocked();
 
 DROP TABLE IF EXISTS public.player_blocks;
