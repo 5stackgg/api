@@ -60,6 +60,10 @@ const ONLINE_PREFIX = "steam-presence:online:";
 // Delay before polling match history after a match ends, so Valve has time to
 // publish the demo + share code.
 const IMPORT_DELAY_MS = 60_000;
+// A match-end poll skips the poll cooldown, so a player whose rich presence
+// keeps flapping in and out of a match is capped at this many an hour.
+const MATCH_END_COUNT_PREFIX = "steam-presence:match-end-count:";
+const MATCH_END_MAX_PER_HOUR = 6;
 // Exponential backoff between reconnect attempts after a login error, so a bot
 // with bad credentials (or that Steam has rate-limited) isn't retried every tick
 // — which would make Steam lock it harder.
@@ -582,18 +586,88 @@ export class SteamPresenceService
       )
       .catch(() => {});
 
-    // Only matchmaking matches (comp/premier/wingman) set inMatch, so deathmatch
-    // and arms race never reach here. Delay so Valve can publish the demo first.
+    // Only matchmaking modes (comp/premier/wingman/rush) set inMatch, so
+    // deathmatch and arms race never reach here.
     if (isMatchEndTransition(previous, current)) {
-      this.logger.log(
-        `steam-presence import trigger: ${steamId} finished ${previous?.mode ?? "match"} ` +
-          `— scheduling match-history poll in ${IMPORT_DELAY_MS / 1000}s`,
-      );
-      await this.enqueuePoll(steamId, IMPORT_DELAY_MS);
+      await this.onMatchEnd(steamId, previous?.mode ?? "match");
     }
   }
 
-  private async enqueuePoll(steamId: string, delayMs = 0): Promise<void> {
+  private async onMatchEnd(steamId: string, mode: string): Promise<void> {
+    const onFiveStack = await this.playedOnFiveStack(steamId).catch((error) => {
+      this.logger.warn(
+        `steam-presence 5stack lookup failed for ${steamId}: ${(error as Error)?.message ?? error}`,
+      );
+      return false;
+    });
+    if (onFiveStack) {
+      this.logger.log(
+        `steam-presence ${steamId} finished ${mode} on a 5stack server — no match-history poll`,
+      );
+      return;
+    }
+
+    const countKey = MATCH_END_COUNT_PREFIX + steamId;
+    const count = Number((await this.cache.get(countKey)) ?? 0);
+    if (count >= MATCH_END_MAX_PER_HOUR) {
+      this.logger.warn(
+        `steam-presence ${steamId} reached ${MATCH_END_MAX_PER_HOUR} match-end polls this hour — leaving it to the hourly poll`,
+      );
+      return;
+    }
+    await this.cache.put(countKey, count + 1, 60 * 60);
+
+    this.logger.log(
+      `steam-presence import trigger: ${steamId} finished ${mode} ` +
+        `— scheduling match-history poll in ${IMPORT_DELAY_MS / 1000}s`,
+    );
+    // Its own jobId, so a waiting on-login poll can't absorb it, and the latest
+    // end replaces a poll still waiting from an earlier flap. The delay gives
+    // Valve time to publish the share code.
+    const jobId = `poll-steam-match-history.match-end.${steamId}`;
+    try {
+      await this.pollQueue.remove(jobId);
+      await this.pollQueue.add(
+        "PollSteamMatchHistoryForUser",
+        { steamId, matchEnd: true },
+        {
+          jobId,
+          delay: IMPORT_DELAY_MS,
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
+      );
+    } catch (err) {
+      this.logger.error(
+        `steam-presence match-end poll enqueue failed for ${steamId}: ${(err as Error)?.message ?? err}`,
+      );
+    }
+  }
+
+  // A 5stack match or community server can report the same game:mode as
+  // Valve's queue, so rich presence alone cannot tell them apart.
+  private async playedOnFiveStack(steamId: string): Promise<boolean> {
+    const rows = await this.postgres.query<Array<{ found: number }>>(
+      `SELECT 1 AS found
+         FROM public.match_lineup_players mlp
+         JOIN public.matches m
+           ON mlp.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
+        WHERE mlp.steam_id = $1::bigint
+          AND m.source = '5stack'
+          AND ((m.status = 'Live' AND m.started_at > now() - interval '6 hours')
+               OR m.ended_at > now() - interval '10 minutes')
+       UNION ALL
+       SELECT 1 AS found
+         FROM public.server_player_sessions s
+        WHERE s.player_steam_id = $1::bigint
+          AND (s.ended_at IS NULL OR s.ended_at > now() - interval '10 minutes')
+        LIMIT 1`,
+      [steamId],
+    );
+    return rows.length > 0;
+  }
+
+  private async enqueuePoll(steamId: string): Promise<void> {
     // Same jobId as the on-login poll so a pending poll isn't duplicated; the
     // per-user 10-minute cooldown in pollForUser absorbs extra triggers.
     await this.pollQueue
@@ -602,7 +676,6 @@ export class SteamPresenceService
         { steamId },
         {
           jobId: `poll-steam-match-history.${steamId}`,
-          delay: delayMs,
           removeOnComplete: true,
           removeOnFail: true,
         },

@@ -25,6 +25,7 @@ export class SteamMatchHistoryService {
   private static readonly RATE_LIMITED_COOLDOWN_SECONDS = 60 * 60;
   private static readonly INTER_REQUEST_DELAY_MS = 300;
   private static readonly SHARE_CODE_IMPORT_COOLDOWN_SECONDS = 30;
+  private static readonly MATCH_END_RETRY_DELAY_MS = 4 * 60 * 1000;
   private readonly steamApiKey: string;
 
   constructor(
@@ -36,6 +37,8 @@ export class SteamMatchHistoryService {
     @InjectQueue(SteamMatchHistoryQueues.ResolveMatchMetadata)
     private readonly resolveQueue: Queue,
     private readonly steamGc: SteamGcService,
+    @InjectQueue(SteamMatchHistoryQueues.PollSteamMatchHistoryForUser)
+    private readonly pollQueue: Queue,
   ) {
     this.steamApiKey = this.config.get("steam.steamApiKey");
   }
@@ -258,7 +261,12 @@ export class SteamMatchHistoryService {
     return rows.length > 0;
   }
 
-  public async pollForUser(steamId: string): Promise<PollResult> {
+  // A match-end poll skips the poll cooldown, since an hourly or on-login poll a
+  // few minutes earlier would otherwise swallow it. A 429 still stops it.
+  public async pollForUser(
+    steamId: string,
+    options: { matchEnd?: boolean } = {},
+  ): Promise<PollResult> {
     if (!this.isEnabled()) {
       return {
         collected: 0,
@@ -275,8 +283,17 @@ export class SteamMatchHistoryService {
       };
     }
 
+    const rateLimitedKey = SteamMatchHistoryService.rateLimitedKey(steamId);
+    if (await this.cache.has(rateLimitedKey)) {
+      return {
+        collected: 0,
+        lastShareCode: null,
+        error: "steam web api rate limited",
+      };
+    }
+
     const cooldownKey = SteamMatchHistoryService.cooldownKey(steamId);
-    if (await this.cache.has(cooldownKey)) {
+    if (!options.matchEnd && (await this.cache.has(cooldownKey))) {
       return {
         collected: 0,
         lastShareCode: null,
@@ -311,7 +328,7 @@ export class SteamMatchHistoryService {
 
       if (result.rateLimited) {
         await this.cache.put(
-          cooldownKey,
+          rateLimitedKey,
           true,
           SteamMatchHistoryService.RATE_LIMITED_COOLDOWN_SECONDS,
         );
@@ -365,6 +382,33 @@ export class SteamMatchHistoryService {
       lastShareCode: known,
       error: pollError,
     };
+  }
+
+  // Valve can take a few minutes to publish a finished match's share code, so
+  // a match-end poll that comes back empty gets exactly one more try. A newer
+  // match end replaces the retry still waiting from an earlier one.
+  public async pollAfterMatchEnd(
+    steamId: string,
+    retry: boolean,
+  ): Promise<void> {
+    const retryJobId = `poll-steam-match-history.match-end-retry.${steamId}`;
+    if (!retry) {
+      await this.pollQueue.remove(retryJobId);
+    }
+    const result = await this.pollForUser(steamId, { matchEnd: true });
+    if (retry || result.collected > 0 || result.error) {
+      return;
+    }
+    await this.pollQueue.add(
+      "PollSteamMatchHistoryForUser",
+      { steamId, matchEnd: true, retry: true },
+      {
+        jobId: retryJobId,
+        delay: SteamMatchHistoryService.MATCH_END_RETRY_DELAY_MS,
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    );
   }
 
   public async pollAllActive(): Promise<void> {
@@ -561,6 +605,10 @@ export class SteamMatchHistoryService {
 
   private static cooldownKey(steamId: string): string {
     return `steam-match-history:poll-cooldown:v2:${steamId}`;
+  }
+
+  private static rateLimitedKey(steamId: string): string {
+    return `steam-match-history:rate-limited:${steamId}`;
   }
 
   private static shareCodeImportCooldownKey(steamId: string): string {
