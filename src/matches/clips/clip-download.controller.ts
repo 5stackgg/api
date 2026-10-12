@@ -8,14 +8,25 @@ import {
   Res,
 } from "@nestjs/common";
 import { Request, Response } from "express";
+import { createHash } from "crypto";
 import { S3Service } from "../../s3/s3.service";
 import { HasuraService } from "../../hasura/hasura.service";
+import { ClipsService } from "./clips.service";
+
+// View counting mirrors the clip Worker (5stack-panel
+// cloudflare-workers/backblaze-proxy) rule for rule, viewer key included, so a
+// view counts the same whichever path serves the clip and the two share one
+// per-viewer dedupe.
+const VIEW_FRACTION = 0.5;
+const BOT_UA =
+  /bot|crawl|spider|facebookexternalhit|slack|discord|telegram|whatsapp|preview|unfurl|embed|scrape|metainspector|skype|vkshare|redditbot|pinterest|googlebot|bingbot/i;
 
 @Controller("/clips/:clipId")
 export class ClipDownloadController {
   constructor(
     private readonly s3: S3Service,
     private readonly hasura: HasuraService,
+    private readonly clips: ClipsService,
     private readonly logger: Logger,
   ) {}
 
@@ -40,6 +51,12 @@ export class ClipDownloadController {
       request,
       response,
     );
+    if (
+      this.shouldTrackView(request, clip.file) &&
+      this.spansViewThreshold(response)
+    ) {
+      await this.registerView(request, clip.file);
+    }
   }
 
   @Get("thumbnail")
@@ -61,6 +78,69 @@ export class ClipDownloadController {
       request,
       response,
     );
+  }
+
+  private shouldTrackView(request: Request, key: string): boolean {
+    if (request.method !== "GET" || !/^clips\/.+\.mp4$/.test(key)) {
+      return false;
+    }
+    if (
+      request.query.dl === "1" ||
+      request.query.download === "1" ||
+      request.query.noview === "1"
+    ) {
+      return false;
+    }
+    return !BOT_UA.test(request.headers["user-agent"] ?? "");
+  }
+
+  private spansViewThreshold(response: Response): boolean {
+    if (response.statusCode === 200) {
+      return true;
+    }
+    // stream() sets Content-Range before it fetches the bytes, and a failed
+    // fetch answers 500 with the header still set.
+    if (response.statusCode !== 206) {
+      return false;
+    }
+    const contentRange = response.getHeader("Content-Range");
+    if (typeof contentRange !== "string") {
+      return false;
+    }
+    const match = /^bytes\s+(\d+)-(\d+)\/(\d+)$/.exec(contentRange.trim());
+    if (!match) {
+      return false;
+    }
+    const start = Number(match[1]);
+    const end = Number(match[2]);
+    const total = Number(match[3]);
+    if (!Number.isFinite(total) || total <= 0) {
+      return false;
+    }
+    const threshold = total * VIEW_FRACTION;
+    return start <= threshold && end >= threshold;
+  }
+
+  private async registerView(request: Request, file: string) {
+    try {
+      await this.clips.registerStreamedClipView(file, this.viewerKey(request));
+    } catch (error) {
+      this.logger.warn(
+        `failed to count a view of ${file}: ${(error as Error)?.message}`,
+      );
+    }
+  }
+
+  private viewerKey(request: Request): string {
+    const ip =
+      (request.headers["cf-connecting-ip"] as string | undefined) ??
+      request.ip ??
+      "";
+    const userAgent = request.headers["user-agent"] ?? "";
+    return createHash("sha256")
+      .update(`${ip}\n${userAgent}`)
+      .digest("hex")
+      .slice(0, 32);
   }
 
   private async getClip(clipId: string) {
