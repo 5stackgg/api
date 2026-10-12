@@ -210,7 +210,13 @@ BEGIN
                     -- zero teams and cancel itself. Drafting here first makes
                     -- the count real; the draft is idempotent on is_drafted, so
                     -- the tau_tournaments call that follows is a no-op.
-                    IF NEW.registration_type IN ('free_agents', 'both') THEN
+                    --
+                    -- Only on the way out of registration, the same statuses
+                    -- tau_tournaments seeds from. Out of RegistrationClosed the
+                    -- bracket is already drawn, and a team drafted now has no
+                    -- slot in it.
+                    IF NEW.registration_type IN ('free_agents', 'both')
+                       AND OLD.status IN ('Setup', 'RegistrationOpen', 'CheckInReview') THEN
                         PERFORM draft_tournament_free_agent_teams(NEW.id);
                     END IF;
 
