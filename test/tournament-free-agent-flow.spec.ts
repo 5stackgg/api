@@ -1170,6 +1170,17 @@ describe("free agent flow (SQL-driven)", () => {
       }
     });
 
+    const seedsOf = async (teamIds: Array<string>) => {
+      const rows = await postgres.query<
+        Array<{ id: string; seed: number | null }>
+      >("SELECT id, seed FROM tournament_teams WHERE id = ANY($1::uuid[])", [
+        teamIds,
+      ]);
+      return teamIds.map(
+        (teamId) => rows.find((row) => row.id === teamId)!.seed,
+      );
+    };
+
     // assign_seeds_to_teams keeps a seed it finds and only fills the gaps, and
     // a smaller bracket drops every seed past its size -- with the team on it.
     it("re-seeds the whole field after the pickup teams are undone", async () => {
@@ -1211,11 +1222,14 @@ describe("free agent flow (SQL-driven)", () => {
       }
 
       await setStatus(t.id, t.organizer, "RegistrationOpen");
+      expect(await seedsOf(registered)).toEqual([1, 2, 3, 4]);
+
       await leave(t.id, agents[0]);
       await leave(t.id, agents[1]);
       await setStatus(t.id, t.organizer, "RegistrationClosed");
 
       expect(await pickupTeams(t.id)).toHaveLength(3);
+      expect(await seedsOf(registered)).toEqual([1, 2, 3, 4]);
 
       const teams = await postgres.query<Array<{ id: string; seed: number }>>(
         "SELECT id, seed FROM tournament_teams WHERE tournament_id = $1 ORDER BY seed",
@@ -1236,6 +1250,55 @@ describe("free agent flow (SQL-driven)", () => {
       expect([...bracket.team_ids].sort()).toEqual(
         teams.map((team) => team.id).sort(),
       );
+    });
+
+    it("keeps an organizer's seed order through the undo, and an unseeded team unseeded", async () => {
+      const t = await openTournament({
+        registrationType: "both",
+        maxTeams: 16,
+      });
+      const registered: Array<string> = [];
+      for (let i = 0; i < 4; i++) {
+        const [owner, member] = await fx.players(2);
+        registered.push(await registerTeam(t.id, owner, [owner, member]));
+      }
+      const recruiting = await fx.player();
+      const short = await registerTeam(t.id, recruiting, [recruiting]);
+      await joinAll(t.id, await fx.players(8));
+
+      await setStatus(t.id, t.organizer, "RegistrationClosed");
+      const pickups = (await pickupTeams(t.id)).map((team) => team.id);
+      expect(pickups).toHaveLength(4);
+      expect(await seedsOf([short])).toEqual([null]);
+
+      await postgres.query(
+        "UPDATE tournament_teams SET seed = NULL WHERE tournament_id = $1",
+        [t.id],
+      );
+      const draw: Array<[string, number]> = [
+        [registered[0], 8],
+        [registered[1], 2],
+        [registered[2], 6],
+        [registered[3], 4],
+        [pickups[0], 1],
+        [pickups[1], 3],
+        [pickups[2], 5],
+        [pickups[3], 7],
+      ];
+      for (const [teamId, seed] of draw) {
+        await postgres.query(
+          "UPDATE tournament_teams SET seed = $2 WHERE id = $1",
+          [teamId, seed],
+        );
+      }
+
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+
+      expect(await seedsOf([...registered, short])).toEqual([4, 1, 3, 2, null]);
+
+      await setStatus(t.id, t.organizer, "RegistrationClosed");
+
+      expect(await seedsOf(registered)).toEqual([4, 1, 3, 2]);
     });
 
     // A pickup captain's invite or an organizer's hand placement puts a player
