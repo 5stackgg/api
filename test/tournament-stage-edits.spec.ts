@@ -79,7 +79,6 @@ describe("tournament stage edits after the draw (SQL-driven)", () => {
     }
   };
 
-  // Round 1 of the group is played to one result, then the organizer pauses.
   const pausedWithFinishedMatch = async () => {
     const t = await tfx.launch(GROUP_THEN_FINAL, 4);
     const [first] = (await tfx.getBrackets(t.stageIds[0])).filter(

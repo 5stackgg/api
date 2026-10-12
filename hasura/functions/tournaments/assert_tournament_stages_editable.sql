@@ -10,9 +10,12 @@ AS $$
 DECLARE
     _status text;
 BEGIN
+    -- Held until the edit commits, so a close of registration cannot draw
+    -- round 1 in between and then have this edit's rebuild wipe it.
     SELECT status INTO _status
     FROM public.tournaments
-    WHERE id = _tournament_id;
+    WHERE id = _tournament_id
+    FOR SHARE;
 
     IF NOT FOUND OR _status = 'Setup' THEN
         RETURN;
