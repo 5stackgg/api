@@ -12,7 +12,10 @@ describe("TournamentsController registration and check-in actions", () => {
   const hasura = { query: jest.fn(), mutation: jest.fn() };
   const demoMetadata = { deleteDemosForMatch: jest.fn() };
   const clips = { deleteClipsForMatch: jest.fn() };
-  const tournamentVoice = {};
+  const tournamentVoice = {
+    createTournamentReadyRoom: jest.fn(),
+    removeTournamentVoice: jest.fn(),
+  };
   const notifications = { notifyPlayers: jest.fn() };
   const postgres = { query: jest.fn() };
   const redisExec = jest.fn();
@@ -170,6 +173,66 @@ describe("TournamentsController registration and check-in actions", () => {
       postgres as any,
       redisManager as any,
     );
+  });
+
+  describe("tournament_events", () => {
+    const statusChange = (from: string, to: string) =>
+      controller.tournament_events({
+        op: "UPDATE",
+        old: { id: "tournament-1", status: from },
+        new: { id: "tournament-1", status: to },
+      } as never);
+
+    const deletedMatches = () =>
+      hasura.mutation.mock.calls
+        .map(([mutation]) => mutation.delete_matches_by_pk?.__args.id)
+        .filter(Boolean);
+
+    beforeEach(() => {
+      hasura.query.mockResolvedValue({
+        tournaments_by_pk: {
+          stages: [
+            {
+              brackets: [{ match: { id: "match-1" } }, { match: null }],
+            },
+          ],
+        },
+      });
+      hasura.mutation.mockResolvedValue({});
+    });
+
+    // A round re-seeded while registration was open is drawn and parked on the
+    // start. Cancelled for too few teams at that start, nothing parks it any
+    // more, and CheckForScheduledMatches would open check-in for it.
+    it.each([
+      ["RegistrationOpen", "Cancelled"],
+      ["RegistrationOpen", "CancelledMinTeams"],
+      ["CheckInReview", "CancelledMinTeams"],
+      ["RegistrationClosed", "CancelledMinTeams"],
+    ])(
+      "deletes the matches and their files going from %s to %s",
+      async (from, to) => {
+        await statusChange(from, to);
+
+        expect(clips.deleteClipsForMatch).toHaveBeenCalledWith("match-1");
+        expect(demoMetadata.deleteDemosForMatch).toHaveBeenCalledWith(
+          "match-1",
+        );
+        expect(deletedMatches()).toEqual(["match-1"]);
+      },
+    );
+
+    it.each([
+      ["RegistrationOpen", "RegistrationClosed"],
+      ["RegistrationClosed", "Live"],
+      ["Live", "Finished"],
+    ])("keeps the matches going from %s to %s", async (from, to) => {
+      await statusChange(from, to);
+
+      expect(clips.deleteClipsForMatch).not.toHaveBeenCalled();
+      expect(demoMetadata.deleteDemosForMatch).not.toHaveBeenCalled();
+      expect(deletedMatches()).toEqual([]);
+    });
   });
 
   describe("checkIntoTournament", () => {

@@ -4,14 +4,19 @@
 -- veto and the join/start flow, so a 12:20 tournament whose registration closed
 -- at 12:15 was fully playable at 12:15.
 --
--- Deliberately narrow. Only those two holding statuses, and only while `start`
--- is still ahead:
+-- Deliberately narrow. Those two holding statuses only while `start` is still
+-- ahead:
 --   * Live (or an organizer starting early) makes this false immediately, so
 --     nothing has to be released by hand;
 --   * every later round is materialized once the tournament is already running
 --     and keeps its current immediate behaviour;
 --   * a league fixture plays while its season tournament is Live, so it is
 --     never gated either.
+--
+-- Setup and RegistrationOpen are parked whatever the clock says. A round drawn
+-- there comes from re-seeding mid-registration (a draft, a re-admit, a drafted
+-- player leaving), the close rebuilds the bracket from scratch, and without
+-- check-in registration can stay open past `start`.
 CREATE OR REPLACE FUNCTION public.tournament_match_is_pre_start(_match_id uuid)
 RETURNS boolean
 LANGUAGE sql
@@ -23,7 +28,12 @@ AS $$
         INNER JOIN public.tournament_stages ts ON ts.id = tb.tournament_stage_id
         INNER JOIN public.tournaments t ON t.id = ts.tournament_id
         WHERE tb.match_id = _match_id
-          AND t.status IN ('RegistrationClosed', 'CheckInReview')
-          AND t."start" > now()
+          AND (
+              t.status IN ('Setup', 'RegistrationOpen')
+              OR (
+                  t.status IN ('RegistrationClosed', 'CheckInReview')
+                  AND t."start" > now()
+              )
+          )
     );
 $$;

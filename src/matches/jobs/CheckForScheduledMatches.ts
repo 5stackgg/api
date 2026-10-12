@@ -52,11 +52,36 @@ export class CheckForScheduledMatches extends WorkerHost {
                   tournament_brackets: {
                     stage: {
                       tournament: {
+                        _or: [
+                          {
+                            status: {
+                              _in: ["Setup", "RegistrationOpen"],
+                            },
+                          },
+                          {
+                            status: {
+                              _in: ["RegistrationClosed", "CheckInReview"],
+                            },
+                            start: {
+                              _gt: new Date(Date.now() - 60 * 1000),
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  },
+                },
+              },
+              // Not part of that mirror: a cancelled tournament's matches are
+              // deleted with it, and one that outlives the cleanup must not
+              // open check-in for a tournament that will never be played.
+              {
+                _not: {
+                  tournament_brackets: {
+                    stage: {
+                      tournament: {
                         status: {
-                          _in: ["RegistrationClosed", "CheckInReview"],
-                        },
-                        start: {
-                          _gt: new Date(Date.now() - 60 * 1000),
+                          _in: ["Cancelled", "CancelledMinTeams"],
                         },
                       },
                     },
