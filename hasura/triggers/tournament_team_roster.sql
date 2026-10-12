@@ -48,7 +48,15 @@ BEGIN
         RETURN OLD;
     END IF;
 
-    -- So two removals cannot both count the other's player as still there.
+    -- The team row serializes two removals, so neither counts the other's
+    -- player as still there. The key must stay promote_tournament_free_agent's:
+    -- a removal runs that promotion after this, and the promotion takes its lock
+    -- before the team row, so taking it here first keeps the order the same.
+    PERFORM pg_advisory_xact_lock(
+        hashtext('tournament_free_agent_promotion'),
+        hashtext(_tournament.id::text)
+    );
+
     PERFORM 1
         FROM tournament_teams tt
         WHERE tt.id = OLD.tournament_team_id

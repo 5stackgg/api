@@ -665,6 +665,32 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
     expect(row.party_id).toBeNull();
   });
 
+  it("lets only one of two concurrent removals take a team one above the minimum", async () => {
+    const cup = await drawnCupAt("Scheduled");
+    const [first, second] = (await roster(cup.tt1)).filter(
+      (steamId) => steamId !== cup.team1.owner,
+    );
+
+    let refused: unknown;
+    await whileHolding(
+      [
+        `DELETE FROM tournament_team_roster
+         WHERE tournament_team_id = $1 AND player_steam_id = $2`,
+        [cup.tt1, first],
+      ],
+      () =>
+        removeFromRoster(cup, second).catch((error: unknown) => {
+          refused = error;
+        }),
+    );
+
+    expect(String(refused)).toMatch(rosterLocked);
+    const left = await roster(cup.tt1);
+    expect(left).not.toContain(first);
+    expect(left).toContain(second);
+    expect(left).toHaveLength(5);
+  });
+
   it("locks the team before the match when a roster add refreshes its lineup", async () => {
     const cup = await drawnCupAt("WaitingForCheckIn");
 
