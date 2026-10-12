@@ -32,19 +32,6 @@ BEGIN
         RETURN false;
     END IF;
 
-    -- Registering a team takes a free agent out of the pool
-    -- (tai_tournament_teams_free_agents). They leave it themselves first rather
-    -- than lose their place to a form that never said so.
-    IF EXISTS (
-        SELECT 1
-        FROM tournament_free_agents fa
-        WHERE fa.tournament_id = tournament.id
-          AND fa.player_steam_id = _steam_id
-          AND fa.status IN ('registered', 'waitlisted')
-    ) THEN
-        RETURN false;
-    END IF;
-
     -- Check if the player is already on a roster for this tournament
     SELECT EXISTS (
         SELECT 1

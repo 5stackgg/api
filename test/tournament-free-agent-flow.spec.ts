@@ -321,25 +321,10 @@ describe("free agent flow (SQL-driven)", () => {
       expect(await agentRow(t.id, mate)).toBeUndefined();
     });
 
-    it("takes a free agent out of the pool when they register a team of their own", async () => {
+    it("lets a free agent leave the pool by registering a team of their own", async () => {
       const t = await openTournament({ registrationType: "both" });
       const agent = await fx.player();
       await join(t.id, agent);
-
-      await runAsUser(postgres, agent, "user", (query) =>
-        query(
-          `INSERT INTO tournament_teams (tournament_id, name, owner_steam_id)
-           VALUES ($1, 'Mine', $2)`,
-          [t.id, agent],
-        ),
-      );
-
-      expect(await agentRow(t.id, agent)).toBeUndefined();
-    });
-
-    it("stops offering a team registration to a player in the pool", async () => {
-      const t = await openTournament({ registrationType: "both" });
-      const agent = await fx.player();
 
       const canJoin = async () => {
         const [row] = await postgres.query<Array<{ can_join: boolean }>>(
@@ -353,10 +338,17 @@ describe("free agent flow (SQL-driven)", () => {
       };
 
       expect(await canJoin()).toBe(true);
-      await join(t.id, agent);
+
+      await runAsUser(postgres, agent, "user", (query) =>
+        query(
+          `INSERT INTO tournament_teams (tournament_id, name, owner_steam_id)
+           VALUES ($1, 'Mine', $2)`,
+          [t.id, agent],
+        ),
+      );
+
+      expect(await agentRow(t.id, agent)).toBeUndefined();
       expect(await canJoin()).toBe(false);
-      await leave(t.id, agent);
-      expect(await canJoin()).toBe(true);
     });
 
     it("breaks up the party of a free agent who joins a team", async () => {
