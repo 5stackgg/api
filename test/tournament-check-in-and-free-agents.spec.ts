@@ -1133,12 +1133,11 @@ describe("tournament check-in, registration rules and free agents (SQL-driven)",
       });
       await setStatus(t.id, t.organizer, "RegistrationOpen");
 
-      // Pool first, team second: no trigger can catch that order, so the draft
-      // is what has to skip them. tournament_teams is
-      // UNIQUE (owner_steam_id, tournament_id) and the draft makes its top-rated
-      // pick the generated team's owner, so drafting this player raises inside
-      // tau_tournaments and rolls the whole transition back -- identically on
-      // every retry, with no way out for the organizer.
+      // Pool first, team second: registering the team takes them out of the
+      // pool (tai_tournament_teams_free_agents). Before that, the draft made its
+      // top-rated pick the generated team's owner, so drafting this player
+      // raised inside tau_tournaments and rolled the whole transition back --
+      // identically on every retry, with no way out for the organizer.
       const owner = await fx.player();
       await registerFreeAgent(
         t.id,
@@ -1159,12 +1158,12 @@ describe("tournament check-in, registration rules and free agents (SQL-driven)",
         setStatus(t.id, t.organizer, "RegistrationClosed"),
       ).resolves.not.toThrow();
 
-      const [pooled] = await postgres.query<Array<{ status: string }>>(
+      const pooled = await postgres.query<Array<{ status: string }>>(
         `SELECT status FROM tournament_free_agents
           WHERE tournament_id = $1 AND player_steam_id = $2`,
         [t.id, owner],
       );
-      expect(pooled.status).toBe("registered");
+      expect(pooled).toHaveLength(0);
 
       const rostered = await postgres.query<Array<{ player_steam_id: string }>>(
         `SELECT player_steam_id FROM tournament_team_roster

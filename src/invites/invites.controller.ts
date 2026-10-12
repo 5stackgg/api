@@ -306,24 +306,52 @@ export class InvitesController {
       };
     }
 
-    await this.hasura.mutation({
-      insert_tournament_team_roster_one: {
-        __args: {
-          object: {
-            role: "Member",
-            tournament_id: tournament_team_invites_by_pk.team.tournament_id,
-            tournament_team_id:
-              tournament_team_invites_by_pk.tournament_team_id,
-            player_steam_id: user.steam_id,
+    // The roster key is (player, tournament), so inserting over a seat on
+    // another team only rewrote that seat's role: the player stayed put and a
+    // captain was demoted to Member.
+    const [seat] = await this.postgres.query<
+      Array<{ tournament_team_id: string }>
+    >(
+      `SELECT tournament_team_id::text AS tournament_team_id
+         FROM tournament_team_roster
+        WHERE tournament_id = $1::uuid AND player_steam_id = $2::bigint`,
+      [tournament_team_invites_by_pk.team.tournament_id, user.steam_id],
+    );
+
+    if (
+      seat &&
+      seat.tournament_team_id !==
+        tournament_team_invites_by_pk.tournament_team_id
+    ) {
+      throw Error("You are already on a team in this tournament");
+    }
+
+    if (!seat) {
+      try {
+        await this.hasura.mutation({
+          insert_tournament_team_roster_one: {
+            __args: {
+              object: {
+                role: "Member",
+                tournament_id: tournament_team_invites_by_pk.team.tournament_id,
+                tournament_team_id:
+                  tournament_team_invites_by_pk.tournament_team_id,
+                player_steam_id: user.steam_id,
+              },
+            },
+            __typename: true,
           },
-          on_conflict: {
-            constraint: "tournament_roster_pkey",
-            update_columns: ["role"],
-          },
-        },
-        __typename: true,
-      },
-    });
+        });
+      } catch (error) {
+        // Two accepts racing past the seat check above.
+        const message = error instanceof Error ? error.message : String(error);
+        if (message.includes("tournament_roster_pkey")) {
+          throw Error("You are already on a team in this tournament");
+        }
+
+        throw error;
+      }
+    }
 
     await this.hasura.mutation({
       delete_tournament_team_invites_by_pk: {

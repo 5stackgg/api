@@ -36,7 +36,6 @@ describe("discord routing", () => {
     "TournamentTeamInvite",
     "TeamInvite",
     "DraftInvite",
-    "TournamentPartySignup",
     "TournamentCheckInOpen",
     "TournamentCheckInClosing",
     "TournamentCheckInMissed",

@@ -69,7 +69,6 @@ const DELIVERY_POLICIES: Record<string, e_notification_types_enum[]> = {
     "TournamentCheckInOpen",
     "TournamentCheckInClosing",
     "TournamentCheckInMissed",
-    "TournamentPartySignup",
     "EventReminder",
     "SeasonEnded",
     "FormTeamSuggestion",
