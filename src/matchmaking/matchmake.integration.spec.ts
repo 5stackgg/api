@@ -555,7 +555,9 @@ describe("matchmaking (end to end)", () => {
       );
 
       await service.matchmake(COMPETITIVE, "us-east");
-      expect(await redis.get("matchmaking:lock:us-east")).toBeNull();
+      expect(
+        await redis.get("matchmaking:lock:us-east:Competitive"),
+      ).toBeNull();
 
       const second = Array.from({ length: 10 }, (_, i) =>
         makeLobby(`second-${i}`, [5000]),
@@ -1360,7 +1362,9 @@ describe("matchmaking (end to end)", () => {
       await expect(
         service.matchmake(COMPETITIVE, "us-east"),
       ).resolves.toBeUndefined();
-      expect(await redis.get("matchmaking:lock:us-east")).toBeNull();
+      expect(
+        await redis.get("matchmaking:lock:us-east:Competitive"),
+      ).toBeNull();
       expect(queuedIn("us-east")).toEqual([]);
     });
   });
@@ -1397,7 +1401,9 @@ describe("matchmaking (end to end)", () => {
       expect(delays).toEqual([
         10_000, 20_000, 40_000, 80_000, 160_000, 300_000, 300_000, 300_000,
       ]);
-      expect(await redis.get("matchmaking:lock:us-east")).toBeNull();
+      expect(
+        await redis.get("matchmaking:lock:us-east:Competitive"),
+      ).toBeNull();
     });
 
     it("matches as soon as the lookup is back", async () => {
@@ -1412,6 +1418,198 @@ describe("matchmaking (end to end)", () => {
 
       expect(next).toBeUndefined();
       expect(confirmations).toHaveLength(1);
+    });
+  });
+
+  describe("passes that collide and ready checks that end", () => {
+    const solos = (prefix: string, count: number) =>
+      Array.from({ length: count }, (_, i) =>
+        makeLobby(`${prefix}-${i}`, [5000]),
+      );
+
+    function regionStatsDown() {
+      const answer = hasura.query.getMockImplementation();
+      hasura.query.mockImplementation(async (payload: any) => {
+        if (payload?.server_regions) {
+          throw new Error("hasura unavailable");
+        }
+        return answer(payload);
+      });
+    }
+
+    async function confirm(confirmationId: string, lobbyIds: string[]) {
+      for (const lobbyId of lobbyIds) {
+        for (const player of lobbyStore.get(lobbyId).players) {
+          await service.playerConfirmMatchmaking(
+            confirmationId,
+            player.steam_id,
+          );
+        }
+      }
+    }
+
+    // what matchmaking:leave does
+    async function leave(lobbyId: string) {
+      await service.releaseLobbyLock(lobbyId, 0);
+      await lobbyService.removeLobbyFromQueue(lobbyId);
+      await lobbyService.removeLobbyDetails(lobbyId);
+    }
+
+    const stampOf = (lobbyId: string) =>
+      redis.hget(getMatchmakingLobbyDetailsCacheKey(lobbyId), "confirmationId");
+
+    const ids = (prefix: string, count: number) =>
+      Array.from({ length: count }, (_, i) => `${prefix}-${i}`);
+
+    it("asks for another pass soon when the region is busy", async () => {
+      await enqueue(solos("solo", 10));
+      jest
+        .spyOn(service as any, "aquireMatchmakeRegionLock")
+        .mockResolvedValueOnce(false);
+
+      const next = await service.matchmake(COMPETITIVE, "us-east", 3);
+
+      expect(confirmations).toEqual([]);
+      expect(next.failures).toBe(3);
+      expect(next.delay).toBeGreaterThanOrEqual(1000);
+      expect(next.delay).toBeLessThanOrEqual(5000);
+      expect(queue.add).toHaveBeenCalledWith(
+        "ExpandMatchmaking",
+        { type: COMPETITIVE, region: "us-east", failures: 3 },
+        expect.objectContaining({ delay: next.delay }),
+      );
+    });
+
+    it("runs a pass for one type while another type's pass is stuck in the same region", async () => {
+      await enqueue(solos("solo", 10));
+      await enqueue(
+        Array.from({ length: 4 }, (_, i) =>
+          makeLobby(`wing-${i}`, [5000], { type: "Wingman" }),
+        ),
+      );
+
+      let unstick: () => void;
+      const stuck = new Promise<void>((resolve) => {
+        unstick = resolve;
+      });
+      const answer = hasura.query.getMockImplementation();
+      hasura.query.mockImplementation(async (payload: any) => {
+        if (
+          payload?.players?.__args.where.steam_id._in.some((steamId: string) =>
+            steamId.startsWith("wing-"),
+          )
+        ) {
+          await stuck;
+        }
+        return answer(payload);
+      });
+
+      const wingman = service.matchmake("Wingman", "us-east");
+      await new Promise((resolve) => setImmediate(resolve));
+
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      expect(
+        confirmations.filter(({ type }) => type === COMPETITIVE),
+      ).toHaveLength(1);
+
+      unstick();
+      await wingman;
+    });
+
+    it("leaves a lobby alone once it has moved on to a newer ready check", async () => {
+      await enqueue(solos("first", 10));
+      await service.matchmake(COMPETITIVE, "us-east");
+      const [first] = confirmationIds;
+
+      // first-0 accepts, leaves, queues again and lands in a second ready check
+      await confirm(first, ["first-0"]);
+      await leave("first-0");
+      await enqueue([lobbyStore.get("first-0")]);
+      await enqueue(solos("second", 9));
+      await service.matchmake(COMPETITIVE, "us-east");
+      const second = confirmationIds[1];
+      expect(await stampOf("first-0")).toBe(second);
+
+      await service.cancelMatchMaking(first);
+
+      expect(await stampOf("first-0")).toBe(second);
+      expect(queuedIn("us-east")).not.toContain("first-0");
+      expect(await redis.get("matchmaking:lock:first-0")).not.toBeNull();
+    });
+
+    it("keeps a lobby that declined and queued again before the check ran out", async () => {
+      await enqueue(solos("solo", 10));
+      await service.matchmake(COMPETITIVE, "us-east");
+      const [confirmationId] = confirmationIds;
+
+      await leave("solo-0");
+      await enqueue([lobbyStore.get("solo-0")]);
+
+      await service.cancelMatchMaking(confirmationId);
+
+      expect(queuedIn("us-east")).toEqual(["solo-0"]);
+      expect(await detailsOf("solo-0")).not.toBeNull();
+    });
+
+    it("lets the cancel job finish an abort that failed part way, without the Play count", async () => {
+      await enqueue(solos("solo", 10));
+      await service.matchmake(COMPETITIVE, "us-east");
+      const [confirmationId] = confirmationIds;
+
+      busy.add("solo-3-p0");
+      regionStatsDown();
+      jest
+        .spyOn(lobbyService, "removeLobbyDetails")
+        .mockRejectedValueOnce(new Error("redis blipped"));
+
+      await confirm(confirmationId, ids("solo", 10)).catch(() => undefined);
+      expect(queue.remove).not.toHaveBeenCalledWith(
+        `matchmaking.cancel.${confirmationId}`,
+      );
+
+      // the cancel job, 30s later
+      await service.cancelMatchMaking(confirmationId);
+
+      expect(queuedIn("us-east")).toEqual(ids("solo", 10).sort());
+      expect(
+        await redis.hgetall(getMatchmakingConformationCacheKey(confirmationId)),
+      ).toEqual({});
+      for (const lobbyId of ids("solo", 10)) {
+        expect(await stampOf(lobbyId)).toBeNull();
+      }
+    });
+
+    it("retries the cancel job", async () => {
+      await enqueue(solos("solo", 10));
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      const [, , options] = queue.add.mock.calls.find(
+        ([name]) => name === "CancelMatchMaking",
+      );
+      expect(options.attempts).toBeGreaterThan(1);
+      expect(options.backoff).toEqual(
+        expect.objectContaining({ type: "exponential" }),
+      );
+    });
+
+    it("lets an abandoned ready check expire, but not the match it made", async () => {
+      await enqueue(solos("solo", 10));
+      await service.matchmake(COMPETITIVE, "us-east");
+      const [confirmationId] = confirmationIds;
+      const key = getMatchmakingConformationCacheKey(confirmationId);
+
+      await confirm(confirmationId, ["solo-0"]);
+
+      // long enough for the cancel job and all of its retries
+      expect(await redis.ttl(key)).toBeGreaterThan(5 * 60);
+      expect(await redis.ttl(`${key}:confirmed`)).toBeGreaterThan(5 * 60);
+
+      await confirm(confirmationId, ids("solo", 10).slice(1));
+
+      expect(matchAssistant.createMatchBasedOnType).toHaveBeenCalledTimes(1);
+      expect(await redis.ttl(key)).toBe(-1);
+      expect(await redis.ttl(`${key}:confirmed`)).toBe(-1);
     });
   });
 

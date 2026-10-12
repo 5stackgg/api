@@ -38,6 +38,8 @@ export class FakeRedis {
   // Redis refuses a command against a key of another type, which is what
   // catches a fixture that stores something the real code never would.
   private assertType(key: string, type: "string" | "hash" | "zset") {
+    this.expireIfDue(key);
+
     const actual = this.strings.has(key)
       ? "string"
       : this.hashes.has(key)
@@ -127,6 +129,23 @@ export class FakeRedis {
 
     this.expiries.set(key, this.clock + seconds * 1000);
     return 1;
+  }
+
+  async persist(key: string) {
+    this.expireIfDue(key);
+    return this.expiries.delete(key) ? 1 : 0;
+  }
+
+  /** Seconds left on a key's expiry, as redis TTL reports it. */
+  async ttl(key: string) {
+    this.expireIfDue(key);
+    if (!this.has(key) && !this.sortedSets.has(key)) {
+      return -2;
+    }
+    const deadline = this.expiries.get(key);
+    return deadline === undefined
+      ? -1
+      : Math.ceil((deadline - this.clock) / 1000);
   }
 
   private zadds = 0;
