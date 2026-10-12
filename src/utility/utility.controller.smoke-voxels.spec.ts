@@ -10,7 +10,7 @@ const CAPTURE = {
   tick_rate: 64,
 };
 
-describe("UtilityController ingest", () => {
+describe("UtilityController smoke voxels", () => {
   const context = {
     serverId: "server",
     matchId: "match",
@@ -22,6 +22,7 @@ describe("UtilityController ingest", () => {
       isLibraryEnabled: jest.fn().mockResolvedValue(true),
       serverContext: jest.fn().mockResolvedValue(context),
       ingest: jest.fn().mockResolvedValue({ id: LINEUP }),
+      recordRenderSmokeVoxels: jest.fn().mockResolvedValue({ stored: true }),
     };
     const controller = new UtilityController(
       { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
@@ -62,5 +63,29 @@ describe("UtilityController ingest", () => {
       }),
     ).rejects.toThrow("payload too large");
     expect(lineups.ingest).not.toHaveBeenCalled();
+  });
+
+  it("hands a render take's smoke to the lineup it filmed", async () => {
+    const { controller, lineups } = make();
+
+    await expect(
+      controller.smokeVoxels(request, LINEUP, CAPTURE),
+    ).resolves.toEqual({ stored: true });
+    expect(lineups.recordRenderSmokeVoxels).toHaveBeenCalledWith(
+      context,
+      LINEUP,
+      CAPTURE,
+    );
+  });
+
+  it("answers a smoke it refuses with a 400", async () => {
+    const { controller, lineups } = make();
+    lineups.recordRenderSmokeVoxels.mockRejectedValueOnce(
+      new Error("this server is not filming that lineup"),
+    );
+
+    await expect(
+      controller.smokeVoxels(request, LINEUP, CAPTURE),
+    ).rejects.toMatchObject({ status: 400 });
   });
 });
