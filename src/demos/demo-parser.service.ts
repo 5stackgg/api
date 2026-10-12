@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { S3Service } from "../s3/s3.service";
 import { AppConfig } from "../configs/types/AppConfig";
+import { UtilitySmokeVoxelCapture } from "../utility/types/UtilitySmokeVoxelCapture";
 
 export type ParsedRound = {
   round: number;
@@ -643,6 +644,57 @@ export class DemoParserService {
     } catch (error) {
       this.logger.warn(
         `[smoke-volume] ${mapName} sent a body that is not a volume: ${(error as Error)?.message}`,
+      );
+      return null;
+    }
+  }
+
+  // The smoke the game itself simulated, rebuilt from the voxel log the
+  // practice plugin read off the live projectile, in the row the playback blob
+  // carries. Never a hard failure either: a 422 is a log with nothing in it to
+  // rebuild, and without a row the lineup keeps its estimated bloom.
+  public async smokeVoxels(
+    capture: UtilitySmokeVoxelCapture,
+  ): Promise<ParsedSmokeVoxels | null> {
+    const url = `${this.appConfig.demoParserUrl}/smoke-voxels`;
+
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          log: capture.log,
+          samples: capture.samples,
+          detonation: capture.detonation,
+          tick_rate: capture.tick_rate,
+        }),
+        signal: AbortSignal.timeout(30_000),
+      });
+    } catch (error) {
+      this.logger.warn(
+        `[smoke-voxels] unreachable: ${(error as Error)?.message ?? String(error)}`,
+      );
+      return null;
+    }
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      this.logger.warn(
+        `[smoke-voxels] ${res.status}: ${text.slice(0, 200).trim()}`,
+      );
+      return null;
+    }
+
+    try {
+      const voxels = (await res.json()) as ParsedSmokeVoxels;
+      if (!voxels?.dx || !voxels?.dy || !voxels?.dz || !voxels?.arr) {
+        return null;
+      }
+      return voxels;
+    } catch (error) {
+      this.logger.warn(
+        `[smoke-voxels] sent a body that is not a voxel grid: ${(error as Error)?.message}`,
       );
       return null;
     }

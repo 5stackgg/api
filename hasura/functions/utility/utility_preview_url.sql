@@ -102,3 +102,35 @@ CREATE OR REPLACE FUNCTION public.utility_lineup_preview_stills_url(utility_line
         RETURN urls;
     END;
 $$;
+
+-- The recorded smoke, from the same worker as the clip for the same reason.
+-- smoke_voxels_at busts the browser's copy; the key itself changes with every
+-- recording, which is what gets past the worker's.
+CREATE OR REPLACE FUNCTION public.utility_lineup_smoke_voxels_url(utility_lineups public.utility_lineups)
+    RETURNS text
+    LANGUAGE plpgsql STABLE
+    AS $$
+    DECLARE
+        worker_url text;
+        version text;
+    BEGIN
+        IF utility_lineups.smoke_voxels_file IS NULL THEN
+            RETURN NULL;
+        END IF;
+
+        version := COALESCE(
+            EXTRACT(EPOCH FROM utility_lineups.smoke_voxels_at)::bigint::text,
+            '0'
+        );
+
+        SELECT value INTO worker_url
+        FROM settings
+        WHERE name = 'cloudflare_worker_url';
+
+        IF worker_url IS NULL THEN
+            RETURN NULL;
+        END IF;
+
+        RETURN CONCAT(worker_url, '/', utility_lineups.smoke_voxels_file, '?v=', version);
+    END;
+$$;

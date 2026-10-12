@@ -25,7 +25,8 @@ export const UTILITY_RENDER_IN_FLIGHT = [
 // Bumped together with the director's.
 //   2 -- the thrower's eyes are turned without tipping his body. Every aim
 //        still before it was taken from behind and below the stance.
-export const UTILITY_RENDER_VERSION = 2;
+//   3 -- each render records the smoke's real voxels; older ones re-render.
+export const UTILITY_RENDER_VERSION = 3;
 
 // What is recorded for a render whose pod did not say what filmed it. Not
 // NULL, which is a preview from before any of them did: this one was filmed
@@ -230,7 +231,8 @@ export class UtilityRendersService {
   }
 
   // Every preview a lineup ever had, including one from before clips were
-  // keyed per render (`<lineup>.mp4`).
+  // keyed per render (`<lineup>.mp4`), and its recorded smoke
+  // (`<lineup>.smoke.<n>.json`) -- both beside the folder, hence no slash.
   public static GetLineupPreviewS3Prefix(lineupId: string): string {
     return `clips/utility/${lineupId}`;
   }

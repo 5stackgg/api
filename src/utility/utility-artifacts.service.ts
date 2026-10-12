@@ -7,6 +7,7 @@ import {
   DemoParserService,
   ParsedSmokeVolumeResponse,
 } from "../demos/demo-parser.service";
+import { UtilitySmokeVoxelCapture } from "./types/UtilitySmokeVoxelCapture";
 
 // v2 carries the projectile's physics seed alongside the sampled path, so a
 // simulator can re-emit the throw instead of interpolating it. v3 populates
@@ -65,6 +66,14 @@ export class UtilityArtifactsService {
 
   public static trajectoryKey(lineupId: string, cacheBuster: number): string {
     return `utility/${lineupId}/trajectory.v${UTILITY_TRAJECTORY_VERSION}.${cacheBuster}.json.gz`;
+  }
+
+  // Under clips/ because that is the only prefix the worker serves, and keyed
+  // per write like the preview clip: the worker caches B2 by key whatever the
+  // ?v= says, so a re-recorded smoke written over the same key would keep
+  // serving the old one for 30 days.
+  public static smokeVoxelsKey(lineupId: string, cacheBuster: number): string {
+    return `clips/utility/${lineupId}.smoke.${cacheBuster}.json`;
   }
 
   public static buildTrajectoryBlob(input: UtilityTrajectoryInput) {
@@ -215,6 +224,66 @@ export class UtilityArtifactsService {
     }
   }
 
+  // The smoke the game itself simulated for this lineup, stored as the parser's
+  // row verbatim -- the viewer reads it the way it reads a demo's. False when
+  // there was nothing to store, and never a throw: a lineup without its
+  // recorded smoke still has the estimated one.
+  public async storeSmokeVoxels(
+    lineupId: string,
+    capture: UtilitySmokeVoxelCapture,
+  ): Promise<boolean> {
+    const voxels = await this.demoParser.smokeVoxels(capture);
+
+    if (!voxels) {
+      return false;
+    }
+
+    const key = UtilityArtifactsService.smokeVoxelsKey(lineupId, Date.now());
+    const body = Buffer.from(JSON.stringify(voxels));
+
+    try {
+      await this.s3.put(key, body, "application/json");
+
+      const [previous] = await this.postgres.query<
+        Array<{ smoke_voxels_file: string | null }>
+      >(
+        `UPDATE public.utility_lineups l
+            SET smoke_voxels_file = $2,
+                smoke_voxels_at = now()
+           FROM (SELECT id, smoke_voxels_file
+                   FROM public.utility_lineups
+                  WHERE id = $1::uuid
+                    FOR UPDATE) old
+          WHERE l.id = old.id
+      RETURNING old.smoke_voxels_file`,
+        [lineupId, key],
+      );
+
+      // Deleted while the parser was working: its sweep has already run, so
+      // nothing else would ever remove this.
+      if (!previous) {
+        await this.s3.remove(key);
+        return false;
+      }
+
+      if (previous.smoke_voxels_file && previous.smoke_voxels_file !== key) {
+        await this.s3.remove(previous.smoke_voxels_file);
+      }
+    } catch (error) {
+      this.logger.warn(
+        `[utility-smoke-voxels] failed to store ${lineupId}: ${(error as Error)?.message}`,
+      );
+      return false;
+    }
+
+    this.logger.log(
+      `[utility-smoke-voxels] uploaded ${key} (${body.byteLength} bytes, ` +
+        `${voxels.dx}x${voxels.dy}x${voxels.dz} cells)`,
+    );
+
+    return true;
+  }
+
   // Decompressed, not raw. Every trajectory blob is written gzipped -- the key
   // literally ends .json.gz -- and handing those bytes straight to a caller
   // that expects JSON is a silent failure at the far end rather than an error
@@ -270,8 +339,8 @@ export class UtilityArtifactsService {
   // Deleting the row leaves the blob behind, and a versioned bucket keeps every
   // cache-busted generation of it — sweep the whole prefix, not just the key
   // the row happened to be pointing at.
-  // The rendered clip, its thumbnail and every still: the lineup row is the
-  // only thing that names them, so they go when it does.
+  // The rendered clip, its thumbnail, every still and the recorded smoke: the
+  // lineup row is the only thing that names them, so they go when it does.
   public async removePreview(lineupId: string): Promise<void> {
     const prefix = UtilityRendersService.GetLineupPreviewS3Prefix(lineupId);
     try {
