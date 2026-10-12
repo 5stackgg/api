@@ -2,7 +2,10 @@ import { Injectable, Logger } from "@nestjs/common";
 import { CoreV1Api, AppsV1Api, KubeConfig } from "@kubernetes/client-node";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "src/configs/types/AppConfig";
-import { GameServersConfig } from "src/configs/types/GameServersConfig";
+import {
+  GameServersConfig,
+  PRACTICE_PLUGIN_RUNTIME,
+} from "src/configs/types/GameServersConfig";
 import { EncryptionService } from "src/encryption/encryption.service";
 import { HasuraService } from "src/hasura/hasura.service";
 import { e_server_types_enum } from "../../generated";
@@ -202,16 +205,22 @@ export class DedicatedServersService {
           ? `serverfiles-csgo-${sanitizedGameServerNodeId}`
           : `serverfiles-${sanitizedGameServerNodeId}`;
 
-      const pluginRuntime =
-        await this.pluginRuntimeService.resolvePluginRuntime(
-          server.game_server_node,
-        );
+      const isPractice = server.type === "Practice";
 
-      const pluginImage =
-        await this.pluginRuntimeService.resolveGameServerPluginImage(
-          server.game_server_node,
-          pluginRuntime,
-        );
+      const pluginRuntime = isPractice
+        ? PRACTICE_PLUGIN_RUNTIME
+        : await this.pluginRuntimeService.resolvePluginRuntime(
+            server.game_server_node,
+          );
+
+      const pluginImage = isPractice
+        ? await this.pluginRuntimeService.resolvePracticeServerImage(
+            server.game_server_node,
+          )
+        : await this.pluginRuntimeService.resolveGameServerPluginImage(
+            server.game_server_node,
+            pluginRuntime,
+          );
 
       // Seeded here so out-of-date checks know the framework even before the
       // plugin's first ping; the ping overwrites it with what actually loaded.

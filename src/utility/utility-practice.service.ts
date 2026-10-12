@@ -25,6 +25,7 @@ import {
 } from "./utility-load.service";
 import { UtilityPracticeModeService } from "./utility-practice-mode.service";
 import { NoPracticeServerHere } from "./errors/NoPracticeServerHere";
+import { PRACTICE_PLUGIN_RUNTIME } from "../configs/types/GameServersConfig";
 
 export type UtilityPracticeSession = {
   id: string;
@@ -87,6 +88,8 @@ export class UtilityPracticeService {
     "Starting",
     "Ready",
   ];
+  private static readonly UNSUPPORTED_BUILD_MESSAGE =
+    "practice servers need the SwiftlyS2 plugin, which does not support this CS2 build yet";
   private static readonly START_LOCK_SECONDS = 30;
   private static readonly BOOT_GRACE_MINUTES = 10;
   public static readonly CONNECT_MINUTES = 5;
@@ -187,6 +190,7 @@ export class UtilityPracticeService {
           : await this.resolveRegion(input.region);
 
         if (!server) {
+          await this.assertPracticeBuildSupported(region);
           // Before anything is created, not after: a practice session that takes
           // the last free slot is a scheduled tournament match that cannot boot.
           await this.assertServerHeadroom(region);
@@ -288,6 +292,7 @@ export class UtilityPracticeService {
     // respawns whoever else is standing there.
     const region = await this.resolveRegion(options.region);
 
+    await this.assertPracticeBuildSupported(region);
     // A preview clip is never worth the last free slot -- the same reserve a
     // player's session respects.
     await this.assertServerHeadroom(region);
@@ -356,20 +361,16 @@ export class UtilityPracticeService {
         match_id: string;
         password: string;
         port: number | null;
-        plugin_runtime: string;
         node_id: string | null;
       }>
     >(
       `SELECT m.id::text AS match_id,
               m.password,
               srv.port,
-              srv.game_server_node_id AS node_id,
-              COALESCE(n.pin_plugin_runtime, public.active_plugin_runtime())
-                AS plugin_runtime
+              srv.game_server_node_id AS node_id
          FROM public.utility_practice_sessions s
          INNER JOIN public.matches m ON m.id = s.match_id
          INNER JOIN public.servers srv ON srv.id = m.server_id
-          LEFT JOIN public.game_server_nodes n ON n.id = srv.game_server_node_id
         WHERE s.id = $1::uuid`,
       [sessionId],
     );
@@ -382,7 +383,9 @@ export class UtilityPracticeService {
       addr: `127.0.0.1:${row.port}`,
       password: row.password,
       match_id: row.match_id,
-      plugin_runtime: row.plugin_runtime,
+      // Not the node's runtime: a practice server is booted on SwiftlyS2
+      // whatever matches on that node run.
+      plugin_runtime: PRACTICE_PLUGIN_RUNTIME,
       node_id: row.node_id,
     };
   }
@@ -2463,6 +2466,23 @@ export class UtilityPracticeService {
     );
 
     return row ? { id: row.id, region: row.region } : null;
+  }
+
+  // Practice always runs the SwiftlyS2 plugin, and SwiftlyS2 can trail a CS2
+  // update -- which is when an install moves its matches to
+  // CounterStrikeSharp. Not a wait anyone else's server would end, so it
+  // stays out of the waitlist. A region with no node at all is the headroom
+  // check's answer, not this one.
+  private async assertPracticeBuildSupported(region: string): Promise<void> {
+    if ((await this.matchAssistant.practiceNodeIds(region)).length > 0) {
+      return;
+    }
+
+    if (await this.matchAssistant.hasOnDemandNodes(region)) {
+      throw new NoPracticeServerHere(
+        UtilityPracticeService.UNSUPPORTED_BUILD_MESSAGE,
+      );
+    }
   }
 
   private async assertServerHeadroom(region: string): Promise<void> {

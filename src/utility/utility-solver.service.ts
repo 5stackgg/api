@@ -37,7 +37,6 @@ type SolverServer = {
   status: string;
   map_name: string;
   server_id: string | null;
-  plugin_runtime: string | null;
 };
 
 // Drives the practice plugin's oracle solver over RCON.
@@ -63,8 +62,6 @@ export class UtilitySolverService {
   // "<map>: <status>", which is the one thing every calibration reply prints
   // before its prose.
   private static readonly VERDICT = /(?:^|\s)[A-Za-z0-9_]+:\s*([A-Za-z]+)/;
-
-  private static readonly UNSUPPORTED_RUNTIME = "counterstrikesharp";
 
   // Only a server that has actually booted can throw a grenade. 'Starting' is a
   // session waiting on a pod, which is a different answer from a refusal.
@@ -260,34 +257,13 @@ export class UtilitySolverService {
   private async calibrate(
     server: SolverServer,
   ): Promise<UtilityCalibrationOutput> {
-    // Asked before a single grenade is spent, because the answer is a property
-    // of the runtime rather than of this throw: CounterStrikeSharp has no way to
-    // emit a projectile, so its build of the plugin answers Unsupported.
-    if (
-      (server.plugin_runtime ?? "").toLowerCase() ===
-      UtilitySolverService.UNSUPPORTED_RUNTIME
-    ) {
-      return {
-        status: UtilitySolverStatus.Unsupported,
-        ready: false,
-        detail:
-          "the solver needs a grenade emit API, which CounterStrikeSharp does not expose; run the SwiftlyS2 build of this plugin to use it",
-      };
-    }
-
     const reply = await this.send(server.server_id, "utility_solver_calibrate");
 
     if (reply === null) {
       return {
         status: UtilitySolverStatus.Unreachable,
         ready: false,
-        // "cannot solve" and "could not tell" lead somewhere different, so they
-        // must not read the same. A server that never reported a runtime AND
-        // will not answer rcon is the second one: saying it cannot solve would
-        // send somebody redeploying a plugin that may be perfectly fine.
-        detail: server.plugin_runtime
-          ? "unable to reach the practice server over rcon"
-          : "this server has not reported which plugin runtime it is running and did not answer rcon, so whether it can solve is unknown",
+        detail: "unable to reach the practice server over rcon",
       };
     }
 
@@ -344,8 +320,7 @@ export class UtilitySolverService {
               s.host_steam_id::text AS host_steam_id,
               s.status,
               s.map_name,
-              srv.id::text AS server_id,
-              srv.plugin_runtime
+              srv.id::text AS server_id
          FROM public.utility_practice_sessions s
          LEFT JOIN public.matches m ON m.id = s.match_id
          LEFT JOIN public.servers srv ON srv.id = m.server_id

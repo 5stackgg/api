@@ -742,8 +742,22 @@ describe("DedicatedServersService.setupDedicatedServer", () => {
     workshopAddons: [] as Array<string>,
   };
 
+  let deployed: {
+    image: string;
+    runtimeWrite: unknown;
+    pluginRuntime: Record<string, jest.Mock>;
+  };
+
   const deploy = async (type: string, game = "cs2") => {
     const createNamespacedDeployment = jest.fn().mockResolvedValue({});
+    const mutation = jest.fn().mockResolvedValue({});
+    const pluginRuntime = {
+      resolvePluginRuntime: jest.fn().mockResolvedValue("counterstrikesharp"),
+      resolveGameServerPluginImage: jest.fn().mockResolvedValue("image"),
+      resolvePracticeServerImage: jest
+        .fn()
+        .mockResolvedValue("ghcr.io/5stackgg/game-server-sw:latest"),
+    };
     const gameModes = {
       resolveForServer: jest.fn().mockResolvedValue(pluginsOnly),
       pluginCfgLayers: jest
@@ -778,16 +792,13 @@ describe("DedicatedServersService.setupDedicatedServer", () => {
             server_region: { steam_relay: false },
           },
         }),
-        mutation: jest.fn().mockResolvedValue({}),
+        mutation,
       } as never,
       { decrypt: jest.fn().mockResolvedValue("rcon") } as never,
       null as never,
       { getConnection: () => ({}) } as never,
       null as never,
-      {
-        resolvePluginRuntime: jest.fn().mockResolvedValue("swiftly"),
-        resolveGameServerPluginImage: jest.fn().mockResolvedValue("image"),
-      } as never,
+      pluginRuntime as never,
       gameModes as never,
       { forServer: jest.fn().mockResolvedValue({ maps: [] }) } as never,
       null as never,
@@ -802,9 +813,20 @@ describe("DedicatedServersService.setupDedicatedServer", () => {
 
     expect(await service.setupDedicatedServer("server-1")).toBe(true);
 
-    const env: Array<{ name: string; value: string }> =
+    const [container] =
       createNamespacedDeployment.mock.calls[0][0].body.spec.template.spec
-        .containers[0].env;
+        .containers;
+
+    deployed = {
+      image: container.image,
+      runtimeWrite: mutation.mock.calls.find(
+        ([request]) =>
+          request.update_servers_by_pk?.__args?._set?.plugin_runtime,
+      )?.[0].update_servers_by_pk.__args._set.plugin_runtime,
+      pluginRuntime,
+    };
+
+    const env: Array<{ name: string; value: string }> = container.env;
 
     return env;
   };
@@ -848,5 +870,33 @@ describe("DedicatedServersService.setupDedicatedServer", () => {
     expect(await launchParams("Casual", "csgo")).not.toContain(
       "-disable_workshop_command_filtering",
     );
+  });
+
+  // The CounterStrikeSharp image refuses to boot a practice server.
+  it("boots a Practice server on SwiftlyS2 whatever runtime the node runs", async () => {
+    await deploy("Practice");
+
+    expect(deployed.image).toBe("ghcr.io/5stackgg/game-server-sw:latest");
+    expect(deployed.runtimeWrite).toBe("swiftlys2");
+    expect(
+      deployed.pluginRuntime.resolvePracticeServerImage,
+    ).toHaveBeenCalledWith({ id: "node-1" });
+    expect(deployed.pluginRuntime.resolvePluginRuntime).not.toHaveBeenCalled();
+    expect(
+      deployed.pluginRuntime.resolveGameServerPluginImage,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("keeps every other server on the node's runtime", async () => {
+    await deploy("Ranked");
+
+    expect(deployed.image).toBe("image");
+    expect(deployed.runtimeWrite).toBe("counterstrikesharp");
+    expect(
+      deployed.pluginRuntime.resolveGameServerPluginImage,
+    ).toHaveBeenCalledWith({ id: "node-1" }, "counterstrikesharp");
+    expect(
+      deployed.pluginRuntime.resolvePracticeServerImage,
+    ).not.toHaveBeenCalled();
   });
 });

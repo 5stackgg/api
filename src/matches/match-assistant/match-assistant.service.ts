@@ -233,6 +233,50 @@ export class MatchAssistantService {
     return game_server_nodes.length > 0;
   }
 
+  // The nodes here that could boot a practice server. Practice runs the
+  // SwiftlyS2 plugin whatever runtime matches use, so a node is only one of
+  // them while SwiftlyS2 supports its CS2 build.
+  public async practiceNodeIds(region?: string | null): Promise<Array<string>> {
+    const { game_server_nodes } = await this.hasura.query({
+      game_server_nodes: {
+        __args: {
+          where: {
+            status: {
+              _eq: "Online",
+            },
+            enabled: {
+              _eq: true,
+            },
+            enabled_for_match_making: {
+              _eq: true,
+            },
+            ...(region
+              ? {
+                  region: {
+                    _eq: region,
+                  },
+                }
+              : {}),
+          },
+        },
+        id: true,
+        build_id: true,
+        pin_plugin_version: true,
+        pin_plugin_runtime: true,
+      },
+    });
+
+    const supported = await Promise.all(
+      game_server_nodes.map((node) =>
+        this.pluginRuntimeService.supportsPractice(node),
+      ),
+    );
+
+    return game_server_nodes
+      .filter((_, index) => supported[index])
+      .map((node) => node.id);
+  }
+
   // The same set assignOnDemandServer picks from, counted rather than taken.
   // Anything that wants to know whether there is room to boot another server
   // has to ask with this exact predicate, or it will promise a slot that the
@@ -905,11 +949,10 @@ export class MatchAssistantService {
       throw Error("unable to find match");
     }
 
+    const isPractice = match.source === "practice";
     // A render pod reaches its practice server over loopback, so the server
     // has to boot on a node the pod can be scheduled on.
-    const isRender =
-      match.source === "practice" &&
-      (await this.isRenderPracticeMatch(matchId));
+    const isRender = isPractice && (await this.isRenderPracticeMatch(matchId));
     const renderNodeFilter = isRender
       ? {
           gpu: { _eq: true },
@@ -948,6 +991,17 @@ export class MatchAssistantService {
     if (game_server_nodes.length === 0) {
       this.logger.warn(
         `[${matchId}] no eligible game server node (Online + enabled + matchmaking${isRender ? " + GPU rendering" : ""}${match.region ? ` in ${match.region}` : ""}) — cannot boot an on-demand server`,
+      );
+      return false;
+    }
+
+    const practiceNodeIds = isPractice
+      ? await this.practiceNodeIds(match.region)
+      : null;
+
+    if (practiceNodeIds?.length === 0) {
+      this.logger.warn(
+        `[${matchId}] the SwiftlyS2 plugin does not support the CS2 build on any eligible node${match.region ? ` in ${match.region}` : ""} — cannot boot a practice server`,
       );
       return false;
     }
@@ -1036,6 +1090,15 @@ export class MatchAssistantService {
                           {
                             region: {
                               _eq: match.region,
+                            },
+                          },
+                        ]
+                      : []),
+                    ...(practiceNodeIds
+                      ? [
+                          {
+                            id: {
+                              _in: practiceNodeIds,
                             },
                           },
                         ]
@@ -1155,9 +1218,13 @@ export class MatchAssistantService {
 
           const pluginImage =
             (isRender && this.gameServerConfig.utilityRenderServerImage) ||
-            (await this.pluginRuntimeService.resolveGameServerPluginImage(
-              server.game_server_node,
-            ));
+            (isPractice
+              ? await this.pluginRuntimeService.resolvePracticeServerImage(
+                  server.game_server_node,
+                )
+              : await this.pluginRuntimeService.resolveGameServerPluginImage(
+                  server.game_server_node,
+                ));
 
           const fivestackRanksSettingName = match.is_tournament_match
             ? "fivestack_ranks_tournaments"
@@ -1176,10 +1243,9 @@ export class MatchAssistantService {
 
           const showEloRanks = fivestackRanksSetting?.value === "true";
 
-          const utilityPracticeEnv =
-            match.source === "practice"
-              ? await this.utilityPracticeServerEnv(isRender)
-              : [];
+          const utilityPracticeEnv = isPractice
+            ? await this.utilityPracticeServerEnv(isRender)
+            : [];
           const gameMode = await this.gameModesService.resolveForServer(
             server.id,
             matchId,

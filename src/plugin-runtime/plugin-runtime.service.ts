@@ -7,7 +7,13 @@ import {
   GameServersConfig,
   isPluginRuntime,
   PluginRuntime,
+  PRACTICE_PLUGIN_RUNTIME,
 } from "src/configs/types/GameServersConfig";
+
+type PluginPin = {
+  pin_plugin_version?: string | null;
+  pin_plugin_runtime?: string | null;
+};
 
 // Depends on postgres + config only. Reaching for SystemService here instead would
 // close a module cycle back through GameServerNodeModule.
@@ -42,10 +48,7 @@ export class PluginRuntimeService {
   }
 
   public async resolveGameServerPluginImage(
-    pin?: {
-      pin_plugin_version?: string | null;
-      pin_plugin_runtime?: string | null;
-    },
+    pin?: PluginPin,
     runtime?: PluginRuntime,
   ): Promise<string> {
     const { serverImageOverride, pluginRuntimeImages } =
@@ -64,5 +67,47 @@ export class PluginRuntimeService {
       pluginRuntimeImages[runtime ?? (await this.resolvePluginRuntime(pin))];
 
     return `${repository}:${pinnedVersion ? `v${pinnedVersion}` : "latest"}`;
+  }
+
+  public async resolvePracticeServerImage(pin?: PluginPin): Promise<string> {
+    return await this.resolveGameServerPluginImage(
+      { pin_plugin_version: await this.practicePluginVersion(pin) },
+      PRACTICE_PLUGIN_RUNTIME,
+    );
+  }
+
+  // SwiftlyS2 can trail a CS2 update, which is when an install moves its
+  // matches over to CounterStrikeSharp; practice has nowhere to move. A node
+  // that has not reported a build yet passes, as plugin_supported lets it.
+  public async supportsPractice(
+    node: PluginPin & { build_id?: number | null },
+  ): Promise<boolean> {
+    if (node.build_id == null) {
+      return true;
+    }
+
+    const [row] = await this.postgres.query<Array<{ supported: boolean }>>(
+      `SELECT public.game_version_supports_plugin($1::integer, $2::text, $3::text) AS supported`,
+      [
+        node.build_id,
+        await this.practicePluginVersion(node),
+        PRACTICE_PLUGIN_RUNTIME,
+      ],
+    );
+
+    return row?.supported === true;
+  }
+
+  // The runtimes number their releases separately, so a pin made against
+  // CounterStrikeSharp names an unrelated SwiftlyS2 build; practice takes the
+  // latest SwiftlyS2 one instead.
+  private async practicePluginVersion(pin?: PluginPin): Promise<string | null> {
+    if (!pin?.pin_plugin_version) {
+      return null;
+    }
+
+    return (await this.resolvePluginRuntime(pin)) === PRACTICE_PLUGIN_RUNTIME
+      ? pin.pin_plugin_version
+      : null;
   }
 }
