@@ -148,7 +148,7 @@ export class MatchmakeService {
               await this.matchmakingLobbyService.getLobbyDetails(lobbyId);
 
             if (!details) {
-              await this.sweepOrphanedQueueEntry(lobbyId, type, regionValues);
+              await this.dropStrayQueueEntries(lobbyId, type, regionValues);
               continue;
             }
 
@@ -329,7 +329,14 @@ export class MatchmakeService {
         lobbiesData[i],
       );
 
-      if (!details) {
+      if (
+        !details ||
+        details.type !== type ||
+        !details.regions.includes(region)
+      ) {
+        if (await this.dropStrayQueueEntries(lobbiesData[i], type, [region])) {
+          pass.claimed = true;
+        }
         continue;
       }
 
@@ -409,11 +416,10 @@ export class MatchmakeService {
             avgRank: averageRank(players2),
           };
 
-          await this.createMatchConfirmation(
-            details.regions.includes(region) ? region : details.regions.at(0),
-            details.type,
-            { team1, team2 },
-          );
+          await this.createMatchConfirmation(region, details.type, {
+            team1,
+            team2,
+          });
         } catch (error) {
           this.logger.error(
             `Error creating match confirmation for lobby ${details.lobbyId}:`,
@@ -630,24 +636,39 @@ export class MatchmakeService {
     return `matchmaking:lock:${lobbyId}`;
   }
 
-  // Removing the queue entry unconditionally would drop a lobby that left and
-  // rejoined between the details read and this call, so the details key is
-  // re-checked inside the script: if it is back, the entry is the fresh one.
-  private static readonly SWEEP_ORPHANED_ENTRY_SCRIPT = `
-    if redis.call('EXISTS', KEYS[1]) == 1 then
-      return 0
+  // KEYS: the lobby's details, then a queue and rank key for each region in
+  // ARGV[3..]. An entry is the lobby's only where its details name that type
+  // and region. The details are read inside the script, so an entry that was
+  // stray when the caller looked and has since been queued for real is kept.
+  private static readonly DROP_STRAY_ENTRIES_SCRIPT = `
+    local queuedIn = {}
+    local details = redis.call('HGET', KEYS[1], 'details')
+    if details then
+      local lobby = cjson.decode(details)
+      if lobby.type == ARGV[2] then
+        for _, region in ipairs(lobby.regions) do
+          queuedIn[region] = true
+        end
+      end
     end
-    for i = 2, #KEYS do
-      redis.call('ZREM', KEYS[i], ARGV[1])
+    local dropped = 0
+    for i = 3, #ARGV do
+      if not queuedIn[ARGV[i]] then
+        local queue = 2 * (i - 2)
+        dropped = dropped + redis.call('ZREM', KEYS[queue], ARGV[1])
+        dropped = dropped + redis.call('ZREM', KEYS[queue + 1], ARGV[1])
+      end
     end
-    return 1
+    return dropped
   `;
 
-  // A queue entry can outlive its details: addLobbyToQueue reads the details
-  // and then zadds, so a leave landing in between leaves an entry behind with
-  // nothing to read. Nothing expires the sorted sets, so it would sit in the
-  // queue - and in the queue counts - forever.
-  private async sweepOrphanedQueueEntry(
+  // A queue entry can outlive what it was queued for: addLobbyToQueue reads
+  // the details and then zadds, so a leave, or a leave and a join for another
+  // type, landing in between leaves an entry behind. Nothing expires the
+  // sorted sets, so it would sit in the queue - and in the queue counts -
+  // forever, and a pass would match the lobby for a type or region it is not
+  // queued for.
+  private async dropStrayQueueEntries(
     lobbyId: string,
     type: e_match_types_enum,
     regions: string[],
@@ -659,25 +680,38 @@ export class MatchmakeService {
       keys.push(getMatchmakingRankCacheKey(type, region));
     }
 
-    const swept = await this.redis.eval(
-      MatchmakeService.SWEEP_ORPHANED_ENTRY_SCRIPT,
-      keys.length,
-      ...keys,
-      lobbyId,
+    const dropped = Number(
+      await this.redis.eval(
+        MatchmakeService.DROP_STRAY_ENTRIES_SCRIPT,
+        keys.length,
+        ...keys,
+        lobbyId,
+        type,
+        ...regions,
+      ),
     );
 
-    if (swept === 1) {
+    if (dropped > 0) {
       this.logger.warn(
-        `removed orphaned ${type} queue entry for lobby ${lobbyId}`,
+        `removed stray ${type} queue entry for lobby ${lobbyId}`,
       );
     }
+
+    return dropped > 0;
   }
 
   // A lobby that left after the pass read it is no longer in any of its
   // queues, and must not be claimed into a ready check it would never see.
+  // One that left and queued again is not the lobby the pass matched either,
+  // whatever entry the old one left behind: joinedAt is set by the join, so it
+  // tells the two apart.
   private static readonly CLAIM_LOBBY_SCRIPT = `
+    local details = redis.call('HGET', KEYS[2], 'details')
+    if not details or cjson.decode(details).joinedAt ~= ARGV[3] then
+      return 0
+    end
     local queued = false
-    for i = 2, #KEYS do
+    for i = 3, #KEYS do
       if redis.call('ZSCORE', KEYS[i], ARGV[1]) then
         queued = true
       end
@@ -689,7 +723,7 @@ export class MatchmakeService {
     if not acquired then
       return 0
     end
-    for i = 2, #KEYS do
+    for i = 3, #KEYS do
       redis.call('ZREM', KEYS[i], ARGV[1])
     end
     return 1
@@ -706,7 +740,10 @@ export class MatchmakeService {
       return false;
     }
 
-    const keys: string[] = [this.getLobbyLockKey(lobbyId)];
+    const keys: string[] = [
+      this.getLobbyLockKey(lobbyId),
+      getMatchmakingLobbyDetailsCacheKey(lobbyId),
+    ];
 
     for (const region of lobby.regions) {
       keys.push(getMatchmakingQueueCacheKey(lobby.type, region));
@@ -719,6 +756,7 @@ export class MatchmakeService {
       ...keys,
       lobbyId,
       10, // TTL in seconds
+      new Date(lobby.joinedAt).toISOString(),
     );
 
     return result === 1;

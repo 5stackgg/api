@@ -1452,7 +1452,6 @@ describe("matchmaking (end to end)", () => {
     async function leave(lobbyId: string) {
       await service.releaseLobbyLock(lobbyId, 0);
       await lobbyService.removeLobbyFromQueue(lobbyId);
-      await lobbyService.removeLobbyDetails(lobbyId);
     }
 
     const stampOf = (lobbyId: string) =>

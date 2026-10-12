@@ -44,6 +44,8 @@ describe("stranded matchmaking lobbies", () => {
   let partyOf: Map<string, string>;
   let onBusyCheck: (steamIds: string[]) => Promise<void>;
   let onRegionStats: () => Promise<void>;
+  // the regions the Play count reports on
+  let statsRegions: string[];
 
   beforeAll(async () => {
     container = await new GenericContainer("redis:8.8-alpine")
@@ -69,6 +71,7 @@ describe("stranded matchmaking lobbies", () => {
     partyOf = new Map();
     onBusyCheck = async () => {};
     onRegionStats = async () => {};
+    statsRegions = [REGION];
     createMatch = jest.fn(async () => ({
       id: "match-1",
       lineup_1_id: "lineup-1",
@@ -104,6 +107,9 @@ describe("stranded matchmaking lobbies", () => {
           // the Play count's query; a join asks by status instead
           if (payload.server_regions.__args.where._and) {
             await onRegionStats();
+            return {
+              server_regions: statsRegions.map((value) => ({ value })),
+            };
           }
           return {
             server_regions: [
@@ -227,8 +233,8 @@ describe("stranded matchmaking lobbies", () => {
   const join = (steamId: string, type: e_match_types_enum = "Duel") =>
     gateway.joinQueue({ type, regions: [REGION] }, clientOf(steamId));
 
-  const runPass = () =>
-    MatchmakeService.prototype.matchmake.call(matchmake, "Duel", REGION);
+  const runPass = (type: e_match_types_enum = "Duel", region = REGION) =>
+    MatchmakeService.prototype.matchmake.call(matchmake, type, region);
 
   // The process dies inside the pass: nothing after the claim ever runs.
   function freezePassAtConfirmation() {
@@ -251,15 +257,25 @@ describe("stranded matchmaking lobbies", () => {
   const regionLock = `matchmaking:lock:${REGION}:Duel`;
   const lobbyLock = (lobbyId: string) => `matchmaking:lock:${lobbyId}`;
 
-  const queued = async () =>
+  const queued = async (type: e_match_types_enum = "Duel", region = REGION) =>
     (
-      await redis.zrange(getMatchmakingQueueCacheKey("Duel", REGION), 0, -1)
+      await redis.zrange(getMatchmakingQueueCacheKey(type, region), 0, -1)
     ).sort();
 
-  const ranked = async () =>
+  const ranked = async (type: e_match_types_enum = "Duel", region = REGION) =>
     (
-      await redis.zrange(getMatchmakingRankCacheKey("Duel", REGION), 0, -1)
+      await redis.zrange(getMatchmakingRankCacheKey(type, region), 0, -1)
     ).sort();
+
+  // What a requeue that raced the lobby's leave leaves behind.
+  async function strayEntry(
+    lobbyId: string,
+    type: e_match_types_enum,
+    region = REGION,
+  ) {
+    await redis.zadd(getMatchmakingQueueCacheKey(type, region), 0, lobbyId);
+    await redis.zadd(getMatchmakingRankCacheKey(type, region), 5000, lobbyId);
+  }
 
   const detailsOf = (lobbyId: string) =>
     redis.hget(getMatchmakingLobbyDetailsCacheKey(lobbyId), "details");
@@ -436,9 +452,31 @@ describe("stranded matchmaking lobbies", () => {
     expect(await queued()).toEqual([A]);
   });
 
-  // Every leave takes the lobby out of the queue, sends the Play count, and
-  // only then deletes its details.
-  it("does not put back a lobby that is part way through leaving", async () => {
+  it("never puts back a lobby whose leave is stuck sending the Play count", async () => {
+    await join(A);
+
+    const stuck = new Promise<void>((reached) => {
+      onRegionStats = () => {
+        onRegionStats = async () => {};
+        reached();
+        return new Promise<void>(() => {});
+      };
+    });
+    void gateway.leaveQueue(clientOf(A));
+    await stuck;
+
+    for (let minute = 0; minute < 5; minute++) {
+      await sweep();
+      await aMinuteLater();
+    }
+
+    expect(await detailsOf(A)).toBeNull();
+    expect(await queued()).toEqual([]);
+    expect(await ranked()).toEqual([]);
+    expect(sentTo(A, "matchmaking:details").at(-1).data).toEqual({});
+  });
+
+  it("keeps a lobby that queued again while its leave was still sending the Play count", async () => {
     await join(A);
 
     let finishLeave: () => void;
@@ -454,19 +492,26 @@ describe("stranded matchmaking lobbies", () => {
     const leaving = gateway.leaveQueue(clientOf(A));
     await midLeave;
 
-    await sweep();
+    await join(A);
     finishLeave();
     await leaving;
 
-    expect(await detailsOf(A)).toBeNull();
-    expect(await queued()).toEqual([]);
-    expect(await ranked()).toEqual([]);
+    expect(errorCodes(A)).toEqual([]);
+    expect(await detailsOf(A)).not.toBeNull();
+    expect(await queued()).toEqual([A]);
+    expect(await ranked()).toEqual([A]);
+  });
 
-    await aMinuteLater();
-    await sweep();
+  it("clears the stamp of a lobby with no details when it leaves", async () => {
+    await redis.hset(
+      getMatchmakingLobbyDetailsCacheKey(A),
+      "confirmationId",
+      "some-confirmation",
+    );
 
-    expect(await queued()).toEqual([]);
-    expect(await ranked()).toEqual([]);
+    await gateway.leaveQueue(clientOf(A));
+
+    expect(await redis.exists(getMatchmakingLobbyDetailsCacheKey(A))).toBe(0);
   });
 
   it("drops a ready check's lobbies when its cancel ran after it expired", async () => {
@@ -662,6 +707,140 @@ describe("stranded matchmaking lobbies", () => {
     await sweepTwice();
 
     expect(await redis.exists(getMatchmakingLobbyDetailsCacheKey(A))).toBe(0);
+  });
+
+  describe("queue entries that are not the lobby's", () => {
+    // The Play count only tidies the regions it reports on, which leaves out
+    // LAN regions and regions with no servers.
+    it("drops an entry with no lobby behind it when a pass reaches it", async () => {
+      await strayEntry(A, "Duel", "lan");
+      await redis.hset(
+        getMatchmakingLobbyDetailsCacheKey(A),
+        "confirmationId",
+        "expired-confirmation",
+      );
+
+      await runPass("Duel", "lan");
+
+      expect(await queued("Duel", "lan")).toEqual([]);
+      expect(await ranked("Duel", "lan")).toEqual([]);
+      expect(readyChecks()).toEqual([]);
+    });
+
+    it("keeps an entry whose lobby queued for real after the pass found it stray", async () => {
+      await strayEntry(A, "Duel");
+
+      const read = lobbies.getLobbyDetails.bind(lobbies);
+      let joins = true;
+      jest
+        .spyOn(lobbies, "getLobbyDetails")
+        .mockImplementation(async (lobbyId: string) => {
+          const details = await read(lobbyId);
+          if (lobbyId === A && joins) {
+            joins = false;
+            await join(A);
+          }
+          return details;
+        });
+
+      await runPass();
+
+      expect(await queued()).toEqual([A]);
+      expect(await ranked()).toEqual([A]);
+    });
+
+    it("has the Play count drop the entries a lobby's details do not name", async () => {
+      statsRegions = [REGION, "eu-west"];
+      await strayEntry(A, "Duel", REGION);
+      await strayEntry(A, "Duel", "eu-west");
+
+      // A queues for one of the two regions as the Play count reads it
+      const read = lobbies.getLobbyDetails.bind(lobbies);
+      let joins = true;
+      jest
+        .spyOn(lobbies, "getLobbyDetails")
+        .mockImplementation(async (lobbyId: string) => {
+          const details = await read(lobbyId);
+          if (lobbyId === A && joins) {
+            joins = false;
+            await join(A);
+          }
+          return details;
+        });
+
+      await matchmake.sendRegionStats();
+
+      expect(await queued("Duel", REGION)).toEqual([A]);
+      expect(await ranked("Duel", REGION)).toEqual([A]);
+      expect(await queued("Duel", "eu-west")).toEqual([]);
+      expect(await ranked("Duel", "eu-west")).toEqual([]);
+    });
+
+    it("matches a lobby only for the type it is queued for now", async () => {
+      const others = Array.from(
+        { length: 12 },
+        (_, index) => `765611980000001${10 + index}`,
+      );
+
+      await join(A, "Wingman");
+      await strayEntry(A, "Competitive");
+      for (const steamId of others.slice(0, 9)) {
+        await join(steamId, "Competitive");
+      }
+
+      await runPass("Competitive");
+
+      expect(readyChecks()).toEqual([]);
+      expect(await stampOf(A)).toBeNull();
+      expect(await queued("Competitive")).not.toContain(A);
+      expect(await ranked("Competitive")).not.toContain(A);
+      expect(await queued("Wingman")).toEqual([A]);
+
+      for (const steamId of others.slice(9)) {
+        await join(steamId, "Wingman");
+      }
+      await runPass("Wingman");
+
+      expect(readyChecks()).toHaveLength(1);
+      const { type, team1, team2 } =
+        await matchmake.getMatchConfirmationDetails(readyChecks()[0]);
+      expect(type).toBe("Wingman");
+      expect([...team1, ...team2].map((player) => player.steam_id)).toContain(
+        A,
+      );
+    });
+
+    it("does not claim a lobby that queued for another type after the pass read it", async () => {
+      await join(A);
+      await join(B);
+
+      const read = lobbies.getLobbyDetails.bind(lobbies);
+      let movesOn = true;
+      jest
+        .spyOn(lobbies, "getLobbyDetails")
+        .mockImplementation(async (lobbyId: string) => {
+          const details = await read(lobbyId);
+          if (lobbyId === A && movesOn) {
+            movesOn = false;
+            await gateway.leaveQueue(clientOf(A));
+            await join(A, "Wingman");
+            await strayEntry(A, "Duel");
+          }
+          return details;
+        });
+
+      await runPass();
+
+      expect(readyChecks()).toEqual([]);
+      expect(await stampOf(A)).toBeNull();
+      expect(await queued("Wingman")).toEqual([A]);
+
+      await runPass();
+
+      expect(await queued()).toEqual([B]);
+      expect(await ranked()).toEqual([B]);
+      expect(await queued("Wingman")).toEqual([A]);
+    });
   });
 
   it("ignores a lobby that is gone by the time it is read", async () => {

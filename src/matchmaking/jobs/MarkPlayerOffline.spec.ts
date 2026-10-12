@@ -13,7 +13,6 @@ function build(clientKeys: string[], livePods: string[]) {
   const lobbies = {
     getPlayerLobby: jest.fn().mockResolvedValue({ id: "lobby-1" }),
     removeLobbyFromQueue: jest.fn().mockResolvedValue(true),
-    removeLobbyDetails: jest.fn().mockResolvedValue(undefined),
   };
 
   const job = new MarkPlayerOffline(
@@ -52,6 +51,5 @@ describe("MarkPlayerOffline", () => {
 
     expect(hasura.mutation).toHaveBeenCalledTimes(1);
     expect(lobbies.removeLobbyFromQueue).toHaveBeenCalledWith("lobby-1");
-    expect(lobbies.removeLobbyDetails).toHaveBeenCalledWith("lobby-1");
   });
 });

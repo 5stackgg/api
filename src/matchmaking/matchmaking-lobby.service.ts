@@ -275,38 +275,89 @@ export class MatchmakingLobbyService {
     return details;
   }
 
+  // Out of its queues and gone in one step. A lobby that is out of its queues
+  // with its details still there is what the stranded-lobby sweep looks for,
+  // and the sweep would put it back behind a leave that had not finished.
+  private static readonly REMOVE_LOBBY_SCRIPT = `
+    if (redis.call('HGET', KEYS[1], 'details') or '') ~= ARGV[2] then
+      return 0
+    end
+    for i = 2, #KEYS do
+      redis.call('ZREM', KEYS[i], ARGV[1])
+    end
+    redis.call('HDEL', KEYS[1], 'details', 'confirmationId')
+    return 1
+  `;
+
+  // The whole of a lobby leaving matchmaking. A caller must not delete the
+  // details again afterwards: once they are gone the lobby can queue again,
+  // and the Play count is slow enough for it to have.
   public async removeLobbyFromQueue(lobbyId: string) {
-    if (!(await this.dequeueLobby(lobbyId))) {
-      return false;
+    const detailsKey = getMatchmakingLobbyDetailsCacheKey(lobbyId);
+
+    // The queue keys come from the details, so the script only acts on the
+    // details that were read. A lobby that left and queued again in between is
+    // read again.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const details = (await this.redis.hget(detailsKey, "details")) ?? "";
+      const lobby: MatchmakingLobby | undefined = details
+        ? JSON.parse(details)
+        : undefined;
+      const keys = [detailsKey, ...this.getQueueKeys(lobby?.regions ?? [])];
+
+      const removed = await this.redis.eval(
+        MatchmakingLobbyService.REMOVE_LOBBY_SCRIPT,
+        keys.length,
+        ...keys,
+        lobbyId,
+        details,
+      );
+
+      if (removed !== 1) {
+        continue;
+      }
+
+      // with no details there was at most a stamp, from a pass that claimed
+      // the lobby just before it left
+      if (!lobby) {
+        return false;
+      }
+
+      await this.sendRemovedFromQueue(lobby.players);
+      await this.matchmaking.sendRegionStats();
+
+      return true;
     }
 
-    await this.matchmaking.sendRegionStats();
-
-    return true;
+    return false;
   }
 
-  // Every queue type, not only the one in the details: an entry left under
-  // another type would otherwise outlive the details that describe it.
   public async dequeueLobby(lobbyId: string) {
     const queueDetails = await this.getLobbyDetails(lobbyId);
     if (!queueDetails) {
       return false;
     }
 
-    for (const type of MatchmakingLobbyService.QUEUE_TYPES) {
-      for (const region of queueDetails.regions) {
-        await this.redis.zrem(
-          getMatchmakingQueueCacheKey(type, region),
-          lobbyId,
-        );
-        await this.redis.zrem(
-          getMatchmakingRankCacheKey(type, region),
-          lobbyId,
-        );
-      }
+    for (const key of this.getQueueKeys(queueDetails.regions)) {
+      await this.redis.zrem(key, lobbyId);
     }
 
     return true;
+  }
+
+  // Every queue type, not only the one in the details: an entry left under
+  // another type would otherwise outlive the details that describe it.
+  private getQueueKeys(regions: string[]) {
+    const keys: string[] = [];
+
+    for (const type of MatchmakingLobbyService.QUEUE_TYPES) {
+      for (const region of regions) {
+        keys.push(getMatchmakingQueueCacheKey(type, region));
+        keys.push(getMatchmakingRankCacheKey(type, region));
+      }
+    }
+
+    return keys;
   }
 
   // Details stay set from the join until the lobby leaves or its match ends,

@@ -168,13 +168,17 @@ export class FakeRedis {
     return this.sortedSets.get(key) ?? new Map<string, number>();
   }
 
-  async zrem(key: string, member: string) {
+  private removeMember(key: string, member: string) {
     const set = this.readZset(key);
     const removed = set.delete(member);
     if (set.size === 0) {
       this.sortedSets.delete(key);
     }
     return removed ? 1 : 0;
+  }
+
+  async zrem(key: string, member: string) {
+    return this.removeMember(key, member);
   }
 
   async zscore(key: string, member: string) {
@@ -252,47 +256,108 @@ export class FakeRedis {
 
   /**
    * The redis EVAL command, not javascript eval. The lua source is not
-   * interpreted - this hardcodes the two scripts matchmaking runs, recognised
-   * by their first command, and both are atomic here by virtue of being
-   * synchronous, which is the property the real scripts buy with lua.
+   * interpreted - this hardcodes the scripts matchmaking runs, recognised by a
+   * command only they use. None of them awaits anything, so each runs in one
+   * go, which is the property the real scripts buy with lua.
    *
-   * CLAIM_LOBBY_SCRIPT: while the lobby is still in one of the queue keys
-   * passed in, SET NX the lock, and on success ZREM it from all of them.
+   * CLAIM_LOBBY_SCRIPT: while the lobby's details are the ones the pass read
+   * and it is still in one of the queue keys passed in, SET NX the lock, and
+   * on success ZREM it from all of them.
    *
-   * SWEEP_ORPHANED_ENTRY_SCRIPT: ZREM the lobby from every queue key passed in,
-   * but only while its details key is still missing.
+   * REMOVE_LOBBY_SCRIPT: while the details are the ones the caller read, or
+   * are still missing, ZREM the lobby from every queue key passed in and
+   * delete its details and stamp.
+   *
+   * DROP_STRAY_ENTRIES_SCRIPT: ZREM the lobby from the queue and rank key of
+   * every region passed in that its details do not name for that type.
    */
   async eval(script: string, numKeys: number, ...args: unknown[]) {
     const keys = args.slice(0, numKeys) as string[];
-    const [member, ttl] = args.slice(numKeys) as [string, number];
+    const argv = args.slice(numKeys).map(String);
 
-    if (script.includes("EXISTS")) {
-      if (this.has(keys[0])) {
-        return 0;
-      }
-
-      for (const key of keys.slice(1)) {
-        await this.zrem(key, member);
-      }
-
-      return 1;
+    if (script.includes("'NX'")) {
+      return this.claimLobby(keys, argv);
     }
 
-    const queued = keys.slice(1).some((key) => this.readZset(key).has(member));
-    if (!queued) {
+    if (script.includes("HDEL")) {
+      return this.removeLobby(keys, argv);
+    }
+
+    return this.dropStrayEntries(keys, argv);
+  }
+
+  private detailsIn(key: string) {
+    this.assertType(key, "hash");
+    return this.hashes.get(key)?.get("details");
+  }
+
+  private claimLobby(
+    [lock, details, ...queues]: string[],
+    [member, ttl, joinedAt]: string[],
+  ) {
+    const raw = this.detailsIn(details);
+    if (!raw || JSON.parse(raw).joinedAt !== joinedAt) {
       return 0;
     }
 
-    const acquired = await this.set(keys[0], 1, "EX", ttl, "NX");
-    if (!acquired) {
+    if (!queues.some((key) => this.readZset(key).has(member))) {
       return 0;
     }
 
-    for (const key of keys.slice(1)) {
-      await this.zrem(key, member);
+    this.assertType(lock, "string");
+    if (this.strings.has(lock)) {
+      return 0;
+    }
+    this.strings.set(lock, "1");
+    this.expiries.set(lock, this.clock + Number(ttl) * 1000);
+
+    for (const key of queues) {
+      this.removeMember(key, member);
     }
 
     return 1;
+  }
+
+  private removeLobby(
+    [details, ...queues]: string[],
+    [member, expected]: string[],
+  ) {
+    if ((this.detailsIn(details) ?? "") !== expected) {
+      return 0;
+    }
+
+    for (const key of queues) {
+      this.removeMember(key, member);
+    }
+
+    const hash = this.hashes.get(details);
+    hash?.delete("details");
+    hash?.delete("confirmationId");
+    if (hash?.size === 0) {
+      this.hashes.delete(details);
+    }
+
+    return 1;
+  }
+
+  private dropStrayEntries(
+    [details, ...queues]: string[],
+    [member, type, ...regions]: string[],
+  ) {
+    const raw = this.detailsIn(details);
+    const lobby = raw ? JSON.parse(raw) : undefined;
+
+    let dropped = 0;
+    regions.forEach((region, index) => {
+      if (lobby?.type === type && lobby.regions.includes(region)) {
+        return;
+      }
+
+      dropped += this.removeMember(queues[2 * index], member);
+      dropped += this.removeMember(queues[2 * index + 1], member);
+    });
+
+    return dropped;
   }
 
   // --- test helpers

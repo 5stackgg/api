@@ -295,7 +295,6 @@ export class MatchmakingGateway {
 
         this.logger.error(`unable to add lobby to queue`, error);
         await this.matchmakingLobbyService.removeLobbyFromQueue(lobby.id);
-        await this.matchmakingLobbyService.removeLobbyDetails(lobby.id);
         throw new JoinQueueError("Unknown Error");
       }
 
@@ -352,7 +351,6 @@ export class MatchmakingGateway {
 
     await this.matchmakeService.releaseLobbyLock(lobby.id, 0);
     await this.matchmakingLobbyService.removeLobbyFromQueue(lobby.id);
-    await this.matchmakingLobbyService.removeLobbyDetails(lobby.id);
   }
 
   @SubscribeMessage("matchmaking:confirm")
