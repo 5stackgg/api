@@ -259,8 +259,10 @@ BEGIN
             MESSAGE = 'This tournament belongs to a league; cancel or delete the league season instead';
     END IF;
 
+    PERFORM set_config('fivestack.deleting_tournament', OLD.id::text, true);
     DELETE FROM tournament_stages
         WHERE tournament_id = OLD.id;
+    PERFORM set_config('fivestack.deleting_tournament', '', true);
 
     -- BEFORE DELETE because the invite rows are still here to say which
     -- notifications were theirs; the FK cascade has removed them by AFTER.
