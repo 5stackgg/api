@@ -121,7 +121,14 @@ export class TournamentsController {
     // Cancelling resets the bracket: drop the matches (and their demos) so
     // they can be regenerated. tournament_brackets.match_id is ON DELETE
     // SET NULL, so the brackets themselves stay in place.
-    if (status === "Cancelled" && data.old.status !== "Cancelled") {
+    //
+    // CancelledMinTeams too: it is reached at the start, and a round re-seeded
+    // while registration was open is already drawn and parked on that start.
+    // Nothing parks it once the tournament is cancelled.
+    if (
+      ["Cancelled", "CancelledMinTeams"].includes(status) &&
+      data.old.status !== status
+    ) {
       const { matchCount } = await this.deleteTournamentMatches(tournamentId);
       this.logger.log(
         `[${tournamentId}] tournament cancelled, cleaned up assets across ${matchCount} matches`,

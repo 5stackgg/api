@@ -48,4 +48,30 @@ describe("CheckForScheduledMatches", () => {
     });
     expect(holding.start._gt).toBeInstanceOf(Date);
   });
+
+  // CancelledMinTeams is reached from RegistrationOpen at the start, where a
+  // round re-seeded mid-registration is already drawn; once the tournament is
+  // cancelled nothing parks it any more.
+  it("never releases a match whose tournament was cancelled", async () => {
+    await job.process();
+
+    const cancelled = whereClauses().filter(
+      (clause: Record<string, any>) =>
+        clause._not?.tournament_brackets?.stage?.tournament?.status,
+    );
+
+    expect(cancelled).toEqual([
+      {
+        _not: {
+          tournament_brackets: {
+            stage: {
+              tournament: {
+                status: { _in: ["Cancelled", "CancelledMinTeams"] },
+              },
+            },
+          },
+        },
+      },
+    ]);
+  });
 });
