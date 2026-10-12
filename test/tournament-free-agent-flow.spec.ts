@@ -750,7 +750,6 @@ describe("free agent flow (SQL-driven)", () => {
       await setStatus(t.id, t.organizer, "RegistrationClosed");
       expect(await pickupTeams(t.id)).toEqual([]);
 
-      // A withdrawal after the draw frees a slot the pool could fill.
       await postgres.query("DELETE FROM tournament_teams WHERE id = $1", [
         registered[0],
       ]);
