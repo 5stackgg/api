@@ -13,6 +13,7 @@ import {
 } from "./utility-artifacts.service";
 import { UtilityCalloutsService } from "./utility-callouts.service";
 import { UtilityApproachPoint } from "./types/UtilityApproachPoint";
+import { UtilitySmokeVoxelCapture } from "./types/UtilitySmokeVoxelCapture";
 
 export type UtilityIngestPayload = {
   match_id?: string;
@@ -46,6 +47,15 @@ export type UtilityIngestPayload = {
   tick_rate?: number;
   path?: Array<{ tick?: number; x?: number; y?: number; z?: number }>;
   approach?: Array<Partial<UtilityApproachPoint>> | null;
+  // The smoke as the plugin watched it bloom. Measured apart from
+  // MAX_PAYLOAD_BYTES, which a voxel log alone can outweigh.
+  smoke_voxels?: UtilitySmokeVoxelCapture | null;
+};
+
+// A throw the plugin re-made from a stored lineup -- a render or a replay --
+// reporting the smoke it bloomed into.
+export type UtilitySmokeVoxelsPayload = Partial<UtilitySmokeVoxelCapture> & {
+  render?: boolean;
 };
 
 // What the plugin reports after a throw made with a lineup loaded. `success`
@@ -170,6 +180,10 @@ export class UtilityLineupsService {
   public static readonly MAX_PATH_POINTS = 256;
   public static readonly MAX_APPROACH_POINTS = 128;
   public static readonly MAX_APPROACH_MS = 5000;
+  // Ceilings on what a server can make the parser decode, well past any real
+  // smoke: a megabyte of log, and a sample per tick for a minute at 64 tick.
+  public static readonly MAX_SMOKE_VOXEL_LOG_BYTES = 1024 * 1024;
+  public static readonly MAX_SMOKE_VOXEL_SAMPLES = 64 * 60;
   // sv_maxvelocity is 3500 and a grenade leaves the hand at a few hundred
   // units/sec, so twice the engine's own ceiling is generous and still rejects
   // a seed that is not a velocity at all.
@@ -463,7 +477,84 @@ export class UtilityLineupsService {
       });
     }
 
+    if (payload.smoke_voxels && payload.utility_type === "Smoke") {
+      await this.ingestSmokeVoxels(inserted.id, payload.smoke_voxels, author);
+    }
+
     return { id: inserted.id, trajectory_file: trajectoryFile };
+  }
+
+  // Dropped rather than refused, like the run-up: the lineup is saved already,
+  // and without its recorded smoke it still has the estimated one.
+  private async ingestSmokeVoxels(
+    lineupId: string,
+    value: unknown,
+    author: string,
+  ): Promise<void> {
+    try {
+      const capture = UtilityLineupsService.parseSmokeVoxels(value);
+
+      if (capture) {
+        await this.artifacts.storeSmokeVoxels(lineupId, capture);
+      }
+    } catch (error) {
+      this.logger.warn(
+        `[utility-smoke-voxels] dropped the recorded smoke of ${lineupId} by ${author}: ${(error as Error)?.message}`,
+      );
+    }
+  }
+
+  /**
+   * The smoke a stored lineup bloomed into when a server threw it again.
+   *
+   * The first one a lineup gets is kept from any throw. After that only a
+   * render may replace it: a render re-records on purpose, a replay is a
+   * player practising. A render is believed only from the server filming that
+   * lineup in its batch, and a lineup only from the map the server is on --
+   * the smoke it watched could not have bloomed anywhere else.
+   */
+  public async recordSmokeVoxels(
+    context: UtilityServerContext,
+    lineupId: string,
+    payload: UtilitySmokeVoxelsPayload,
+  ): Promise<{ stored: boolean }> {
+    if (!UtilityLineupsService.UUID.test(lineupId)) {
+      throw Error("not a lineup id");
+    }
+
+    const capture = UtilityLineupsService.parseSmokeVoxels(payload);
+
+    if (!capture) {
+      throw Error("no smoke voxels");
+    }
+
+    const [lineup] = await this.postgres.query<
+      Array<{ utility_type: string; smoke_voxels_file: string | null }>
+    >(
+      `SELECT utility_type, smoke_voxels_file
+         FROM public.utility_lineups
+        WHERE id = $1::uuid
+          AND map_name = $2`,
+      [lineupId, context.mapName],
+    );
+
+    if (lineup?.utility_type !== "Smoke") {
+      return { stored: false };
+    }
+
+    if (
+      lineup.smoke_voxels_file &&
+      !(
+        payload.render === true &&
+        (await this.renderBatchLineupIds(context.matchId))?.includes(lineupId)
+      )
+    ) {
+      return { stored: false };
+    }
+
+    return {
+      stored: await this.artifacts.storeSmokeVoxels(lineupId, capture),
+    };
   }
 
   // The columns the practice plugin's LineupRecord is deserialized from. Shared
@@ -994,7 +1085,11 @@ export class UtilityLineupsService {
       // measurement of this lineup. Cleared rather than left to be served
       // against coordinates it never belonged to, and the confidence drops to
       // match: a hand-moved point is not something a server watched happen.
+      // The recorded smoke bloomed where the old throw landed, so it goes too;
+      // the next throw of the moved lineup records its own.
       push("trajectory_file", null);
+      push("smoke_voxels_file", null);
+      push("smoke_voxels_at", null);
       push("confidence", "low");
 
       progressReset = await this.resetProgressIfMoved(row, geometry);
@@ -1588,6 +1683,77 @@ export class UtilityLineupsService {
         ducked: sample.ducked,
       };
     });
+  }
+
+  // Shape and size only; whether the log means anything is the parser's call.
+  // Null is no capture at all.
+  public static parseSmokeVoxels(
+    value: unknown,
+  ): UtilitySmokeVoxelCapture | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    const capture = value as Partial<UtilitySmokeVoxelCapture>;
+
+    if (typeof capture.log !== "string") {
+      throw Error("smoke_voxels.log is not base64");
+    }
+
+    // Sized from the length alone, before anything walks the string.
+    if (
+      Buffer.byteLength(capture.log, "base64") >
+      UtilityLineupsService.MAX_SMOKE_VOXEL_LOG_BYTES
+    ) {
+      throw Error("smoke_voxels.log is too large");
+    }
+
+    if (!/^[A-Za-z0-9+/]+={0,2}$/.test(capture.log)) {
+      throw Error("smoke_voxels.log is not base64");
+    }
+
+    if (!Array.isArray(capture.samples) || capture.samples.length === 0) {
+      throw Error("smoke_voxels.samples is empty");
+    }
+
+    if (
+      capture.samples.length > UtilityLineupsService.MAX_SMOKE_VOXEL_SAMPLES
+    ) {
+      throw Error("smoke_voxels has too many samples");
+    }
+
+    const samples = capture.samples.map((sample, index): [number, number] => {
+      if (
+        !Array.isArray(sample) ||
+        sample.length !== 2 ||
+        !sample.every((part) => Number.isInteger(part) && part >= 0)
+      ) {
+        throw Error(`smoke_voxels.samples[${index}] is not [byteLength, tick]`);
+      }
+
+      return [sample[0], sample[1]];
+    });
+
+    const tickRate = UtilityLineupsService.finite(
+      capture.tick_rate,
+      "smoke_voxels.tick_rate",
+    );
+
+    if (tickRate <= 0 || tickRate > 1024) {
+      throw Error("smoke_voxels.tick_rate is out of range");
+    }
+
+    return {
+      log: capture.log,
+      samples,
+      detonation: UtilityLineupsService.point(
+        capture.detonation?.x,
+        capture.detonation?.y,
+        capture.detonation?.z,
+        "smoke_voxels.detonation",
+      ),
+      tick_rate: tickRate,
+    };
   }
 
   // All six or none. A partial seed cannot be re-emitted, and completing it

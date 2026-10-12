@@ -299,7 +299,9 @@ export class UtilityImportService {
       `SELECT id::text AS id
          FROM public.utility_lineups
         WHERE origin_source = $1
-          AND (trajectory_file IS NOT NULL OR preview_file IS NOT NULL)`,
+          AND (trajectory_file IS NOT NULL
+               OR preview_file IS NOT NULL
+               OR smoke_voxels_file IS NOT NULL)`,
       [source],
     );
 

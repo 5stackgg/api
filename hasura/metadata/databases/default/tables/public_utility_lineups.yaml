@@ -105,6 +105,11 @@ computed_fields:
       function:
         name: utility_lineup_preview_stills_url
         schema: public
+  - name: smoke_voxels_url
+    definition:
+      function:
+        name: utility_lineup_smoke_voxels_url
+        schema: public
 insert_permissions:
   - role: user
     permission:
@@ -258,6 +263,8 @@ select_permissions:
         - preview_stills
         - preview_rendered_at
         - preview_version
+        - smoke_voxels_file
+        - smoke_voxels_at
       computed_fields:
         - can_view
         - can_edit
@@ -267,6 +274,7 @@ select_permissions:
         - preview_url
         - preview_thumbnail_url
         - preview_stills_url
+        - smoke_voxels_url
       filter:
         _and:
           - visibility:
@@ -342,6 +350,8 @@ select_permissions:
         - preview_stills
         - preview_rendered_at
         - preview_version
+        - smoke_voxels_file
+        - smoke_voxels_at
       computed_fields:
         - can_view
         - can_edit
@@ -351,6 +361,7 @@ select_permissions:
         - preview_url
         - preview_thumbnail_url
         - preview_stills_url
+        - smoke_voxels_url
       filter:
         can_view:
           _eq: true
@@ -423,6 +434,8 @@ select_permissions:
         - preview_stills
         - preview_rendered_at
         - preview_version
+        - smoke_voxels_file
+        - smoke_voxels_at
       computed_fields:
         - can_view
         - can_edit
@@ -432,6 +445,7 @@ select_permissions:
         - preview_url
         - preview_thumbnail_url
         - preview_stills_url
+        - smoke_voxels_url
       filter: {}
       allow_aggregations: true
     comment: ''
