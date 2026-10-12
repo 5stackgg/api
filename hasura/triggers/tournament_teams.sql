@@ -273,7 +273,10 @@ CREATE OR REPLACE FUNCTION public.tau_tournament_team_captain() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    PERFORM refresh_unstarted_tournament_team_lineups(NEW.id);
+    -- Only a captain change made directly (depth 1) moves a lineup captain who
+    -- is still seated. The hand-over in taid_tournament_team_roster_lineups
+    -- runs from a trigger, and a hand-picked lineup captain outlasts it.
+    PERFORM refresh_unstarted_tournament_team_lineups(NEW.id, pg_trigger_depth() = 1);
 
     RETURN NULL;
 END;

@@ -1,37 +1,42 @@
--- Seats a tournament team's current roster in one lineup of a match that has
--- not been played, changing only what differs: players still wanted keep their
--- row (and their check-in), players no longer wanted give their row to an
--- incoming player, and only then is genuine surplus inserted or deleted.
+-- A player who left the roster always leaves the lineup, even when the team can
+-- no longer field the minimum: the deletes run under
+-- fivestack.tournament_lineup_refresh, which tbid_match_lineup_players lets past
+-- its minimum guard, leaving the same short lineup schedule_tournament_match
+-- would seat from that roster.
 --
--- Rows are re-seated IN PLACE rather than deleted and re-inserted: clearing a
--- lineup first trips the shared minimum-player guard on match_lineup_players
--- ("Cannot remove players: not enough players in lineup"). A re-seated row is
--- a different player, so it must not keep the previous player's check-in or
--- captaincy.
+-- A banned player is never newly seated (tbid_match_lineup_players refuses,
+-- which would fail the roster write that caused the refresh), but one who is
+-- already seated keeps the seat: a ban is not a roster change.
 --
--- Banned players are left out: tbid_match_lineup_players refuses to seat them,
--- which would otherwise fail whatever roster write caused the refresh.
+-- The lineup captain only moves when they left the lineup or when the
+-- tournament captain was explicitly changed (_follow_captain), so a captain
+-- picked by hand for check-in survives an unrelated roster edit.
 CREATE OR REPLACE FUNCTION public.refresh_tournament_match_lineup(
     _match public.matches,
     _match_lineup_id uuid,
-    _tournament_team_id uuid
+    _tournament_team_id uuid,
+    _follow_captain boolean
 ) RETURNS VOID
     LANGUAGE plpgsql
 AS $$
 DECLARE
     _captain_steam_id bigint;
+    _lineup_captain bigint;
     _desired bigint[];
-    _vacated uuid[];
     _incoming bigint[];
-    _index int;
 BEGIN
     SELECT tt.captain_steam_id
     INTO _captain_steam_id
     FROM tournament_teams tt
     WHERE tt.id = _tournament_team_id;
 
-    -- Same ordering and cap schedule_tournament_match() uses, so a
-    -- refreshed lineup is indistinguishable from a freshly scheduled one.
+    SELECT mlp.steam_id
+    INTO _lineup_captain
+    FROM match_lineup_players mlp
+    WHERE mlp.match_lineup_id = _match_lineup_id
+      AND mlp.captain;
+
+    -- Same ordering and cap schedule_tournament_match() uses.
     SELECT COALESCE(array_agg(player_steam_id ORDER BY ord), ARRAY[]::bigint[])
     INTO _desired
     FROM (
@@ -56,16 +61,18 @@ BEGIN
           ON tr.team_id = tt.team_id
          AND tr.player_steam_id = ttr.player_steam_id
         WHERE ttr.tournament_team_id = _tournament_team_id
-          AND NOT is_banned(p)
+          AND (
+              NOT is_banned(p)
+              OR EXISTS (
+                  SELECT 1
+                  FROM match_lineup_players seated
+                  WHERE seated.match_lineup_id = _match_lineup_id
+                    AND seated.steam_id = ttr.player_steam_id
+              )
+          )
         ORDER BY ord
         LIMIT match_max_players_per_lineup(_match)
     ) ranked;
-
-    SELECT COALESCE(array_agg(mlp.id ORDER BY mlp.steam_id NULLS LAST, mlp.id), ARRAY[]::uuid[])
-    INTO _vacated
-    FROM match_lineup_players mlp
-    WHERE mlp.match_lineup_id = _match_lineup_id
-      AND NOT COALESCE(mlp.steam_id = ANY(_desired), false);
 
     SELECT COALESCE(array_agg(d.steam_id ORDER BY d.ord), ARRAY[]::bigint[])
     INTO _incoming
@@ -77,28 +84,28 @@ BEGIN
           AND mlp.steam_id = d.steam_id
     );
 
-    FOR _index IN 1..cardinality(_incoming) LOOP
-        IF _index <= cardinality(_vacated) THEN
-            UPDATE match_lineup_players
-            SET steam_id = _incoming[_index],
-                placeholder_name = NULL,
-                checked_in = false,
-                captain = false
-            WHERE id = _vacated[_index];
-        ELSE
-            INSERT INTO match_lineup_players (match_lineup_id, steam_id)
-            VALUES (_match_lineup_id, _incoming[_index]);
-        END IF;
-    END LOOP;
+    PERFORM set_config('fivestack.tournament_lineup_refresh', 'true', true);
 
-    IF cardinality(_vacated) > cardinality(_incoming) THEN
-        DELETE FROM match_lineup_players
-        WHERE id = ANY(_vacated[cardinality(_incoming) + 1 : cardinality(_vacated)]);
-    END IF;
+    DELETE FROM match_lineup_players
+    WHERE match_lineup_id = _match_lineup_id
+      AND NOT COALESCE(steam_id = ANY(_desired), false);
 
-    -- tournament_teams.captain_steam_id is nullable; with no seated tournament
-    -- captain, pick_captain has already kept exactly one lineup captain.
-    IF _captain_steam_id = ANY(_desired) THEN
+    -- tournament_roster_pkey keeps a player on one team, so a seat on the other
+    -- side of this match is stale and would otherwise leave them on both.
+    DELETE FROM match_lineup_players
+    WHERE match_lineup_id IN (_match.lineup_1_id, _match.lineup_2_id)
+      AND match_lineup_id <> _match_lineup_id
+      AND steam_id = ANY(_incoming);
+
+    PERFORM set_config('fivestack.tournament_lineup_refresh', 'false', true);
+
+    INSERT INTO match_lineup_players (match_lineup_id, steam_id)
+    SELECT _match_lineup_id, d.steam_id
+    FROM unnest(_incoming) WITH ORDINALITY AS d(steam_id, ord)
+    ORDER BY d.ord;
+
+    IF _captain_steam_id = ANY(_desired)
+       AND (_follow_captain OR NOT COALESCE(_lineup_captain = ANY(_desired), false)) THEN
         UPDATE match_lineup_players
         SET captain = COALESCE(steam_id = _captain_steam_id, false)
         WHERE match_lineup_id = _match_lineup_id
@@ -126,9 +133,11 @@ BEGIN
         RETURN;
     END IF;
 
+    -- Shared lock so a match that starts concurrently is seen as started.
     SELECT * INTO _match
     FROM matches
-    WHERE id = bracket.match_id;
+    WHERE id = bracket.match_id
+    FOR SHARE;
 
     IF NOT FOUND THEN
         RETURN;
@@ -159,7 +168,8 @@ BEGIN
         PERFORM refresh_tournament_match_lineup(
             _match,
             _lineup.match_lineup_id,
-            _lineup.tournament_team_id
+            _lineup.tournament_team_id,
+            false
         );
     END LOOP;
 END;

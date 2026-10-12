@@ -45,11 +45,17 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
     tt1: string;
     tt2: string;
     team1: { id: string; owner: string };
+    team2: { id: string; owner: string };
   };
 
   // Four Competitive teams of 1 + `mates` players with two substitute slots,
-  // so a lineup holds up to 7. Registration is closed, so round 1 is seated.
-  const drawnCup = async (mates: number): Promise<Cup> => {
+  // so a lineup holds up to 7. Round 1 is seated either by closing
+  // registration, or (`review`) by the organizer re-admitting teams while the
+  // tournament is held in CheckInReview, where the roster lock does not apply.
+  const drawnCup = async (
+    mates: number,
+    { review = false } = {},
+  ): Promise<Cup> => {
     const organizer = await fx.player();
     const [options] = await postgres.query<Array<{ id: string }>>(
       `INSERT INTO match_options (mr, best_of, type, map_pool_id, map_veto, region_veto, regions, number_of_substitutes)
@@ -57,9 +63,15 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
        FROM map_pools WHERE type = 'Competitive' AND seed = true RETURNING id`,
     );
     const [tournament] = await postgres.query<Array<{ id: string }>>(
-      `INSERT INTO tournaments (name, start, organizer_steam_id, match_options_id, status)
-       VALUES ($1, now() + interval '1 day', $2, $3, 'Setup') RETURNING id`,
-      [fx.nextName("cup"), organizer, options.id],
+      `INSERT INTO tournaments (name, start, organizer_steam_id, match_options_id, status, check_in_required)
+       VALUES ($1, now() + $4::interval, $2, $3, 'Setup', $5) RETURNING id`,
+      [
+        fx.nextName("cup"),
+        organizer,
+        options.id,
+        review ? "2 hours" : "1 day",
+        review,
+      ],
     );
     await postgres.query(
       `INSERT INTO tournament_stages (tournament_id, type, "order", min_teams, max_teams)
@@ -80,7 +92,23 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
         ),
       );
     }
-    await setStatus(tournament.id, organizer, "RegistrationClosed");
+    if (review) {
+      await setStatus(tournament.id, organizer, "CheckInReview");
+      await postgres.query(
+        "SELECT assign_seeds_to_teams(t) FROM tournaments t WHERE t.id = $1",
+        [tournament.id],
+      );
+      await postgres.query("SELECT update_tournament_stages($1)", [
+        tournament.id,
+      ]);
+      await postgres.query(
+        `SELECT seed_stage(ts.id) FROM tournament_stages ts
+         WHERE ts.tournament_id = $1 AND ts."order" = 1`,
+        [tournament.id],
+      );
+    } else {
+      await setStatus(tournament.id, organizer, "RegistrationClosed");
+    }
 
     const [bracket] = await postgres.query<
       Array<{
@@ -90,14 +118,17 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
         lineup_1_id: string;
         lineup_2_id: string;
         team_id_1: string;
+        team_id_2: string;
       }>
     >(
       `SELECT tb.match_id, tb.tournament_team_id_1, tb.tournament_team_id_2,
-              m.lineup_1_id, m.lineup_2_id, tt.team_id AS team_id_1
+              m.lineup_1_id, m.lineup_2_id,
+              tt1.team_id AS team_id_1, tt2.team_id AS team_id_2
        FROM tournament_brackets tb
        INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
        INNER JOIN matches m ON m.id = tb.match_id
-       INNER JOIN tournament_teams tt ON tt.id = tb.tournament_team_id_1
+       INNER JOIN tournament_teams tt1 ON tt1.id = tb.tournament_team_id_1
+       INNER JOIN tournament_teams tt2 ON tt2.id = tb.tournament_team_id_2
        WHERE ts.tournament_id = $1
        ORDER BY tb.round, tb.match_number LIMIT 1`,
       [tournament.id],
@@ -112,6 +143,7 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
       tt1: bracket.tournament_team_id_1,
       tt2: bracket.tournament_team_id_2,
       team1: teams.find((team) => team.id === bracket.team_id_1)!,
+      team2: teams.find((team) => team.id === bracket.team_id_2)!,
     };
   };
 
@@ -171,26 +203,53 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
       .filter((row) => row.captain)
       .map((row) => row.steam_id);
 
-  const removeFromRoster = (cup: Cup, steamId: string) =>
-    runAsUser(postgres, cup.organizer, "admin", (query) =>
-      query(
-        `DELETE FROM tournament_team_roster
-         WHERE tournament_team_id = $1 AND player_steam_id = $2`,
-        [cup.tt1, steamId],
-      ),
+  type Edit = { team?: string; actor?: string; role?: string };
+
+  const removeFromRoster = (cup: Cup, steamId: string, edit: Edit = {}) =>
+    runAsUser(
+      postgres,
+      edit.actor ?? cup.organizer,
+      edit.role ?? "admin",
+      (query) =>
+        query(
+          `DELETE FROM tournament_team_roster
+           WHERE tournament_team_id = $1 AND player_steam_id = $2`,
+          [edit.team ?? cup.tt1, steamId],
+        ),
     );
 
-  const addToRoster = async (cup: Cup, steamId?: string) => {
+  const addToRoster = async (cup: Cup, steamId?: string, edit: Edit = {}) => {
     const player = steamId ?? (await fx.player());
-    await runAsUser(postgres, cup.organizer, "admin", (query) =>
-      query(
-        `INSERT INTO tournament_team_roster (tournament_team_id, player_steam_id, tournament_id)
-         VALUES ($1, $2, $3)`,
-        [cup.tt1, player, cup.tournamentId],
-      ),
+    await runAsUser(
+      postgres,
+      edit.actor ?? cup.organizer,
+      edit.role ?? "admin",
+      (query) =>
+        query(
+          `INSERT INTO tournament_team_roster (tournament_team_id, player_steam_id, tournament_id)
+           VALUES ($1, $2, $3)`,
+          [edit.team ?? cup.tt1, player, cup.tournamentId],
+        ),
     );
     return player;
   };
+
+  // The lineup guard on match_lineup_players waves through the literal
+  // "admin" role only, so the shrinking edits run as the roles that really
+  // send them.
+  const actorFor = async (cup: Cup, role: string) =>
+    role === "user"
+      ? cup.team1.owner
+      : role === "tournament_organizer"
+        ? cup.organizer
+        : await fx.player();
+
+  const handPickCaptain = (cup: Cup, steamId: string) =>
+    postgres.query(
+      `UPDATE match_lineup_players SET captain = true
+       WHERE match_lineup_id = $1 AND steam_id = $2`,
+      [cup.lineup1, steamId],
+    );
 
   const nonCaptain = async (cup: Cup) => {
     const captain = await captainOf(cup.tt1);
@@ -296,6 +355,135 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
     expect(await seatedSteamIds(cup.lineup1)).not.toContain(banned);
   });
 
+  it("drops a removed player even when a banned teammate leaves the team short of seatable players", async () => {
+    const cup = await drawnCupAt("Scheduled");
+    const [banned, removed] = (await roster(cup.tt1)).filter(
+      (steamId) => steamId !== cup.team1.owner,
+    );
+    await postgres.query(
+      "INSERT INTO player_sanctions (player_steam_id, type) VALUES ($1, 'ban')",
+      [banned],
+    );
+
+    await removeFromRoster(cup, removed, {
+      actor: cup.team1.owner,
+      role: "user",
+    });
+
+    const lineup = await seatedSteamIds(cup.lineup1);
+    expect(lineup).not.toContain(removed);
+    expect(lineup).toContain(banned);
+    expect(lineup).toEqual(await roster(cup.tt1));
+  });
+
+  describe("held in CheckInReview, where the roster lock does not apply", () => {
+    it.each(["user", "tournament_organizer", "administrator"])(
+      "drops a removed player below the minimum when a %s removes them",
+      async (role) => {
+        const cup = await drawnCup(4, { review: true });
+        expect(await matchStatus(cup.matchId)).toBe("Scheduled");
+        const removed = await nonCaptain(cup);
+
+        await removeFromRoster(cup, removed, {
+          actor: await actorFor(cup, role),
+          role,
+        });
+
+        const lineup = await seatedSteamIds(cup.lineup1);
+        expect(lineup).not.toContain(removed);
+        expect(lineup).toHaveLength(4);
+      },
+    );
+
+    it("a player who moves to the opponent sits on their side only", async () => {
+      const cup = await drawnCup(4, { review: true });
+      const mover = await nonCaptain(cup);
+
+      await removeFromRoster(cup, mover, {
+        actor: cup.team1.owner,
+        role: "user",
+      });
+      await addToRoster(cup, mover, {
+        team: cup.tt2,
+        actor: cup.team2.owner,
+        role: "user",
+      });
+
+      expect(await seatedSteamIds(cup.lineup1)).not.toContain(mover);
+      expect(await seatedSteamIds(cup.lineup2)).toContain(mover);
+    });
+  });
+
+  it("a player seated by hand on the other side moves to the side whose roster they join", async () => {
+    const cup = await drawnCupAt("WaitingForCheckIn");
+    const outsider = await fx.player();
+    await runAsUser(postgres, cup.organizer, "admin", (query) =>
+      query(
+        "INSERT INTO match_lineup_players (match_lineup_id, steam_id) VALUES ($1, $2)",
+        [cup.lineup1, outsider],
+      ),
+    );
+
+    await addToRoster(cup, outsider, { team: cup.tt2 });
+
+    expect(await seatedSteamIds(cup.lineup1)).not.toContain(outsider);
+    expect(await seatedSteamIds(cup.lineup2)).toContain(outsider);
+  });
+
+  it("leaves a match alone when it starts while the roster edit waits on it", async () => {
+    const cup = await drawnCupAt("WaitingForCheckIn");
+    await postgres.query(
+      `INSERT INTO match_maps (match_id, map_id, "order")
+       SELECT $1, id, 1 FROM maps WHERE type = 'Competitive' ORDER BY name LIMIT 1`,
+      [cup.matchId],
+    );
+    const removed = await nonCaptain(cup);
+    const before = await seatedSteamIds(cup.lineup1);
+
+    const starting = await (
+      postgres as unknown as {
+        pool: {
+          connect(): Promise<{
+            query(sql: string, params?: Array<unknown>): Promise<unknown>;
+            release(): void;
+          }>;
+        };
+      }
+    ).pool.connect();
+    try {
+      await starting.query("BEGIN");
+      await starting.query("UPDATE matches SET status = 'Live' WHERE id = $1", [
+        cup.matchId,
+      ]);
+
+      const removal = removeFromRoster(cup, removed);
+      for (let attempt = 0; ; attempt++) {
+        const [row] = await postgres.query<Array<{ waiting: number }>>(
+          `SELECT count(*)::int AS waiting FROM pg_stat_activity
+           WHERE datname = current_database() AND wait_event_type = 'Lock'`,
+        );
+        if (row.waiting > 0) {
+          break;
+        }
+        if (attempt > 400) {
+          throw new Error("the roster edit never waited on the match");
+        }
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+
+      await starting.query("COMMIT");
+      await removal;
+    } catch (error) {
+      await starting.query("ROLLBACK");
+      throw error;
+    } finally {
+      starting.release();
+    }
+
+    expect(await matchStatus(cup.matchId)).toBe("Live");
+    expect(await seatedSteamIds(cup.lineup1)).toEqual(before);
+  });
+
   it.each(["Live", "Finished"])(
     "leaves a %s match's lineup as it was played",
     async (played) => {
@@ -387,6 +575,63 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
       );
 
       expect(await lineupCaptains(cup.lineup1)).toEqual([next]);
+    });
+  });
+
+  // In Captains check-in the lineup captain is who readies the side, so a
+  // roster edit must not take it off a captain picked by hand.
+  describe("a hand-picked lineup captain", () => {
+    const pickedCup = async () => {
+      const cup = await drawnCupAt("WaitingForCheckIn");
+      const [other, picked] = (await roster(cup.tt1)).filter(
+        (steamId) => steamId !== cup.team1.owner,
+      );
+      await handPickCaptain(cup, picked);
+      expect(await lineupCaptains(cup.lineup1)).toEqual([picked]);
+      return { cup, picked, other };
+    };
+
+    it("stays captain through a swap", async () => {
+      const { cup, picked, other } = await pickedCup();
+
+      await removeFromRoster(cup, other);
+      await addToRoster(cup);
+
+      expect(await lineupCaptains(cup.lineup1)).toEqual([picked]);
+    });
+
+    it("stays captain when the tournament captain leaves the roster", async () => {
+      const { cup, picked } = await pickedCup();
+
+      await removeFromRoster(cup, cup.team1.owner);
+
+      expect(await captainOf(cup.tt1)).not.toBe(cup.team1.owner);
+      expect(await lineupCaptains(cup.lineup1)).toEqual([picked]);
+    });
+
+    it("hands the lineup back to the tournament captain when they leave", async () => {
+      const { cup, picked } = await pickedCup();
+
+      await removeFromRoster(cup, picked);
+
+      expect(await lineupCaptains(cup.lineup1)).toEqual([cup.team1.owner]);
+    });
+
+    it("gives way to an explicit tournament captain change", async () => {
+      const { cup, other } = await pickedCup();
+
+      await runAsUser(
+        postgres,
+        cup.organizer,
+        "tournament_organizer",
+        (query) =>
+          query(
+            "UPDATE tournament_teams SET captain_steam_id = $2 WHERE id = $1",
+            [cup.tt1, other],
+          ),
+      );
+
+      expect(await lineupCaptains(cup.lineup1)).toEqual([other]);
     });
   });
 });

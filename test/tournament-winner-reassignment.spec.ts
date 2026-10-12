@@ -3,6 +3,7 @@ import { Fixtures } from "./utils/fixtures";
 import { TournamentFixtures } from "./utils/tournament-fixtures";
 import {
   bootMigratedDb,
+  runAsUser,
   seedRegionWithServer,
   SqlTestDb,
 } from "./utils/sql-test-db";
@@ -197,6 +198,78 @@ describe("tournament winner reassignment (SQL-driven)", () => {
         .filter((row) => !incoming.includes(row.steam_id))
         .every((row) => row.checked_in),
     ).toBe(true);
+  });
+
+  it("re-seats a row as fresh for its new player: no inherited party, connection or discord id", async () => {
+    const { semis, final } = await semisPlayed();
+    const [finalMatch] = await postgres.query<
+      Array<{ lineup_1_id: string; lineup_2_id: string }>
+    >("SELECT lineup_1_id, lineup_2_id FROM matches WHERE id = $1", [
+      final!.match_id,
+    ]);
+    await postgres.query(
+      `UPDATE match_lineup_players
+          SET party_id = gen_random_uuid(), party_source = 'lobby',
+              is_connected = true, discord_id = 'left-behind'
+        WHERE match_lineup_id IN ($1, $2)`,
+      [finalMatch.lineup_1_id, finalMatch.lineup_2_id],
+    );
+
+    const [semiRow] = await postgres.query<
+      Array<{ tournament_team_id_2: string }>
+    >("SELECT tournament_team_id_2 FROM tournament_brackets WHERE id = $1", [
+      semis[0].id,
+    ]);
+    const [creator, mate] = await rosterOfTournamentTeam(
+      semiRow.tournament_team_id_2,
+    );
+    const lobbyId = await runAsUser(
+      postgres,
+      creator,
+      "user",
+      async (query) => {
+        const [row] = (await query(
+          "INSERT INTO lobbies (access) VALUES ('Private') RETURNING id",
+        )) as Array<{ id: string }>;
+        return row.id;
+      },
+    );
+    await postgres.query(
+      `INSERT INTO lobby_players (lobby_id, steam_id, status)
+       VALUES ($1, $2, 'Accepted')
+       ON CONFLICT (steam_id, lobby_id) DO UPDATE SET status = 'Accepted'`,
+      [lobbyId, mate],
+    );
+
+    await tfx.winMatch(semis[0].match_id!, "lineup_2_id");
+
+    const incoming = await postgres.query<
+      Array<{
+        party_id: string | null;
+        party_source: string | null;
+        is_connected: boolean;
+        discord_id: string | null;
+      }>
+    >(
+      `SELECT party_id::text, party_source, is_connected, discord_id
+         FROM match_lineup_players
+        WHERE match_lineup_id IN ($1, $2) AND steam_id = ANY($3::bigint[])`,
+      [finalMatch.lineup_1_id, finalMatch.lineup_2_id, [creator, mate]],
+    );
+    expect(incoming).toEqual([
+      {
+        party_id: lobbyId,
+        party_source: "lobby",
+        is_connected: false,
+        discord_id: null,
+      },
+      {
+        party_id: lobbyId,
+        party_source: "lobby",
+        is_connected: false,
+        discord_id: null,
+      },
+    ]);
   });
 
   it("does not trip the minimum-player guard while swapping the roster", async () => {

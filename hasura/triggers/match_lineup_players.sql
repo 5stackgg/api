@@ -66,6 +66,13 @@ BEGIN
     END IF;
 
     IF TG_OP = 'DELETE' THEN
+        -- Set by refresh_tournament_match_lineup: an unstarted tournament lineup
+        -- follows its roster, so a player who left the team leaves the lineup
+        -- even when that leaves it short.
+        IF current_setting('fivestack.tournament_lineup_refresh', true) = 'true' THEN
+            RETURN OLD;
+        END IF;
+
         SELECT COUNT(*) INTO lineup_count
             FROM match_lineup_players
             WHERE match_lineup_id = OLD.match_lineup_id;

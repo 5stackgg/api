@@ -297,7 +297,7 @@ BEGIN
         END IF;
     END IF;
 
-    PERFORM refresh_unstarted_tournament_team_lineups(COALESCE(NEW.tournament_team_id, OLD.tournament_team_id));
+    PERFORM refresh_unstarted_tournament_team_lineups(COALESCE(NEW.tournament_team_id, OLD.tournament_team_id), false);
 
     RETURN NULL;
 END;
