@@ -71,10 +71,11 @@ describe("recreating an orphaned tournament bracket match (SQL-driven)", () => {
         status: string;
         winning_lineup_id: string | null;
         scheduled_at: Date | null;
+        cancels_at: Date | null;
         lineup_players: string;
       }>
     >(
-      `SELECT m.status, m.winning_lineup_id, m.scheduled_at,
+      `SELECT m.status, m.winning_lineup_id, m.scheduled_at, m.cancels_at,
               (SELECT count(*) FROM match_lineup_players mlp
                  JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
                 WHERE ml.match_id = m.id) AS lineup_players
@@ -89,6 +90,37 @@ describe("recreating an orphaned tournament bracket match (SQL-driven)", () => {
 
   const finalOf = async (stageId: string) =>
     (await tfx.getBrackets(stageId)).find((b) => b.round === 2)!;
+
+  const tournamentMatchCount = async (tournamentId: string) => {
+    const [row] = await postgres.query<Array<{ count: string }>>(
+      `SELECT count(*) AS count FROM matches m
+        WHERE EXISTS (
+          SELECT 1 FROM match_lineups ml
+            JOIN tournament_teams tt ON tt.team_id = ml.team_id
+           WHERE ml.id = m.lineup_1_id AND tt.tournament_id = $1
+        )`,
+      [tournamentId],
+    );
+    return Number(row.count);
+  };
+
+  const minutesFromNow = (date: Date | null) =>
+    date ? (date.getTime() - Date.now()) / 60_000 : null;
+
+  const launchScheduledByHand = async () => {
+    const t = await tfx.createTournament(SE4);
+    await postgres.query(
+      "UPDATE tournaments SET auto_start = false WHERE id = $1",
+      [t.id],
+    );
+    await tfx.setStatus(t.id, t.organizer, "RegistrationOpen");
+    for (let i = 0; i < 4; i++) {
+      await tfx.registerTeam(t.id, await fx.team(1));
+    }
+    await tfx.setStatus(t.id, t.organizer, "RegistrationClosed");
+    await tfx.setStatus(t.id, t.organizer, "Live");
+    return t;
+  };
 
   it("recreates the match of a slot whose unplayed match was deleted", async () => {
     const t = await tfx.launch(SE4, 4);
@@ -107,23 +139,23 @@ describe("recreating an orphaned tournament bracket match (SQL-driven)", () => {
     const recreated = await match(matchId);
     expect(recreated.status).toBe("WaitingForCheckIn");
     expect(Number(recreated.lineup_players)).toBe(4);
+    expect(minutesFromNow(recreated.cancels_at)).toBeGreaterThan(14);
   });
 
-  it("parks a recreated match as Scheduled while its bracket's time is still ahead", async () => {
-    const t = await tfx.launch(SE4, 4);
+  it("waits for the scheduled time of a tournament that does not start matches itself", async () => {
+    const t = await launchScheduledByHand();
     const [semi] = await semis(t.stageIds[0]);
-    await postgres.query("DELETE FROM matches WHERE id = $1", [semi.match_id]);
+    expect(semi.match_id).toBeNull();
+
+    await expect(recreate(semi.id)).rejects.toThrow(/not due/);
+
     await postgres.query(
-      "UPDATE tournament_brackets SET scheduled_at = now() + interval '2 days' WHERE id = $1",
+      "UPDATE tournament_brackets SET scheduled_at = now() + interval '5 minutes' WHERE id = $1",
       [semi.id],
     );
+    const matchId = await recreate(semi.id);
 
-    const recreated = await match(await recreate(semi.id));
-
-    expect(recreated.status).toBe("Scheduled");
-    expect(recreated.scheduled_at!.getTime()).toBeGreaterThan(
-      Date.now() + 86_400_000,
-    );
+    expect((await bracket(semi.id)).match_id).toBe(matchId);
   });
 
   it("replays a won slot and unwinds the final it fed", async () => {
@@ -148,6 +180,7 @@ describe("recreating an orphaned tournament bracket match (SQL-driven)", () => {
     const recreated = await match(matchId);
     expect(recreated.status).toBe("WaitingForCheckIn");
     expect(recreated.winning_lineup_id).toBeNull();
+    expect(minutesFromNow(recreated.cancels_at)).toBeGreaterThan(14);
 
     const final = await finalOf(t.stageIds[0]);
     expect(final.match_id).toBeNull();
@@ -179,13 +212,90 @@ describe("recreating an orphaned tournament bracket match (SQL-driven)", () => {
     ]);
     await postgres.query("DELETE FROM matches WHERE id = $1", [semi.match_id]);
 
-    await expect(recreate(semi.id)).rejects.toThrow(/downstream match is live/);
+    await expect(recreate(semi.id)).rejects.toThrow(/downstream/);
 
     expect(await bracket(semi.id)).toMatchObject({
       match_id: null,
       finished: true,
     });
     expect((await match(final.match_id!)).status).toBe("Live");
+  });
+
+  it("refuses a won slot whose downstream match was already played", async () => {
+    const t = await tfx.launch(
+      [{ type: "SingleElimination", order: 1, minTeams: 8, maxTeams: 8 }],
+      8,
+    );
+    await tfx.playRound(t.stageIds[0], 1);
+    const brackets = await tfx.getBrackets(t.stageIds[0]);
+    const quarter = brackets.find((b) => b.round === 1)!;
+    const [{ parent_bracket_id }] = await postgres.query<
+      Array<{ parent_bracket_id: string }>
+    >("SELECT parent_bracket_id FROM tournament_brackets WHERE id = $1", [
+      quarter.id,
+    ]);
+    const semi = brackets.find((b) => b.id === parent_bracket_id)!;
+    await tfx.winMatch(semi.match_id!);
+    await postgres.query("DELETE FROM matches WHERE id = $1", [
+      quarter.match_id,
+    ]);
+
+    await expect(recreate(quarter.id)).rejects.toThrow(/downstream/);
+
+    expect((await match(semi.match_id!)).status).toBe("Finished");
+    expect(await bracket(semi.id)).toMatchObject({
+      match_id: semi.match_id,
+      finished: true,
+    });
+    expect(await bracket(quarter.id)).toMatchObject({
+      match_id: null,
+      finished: true,
+    });
+  });
+
+  it("refuses a later round-robin round while the round before is still being played", async () => {
+    const t = await tfx.launch(
+      [{ type: "RoundRobin", order: 1, minTeams: 4, maxTeams: 4 }],
+      4,
+    );
+    const roundTwo = (await tfx.getBrackets(t.stageIds[0])).find(
+      (b) => b.round === 2,
+    )!;
+    expect(roundTwo.match_id).toBeNull();
+
+    await expect(recreate(roundTwo.id)).rejects.toThrow(/not due/);
+
+    expect((await bracket(roundTwo.id)).match_id).toBeNull();
+  });
+
+  it("refuses while the tournament is paused", async () => {
+    const t = await tfx.launch(SE4, 4);
+    const [semi] = await semis(t.stageIds[0]);
+    await postgres.query("DELETE FROM matches WHERE id = $1", [semi.match_id]);
+    await tfx.setStatus(t.id, t.organizer, "Paused");
+
+    await expect(recreate(semi.id)).rejects.toThrow(/not running/);
+
+    expect((await bracket(semi.id)).match_id).toBeNull();
+  });
+
+  // CheckForScheduledTournamentBrackets reads its due slots without a lock, so
+  // it can hand schedule_tournament_match a copy from before a match landed.
+  it("never gives a slot a second match from a stale copy", async () => {
+    const t = await tfx.launch(SE4, 4);
+    const [semi] = await semis(t.stageIds[0]);
+
+    const [{ match_id }] = await postgres.query<Array<{ match_id: string }>>(
+      `SELECT schedule_tournament_match(
+                jsonb_populate_record(NULL::tournament_brackets, to_jsonb(tb) || '{"match_id": null}')
+              ) AS match_id
+         FROM tournament_brackets tb WHERE tb.id = $1`,
+      [semi.id],
+    );
+
+    expect(match_id).toBe(semi.match_id);
+    expect((await bracket(semi.id)).match_id).toBe(semi.match_id);
+    expect(await tournamentMatchCount(t.id)).toBe(2);
   });
 
   it("refuses a won slot in a round robin", async () => {

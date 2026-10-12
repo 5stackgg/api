@@ -9,11 +9,11 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     _bracket tournament_brackets%ROWTYPE;
-    _stage_type text;
+    _stage tournament_stages%ROWTYPE;
     _tournament_status text;
     _was_finished boolean;
-    _pending boolean;
     _match_id uuid;
+    _scheduled matches%ROWTYPE;
 BEGIN
     SELECT * INTO _bracket
     FROM tournament_brackets
@@ -34,20 +34,47 @@ BEGIN
         RAISE EXCEPTION 'both teams have to be in the bracket to recreate its match' USING ERRCODE = '22000';
     END IF;
 
-    SELECT ts.type, t.status
-    INTO _stage_type, _tournament_status
-    FROM tournament_stages ts
-    JOIN tournaments t ON t.id = ts.tournament_id
-    WHERE ts.id = _bracket.tournament_stage_id;
+    SELECT * INTO _stage
+    FROM tournament_stages
+    WHERE id = _bracket.tournament_stage_id;
 
-    IF _tournament_status NOT IN ('RegistrationClosed', 'Live', 'Paused') THEN
+    SELECT status INTO _tournament_status
+    FROM tournaments
+    WHERE id = _stage.tournament_id;
+
+    IF _tournament_status NOT IN ('RegistrationClosed', 'Live') THEN
         RAISE EXCEPTION 'the tournament is not running' USING ERRCODE = '22000';
+    END IF;
+
+    -- Due only when a scheduler would create it now: straight away where the
+    -- tournament starts its own matches (a later round-robin round once both
+    -- teams are done with the round before, as schedule_next_round_robin_matches
+    -- waits), otherwise by the bracket's time, as
+    -- CheckForScheduledTournamentBrackets picks it up.
+    IF NOT (
+        (
+            should_auto_schedule(_stage.id)
+            AND (
+                _stage.type <> 'RoundRobin'
+                OR _bracket.round = 1
+                OR (
+                    opponent_finished_previous_round(_bracket.tournament_team_id_1, _stage.id, _bracket.round - 1, _bracket."group"::int)
+                    AND opponent_finished_previous_round(_bracket.tournament_team_id_2, _stage.id, _bracket.round - 1, _bracket."group"::int)
+                )
+            )
+        )
+        OR (
+            _tournament_status = 'Live'
+            AND COALESCE(_bracket.scheduled_at <= now() + interval '15 minutes', false)
+        )
+    ) THEN
+        RAISE EXCEPTION 'this bracket''s match is not due yet' USING ERRCODE = '22000';
     END IF;
 
     _was_finished := _bracket.finished;
 
     IF _was_finished THEN
-        IF _stage_type NOT IN ('SingleElimination', 'DoubleElimination') THEN
+        IF _stage.type NOT IN ('SingleElimination', 'DoubleElimination') THEN
             RAISE EXCEPTION 'only elimination stage matches can be replayed once won' USING ERRCODE = '22000';
         END IF;
 
@@ -57,38 +84,37 @@ BEGIN
         RETURNING * INTO _bracket;
     END IF;
 
-    -- Materialized as early as the cron would, never earlier: a bracket whose
-    -- time is still ahead waits as Scheduled for CheckForScheduledMatches.
-    _pending := COALESCE(_bracket.scheduled_at > now() + interval '15 minutes', false);
-
-    IF _pending THEN
-        PERFORM set_config('fivestack.schedule_as_pending', 'true', true);
-    END IF;
-
     _match_id := schedule_tournament_match(_bracket);
-
-    PERFORM set_config('fivestack.schedule_as_pending', 'false', true);
 
     IF _match_id IS NULL THEN
         RAISE EXCEPTION 'this bracket needs a schedule before its match can be created' USING ERRCODE = '22000';
     END IF;
 
     IF _was_finished THEN
+        -- The unwind deletes every match the slot fed, so only ones nobody has
+        -- started yet may be in the way.
         IF EXISTS (
             SELECT 1
             FROM preview_tournament_match_reset(_match_id) affected
             WHERE affected.will_delete_match
-              AND affected.match_status IN ('Live', 'Veto')
+              AND affected.match_status NOT IN ('Scheduled', 'WaitingForCheckIn', 'Canceled')
         ) THEN
-            RAISE EXCEPTION 'cannot replay while an affected downstream match is live' USING ERRCODE = '22000';
+            RAISE EXCEPTION 'a match downstream of this bracket has already started; reset it first' USING ERRCODE = '22000';
         END IF;
 
-        PERFORM reset_tournament_match(
-            _match_id,
-            NULL,
-            CASE WHEN _pending THEN 'Scheduled' ELSE 'WaitingForCheckIn' END,
-            CASE WHEN _pending THEN _bracket.scheduled_at END
-        );
+        -- reset_tournament_match also rewrites the match itself and clears
+        -- cancels_at, which tbu_matches only arms on a status change, so the
+        -- match is handed back the status, time and no-show deadline it was
+        -- just scheduled with.
+        SELECT * INTO _scheduled
+        FROM matches
+        WHERE id = _match_id;
+
+        PERFORM reset_tournament_match(_match_id, NULL, _scheduled.status, _scheduled.scheduled_at);
+
+        UPDATE matches
+        SET cancels_at = _scheduled.cancels_at
+        WHERE id = _match_id;
     END IF;
 
     RETURN _match_id;
