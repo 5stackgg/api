@@ -2,7 +2,7 @@ import { SocketsGateway } from "./sockets.gateway";
 
 describe("SocketsGateway ping", () => {
   let gateway: SocketsGateway;
-  let sockets: { updateClient: jest.Mock };
+  let sockets: { heartbeat: jest.Mock };
 
   const OPEN = 1;
   const CLOSED = 3;
@@ -18,7 +18,7 @@ describe("SocketsGateway ping", () => {
     }) as any;
 
   beforeEach(() => {
-    sockets = { updateClient: jest.fn().mockResolvedValue(undefined) };
+    sockets = { heartbeat: jest.fn().mockResolvedValue(undefined) };
     gateway = new SocketsGateway(sockets as any);
   });
 
@@ -30,7 +30,7 @@ describe("SocketsGateway ping", () => {
     expect(anonymous.send).toHaveBeenCalledWith(
       JSON.stringify({ event: "pong" }),
     );
-    expect(sockets.updateClient).not.toHaveBeenCalled();
+    expect(sockets.heartbeat).not.toHaveBeenCalled();
   });
 
   it("answers a signed-in client and refreshes its presence", async () => {
@@ -41,7 +41,7 @@ describe("SocketsGateway ping", () => {
     expect(signedIn.send).toHaveBeenCalledWith(
       JSON.stringify({ event: "pong" }),
     );
-    expect(sockets.updateClient).toHaveBeenCalledWith(
+    expect(sockets.heartbeat).toHaveBeenCalledWith(
       "76561198000000001",
       "client-1",
     );
@@ -50,7 +50,7 @@ describe("SocketsGateway ping", () => {
   it("sends the pong before presence is written", async () => {
     let sentBeforeUpdate = false;
     const signedIn = client({ user: { steam_id: "76561198000000001" } });
-    sockets.updateClient.mockImplementation(async () => {
+    sockets.heartbeat.mockImplementation(async () => {
       sentBeforeUpdate = signedIn.send.mock.calls.length > 0;
     });
 

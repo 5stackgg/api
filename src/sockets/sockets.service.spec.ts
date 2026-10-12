@@ -27,6 +27,7 @@ function makeService() {
     del: jest.fn().mockResolvedValue(1),
     hdel: jest.fn().mockResolvedValue(1),
     keys: jest.fn().mockResolvedValue([]),
+    exists: jest.fn().mockResolvedValue(1),
     publish: jest.fn().mockResolvedValue(1),
     subscribe: jest.fn().mockResolvedValue(1),
     on: jest.fn(),
@@ -106,7 +107,7 @@ describe("SocketsService.setupSocket", () => {
       `clients:${USER.steam_id}:${undefined}:${client.id}`,
       "1",
       "EX",
-      20,
+      expect.any(Number),
     );
     expect(matchmaking.cancelOffline).toHaveBeenCalledWith(USER.steam_id);
     expect(lobbies.sendQueueDetailsToPlayer).toHaveBeenCalledWith(
@@ -247,5 +248,318 @@ describe("SocketsService.setupSocket", () => {
     expect(client.terminate).not.toHaveBeenCalled();
     expect(client.on).toHaveBeenCalledWith("close", expect.any(Function));
     expect(logger.error).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("SocketsService.sendMessageToSteamId", () => {
+  const OTHER = { ...USER, steam_id: "76561198000000002", name: "Other" };
+
+  afterEach(() => {
+    sessionLoad.impl = (_request, next) => next();
+  });
+
+  const settle = () => new Promise((resolve) => setImmediate(resolve));
+
+  const closeListener = (client: any) =>
+    client.on.mock.calls.find(([event]: [string]) => event === "close")[1];
+
+  async function connect(
+    service: SocketsService,
+    user: typeof USER,
+  ): Promise<any> {
+    const client = socket();
+    signIn(user);
+    await service.setupSocket(client, {} as any);
+    await settle();
+    return client;
+  }
+
+  async function publish(
+    redis: ReturnType<typeof makeService>["redis"],
+    steamId: string | number,
+    event: string,
+    data: unknown,
+  ) {
+    const onMessage = redis.on.mock.calls.find(
+      ([event]: [string]) => event === "message",
+    )[1];
+    onMessage(
+      "send-message-to-steam-id",
+      JSON.stringify({ steamId, event, data }),
+    );
+    await settle();
+  }
+
+  const sent = (event: string, data: unknown) =>
+    JSON.stringify({ event, data });
+
+  it("reaches an open socket whose presence key has expired", async () => {
+    const { service, redis } = makeService();
+    const client = await connect(service, USER);
+
+    redis.keys.mockResolvedValue([]);
+
+    await publish(redis, USER.steam_id, "matchmaking:details", { ready: 1 });
+
+    expect(client.send).toHaveBeenCalledWith(
+      sent("matchmaking:details", { ready: 1 }),
+    );
+  });
+
+  it("reaches every open tab of the player and nobody else", async () => {
+    const { service, redis } = makeService();
+    const first = await connect(service, USER);
+    const second = await connect(service, USER);
+    const other = await connect(service, OTHER);
+
+    await publish(redis, USER.steam_id, "direct:incoming", { id: 1 });
+
+    expect(first.send).toHaveBeenCalledWith(sent("direct:incoming", { id: 1 }));
+    expect(second.send).toHaveBeenCalledWith(
+      sent("direct:incoming", { id: 1 }),
+    );
+    expect(other.send).not.toHaveBeenCalled();
+  });
+
+  it("matches a steam id published as a number", async () => {
+    const { service, redis } = makeService();
+    const client = await connect(service, { ...USER, steam_id: "42" });
+
+    await publish(redis, 42, "matchmaking:details", {});
+
+    expect(client.send).toHaveBeenCalledWith(sent("matchmaking:details", {}));
+  });
+
+  it("keeps the remaining tab after another one closes", async () => {
+    const { service, redis } = makeService();
+    const closing = await connect(service, USER);
+    const staying = await connect(service, USER);
+
+    await closeListener(closing)();
+    await publish(redis, USER.steam_id, "matchmaking:details", {});
+
+    expect(closing.send).not.toHaveBeenCalled();
+    expect(staying.send).toHaveBeenCalledWith(sent("matchmaking:details", {}));
+  });
+
+  it("forgets a player once their last tab closes", async () => {
+    const { service, redis } = makeService();
+    const first = await connect(service, USER);
+    const second = await connect(service, USER);
+
+    await closeListener(first)();
+    await closeListener(second)();
+    await publish(redis, USER.steam_id, "matchmaking:details", {});
+
+    expect(first.send).not.toHaveBeenCalled();
+    expect(second.send).not.toHaveBeenCalled();
+    expect((service as any).clientsBySteamId.size).toBe(0);
+  });
+
+  it("never indexes a socket that closed while its session loaded", async () => {
+    const { service, redis } = makeService();
+    const client = socket(3);
+    signIn(USER);
+
+    await service.setupSocket(client, {} as any);
+    await settle();
+    await publish(redis, USER.steam_id, "matchmaking:details", {});
+
+    expect(client.send).not.toHaveBeenCalled();
+    expect((service as any).clientsBySteamId.size).toBe(0);
+  });
+});
+
+describe("SocketsService presence", () => {
+  // what a tab hidden for a few minutes manages
+  const HIDDEN_TAB_PING_SECONDS = 60;
+
+  afterEach(() => {
+    sessionLoad.impl = (_request, next) => next();
+  });
+
+  const settle = () => new Promise((resolve) => setImmediate(resolve));
+
+  const closeListener = (client: any) =>
+    client.on.mock.calls.find(([event]: [string]) => event === "close")[1];
+
+  async function connect(service: SocketsService): Promise<any> {
+    const client = socket();
+    signIn(USER);
+    await service.setupSocket(client, {} as any);
+    await settle();
+    return client;
+  }
+
+  const ttlOf = (redis: ReturnType<typeof makeService>["redis"], key: string) =>
+    redis.set.mock.calls.find(([written]: [string]) => written === key)[3];
+
+  it("outlasts the heartbeat of a hidden tab", async () => {
+    const { service, redis } = makeService();
+
+    await service.updateClient(USER.steam_id, "client-1");
+
+    expect(ttlOf(redis, `players:${USER.steam_id}`)).toBeGreaterThan(
+      HIDDEN_TAB_PING_SECONDS * 2,
+    );
+    expect(
+      ttlOf(redis, `clients:${USER.steam_id}:${undefined}:client-1`),
+    ).toBeGreaterThan(HIDDEN_TAB_PING_SECONDS * 2);
+  });
+
+  it("keeps a player online when a tab closes while another stays open on this pod", async () => {
+    const { service, redis, matchmaking } = makeService();
+    const closing = await connect(service);
+    await connect(service);
+
+    // the other tab is hidden and its presence key has lapsed
+    redis.keys.mockResolvedValue([]);
+
+    await closeListener(closing)();
+
+    expect(matchmaking.markOffline).not.toHaveBeenCalled();
+    expect(redis.del).not.toHaveBeenCalledWith(`players:${USER.steam_id}`);
+  });
+
+  it("puts a player who dropped out of presence back online on their next ping", async () => {
+    const { service, redis, matchmaking } = makeService();
+    // SET ... GET finds no presence left
+    redis.set.mockResolvedValueOnce(null);
+
+    await service.heartbeat(USER.steam_id, "client-1");
+
+    expect(redis.set).toHaveBeenCalledWith(
+      `players:${USER.steam_id}`,
+      expect.any(String),
+      "EX",
+      expect.any(Number),
+      "GET",
+    );
+    expect(matchmaking.cancelOffline).toHaveBeenCalledWith(USER.steam_id);
+    expect(redis.publish).toHaveBeenCalledWith(
+      "broadcast-message",
+      expect.stringContaining("players-online"),
+    );
+  });
+
+  it("leaves the offline job alone on the ping of a player who is online", async () => {
+    const { service, matchmaking, redis } = makeService();
+    redis.set.mockResolvedValueOnce(JSON.stringify({ lastSeen: 1 }));
+
+    await service.heartbeat(USER.steam_id, "client-1");
+
+    expect(matchmaking.cancelOffline).not.toHaveBeenCalled();
+    expect(redis.publish).not.toHaveBeenCalled();
+  });
+});
+
+describe("SocketsService offline", () => {
+  afterEach(() => {
+    sessionLoad.impl = (_request, next) => next();
+    jest.useRealTimers();
+  });
+
+  const settle = () => new Promise((resolve) => setImmediate(resolve));
+
+  const closeListener = (client: any) =>
+    client.on.mock.calls.find(([event]: [string]) => event === "close")[1];
+
+  async function connect(service: SocketsService): Promise<any> {
+    const client = socket();
+    signIn(USER);
+    await service.setupSocket(client, {} as any);
+    await settle();
+    return client;
+  }
+
+  // A reload's new socket registers while the old one is closing; whatever it
+  // cancels has to be queued already.
+  it("queues the offline job before anyone can see the player gone", async () => {
+    const { service, redis, matchmaking } = makeService();
+    const client = await connect(service);
+
+    await closeListener(client)();
+
+    const queued = matchmaking.markOffline.mock.invocationCallOrder[0];
+    const removed =
+      redis.del.mock.invocationCallOrder[
+        redis.del.mock.calls.findIndex(
+          ([key]: [string]) => key === `players:${USER.steam_id}`,
+        )
+      ];
+    const announced = redis.publish.mock.invocationCallOrder.at(-1);
+
+    expect(queued).toBeLessThan(removed);
+    expect(queued).toBeLessThan(announced);
+  });
+
+  it("counts a tab on a pod that has died as gone", async () => {
+    const { service, redis, matchmaking } = makeService();
+    const client = await connect(service);
+    redis.keys.mockResolvedValue([
+      `clients:${USER.steam_id}:dead-pod:client-9`,
+    ]);
+    redis.exists.mockImplementation(async (key: string) =>
+      key === "sockets:pod:dead-pod" ? 0 : 1,
+    );
+
+    await closeListener(client)();
+
+    expect(matchmaking.markOffline).toHaveBeenCalledWith(USER.steam_id);
+  });
+
+  it("keeps a player online while a tab of theirs is on a live pod", async () => {
+    const { service, redis, matchmaking } = makeService();
+    const client = await connect(service);
+    redis.keys.mockResolvedValue([
+      `clients:${USER.steam_id}:other-pod:client-9`,
+    ]);
+
+    await closeListener(client)();
+
+    expect(matchmaking.markOffline).not.toHaveBeenCalled();
+  });
+
+  it("keeps this pod marked alive", async () => {
+    jest.useFakeTimers();
+    const { service, redis } = makeService();
+    const podWrites = () =>
+      redis.set.mock.calls.filter(
+        ([key]: [string]) => key === `sockets:pod:${undefined}`,
+      );
+
+    service.onModuleInit();
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(podWrites()).toHaveLength(1);
+    const [, , ex, ttl] = podWrites()[0];
+    expect(ex).toBe("EX");
+    expect(ttl).toBeLessThanOrEqual(30);
+
+    await jest.advanceTimersByTimeAsync((ttl * 1000) / 2);
+    expect(podWrites().length).toBeGreaterThan(1);
+
+    service.onApplicationShutdown();
+  });
+
+  it("drops a socket that has been silent for longer than presence lasts", async () => {
+    const { service } = makeService();
+    const silent = await connect(service);
+    const pinging = await connect(service);
+
+    jest.useFakeTimers({
+      now: Date.now(),
+      doNotFake: ["setImmediate", "nextTick"],
+    });
+    service.onModuleInit();
+
+    await jest.advanceTimersByTimeAsync(100 * 1000);
+    await service.heartbeat(USER.steam_id, pinging.id);
+    await jest.advanceTimersByTimeAsync(60 * 1000);
+
+    expect(silent.terminate).toHaveBeenCalled();
+    expect(pinging.terminate).not.toHaveBeenCalled();
+
+    service.onApplicationShutdown();
   });
 });
