@@ -10,6 +10,7 @@ describe("PluginRuntimeService practice servers", () => {
       activeRuntime?: string;
       serverImageOverride?: string | null;
       supported?: boolean;
+      known?: boolean;
     } = {},
   ) => {
     const seen: Array<{ sql: string; params: Array<unknown> }> = [];
@@ -22,7 +23,12 @@ describe("PluginRuntimeService practice servers", () => {
           return [{ value: options.activeRuntime ?? "swiftlys2" }];
         }
         if (sql.includes("game_version_supports_plugin")) {
-          return [{ supported: options.supported ?? true }];
+          return [
+            {
+              known: options.known ?? true,
+              supported: options.supported ?? true,
+            },
+          ];
         }
         return [];
       }),
@@ -157,6 +163,18 @@ describe("PluginRuntimeService practice servers", () => {
           pin_plugin_runtime: null,
         }),
       ).resolves.toBe(false);
+    });
+
+    it("lets practice run before any SwiftlyS2 release has synced", async () => {
+      const { service } = build({ known: false, supported: false });
+
+      await expect(
+        service.supportsPractice({
+          build_id: 20000,
+          pin_plugin_version: null,
+          pin_plugin_runtime: null,
+        }),
+      ).resolves.toBe(true);
     });
 
     it("lets a node that has not reported a build through", async () => {

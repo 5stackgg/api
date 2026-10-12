@@ -86,8 +86,16 @@ export class PluginRuntimeService {
       return true;
     }
 
-    const [row] = await this.postgres.query<Array<{ supported: boolean }>>(
-      `SELECT public.game_version_supports_plugin($1::integer, $2::text, $3::text) AS supported`,
+    // Refused only on evidence: with no SwiftlyS2 releases synced yet there is
+    // nothing to say this build is unsupported, and practice should still run.
+    const [row] = await this.postgres.query<
+      Array<{ known: boolean; supported: boolean }>
+    >(
+      `SELECT EXISTS (
+                SELECT 1 FROM public.plugin_versions
+                 WHERE runtime = $3::text AND min_game_build_id IS NOT NULL
+              ) AS known,
+              public.game_version_supports_plugin($1::integer, $2::text, $3::text) AS supported`,
       [
         node.build_id,
         await this.practicePluginVersion(node),
@@ -95,7 +103,7 @@ export class PluginRuntimeService {
       ],
     );
 
-    return row?.supported === true;
+    return row?.known !== true || row.supported === true;
   }
 
   // The runtimes number their releases separately, so a pin made against
