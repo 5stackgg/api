@@ -44,7 +44,7 @@ describe("ClipDownloadController view counting", () => {
       range?: string;
       query?: Record<string, string>;
       userAgent?: string;
-      ip?: string;
+      ip?: string | null;
     } = {},
   ) {
     const response: any = new Writable({
@@ -73,7 +73,9 @@ describe("ClipDownloadController view counting", () => {
       query,
       headers: {
         "user-agent": opts.userAgent ?? CHROME,
-        "cf-connecting-ip": opts.ip ?? VIEWER_IP,
+        ...(opts.ip === null
+          ? {}
+          : { "cf-connecting-ip": opts.ip ?? VIEWER_IP }),
         ...(opts.range ? { range: opts.range } : {}),
       },
     };
@@ -223,6 +225,59 @@ describe("ClipDownloadController view counting", () => {
       expect(increments()).toBe(1);
     },
   );
+
+  // The range path sets 206 and Content-Range before it fetches the bytes, so
+  // a fetch that fails afterwards still carries a range spanning the midpoint.
+  it.each([
+    [
+      "a missing file (404)",
+      () => s3.stat.mockRejectedValueOnce({ code: "NotFound" }),
+      {},
+      404,
+    ],
+    [
+      "an unsatisfiable range (416)",
+      () => undefined,
+      { range: "bytes=2000-" },
+      416,
+    ],
+    [
+      "a failed stat (500)",
+      () => s3.stat.mockRejectedValueOnce(new Error("s3 unavailable")),
+      {},
+      500,
+    ],
+    [
+      "a range whose fetch failed (500)",
+      () => s3.getPartial.mockRejectedValueOnce(new Error("s3 unavailable")),
+      { range: "bytes=0-" },
+      500,
+    ],
+  ])(
+    "does not count %s, and leaves the viewer's next play countable",
+    async (_label, fail, opts, status) => {
+      fail();
+      const response = await get(opts);
+
+      expect(response.statusCode).toBe(status);
+      expect(increments()).toBe(0);
+
+      await get();
+      expect(increments()).toBe(1);
+    },
+  );
+
+  it("keys a viewer without cf-connecting-ip by the request's own address", async () => {
+    await get({ ip: null });
+
+    expect(increments()).toBe(1);
+    expect(redis.set.mock.calls[0][0]).toBe(
+      `clip-view:${FILE}:${workerViewerKey("10.0.0.1", CHROME)}`,
+    );
+
+    await get({ ip: "10.0.0.1" });
+    expect(increments()).toBe(1);
+  });
 
   it.each([
     ["a HEAD request", { method: "HEAD" }],

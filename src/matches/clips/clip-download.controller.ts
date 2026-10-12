@@ -98,6 +98,11 @@ export class ClipDownloadController {
     if (response.statusCode === 200) {
       return true;
     }
+    // stream() sets Content-Range before it fetches the bytes, and a failed
+    // fetch answers 500 with the header still set.
+    if (response.statusCode !== 206) {
+      return false;
+    }
     const contentRange = response.getHeader("Content-Range");
     if (typeof contentRange !== "string") {
       return false;
