@@ -78,6 +78,17 @@ BEGIN
       AND player_steam_id = NEW.owner_steam_id
       AND role <> 'Admin';
 
+    -- tournament_teams copies the owner at registration. Entries still in play
+    -- follow the transfer, even when the new owner already owns another entry
+    -- (the one-team-per-owner rule only gates registering); a finished or
+    -- cancelled tournament keeps its owner of record.
+    UPDATE tournament_teams tt
+    SET owner_steam_id = NEW.owner_steam_id
+    FROM tournaments t
+    WHERE tt.team_id = NEW.id
+      AND t.id = tt.tournament_id
+      AND t.status NOT IN ('Finished', 'Cancelled', 'CancelledMinTeams');
+
     RETURN NEW;
 END;
 $$;
