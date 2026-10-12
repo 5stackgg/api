@@ -95,6 +95,16 @@ DECLARE
     _organizer boolean;
     _invite boolean := false;
 BEGIN
+    -- The team row before the roster key, on every path. The maximum lineup is
+    -- counted after the insert (check_team_eligibility), so two inserts that
+    -- each count without the other's row would both pass; and a transfer
+    -- seating the new owner (tau_tournament_team_owner) already holds this row
+    -- when it inserts, so taking the key first here deadlocks against it.
+    PERFORM 1
+        FROM tournament_teams tt
+        WHERE tt.id = NEW.tournament_team_id
+        FOR NO KEY UPDATE;
+
     -- draft_tournament_free_agent_teams builds pickup teams out of players who
     -- never invited each other, so the invite redirect below would turn every
     -- generated roster row into an invitation nobody sent and leave the teams

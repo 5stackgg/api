@@ -297,6 +297,52 @@ BEGIN
         RETURN NULL;
     END IF;
 
+    SELECT fa.checked_in_at INTO _checked_in_at
+    FROM tournament_free_agents fa
+    WHERE fa.tournament_id = NEW.tournament_id
+      AND fa.player_steam_id = NEW.owner_steam_id
+      AND fa.status IN ('registered', 'waitlisted');
+
+    IF FOUND THEN
+        SELECT * INTO _tournament FROM tournaments t WHERE t.id = NEW.tournament_id;
+
+        -- The room is counted under this entry's row lock, held since the
+        -- owner was written, and tbi_tournament_team_roster makes every other
+        -- roster insert wait for it.
+        IF _tournament.status NOT IN ('Finished', 'Cancelled', 'CancelledMinTeams')
+           AND player_meets_tournament_requirements(NEW.tournament_id, NEW.owner_steam_id)
+           AND (
+               SELECT COUNT(*)
+               FROM tournament_team_roster ttr
+               WHERE ttr.tournament_team_id = NEW.id
+           ) < tournament_max_players_per_lineup(_tournament) THEN
+            -- The system path the draft and the promotion mark:
+            -- tbi_tournament_team_roster would otherwise read a session that
+            -- an internal transfer may not carry. Their pool check-in carries
+            -- over, as it does for a promotion.
+            PERFORM set_config('fivestack.free_agent_draft', 'true', true);
+
+            -- Already on a roster in this tournament is the conflict, and
+            -- waiting it out here rather than checking first is what lets a
+            -- join in flight finish instead of failing this transfer.
+            INSERT INTO tournament_team_roster (tournament_team_id, player_steam_id, tournament_id, role, checked_in_at)
+            VALUES (
+                NEW.id,
+                NEW.owner_steam_id,
+                NEW.tournament_id,
+                CASE WHEN NEW.team_id IS NULL THEN 'Admin' ELSE 'Member' END,
+                _checked_in_at
+            )
+            ON CONFLICT (player_steam_id, tournament_id) DO NOTHING;
+
+            PERFORM set_config('fivestack.free_agent_draft', 'false', true);
+        END IF;
+    END IF;
+
+    -- After the roster row, never before: every roster insert takes the
+    -- roster key first and this lock in tai_tournament_team_roster_free_agents,
+    -- so the other order deadlocks against a new owner who is joining a
+    -- roster at the same moment.
     PERFORM pg_advisory_xact_lock(
         hashtext('tournament_entry'),
         hashtext(NEW.tournament_id::text || ':' || NEW.owner_steam_id::text)
@@ -305,46 +351,7 @@ BEGIN
     DELETE FROM tournament_free_agents fa
     WHERE fa.tournament_id = NEW.tournament_id
       AND fa.player_steam_id = NEW.owner_steam_id
-      AND fa.status IN ('registered', 'waitlisted')
-    RETURNING fa.checked_in_at INTO _checked_in_at;
-
-    IF NOT FOUND THEN
-        RETURN NULL;
-    END IF;
-
-    SELECT * INTO _tournament FROM tournaments t WHERE t.id = NEW.tournament_id;
-
-    IF _tournament.status IN ('Finished', 'Cancelled', 'CancelledMinTeams')
-       OR NOT player_meets_tournament_requirements(NEW.tournament_id, NEW.owner_steam_id)
-       OR EXISTS (
-           SELECT 1
-           FROM tournament_team_roster ttr
-           WHERE ttr.tournament_id = NEW.tournament_id
-             AND ttr.player_steam_id = NEW.owner_steam_id
-       )
-       OR (
-           SELECT COUNT(*)
-           FROM tournament_team_roster ttr
-           WHERE ttr.tournament_team_id = NEW.id
-       ) >= tournament_max_players_per_lineup(_tournament) THEN
-        RETURN NULL;
-    END IF;
-
-    -- The system path the draft and the promotion mark: tbi_tournament_team_roster
-    -- would otherwise read a session that an internal transfer may not carry.
-    -- Their pool check-in carries over, as it does for a promotion.
-    PERFORM set_config('fivestack.free_agent_draft', 'true', true);
-
-    INSERT INTO tournament_team_roster (tournament_team_id, player_steam_id, tournament_id, role, checked_in_at)
-    VALUES (
-        NEW.id,
-        NEW.owner_steam_id,
-        NEW.tournament_id,
-        CASE WHEN NEW.team_id IS NULL THEN 'Admin' ELSE 'Member' END,
-        _checked_in_at
-    );
-
-    PERFORM set_config('fivestack.free_agent_draft', 'false', true);
+      AND fa.status IN ('registered', 'waitlisted');
 
     RETURN NULL;
 END;
