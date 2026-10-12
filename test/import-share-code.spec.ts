@@ -63,6 +63,7 @@ describe("import a Valve match from a pasted share code", () => {
       { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as never,
       resolveQueue as never,
       { isAvailable: () => true } as never,
+      { add: jest.fn(async (): Promise<void> => undefined) } as never,
     );
     return { service, resolveQueue };
   };

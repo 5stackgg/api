@@ -13,8 +13,17 @@ export class PollSteamMatchHistoryForUser extends WorkerHost {
     super();
   }
 
-  async process(job: Job<{ steamId: string }>): Promise<void> {
+  async process(
+    job: Job<{ steamId: string; matchEnd?: boolean; retry?: boolean }>,
+  ): Promise<void> {
     if (!job.data.steamId) {
+      return;
+    }
+    if (job.data.matchEnd) {
+      await this.steamMatchHistory.pollAfterMatchEnd(
+        job.data.steamId,
+        !!job.data.retry,
+      );
       return;
     }
     await this.steamMatchHistory.pollForUser(job.data.steamId);
