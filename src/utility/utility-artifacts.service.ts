@@ -226,7 +226,8 @@ export class UtilityArtifactsService {
   }
 
   // The smoke the plugin recorded, rebuilt by the parser into the row a demo
-  // carries. False when there was nothing to rebuild.
+  // carries. False when there was nothing to rebuild. The log it was rebuilt
+  // from rides along, so a better rebuild needs no new recording.
   public async storeSmokeVoxels(
     lineupId: string,
     capture: UtilitySmokeVoxelCapture,
@@ -237,7 +238,7 @@ export class UtilityArtifactsService {
       return false;
     }
 
-    return await this.storeSmokeVoxelRow(lineupId, voxels);
+    return await this.storeSmokeVoxelRow(lineupId, voxels, capture);
   }
 
   // The smoke the game itself simulated for this lineup, stored as the row
@@ -246,9 +247,12 @@ export class UtilityArtifactsService {
   public async storeSmokeVoxelRow(
     lineupId: string,
     voxels: ParsedSmokeVoxels,
+    capture?: UtilitySmokeVoxelCapture,
   ): Promise<boolean> {
     const key = UtilityArtifactsService.smokeVoxelsKey(lineupId, Date.now());
-    const body = Buffer.from(JSON.stringify(voxels));
+    const body = Buffer.from(
+      JSON.stringify(capture ? { ...voxels, capture } : voxels),
+    );
 
     try {
       await this.s3.put(key, body, "application/json");

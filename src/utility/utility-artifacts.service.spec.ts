@@ -72,7 +72,7 @@ describe("UtilityArtifactsService smoke voxels", () => {
     ).toBe(true);
   });
 
-  it("stores the parser's row verbatim as json and points the lineup at it", async () => {
+  it("stores the parser's row and the log it came from as json and points the lineup at it", async () => {
     await expect(service.storeSmokeVoxels(LINEUP, CAPTURE)).resolves.toBe(true);
 
     expect(parser.smokeVoxels).toHaveBeenCalledWith(CAPTURE);
@@ -81,7 +81,7 @@ describe("UtilityArtifactsService smoke voxels", () => {
     expect(key).toMatch(
       new RegExp(`^clips/utility/${LINEUP}\\.smoke\\.\\d+\\.json$`),
     );
-    expect(JSON.parse(body.toString())).toEqual(ROW);
+    expect(JSON.parse(body.toString())).toEqual({ ...ROW, capture: CAPTURE });
     expect(contentType).toBe("application/json");
 
     const [sql, bindings] = postgres.query.mock.calls[0];
