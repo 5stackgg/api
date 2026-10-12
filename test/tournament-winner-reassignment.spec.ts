@@ -34,6 +34,7 @@ describe("tournament winner reassignment (SQL-driven)", () => {
     await postgres.query("DELETE FROM tournaments");
     await postgres.query("DELETE FROM match_options");
     await postgres.query("DELETE FROM teams");
+    await postgres.query("DELETE FROM player_sanctions");
     await postgres.query("DELETE FROM players");
   });
 
@@ -270,6 +271,40 @@ describe("tournament winner reassignment (SQL-driven)", () => {
         discord_id: null,
       },
     ]);
+  });
+
+  it("refuses a reassignment that would seat the incoming team short of the minimum", async () => {
+    const { semis, final } = await semisPlayed();
+    const [finalMatch] = await postgres.query<
+      Array<{ lineup_1_id: string; lineup_2_id: string }>
+    >("SELECT lineup_1_id, lineup_2_id FROM matches WHERE id = $1", [
+      final!.match_id,
+    ]);
+    const before = [
+      await lineupSteamIds(finalMatch.lineup_1_id),
+      await lineupSteamIds(finalMatch.lineup_2_id),
+    ];
+    const [semiRow] = await postgres.query<
+      Array<{ tournament_team_id_2: string }>
+    >("SELECT tournament_team_id_2 FROM tournament_brackets WHERE id = $1", [
+      semis[0].id,
+    ]);
+    const [, banned] = await rosterOfTournamentTeam(
+      semiRow.tournament_team_id_2,
+    );
+    await postgres.query(
+      "INSERT INTO player_sanctions (player_steam_id, type) VALUES ($1, 'ban')",
+      [banned],
+    );
+
+    await expect(
+      tfx.winMatch(semis[0].match_id!, "lineup_2_id"),
+    ).rejects.toThrow(/minimum lineup/i);
+
+    expect([
+      await lineupSteamIds(finalMatch.lineup_1_id),
+      await lineupSteamIds(finalMatch.lineup_2_id),
+    ]).toEqual(before);
   });
 
   it("does not trip the minimum-player guard while swapping the roster", async () => {

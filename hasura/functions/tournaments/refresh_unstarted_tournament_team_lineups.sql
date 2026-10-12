@@ -1,3 +1,5 @@
+DROP FUNCTION IF EXISTS public.refresh_unstarted_tournament_team_lineups(uuid);
+
 CREATE OR REPLACE FUNCTION public.refresh_unstarted_tournament_team_lineups(
     _tournament_team_id uuid,
     _follow_captain boolean
@@ -35,6 +37,7 @@ BEGIN
         WHERE ts.tournament_id = _tournament_id
           AND _tournament_team_id IN (tb.tournament_team_id_1, tb.tournament_team_id_2)
           AND m.status IN ('Scheduled', 'WaitingForCheckIn')
+        ORDER BY m.id
         FOR SHARE OF m
     LOOP
         SELECT * INTO _match

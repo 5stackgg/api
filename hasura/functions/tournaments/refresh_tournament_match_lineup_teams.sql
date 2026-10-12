@@ -1,12 +1,15 @@
--- A player who left the roster always leaves the lineup, even when the team can
--- no longer field the minimum: the deletes run under
--- fivestack.tournament_lineup_refresh, which tbid_match_lineup_players lets past
--- its minimum guard, leaving the same short lineup schedule_tournament_match
--- would seat from that roster.
+DROP FUNCTION IF EXISTS public.refresh_tournament_match_lineup(public.matches, uuid, uuid);
+
+-- Rows are re-seated IN PLACE: when a lineup's minimum equals its maximum
+-- (Duel, or substitutes off) neither delete-then-insert nor insert-then-delete
+-- gets past the guards on match_lineup_players. A re-seated row is reset to
+-- what an insert would give the new player, and parties are assigned here
+-- because tai_match_lineup_players_parties only fires on INSERT.
 --
--- A banned player is never newly seated (tbid_match_lineup_players refuses,
--- which would fail the roster write that caused the refresh), but one who is
--- already seated keeps the seat: a ban is not a roster change.
+-- A banned player is never newly seated (tbid_match_lineup_players refuses),
+-- but one who is already seated keeps the seat: a ban is not a roster change.
+-- A player already seated on the other side of the match (an organizer's
+-- stand-in) is not taken from there.
 --
 -- The lineup captain only moves when they left the lineup or when the
 -- tournament captain was explicitly changed (_follow_captain), so a captain
@@ -22,8 +25,12 @@ AS $$
 DECLARE
     _captain_steam_id bigint;
     _lineup_captain bigint;
+    _seated int;
+    _min_players int;
     _desired bigint[];
+    _vacated uuid[];
     _incoming bigint[];
+    _index int;
 BEGIN
     SELECT tt.captain_steam_id
     INTO _captain_steam_id
@@ -70,9 +77,38 @@ BEGIN
                     AND seated.steam_id = ttr.player_steam_id
               )
           )
+          AND NOT EXISTS (
+              SELECT 1
+              FROM match_lineup_players elsewhere
+              WHERE elsewhere.match_lineup_id IN (_match.lineup_1_id, _match.lineup_2_id)
+                AND elsewhere.match_lineup_id <> _match_lineup_id
+                AND elsewhere.steam_id = ttr.player_steam_id
+          )
         ORDER BY ord
         LIMIT match_max_players_per_lineup(_match)
     ) ranked;
+
+    SELECT COUNT(*)
+    INTO _seated
+    FROM match_lineup_players mlp
+    WHERE mlp.match_lineup_id = _match_lineup_id;
+
+    _min_players := match_min_players_per_lineup(_match);
+
+    -- tbd_tournament_team_roster refuses the removals that would get here; this
+    -- covers the rest (a reassignment into a team with a banned member), and
+    -- holds for the "admin" role that tbid_match_lineup_players waves through.
+    IF cardinality(_desired) < _min_players AND cardinality(_desired) < _seated THEN
+        RAISE EXCEPTION USING
+            ERRCODE = '22000',
+            MESSAGE = 'The team cannot field the minimum lineup of ' || _min_players || ' players for its next match';
+    END IF;
+
+    SELECT COALESCE(array_agg(mlp.id ORDER BY mlp.steam_id NULLS LAST, mlp.id), ARRAY[]::uuid[])
+    INTO _vacated
+    FROM match_lineup_players mlp
+    WHERE mlp.match_lineup_id = _match_lineup_id
+      AND NOT COALESCE(mlp.steam_id = ANY(_desired), false);
 
     SELECT COALESCE(array_agg(d.steam_id ORDER BY d.ord), ARRAY[]::bigint[])
     INTO _incoming
@@ -84,25 +120,34 @@ BEGIN
           AND mlp.steam_id = d.steam_id
     );
 
-    PERFORM set_config('fivestack.tournament_lineup_refresh', 'true', true);
+    FOR _index IN 1..LEAST(cardinality(_vacated), cardinality(_incoming)) LOOP
+        UPDATE match_lineup_players
+        SET steam_id = _incoming[_index],
+            discord_id = NULL,
+            placeholder_name = NULL,
+            captain = false,
+            checked_in = false,
+            is_connected = false,
+            party_id = NULL,
+            party_source = NULL
+        WHERE id = _vacated[_index];
+    END LOOP;
 
-    DELETE FROM match_lineup_players
-    WHERE match_lineup_id = _match_lineup_id
-      AND NOT COALESCE(steam_id = ANY(_desired), false);
+    IF LEAST(cardinality(_vacated), cardinality(_incoming)) > 0 THEN
+        PERFORM assign_lobby_parties(_match.id);
+    END IF;
 
-    -- tournament_roster_pkey keeps a player on one team, so a seat on the other
-    -- side of this match is stale and would otherwise leave them on both.
-    DELETE FROM match_lineup_players
-    WHERE match_lineup_id IN (_match.lineup_1_id, _match.lineup_2_id)
-      AND match_lineup_id <> _match_lineup_id
-      AND steam_id = ANY(_incoming);
+    IF cardinality(_incoming) > cardinality(_vacated) THEN
+        INSERT INTO match_lineup_players (match_lineup_id, steam_id)
+        SELECT _match_lineup_id, d.steam_id
+        FROM unnest(_incoming[cardinality(_vacated) + 1 :]) WITH ORDINALITY AS d(steam_id, ord)
+        ORDER BY d.ord;
+    END IF;
 
-    PERFORM set_config('fivestack.tournament_lineup_refresh', 'false', true);
-
-    INSERT INTO match_lineup_players (match_lineup_id, steam_id)
-    SELECT _match_lineup_id, d.steam_id
-    FROM unnest(_incoming) WITH ORDINALITY AS d(steam_id, ord)
-    ORDER BY d.ord;
+    IF cardinality(_vacated) > cardinality(_incoming) THEN
+        DELETE FROM match_lineup_players
+        WHERE id = ANY(_vacated[cardinality(_incoming) + 1 :]);
+    END IF;
 
     IF _captain_steam_id = ANY(_desired)
        AND (_follow_captain OR NOT COALESCE(_lineup_captain = ANY(_desired), false)) THEN

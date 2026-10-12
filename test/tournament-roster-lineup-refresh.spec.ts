@@ -1,3 +1,5 @@
+import { readFileSync } from "fs";
+import { join } from "path";
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { Fixtures } from "./utils/fixtures";
 import {
@@ -355,7 +357,7 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
     expect(await seatedSteamIds(cup.lineup1)).not.toContain(banned);
   });
 
-  it("drops a removed player even when a banned teammate leaves the team short of seatable players", async () => {
+  it("refuses a removal that leaves fewer unbanned players than the minimum", async () => {
     const cup = await drawnCupAt("Scheduled");
     const [banned, removed] = (await roster(cup.tt1)).filter(
       (steamId) => steamId !== cup.team1.owner,
@@ -364,39 +366,79 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
       "INSERT INTO player_sanctions (player_steam_id, type) VALUES ($1, 'ban')",
       [banned],
     );
+    const before = await seatedSteamIds(cup.lineup1);
 
-    await removeFromRoster(cup, removed, {
-      actor: cup.team1.owner,
-      role: "user",
-    });
+    await expect(
+      removeFromRoster(cup, removed, {
+        actor: cup.team1.owner,
+        role: "user",
+      }),
+    ).rejects.toThrow(/minimum lineup/i);
 
-    const lineup = await seatedSteamIds(cup.lineup1);
-    expect(lineup).not.toContain(removed);
-    expect(lineup).toContain(banned);
-    expect(lineup).toEqual(await roster(cup.tt1));
+    expect(await roster(cup.tt1)).toContain(removed);
+    expect(await seatedSteamIds(cup.lineup1)).toEqual(before);
   });
 
-  describe("held in CheckInReview, where the roster lock does not apply", () => {
+  it("a banned player the organizer adds does not let the team drop a seated one", async () => {
+    const cup = await drawnCupAt("WaitingForCheckIn", 4);
+    const banned = await fx.player();
+    await postgres.query(
+      "INSERT INTO player_sanctions (player_steam_id, type) VALUES ($1, 'ban')",
+      [banned],
+    );
+    await addToRoster(cup, banned);
+    const removed = await nonCaptain(cup);
+    const before = await seatedSteamIds(cup.lineup1);
+
+    await expect(
+      removeFromRoster(cup, removed, {
+        actor: cup.organizer,
+        role: "tournament_organizer",
+      }),
+    ).rejects.toThrow(/minimum lineup/i);
+
+    expect(await seatedSteamIds(cup.lineup1)).toEqual(before);
+  });
+
+  // Re-admitting a team during CheckInReview draws round 1 before the
+  // registration closes, so the roster lock follows the match, not the status.
+  describe("held in CheckInReview with round 1 drawn", () => {
     it.each(["user", "tournament_organizer", "administrator"])(
-      "drops a removed player below the minimum when a %s removes them",
+      "refuses a %s removing a player the lineup cannot spare",
       async (role) => {
         const cup = await drawnCup(4, { review: true });
         expect(await matchStatus(cup.matchId)).toBe("Scheduled");
         const removed = await nonCaptain(cup);
 
-        await removeFromRoster(cup, removed, {
-          actor: await actorFor(cup, role),
-          role,
-        });
+        await expect(
+          removeFromRoster(cup, removed, {
+            actor: await actorFor(cup, role),
+            role,
+          }),
+        ).rejects.toThrow(/minimum lineup/i);
 
         const lineup = await seatedSteamIds(cup.lineup1);
-        expect(lineup).not.toContain(removed);
-        expect(lineup).toHaveLength(4);
+        expect(lineup).toContain(removed);
+        expect(lineup).toHaveLength(5);
       },
     );
 
+    it("drops a player the lineup can spare", async () => {
+      const cup = await drawnCup(5, { review: true });
+      const removed = await nonCaptain(cup);
+
+      await removeFromRoster(cup, removed, {
+        actor: cup.team1.owner,
+        role: "user",
+      });
+
+      const lineup = await seatedSteamIds(cup.lineup1);
+      expect(lineup).not.toContain(removed);
+      expect(lineup).toEqual(await roster(cup.tt1));
+    });
+
     it("a player who moves to the opponent sits on their side only", async () => {
-      const cup = await drawnCup(4, { review: true });
+      const cup = await drawnCup(5, { review: true });
       const mover = await nonCaptain(cup);
 
       await removeFromRoster(cup, mover, {
@@ -414,20 +456,57 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
     });
   });
 
-  it("a player seated by hand on the other side moves to the side whose roster they join", async () => {
+  it("a stand-in placed by hand on the other side keeps that seat when they join this roster", async () => {
     const cup = await drawnCupAt("WaitingForCheckIn");
-    const outsider = await fx.player();
+    const standIn = await fx.player();
     await runAsUser(postgres, cup.organizer, "admin", (query) =>
       query(
         "INSERT INTO match_lineup_players (match_lineup_id, steam_id) VALUES ($1, $2)",
-        [cup.lineup1, outsider],
+        [cup.lineup2, standIn],
       ),
     );
+    const opponent = await seated(cup.lineup2);
+    const own = await seated(cup.lineup1);
 
-    await addToRoster(cup, outsider, { team: cup.tt2 });
+    await addToRoster(cup, standIn, { actor: cup.team1.owner, role: "user" });
 
-    expect(await seatedSteamIds(cup.lineup1)).not.toContain(outsider);
-    expect(await seatedSteamIds(cup.lineup2)).toContain(outsider);
+    expect(await roster(cup.tt1)).toContain(standIn);
+    expect(await seated(cup.lineup2)).toEqual(opponent);
+    expect(await seated(cup.lineup1)).toEqual(own);
+  });
+
+  it("re-applying the refresh functions drops the overloads an earlier version created", async () => {
+    await postgres.query(
+      `CREATE OR REPLACE FUNCTION public.refresh_tournament_match_lineup(public.matches, uuid, uuid)
+       RETURNS void LANGUAGE plpgsql AS $$ BEGIN END $$`,
+    );
+    await postgres.query(
+      `CREATE OR REPLACE FUNCTION public.refresh_unstarted_tournament_team_lineups(uuid)
+       RETURNS void LANGUAGE plpgsql AS $$ BEGIN END $$`,
+    );
+
+    for (const file of [
+      "refresh_tournament_match_lineup_teams.sql",
+      "refresh_unstarted_tournament_team_lineups.sql",
+    ]) {
+      await postgres.query(
+        readFileSync(
+          join(process.cwd(), "hasura", "functions", "tournaments", file),
+          "utf8",
+        ),
+      );
+    }
+
+    expect(
+      await postgres.query(
+        `SELECT proname::text, pronargs::int FROM pg_proc
+         WHERE proname IN ('refresh_tournament_match_lineup', 'refresh_unstarted_tournament_team_lineups')
+         ORDER BY proname, pronargs`,
+      ),
+    ).toEqual([
+      { proname: "refresh_tournament_match_lineup", pronargs: 4 },
+      { proname: "refresh_unstarted_tournament_team_lineups", pronargs: 2 },
+    ]);
   });
 
   it("leaves a match alone when it starts while the roster edit waits on it", async () => {
