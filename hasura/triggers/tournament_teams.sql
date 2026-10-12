@@ -268,3 +268,20 @@ $$;
 
 DROP TRIGGER IF EXISTS tbu_tournament_team ON public.tournament_teams;
 CREATE TRIGGER tbu_tournament_team BEFORE UPDATE ON public.tournament_teams FOR EACH ROW EXECUTE FUNCTION public.tbu_tournament_team();
+
+CREATE OR REPLACE FUNCTION public.tau_tournament_team_captain() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    PERFORM refresh_unstarted_tournament_team_lineups(NEW.id);
+
+    RETURN NULL;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tau_tournament_team_captain ON public.tournament_teams;
+CREATE TRIGGER tau_tournament_team_captain
+    AFTER UPDATE OF captain_steam_id ON public.tournament_teams
+    FOR EACH ROW
+    WHEN (NEW.captain_steam_id IS DISTINCT FROM OLD.captain_steam_id)
+    EXECUTE FUNCTION public.tau_tournament_team_captain();

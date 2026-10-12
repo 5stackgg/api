@@ -160,6 +160,45 @@ describe("tournament winner reassignment (SQL-driven)", () => {
     }
   });
 
+  it("does not carry the replaced team's check-ins over to the team seated in its place", async () => {
+    const { semis, final } = await semisPlayed();
+    const [finalMatch] = await postgres.query<
+      Array<{ lineup_1_id: string; lineup_2_id: string }>
+    >("SELECT lineup_1_id, lineup_2_id FROM matches WHERE id = $1", [
+      final!.match_id,
+    ]);
+    await postgres.query(
+      `UPDATE match_lineup_players SET checked_in = true
+        WHERE match_lineup_id IN ($1, $2)`,
+      [finalMatch.lineup_1_id, finalMatch.lineup_2_id],
+    );
+
+    const [semiRow] = await postgres.query<
+      Array<{ tournament_team_id_2: string }>
+    >("SELECT tournament_team_id_2 FROM tournament_brackets WHERE id = $1", [
+      semis[0].id,
+    ]);
+    const incoming = await rosterOfTournamentTeam(semiRow.tournament_team_id_2);
+
+    await tfx.winMatch(semis[0].match_id!, "lineup_2_id");
+
+    const rows = await postgres.query<
+      Array<{ steam_id: string; checked_in: boolean }>
+    >(
+      `SELECT steam_id::text, checked_in FROM match_lineup_players
+        WHERE match_lineup_id IN ($1, $2)`,
+      [finalMatch.lineup_1_id, finalMatch.lineup_2_id],
+    );
+    const incomingRows = rows.filter((row) => incoming.includes(row.steam_id));
+    expect(incomingRows).toHaveLength(incoming.length);
+    expect(incomingRows.every((row) => !row.checked_in)).toBe(true);
+    expect(
+      rows
+        .filter((row) => !incoming.includes(row.steam_id))
+        .every((row) => row.checked_in),
+    ).toBe(true);
+  });
+
   it("does not trip the minimum-player guard while swapping the roster", async () => {
     const { semis, final } = await semisPlayed();
 
