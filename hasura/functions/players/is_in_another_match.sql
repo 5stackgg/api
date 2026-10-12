@@ -6,7 +6,10 @@ AS $$
     SELECT EXISTS (
         SELECT 1
         FROM get_player_matches(player) AS pm
-        WHERE (
+        -- A utility practice server is a Live match row seating its host, and
+        -- the host can leave it whenever they like.
+        WHERE pm.source <> 'practice'
+        AND (
             pm.status IN ('Veto', 'WaitingForCheckIn', 'WaitingForServer')
             OR (pm.status = 'Live' AND NOT match_series_decided(pm.id))
             -- A scheduled match only ties the player up once it's within an hour

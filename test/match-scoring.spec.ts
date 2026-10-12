@@ -468,6 +468,20 @@ describe("match scoring from rounds (SQL-driven)", () => {
         }
       });
 
+      it("leaves a player free to join a lobby while their utility practice server runs", async () => {
+        const match = await createLiveMatch(1);
+        const player = await fx.lineupPlayer(match.lineup_1_id);
+        await setMapStatus(match.mapIds[0], "Live");
+        expect(await inAnotherMatch(player)).toBe(true);
+
+        await postgres.query(
+          "UPDATE matches SET source = 'practice' WHERE id = $1",
+          [match.id],
+        );
+
+        expect(await inAnotherMatch(player)).toBe(false);
+      });
+
       it("keeps the players while the series still has maps to play", async () => {
         const match = await createLiveMatch(3);
         const player = await fx.lineupPlayer(match.lineup_1_id);
