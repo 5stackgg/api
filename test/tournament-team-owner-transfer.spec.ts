@@ -35,7 +35,7 @@ describe("tournament entry owner follows a team ownership transfer (SQL-driven)"
     await postgres.query("DELETE FROM players");
   });
 
-  const openTournament = async () => {
+  const openTournament = async ({ registrationType = "teams" } = {}) => {
     const organizer = await fx.player();
     const [options] = await postgres.query<Array<{ id: string }>>(
       `INSERT INTO match_options (mr, best_of, type, map_pool_id, map_veto, region_veto, regions)
@@ -43,9 +43,9 @@ describe("tournament entry owner follows a team ownership transfer (SQL-driven)"
        FROM map_pools WHERE type = 'Wingman' AND seed = true RETURNING id`,
     );
     const [tournament] = await postgres.query<Array<{ id: string }>>(
-      `INSERT INTO tournaments (name, start, organizer_steam_id, match_options_id, status)
-       VALUES ($1, now() + interval '1 day', $2, $3, 'Setup') RETURNING id`,
-      [fx.nextName("cup"), organizer, options.id],
+      `INSERT INTO tournaments (name, start, organizer_steam_id, match_options_id, status, registration_type)
+       VALUES ($1, now() + interval '1 day', $2, $3, 'Setup', $4) RETURNING id`,
+      [fx.nextName("cup"), organizer, options.id, registrationType],
     );
     await postgres.query(
       `INSERT INTO tournament_stages (tournament_id, type, "order", min_teams, max_teams)
@@ -150,6 +150,73 @@ describe("tournament entry owner follows a team ownership transfer (SQL-driven)"
     expect((await entry(t.id, team.id)).owner_steam_id).toBe(heir);
     expect((await entry(t.id, heirsTeam.id)).owner_steam_id).toBe(heir);
   });
+
+  // One entry per player: owning a team is being in the tournament, so the new
+  // owner cannot also wait in its free-agent pool, where the draft and the
+  // waitlist promotion would skip them forever.
+  it.each(["registered", "waitlisted"])(
+    "takes a %s new owner out of the tournament's free-agent pool",
+    async (status) => {
+      const t = await openTournament({ registrationType: "both" });
+      const team = await fx.team(2);
+      const [heir, starter] = (
+        await postgres.query<Array<{ player_steam_id: string }>>(
+          `SELECT player_steam_id::text FROM team_roster
+           WHERE team_id = $1 AND player_steam_id <> $2
+           ORDER BY player_steam_id`,
+          [team.id, team.owner],
+        )
+      ).map((row) => row.player_steam_id);
+      await runAsUser(postgres, team.owner, "user", async (query) => {
+        const [registered] = (await query(
+          `INSERT INTO tournament_teams (tournament_id, team_id, name)
+           SELECT $1, id, name FROM teams WHERE id = $2 RETURNING id`,
+          [t.id, team.id],
+        )) as Array<{ id: string }>;
+        for (const player of [team.owner, starter]) {
+          await query(
+            `INSERT INTO tournament_team_roster (tournament_team_id, player_steam_id, tournament_id)
+             VALUES ($1, $2, $3)`,
+            [registered.id, player, t.id],
+          );
+        }
+      });
+      const partner = await fx.player();
+      const [{ party_id: partyId }] = await postgres.query<
+        Array<{ party_id: string }>
+      >("SELECT gen_random_uuid()::text AS party_id");
+      for (const player of [heir, partner]) {
+        await postgres.query(
+          `INSERT INTO tournament_free_agents (tournament_id, player_steam_id, party_id)
+           VALUES ($1, $2, $3)`,
+          [t.id, player, partyId],
+        );
+      }
+      await postgres.query(
+        `UPDATE tournament_free_agents SET status = $3
+         WHERE tournament_id = $1 AND player_steam_id = $2`,
+        [t.id, heir, status],
+      );
+
+      await transfer(team.id, team.owner, heir);
+
+      expect((await entry(t.id, team.id)).owner_steam_id).toBe(heir);
+      const pool = await postgres.query<
+        Array<{
+          player_steam_id: string;
+          status: string;
+          party_id: string | null;
+        }>
+      >(
+        `SELECT player_steam_id::text, status, party_id::text
+         FROM tournament_free_agents WHERE tournament_id = $1`,
+        [t.id],
+      );
+      expect(pool).toEqual([
+        { player_steam_id: partner, status: "registered", party_id: null },
+      ]);
+    },
+  );
 
   it.each([
     ["Finished", "administrator"],

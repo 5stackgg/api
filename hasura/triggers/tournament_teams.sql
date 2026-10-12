@@ -268,3 +268,36 @@ $$;
 
 DROP TRIGGER IF EXISTS tbu_tournament_team ON public.tournament_teams;
 CREATE TRIGGER tbu_tournament_team BEFORE UPDATE ON public.tournament_teams FOR EACH ROW EXECUTE FUNCTION public.tbu_tournament_team();
+
+-- One entry per player: owning a team is being in the tournament, so a new
+-- owner (a team ownership transfer) leaves the free-agent pool. The draft and
+-- the waitlist promotion skip owners, so a pool row left behind would wait for
+-- a place that never comes. A drafted team's owner is already drafted onto it.
+CREATE OR REPLACE FUNCTION public.tau_tournament_team_owner() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NEW.is_drafted THEN
+        RETURN NULL;
+    END IF;
+
+    PERFORM pg_advisory_xact_lock(
+        hashtext('tournament_entry'),
+        hashtext(NEW.tournament_id::text || ':' || NEW.owner_steam_id::text)
+    );
+
+    DELETE FROM tournament_free_agents fa
+    WHERE fa.tournament_id = NEW.tournament_id
+      AND fa.player_steam_id = NEW.owner_steam_id
+      AND fa.status IN ('registered', 'waitlisted');
+
+    RETURN NULL;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tau_tournament_team_owner ON public.tournament_teams;
+CREATE TRIGGER tau_tournament_team_owner
+    AFTER UPDATE OF owner_steam_id ON public.tournament_teams
+    FOR EACH ROW
+    WHEN (NEW.owner_steam_id IS DISTINCT FROM OLD.owner_steam_id)
+    EXECUTE FUNCTION public.tau_tournament_team_owner();
