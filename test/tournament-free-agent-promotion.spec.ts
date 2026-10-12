@@ -296,31 +296,43 @@ describe("free agent waitlist promotion (SQL-driven)", () => {
       expect(await teamOf(t.id, t.players[9])).toBe(team);
     });
 
-    // tournament_teams is UNIQUE (owner_steam_id, tournament_id) and every
-    // pickup team takes one of its own players as owner -- the collision that
-    // hard-stalled the draft once already.
+    // Owning a team is being in the tournament, with or without a roster row.
     it("skips a waitlisted agent who owns a team in this tournament", async () => {
       const t = await draftedPool();
 
-      // Registering a team takes them out of the pool, so ownership is written
-      // past that trigger -- the state two racing requests can still leave
-      // behind.
+      // Taking a team over takes them out of the pool, so the ownership is
+      // written with that trigger off -- the state two racing requests can
+      // still leave behind.
       const outsider = await fx.player();
       const [owned] = await postgres.query<Array<{ id: string }>>(
         `INSERT INTO tournament_teams (tournament_id, name, owner_steam_id, captain_steam_id)
          VALUES ($1, 'Owned', $2, $2) RETURNING id`,
         [t.id, outsider],
       );
-      await postgres.query(
-        "UPDATE tournament_teams SET owner_steam_id = $2 WHERE id = $1",
-        [owned.id, t.players[8]],
-      );
+      await runAsUser(postgres, t.organizer, "admin", async (query) => {
+        await query(
+          "ALTER TABLE tournament_teams DISABLE TRIGGER tau_tournament_team_owner",
+        );
+        await query(
+          "UPDATE tournament_teams SET owner_steam_id = $2 WHERE id = $1",
+          [owned.id, t.players[8]],
+        );
+        await query(
+          "ALTER TABLE tournament_teams ENABLE TRIGGER tau_tournament_team_owner",
+        );
+      });
+      const waiting = async () =>
+        (await agents(t.id)).find(
+          (agent) => agent.player_steam_id === t.players[8],
+        )?.status;
+      expect(await waiting()).toBe("waitlisted");
 
       const team = await teamOf(t.id, t.players[0]);
       await removeFromRoster(t.id, t.players[0]);
 
       expect(await teamOf(t.id, t.players[9])).toBe(team);
-      expect(await teamOf(t.id, t.players[8])).toBe(owned.id);
+      expect(await teamOf(t.id, t.players[8])).toBeNull();
+      expect(await waiting()).toBe("waitlisted");
     });
 
     it("skips a waitlisted agent who no longer meets the entry requirements", async () => {

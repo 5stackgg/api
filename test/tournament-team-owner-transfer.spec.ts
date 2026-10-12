@@ -155,8 +155,6 @@ describe("tournament entry owner follows a team ownership transfer (SQL-driven)"
     expect((await entry(t.id, heirsTeam.id)).owner_steam_id).toBe(heir);
   });
 
-  // A Wingman entry of the owner and one starter; the owner's third teammate,
-  // the heir, is left off its roster.
   const entryWithHeir = async ({ substitutes = 0 } = {}) => {
     const t = await openTournament({ registrationType: "both", substitutes });
     const team = await fx.team(2);
@@ -208,7 +206,6 @@ describe("tournament entry owner follows a team ownership transfer (SQL-driven)"
     );
   };
 
-  // The heir waits in the pool beside a bystander.
   const entryWithPooledHeir = async (
     status: string,
     { substitutes = 0 } = {},

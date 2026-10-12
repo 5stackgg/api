@@ -1195,9 +1195,9 @@ describe("free agent flow (SQL-driven)", () => {
       );
     };
 
-    // assign_seeds_to_teams keeps a seed it finds and only fills the gaps, and
-    // a smaller bracket drops every seed past its size -- with the team on it.
-    it("re-seeds the whole field after the pickup teams are undone", async () => {
+    // A seed kept past the size of the next field has no bracket slot, so the
+    // gaps the pickup teams leave are closed up when they go.
+    it("closes up the registered teams' seeds when the pickup teams are undone, and draws the whole field", async () => {
       const t = await openTournament({
         registrationType: "both",
         maxTeams: 16,
