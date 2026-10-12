@@ -1,4 +1,5 @@
-import { forwardRef, Module } from "@nestjs/common";
+import { forwardRef, Module, OnModuleInit } from "@nestjs/common";
+import { Queue } from "bullmq";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { MatchmakingGateway } from "./matchmaking.gateway";
 import { HasuraModule } from "src/hasura/hasura.module";
@@ -9,13 +10,14 @@ import { MatchmakeService } from "./matchmake.service";
 import { MatchmakingLobbyService } from "./matchmaking-lobby.service";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { BullBoardModule } from "@bull-board/nestjs";
-import { BullModule } from "@nestjs/bullmq";
+import { BullModule, InjectQueue } from "@nestjs/bullmq";
 import { getQueuesProcessors } from "src/utilities/QueueProcessors";
 import { MatchmakingQueues } from "./enums/MatchmakingQueues";
 import { CancelMatchMaking } from "./jobs/CancelMatchMaking";
 import { MatchmakingController } from "./matchmaking.controller";
 import { MarkPlayerOffline } from "./jobs/MarkPlayerOffline";
 import { ExpandMatchmaking } from "./jobs/ExpandMatchmaking";
+import { HealStrandedLobbies } from "./jobs/HealStrandedLobbies";
 import { NotificationsModule } from "src/notifications/notifications.module";
 
 @Module({
@@ -41,9 +43,33 @@ import { NotificationsModule } from "src/notifications/notifications.module";
     CancelMatchMaking,
     MarkPlayerOffline,
     ExpandMatchmaking,
+    HealStrandedLobbies,
     ...getQueuesProcessors("Matchmaking"),
     loggerFactory(),
   ],
   controllers: [MatchmakingController],
 })
-export class MatchMaking {}
+export class MatchMaking implements OnModuleInit {
+  constructor(
+    @InjectQueue(MatchmakingQueues.Matchmaking)
+    private readonly queue: Queue,
+  ) {}
+
+  public onModuleInit() {
+    if (process.env.RUN_MIGRATIONS) {
+      return;
+    }
+
+    void this.queue.add(
+      HealStrandedLobbies.name,
+      {},
+      {
+        repeat: {
+          pattern: "* * * * *",
+        },
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    );
+  }
+}

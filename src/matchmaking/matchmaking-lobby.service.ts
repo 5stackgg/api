@@ -215,8 +215,11 @@ export class MatchmakingLobbyService {
 
     await this.removeConfirmationIdFromLobby(lobbyId);
 
-    // notify players in the lobby that they have been removed from the queue
-    for (const player of lobbyDetails.players) {
+    await this.sendRemovedFromQueue(lobbyDetails.players);
+  }
+
+  public async sendRemovedFromQueue(players: Array<{ steam_id: string }>) {
+    for (const player of players) {
       await this.redis.publish(
         "send-message-to-steam-id",
         JSON.stringify({

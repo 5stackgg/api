@@ -53,124 +53,136 @@ export class MatchmakingGateway {
       return;
     }
 
-    const { settings } = await this.hasura.query({
-      settings: {
-        __args: {
-          where: {
-            _or: [
-              {
-                name: {
-                  _eq: "public.matchmaking",
-                },
-              },
-              {
-                name: {
-                  _eq: "public.matchmaking_min_role",
-                },
-              },
-              {
-                name: {
-                  _eq: "public.max_acceptable_latency",
-                },
-              },
-              {
-                name: {
-                  _eq: "public.matchmaking_competitive",
-                },
-              },
-              {
-                name: {
-                  _eq: "public.matchmaking_wingman",
-                },
-              },
-              {
-                name: {
-                  _eq: "public.matchmaking_duel",
-                },
-              },
-              {
-                name: {
-                  _eq: "public.matchmaking_rush",
-                },
-              },
-            ],
-          },
-        },
-        name: true,
-        value: true,
-      },
-    });
-
-    const matchmakingAllowed = settings.find(
-      (setting) =>
-        setting.name === `public.matchmaking_${data.type.toLowerCase()}`,
-    );
-
-    if (matchmakingAllowed?.value === "false") {
-      throw new JoinQueueError("Matchmaking is not allowed");
-    }
-
-    const matchmakingEnabled = settings.find(
-      (setting) => setting.name === "public.matchmaking",
-    );
-
-    if (matchmakingEnabled && matchmakingEnabled.value === "false") {
-      throw new JoinQueueError("Matchmaking is disabled");
-    }
-
-    const matchmakingMinRole = settings.find(
-      (setting) => setting.name === "public.matchmaking_min_role",
-    );
-
-    const maxAcceptableLatency = parseInt(
-      settings.find(
-        (setting) => setting.name === "public.max_acceptable_latency",
-      )?.value || "100",
-    );
-
-    if (
-      matchmakingMinRole &&
-      !isRoleAbove(user.role, matchmakingMinRole.value as e_player_roles_enum)
-    ) {
-      throw new JoinQueueError("You do not have permission to join this queue");
-    }
-
     let lobby: PlayerLobby | undefined;
 
-    const { server_regions } = await this.hasura.query({
-      server_regions: {
-        __args: {
-          where: {
-            status: {
-              _neq: "Disabled",
-            },
-          },
-        },
-        value: true,
-        is_lan: true,
-        status: true,
-      },
-    });
-
-    const { game_server_nodes_aggregate } = await this.hasura.query({
-      game_server_nodes_aggregate: {
-        __args: {
-          where: {
-            enabled: {
-              _eq: true,
-            },
-            status: {
-              _eq: "Online",
-            },
-          },
-        },
-        aggregate: {
-          count: true,
-        },
-      },
-    });
-
     try {
+      const { settings } = await this.hasura.query({
+        settings: {
+          __args: {
+            where: {
+              _or: [
+                {
+                  name: {
+                    _eq: "public.matchmaking",
+                  },
+                },
+                {
+                  name: {
+                    _eq: "public.matchmaking_min_role",
+                  },
+                },
+                {
+                  name: {
+                    _eq: "public.max_acceptable_latency",
+                  },
+                },
+                {
+                  name: {
+                    _eq: "public.matchmaking_competitive",
+                  },
+                },
+                {
+                  name: {
+                    _eq: "public.matchmaking_wingman",
+                  },
+                },
+                {
+                  name: {
+                    _eq: "public.matchmaking_duel",
+                  },
+                },
+                {
+                  name: {
+                    _eq: "public.matchmaking_rush",
+                  },
+                },
+              ],
+            },
+          },
+          name: true,
+          value: true,
+        },
+      });
+
+      const matchmakingAllowed = settings.find(
+        (setting) =>
+          setting.name === `public.matchmaking_${data.type.toLowerCase()}`,
+      );
+
+      if (matchmakingAllowed?.value === "false") {
+        throw new JoinQueueError(
+          "Matchmaking is not allowed",
+          undefined,
+          "queue_disabled",
+        );
+      }
+
+      const matchmakingEnabled = settings.find(
+        (setting) => setting.name === "public.matchmaking",
+      );
+
+      if (matchmakingEnabled && matchmakingEnabled.value === "false") {
+        throw new JoinQueueError(
+          "Matchmaking is disabled",
+          undefined,
+          "matchmaking_disabled",
+        );
+      }
+
+      const matchmakingMinRole = settings.find(
+        (setting) => setting.name === "public.matchmaking_min_role",
+      );
+
+      const maxAcceptableLatency = parseInt(
+        settings.find(
+          (setting) => setting.name === "public.max_acceptable_latency",
+        )?.value || "100",
+      );
+
+      if (
+        matchmakingMinRole &&
+        !isRoleAbove(user.role, matchmakingMinRole.value as e_player_roles_enum)
+      ) {
+        throw new JoinQueueError(
+          "You do not have permission to join this queue",
+          undefined,
+          "role_required",
+        );
+      }
+
+      const { server_regions } = await this.hasura.query({
+        server_regions: {
+          __args: {
+            where: {
+              status: {
+                _neq: "Disabled",
+              },
+            },
+          },
+          value: true,
+          is_lan: true,
+          status: true,
+        },
+      });
+
+      const { game_server_nodes_aggregate } = await this.hasura.query({
+        game_server_nodes_aggregate: {
+          __args: {
+            where: {
+              enabled: {
+                _eq: true,
+              },
+              status: {
+                _eq: "Online",
+              },
+            },
+          },
+          aggregate: {
+            count: true,
+          },
+        },
+      });
+
       const latencyResults = await this.getLatencyResults(client);
 
       let checkLatency = false;
@@ -236,8 +248,11 @@ export class MatchmakingGateway {
         throw new JoinQueueError("Unable to find Player Lobby");
       }
 
+      let locked = false;
       try {
         await this.cache.lock(`matchmaking:verify:${lobby.id}`, async () => {
+          locked = true;
+
           await this.matchmakingLobbyService.verifyLobby(lobby, user, type);
 
           // A second tab or device would otherwise put a lobby that is in a
@@ -267,6 +282,17 @@ export class MatchmakingGateway {
         if (error instanceof JoinQueueError) {
           throw error;
         }
+
+        // Another join of this lobby holds the lock, and the queue state is
+        // its to change.
+        if (!locked) {
+          throw new JoinQueueError(
+            "Your lobby is still joining the queue, try again",
+            undefined,
+            "queue_busy",
+          );
+        }
+
         this.logger.error(`unable to add lobby to queue`, error);
         await this.matchmakingLobbyService.removeLobbyFromQueue(lobby.id);
         await this.matchmakingLobbyService.removeLobbyDetails(lobby.id);
