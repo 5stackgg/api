@@ -12,6 +12,7 @@ DECLARE
     _stage tournament_stages%ROWTYPE;
     _tournament_status text;
     _was_finished boolean;
+    _agreed boolean;
     _match_id uuid;
     _scheduled matches%ROWTYPE;
 BEGIN
@@ -46,13 +47,22 @@ BEGIN
         RAISE EXCEPTION 'the tournament is not running' USING ERRCODE = '22000';
     END IF;
 
+    _agreed := EXISTS (
+        SELECT 1
+        FROM league_scheduling_proposals p
+        WHERE p.tournament_bracket_id = _bracket.id
+          AND p.status = 'Accepted'
+    );
+
     -- Due only when a scheduler would create it now: straight away where the
     -- tournament starts its own matches (a later round-robin round once both
     -- teams are done with the round before, as schedule_next_round_robin_matches
-    -- waits), otherwise by the bracket's time, as
-    -- CheckForScheduledTournamentBrackets picks it up.
+    -- waits), as soon as both sides agreed a time (tau_league_scheduling_proposals),
+    -- otherwise by the bracket's time, as CheckForScheduledTournamentBrackets
+    -- picks it up.
     IF NOT (
-        (
+        _agreed
+        OR (
             should_auto_schedule(_stage.id)
             AND (
                 _stage.type <> 'RoundRobin'
@@ -84,22 +94,47 @@ BEGIN
         RETURNING * INTO _bracket;
     END IF;
 
+    -- Parked as Scheduled like the accepted proposal parks it, so check-in
+    -- still opens near the agreed kickoff rather than now.
+    IF _agreed THEN
+        PERFORM set_config('fivestack.schedule_as_pending', 'true', true);
+    END IF;
+
     _match_id := schedule_tournament_match(_bracket);
+
+    IF _agreed THEN
+        PERFORM set_config('fivestack.schedule_as_pending', 'false', true);
+    END IF;
 
     IF _match_id IS NULL THEN
         RAISE EXCEPTION 'this bracket needs a schedule before its match can be created' USING ERRCODE = '22000';
     END IF;
 
     IF _was_finished THEN
-        -- The unwind deletes every match the slot fed, so only ones nobody has
-        -- started yet may be in the way.
+        -- The unwind deletes every match the slot fed, with no sweep of their
+        -- demos or clips, so only ones that never started may be in the way.
+        -- Canceled is not enough on its own: CancelExpiredMatches cancels a
+        -- live match that stalled, and a reset clears started_at but leaves
+        -- the maps and demos it played.
         IF EXISTS (
             SELECT 1
             FROM preview_tournament_match_reset(_match_id) affected
+            JOIN matches m ON m.id = affected.match_id
             WHERE affected.will_delete_match
-              AND affected.match_status NOT IN ('Scheduled', 'WaitingForCheckIn', 'Canceled')
+              AND (
+                  m.status NOT IN ('Scheduled', 'WaitingForCheckIn', 'Canceled')
+                  OR m.started_at IS NOT NULL
+                  OR EXISTS (
+                      SELECT 1 FROM match_maps mm
+                      WHERE mm.match_id = m.id AND mm.started_at IS NOT NULL
+                  )
+                  OR EXISTS (
+                      SELECT 1 FROM match_map_demos d
+                      WHERE d.match_id = m.id
+                  )
+              )
         ) THEN
-            RAISE EXCEPTION 'a match downstream of this bracket has already started; reset it first' USING ERRCODE = '22000';
+            RAISE EXCEPTION 'a match downstream of this bracket was already played or went live, even if it was canceled since, so this slot can no longer be replayed' USING ERRCODE = '22000';
         END IF;
 
         -- reset_tournament_match also rewrites the match itself and clears

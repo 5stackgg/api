@@ -107,11 +107,11 @@ describe("recreating an orphaned tournament bracket match (SQL-driven)", () => {
   const minutesFromNow = (date: Date | null) =>
     date ? (date.getTime() - Date.now()) / 60_000 : null;
 
-  const launchScheduledByHand = async () => {
+  const launchScheduledByHand = async (schedulingMode = "auto") => {
     const t = await tfx.createTournament(SE4);
     await postgres.query(
-      "UPDATE tournaments SET auto_start = false WHERE id = $1",
-      [t.id],
+      "UPDATE tournaments SET auto_start = false, scheduling_mode = $2 WHERE id = $1",
+      [t.id, schedulingMode],
     );
     await tfx.setStatus(t.id, t.organizer, "RegistrationOpen");
     for (let i = 0; i < 4; i++) {
@@ -156,6 +156,32 @@ describe("recreating an orphaned tournament bracket match (SQL-driven)", () => {
     const matchId = await recreate(semi.id);
 
     expect((await bracket(semi.id)).match_id).toBe(matchId);
+  });
+
+  // An accepted proposal materializes the fixture at once, parked as
+  // Scheduled, so it is on both teams' calendars long before kickoff.
+  it("brings back a negotiated fixture's match as soon as its time was agreed", async () => {
+    const t = await launchScheduledByHand("negotiated");
+    const [semi] = await semis(t.stageIds[0]);
+    const [proposal] = await postgres.query<Array<{ id: string }>>(
+      `INSERT INTO league_scheduling_proposals (tournament_bracket_id, proposed_by_steam_id, proposed_time)
+       VALUES ($1, $2, now() + interval '3 days') RETURNING id`,
+      [semi.id, t.organizer],
+    );
+    await postgres.query(
+      "UPDATE league_scheduling_proposals SET status = 'Accepted' WHERE id = $1",
+      [proposal.id],
+    );
+    const agreed = (await bracket(semi.id)).match_id!;
+    expect((await match(agreed)).status).toBe("Scheduled");
+    await postgres.query("DELETE FROM matches WHERE id = $1", [agreed]);
+
+    const recreated = await match(await recreate(semi.id));
+
+    expect(recreated.status).toBe("Scheduled");
+    expect(minutesFromNow(recreated.scheduled_at)).toBeGreaterThan(
+      3 * 24 * 60 - 5,
+    );
   });
 
   it("replays a won slot and unwinds the final it fed", async () => {
@@ -219,6 +245,50 @@ describe("recreating an orphaned tournament bracket match (SQL-driven)", () => {
       finished: true,
     });
     expect((await match(final.match_id!)).status).toBe("Live");
+  });
+
+  // CancelExpiredMatches cancels a stalled live match, so Canceled alone does
+  // not mean nothing was played; its demos would go with it.
+  it("refuses a won slot whose final went live before it was canceled", async () => {
+    const t = await tfx.launch(SE4, 4);
+    await tfx.playRound(t.stageIds[0], 1);
+    const [semi] = await semis(t.stageIds[0]);
+    const final = await finalOf(t.stageIds[0]);
+    await postgres.query(
+      `INSERT INTO match_maps (match_id, map_id, "order")
+       SELECT $1, id, 1 FROM maps ORDER BY name LIMIT 1`,
+      [final.match_id],
+    );
+    await postgres.query("UPDATE matches SET status = 'Live' WHERE id = $1", [
+      final.match_id,
+    ]);
+    await postgres.query(
+      "UPDATE matches SET status = 'Canceled' WHERE id = $1",
+      [final.match_id],
+    );
+    await postgres.query("DELETE FROM matches WHERE id = $1", [semi.match_id]);
+
+    await expect(recreate(semi.id)).rejects.toThrow(/went live/);
+
+    expect((await match(final.match_id!)).status).toBe("Canceled");
+    expect((await bracket(final.id)).match_id).toBe(final.match_id);
+  });
+
+  it("still clears a final that was canceled before anyone played it", async () => {
+    const t = await tfx.launch(SE4, 4);
+    await tfx.playRound(t.stageIds[0], 1);
+    const [semi] = await semis(t.stageIds[0]);
+    const final = await finalOf(t.stageIds[0]);
+    await postgres.query(
+      "UPDATE matches SET status = 'Canceled' WHERE id = $1",
+      [final.match_id],
+    );
+    await postgres.query("DELETE FROM matches WHERE id = $1", [semi.match_id]);
+
+    await recreate(semi.id);
+
+    expect(await match(final.match_id!)).toBeUndefined();
+    expect((await finalOf(t.stageIds[0])).match_id).toBeNull();
   });
 
   it("refuses a won slot whose downstream match was already played", async () => {
