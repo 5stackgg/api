@@ -16,6 +16,7 @@ describe("ClipsService", () => {
   };
   let batchQueue: { getJobs: jest.Mock; add: jest.Mock };
   let logger: { log: jest.Mock; warn: jest.Mock; error: jest.Mock };
+  let redisManager: { getConnection: jest.Mock };
 
   beforeEach(() => {
     hasura = { query: jest.fn(), mutation: jest.fn() };
@@ -25,6 +26,7 @@ describe("ClipsService", () => {
     };
     batchQueue = { getJobs: jest.fn().mockResolvedValue([]), add: jest.fn() };
     logger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
+    redisManager = { getConnection: jest.fn() };
 
     service = new ClipsService(
       logger as any,
@@ -33,7 +35,7 @@ describe("ClipsService", () => {
       {} as any,
       gameStreamer as any,
       { release: jest.fn() } as any,
-      { getConnection: jest.fn() } as any,
+      redisManager as any,
       batchQueue as any,
       { notifyPlayers: jest.fn() } as any,
     );
@@ -423,6 +425,48 @@ describe("ClipsService", () => {
       });
 
       expect(setOf().status).toBe("rendering");
+    });
+  });
+
+  describe("registerStreamedClipView", () => {
+    const FILE = "clips/76561198000000001/clip.mp4";
+    const VIEWER = "a".repeat(32);
+    let claims: Set<string>;
+    let redis: { set: jest.Mock; del: jest.Mock };
+
+    beforeEach(() => {
+      claims = new Set();
+      redis = {
+        set: jest.fn(async (key: string) => {
+          if (claims.has(key)) {
+            return null;
+          }
+          claims.add(key);
+          return "OK";
+        }),
+        del: jest.fn(async (key: string) => {
+          return claims.delete(key) ? 1 : 0;
+        }),
+      };
+      redisManager.getConnection.mockReturnValue(redis);
+      hasura.mutation.mockResolvedValue({
+        update_match_clips: { affected_rows: 1 },
+      });
+    });
+
+    it("releases the viewer's claim when the increment fails, so a retry counts", async () => {
+      hasura.mutation.mockRejectedValueOnce(new Error("hasura unavailable"));
+
+      await expect(
+        service.registerStreamedClipView(FILE, VIEWER),
+      ).rejects.toThrow("hasura unavailable");
+      expect(claims.size).toBe(0);
+
+      await expect(
+        service.registerStreamedClipView(FILE, VIEWER),
+      ).resolves.toBe(true);
+      expect(hasura.mutation).toHaveBeenCalledTimes(2);
+      expect(claims.has(`clip-view:${FILE}:${VIEWER}`)).toBe(true);
     });
   });
 });
