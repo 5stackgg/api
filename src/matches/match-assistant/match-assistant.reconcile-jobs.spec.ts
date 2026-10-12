@@ -319,6 +319,23 @@ describe("MatchAssistantService — reconciling on-demand server Jobs", () => {
     );
   });
 
+  it("deletes a practice server's Job by its u- name", async () => {
+    listNamespacedJob.mockResolvedValue({
+      items: [
+        job({
+          metadata: {
+            name: `u-${MATCH_ID}`,
+            labels: { app: "game-server", role: "match", "match-id": MATCH_ID },
+          },
+        }),
+      ],
+    });
+
+    await service.reconcileOnDemandServerJobs();
+
+    expect(deletedJobs()).toEqual([`u-${MATCH_ID}`]);
+  });
+
   it("leaves a Job replaced after it was listed, and the rows its match holds", async () => {
     matches = [
       match({

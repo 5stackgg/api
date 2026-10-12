@@ -31,12 +31,13 @@ describe("StopOnDemandServer", () => {
 
   it("checks back on a server it already signalled", async () => {
     await processor.process({
-      data: { matchId: "match-1", jobUid: "uid-1" },
+      data: { matchId: "match-1", jobName: "u-match-1", jobUid: "uid-1" },
     } as any);
 
     expect(matchAssistant.removeUnstoppedOnDemandServer).toHaveBeenCalledWith(
       "match-1",
       "uid-1",
+      "u-match-1",
     );
     expect(matchAssistant.stopEndedMatchServer).not.toHaveBeenCalled();
   });
