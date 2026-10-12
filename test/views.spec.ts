@@ -147,22 +147,27 @@ describe("read-side views and aggregations (SQL-driven)", () => {
     });
   });
 
+  const firstMap = async (matchId: string) => {
+    const [existing] = await postgres.query<Array<{ id: string }>>(
+      "SELECT id FROM match_maps WHERE match_id = $1",
+      [matchId],
+    );
+    return (
+      existing?.id ??
+      (
+        await postgres.query<Array<{ id: string }>>(
+          `INSERT INTO match_maps (match_id, map_id, "order")
+           SELECT $1, id, 1 FROM maps ORDER BY name LIMIT 1 RETURNING id`,
+          [matchId],
+        )
+      )[0].id
+    );
+  };
+
   describe("pistol rounds", () => {
     const pistolRounds = async (type: string, mr: number) => {
       const match = await fx.match({ type, mr });
-      const [existing] = await postgres.query<Array<{ id: string }>>(
-        "SELECT id FROM match_maps WHERE match_id = $1",
-        [match.id],
-      );
-      const mapId =
-        existing?.id ??
-        (
-          await postgres.query<Array<{ id: string }>>(
-            `INSERT INTO match_maps (match_id, map_id, "order")
-             SELECT $1, id, 1 FROM maps ORDER BY name LIMIT 1 RETURNING id`,
-            [match.id],
-          )
-        )[0].id;
+      const mapId = await firstMap(match.id);
 
       for (const round of [1, 2, mr + 1]) {
         await fx.round(mapId, round, { time: T(100 - round) });
@@ -182,6 +187,77 @@ describe("read-side views and aggregations (SQL-driven)", () => {
 
     it("counts only round 1 for Rush, which has no halftime", async () => {
       expect(await pistolRounds("Rush", 8)).toBe(1);
+    });
+  });
+
+  // match_map_rounds keeps each lineup's money as the round ends, which is the
+  // bank the next round starts on.
+  describe("buy types", () => {
+    // Lineup 1 wins every round, ending odd rounds on $25,000 and even ones on
+    // $3,000; lineup 2 ends them on $15,000 and $30,000. Sides follow the game
+    // server through MR12 and two overtimes: 30 -> 31 keeps them.
+    const playRounds = async (rounds: number[]) => {
+      const match = await fx.match({ type: "Competitive", mr: 12 });
+      const mapId = await firstMap(match.id);
+      await postgres.query(
+        `INSERT INTO match_map_rounds
+           (match_map_id, round, lineup_1_score, lineup_2_score, lineup_1_money, lineup_2_money,
+            "time", lineup_1_timeouts_available, lineup_2_timeouts_available,
+            lineup_1_side, lineup_2_side, winning_side)
+         SELECT $1, r, 0, 0,
+           CASE WHEN r % 2 = 1 THEN 25000 ELSE 3000 END,
+           CASE WHEN r % 2 = 1 THEN 15000 ELSE 30000 END,
+           now() - make_interval(mins => 100 - r), 3, 3,
+           s.l1, CASE WHEN s.l1 = 'CT' THEN 'TERRORIST' ELSE 'CT' END, s.l1
+         FROM unnest($2::int[]) r,
+         LATERAL (SELECT CASE WHEN r BETWEEN 13 AND 27 THEN 'CT' ELSE 'TERRORIST' END AS l1) s`,
+        [mapId, rounds],
+      );
+      return match;
+    };
+
+    const matchups = async (match: { id: string; lineup_1_id: string }) =>
+      Object.fromEntries(
+        (
+          await postgres.query<Array<{ matchup: string; rounds: number }>>(
+            `SELECT matchup, SUM(rounds)::int AS rounds FROM v_match_lineup_buy_types
+             WHERE match_id = $1 AND match_lineup_id = $2 GROUP BY matchup`,
+            [match.id, match.lineup_1_id],
+          )
+        ).map((row) => [row.matchup, row.rounds]),
+      );
+
+    it("classifies a round by the money it started with", async () => {
+      const match = await playRounds(
+        Array.from({ length: 31 }, (_, i) => i + 1),
+      );
+
+      // Pistols at 1 and 13; every overtime half (25, 28, 31) restarts on
+      // overtime money; any other round runs on the previous round's bank.
+      expect(await matchups(match)).toEqual({
+        pistol_v_pistol: 2,
+        full_v_full: 3,
+        full_v_force: 14,
+        eco_v_full: 12,
+      });
+
+      const [won] = await postgres.query<
+        Array<{ pistol: number; eco: number; force: number; full: number }>
+      >(
+        `SELECT SUM(won_buy_pistol)::int AS pistol, SUM(won_buy_eco)::int AS eco,
+                SUM(won_buy_force)::int AS force, SUM(won_buy_full)::int AS full
+         FROM v_match_lineup_map_stats WHERE match_id = $1 AND match_lineup_id = $2`,
+        [match.id, match.lineup_1_id],
+      );
+      expect(won).toEqual({ pistol: 2, eco: 12, force: 0, full: 17 });
+    });
+
+    it("leaves a round unclassified when the round before it is missing", async () => {
+      const match = await playRounds([1, 2, 4]);
+      expect(await matchups(match)).toEqual({
+        pistol_v_pistol: 1,
+        full_v_force: 1,
+      });
     });
   });
 
