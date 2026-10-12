@@ -27,7 +27,9 @@ import { balanceTeams, canFillTeams } from "./utilities/balanceTeams";
 import { selectMatchCandidates } from "./utilities/selectMatchCandidates";
 import { WINDOW_CAP, winProbability } from "./utilities/matchmakingTuning";
 
-type MatchmakePass = { claimed: boolean };
+type MatchmakePass = { claimed: boolean; unchecked?: boolean };
+
+type NextPass = { delay: number; failures: number };
 
 function averageRank(players: Array<{ rank: number }>) {
   return players.reduce((acc, player) => acc + player.rank, 0) / players.length;
@@ -114,13 +116,6 @@ export class MatchmakeService {
       },
     });
 
-    const types: e_match_types_enum[] = [
-      "Duel",
-      "Wingman",
-      "Rush",
-      "Competitive",
-    ];
-
     const regionStats: Partial<
       Record<string, Partial<Record<e_match_types_enum, QueuedLobbyStat[]>>>
     > = {};
@@ -129,7 +124,7 @@ export class MatchmakeService {
       (region: { value: string }) => region.value,
     );
 
-    for (const type of types) {
+    for (const type of MatchmakingLobbyService.QUEUE_TYPES) {
       // A lobby queued in several regions keeps one index across all of them,
       // so the client can count it once.
       const lobbyIndexes = new Map<string, number>();
@@ -191,16 +186,28 @@ export class MatchmakeService {
     );
   }
 
+  /**
+   * Resolves to the pass it queued to follow this one, if any. `failures`
+   * counts the passes in a row that could not check who is busy.
+   */
   public async matchmake(
     type: e_match_types_enum,
     region: string,
-  ): Promise<void> {
-    const lock = await this.aquireMatchmakeRegionLock(region);
+    failures = 0,
+  ): Promise<NextPass | undefined> {
+    const lock = await this.aquireMatchmakeRegionLock(type, region);
     if (!lock) {
       this.logger.warn(
-        `Unable to acquire region lock for ${region} - another matchmaking process is running`,
+        `Unable to acquire region lock for ${type}/${region} - another matchmaking process is running`,
       );
-      return;
+      // the pass that holds it may have read the queue before this one was
+      // asked for
+      return await this.scheduleExpandedSearch(
+        type,
+        region,
+        1000 + Math.floor(Math.random() * 4000),
+        failures,
+      );
     }
 
     const pass: MatchmakePass = { claimed: false };
@@ -214,10 +221,28 @@ export class MatchmakeService {
         "WITHSCORES",
       );
 
-      const lobbies = await this.processLobbyData(lobbiesData, region, pass);
+      const lobbies = await this.processLobbyData(
+        lobbiesData,
+        type,
+        region,
+        pass,
+      );
 
       if (lobbies.length === 0) {
-        await this.releaseMatchmakeRegionLock(region);
+        await this.releaseMatchmakeRegionLock(type, region);
+
+        if (pass.unchecked) {
+          return await this.scheduleExpandedSearch(
+            type,
+            region,
+            Math.min(
+              MatchmakeService.UNCHECKED_RETRY_MS * 2 ** failures,
+              MatchmakeService.UNCHECKED_RETRY_CAP_MS,
+            ),
+            failures + 1,
+          );
+        }
+
         return;
       }
 
@@ -227,11 +252,11 @@ export class MatchmakeService {
         lobbies,
         pass,
       ).finally(() => {
-        void this.releaseMatchmakeRegionLock(region);
+        void this.releaseMatchmakeRegionLock(type, region);
       });
 
       if (totalPlayerNotQueued < ExpectedPlayers[type]) {
-        await this.releaseMatchmakeRegionLock(region);
+        await this.releaseMatchmakeRegionLock(type, region);
         return;
       }
 
@@ -239,7 +264,7 @@ export class MatchmakeService {
         `${totalPlayerNotQueued} players not queued, expanding search....`,
       );
 
-      await this.scheduleExpandedSearch(
+      return await this.scheduleExpandedSearch(
         type,
         region,
         10000 + Math.floor(Math.random() * 10000),
@@ -264,11 +289,12 @@ export class MatchmakeService {
     type: e_match_types_enum,
     region: string,
     delay: number,
-  ) {
+    failures = 0,
+  ): Promise<NextPass> {
     try {
       await this.queue.add(
         "ExpandMatchmaking",
-        { type, region },
+        { type, region, failures },
         {
           delay,
           jobId: `matchmaking.expand.${type}.${region}`,
@@ -282,14 +308,20 @@ export class MatchmakeService {
         error,
       );
     }
+
+    return { delay, failures };
   }
+
+  private static readonly UNCHECKED_RETRY_MS = 10 * 1000;
+  private static readonly UNCHECKED_RETRY_CAP_MS = 5 * 60 * 1000;
 
   private async processLobbyData(
     lobbiesData: string[],
+    type: e_match_types_enum,
     region: string,
     pass: MatchmakePass = { claimed: false },
   ): Promise<MatchmakingLobby[]> {
-    const lobbyDetails = [];
+    const queued: MatchmakingLobby[] = [];
 
     for (let i = 0; i < lobbiesData.length; i += 2) {
       const details = await this.matchmakingLobbyService.getLobbyDetails(
@@ -298,6 +330,53 @@ export class MatchmakeService {
 
       if (!details) {
         continue;
+      }
+
+      // However it got back in the queue, a lobby in a ready check, or in the
+      // match that came out of one, must not be claimed into another.
+      if (await this.hasCurrentConfirmation(details.lobbyId)) {
+        await this.matchmakingLobbyService.dequeueLobby(details.lobbyId);
+        pass.claimed = true;
+        continue;
+      }
+
+      queued.push(details);
+    }
+
+    let busy: Map<string, string>;
+    try {
+      busy = await this.getBusyPlayers(
+        queued.flatMap((lobby) =>
+          lobby.players.map((player) => player.steam_id),
+        ),
+      );
+    } catch (error) {
+      this.logger.error(
+        `Unable to check who is already in a match for ${type}/${region}:`,
+        error,
+      );
+      pass.unchecked = true;
+      return [];
+    }
+
+    const lobbyDetails = [];
+    // A player who joined a party is still in their solo entry until the
+    // lobby_players event removes it.
+    const seated = new Set<string>();
+
+    for (const details of queued) {
+      if (details.players.some((player) => busy.has(player.steam_id))) {
+        await this.dropLobbyWithBusyPlayers(details, busy);
+        pass.claimed = true;
+        continue;
+      }
+
+      if (details.players.some((player) => seated.has(player.steam_id))) {
+        continue;
+      }
+
+      for (const player of details.players) {
+        seated.add(player.steam_id);
       }
 
       if (details.players.length === ExpectedPlayers[details.type]) {
@@ -514,8 +593,13 @@ export class MatchmakeService {
     }
   }
 
-  private async aquireMatchmakeRegionLock(region: string): Promise<boolean> {
-    const lockKey = `matchmaking:lock:${region}`;
+  // Per type as well as region: queue entries never span types, so passes of
+  // different types have nothing to serialise on.
+  private async aquireMatchmakeRegionLock(
+    type: e_match_types_enum,
+    region: string,
+  ): Promise<boolean> {
+    const lockKey = `matchmaking:lock:${region}:${type}`;
 
     const result = await this.redis.set(lockKey, 1, "EX", 60, "NX");
 
@@ -526,8 +610,11 @@ export class MatchmakeService {
     return true;
   }
 
-  private async releaseMatchmakeRegionLock(region: string) {
-    const lockKey = `matchmaking:lock:${region}`;
+  private async releaseMatchmakeRegionLock(
+    type: e_match_types_enum,
+    region: string,
+  ) {
+    const lockKey = `matchmaking:lock:${region}:${type}`;
     await this.redis.del(lockKey);
   }
 
@@ -574,7 +661,18 @@ export class MatchmakeService {
     }
   }
 
+  // A lobby that left after the pass read it is no longer in any of its
+  // queues, and must not be claimed into a ready check it would never see.
   private static readonly CLAIM_LOBBY_SCRIPT = `
+    local queued = false
+    for i = 2, #KEYS do
+      if redis.call('ZSCORE', KEYS[i], ARGV[1]) then
+        queued = true
+      end
+    end
+    if not queued then
+      return 0
+    end
     local acquired = redis.call('SET', KEYS[1], 1, 'EX', ARGV[2], 'NX')
     if not acquired then
       return 0
@@ -620,6 +718,86 @@ export class MatchmakeService {
     await this.addLobbyToQueue(lobbyId);
   }
 
+  // A stamp can outlive its ready check when the lobby left first, so it only
+  // counts while the confirmation it names still exists.
+  public async hasCurrentConfirmation(lobbyId: string) {
+    const confirmationId = await this.redis.hget(
+      getMatchmakingLobbyDetailsCacheKey(lobbyId),
+      "confirmationId",
+    );
+
+    if (!confirmationId) {
+      return false;
+    }
+
+    return !!(await this.redis.hget(
+      getMatchmakingConformationCacheKey(confirmationId),
+      "lobbyIds",
+    ));
+  }
+
+  // is_in_another_match is checked once, when a lobby joins. A tournament or
+  // league match can go live, or come within the hour, while its players wait
+  // in the queue or in a ready check.
+  private async getBusyPlayers(steamIds: string[]) {
+    const busy = new Map<string, string>();
+
+    if (steamIds.length === 0) {
+      return busy;
+    }
+
+    const { players } = await this.hasura.query({
+      players: {
+        __args: {
+          where: {
+            steam_id: { _in: steamIds },
+            is_in_another_match: { _eq: true },
+          },
+        },
+        steam_id: true,
+        name: true,
+      },
+    });
+
+    for (const player of players) {
+      busy.set(player.steam_id, player.name);
+    }
+
+    return busy;
+  }
+
+  private async dropLobbyWithBusyPlayers(
+    lobby: MatchmakingLobby,
+    busy: Map<string, string>,
+  ) {
+    const name = lobby.players
+      .map((player) => busy.get(player.steam_id))
+      .find((playerName) => playerName !== undefined);
+
+    this.logger.warn(
+      `Dropping lobby ${lobby.lobbyId} from the queue: ${name} is already in a match`,
+    );
+
+    await this.releaseLobbyLock(lobby.lobbyId, 0);
+    await this.matchmakingLobbyService.dequeueLobby(lobby.lobbyId);
+    await this.matchmakingLobbyService.removeLobbyDetails(lobby.lobbyId);
+
+    for (const player of lobby.players) {
+      await this.redis.publish(
+        "send-message-to-steam-id",
+        JSON.stringify({
+          steamId: player.steam_id,
+          event: "matchmaking:error",
+          data: {
+            code: "player_in_match",
+            name,
+            message: `${name} is already in a match`,
+          },
+        }),
+      );
+    }
+  }
+
   public async releaseLobbyLock(lobbyId: string, seconds: number) {
     const lockKey = `matchmaking:lock:${lobbyId}`;
     await this.redis.expire(lockKey, seconds);
@@ -663,37 +841,59 @@ export class MatchmakeService {
 
     const confirmationId = uuidv4();
 
-    await this.setConfirmationDetails(
-      region,
-      type,
-      confirmationId,
-      team1,
-      team2,
-    );
+    // Only this call can stamp these lobbies while it holds their locks.
+    const stamped: string[] = [];
 
-    for (const lobbyId of [...team1.lobbies, ...team2.lobbies]) {
-      await this.matchmakingLobbyService.setMatchConformationIdForLobby(
-        lobbyId,
-        confirmationId,
-      );
-      await this.matchmakingLobbyService.sendQueueDetailsToLobby(lobbyId);
-    }
-
-    void this.notifications
-      .notifyMatchFound(
-        confirmationId,
-        [...team1.players, ...team2.players].map(({ steam_id }) => steam_id),
+    try {
+      await this.setConfirmationDetails(
+        region,
         type,
-        30,
-      )
-      .catch((error) => {
-        this.logger.warn(
-          `unable to push match found for confirmation ${confirmationId}`,
-          error,
-        );
-      });
+        confirmationId,
+        team1,
+        team2,
+      );
 
-    await this.cancelMatchMakingDueToReadyCheck(confirmationId);
+      for (const lobbyId of [...team1.lobbies, ...team2.lobbies]) {
+        await this.matchmakingLobbyService.setMatchConformationIdForLobby(
+          lobbyId,
+          confirmationId,
+        );
+        stamped.push(lobbyId);
+        await this.matchmakingLobbyService.sendQueueDetailsToLobby(lobbyId);
+      }
+
+      void this.notifications
+        .notifyMatchFound(
+          confirmationId,
+          [...team1.players, ...team2.players].map(({ steam_id }) => steam_id),
+          type,
+          30,
+        )
+        .catch((error) => {
+          this.logger.warn(
+            `unable to push match found for confirmation ${confirmationId}`,
+            error,
+          );
+        });
+
+      await this.cancelMatchMakingDueToReadyCheck(confirmationId);
+    } catch (error) {
+      try {
+        for (const lobbyId of stamped) {
+          await this.matchmakingLobbyService.removeConfirmationIdFromLobby(
+            lobbyId,
+          );
+        }
+        await this.removeConfirmationDetails(confirmationId);
+      } catch (cleanupError) {
+        this.logger.error(
+          `Unable to clean up confirmation ${confirmationId}:`,
+          cleanupError,
+        );
+      }
+
+      throw error;
+    }
   }
 
   public async cancelMatchMakingDueToReadyCheck(confirmationId: string) {
@@ -705,6 +905,8 @@ export class MatchmakeService {
       {
         delay: 30 * 1000,
         jobId: this.getMatchMakingCancelJobId(confirmationId),
+        attempts: 5,
+        backoff: { type: "exponential", delay: 5000 },
       },
     );
   }
@@ -716,6 +918,10 @@ export class MatchmakeService {
   private getMatchMakingCancelJobId(confirmationId: string) {
     return `matchmaking.cancel.${confirmationId}`;
   }
+
+  // Outlives the cancel job and all of its retries. A ready check that becomes
+  // a match is kept for as long as the match is, see createMatch.
+  private static readonly READY_CHECK_TTL_SECONDS = 10 * 60;
 
   private async setConfirmationDetails(
     region: string,
@@ -732,6 +938,11 @@ export class MatchmakeService {
       team1: JSON.stringify(team1.players),
       team2: JSON.stringify(team2.players),
     });
+
+    await this.redis.expire(
+      getMatchmakingConformationCacheKey(confirmationId),
+      MatchmakeService.READY_CHECK_TTL_SECONDS,
+    );
   }
 
   public async removeConfirmationDetails(confirmationId: string) {
@@ -805,9 +1016,23 @@ export class MatchmakeService {
       await this.getMatchConfirmationDetails(confirmationId);
 
     for (const lobbyId of lobbyIds) {
+      // A lobby that left this ready check and queued again belongs to
+      // whatever it is in now, a newer ready check included.
+      const stamp = await this.redis.hget(
+        getMatchmakingLobbyDetailsCacheKey(lobbyId),
+        "confirmationId",
+      );
+
+      if (stamp !== confirmationId) {
+        continue;
+      }
+
       const lobby = await this.matchmakingLobbyService.getLobbyDetails(lobbyId);
 
       if (!lobby) {
+        await this.matchmakingLobbyService.removeConfirmationIdFromLobby(
+          lobbyId,
+        );
         continue;
       }
 
@@ -826,7 +1051,7 @@ export class MatchmakeService {
         }
       }
 
-      await this.matchmakingLobbyService.removeLobbyFromQueue(lobbyId);
+      await this.matchmakingLobbyService.dequeueLobby(lobbyId);
       await this.matchmakingLobbyService.removeConfirmationIdFromLobby(lobbyId);
 
       if (!requeue) {
@@ -835,12 +1060,14 @@ export class MatchmakeService {
       }
 
       shouldMatchmake = true;
+      // the ready check's lock would otherwise hold it out of the next pass
+      await this.releaseLobbyLock(lobbyId, 0);
       await this.addLobbyToQueue(lobbyId);
     }
 
     await this.removeConfirmationDetails(confirmationId);
 
-    await this.sendRegionStats();
+    await this.refreshRegionStats();
 
     if (shouldMatchmake) {
       await this.scheduleExpandedSearch(
@@ -877,6 +1104,10 @@ export class MatchmakeService {
       steamId,
       1,
     );
+    await this.redis.expire(
+      `${getMatchmakingConformationCacheKey(confirmationId)}:confirmed`,
+      MatchmakeService.READY_CHECK_TTL_SECONDS,
+    );
 
     this.retractMatchFound(confirmationId, steamId);
 
@@ -892,12 +1123,14 @@ export class MatchmakeService {
 
     // Everyone is ready, but so is every other confirmation that arrived at the
     // same time. Whoever claims this key creates the match; the rest return.
-    // The claim never expires on its own - it is dropped with the rest of the
-    // confirmation details, so a failed creation is cleaned up by the cancel
-    // job rather than by a second match.
+    // The claim lives as long as the ready check and is dropped with it, so a
+    // failed creation is cleaned up by the cancel job rather than by a second
+    // match.
     const claimedCreation = await this.redis.set(
       this.getMatchCreationClaimKey(confirmationId),
       1,
+      "EX",
+      MatchmakeService.READY_CHECK_TTL_SECONDS,
       "NX",
     );
 
@@ -916,7 +1149,40 @@ export class MatchmakeService {
     const { team1, team2, type, region, lobbyIds } =
       await this.getMatchConfirmationDetails(confirmationId);
 
+    const players = [...team1, ...team2];
+
+    // cancelled or expired since the last confirmation came in
+    if (players.length === 0) {
+      return;
+    }
+
+    const busy = await this.getBusyPlayers(
+      players.map((player) => player.steam_id),
+    );
+
+    // The cancel job stays queued: if this abort fails part way the job
+    // finishes it, and once the confirmation is gone the job only refreshes
+    // the region stats.
+    if (busy.size > 0) {
+      for (const lobbyId of lobbyIds) {
+        const lobby =
+          await this.matchmakingLobbyService.getLobbyDetails(lobbyId);
+
+        if (lobby?.players.some((player) => busy.has(player.steam_id))) {
+          await this.dropLobbyWithBusyPlayers(lobby, busy);
+        }
+      }
+
+      // everyone left accepted, so the cancel puts them back in the queue
+      await this.cancelMatchMaking(confirmationId);
+      return;
+    }
+
     await this.removeCancelMatchMakingJob(confirmationId);
+
+    for (const lobbyId of lobbyIds) {
+      await this.matchmakingLobbyService.dequeueLobby(lobbyId);
+    }
 
     // e_map_pool_types_enum doesn't include Premier/Faceit (imports only).
     const mapPoolType: e_map_pool_types_enum =
@@ -965,6 +1231,14 @@ export class MatchmakeService {
       getMatchmakingConformationCacheKey(confirmationId),
       "matchId",
       match.id,
+    );
+
+    // kept until the match ends and cancelMatchMakingByMatchId removes it
+    await this.redis.persist(
+      getMatchmakingConformationCacheKey(confirmationId),
+    );
+    await this.redis.persist(
+      `${getMatchmakingConformationCacheKey(confirmationId)}:confirmed`,
     );
 
     await this.redis.set(`matches:confirmation:${match.id}`, confirmationId);

@@ -280,7 +280,6 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    tournament_status text;
     stage_has_matches boolean;
 BEGIN
     BEGIN
@@ -299,14 +298,7 @@ BEGIN
         RETURN NEW;
     END IF;
 
-    SELECT status
-    INTO tournament_status
-    FROM tournaments t
-    WHERE t.id = NEW.tournament_id;
-
-    IF tournament_status = 'Live' OR tournament_status = 'Finished' THEN
-        RAISE EXCEPTION 'Unable to modify stage since the tournament has been started' USING ERRCODE = '22000';
-    END IF;
+    PERFORM assert_tournament_stages_editable(NEW.tournament_id);
 
     -- Check if stage has started (has at least one match created)
     SELECT EXISTS (
@@ -352,10 +344,32 @@ $$;
 DROP TRIGGER IF EXISTS tbu_tournament_stages ON public.tournament_stages;
 CREATE TRIGGER tbu_tournament_stages BEFORE UPDATE ON public.tournament_stages FOR EACH ROW EXECUTE FUNCTION public.tbu_tournament_stages();
 
+CREATE OR REPLACE FUNCTION public.tbi_tournament_stages() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    PERFORM assert_tournament_stages_editable(NEW.tournament_id);
+
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tbi_tournament_stages ON public.tournament_stages;
+CREATE TRIGGER tbi_tournament_stages
+    BEFORE INSERT ON public.tournament_stages
+    FOR EACH ROW
+    EXECUTE FUNCTION public.tbi_tournament_stages();
+
 CREATE OR REPLACE FUNCTION public.tbd_tournament_stages() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
+    -- Set by tbd_tournaments while it removes the stages of the tournament
+    -- being deleted, which is the one delete that may take a drawn bracket.
+    IF current_setting('fivestack.deleting_tournament', true) IS DISTINCT FROM OLD.tournament_id::text THEN
+        PERFORM assert_tournament_stages_editable(OLD.tournament_id);
+    END IF;
+
     DELETE FROM tournament_brackets
         WHERE tournament_stage_id = OLD.id;
 

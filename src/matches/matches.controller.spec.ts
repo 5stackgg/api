@@ -10,18 +10,24 @@ import { GameStreamerService } from "./game-streamer/game-streamer.service";
 
 // Positional, in constructor order; anything a test does not reach stays {}.
 const controllerWith = (deps: {
+  logger?: unknown;
   hasura?: unknown;
+  postgres?: unknown;
   matchAssistant?: unknown;
   gameStreamer?: unknown;
+  demoMetadata?: unknown;
   clips?: unknown;
   gameModes?: unknown;
 }) => {
   const args: any[] = Array.from({ length: 30 }, () => ({}));
 
+  args[0] = deps.logger ?? {};
   args[1] = deps.hasura ?? {};
+  args[2] = deps.postgres ?? {};
   args[3] = { get: jest.fn(() => ({})) };
   args[5] = deps.matchAssistant ?? {};
   args[21] = deps.gameStreamer ?? {};
+  args[22] = deps.demoMetadata ?? {};
   args[23] = deps.clips ?? {};
   args[29] = deps.gameModes ?? {};
 
@@ -397,6 +403,64 @@ describe("MatchesController", () => {
         format: "mp4",
         resolution: "720p",
         fps: 30,
+      });
+    });
+  });
+
+  describe("deleteMatch", () => {
+    let hasura: { query: jest.Mock; mutation: jest.Mock };
+    let clips: { deleteClipsForMatch: jest.Mock };
+    let demoMetadata: { deleteDemosForMatch: jest.Mock };
+
+    const deleteMatchWith = (match: Record<string, unknown>) => {
+      hasura = {
+        query: jest.fn(async () => ({ matches_by_pk: match })),
+        mutation: jest.fn(async () => ({})),
+      };
+      clips = { deleteClipsForMatch: jest.fn() };
+      demoMetadata = { deleteDemosForMatch: jest.fn() };
+
+      return controllerWith({
+        logger: { log: jest.fn() },
+        hasura,
+        postgres: { query: jest.fn(async (): Promise<unknown[]> => []) },
+        demoMetadata,
+        clips,
+      }).deleteMatch({ match_id: "match-1" });
+    };
+
+    // The bracket's match_id is ON DELETE SET NULL: the slot would keep its
+    // teams, and a won slot its winner downstream, with no match to reset.
+    it("refuses a match a tournament bracket points at, before touching its files", async () => {
+      await expect(
+        deleteMatchWith({
+          id: "match-1",
+          status: "Finished",
+          is_tournament_match: true,
+        }),
+      ).rejects.toThrow(/tournament match/);
+
+      expect(clips.deleteClipsForMatch).not.toHaveBeenCalled();
+      expect(demoMetadata.deleteDemosForMatch).not.toHaveBeenCalled();
+      expect(hasura.mutation).not.toHaveBeenCalled();
+    });
+
+    it("still deletes a match outside any tournament", async () => {
+      await expect(
+        deleteMatchWith({
+          id: "match-1",
+          status: "Finished",
+          is_tournament_match: false,
+        }),
+      ).resolves.toEqual({ success: true });
+
+      expect(clips.deleteClipsForMatch).toHaveBeenCalledWith("match-1");
+      expect(demoMetadata.deleteDemosForMatch).toHaveBeenCalledWith("match-1");
+      expect(hasura.mutation).toHaveBeenCalledWith({
+        delete_matches_by_pk: {
+          __args: { id: "match-1" },
+          __typename: true,
+        },
       });
     });
   });

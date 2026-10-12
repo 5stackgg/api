@@ -50,10 +50,26 @@ export class PostgresService {
 
   public async transaction<T>(
     fn: (client: PoolClient) => Promise<T>,
+    hasuraSession?: string,
   ): Promise<T> {
     const client = await this.pool.connect();
     try {
+      if (hasuraSession) {
+        // Set outside the transaction so it is what the transaction-local
+        // session below falls back to at COMMIT or ROLLBACK. A connection that
+        // never had one falls back to '' instead, and every later
+        // current_setting('hasura.user', true)::json on it then fails.
+        await client.query("SELECT set_config('hasura.user', '{}', false)");
+      }
+
       await client.query("BEGIN");
+
+      if (hasuraSession) {
+        await client.query("SELECT set_config('hasura.user', $1, true)", [
+          hasuraSession,
+        ]);
+      }
+
       const result = await fn(client);
       await client.query("COMMIT");
       return result;

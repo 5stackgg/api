@@ -79,6 +79,25 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
         END IF;
     END;
 
+     -- Pre-link the bracket to the (about-to-exist) match id so triggers on
+     -- the matches insert (notably tai_match) can recognize this as a
+     -- tournament match via is_tournament_match(). The FK is deferrable so
+     -- pointing at a row that does not yet exist is fine within this txn.
+     --
+     -- Only while the slot is still empty: a caller can hold a copy read before
+     -- another scheduler filled it (CheckForScheduledTournamentBrackets reads
+     -- unlocked), and re-pointing it would leave its teams with two matches.
+     _match_id := gen_random_uuid();
+
+     UPDATE tournament_brackets
+        SET match_id = _match_id
+      WHERE id = bracket.id
+        AND match_id IS NULL;
+
+     IF NOT FOUND THEN
+         RETURN (SELECT tb.match_id FROM tournament_brackets tb WHERE tb.id = bracket.id);
+     END IF;
+
      -- Per-round best_of resolution (only when bracket has no custom match_options)
      IF bracket.match_options_id IS NULL THEN
          IF stage.type = 'Swiss' THEN
@@ -115,16 +134,6 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      IF _match_options_id IS NULL THEN
          _match_options_id := clone_match_options(_template_match_options_id);
      END IF;
-
-     -- Pre-link the bracket to the (about-to-exist) match id so triggers on
-     -- the matches insert (notably tai_match) can recognize this as a
-     -- tournament match via is_tournament_match(). The FK is deferrable so
-     -- pointing at a row that does not yet exist is fine within this txn.
-     _match_id := gen_random_uuid();
-
-     UPDATE tournament_brackets
-        SET match_id = _match_id
-      WHERE id = bracket.id;
 
      INSERT INTO matches (
          id,

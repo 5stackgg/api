@@ -5,6 +5,19 @@ DECLARE
     first_stage_id uuid;
     bracket_row tournament_brackets%ROWTYPE;
 BEGIN
+    -- The free agent draft runs once, so a field taking entries again starts
+    -- from an undrafted pool. Not out of CheckInReview: reopening there only
+    -- extends check-in for the field already in.
+    IF NEW.status IS DISTINCT FROM OLD.status AND (
+        NEW.status = 'Setup'
+        OR (
+            NEW.status = 'RegistrationOpen'
+            AND OLD.status IN ('RegistrationClosed', 'Cancelled', 'CancelledMinTeams')
+        )
+    ) THEN
+        PERFORM undo_tournament_free_agent_draft(NEW.id);
+    END IF;
+
     IF (
          NEW.status IS DISTINCT FROM OLD.status AND
          NEW.status IN ('RegistrationOpen')
@@ -210,7 +223,13 @@ BEGIN
                     -- zero teams and cancel itself. Drafting here first makes
                     -- the count real; the draft is idempotent on is_drafted, so
                     -- the tau_tournaments call that follows is a no-op.
-                    IF NEW.registration_type IN ('free_agents', 'both') THEN
+                    --
+                    -- Only on the way out of registration, the same statuses
+                    -- tau_tournaments seeds from. Out of RegistrationClosed the
+                    -- bracket is already drawn, and a team drafted now has no
+                    -- slot in it.
+                    IF NEW.registration_type IN ('free_agents', 'both')
+                       AND OLD.status IN ('Setup', 'RegistrationOpen', 'CheckInReview') THEN
                         PERFORM draft_tournament_free_agent_teams(NEW.id);
                     END IF;
 
@@ -259,8 +278,10 @@ BEGIN
             MESSAGE = 'This tournament belongs to a league; cancel or delete the league season instead';
     END IF;
 
+    PERFORM set_config('fivestack.deleting_tournament', OLD.id::text, true);
     DELETE FROM tournament_stages
         WHERE tournament_id = OLD.id;
+    PERFORM set_config('fivestack.deleting_tournament', '', true);
 
     -- BEFORE DELETE because the invite rows are still here to say which
     -- notifications were theirs; the FK cascade has removed them by AFTER.

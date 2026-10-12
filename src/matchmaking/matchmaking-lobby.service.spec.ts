@@ -9,6 +9,12 @@ import { PlayerLobby } from "./types/PlayerLobby";
 import { JoinQueueError } from "./utilities/joinQueueError";
 import { User } from "../auth/types/User";
 import { ExpectedPlayers } from "../discord-bot/enums/ExpectedPlayers";
+import { FakeRedis } from "./testing/fakeRedis";
+import {
+  getMatchmakingLobbyDetailsCacheKey,
+  getMatchmakingQueueCacheKey,
+  getMatchmakingRankCacheKey,
+} from "./utilities/cacheKeys";
 
 /**
  * The party-size rule: a lobby may queue when it fits in one lineup (<= half
@@ -424,5 +430,55 @@ describe("MatchmakingLobbyService.setLobbyDetails", () => {
     ]);
     expect(Number.isFinite(details.avgRank)).toBe(true);
     expect(details.avgRank).toBeCloseTo(13000 / 3, 9);
+  });
+});
+
+describe("MatchmakingLobbyService.removeLobbyFromQueue", () => {
+  it("takes the lobby out of every type's queue, not only the one in its details", async () => {
+    const redis = new FakeRedis();
+    const matchmaking = { sendRegionStats: jest.fn() };
+    const service = new MatchmakingLobbyService(
+      new Logger("Test"),
+      {} as HasuraService,
+      { getConnection: () => redis } as any,
+      matchmaking as unknown as MatchmakeService,
+    );
+
+    // re-queued for Wingman over a Competitive entry that was never removed
+    await redis.hset(
+      getMatchmakingLobbyDetailsCacheKey("lobby-1"),
+      "details",
+      JSON.stringify({
+        type: "Wingman",
+        regions: ["us-east"],
+        lobbyId: "lobby-1",
+        players: [{ steam_id: "steam-1", rank: 5000 }],
+      }),
+    );
+    const types: e_match_types_enum[] = ["Competitive", "Wingman"];
+    for (const type of types) {
+      await redis.zadd(
+        getMatchmakingQueueCacheKey(type, "us-east"),
+        0,
+        "lobby-1",
+      );
+      await redis.zadd(
+        getMatchmakingRankCacheKey(type, "us-east"),
+        5000,
+        "lobby-1",
+      );
+    }
+
+    await expect(service.removeLobbyFromQueue("lobby-1")).resolves.toBe(true);
+
+    for (const type of types) {
+      expect(
+        redis.members(getMatchmakingQueueCacheKey(type, "us-east")),
+      ).toEqual([]);
+      expect(
+        redis.members(getMatchmakingRankCacheKey(type, "us-east")),
+      ).toEqual([]);
+    }
+    expect(matchmaking.sendRegionStats).toHaveBeenCalledTimes(1);
   });
 });

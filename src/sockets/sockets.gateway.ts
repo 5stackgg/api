@@ -29,7 +29,7 @@ export class SocketsGateway implements OnGatewayConnection {
       return;
     }
 
-    await this.sockets.updateClient(client.user.steam_id, client.id);
+    await this.sockets.heartbeat(client.user.steam_id, client.id);
   }
 
   // What this tab is showing, so a notification can decide not to buzz someone

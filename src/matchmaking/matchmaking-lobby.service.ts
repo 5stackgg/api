@@ -22,6 +22,14 @@ import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
 export class MatchmakingLobbyService {
   public redis: Redis;
 
+  // Premier and Faceit are demo imports only, they are never queued.
+  public static readonly QUEUE_TYPES: e_match_types_enum[] = [
+    "Duel",
+    "Wingman",
+    "Rush",
+    "Competitive",
+  ];
+
   constructor(
     public readonly logger: Logger,
     public readonly hasura: HasuraService,
@@ -195,6 +203,8 @@ export class MatchmakingLobbyService {
     const lobbyDetails = await this.getLobbyDetails(lobbyId);
 
     if (!lobbyDetails) {
+      // a pass that claimed the lobby just before it left still stamps it
+      await this.removeConfirmationIdFromLobby(lobbyId);
       return;
     }
 
@@ -263,25 +273,50 @@ export class MatchmakingLobbyService {
   }
 
   public async removeLobbyFromQueue(lobbyId: string) {
-    const queueDetails = await this.getLobbyDetails(lobbyId);
-    if (!queueDetails) {
+    if (!(await this.dequeueLobby(lobbyId))) {
       return false;
-    }
-
-    for (const region of queueDetails.regions) {
-      await this.redis.zrem(
-        getMatchmakingQueueCacheKey(queueDetails.type, region),
-        lobbyId,
-      );
-      await this.redis.zrem(
-        getMatchmakingRankCacheKey(queueDetails.type, region),
-        lobbyId,
-      );
     }
 
     await this.matchmaking.sendRegionStats();
 
     return true;
+  }
+
+  // Every queue type, not only the one in the details: an entry left under
+  // another type would otherwise outlive the details that describe it.
+  public async dequeueLobby(lobbyId: string) {
+    const queueDetails = await this.getLobbyDetails(lobbyId);
+    if (!queueDetails) {
+      return false;
+    }
+
+    for (const type of MatchmakingLobbyService.QUEUE_TYPES) {
+      for (const region of queueDetails.regions) {
+        await this.redis.zrem(
+          getMatchmakingQueueCacheKey(type, region),
+          lobbyId,
+        );
+        await this.redis.zrem(
+          getMatchmakingRankCacheKey(type, region),
+          lobbyId,
+        );
+      }
+    }
+
+    return true;
+  }
+
+  // Details stay set from the join until the lobby leaves or its match ends,
+  // through the ready check and the match itself.
+  public async isLobbyQueued(lobbyId: string) {
+    const details = await this.redis.hget(
+      getMatchmakingLobbyDetailsCacheKey(lobbyId),
+      "details",
+    );
+
+    return (
+      !!details || (await this.matchmaking.hasCurrentConfirmation(lobbyId))
+    );
   }
 
   // TODO - extermly inefficient

@@ -39,7 +39,7 @@ BEGIN
         -- and have to be re-pointed here or they never get updated at all.
         IF (OLD.tournament_team_id_1 IS DISTINCT FROM NEW.tournament_team_id_1)
            OR (OLD.tournament_team_id_2 IS DISTINCT FROM NEW.tournament_team_id_2) THEN
-            PERFORM refresh_tournament_match_lineup_teams(NEW);
+            PERFORM refresh_tournament_match_lineup_teams(NEW, OLD);
         END IF;
 
         return NEW;

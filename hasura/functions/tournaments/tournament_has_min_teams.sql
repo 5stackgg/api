@@ -37,6 +37,18 @@ BEGIN
             or tt.checked_in_at is not null
         );
 
+    -- Until the draft runs a free-agent field is still sign-ups: count the
+    -- pickup teams it will make, by its own rules. Only in the statuses the
+    -- close and the start draft from -- past them the draft has run, and
+    -- tbu_tournaments passes NEW (already Live) after drafting.
+    IF tournament.registration_type IN ('free_agents', 'both')
+       AND tournament.status IN ('Setup', 'RegistrationOpen', 'CheckInReview') THEN
+        total_teams := total_teams + tournament_free_agent_draft_team_count(
+            tournament,
+            COALESCE(array_length(tournament_free_agent_draft_pool(tournament.id), 1), 0)
+        );
+    END IF;
+
     -- Log validation details
     RAISE NOTICE 'Tournament % (status: %): %/% teams (actual/required)', 
         tournament.id, tournament_status, total_teams, tournament_min_teams;

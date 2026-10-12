@@ -34,10 +34,44 @@ describe("CheckForScheduledMatches", () => {
     );
     expect(excluded).toBeDefined();
 
-    const tournament = excluded._not.tournament_brackets.stage.tournament;
-    expect(tournament.status).toEqual({
+    const [registering, holding] =
+      excluded._not.tournament_brackets.stage.tournament._or;
+
+    // A round re-seeded before registration closes stays parked even once the
+    // start has passed.
+    expect(registering).toEqual({
+      status: { _in: ["Setup", "RegistrationOpen"] },
+    });
+
+    expect(holding.status).toEqual({
       _in: ["RegistrationClosed", "CheckInReview"],
     });
-    expect(tournament.start._gt).toBeInstanceOf(Date);
+    expect(holding.start._gt).toBeInstanceOf(Date);
+  });
+
+  // CancelledMinTeams is reached from RegistrationOpen at the start, where a
+  // round re-seeded mid-registration is already drawn; once the tournament is
+  // cancelled nothing parks it any more.
+  it("never releases a match whose tournament was cancelled", async () => {
+    await job.process();
+
+    const cancelled = whereClauses().filter(
+      (clause: Record<string, any>) =>
+        clause._not?.tournament_brackets?.stage?.tournament?.status,
+    );
+
+    expect(cancelled).toEqual([
+      {
+        _not: {
+          tournament_brackets: {
+            stage: {
+              tournament: {
+                status: { _in: ["Cancelled", "CancelledMinTeams"] },
+              },
+            },
+          },
+        },
+      },
+    ]);
   });
 });

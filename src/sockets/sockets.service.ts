@@ -11,18 +11,39 @@ import { ConfigService } from "@nestjs/config";
 import { FiveStackWebSocketClient } from "./types/FiveStackWebSocketClient";
 import { MatchmakeService } from "src/matchmaking/matchmake.service";
 import { MatchmakingLobbyService } from "src/matchmaking/matchmaking-lobby.service";
-import { Inject, Injectable, Logger } from "@nestjs/common";
+import {
+  Inject,
+  Injectable,
+  Logger,
+  OnApplicationShutdown,
+  OnModuleInit,
+} from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
 import { DemoSessionWatcherService } from "src/matches/game-streamer/demo-session-watcher.service";
 import { presenceFocusKey } from "src/notifications/push/notification-delivery";
 
 @Injectable()
-export class SocketsService {
+export class SocketsService implements OnModuleInit, OnApplicationShutdown {
   private redis: Redis;
   private appConfig: AppConfig;
   private nodeId: string = process.env.POD_NAME;
 
   private clients: Map<string, FiveStackWebSocketClient> = new Map();
+
+  // Delivery and the close handler read this rather than the clients:*
+  // presence keys, which only say a socket pinged lately somewhere.
+  private clientsBySteamId: Map<string, Set<string>> = new Map();
+
+  // A tab hidden for a few minutes pings once a minute, so presence has to
+  // outlast a missed ping or a hidden tab drops out of it.
+  private static readonly PRESENCE_TTL_SECONDS = 150;
+
+  // A pod that dies leaves its clients:* keys behind for the whole presence
+  // TTL, so they only count while its own short-lived key says it is up.
+  private static readonly POD_TTL_SECONDS = 20;
+  private static readonly POD_HEARTBEAT_MS = 10 * 1000;
+
+  private podTimer: NodeJS.Timeout;
 
   // Twice the client's ping interval, so a focus survives a missed heartbeat
   // but a closed laptop stops claiming to be reading anything within a round.
@@ -88,6 +109,66 @@ export class SocketsService {
           break;
       }
     });
+  }
+
+  public static GET_POD_KEY(nodeId: string) {
+    return `sockets:pod:${nodeId}`;
+  }
+
+  // What the close handler and MarkPlayerOffline both mean by "still online":
+  // a socket that pinged lately, on a pod that is still up.
+  public static async hasLivePresence(redis: Redis, steamId: string) {
+    const clients = await redis.keys(
+      `${SocketsService.GET_PLAYER_CLIENTS(steamId)}:*`,
+    );
+
+    const nodeIds = new Set(clients.map((key) => key.split(":")[2]));
+
+    for (const nodeId of nodeIds) {
+      if (await redis.exists(SocketsService.GET_POD_KEY(nodeId))) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public onModuleInit() {
+    void this.tick();
+    this.podTimer = setInterval(
+      () => void this.tick(),
+      SocketsService.POD_HEARTBEAT_MS,
+    );
+    this.podTimer.unref?.();
+  }
+
+  public onApplicationShutdown() {
+    clearInterval(this.podTimer);
+  }
+
+  private async tick() {
+    try {
+      await this.redis.set(
+        SocketsService.GET_POD_KEY(this.nodeId),
+        "1",
+        "EX",
+        SocketsService.POD_TTL_SECONDS,
+      );
+    } catch (error) {
+      this.logger.warn(
+        `unable to mark this pod alive: ${(error as Error)?.message}`,
+      );
+    }
+
+    // The server never pings /ws/web itself, so a socket whose peer vanished
+    // without a close would otherwise stay open, and keep its player online,
+    // for good.
+    const silentSince = Date.now() - SocketsService.PRESENCE_TTL_SECONDS * 1000;
+    for (const client of Array.from(this.clients.values())) {
+      if (client.lastSeenAt < silentSince) {
+        client.terminate();
+      }
+    }
   }
 
   public static GET_PLAYER_KEY(steamId: string) {
@@ -172,8 +253,10 @@ export class SocketsService {
     client.node = this.nodeId;
     client.peerNodes = new Set();
     client.signalPeers = new Map();
+    client.lastSeenAt = Date.now();
 
     this.clients.set(client.id, client);
+    this.indexClient(client);
 
     const registered = this.register(client);
 
@@ -181,6 +264,7 @@ export class SocketsService {
 
     client.on("close", async () => {
       this.clients.delete(client.id);
+      this.unindexClient(client);
 
       void this.demoSessionWatcher.clientClosed(client.id);
 
@@ -205,19 +289,24 @@ export class SocketsService {
 
       await this.setFocus(client.user.steam_id, client.id, null);
 
-      const clients = await this.redis.keys(
-        `${SocketsService.GET_PLAYER_CLIENTS(client.user.steam_id)}:*`,
-      );
-
-      if (clients.length === 0) {
-        await this.redis.del(
-          SocketsService.GET_PLAYER_KEY(client.user.steam_id),
-        );
-
-        await this.sendPeopleOnline();
-
-        void this.matchmaking.markOffline(client.user.steam_id);
+      if (this.clientsBySteamId.has(String(client.user.steam_id))) {
+        return;
       }
+
+      if (
+        await SocketsService.hasLivePresence(this.redis, client.user.steam_id)
+      ) {
+        return;
+      }
+
+      // Queued before the player disappears from presence: a reload's new
+      // socket that registers from here on cancels it, and any ping after the
+      // DEL finds them gone and cancels it too.
+      await this.matchmaking.markOffline(client.user.steam_id);
+
+      await this.redis.del(SocketsService.GET_PLAYER_KEY(client.user.steam_id));
+
+      await this.sendPeopleOnline();
     });
   }
 
@@ -306,20 +395,40 @@ export class SocketsService {
     });
   }
 
+  // A ping that finds the player gone from presence puts them back: another
+  // pod can have marked them offline while this tab sat hidden.
+  public async heartbeat(steamId: string, clientId: string) {
+    const client = this.clients.get(clientId);
+    if (client) {
+      client.lastSeenAt = Date.now();
+    }
+
+    if (!(await this.updateClient(steamId, clientId))) {
+      return;
+    }
+
+    await this.matchmaking.cancelOffline(steamId);
+    await this.sendPeopleOnline();
+  }
+
+  // Resolves true when the player had no presence left.
   public async updateClient(steamId: string, clientId: string) {
-    await this.redis.set(
+    const previous = await this.redis.set(
       SocketsService.GET_PLAYER_KEY(steamId),
       JSON.stringify({ lastSeen: Date.now() }),
       "EX",
-      20,
+      SocketsService.PRESENCE_TTL_SECONDS,
+      "GET",
     );
 
     await this.redis.set(
       SocketsService.GET_PLAYER_CLIENT(steamId, this.nodeId, clientId),
       "1",
       "EX",
-      20,
+      SocketsService.PRESENCE_TTL_SECONDS,
     );
+
+    return previous === null;
   }
 
   // Every client on this pod. Callers almost always want every client
@@ -362,30 +471,48 @@ export class SocketsService {
     client.send(JSON.stringify({ event, data }));
   }
 
+  private indexClient(client: FiveStackWebSocketClient) {
+    const steamId = String(client.user.steam_id);
+
+    let clientIds = this.clientsBySteamId.get(steamId);
+    if (!clientIds) {
+      clientIds = new Set();
+      this.clientsBySteamId.set(steamId, clientIds);
+    }
+
+    clientIds.add(client.id);
+  }
+
+  private unindexClient(client: FiveStackWebSocketClient) {
+    const steamId = String(client.user.steam_id);
+
+    const clientIds = this.clientsBySteamId.get(steamId);
+    if (!clientIds) {
+      return;
+    }
+
+    clientIds.delete(client.id);
+
+    if (clientIds.size === 0) {
+      this.clientsBySteamId.delete(steamId);
+    }
+  }
+
   private async sendMessageToSteamId(
     steamId: string,
     event: string,
     data: unknown,
   ) {
-    const clients = await this.redis.keys(
-      `${SocketsService.GET_PLAYER_CLIENTS_BY_NODE(steamId, this.nodeId)}:*`,
-    );
+    const clientIds = this.clientsBySteamId.get(String(steamId));
 
-    for (const client of clients) {
-      const [, , , clientId] = client.split(":");
+    if (!clientIds) {
+      return;
+    }
 
-      const _client = this.clients.get(clientId);
+    const message = JSON.stringify({ event, data });
 
-      if (!_client) {
-        continue;
-      }
-
-      _client.send(
-        JSON.stringify({
-          event,
-          data,
-        }),
-      );
+    for (const clientId of clientIds) {
+      this.clients.get(clientId)?.send(message);
     }
   }
 

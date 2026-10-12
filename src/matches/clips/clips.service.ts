@@ -1250,7 +1250,15 @@ export class ClipsService {
     if (claimed !== "OK") {
       return false;
     }
-    await this.incrementClipViewsByFile(file);
+    try {
+      await this.incrementClipViewsByFile(file);
+    } catch (error) {
+      await this.redisManager
+        .getConnection()
+        .del(dedupeKey)
+        .catch(() => {});
+      throw error;
+    }
     return true;
   }
 

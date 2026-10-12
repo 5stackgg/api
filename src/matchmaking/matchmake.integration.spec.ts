@@ -20,6 +20,7 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { MatchmakingQueues } from "./enums/MatchmakingQueues";
 import { FakeRedis } from "./testing/fakeRedis";
 import {
+  getMatchmakingConformationCacheKey,
   getMatchmakingLobbyDetailsCacheKey,
   getMatchmakingQueueCacheKey,
   getMatchmakingRankCacheKey,
@@ -27,6 +28,12 @@ import {
 import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
 
 const COMPETITIVE: e_match_types_enum = "Competitive";
+const QUEUE_TYPES: e_match_types_enum[] = [
+  "Duel",
+  "Wingman",
+  "Rush",
+  "Competitive",
+];
 
 /**
  * These drive the real MatchmakeService against an in-memory redis, so the
@@ -52,52 +59,21 @@ describe("matchmaking (end to end)", () => {
     updateMatchStatus: jest.Mock;
   };
   let hasura: { query: jest.Mock; mutation: jest.Mock };
-  let lobbyService: Record<string, jest.Mock>;
+  let lobbyService: MatchmakingLobbyService;
   let queue: { add: jest.Mock; remove: jest.Mock };
+  // players whose is_in_another_match reads true
+  let busy: Set<string>;
 
   beforeEach(async () => {
     redis = new FakeRedis();
     lobbyStore = new Map();
     confirmations = [];
+    busy = new Set();
 
     queue = { add: jest.fn(), remove: jest.fn() };
 
     confirmationIds = [];
     lineupInserts = [];
-
-    lobbyService = {
-      getLobbyDetails: jest.fn(async (lobbyId: string) => {
-        const lobby = lobbyStore.get(lobbyId);
-        return lobby ? { ...lobby, players: [...lobby.players] } : null;
-      }),
-      setMatchConformationIdForLobby: jest.fn(
-        async (_lobbyId: string, confirmationId: string) => {
-          if (!confirmationIds.includes(confirmationId)) {
-            confirmationIds.push(confirmationId);
-          }
-        },
-      ),
-      sendQueueDetailsToLobby: jest.fn(),
-      // the real implementations zrem from every region the lobby queued for
-      removeLobbyFromQueue: jest.fn(async (lobbyId: string) => {
-        const lobby = lobbyStore.get(lobbyId);
-        for (const region of lobby?.regions ?? []) {
-          await redis.zrem(
-            getMatchmakingRankCacheKey(lobby.type, region),
-            lobbyId,
-          );
-          await redis.zrem(
-            getMatchmakingQueueCacheKey(lobby.type, region),
-            lobbyId,
-          );
-        }
-      }),
-      removeLobbyDetails: jest.fn(async (lobbyId: string) => {
-        lobbyStore.delete(lobbyId);
-        await redis.del(getMatchmakingLobbyDetailsCacheKey(lobbyId));
-      }),
-      removeConfirmationIdFromLobby: jest.fn(),
-    };
 
     matchAssistant = {
       createMatchBasedOnType: jest.fn(async () => ({
@@ -109,10 +85,31 @@ describe("matchmaking (end to end)", () => {
     };
 
     hasura = {
-      // sendRegionStats reads the region list on cancel
-      query: jest.fn(async () => ({
-        server_regions: [{ value: "us-east" }, { value: "eu-west" }],
-      })),
+      query: jest.fn(async (payload: any) => {
+        if (payload?.matches_by_pk) {
+          return {
+            matches_by_pk: {
+              id: payload.matches_by_pk.__args.id,
+              status: "Live",
+            },
+          };
+        }
+        if (payload?.players) {
+          const steamIds: string[] = payload.players.__args.where.steam_id._in;
+          return {
+            players: steamIds
+              .filter((steamId) => busy.has(steamId))
+              .map((steamId) => ({
+                steam_id: steamId,
+                name: `name-${steamId}`,
+              })),
+          };
+        }
+        // sendRegionStats reads the region list on cancel
+        return {
+          server_regions: [{ value: "us-east" }, { value: "eu-west" }],
+        };
+      }),
       mutation: jest.fn(async (payload: any) => {
         const objects = payload?.insert_match_lineup_players?.__args?.objects;
         if (objects) {
@@ -129,9 +126,9 @@ describe("matchmaking (end to end)", () => {
       providers: [
         { provide: Logger, useValue: new Logger("Test") },
         MatchmakeService,
+        MatchmakingLobbyService,
         { provide: HasuraService, useValue: hasura },
         { provide: MatchAssistantService, useValue: matchAssistant },
-        { provide: MatchmakingLobbyService, useValue: lobbyService },
         {
           provide: RedisManagerService,
           useValue: { getConnection: () => redis },
@@ -151,6 +148,18 @@ describe("matchmaking (end to end)", () => {
     }).compile();
 
     service = module.get<MatchmakeService>(MatchmakeService);
+    lobbyService = module.get<MatchmakingLobbyService>(MatchmakingLobbyService);
+
+    const stamp =
+      lobbyService.setMatchConformationIdForLobby.bind(lobbyService);
+    jest
+      .spyOn(lobbyService, "setMatchConformationIdForLobby")
+      .mockImplementation(async (lobbyId: string, confirmationId: string) => {
+        if (!confirmationIds.includes(confirmationId)) {
+          confirmationIds.push(confirmationId);
+        }
+        return stamp(lobbyId, confirmationId);
+      });
 
     // record confirmations but keep the real redis writes, so queue state stays honest
     const original = (service as any).createMatchConfirmation.bind(service);
@@ -187,9 +196,10 @@ describe("matchmaking (end to end)", () => {
   async function enqueue(lobbies: MatchmakingLobby[]) {
     for (const lobby of lobbies) {
       lobbyStore.set(lobby.lobbyId, lobby);
-      // the real getLobbyDetails reads this key, and the orphan sweep checks it
-      await redis.set(
+      // where setLobbyDetails puts it; the orphan sweep checks the key exists
+      await redis.hset(
         getMatchmakingLobbyDetailsCacheKey(lobby.lobbyId),
+        "details",
         JSON.stringify(lobby),
       );
       for (const region of lobby.regions) {
@@ -205,6 +215,10 @@ describe("matchmaking (end to end)", () => {
         );
       }
     }
+  }
+
+  function detailsOf(lobbyId: string) {
+    return redis.hget(getMatchmakingLobbyDetailsCacheKey(lobbyId), "details");
   }
 
   function queuedIn(region: string, type = COMPETITIVE) {
@@ -365,7 +379,13 @@ describe("matchmaking (end to end)", () => {
         makeLobby(`solo-${i}`, [5000]),
       );
       await enqueue(lobbies);
-      hasura.query.mockRejectedValue(new Error("hasura unavailable"));
+      const answer = hasura.query.getMockImplementation();
+      hasura.query.mockImplementation(async (payload: any) => {
+        if (payload?.server_regions) {
+          throw new Error("hasura unavailable");
+        }
+        return answer(payload);
+      });
 
       await service.matchmake(COMPETITIVE, "us-east");
 
@@ -401,17 +421,18 @@ describe("matchmaking (end to end)", () => {
         ),
       ]);
 
-      const details = lobbyService.getLobbyDetails as jest.Mock;
-      const read = details.getMockImplementation();
+      const read = lobbyService.getLobbyDetails.bind(lobbyService);
       let takenByEast = false;
-      details.mockImplementation(async (lobbyId: string) => {
-        const lobby = await read(lobbyId);
-        if (lobbyId === "multi" && !takenByEast) {
-          takenByEast = true;
-          await (service as any).claimLobby("multi", lobby);
-        }
-        return lobby;
-      });
+      jest
+        .spyOn(lobbyService, "getLobbyDetails")
+        .mockImplementation(async (lobbyId: string) => {
+          const lobby = await read(lobbyId);
+          if (lobbyId === "multi" && !takenByEast) {
+            takenByEast = true;
+            await (service as any).claimLobby("multi", lobby);
+          }
+          return lobby;
+        });
 
       const expire = redis.expire.bind(redis);
       let broadcastWhileHeld = false;
@@ -451,17 +472,19 @@ describe("matchmaking (end to end)", () => {
     it("keeps a lobby that rejoins while the stats are being built", async () => {
       await enqueue([makeLobby("rejoiner", [5000])]);
 
-      const details = lobbyService.getLobbyDetails as jest.Mock;
-      details.mockImplementationOnce(async (lobbyId: string) => {
-        // the lobby leaves and comes straight back while we are reading it
-        const rejoined = makeLobby("rejoiner", [5000]);
-        lobbyStore.set("rejoiner", rejoined);
-        await redis.set(
-          getMatchmakingLobbyDetailsCacheKey(lobbyId),
-          JSON.stringify(rejoined),
-        );
-        return null;
-      });
+      jest
+        .spyOn(lobbyService, "getLobbyDetails")
+        .mockImplementationOnce(async (lobbyId: string) => {
+          // the lobby leaves and comes straight back while we are reading it
+          const rejoined = makeLobby("rejoiner", [5000]);
+          lobbyStore.set("rejoiner", rejoined);
+          await redis.hset(
+            getMatchmakingLobbyDetailsCacheKey(lobbyId),
+            "details",
+            JSON.stringify(rejoined),
+          );
+          return null;
+        });
 
       await service.sendRegionStats();
 
@@ -532,7 +555,9 @@ describe("matchmaking (end to end)", () => {
       );
 
       await service.matchmake(COMPETITIVE, "us-east");
-      expect(await redis.get("matchmaking:lock:us-east")).toBeNull();
+      expect(
+        await redis.get("matchmaking:lock:us-east:Competitive"),
+      ).toBeNull();
 
       const second = Array.from({ length: 10 }, (_, i) =>
         makeLobby(`second-${i}`, [5000]),
@@ -616,6 +641,7 @@ describe("matchmaking (end to end)", () => {
       expect(expandJobs[0][1]).toEqual({
         type: COMPETITIVE,
         region: "us-east",
+        failures: 0,
       });
     });
 
@@ -1053,6 +1079,540 @@ describe("matchmaking (end to end)", () => {
     });
   });
 
+  describe("players who are already in a match", () => {
+    const tenSolos = (options?: { regions?: string[] }) =>
+      Array.from({ length: 10 }, (_, i) =>
+        makeLobby(`solo-${i}`, [5000], options),
+      );
+
+    function errorsTo(steamId: string) {
+      return redis.published
+        .filter((entry) => entry.channel === "send-message-to-steam-id")
+        .map((entry) => JSON.parse(entry.message))
+        .filter(
+          (message) =>
+            message.event === "matchmaking:error" &&
+            message.steamId === steamId,
+        )
+        .map((message) => message.data);
+    }
+
+    async function confirmEveryone() {
+      const [confirmation] = confirmations;
+      const [confirmationId] = confirmationIds;
+      for (const player of [
+        ...confirmation.team1.players,
+        ...confirmation.team2.players,
+      ]) {
+        await service.playerConfirmMatchmaking(confirmationId, player.steam_id);
+      }
+      return confirmationId;
+    }
+
+    function inAnyQueue(lobbyId: string, regions: string[]) {
+      return QUEUE_TYPES.some((type) =>
+        regions.some(
+          (region) =>
+            redis
+              .members(getMatchmakingQueueCacheKey(type, region))
+              .includes(lobbyId) ||
+            redis
+              .members(getMatchmakingRankCacheKey(type, region))
+              .includes(lobbyId),
+        ),
+      );
+    }
+
+    it("drops a lobby whose player went into another match before the ready check", async () => {
+      await enqueue(tenSolos());
+      busy.add("solo-3-p0");
+
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      expect(confirmations).toHaveLength(0);
+      expect(queuedIn("us-east")).toHaveLength(9);
+      expect(queuedIn("us-east")).not.toContain("solo-3");
+      expect(await detailsOf("solo-3")).toBeNull();
+      expect(errorsTo("solo-3-p0")).toEqual([
+        expect.objectContaining({
+          code: "player_in_match",
+          name: "name-solo-3-p0",
+        }),
+      ]);
+      expect(errorsTo("solo-4-p0")).toEqual([]);
+    });
+
+    it("drops a full party with a busy player instead of starting its ready check", async () => {
+      await enqueue([makeLobby("ten-stack", new Array(10).fill(5000))]);
+      busy.add("ten-stack-p7");
+
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      expect(confirmations).toHaveLength(0);
+      expect(queuedIn("us-east")).toEqual([]);
+      expect(await detailsOf("ten-stack")).toBeNull();
+      expect(errorsTo("ten-stack-p0")).toEqual([
+        expect.objectContaining({ code: "player_in_match" }),
+      ]);
+    });
+
+    it("drops a lobby whose player went into another match before the match is created, and requeues the rest", async () => {
+      await enqueue(tenSolos());
+      await service.matchmake(COMPETITIVE, "us-east");
+      expect(confirmations).toHaveLength(1);
+
+      busy.add("solo-3-p0");
+      const confirmationId = await confirmEveryone();
+
+      expect(matchAssistant.createMatchBasedOnType).not.toHaveBeenCalled();
+      expect(lineupInserts).toEqual([]);
+      expect(await detailsOf("solo-3")).toBeNull();
+      expect(queuedIn("us-east")).toEqual(
+        Array.from({ length: 10 }, (_, i) => `solo-${i}`)
+          .filter((lobbyId) => lobbyId !== "solo-3")
+          .sort(),
+      );
+      expect(
+        await redis.hgetall(getMatchmakingConformationCacheKey(confirmationId)),
+      ).toEqual({});
+      expect(errorsTo("solo-3-p0")).toEqual([
+        expect.objectContaining({ code: "player_in_match" }),
+      ]);
+    });
+
+    it("takes the matched lobbies out of every queue when the match is created", async () => {
+      const regions = ["us-east", "eu-west"];
+      await enqueue(tenSolos({ regions }));
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      // whatever put it back while the ready check was up
+      await redis.zadd(
+        getMatchmakingQueueCacheKey(COMPETITIVE, "eu-west"),
+        0,
+        "solo-0",
+      );
+      await redis.zadd(
+        getMatchmakingRankCacheKey(COMPETITIVE, "eu-west"),
+        5000,
+        "solo-0",
+      );
+      await redis.zadd(
+        getMatchmakingQueueCacheKey("Wingman", "us-east"),
+        0,
+        "solo-1",
+      );
+      await redis.zadd(
+        getMatchmakingRankCacheKey("Wingman", "us-east"),
+        5000,
+        "solo-1",
+      );
+
+      await confirmEveryone();
+
+      expect(matchAssistant.createMatchBasedOnType).toHaveBeenCalledTimes(1);
+      for (let i = 0; i < 10; i++) {
+        expect(inAnyQueue(`solo-${i}`, regions)).toBe(false);
+      }
+    });
+
+    it("still matches lobbies whose ready check failed part way", async () => {
+      await enqueue(tenSolos());
+      jest
+        .spyOn(lobbyService, "sendQueueDetailsToLobby")
+        .mockRejectedValueOnce(new Error("redis is down"));
+
+      await service.matchmake(COMPETITIVE, "us-east");
+      expect(queuedIn("us-east")).toHaveLength(10);
+
+      // the failed ready check leaves nothing behind for the lobbies to show
+      const [failedId] = confirmationIds;
+      expect(
+        await redis.hgetall(getMatchmakingConformationCacheKey(failedId)),
+      ).toEqual({});
+      for (let i = 0; i < 10; i++) {
+        expect(
+          await redis.hget(
+            getMatchmakingLobbyDetailsCacheKey(`solo-${i}`),
+            "confirmationId",
+          ),
+        ).toBeNull();
+      }
+
+      confirmations.length = 0;
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      expect(confirmations).toHaveLength(1);
+      expect(queuedIn("us-east")).toHaveLength(0);
+    });
+
+    it("does not claim a queued lobby that is still in a ready check", async () => {
+      await enqueue(tenSolos());
+      await service.matchmake(COMPETITIVE, "us-east");
+      expect(confirmations).toHaveLength(1);
+
+      // put back into the queue while its ready check is still up, and left
+      // there past the 30s lobby lock
+      await redis.zadd(
+        getMatchmakingRankCacheKey(COMPETITIVE, "us-east"),
+        5000,
+        "solo-0",
+      );
+      await redis.zadd(
+        getMatchmakingQueueCacheKey(COMPETITIVE, "us-east"),
+        0,
+        "solo-0",
+      );
+      redis.advanceTime(31_000);
+
+      await enqueue(
+        Array.from({ length: 9 }, (_, i) => makeLobby(`late-${i}`, [5000])),
+      );
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      expect(confirmations).toHaveLength(1);
+      expect(queuedIn("us-east")).not.toContain("solo-0");
+      expect(queuedIn("us-east")).toHaveLength(9);
+    });
+
+    it("lets the next pass claim the lobbies an aborted ready check put back", async () => {
+      await enqueue(tenSolos());
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      busy.add("solo-3-p0");
+      await confirmEveryone();
+      expect(queuedIn("us-east")).toHaveLength(9);
+
+      // the follow-up pass runs within seconds, well inside the 30s lock the
+      // ready check put on every lobby
+      await enqueue([makeLobby("late-0", [5000])]);
+      confirmations.length = 0;
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      expect(confirmations).toHaveLength(1);
+      expect(queuedIn("us-east")).toEqual([]);
+    });
+
+    it("keeps the ready check's cancel job when the abort cannot finish", async () => {
+      await enqueue(tenSolos());
+      await service.matchmake(COMPETITIVE, "us-east");
+      const [confirmationId] = confirmationIds;
+
+      busy.add("solo-3-p0");
+      const answer = hasura.query.getMockImplementation();
+      hasura.query.mockImplementation(async (payload: any) => {
+        if (payload?.server_regions) {
+          throw new Error("hasura unavailable");
+        }
+        return answer(payload);
+      });
+
+      await confirmEveryone().catch(() => undefined);
+
+      expect(matchAssistant.createMatchBasedOnType).not.toHaveBeenCalled();
+      expect(queue.remove).not.toHaveBeenCalledWith(
+        `matchmaking.cancel.${confirmationId}`,
+      );
+    });
+
+    it("never seats a player twice when they are in two queued lobbies", async () => {
+      const solo = makeLobby("solo-x", [5000], { waitSeconds: 600 });
+      const duo = makeLobby("duo-x", [5000, 5000], { waitSeconds: 600 });
+      // queued solo, then pulled into a party before the solo entry is gone
+      duo.players[0].steam_id = solo.players[0].steam_id;
+      await enqueue([
+        solo,
+        duo,
+        ...Array.from({ length: 8 }, (_, i) => makeLobby(`solo-${i}`, [5000])),
+      ]);
+
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      const seated = confirmations.flatMap((confirmation) =>
+        [...confirmation.team1.players, ...confirmation.team2.players].map(
+          (player) => player.steam_id,
+        ),
+      );
+      expect(new Set(seated).size).toBe(seated.length);
+    });
+
+    it("releases the region when the Play count fails while dropping a stale entry", async () => {
+      await enqueue(tenSolos());
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      // put back while its ready check is still up
+      await redis.zadd(
+        getMatchmakingRankCacheKey(COMPETITIVE, "us-east"),
+        5000,
+        "solo-0",
+      );
+      await redis.zadd(
+        getMatchmakingQueueCacheKey(COMPETITIVE, "us-east"),
+        0,
+        "solo-0",
+      );
+
+      const answer = hasura.query.getMockImplementation();
+      hasura.query.mockImplementation(async (payload: any) => {
+        if (payload?.server_regions) {
+          throw new Error("hasura unavailable");
+        }
+        return answer(payload);
+      });
+
+      await expect(
+        service.matchmake(COMPETITIVE, "us-east"),
+      ).resolves.toBeUndefined();
+      expect(
+        await redis.get("matchmaking:lock:us-east:Competitive"),
+      ).toBeNull();
+      expect(queuedIn("us-east")).toEqual([]);
+    });
+  });
+
+  describe("a pass that cannot check who is busy", () => {
+    beforeEach(() => {
+      const answer = hasura.query.getMockImplementation();
+      hasura.query.mockImplementation(async (payload: any) => {
+        if (payload?.players && lookupDown) {
+          throw new Error("hasura unavailable");
+        }
+        return answer(payload);
+      });
+    });
+
+    let lookupDown: boolean;
+
+    it("claims nobody and asks for another pass, backing off to a cap", async () => {
+      lookupDown = true;
+      await enqueue(
+        Array.from({ length: 10 }, (_, i) => makeLobby(`solo-${i}`, [5000])),
+      );
+
+      const delays: number[] = [];
+      let failures = 0;
+      for (let attempt = 0; attempt < 8; attempt++) {
+        const next = await service.matchmake(COMPETITIVE, "us-east", failures);
+        delays.push(next.delay);
+        failures = next.failures;
+      }
+
+      expect(confirmations).toEqual([]);
+      expect(queuedIn("us-east")).toHaveLength(10);
+      expect(delays).toEqual([
+        10_000, 20_000, 40_000, 80_000, 160_000, 300_000, 300_000, 300_000,
+      ]);
+      expect(
+        await redis.get("matchmaking:lock:us-east:Competitive"),
+      ).toBeNull();
+    });
+
+    it("matches as soon as the lookup is back", async () => {
+      lookupDown = true;
+      await enqueue(
+        Array.from({ length: 10 }, (_, i) => makeLobby(`solo-${i}`, [5000])),
+      );
+      const { failures } = await service.matchmake(COMPETITIVE, "us-east", 4);
+
+      lookupDown = false;
+      const next = await service.matchmake(COMPETITIVE, "us-east", failures);
+
+      expect(next).toBeUndefined();
+      expect(confirmations).toHaveLength(1);
+    });
+  });
+
+  describe("passes that collide and ready checks that end", () => {
+    const solos = (prefix: string, count: number) =>
+      Array.from({ length: count }, (_, i) =>
+        makeLobby(`${prefix}-${i}`, [5000]),
+      );
+
+    function regionStatsDown() {
+      const answer = hasura.query.getMockImplementation();
+      hasura.query.mockImplementation(async (payload: any) => {
+        if (payload?.server_regions) {
+          throw new Error("hasura unavailable");
+        }
+        return answer(payload);
+      });
+    }
+
+    async function confirm(confirmationId: string, lobbyIds: string[]) {
+      for (const lobbyId of lobbyIds) {
+        for (const player of lobbyStore.get(lobbyId).players) {
+          await service.playerConfirmMatchmaking(
+            confirmationId,
+            player.steam_id,
+          );
+        }
+      }
+    }
+
+    // what matchmaking:leave does
+    async function leave(lobbyId: string) {
+      await service.releaseLobbyLock(lobbyId, 0);
+      await lobbyService.removeLobbyFromQueue(lobbyId);
+      await lobbyService.removeLobbyDetails(lobbyId);
+    }
+
+    const stampOf = (lobbyId: string) =>
+      redis.hget(getMatchmakingLobbyDetailsCacheKey(lobbyId), "confirmationId");
+
+    const ids = (prefix: string, count: number) =>
+      Array.from({ length: count }, (_, i) => `${prefix}-${i}`);
+
+    it("asks for another pass soon when the region is busy", async () => {
+      await enqueue(solos("solo", 10));
+      jest
+        .spyOn(service as any, "aquireMatchmakeRegionLock")
+        .mockResolvedValueOnce(false);
+
+      const next = await service.matchmake(COMPETITIVE, "us-east", 3);
+
+      expect(confirmations).toEqual([]);
+      expect(next.failures).toBe(3);
+      expect(next.delay).toBeGreaterThanOrEqual(1000);
+      expect(next.delay).toBeLessThanOrEqual(5000);
+      expect(queue.add).toHaveBeenCalledWith(
+        "ExpandMatchmaking",
+        { type: COMPETITIVE, region: "us-east", failures: 3 },
+        expect.objectContaining({ delay: next.delay }),
+      );
+    });
+
+    it("runs a pass for one type while another type's pass is stuck in the same region", async () => {
+      await enqueue(solos("solo", 10));
+      await enqueue(
+        Array.from({ length: 4 }, (_, i) =>
+          makeLobby(`wing-${i}`, [5000], { type: "Wingman" }),
+        ),
+      );
+
+      let unstick: () => void;
+      const stuck = new Promise<void>((resolve) => {
+        unstick = resolve;
+      });
+      const answer = hasura.query.getMockImplementation();
+      hasura.query.mockImplementation(async (payload: any) => {
+        if (
+          payload?.players?.__args.where.steam_id._in.some((steamId: string) =>
+            steamId.startsWith("wing-"),
+          )
+        ) {
+          await stuck;
+        }
+        return answer(payload);
+      });
+
+      const wingman = service.matchmake("Wingman", "us-east");
+      await new Promise((resolve) => setImmediate(resolve));
+
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      expect(
+        confirmations.filter(({ type }) => type === COMPETITIVE),
+      ).toHaveLength(1);
+
+      unstick();
+      await wingman;
+    });
+
+    it("leaves a lobby alone once it has moved on to a newer ready check", async () => {
+      await enqueue(solos("first", 10));
+      await service.matchmake(COMPETITIVE, "us-east");
+      const [first] = confirmationIds;
+
+      // first-0 accepts, leaves, queues again and lands in a second ready check
+      await confirm(first, ["first-0"]);
+      await leave("first-0");
+      await enqueue([lobbyStore.get("first-0")]);
+      await enqueue(solos("second", 9));
+      await service.matchmake(COMPETITIVE, "us-east");
+      const second = confirmationIds[1];
+      expect(await stampOf("first-0")).toBe(second);
+
+      await service.cancelMatchMaking(first);
+
+      expect(await stampOf("first-0")).toBe(second);
+      expect(queuedIn("us-east")).not.toContain("first-0");
+      expect(await redis.get("matchmaking:lock:first-0")).not.toBeNull();
+    });
+
+    it("keeps a lobby that declined and queued again before the check ran out", async () => {
+      await enqueue(solos("solo", 10));
+      await service.matchmake(COMPETITIVE, "us-east");
+      const [confirmationId] = confirmationIds;
+
+      await leave("solo-0");
+      await enqueue([lobbyStore.get("solo-0")]);
+
+      await service.cancelMatchMaking(confirmationId);
+
+      expect(queuedIn("us-east")).toEqual(["solo-0"]);
+      expect(await detailsOf("solo-0")).not.toBeNull();
+    });
+
+    it("lets the cancel job finish an abort that failed part way, without the Play count", async () => {
+      await enqueue(solos("solo", 10));
+      await service.matchmake(COMPETITIVE, "us-east");
+      const [confirmationId] = confirmationIds;
+
+      busy.add("solo-3-p0");
+      regionStatsDown();
+      jest
+        .spyOn(lobbyService, "removeLobbyDetails")
+        .mockRejectedValueOnce(new Error("redis blipped"));
+
+      await confirm(confirmationId, ids("solo", 10)).catch(() => undefined);
+      expect(queue.remove).not.toHaveBeenCalledWith(
+        `matchmaking.cancel.${confirmationId}`,
+      );
+
+      // the cancel job, 30s later
+      await service.cancelMatchMaking(confirmationId);
+
+      expect(queuedIn("us-east")).toEqual(ids("solo", 10).sort());
+      expect(
+        await redis.hgetall(getMatchmakingConformationCacheKey(confirmationId)),
+      ).toEqual({});
+      for (const lobbyId of ids("solo", 10)) {
+        expect(await stampOf(lobbyId)).toBeNull();
+      }
+    });
+
+    it("retries the cancel job", async () => {
+      await enqueue(solos("solo", 10));
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      const [, , options] = queue.add.mock.calls.find(
+        ([name]) => name === "CancelMatchMaking",
+      );
+      expect(options.attempts).toBeGreaterThan(1);
+      expect(options.backoff).toEqual(
+        expect.objectContaining({ type: "exponential" }),
+      );
+    });
+
+    it("lets an abandoned ready check expire, but not the match it made", async () => {
+      await enqueue(solos("solo", 10));
+      await service.matchmake(COMPETITIVE, "us-east");
+      const [confirmationId] = confirmationIds;
+      const key = getMatchmakingConformationCacheKey(confirmationId);
+
+      await confirm(confirmationId, ["solo-0"]);
+
+      // long enough for the cancel job and all of its retries
+      expect(await redis.ttl(key)).toBeGreaterThan(5 * 60);
+      expect(await redis.ttl(`${key}:confirmed`)).toBeGreaterThan(5 * 60);
+
+      await confirm(confirmationId, ids("solo", 10).slice(1));
+
+      expect(matchAssistant.createMatchBasedOnType).toHaveBeenCalledTimes(1);
+      expect(await redis.ttl(key)).toBe(-1);
+      expect(await redis.ttl(`${key}:confirmed`)).toBe(-1);
+    });
+  });
+
   describe("randomized queues", () => {
     function mulberry32(seed: number) {
       let state = seed;
@@ -1071,6 +1631,7 @@ describe("matchmaking (end to end)", () => {
       for (let iteration = 0; iteration < 60; iteration++) {
         redis = new FakeRedis();
         (service as any).redis = redis;
+        (lobbyService as any).redis = redis;
         lobbyStore.clear();
         confirmations.length = 0;
 
