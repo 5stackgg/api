@@ -917,35 +917,6 @@ export class UtilityRendersService {
     );
   }
 
-  // The lineups a render session's server is allowed to hand its client. The
-  // pod is not on anybody's roster and owns none of these lineups, so the
-  // player-scoped library would come back empty and `.load` would never resolve.
-  public async renderLibraryLineupIds(
-    matchId: string,
-  ): Promise<Array<string> | null> {
-    const [session] = await this.postgres.query<Array<{ id: string }>>(
-      `SELECT id::text AS id
-         FROM public.utility_practice_sessions
-        WHERE match_id = $1::uuid AND is_render = true`,
-      [matchId],
-    );
-
-    if (!session) {
-      return null;
-    }
-
-    const rows = await this.postgres.query<
-      Array<{ utility_lineup_id: string }>
-    >(
-      `SELECT utility_lineup_id::text AS utility_lineup_id
-         FROM public.utility_lineup_renders
-        WHERE utility_practice_session_id = $1::uuid`,
-      [session.id],
-    );
-
-    return rows.map((row) => row.utility_lineup_id);
-  }
-
   // ---------------------------------------------------------------------
   // Pod callbacks
   // ---------------------------------------------------------------------

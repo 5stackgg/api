@@ -505,19 +505,49 @@ export class DemoParserService {
       "get",
     );
 
-    const url = `${this.appConfig.demoParserUrl}/parse`;
     this.logger.log(
-      `[demo-parser] POST ${url} (s3_key=${s3Key}${matchMapDemoId ? ` id=${matchMapDemoId}` : ""})`,
+      `[demo-parser] POST ${this.appConfig.demoParserUrl}/parse (s3_key=${s3Key}${matchMapDemoId ? ` id=${matchMapDemoId}` : ""})`,
+    );
+
+    const res = await this.postParse(presignedUrl, matchMapDemoId);
+
+    const parsed = (await res.json()) as ParsedDemo;
+    this.logger.log(
+      `[demo-parser] parsed: ${parsed.total_ticks} ticks @ ${parsed.tick_rate} tps, ${parsed.round_ticks?.length ?? 0} rounds, ${parsed.kills?.length ?? 0} kills, ${parsed.bombs?.length ?? 0} bombs, ${parsed.shots_fired?.length ?? 0} shots, ${parsed.damages?.length ?? 0} dmg, ${parsed.spotted?.length ?? 0} spotted, ${parsed.grenade_throws?.length ?? 0} thrown, ${parsed.grenade_detonations?.length ?? 0} detonated, map=${parsed.map_name ?? "<unknown>"}${parsed.workshop_id ? ` (workshop ${parsed.workshop_id})` : ""}`,
+    );
+    return parsed;
+  }
+
+  public async parseFromUrl(demoUrl: string): Promise<ParsedDemo | null> {
+    this.logger.log(
+      `[demo-parser] POST ${this.appConfig.demoParserUrl}/parse (external url)`,
     );
 
     let res: Response;
     try {
-      res = await fetch(url, {
+      res = await this.postParse(demoUrl);
+    } catch (error) {
+      this.logger.error(
+        `[demo-parser] external url failed: ${(error as Error).message}`,
+      );
+      return null;
+    }
+
+    return (await res.json()) as ParsedDemo;
+  }
+
+  private async postParse(
+    demoUrl: string,
+    matchMapDemoId?: string,
+  ): Promise<Response> {
+    let res: Response;
+    try {
+      res = await fetch(`${this.appConfig.demoParserUrl}/parse`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           match_map_demo_id: matchMapDemoId ?? "",
-          demo_url: presignedUrl,
+          demo_url: demoUrl,
         }),
         signal: AbortSignal.timeout(5 * 60_000),
       });
@@ -547,51 +577,7 @@ export class DemoParserService {
       );
     }
 
-    const parsed = (await res.json()) as ParsedDemo;
-    this.logger.log(
-      `[demo-parser] parsed: ${parsed.total_ticks} ticks @ ${parsed.tick_rate} tps, ${parsed.round_ticks?.length ?? 0} rounds, ${parsed.kills?.length ?? 0} kills, ${parsed.bombs?.length ?? 0} bombs, ${parsed.shots_fired?.length ?? 0} shots, ${parsed.damages?.length ?? 0} dmg, ${parsed.spotted?.length ?? 0} spotted, ${parsed.grenade_throws?.length ?? 0} thrown, ${parsed.grenade_detonations?.length ?? 0} detonated, map=${parsed.map_name ?? "<unknown>"}${parsed.workshop_id ? ` (workshop ${parsed.workshop_id})` : ""}`,
-    );
-    return parsed;
-  }
-
-  public async parseFromBuffer(
-    buffer: Buffer,
-    filename = "upload.dem",
-  ): Promise<ParsedDemo | null> {
-    const url = `${this.appConfig.demoParserUrl}/parse-file`;
-    this.logger.log(
-      `[demo-parser] POST ${url} (buffer ${buffer.length} bytes)`,
-    );
-
-    const form = new FormData();
-    form.append(
-      "demo",
-      new Blob([Uint8Array.from(buffer)], {
-        type: "application/octet-stream",
-      }),
-      filename,
-    );
-
-    let res: Response;
-    try {
-      res = await fetch(url, {
-        method: "POST",
-        body: form,
-        signal: AbortSignal.timeout(10 * 60_000),
-      });
-    } catch (error) {
-      this.logger.error(`[demo-parser] unreachable for buffer upload`, error);
-      return null;
-    }
-
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      this.logger.error(
-        `[demo-parser] ${res.status}: ${text.slice(0, 300).trim()}`,
-      );
-      return null;
-    }
-    return (await res.json()) as ParsedDemo;
+    return res;
   }
 
   // The measured bloom at a point: the free space a smoke would actually fill
@@ -777,33 +763,5 @@ export class DemoParserService {
       this.logger.warn(`[demo-parser] ${path} sent an unreadable body`);
       return { data: null, status: res.status, error: message };
     }
-  }
-
-  public async parseFromUrl(demoUrl: string): Promise<ParsedDemo | null> {
-    const url = `${this.appConfig.demoParserUrl}/parse`;
-    this.logger.log(`[demo-parser] POST ${url} (external url)`);
-
-    let res: Response;
-    try {
-      res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ match_map_demo_id: "", demo_url: demoUrl }),
-        signal: AbortSignal.timeout(5 * 60_000),
-      });
-    } catch (error) {
-      this.logger.error(`[demo-parser] unreachable for external url`, error);
-      return null;
-    }
-
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      this.logger.error(
-        `[demo-parser] ${res.status}: ${text.slice(0, 300).trim()}`,
-      );
-      return null;
-    }
-
-    return (await res.json()) as ParsedDemo;
   }
 }

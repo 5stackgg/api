@@ -1,8 +1,9 @@
-import zlib from "zlib";
 import { Injectable, Logger } from "@nestjs/common";
 import { PostgresService } from "../postgres/postgres.service";
-import { S3Service } from "../s3/s3.service";
-import type { UtilityTrajectoryBlob } from "./utility-artifacts.service";
+import {
+  UtilityArtifactsService,
+  UtilityTrajectoryBlob,
+} from "./utility-artifacts.service";
 
 // Recovers the launch seed a live recording should have carried.
 //
@@ -49,7 +50,7 @@ export class UtilityLaunchSeedService {
   constructor(
     private readonly logger: Logger,
     private readonly postgres: PostgresService,
-    private readonly s3: S3Service,
+    private readonly artifacts: UtilityArtifactsService,
   ) {}
 
   /**
@@ -164,27 +165,6 @@ export class UtilityLaunchSeedService {
     };
   }
 
-  public async backfillOne(lineupId: string): Promise<DerivedLaunchSeed | null> {
-    const [row] = await this.postgres.query<Array<BackfillRow>>(
-      `SELECT id::text AS id, name, trajectory_file
-         FROM public.utility_lineups
-        WHERE id = $1::uuid AND trajectory_file IS NOT NULL`,
-      [lineupId],
-    );
-
-    if (!row) {
-      return null;
-    }
-
-    const seed = await this.seedFor(row);
-
-    if (seed) {
-      await this.write(row.id, seed);
-    }
-
-    return seed;
-  }
-
   private async seedFor(row: BackfillRow): Promise<DerivedLaunchSeed | null> {
     const points = await this.points(row);
 
@@ -208,15 +188,8 @@ export class UtilityLaunchSeedService {
     row: BackfillRow,
   ): Promise<{ path: Array<TrajectoryPoint>; tickRate: number } | null> {
     try {
-      const stream = await this.s3.get(row.trajectory_file);
-      const chunks: Array<Buffer> = [];
-
-      for await (const chunk of stream) {
-        chunks.push(Buffer.from(chunk as Buffer));
-      }
-
       const blob = JSON.parse(
-        zlib.gunzipSync(Buffer.concat(chunks)).toString(),
+        (await this.artifacts.readTrajectory(row.trajectory_file)).toString(),
       ) as UtilityTrajectoryBlob;
 
       const trajectory = blob?.grenade_trajectories?.at(0);

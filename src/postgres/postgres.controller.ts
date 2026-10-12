@@ -669,27 +669,6 @@ export class PostgresController {
   }
 
   @HasuraAction()
-  public async getVacuumProgress(): Promise<any[]> {
-    // Check if pg_stat_progress_vacuum exists (PostgreSQL 9.6+)
-    const result = await this.postgres.query<any>(`
-      SELECT
-        pid,
-        datname,
-        relid::regclass::text as table_name,
-        phase,
-        heap_blks_total,
-        heap_blks_scanned,
-        heap_blks_vacuumed,
-        index_vacuum_count,
-        max_dead_tuples,
-        num_dead_tuples
-      FROM pg_stat_progress_vacuum
-    `);
-
-    return result as unknown as any[];
-  }
-
-  @HasuraAction()
   public async getTableIOStats(args?: {
     schemas?: string[];
   }): Promise<TableIOStat[]> {
