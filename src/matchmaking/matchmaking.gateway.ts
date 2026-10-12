@@ -239,6 +239,22 @@ export class MatchmakingGateway {
       try {
         await this.cache.lock(`matchmaking:verify:${lobby.id}`, async () => {
           await this.matchmakingLobbyService.verifyLobby(lobby, user, type);
+
+          // A second tab or device would otherwise put a lobby that is in a
+          // ready check, or already queued, back in the queue.
+          if (await this.matchmakingLobbyService.isLobbyQueued(lobby.id)) {
+            throw new JoinQueueError(
+              "Your lobby is already in the queue",
+              undefined,
+              "already_queued",
+            );
+          }
+
+          // whatever stamp is left names a ready check that is over
+          await this.matchmakingLobbyService.removeConfirmationIdFromLobby(
+            lobby.id,
+          );
+
           await this.matchmakingLobbyService.setLobbyDetails(
             regions,
             type,
@@ -277,6 +293,7 @@ export class MatchmakingGateway {
               steamId,
               event: "matchmaking:error",
               data: {
+                code: error.code,
                 message: error.message,
               },
             }),
