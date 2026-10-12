@@ -679,16 +679,6 @@ export class UtilityPracticeService {
     return { success: true };
   }
 
-  public async sessionForMatch(
-    matchId: string,
-  ): Promise<UtilityPracticeSession | null> {
-    const [row] = await this.postgres.query<Array<UtilityPracticeSession>>(
-      `${UtilityPracticeService.SELECT} WHERE s.match_id = $1::uuid`,
-      [matchId],
-    );
-    return row ?? null;
-  }
-
   // An invite code only resolves while the session is live: the partial unique
   // index that keeps codes unique is scoped to Starting/Ready, so an ended
   // session's code is free to be minted again by somebody else.

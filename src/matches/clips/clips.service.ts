@@ -1227,15 +1227,6 @@ export class ClipsService {
     });
   }
 
-  public async incrementClipViews(clipId: string): Promise<void> {
-    await this.hasura.mutation({
-      update_match_clips_by_pk: {
-        __args: { pk_columns: { id: clipId }, _inc: { views_count: 1 } },
-        id: true,
-      },
-    });
-  }
-
   private async incrementClipViewsByFile(file: string): Promise<void> {
     await this.hasura.mutation({
       update_match_clips: {

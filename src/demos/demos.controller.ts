@@ -22,7 +22,6 @@ import zlib from "zlib";
 import path from "path";
 import { Readable } from "stream";
 import { DemoMetadataService, demoKey } from "./demo-metadata.service";
-import { ParsedDemo } from "./demo-parser.service";
 
 @Controller("/demos/:matchId")
 export class DemosController {
@@ -264,44 +263,6 @@ export class DemosController {
     }
 
     return response.status(200).send();
-  }
-
-  @Post("parsed")
-  public async markDemoAsParsed(
-    @Req() request: Request,
-    @Res() response: Response,
-  ) {
-    const matchId = request.params.matchId as string;
-    const { mapId, demo, parsed } = request.body as {
-      mapId?: string;
-      demo?: string;
-      parsed?: ParsedDemo;
-    };
-
-    if (!matchId || !mapId || !demo || !parsed) {
-      return response.status(400).json({
-        error: "missing params",
-      });
-    }
-
-    if (!DemosController.isValidDemoName(demo)) {
-      return response.status(400).json({
-        error: "invalid demo filename",
-      });
-    }
-
-    const file = demoKey(matchId, mapId, demo);
-    const matchMapDemoId = await this.upsertDemoRow(matchId, mapId, file, null);
-
-    if (!matchMapDemoId) {
-      return response.status(500).json({ error: "failed to upsert demo row" });
-    }
-
-    await this.demoMetadata.persistParsed(matchMapDemoId, parsed);
-
-    void this.notifyStatsReady(matchId);
-
-    return response.status(200).json({ matchMapDemoId });
   }
 
   // The end of the wait the stats-ready countdown has been showing since

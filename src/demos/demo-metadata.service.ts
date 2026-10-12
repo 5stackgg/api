@@ -259,33 +259,6 @@ export class DemoMetadataService {
     return ts ? new Date(ts * 1000).toISOString() : null;
   }
 
-  public async ensureParsed(matchMapId: string): Promise<DemoRow> {
-    const demo = await this.fetchDemoForMap(matchMapId);
-    if (!demo) {
-      throw new Error(`no uploaded demo for match_map ${matchMapId}`);
-    }
-
-    if (isDemoFresh(demo)) {
-      return demo;
-    }
-
-    const existing = this.inFlight.get(demo.id);
-    if (existing) {
-      return existing;
-    }
-
-    const parsing = this.parseAndPersist(demo)
-      .catch((error) => {
-        this.logger.warn(
-          `[demo-parser] parse failed for ${demo.id} — proceeding without round metadata: ${(error as Error)?.message}`,
-        );
-        return demo;
-      })
-      .finally(() => this.inFlight.delete(demo.id));
-    this.inFlight.set(demo.id, parsing);
-    return parsing;
-  }
-
   public async getDemoForMap(matchMapId: string): Promise<DemoRow | null> {
     return this.fetchDemoForMap(matchMapId);
   }
@@ -513,27 +486,6 @@ export class DemoMetadataService {
     };
   }
 
-  public async persistParsed(
-    matchMapDemoId: string,
-    parsed: ParsedDemo,
-  ): Promise<void> {
-    const demo = await this.fetchDemoById(matchMapDemoId);
-
-    await this.persistDemoStats(matchMapDemoId, demo?.match_id ?? null, parsed);
-
-    await this.persistRanks(parsed, demo?.match_id ?? null);
-
-    if (demo) {
-      await this.uploadPlaybackBlob(
-        demo.match_id,
-        demo.match_map_id,
-        demo.id,
-        parsed,
-        demo.playback_file,
-      );
-    }
-  }
-
   // Live 5stack matches get kills/rounds/money from in-game events, so a reparse
   // only re-derives demo-only aim stats. External matches have no live events, so
   // a reparse must re-run the full import to refresh kills/rounds/money/coords.
@@ -584,82 +536,6 @@ export class DemoMetadataService {
       [matchId],
     );
     return (rows?.[0]?.source ?? "5stack") !== "5stack";
-  }
-
-  // Persists Valve ranks: Wingman (6), Competitive (7), Premier (11). Premier
-  // is a global snapshot on the player row; Wingman/Competitive are per-map and
-  // live only in the history table, tagged with map_id.
-  public async persistRanks(
-    parsed: ParsedDemo,
-    matchId: string | null = null,
-  ): Promise<void> {
-    const RANK_TYPES = new Set([6, 7, 11]);
-    const entries = (parsed.players ?? []).filter(
-      (p) =>
-        RANK_TYPES.has(Number(p.rank_type)) && (p.rank ?? 0) > 0 && p.steam_id,
-    );
-    if (entries.length === 0) {
-      return;
-    }
-    const now = new Date().toISOString();
-    const steamIds = entries.map((e) => BigInt(e.steam_id).toString());
-    const ranks = entries.map((e) => {
-      const rank = Number(e.rank);
-      if (!Number.isInteger(rank)) {
-        throw new Error(`invalid rank for ${e.steam_id}: ${e.rank}`);
-      }
-      return rank;
-    });
-    const rankTypes = entries.map((e) => Number(e.rank_type));
-    const previousRanks = entries.map((e) => {
-      const pr = Number(e.previous_rank);
-      return Number.isInteger(pr) && pr > 0 ? pr : null;
-    });
-
-    // Global snapshot — Premier only (Competitive/Wingman are per map).
-    await this.postgres.query(
-      `UPDATE public.players AS p
-         SET premier_rank = v.rank,
-             premier_rank_updated_at = $1::timestamptz
-         FROM UNNEST($2::bigint[], $3::int[]) AS v(steam_id, rank)
-         WHERE p.steam_id = v.steam_id
-           AND (p.premier_rank_updated_at IS NULL OR p.premier_rank_updated_at <= $1::timestamptz)`,
-      [
-        now,
-        steamIds.filter((_, i) => rankTypes[i] === 11),
-        ranks.filter((_, i) => rankTypes[i] === 11),
-      ],
-    );
-    if (matchId) {
-      await this.postgres.query(
-        `INSERT INTO public.player_premier_rank_history
-           (steam_id, rank, rank_type, map_id, previous_rank, match_id, observed_at)
-           SELECT v.steam_id, v.rank, v.rank_type,
-             CASE WHEN v.rank_type = 11 THEN NULL ELSE mm.map_id END,
-             COALESCE(
-               v.previous_rank,
-               (SELECT h.rank FROM public.player_premier_rank_history h
-                 WHERE h.steam_id = v.steam_id AND h.rank_type = v.rank_type
-                   AND h.match_id <> $1::uuid AND h.observed_at < $2::timestamptz
-                   AND (v.rank_type = 11 OR h.map_id = mm.map_id)
-                 ORDER BY h.observed_at DESC LIMIT 1)
-             ),
-             $1::uuid, $2::timestamptz
-           FROM UNNEST($3::bigint[], $4::int[], $5::int[], $6::int[])
-             AS v(steam_id, rank, rank_type, previous_rank)
-           LEFT JOIN LATERAL (
-             SELECT map_id FROM public.match_maps WHERE match_id = $1::uuid LIMIT 1
-           ) mm ON true
-           WHERE EXISTS (SELECT 1 FROM public.players WHERE steam_id = v.steam_id)
-         ON CONFLICT (steam_id, match_id, rank_type) DO UPDATE
-           SET rank = EXCLUDED.rank,
-               map_id = EXCLUDED.map_id,
-               previous_rank = EXCLUDED.previous_rank,
-               observed_at = EXCLUDED.observed_at`,
-        [matchId, now, steamIds, ranks, rankTypes, previousRanks],
-      );
-    }
-    this.logger.log(`demo rank update wrote ${entries.length} players`);
   }
 
   public async deleteDemo(matchMapDemoId: string): Promise<void> {

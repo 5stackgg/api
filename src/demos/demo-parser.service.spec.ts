@@ -97,3 +97,77 @@ describe("DemoParserService.smokeVoxels", () => {
     await expect(parser.smokeVoxels(CAPTURE)).resolves.toBeNull();
   });
 });
+
+// Both entry points post the same request; only what a failure looks like
+// differs, and the callers depend on that difference.
+describe("DemoParserService parse", () => {
+  const originalFetch = global.fetch;
+  let fetchMock: jest.Mock;
+  let parser: DemoParserService;
+
+  const PARSED = { total_ticks: 100, tick_rate: 64, round_ticks: [] };
+
+  beforeEach(() => {
+    fetchMock = jest.fn();
+    global.fetch = fetchMock as any;
+    parser = new DemoParserService(
+      { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
+      { get: () => ({ demoParserUrl: "http://parser" }) } as any,
+      {
+        getPresignedUrl: jest.fn().mockResolvedValue("https://s3/demo"),
+      } as any,
+    );
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it("posts a presigned S3 url with the demo id", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(PARSED)));
+
+    await expect(
+      parser.parseFromS3Key("demos/m/map/1.dem", "demo-1"),
+    ).resolves.toEqual(PARSED);
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("http://parser/parse");
+    expect(JSON.parse(init.body)).toEqual({
+      match_map_demo_id: "demo-1",
+      demo_url: "https://s3/demo",
+    });
+  });
+
+  it("posts an external url without a demo id", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(PARSED)));
+
+    await expect(parser.parseFromUrl("https://cdn/demo.dem")).resolves.toEqual(
+      PARSED,
+    );
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      match_map_demo_id: "",
+      demo_url: "https://cdn/demo.dem",
+    });
+  });
+
+  it("throws for an S3 demo the parser refuses", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("bad demo", { status: 500 }));
+
+    await expect(parser.parseFromS3Key("demos/m/map/1.dem")).rejects.toThrow(
+      "demo-parser 500: bad demo",
+    );
+  });
+
+  it("answers null for an external demo the parser refuses or cannot reach", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("bad demo", { status: 500 }));
+    await expect(
+      parser.parseFromUrl("https://cdn/demo.dem"),
+    ).resolves.toBeNull();
+
+    fetchMock.mockRejectedValueOnce(new Error("socket hang up"));
+    await expect(
+      parser.parseFromUrl("https://cdn/demo.dem"),
+    ).resolves.toBeNull();
+  });
+});
