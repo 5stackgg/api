@@ -206,7 +206,7 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       expect(deleteNamespacedJob).not.toHaveBeenCalled();
       expect(scheduledMatchesQueue.add).toHaveBeenCalledWith(
         "StopOnDemandServer",
-        { matchId: "match-1", jobUid: "uid-1" },
+        { matchId: "match-1", jobName: "m-match-1", jobUid: "uid-1" },
         expect.objectContaining({
           delay: MatchAssistantService.ON_DEMAND_SERVER_STOP_CHECK_DELAY_MS,
         }),
@@ -438,6 +438,20 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       await service.stopOnDemandServer("match-1", { remove: true });
 
       expect(listNamespacedPod.mock.calls.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it("removes a practice server under u- and one booted before that under m-", async () => {
+      hasura.query.mockImplementation(async (request: any) => ({
+        matches_by_pk: request.matches_by_pk?.source
+          ? { source: "practice" }
+          : { server_error: null },
+      }));
+
+      await service.stopOnDemandServer("match-1", { remove: true });
+
+      expect(
+        deleteNamespacedJob.mock.calls.map(([request]) => request.name),
+      ).toEqual(["u-match-1", "m-match-1"]);
     });
 
     it("releases only the server it was given", async () => {
@@ -728,6 +742,14 @@ describe("MatchAssistantService — on-demand server teardown", () => {
         hasura.query.mock.calls
           .map(([request]) => request)
           .find((request) => request.servers)?.servers;
+
+      it("names its Job u-", async () => {
+        await (service as any).assignOnDemandServer("match-1");
+
+        expect(createNamespacedJob.mock.calls[0][0].body.metadata.name).toBe(
+          "u-match-1",
+        );
+      });
 
       // The CounterStrikeSharp image refuses to boot one.
       it("boots it on the SwiftlyS2 image", async () => {

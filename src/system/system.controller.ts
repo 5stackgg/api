@@ -69,11 +69,12 @@ export class SystemController {
       return;
     }
 
-    // m- = match jobs, gs- = game-streamer jobs; both read by job-name label.
+    // m- = match jobs, u- = utility practice jobs, gs- = game-streamer jobs; all read by job-name label.
     const isJob =
       service.startsWith("cs-update:") ||
       service.startsWith("shader-bake:") ||
       service.startsWith("m-") ||
+      service.startsWith("u-") ||
       service.startsWith("gs-");
 
     const stream = new PassThrough();

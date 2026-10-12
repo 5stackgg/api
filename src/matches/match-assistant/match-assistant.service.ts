@@ -105,8 +105,9 @@ export class MatchAssistantService {
     this.namespace = this.gameServerConfig.namespace;
   }
 
-  public static GetMatchServerJobId(matchId: string) {
-    return `m-${matchId}`;
+  // u- = utility practice and render servers, m- = every other match.
+  public static GetMatchServerJobId(matchId: string, source?: string) {
+    return `${source === "practice" ? "u" : "m"}-${matchId}`;
   }
 
   public static GetMatchServerJobLabels(matchId: string) {
@@ -634,7 +635,7 @@ export class MatchAssistantService {
     matchId: string,
     tailLines = 200,
   ): Promise<string | null> {
-    const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
+    const jobNames = await this.getMatchServerJobIds(matchId);
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const core = kc.makeApiClient(CoreV1Api);
@@ -643,7 +644,7 @@ export class MatchAssistantService {
     try {
       pods = await core.listNamespacedPod({
         namespace: this.namespace,
-        labelSelector: `job-name=${jobName}`,
+        labelSelector: `job-name in (${jobNames.join(",")})`,
       });
     } catch (error) {
       this.logger.warn(
@@ -1045,7 +1046,10 @@ export class MatchAssistantService {
 
         const batch = kc.makeApiClient(BatchV1Api);
 
-        const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
+        const jobName = MatchAssistantService.GetMatchServerJobId(
+          matchId,
+          match.source,
+        );
 
         const { servers } = await this.hasura.query({
           servers: {
@@ -1460,7 +1464,7 @@ export class MatchAssistantService {
             this.logger.warn(
               `[${matchId}] match ended while its on demand server was being created, removing it`,
             );
-            await this.removeOnDemandServerJob(matchId, {
+            await this.removeOnDemandServerJob(matchId, jobName, {
               uid: createdJob?.metadata?.uid,
             });
             await this.releaseOnDemandServer(matchId, server.id);
@@ -1468,7 +1472,7 @@ export class MatchAssistantService {
           }
         } catch (error) {
           try {
-            await this.removeOnDemandServerJob(matchId);
+            await this.removeOnDemandServerJob(matchId, jobName);
           } catch (teardownError) {
             this.logger.error(
               `[${matchId}] unable to remove the failed on demand server`,
@@ -1603,6 +1607,7 @@ export class MatchAssistantService {
         },
         id: true,
         status: true,
+        source: true,
         server_id: true,
         server: {
           id: true,
@@ -1654,7 +1659,7 @@ export class MatchAssistantService {
 
     try {
       const diagnostics = await this.loggingService.getJobBootDiagnostics(
-        MatchAssistantService.GetMatchServerJobId(matchId),
+        MatchAssistantService.GetMatchServerJobId(matchId, match.source),
       );
 
       await this.syncOnDemandServerBootDiagnostics(
@@ -1891,10 +1896,12 @@ export class MatchAssistantService {
     this.logger.log(`[${matchId}] stopping match servers`);
 
     try {
-      if (options.remove) {
-        await this.removeOnDemandServerJob(matchId, { wait: true });
-      } else {
-        await this.signalOnDemandServerStop(matchId);
+      for (const jobName of await this.getMatchServerJobIds(matchId)) {
+        if (options.remove) {
+          await this.removeOnDemandServerJob(matchId, jobName, { wait: true });
+        } else {
+          await this.signalOnDemandServerStop(matchId, jobName);
+        }
       }
     } catch (error) {
       this.logger.error(
@@ -1961,15 +1968,17 @@ export class MatchAssistantService {
   }
 
   // A SIGUSR1 sent before setup.sh hands PID 1 to server.sh is silently ignored.
-  public async removeUnstoppedOnDemandServer(matchId: string, jobUid: string) {
+  // A check queued without a job name predates u- jobs, so it signalled an m- one.
+  public async removeUnstoppedOnDemandServer(
+    matchId: string,
+    jobUid: string,
+    jobName = MatchAssistantService.GetMatchServerJobId(matchId),
+  ) {
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const batch = kc.makeApiClient(BatchV1Api);
 
-    const job = await this.readOnDemandServerJob(
-      batch,
-      MatchAssistantService.GetMatchServerJobId(matchId),
-    );
+    const job = await this.readOnDemandServerJob(batch, jobName);
 
     if (
       !job ||
@@ -1991,7 +2000,7 @@ export class MatchAssistantService {
       `[${matchId}] on demand server did not stop after it was signalled, removing it`,
     );
 
-    await this.removeOnDemandServerJob(matchId, { uid: jobUid });
+    await this.removeOnDemandServerJob(matchId, jobName, { uid: jobUid });
   }
 
   public async reconcileOnDemandServerJobs(): Promise<void> {
@@ -2086,9 +2095,11 @@ export class MatchAssistantService {
       );
 
       try {
-        const removed = await this.removeOnDemandServerJob(matchId, {
-          uid: job.metadata?.uid,
-        });
+        const removed = await this.removeOnDemandServerJob(
+          matchId,
+          job.metadata.name,
+          { uid: job.metadata?.uid },
+        );
 
         // Rows were read before the loop; the write-time condition keeps a reassignment's row.
         if (removed) {
@@ -2291,9 +2302,29 @@ export class MatchAssistantService {
     }
   }
 
-  private async signalOnDemandServerStop(matchId: string) {
+  // A practice server booted before practice moved to u- still runs as m-, and
+  // a deleted match no longer says which it was, so both names are checked.
+  private async getMatchServerJobIds(matchId: string) {
+    const { matches_by_pk: match } = await this.hasura.query({
+      matches_by_pk: {
+        __args: {
+          id: matchId,
+        },
+        source: true,
+      },
+    });
+
     const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
 
+    return match && match.source !== "practice"
+      ? [jobName]
+      : [
+          MatchAssistantService.GetMatchServerJobId(matchId, "practice"),
+          jobName,
+        ];
+  }
+
+  private async signalOnDemandServerStop(matchId: string, jobName: string) {
     const kc = new KubeConfig();
     kc.loadFromDefault();
 
@@ -2321,7 +2352,9 @@ export class MatchAssistantService {
       }
 
       // Nothing to signal: a pending pod boots anyway and a failed one is replaced (backoffLimit).
-      await this.removeOnDemandServerJob(matchId, { uid: job.metadata?.uid });
+      await this.removeOnDemandServerJob(matchId, jobName, {
+        uid: job.metadata?.uid,
+      });
       return;
     }
 
@@ -2350,6 +2383,7 @@ export class MatchAssistantService {
       MatchJobs.StopOnDemandServer,
       {
         matchId,
+        jobName,
         jobUid: job.metadata?.uid,
       },
       {
@@ -2369,10 +2403,9 @@ export class MatchAssistantService {
   // A uid pins the Job and its pods (409 = already replaced): a reassignment reuses the name.
   private async removeOnDemandServerJob(
     matchId: string,
+    jobName: string,
     options: { uid?: string; wait?: boolean } = {},
   ): Promise<boolean> {
-    const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
-
     const kc = new KubeConfig();
     kc.loadFromDefault();
 
