@@ -24,10 +24,13 @@ export class SocketsService {
 
   private clients: Map<string, FiveStackWebSocketClient> = new Map();
 
-  // Delivery reads this rather than the clients:* presence keys: those live
-  // 20s and a hidden tab only pings once a minute, so they lapse while the
-  // socket is still open.
+  // Delivery and the close handler read this rather than the clients:*
+  // presence keys, which only say a socket pinged lately somewhere.
   private clientsBySteamId: Map<string, Set<string>> = new Map();
+
+  // A tab hidden for a few minutes pings once a minute, so presence has to
+  // outlast a missed ping or a hidden tab drops out of it.
+  private static readonly PRESENCE_TTL_SECONDS = 150;
 
   // Twice the client's ping interval, so a focus survives a missed heartbeat
   // but a closed laptop stops claiming to be reading anything within a round.
@@ -212,6 +215,10 @@ export class SocketsService {
 
       await this.setFocus(client.user.steam_id, client.id, null);
 
+      if (this.clientsBySteamId.has(String(client.user.steam_id))) {
+        return;
+      }
+
       const clients = await this.redis.keys(
         `${SocketsService.GET_PLAYER_CLIENTS(client.user.steam_id)}:*`,
       );
@@ -313,20 +320,35 @@ export class SocketsService {
     });
   }
 
+  // A ping that finds the player gone from presence puts them back: another
+  // pod can have marked them offline while this tab sat hidden.
+  public async heartbeat(steamId: string, clientId: string) {
+    if (!(await this.updateClient(steamId, clientId))) {
+      return;
+    }
+
+    await this.matchmaking.cancelOffline(steamId);
+    await this.sendPeopleOnline();
+  }
+
+  // Resolves true when the player had no presence left.
   public async updateClient(steamId: string, clientId: string) {
-    await this.redis.set(
+    const previous = await this.redis.set(
       SocketsService.GET_PLAYER_KEY(steamId),
       JSON.stringify({ lastSeen: Date.now() }),
       "EX",
-      20,
+      SocketsService.PRESENCE_TTL_SECONDS,
+      "GET",
     );
 
     await this.redis.set(
       SocketsService.GET_PLAYER_CLIENT(steamId, this.nodeId, clientId),
       "1",
       "EX",
-      20,
+      SocketsService.PRESENCE_TTL_SECONDS,
     );
+
+    return previous === null;
   }
 
   // Every client on this pod. Callers almost always want every client

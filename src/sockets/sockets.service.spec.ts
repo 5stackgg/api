@@ -106,7 +106,7 @@ describe("SocketsService.setupSocket", () => {
       `clients:${USER.steam_id}:${undefined}:${client.id}`,
       "1",
       "EX",
-      20,
+      expect.any(Number),
     );
     expect(matchmaking.cancelOffline).toHaveBeenCalledWith(USER.steam_id);
     expect(lobbies.sendQueueDetailsToPlayer).toHaveBeenCalledWith(
@@ -366,5 +366,81 @@ describe("SocketsService.sendMessageToSteamId", () => {
 
     expect(client.send).not.toHaveBeenCalled();
     expect((service as any).clientsBySteamId.size).toBe(0);
+  });
+});
+
+describe("SocketsService presence", () => {
+  // what a tab hidden for a few minutes manages
+  const HIDDEN_TAB_PING_SECONDS = 60;
+
+  afterEach(() => {
+    sessionLoad.impl = (_request, next) => next();
+  });
+
+  const settle = () => new Promise((resolve) => setImmediate(resolve));
+
+  const closeListener = (client: any) =>
+    client.on.mock.calls.find(([event]: [string]) => event === "close")[1];
+
+  async function connect(service: SocketsService): Promise<any> {
+    const client = socket();
+    signIn(USER);
+    await service.setupSocket(client, {} as any);
+    await settle();
+    return client;
+  }
+
+  const ttlOf = (redis: ReturnType<typeof makeService>["redis"], key: string) =>
+    redis.set.mock.calls.find(([written]: [string]) => written === key)[3];
+
+  it("outlasts the heartbeat of a hidden tab", async () => {
+    const { service, redis } = makeService();
+
+    await service.updateClient(USER.steam_id, "client-1");
+
+    expect(ttlOf(redis, `players:${USER.steam_id}`)).toBeGreaterThan(
+      HIDDEN_TAB_PING_SECONDS * 2,
+    );
+    expect(
+      ttlOf(redis, `clients:${USER.steam_id}:${undefined}:client-1`),
+    ).toBeGreaterThan(HIDDEN_TAB_PING_SECONDS * 2);
+  });
+
+  it("keeps a player online when a tab closes while another stays open on this pod", async () => {
+    const { service, redis, matchmaking } = makeService();
+    const closing = await connect(service);
+    await connect(service);
+
+    // the other tab is hidden and its presence key has lapsed
+    redis.keys.mockResolvedValue([]);
+
+    await closeListener(closing)();
+
+    expect(matchmaking.markOffline).not.toHaveBeenCalled();
+    expect(redis.del).not.toHaveBeenCalledWith(`players:${USER.steam_id}`);
+  });
+
+  it("puts a player who dropped out of presence back online on their next ping", async () => {
+    const { service, redis, matchmaking } = makeService();
+    // SET ... GET finds no presence left
+    redis.set.mockResolvedValueOnce(null);
+
+    await service.heartbeat(USER.steam_id, "client-1");
+
+    expect(matchmaking.cancelOffline).toHaveBeenCalledWith(USER.steam_id);
+    expect(redis.publish).toHaveBeenCalledWith(
+      "broadcast-message",
+      expect.stringContaining("players-online"),
+    );
+  });
+
+  it("leaves the offline job alone on the ping of a player who is online", async () => {
+    const { service, matchmaking, redis } = makeService();
+    redis.set.mockResolvedValueOnce(JSON.stringify({ lastSeen: 1 }));
+
+    await service.heartbeat(USER.steam_id, "client-1");
+
+    expect(matchmaking.cancelOffline).not.toHaveBeenCalled();
+    expect(redis.publish).not.toHaveBeenCalled();
   });
 });
