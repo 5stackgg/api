@@ -30,6 +30,12 @@ DECLARE
     _new_team_id uuid;
     _name_number int;
 BEGIN
+    -- An organizer's pool add or removal holds this row FOR SHARE, so the draft
+    -- reads the pool either before that change or after it commits, never
+    -- across it. NO KEY: the foreign-key checks of ordinary sign-ups and roster
+    -- writes take KEY SHARE and need not queue behind the draft.
+    PERFORM 1 FROM public.tournaments t WHERE t.id = _tournament_id FOR NO KEY UPDATE;
+
     SELECT * INTO _tournament FROM public.tournaments t WHERE t.id = _tournament_id;
 
     IF NOT FOUND THEN

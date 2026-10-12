@@ -17,7 +17,7 @@ describe("TournamentsController registration and check-in actions", () => {
     removeTournamentVoice: jest.fn(),
   };
   const notifications = { notifyPlayers: jest.fn() };
-  const postgres = { query: jest.fn() };
+  const postgres = { query: jest.fn(), transaction: jest.fn() };
   const redisExec = jest.fn();
   const redis = {
     multi: () => ({
@@ -35,6 +35,9 @@ describe("TournamentsController registration and check-in actions", () => {
   let extended: Rows;
   let continued: Rows;
   let removedFreeAgent: Rows;
+  let addedFreeAgent: Rows;
+  let transactionSessions: Array<string | undefined>;
+  let transactionStatements: Array<[string, Array<unknown> | undefined]>;
   let eligible: boolean;
   let mintedCode: Record<string, unknown>;
   let codeRow: Record<string, unknown> | undefined;
@@ -85,6 +88,9 @@ describe("TournamentsController registration and check-in actions", () => {
     extended = [{ id: "tournament-1" }];
     continued = [{ id: "tournament-1" }];
     removedFreeAgent = [{ id: "agent-1" }];
+    addedFreeAgent = [{ id: "agent-1" }];
+    transactionSessions = [];
+    transactionStatements = [];
     eligible = true;
     mintedCode = { id: "code-1", code: "ABCDEFGHJK" };
     codeRow = { tournament_id: "tournament-1" };
@@ -94,9 +100,17 @@ describe("TournamentsController registration and check-in actions", () => {
     bracketRow = { tournament_id: "tournament-1" };
     statements = [];
 
-    postgres.query.mockImplementation(async (sql: string) => {
+    const route = async (sql: string) => {
       statements.push(sql);
 
+      if (sql.includes("FOR SHARE")) {
+        return [
+          {
+            status: tournamentRow?.status,
+            check_in_required: tournamentRow?.check_in_required,
+          },
+        ];
+      }
       if (sql.includes("is_tournament_organizer(t, $2::json)")) {
         return tournamentRow ? [tournamentRow] : [];
       }
@@ -125,7 +139,7 @@ describe("TournamentsController registration and check-in actions", () => {
         return [{ ok: eligible }];
       }
       if (sql.includes("INSERT INTO tournament_free_agents")) {
-        return [];
+        return addedFreeAgent;
       }
       if (sql.includes("DELETE FROM tournament_free_agents")) {
         return removedFreeAgent;
@@ -169,7 +183,20 @@ describe("TournamentsController registration and check-in actions", () => {
       }
 
       throw new Error(`unexpected query: ${sql}`);
-    });
+    };
+
+    postgres.query.mockImplementation(route);
+    postgres.transaction.mockImplementation(
+      async (fn: (client: unknown) => Promise<unknown>, session?: string) => {
+        transactionSessions.push(session);
+        return fn({
+          query: async (sql: string, params?: Array<unknown>) => {
+            transactionStatements.push([sql, params]);
+            return { rows: await route(sql) };
+          },
+        });
+      },
+    );
 
     controller = new TournamentsController(
       logger as any,
@@ -818,6 +845,161 @@ describe("TournamentsController registration and check-in actions", () => {
           tournament_id: "tournament-1",
         }),
       ).resolves.toEqual({ success: true });
+    });
+  });
+
+  describe("organizer managing the free agent pool", () => {
+    const POOL_OPEN = ["Setup", "RegistrationOpen", "CheckInReview"];
+    const POOL_CLOSED = [
+      "RegistrationClosed",
+      "Live",
+      "Paused",
+      "Finished",
+      "Cancelled",
+      "CancelledMinTeams",
+    ];
+
+    const add = (user: User = organizer) =>
+      controller.addTournamentFreeAgent({
+        user,
+        tournament_id: "tournament-1",
+        steam_id: player.steam_id,
+      });
+
+    const remove = (user: User = organizer) =>
+      controller.removeTournamentFreeAgent({
+        user,
+        tournament_id: "tournament-1",
+        steam_id: player.steam_id,
+      });
+
+    const wrote = (fragment: string) =>
+      statements.some((sql) => sql.includes(fragment));
+
+    describe("addTournamentFreeAgent", () => {
+      it("refuses a non-organizer", async () => {
+        tournamentRow = tournament({ registration_type: "free_agents" });
+
+        await expect(add(player)).rejects.toThrow(/organizer/i);
+        expect(postgres.transaction).not.toHaveBeenCalled();
+      });
+
+      it.each(POOL_CLOSED)("refuses in %s", async (status) => {
+        tournamentRow = tournament({
+          is_organizer: true,
+          registration_type: "free_agents",
+          status,
+        });
+
+        await expect(add()).rejects.toThrow(/free agent pool/i);
+        expect(wrote("INSERT INTO tournament_free_agents")).toBe(false);
+        expect(wrote("DELETE FROM tournament_free_agents")).toBe(false);
+      });
+
+      it.each(POOL_OPEN)(
+        "adds the player in %s under the organizer's own session",
+        async (status) => {
+          tournamentRow = tournament({
+            is_organizer: true,
+            registration_type: "free_agents",
+            status,
+          });
+
+          await expect(add()).resolves.toEqual({ success: true });
+
+          expect(transactionSessions).toHaveLength(1);
+          expect(JSON.parse(transactionSessions[0]!)).toEqual({
+            "x-hasura-role": organizer.role,
+            "x-hasura-user-id": organizer.steam_id,
+          });
+
+          const lock = statements.findIndex((sql) => sql.includes("FOR SHARE"));
+          const insert = statements.findIndex((sql) =>
+            sql.includes("INSERT INTO tournament_free_agents"),
+          );
+          expect(lock).toBeGreaterThanOrEqual(0);
+          expect(insert).toBeGreaterThan(lock);
+        },
+      );
+
+      it.each([true, false])(
+        "stamps the player checked in only where check-in is required (%s)",
+        async (checkInRequired) => {
+          tournamentRow = tournament({
+            is_organizer: true,
+            registration_type: "free_agents",
+            status: "CheckInReview",
+            check_in_required: checkInRequired,
+          });
+
+          await add();
+
+          const [sql, params] = transactionStatements.find(([statement]) =>
+            statement.includes("INSERT INTO tournament_free_agents"),
+          )!;
+          expect(sql).toContain("checked_in_at");
+          expect(params).toEqual([
+            "tournament-1",
+            player.steam_id,
+            checkInRequired,
+          ]);
+        },
+      );
+
+      it("reports a player who is already in the pool", async () => {
+        tournamentRow = tournament({
+          is_organizer: true,
+          registration_type: "free_agents",
+        });
+        addedFreeAgent = [];
+
+        await expect(add()).rejects.toThrow(/already in/i);
+      });
+    });
+
+    describe("removeTournamentFreeAgent", () => {
+      it("refuses a non-organizer", async () => {
+        tournamentRow = tournament({ registration_type: "free_agents" });
+
+        await expect(remove(player)).rejects.toThrow(/organizer/i);
+        expect(postgres.transaction).not.toHaveBeenCalled();
+      });
+
+      it.each(POOL_CLOSED)("refuses in %s", async (status) => {
+        tournamentRow = tournament({
+          is_organizer: true,
+          registration_type: "free_agents",
+          status,
+        });
+
+        await expect(remove()).rejects.toThrow(/free agent pool/i);
+        expect(wrote("DELETE FROM tournament_free_agents")).toBe(false);
+      });
+
+      it.each(POOL_OPEN)("removes a waiting player in %s", async (status) => {
+        tournamentRow = tournament({
+          is_organizer: true,
+          registration_type: "free_agents",
+          status,
+        });
+
+        await expect(remove()).resolves.toEqual({ success: true });
+
+        const removal = statements.find((sql) =>
+          sql.includes("DELETE FROM tournament_free_agents"),
+        );
+        expect(removal).toContain("status IN ('registered', 'waitlisted')");
+      });
+
+      it("refuses a drafted player, who is not waiting in the pool", async () => {
+        tournamentRow = tournament({
+          is_organizer: true,
+          registration_type: "free_agents",
+        });
+        removedFreeAgent = [];
+
+        await expect(remove()).rejects.toThrow(/registered or waitlisted/i);
+      });
     });
   });
 

@@ -2677,6 +2677,20 @@ type Mutation {
 }
 
 type Mutation {
+  addTournamentFreeAgent(
+    tournament_id: uuid!
+    steam_id: bigint!
+  ): SuccessOutput
+}
+
+type Mutation {
+  removeTournamentFreeAgent(
+    tournament_id: uuid!
+    steam_id: bigint!
+  ): SuccessOutput
+}
+
+type Mutation {
   createTournamentInviteCode(
     tournament_id: uuid!
     expires_in_minutes: Int

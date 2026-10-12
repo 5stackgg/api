@@ -145,3 +145,7 @@ CREATE TRIGGER tbi_event_organizers_not_blocked BEFORE INSERT ON public.event_or
 DROP TRIGGER IF EXISTS tbi_tournament_organizers_not_blocked ON public.tournament_organizers;
 CREATE TRIGGER tbi_tournament_organizers_not_blocked BEFORE INSERT ON public.tournament_organizers
     FOR EACH ROW EXECUTE FUNCTION public.tbi_assert_session_not_blocked('steam_id', 'tournament_organizer');
+
+DROP TRIGGER IF EXISTS tbi_tournament_free_agents_not_blocked ON public.tournament_free_agents;
+CREATE TRIGGER tbi_tournament_free_agents_not_blocked BEFORE INSERT ON public.tournament_free_agents
+    FOR EACH ROW EXECUTE FUNCTION public.tbi_assert_session_not_blocked('player_steam_id', 'tournament_organizer');
