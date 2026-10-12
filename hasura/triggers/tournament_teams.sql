@@ -283,9 +283,15 @@ CREATE TRIGGER tbu_tournament_team BEFORE UPDATE ON public.tournament_teams FOR 
 -- owner (a team ownership transfer) leaves the free-agent pool. The draft and
 -- the waitlist promotion skip owners, so a pool row left behind would wait for
 -- a place that never comes. A drafted team's owner is already drafted onto it.
+--
+-- The pool place they give up was a place to play, so they take a seat on the
+-- entry's roster instead when it has room and they could join it.
 CREATE OR REPLACE FUNCTION public.tau_tournament_team_owner() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
+DECLARE
+    _tournament public.tournaments;
+    _checked_in_at timestamptz;
 BEGIN
     IF NEW.is_drafted THEN
         RETURN NULL;
@@ -299,7 +305,46 @@ BEGIN
     DELETE FROM tournament_free_agents fa
     WHERE fa.tournament_id = NEW.tournament_id
       AND fa.player_steam_id = NEW.owner_steam_id
-      AND fa.status IN ('registered', 'waitlisted');
+      AND fa.status IN ('registered', 'waitlisted')
+    RETURNING fa.checked_in_at INTO _checked_in_at;
+
+    IF NOT FOUND THEN
+        RETURN NULL;
+    END IF;
+
+    SELECT * INTO _tournament FROM tournaments t WHERE t.id = NEW.tournament_id;
+
+    IF _tournament.status IN ('Finished', 'Cancelled', 'CancelledMinTeams')
+       OR NOT player_meets_tournament_requirements(NEW.tournament_id, NEW.owner_steam_id)
+       OR EXISTS (
+           SELECT 1
+           FROM tournament_team_roster ttr
+           WHERE ttr.tournament_id = NEW.tournament_id
+             AND ttr.player_steam_id = NEW.owner_steam_id
+       )
+       OR (
+           SELECT COUNT(*)
+           FROM tournament_team_roster ttr
+           WHERE ttr.tournament_team_id = NEW.id
+       ) >= tournament_max_players_per_lineup(_tournament) THEN
+        RETURN NULL;
+    END IF;
+
+    -- The system path the draft and the promotion mark: tbi_tournament_team_roster
+    -- would otherwise read a session that an internal transfer may not carry.
+    -- Their pool check-in carries over, as it does for a promotion.
+    PERFORM set_config('fivestack.free_agent_draft', 'true', true);
+
+    INSERT INTO tournament_team_roster (tournament_team_id, player_steam_id, tournament_id, role, checked_in_at)
+    VALUES (
+        NEW.id,
+        NEW.owner_steam_id,
+        NEW.tournament_id,
+        CASE WHEN NEW.team_id IS NULL THEN 'Admin' ELSE 'Member' END,
+        _checked_in_at
+    );
+
+    PERFORM set_config('fivestack.free_agent_draft', 'false', true);
 
     RETURN NULL;
 END;

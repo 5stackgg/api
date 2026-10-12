@@ -320,7 +320,7 @@ describe("free agent waitlist promotion (SQL-driven)", () => {
       await removeFromRoster(t.id, t.players[0]);
 
       expect(await teamOf(t.id, t.players[9])).toBe(team);
-      expect(await teamOf(t.id, t.players[8])).toBeNull();
+      expect(await teamOf(t.id, t.players[8])).toBe(owned.id);
     });
 
     it("skips a waitlisted agent who no longer meets the entry requirements", async () => {
