@@ -29,6 +29,7 @@ DECLARE
     _slot int;
     _owner bigint;
     _new_team_id uuid;
+    _name_number int;
 BEGIN
     SELECT * INTO _tournament FROM public.tournaments t WHERE t.id = _tournament_id;
 
@@ -70,6 +71,9 @@ BEGIN
     -- so drafting them would abort the whole transition on a key violation.
     --
     -- Owning a team counts as being in the tournament even with no roster row.
+    --
+    -- Entry requirements are checked again, as promotion does: a ban or a
+    -- rating past the cap can land between the sign-up and the draft.
     SELECT array_agg(fa.id ORDER BY fa.created_at, fa.id)
     INTO _pool_ids
     FROM public.tournament_free_agents fa
@@ -78,6 +82,7 @@ BEGIN
           fa.status = 'registered'
           OR (fa.status = 'waitlisted' AND fa.checked_in_at IS NOT NULL)
       )
+      AND public.player_meets_tournament_requirements(_tournament_id, fa.player_steam_id)
       AND NOT EXISTS (
           SELECT 1
           FROM public.tournament_team_roster ttr
@@ -117,12 +122,17 @@ BEGIN
     -- Stage 1: selection, in sign-up order. Everyone past the last full team
     -- waits; created_at is untouched, so a later pass still honours the order
     -- they signed up in.
+    --
+    -- Nobody is left 'registered' for a draft that never runs again: whoever
+    -- the pool passed over, the ineligible included, waits for a promotion,
+    -- which re-checks the requirements.
     _selected_ids := _pool_ids[1:_teams * _team_size];
 
     UPDATE public.tournament_free_agents fa
        SET status = 'waitlisted',
            tournament_team_id = NULL
-     WHERE fa.id = ANY(_pool_ids)
+     WHERE fa.tournament_id = _tournament_id
+       AND fa.status IN ('registered', 'waitlisted')
        AND fa.id <> ALL(_selected_ids);
 
     -- Stage 2: assignment. Strongest player first onto the team with the lowest
@@ -175,19 +185,31 @@ BEGIN
     -- local, so an error rolls it back with everything else.
     PERFORM set_config('fivestack.free_agent_draft', 'true', true);
 
+    _name_number := _existing_teams;
+
     FOR _team_index IN 1.._teams LOOP
         -- There is no real owner for a pool of strangers; the highest-rated
         -- player on the generated roster is the least arbitrary stand-in for
         -- the NOT NULL owner/captain columns.
         _owner := _steam_ids[array_position(_team_indexes, _team_index)];
 
-        -- Numbered past the teams that are already in, so 'both' does not mint a
-        -- second "Team 1" next to a registered one. checked_in_at is stamped
-        -- outright: a team that did not exist while the window was open cannot
-        -- be a no-show, and leaving it NULL would drop every drafted team back
-        -- out of seeding.
+        -- Numbered past the teams that are already in, and past any name a
+        -- registered team already took: names are unique per tournament, and a
+        -- collision aborts the close it runs in.
+        LOOP
+            _name_number := _name_number + 1;
+            EXIT WHEN NOT EXISTS (
+                SELECT 1 FROM public.tournament_teams tt
+                WHERE tt.tournament_id = _tournament_id
+                  AND tt.name = 'Team ' || _name_number
+            );
+        END LOOP;
+
+        -- checked_in_at is stamped outright: a team that did not exist while the
+        -- window was open cannot be a no-show, and leaving it NULL would drop
+        -- every drafted team back out of seeding.
         INSERT INTO public.tournament_teams (tournament_id, team_id, name, owner_steam_id, captain_steam_id, is_drafted, checked_in_at)
-        VALUES (_tournament_id, NULL, 'Team ' || (_existing_teams + _team_index), _owner, _owner, true, now())
+        VALUES (_tournament_id, NULL, 'Team ' || _name_number, _owner, _owner, true, now())
         RETURNING id INTO _new_team_id;
 
         _team_ids := array_append(_team_ids, _new_team_id);

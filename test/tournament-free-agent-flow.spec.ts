@@ -716,6 +716,82 @@ describe("free agent flow (SQL-driven)", () => {
       expect((await draft(t)).teams_created).toBe(2);
       expect((await draft(t)).teams_created).toBe(0);
     });
+
+    // Team names are unique per tournament, so a collision aborts the close and
+    // leaves the tournament stuck in RegistrationOpen.
+    it("names its teams around a registered team that already took a pickup name", async () => {
+      const t = await openTournament({ registrationType: "both" });
+      const owner = await fx.player();
+      await postgres.query(
+        `INSERT INTO tournament_teams (tournament_id, name, owner_steam_id, captain_steam_id)
+         VALUES ($1, 'Team 2', $2, $2)`,
+        [t.id, owner],
+      );
+      await joinAll(t.id, await fx.players(4));
+
+      await setStatus(t.id, t.organizer, "RegistrationClosed");
+
+      const names = await postgres.query<Array<{ name: string }>>(
+        `SELECT name FROM tournament_teams
+          WHERE tournament_id = $1 AND is_drafted
+          ORDER BY name`,
+        [t.id],
+      );
+      expect(names.map((row) => row.name)).toEqual(["Team 3", "Team 4"]);
+    });
+
+    // The same rule promotion applies: a ban or a rating past the cap after the
+    // sign-up takes them out of the selection, not just out of the queue.
+    it("passes over a player who no longer meets the entry requirements", async () => {
+      const t = await openTournament();
+      const players = await fx.players(5);
+      await joinAll(t.id, players);
+
+      const [lapsed, ...eligible] = players;
+      await postgres.query(
+        "UPDATE players SET role = 'verified_user' WHERE steam_id = ANY($1::bigint[])",
+        [eligible],
+      );
+      await postgres.query(
+        "UPDATE tournaments SET min_role = 'verified_user' WHERE id = $1",
+        [t.id],
+      );
+
+      expect((await draft(t)).teams_created).toBe(2);
+
+      expect(await teamOf(t.id, lapsed)).toBeNull();
+      expect(await statusOf(t.id, lapsed)).toBe("waitlisted");
+      for (const steamId of eligible) {
+        expect(await statusOf(t.id, steamId)).toBe("drafted");
+      }
+    });
+
+    // tau_tournaments only seeds on the way out of registration, so a team
+    // drafted when a closed tournament starts has no slot in the bracket.
+    it("never drafts a team once the bracket has been drawn", async () => {
+      const t = await openTournament({ registrationType: "both" });
+      const registered: Array<string> = [];
+      for (let i = 0; i < 4; i++) {
+        const [owner, member] = await fx.players(2);
+        registered.push(await registerTeam(t.id, owner, [owner, member]));
+      }
+      const agents = await fx.players(2);
+      await joinAll(t.id, agents);
+
+      await setStatus(t.id, t.organizer, "RegistrationClosed");
+      expect(await pickupTeams(t.id)).toEqual([]);
+
+      await postgres.query("DELETE FROM tournament_teams WHERE id = $1", [
+        registered[0],
+      ]);
+
+      await setStatus(t.id, t.organizer, "Live");
+
+      expect(await pickupTeams(t.id)).toEqual([]);
+      for (const steamId of agents) {
+        expect(await statusOf(t.id, steamId)).toBe("registered");
+      }
+    });
   });
 
   describe("signing up after the teams were drafted", () => {
