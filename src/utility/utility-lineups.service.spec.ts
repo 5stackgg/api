@@ -152,7 +152,10 @@ describe("UtilityLineupsService smoke voxels", () => {
   describe("recordSmokeVoxels", () => {
     it("stores the first smoke a lineup gets from any throw", async () => {
       await expect(
-        service.recordSmokeVoxels(CONTEXT, LINEUP, CAPTURE),
+        service.recordSmokeVoxels(CONTEXT, LINEUP, {
+          ...CAPTURE,
+          steam_id: AUTHOR,
+        }),
       ).resolves.toEqual({ stored: true });
 
       expect(artifacts.storeSmokeVoxels).toHaveBeenCalledWith(LINEUP, CAPTURE);
@@ -162,7 +165,10 @@ describe("UtilityLineupsService smoke voxels", () => {
       lineup = { utility_type: "Smoke", smoke_voxels_file: "clips/utility/x" };
 
       await expect(
-        service.recordSmokeVoxels(CONTEXT, LINEUP, CAPTURE),
+        service.recordSmokeVoxels(CONTEXT, LINEUP, {
+          ...CAPTURE,
+          steam_id: AUTHOR,
+        }),
       ).resolves.toEqual({ stored: false });
       expect(artifacts.storeSmokeVoxels).not.toHaveBeenCalled();
     });
@@ -174,6 +180,7 @@ describe("UtilityLineupsService smoke voxels", () => {
       await expect(
         service.recordSmokeVoxels(CONTEXT, LINEUP, {
           ...CAPTURE,
+          steam_id: AUTHOR,
           render: true,
         }),
       ).resolves.toEqual({ stored: true });
@@ -186,6 +193,7 @@ describe("UtilityLineupsService smoke voxels", () => {
       await expect(
         service.recordSmokeVoxels(CONTEXT, LINEUP, {
           ...CAPTURE,
+          steam_id: AUTHOR,
           render: true,
         }),
       ).resolves.toEqual({ stored: false });
@@ -198,6 +206,7 @@ describe("UtilityLineupsService smoke voxels", () => {
       await expect(
         service.recordSmokeVoxels(CONTEXT, LINEUP, {
           ...CAPTURE,
+          steam_id: AUTHOR,
           render: true,
         }),
       ).resolves.toEqual({ stored: false });
@@ -208,21 +217,68 @@ describe("UtilityLineupsService smoke voxels", () => {
       lineup = null;
 
       await expect(
-        service.recordSmokeVoxels(CONTEXT, LINEUP, CAPTURE),
+        service.recordSmokeVoxels(CONTEXT, LINEUP, {
+          ...CAPTURE,
+          steam_id: AUTHOR,
+        }),
       ).resolves.toEqual({ stored: false });
 
       const [, bindings] = postgres.query.mock.calls.find(([sql]) =>
         String(sql).includes("SELECT utility_type, smoke_voxels_file"),
       );
-      expect(bindings).toEqual([LINEUP, "de_mirage"]);
+      expect(bindings).toEqual([LINEUP, "de_mirage", false, AUTHOR]);
+    });
+
+    it("only records a lineup the throwing player is here to see", async () => {
+      await expect(
+        service.recordSmokeVoxels(CONTEXT, LINEUP, CAPTURE),
+      ).rejects.toThrow("steam_id");
+      await expect(
+        service.recordSmokeVoxels(CONTEXT, LINEUP, {
+          ...CAPTURE,
+          steam_id: "76561198999999999",
+        }),
+      ).rejects.toThrow("not in this match lineup");
+      expect(artifacts.storeSmokeVoxels).not.toHaveBeenCalled();
+
+      // The lookup itself asks whether that player can see the lineup.
+      lineup = null;
+      await expect(
+        service.recordSmokeVoxels(CONTEXT, LINEUP, {
+          ...CAPTURE,
+          steam_id: AUTHOR,
+        }),
+      ).resolves.toEqual({ stored: false });
+      const [sql] = postgres.query.mock.calls.find(([text]) =>
+        String(text).includes("SELECT utility_type, smoke_voxels_file"),
+      );
+      expect(sql).toContain("can_view_utility_lineup");
+    });
+
+    it("lets a render of this server's batch record without a player", async () => {
+      batch = [LINEUP];
+
+      await expect(
+        service.recordSmokeVoxels(CONTEXT, LINEUP, {
+          ...CAPTURE,
+          render: true,
+        }),
+      ).resolves.toEqual({ stored: true });
     });
 
     it("refuses a capture that is not one", async () => {
       await expect(
-        service.recordSmokeVoxels(CONTEXT, LINEUP, { ...CAPTURE, samples: [] }),
+        service.recordSmokeVoxels(CONTEXT, LINEUP, {
+          ...CAPTURE,
+          steam_id: AUTHOR,
+          samples: [],
+        }),
       ).rejects.toThrow("samples");
       await expect(
-        service.recordSmokeVoxels(CONTEXT, "not-a-lineup", CAPTURE),
+        service.recordSmokeVoxels(CONTEXT, "not-a-lineup", {
+          ...CAPTURE,
+          steam_id: AUTHOR,
+        }),
       ).rejects.toThrow("not a lineup id");
       expect(artifacts.storeSmokeVoxels).not.toHaveBeenCalled();
     });
