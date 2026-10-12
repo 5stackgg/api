@@ -393,11 +393,16 @@ export class DraftService {
         return;
       }
 
-      const undrafted = draftGame.players
+      const undrafted = this.draftGameService
+        .acceptedPlayers(draftGame)
         .filter(
           (player) => player.lineup === null || player.lineup === undefined,
         )
-        .sort((a, b) => (b.elo_snapshot || 0) - (a.elo_snapshot || 0));
+        .sort(
+          (a, b) =>
+            (b.elo_snapshot || 0) - (a.elo_snapshot || 0) ||
+            String(a.joined_at || "").localeCompare(String(b.joined_at || "")),
+        );
 
       if (undrafted.length === 0) {
         return;
