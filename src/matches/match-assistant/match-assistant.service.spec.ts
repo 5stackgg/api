@@ -83,6 +83,7 @@ describe("MatchAssistantService", () => {
           async () => "ghcr.io/5stackgg/game-server-sw:latest",
         ),
         resolvePluginRuntime: jest.fn(async () => "swiftlys2"),
+        supportsPractice: jest.fn(async () => true),
       } as any,
       {
         resolveForServer: jest.fn(async (): Promise<null> => null),
@@ -337,6 +338,51 @@ describe("MatchAssistantService", () => {
       const [[query]] = hasura.query.mock.calls;
 
       expect(query.game_server_nodes.__args.where.region).toBeUndefined();
+    });
+  });
+
+  // Practice runs SwiftlyS2 whatever matches run, and SwiftlyS2 can trail a
+  // CS2 update that the install's matches have already moved past.
+  describe("practiceNodeIds", () => {
+    it("keeps only the nodes whose build SwiftlyS2 supports", async () => {
+      hasura.query.mockResolvedValue({
+        game_server_nodes: [
+          { id: "node-1", build_id: 20000, pin_plugin_runtime: "swiftlys2" },
+          { id: "node-2", build_id: 20001, pin_plugin_runtime: null },
+        ],
+      });
+      const supportsPractice = (service as any).pluginRuntimeService
+        .supportsPractice as jest.Mock;
+      supportsPractice.mockImplementation(
+        async (node: { build_id: number }) => node.build_id === 20000,
+      );
+
+      expect(await service.practiceNodeIds("USE")).toEqual(["node-1"]);
+      expect(supportsPractice).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "node-2", build_id: 20001 }),
+      );
+    });
+
+    it("asks with the same node predicate a boot uses", async () => {
+      hasura.query.mockResolvedValue({ game_server_nodes: [] });
+
+      await service.practiceNodeIds("USE");
+
+      const [[query]] = hasura.query.mock.calls;
+
+      expect(query.game_server_nodes.__args.where).toEqual({
+        status: { _eq: "Online" },
+        enabled: { _eq: true },
+        enabled_for_match_making: { _eq: true },
+        region: { _eq: "USE" },
+      });
+      expect(query.game_server_nodes).toEqual(
+        expect.objectContaining({
+          build_id: true,
+          pin_plugin_version: true,
+          pin_plugin_runtime: true,
+        }),
+      );
     });
   });
 

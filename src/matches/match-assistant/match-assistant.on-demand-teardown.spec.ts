@@ -35,6 +35,11 @@ describe("MatchAssistantService — on-demand server teardown", () => {
   let hasura: { query: jest.Mock; mutation: jest.Mock };
   let cache: { lock: jest.Mock };
   let queue: { add: jest.Mock };
+  let pluginRuntime: {
+    resolveGameServerPluginImage: jest.Mock;
+    resolvePracticeServerImage: jest.Mock;
+    supportsPractice: jest.Mock;
+  };
   let scheduledMatchesQueue: { add: jest.Mock; getDelayed: jest.Mock };
   let logger: {
     warn: jest.Mock;
@@ -106,6 +111,15 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       lock: jest.fn(async (_key: string, fn: () => Promise<unknown>) => fn()),
     };
     queue = { add: jest.fn() };
+    pluginRuntime = {
+      resolveGameServerPluginImage: jest.fn(
+        async () => "ghcr.io/5stackgg/game-server-css:latest",
+      ),
+      resolvePracticeServerImage: jest.fn(
+        async () => "ghcr.io/5stackgg/game-server-sw:latest",
+      ),
+      supportsPractice: jest.fn(async () => true),
+    };
     scheduledMatchesQueue = {
       add: jest.fn(),
       getDelayed: jest.fn(async (): Promise<unknown[]> => []),
@@ -129,11 +143,7 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       hasura as any,
       { decrypt: jest.fn(async () => "rcon") } as any,
       { getJobBootDiagnostics: jest.fn() } as any,
-      {
-        resolveGameServerPluginImage: jest.fn(
-          async () => "ghcr.io/5stackgg/game-server-sw:latest",
-        ),
-      } as any,
+      pluginRuntime as any,
       {
         resolveForServer: jest.fn(async (): Promise<null> => null),
         environmentFor: jest.fn((): unknown[] => []),
@@ -447,11 +457,22 @@ describe("MatchAssistantService — on-demand server teardown", () => {
 
   describe("assigning an on-demand server", () => {
     let matchStatus: string;
+    let matchSource: string;
     let serverIdWriteAffectedRows: number;
+    let nodes: Array<Record<string, unknown>>;
 
     beforeEach(() => {
       matchStatus = "Live";
+      matchSource = "5stack";
       serverIdWriteAffectedRows = 1;
+      nodes = [
+        {
+          id: "node-1",
+          build_id: 20000,
+          pin_plugin_version: null,
+          pin_plugin_runtime: null,
+        },
+      ];
 
       hasura.query.mockImplementation(async (request: any) => {
         if (request.matches_by_pk?.match_maps) {
@@ -460,7 +481,7 @@ describe("MatchAssistantService — on-demand server teardown", () => {
               region: "USE",
               password: "secret",
               server_id: null,
-              source: "5stack",
+              source: matchSource,
               max_players_per_lineup: 5,
               is_tournament_match: false,
               options: { type: "Competitive" },
@@ -488,7 +509,7 @@ describe("MatchAssistantService — on-demand server teardown", () => {
           };
         }
         if (request.game_server_nodes) {
-          return { game_server_nodes: [{ id: "node-1" }] };
+          return { game_server_nodes: nodes };
         }
         if (request.servers) {
           return {
@@ -692,6 +713,95 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       await expect(
         (service as any).assignOnDemandServer("match-1"),
       ).rejects.toBeInstanceOf(FailedToCreateOnDemandServer);
+    });
+
+    describe("for practice", () => {
+      beforeEach(() => {
+        matchSource = "practice";
+      });
+
+      const bootedImage = () =>
+        createNamespacedJob.mock.calls[0][0].body.spec.template.spec
+          .containers[0].image;
+
+      const serverQuery = () =>
+        hasura.query.mock.calls
+          .map(([request]) => request)
+          .find((request) => request.servers)?.servers;
+
+      // The CounterStrikeSharp image refuses to boot one.
+      it("boots it on the SwiftlyS2 image", async () => {
+        await expect(
+          (service as any).assignOnDemandServer("match-1"),
+        ).resolves.toBe(true);
+
+        expect(bootedImage()).toBe("ghcr.io/5stackgg/game-server-sw:latest");
+        expect(pluginRuntime.resolvePracticeServerImage).toHaveBeenCalledWith(
+          expect.objectContaining({ id: "node-1" }),
+        );
+        expect(
+          pluginRuntime.resolveGameServerPluginImage,
+        ).not.toHaveBeenCalled();
+      });
+
+      it("keeps a match on the node's own runtime", async () => {
+        matchSource = "5stack";
+
+        await (service as any).assignOnDemandServer("match-1");
+
+        expect(bootedImage()).toBe("ghcr.io/5stackgg/game-server-css:latest");
+        expect(pluginRuntime.resolvePracticeServerImage).not.toHaveBeenCalled();
+        expect(pluginRuntime.supportsPractice).not.toHaveBeenCalled();
+      });
+
+      it("keeps the render image override for a render pod", async () => {
+        (service as any).gameServerConfig = {
+          namespace: "test",
+          utilityRenderServerImage: "registry.local/game-server:render",
+        };
+        const query = hasura.query.getMockImplementation();
+        hasura.query.mockImplementation(async (request: any) =>
+          request.utility_practice_sessions
+            ? { utility_practice_sessions: [{ id: "session-1" }] }
+            : query(request),
+        );
+
+        await (service as any).assignOnDemandServer("match-1");
+
+        expect(bootedImage()).toBe("registry.local/game-server:render");
+      });
+
+      it("only takes a server on a node whose build SwiftlyS2 supports", async () => {
+        nodes = [
+          { id: "node-1", build_id: 20000 },
+          { id: "node-2", build_id: 20001 },
+        ];
+        pluginRuntime.supportsPractice.mockImplementation(
+          async (node: { id: string }) => node.id === "node-1",
+        );
+
+        await (service as any).assignOnDemandServer("match-1");
+
+        expect(serverQuery().__args.where.game_server_node._and).toContainEqual(
+          { id: { _in: ["node-1"] } },
+        );
+      });
+
+      it("boots nothing when SwiftlyS2 supports no node's build", async () => {
+        pluginRuntime.supportsPractice.mockResolvedValue(false);
+
+        await expect(
+          (service as any).assignOnDemandServer("match-1"),
+        ).resolves.toBe(false);
+
+        expect(createNamespacedJob).not.toHaveBeenCalled();
+        expect(serverQuery()).toBeUndefined();
+        expect(logger.warn).toHaveBeenCalledWith(
+          expect.stringContaining(
+            "the SwiftlyS2 plugin does not support the CS2 build",
+          ),
+        );
+      });
     });
 
     it("does not mistake a failure inside the lock for contention", async () => {

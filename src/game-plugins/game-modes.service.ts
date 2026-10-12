@@ -1,7 +1,10 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PostgresService } from "../postgres/postgres.service";
 import { PluginRuntimeService } from "../plugin-runtime/plugin-runtime.service";
-import { PluginRuntime } from "../configs/types/GameServersConfig";
+import {
+  PluginRuntime,
+  PRACTICE_PLUGIN_RUNTIME,
+} from "../configs/types/GameServersConfig";
 import { MapRotationService } from "./map-rotation.service";
 import { MapRotationSpec } from "./types/Registry";
 
@@ -87,6 +90,7 @@ export class GameModesService {
         game_mode_id: string | null;
         game_server_node_id: string | null;
         pin_plugin_runtime: string | null;
+        is_practice: boolean;
         is_ranked: boolean;
         is_tournament: boolean;
         is_ranked_server: boolean;
@@ -104,6 +108,9 @@ export class GameModesService {
               ) AS game_mode_id,
               s.game_server_node_id,
               n.pin_plugin_runtime,
+              s.type = 'Practice' OR EXISTS (
+                SELECT 1 FROM matches m WHERE m.id = $2 AND m.source = 'practice'
+              ) AS is_practice,
               COALESCE(
                 (SELECT m.counts_toward_ranking FROM matches m WHERE m.id = $2),
                 false
@@ -126,9 +133,12 @@ export class GameModesService {
     // with none of its plugins and nothing to say so.
     const scope: PluginScope = {
       nodeId: row?.game_server_node_id ?? null,
-      runtime: await this.pluginRuntime.resolvePluginRuntime({
-        pin_plugin_runtime: row?.pin_plugin_runtime ?? null,
-      }),
+      // A practice server boots on SwiftlyS2 whatever its node runs matches on.
+      runtime: row?.is_practice
+        ? PRACTICE_PLUGIN_RUNTIME
+        : await this.pluginRuntime.resolvePluginRuntime({
+            pin_plugin_runtime: row?.pin_plugin_runtime ?? null,
+          }),
       // A dedicated server is built before it has a match, and its plugin set
       // is baked into the pod -- so "decide later, per match" is not available
       // there. A Ranked server only ever hosts matchmaking, which is answer

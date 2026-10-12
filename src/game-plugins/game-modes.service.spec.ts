@@ -306,6 +306,37 @@ describe("GameModesService node scoping", () => {
     expect(modePlugins?.params[1]).toEqual("counterstrikesharp");
   });
 
+  // The CounterStrikeSharp image refuses to boot a practice server, so its
+  // plugins are SwiftlyS2 builds whatever the node runs matches on.
+  it("asks for SwiftlyS2 plugins on a practice server", async () => {
+    const { service, seen } = build(
+      {
+        game_mode_id: "mode-1",
+        game_server_node_id: "node-a",
+        pin_plugin_runtime: "counterstrikesharp",
+        is_practice: true,
+      },
+      [
+        {
+          plugin_slug: "retakes",
+          config: null,
+          config_path: null,
+          required: true,
+          versionsByNode: { "node-a": "1.0.0" },
+        },
+      ],
+    );
+
+    await service.resolveForServer("server-1", "match-1");
+
+    const modePlugins = seen.find((entry) =>
+      entry.sql.includes("FROM game_mode_plugins"),
+    );
+
+    expect(modePlugins?.params[1]).toEqual("swiftlys2");
+    expect(seen[0].sql).toContain("m.source = 'practice'");
+  });
+
   it("refuses to boot a mode whose required plugin is not on the node", async () => {
     const { service } = build(
       {
