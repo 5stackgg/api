@@ -178,6 +178,55 @@ describe("hasura table metadata", () => {
     });
   });
 
+  // A team-backed entry's roster is auto-filled as 'Member', so whoever manages
+  // the team has to be named in delete itself, the same set insert names.
+  describe("tournament_team_roster", () => {
+    const roster = () =>
+      tables.find(({ file }) => file === "public_tournament_team_roster.yaml")
+        ?.metadata;
+
+    const managers = (expression: Record<string, any>) =>
+      expression._and[0]._or
+        .flatMap((condition: Record<string, any>) =>
+          condition.tournament_team?._or
+            ? condition.tournament_team._or.map((nested: unknown) => ({
+                tournament_team: nested,
+              }))
+            : [condition],
+        )
+        .map((condition: unknown) => JSON.stringify(stableShape(condition)));
+
+    const windows = (expression: Record<string, any>) =>
+      expression._and[1].tournament.status;
+
+    it.each(["user", "tournament_organizer"])(
+      "lets everyone who may add a player for %s remove one",
+      (role) => {
+        const insert = blocksByRole(roster(), "insert_permissions").get(
+          role,
+        )?.check;
+        const remove = blocksByRole(roster(), "delete_permissions").get(
+          role,
+        )?.filter;
+
+        expect(managers(remove)).toEqual(
+          expect.arrayContaining(managers(insert)),
+        );
+      },
+    );
+
+    it("keeps the removal windows", () => {
+      const remove = blocksByRole(roster(), "delete_permissions");
+
+      expect(windows(remove.get("user")?.filter)).toEqual({
+        _nin: ["Cancelled", "CancelledMinTeams", "Finished", "Live"],
+      });
+      expect(windows(remove.get("tournament_organizer")?.filter)).toEqual({
+        _nin: ["Cancelled", "CancelledMinTeams", "Finished"],
+      });
+    });
+  });
+
   describe("chat message deletions", () => {
     it("shows staff the files and GIF a deleted message carried", () => {
       const deletions = tables.find(
