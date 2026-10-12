@@ -84,10 +84,11 @@ export class FakeRedis {
 
   async del(key: string) {
     this.expiries.delete(key);
-    const existed =
-      this.strings.delete(key) ||
-      this.hashes.delete(key) ||
-      this.sortedSets.delete(key);
+    const existed = [
+      this.strings.delete(key),
+      this.hashes.delete(key),
+      this.sortedSets.delete(key),
+    ].some(Boolean);
     return existed ? 1 : 0;
   }
 
@@ -125,6 +126,13 @@ export class FakeRedis {
     return this.zset(key).delete(member) ? 1 : 0;
   }
 
+  async zrank(key: string, member: string) {
+    const rank = [...this.zset(key).entries()]
+      .sort((a, b) => (a[1] !== b[1] ? a[1] - b[1] : a[0].localeCompare(b[0])))
+      .findIndex(([entry]) => entry === member);
+    return rank === -1 ? null : rank;
+  }
+
   async zcard(key: string) {
     return this.zset(key).size;
   }
@@ -159,16 +167,27 @@ export class FakeRedis {
     return 1;
   }
 
+  // Reads never create the key, and a hash goes with its last field, as in
+  // redis: the orphan sweep asks whether a lobby's details key exists at all.
   async hget(key: string, field: string) {
-    return this.hash(key).get(field) ?? null;
+    return this.hashes.get(key)?.get(field) ?? null;
+  }
+
+  async hmget(key: string, ...fields: string[]) {
+    return fields.map((field) => this.hashes.get(key)?.get(field) ?? null);
   }
 
   async hgetall(key: string) {
-    return Object.fromEntries(this.hash(key));
+    return Object.fromEntries(this.hashes.get(key) ?? []);
   }
 
   async hdel(key: string, field: string) {
-    return this.hash(key).delete(field) ? 1 : 0;
+    const hash = this.hashes.get(key);
+    const removed = hash?.delete(field) ?? false;
+    if (hash?.size === 0) {
+      this.hashes.delete(key);
+    }
+    return removed ? 1 : 0;
   }
 
   async publish(channel: string, message: string) {

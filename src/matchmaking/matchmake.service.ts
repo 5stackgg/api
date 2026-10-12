@@ -114,13 +114,6 @@ export class MatchmakeService {
       },
     });
 
-    const types: e_match_types_enum[] = [
-      "Duel",
-      "Wingman",
-      "Rush",
-      "Competitive",
-    ];
-
     const regionStats: Partial<
       Record<string, Partial<Record<e_match_types_enum, QueuedLobbyStat[]>>>
     > = {};
@@ -129,7 +122,7 @@ export class MatchmakeService {
       (region: { value: string }) => region.value,
     );
 
-    for (const type of types) {
+    for (const type of MatchmakingLobbyService.QUEUE_TYPES) {
       // A lobby queued in several regions keeps one index across all of them,
       // so the client can count it once.
       const lobbyIndexes = new Map<string, number>();
@@ -214,7 +207,12 @@ export class MatchmakeService {
         "WITHSCORES",
       );
 
-      const lobbies = await this.processLobbyData(lobbiesData, region, pass);
+      const lobbies = await this.processLobbyData(
+        lobbiesData,
+        type,
+        region,
+        pass,
+      );
 
       if (lobbies.length === 0) {
         await this.releaseMatchmakeRegionLock(region);
@@ -286,10 +284,11 @@ export class MatchmakeService {
 
   private async processLobbyData(
     lobbiesData: string[],
+    type: e_match_types_enum,
     region: string,
     pass: MatchmakePass = { claimed: false },
   ): Promise<MatchmakingLobby[]> {
-    const lobbyDetails = [];
+    const queued: MatchmakingLobby[] = [];
 
     for (let i = 0; i < lobbiesData.length; i += 2) {
       const details = await this.matchmakingLobbyService.getLobbyDetails(
@@ -297,6 +296,46 @@ export class MatchmakeService {
       );
 
       if (!details) {
+        continue;
+      }
+
+      // However it got back in the queue, a lobby in a ready check, or in the
+      // match that came out of one, must not be claimed into another.
+      if (await this.hasCurrentConfirmation(details.lobbyId)) {
+        await this.matchmakingLobbyService.removeLobbyFromQueue(
+          details.lobbyId,
+        );
+        continue;
+      }
+
+      queued.push(details);
+    }
+
+    let busy: Map<string, string>;
+    try {
+      busy = await this.getBusyPlayers(
+        queued.flatMap((lobby) =>
+          lobby.players.map((player) => player.steam_id),
+        ),
+      );
+    } catch (error) {
+      this.logger.error(
+        `Unable to check who is already in a match for ${type}/${region}:`,
+        error,
+      );
+      await this.scheduleExpandedSearch(
+        type,
+        region,
+        10000 + Math.floor(Math.random() * 10000),
+      );
+      return [];
+    }
+
+    const lobbyDetails = [];
+
+    for (const details of queued) {
+      if (details.players.some((player) => busy.has(player.steam_id))) {
+        await this.dropLobbyWithBusyPlayers(details, busy);
         continue;
       }
 
@@ -617,7 +656,88 @@ export class MatchmakeService {
 
   private async releaseLobbyAndRequeue(lobbyId: string): Promise<void> {
     await this.releaseLobbyLock(lobbyId, 0);
+    // A ready check that failed part way may already have stamped the lobby
+    // with its id, and every pass skips a lobby stamped by a live ready check.
+    await this.matchmakingLobbyService.removeConfirmationIdFromLobby(lobbyId);
     await this.addLobbyToQueue(lobbyId);
+  }
+
+  private async hasCurrentConfirmation(lobbyId: string) {
+    const confirmationId = await this.redis.hget(
+      getMatchmakingLobbyDetailsCacheKey(lobbyId),
+      "confirmationId",
+    );
+
+    if (!confirmationId) {
+      return false;
+    }
+
+    return !!(await this.redis.hget(
+      getMatchmakingConformationCacheKey(confirmationId),
+      "lobbyIds",
+    ));
+  }
+
+  // is_in_another_match is checked once, when a lobby joins. A tournament or
+  // league match can go live, or come within the hour, while its players wait
+  // in the queue or in a ready check.
+  private async getBusyPlayers(steamIds: string[]) {
+    const busy = new Map<string, string>();
+
+    if (steamIds.length === 0) {
+      return busy;
+    }
+
+    const { players } = await this.hasura.query({
+      players: {
+        __args: {
+          where: {
+            steam_id: { _in: steamIds },
+            is_in_another_match: { _eq: true },
+          },
+        },
+        steam_id: true,
+        name: true,
+      },
+    });
+
+    for (const player of players) {
+      busy.set(player.steam_id, player.name);
+    }
+
+    return busy;
+  }
+
+  private async dropLobbyWithBusyPlayers(
+    lobby: MatchmakingLobby,
+    busy: Map<string, string>,
+  ) {
+    const name = lobby.players
+      .map((player) => busy.get(player.steam_id))
+      .find((playerName) => playerName !== undefined);
+
+    this.logger.warn(
+      `Dropping lobby ${lobby.lobbyId} from the queue: ${name} is already in a match`,
+    );
+
+    await this.releaseLobbyLock(lobby.lobbyId, 0);
+    await this.matchmakingLobbyService.removeLobbyFromQueue(lobby.lobbyId);
+    await this.matchmakingLobbyService.removeLobbyDetails(lobby.lobbyId);
+
+    for (const player of lobby.players) {
+      await this.redis.publish(
+        "send-message-to-steam-id",
+        JSON.stringify({
+          steamId: player.steam_id,
+          event: "matchmaking:error",
+          data: {
+            code: "player_in_match",
+            name,
+            message: `${name} is already in a match`,
+          },
+        }),
+      );
+    }
   }
 
   public async releaseLobbyLock(lobbyId: string, seconds: number) {
@@ -916,7 +1036,39 @@ export class MatchmakeService {
     const { team1, team2, type, region, lobbyIds } =
       await this.getMatchConfirmationDetails(confirmationId);
 
+    const players = [...team1, ...team2];
+
+    // cancelled or expired since the last confirmation came in
+    if (players.length === 0) {
+      return;
+    }
+
+    const busy = await this.getBusyPlayers(
+      players.map((player) => player.steam_id),
+    );
+
+    if (busy.size > 0) {
+      await this.removeCancelMatchMakingJob(confirmationId);
+
+      for (const lobbyId of lobbyIds) {
+        const lobby =
+          await this.matchmakingLobbyService.getLobbyDetails(lobbyId);
+
+        if (lobby?.players.some((player) => busy.has(player.steam_id))) {
+          await this.dropLobbyWithBusyPlayers(lobby, busy);
+        }
+      }
+
+      // everyone left accepted, so the cancel puts them back in the queue
+      await this.cancelMatchMaking(confirmationId);
+      return;
+    }
+
     await this.removeCancelMatchMakingJob(confirmationId);
+
+    for (const lobbyId of lobbyIds) {
+      await this.matchmakingLobbyService.dequeueLobby(lobbyId);
+    }
 
     // e_map_pool_types_enum doesn't include Premier/Faceit (imports only).
     const mapPoolType: e_map_pool_types_enum =
