@@ -12,6 +12,7 @@ import { isRoleAbove } from "src/utilities/isRoleAbove";
 import { GameServerNodeService } from "src/game-server-node/game-server-node.service";
 import { GameStreamerService } from "src/matches/game-streamer/game-streamer.service";
 import { LoggingService } from "src/k8s/logging/logging.service";
+import { MapAssetsService } from "src/map-assets/map-assets.service";
 
 interface ActiveLogStream {
   stream: PassThrough;
@@ -58,6 +59,7 @@ export class SystemGateway {
     const isJob =
       service.startsWith("cs-update:") ||
       service.startsWith("shader-bake:") ||
+      service.startsWith("map-assets:") ||
       service.startsWith("m-") ||
       service.startsWith("gs-");
     const resolvedService = service.startsWith("cs-update:")
@@ -68,7 +70,9 @@ export class SystemGateway {
         ? GameStreamerService.GET_BAKE_JOB_NAME(
             service.replace("shader-bake:", ""),
           )
-        : service;
+        : service.startsWith("map-assets:")
+          ? MapAssetsService.GET_JOB_NAME(service.replace("map-assets:", ""))
+          : service;
 
     const previousActive = activeLogStreams.get(client);
     if (previousActive) {
