@@ -68,11 +68,6 @@ BEGIN
             MESSAGE = 'You are already on a team in this tournament';
     END IF;
 
-    IF NOT public.tournament_free_agent_party_fits(NEW.tournament_id, NEW.party_id, NEW.id) THEN
-        RAISE EXCEPTION USING ERRCODE = '22000',
-            MESSAGE = 'That party is already the size of a full team';
-    END IF;
-
     -- The draft runs once (it is idempotent on is_drafted), so a sign-up that
     -- lands after it would sit as 'registered' waiting on a draft that never
     -- comes. The waitlist is where everyone the draft did not place waits, in
@@ -122,7 +117,7 @@ BEGIN
            AND tt.is_drafted
          ORDER BY tt.name, tt.id
     LOOP
-        PERFORM public.promote_tournament_free_agent(NEW.tournament_id, _team_id, false);
+        PERFORM public.promote_tournament_free_agent(NEW.tournament_id, _team_id);
     END LOOP;
 
     RETURN NULL;
@@ -134,73 +129,6 @@ CREATE TRIGGER tai_tournament_free_agents
     AFTER INSERT ON public.tournament_free_agents
     FOR EACH ROW
     EXECUTE FUNCTION public.tai_tournament_free_agents();
-
--- Only a party_id that actually MOVES is re-measured. The draft rewrites status
--- and tournament_team_id on every row it touches, and re-counting a party on
--- each of those is work that can never find anything: a party only grows on an
--- insert or on a row joining it.
-CREATE OR REPLACE FUNCTION public.tbu_tournament_free_agents() RETURNS TRIGGER
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-    IF NEW.party_id IS NOT NULL
-       AND NEW.party_id IS DISTINCT FROM OLD.party_id
-       AND NOT public.tournament_free_agent_party_fits(NEW.tournament_id, NEW.party_id, NEW.id) THEN
-        RAISE EXCEPTION USING ERRCODE = '22000',
-            MESSAGE = 'That party is already the size of a full team';
-    END IF;
-
-    RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS tbu_tournament_free_agents ON public.tournament_free_agents;
-CREATE TRIGGER tbu_tournament_free_agents
-    BEFORE UPDATE ON public.tournament_free_agents
-    FOR EACH ROW
-    EXECUTE FUNCTION public.tbu_tournament_free_agents();
-
--- A party of one is just a free agent. Left standing it shows the web a party
--- with nobody in it, and tells the last member they are still signed up "with"
--- someone who has gone.
-CREATE OR REPLACE FUNCTION public.tadu_tournament_free_agents_party() RETURNS TRIGGER
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-    IF OLD.party_id IS NULL THEN
-        RETURN NULL;
-    END IF;
-
-    IF TG_OP = 'UPDATE' AND NEW.party_id IS NOT DISTINCT FROM OLD.party_id THEN
-        RETURN NULL;
-    END IF;
-
-    -- Drafted rows are left alone: after the draft the party_id is the record of
-    -- who signed up with whom, not a queue position. Clearing the survivor's
-    -- party_id re-enters this trigger with a party that no longer exists, where
-    -- the count is 0 and nothing matches -- so it stops after one pass.
-    UPDATE public.tournament_free_agents fa
-       SET party_id = NULL
-     WHERE fa.tournament_id = OLD.tournament_id
-       AND fa.party_id = OLD.party_id
-       AND fa.status IN ('registered', 'waitlisted')
-       AND (
-           SELECT COUNT(*)
-             FROM public.tournament_free_agents other
-            WHERE other.tournament_id = OLD.tournament_id
-              AND other.party_id = OLD.party_id
-              AND other.status <> 'withdrawn'
-       ) = 1;
-
-    RETURN NULL;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS tadu_tournament_free_agents_party ON public.tournament_free_agents;
-CREATE TRIGGER tadu_tournament_free_agents_party
-    AFTER UPDATE OF party_id OR DELETE ON public.tournament_free_agents
-    FOR EACH ROW
-    EXECUTE FUNCTION public.tadu_tournament_free_agents_party();
 
 -- Leaving the pool has to give the slot up too. The roster row is what the
 -- seeding, the lineups and the team page actually read, so a drafted agent who

@@ -141,13 +141,12 @@ describe("free agent flow (SQL-driven)", () => {
   type Agent = {
     status: string;
     tournament_team_id: string | null;
-    party_id: string | null;
     created_at: Date;
   };
 
   const agentRow = async (tournamentId: string, steamId: string) => {
     const [row] = await postgres.query<Array<Agent>>(
-      `SELECT status, tournament_team_id, party_id, created_at
+      `SELECT status, tournament_team_id, created_at
          FROM tournament_free_agents
         WHERE tournament_id = $1 AND player_steam_id = $2`,
       [tournamentId, steamId],
@@ -349,29 +348,6 @@ describe("free agent flow (SQL-driven)", () => {
 
       expect(await agentRow(t.id, agent)).toBeUndefined();
       expect(await canJoin()).toBe(false);
-    });
-
-    it("breaks up the party of a free agent who joins a team", async () => {
-      const t = await openTournament({ registrationType: "both" });
-      const [owner, agent, partner] = await fx.players(3);
-      const [{ party }] = await postgres.query<Array<{ party: string }>>(
-        "SELECT gen_random_uuid()::text AS party",
-      );
-      for (const steamId of [agent, partner]) {
-        await postgres.query(
-          `INSERT INTO tournament_free_agents (tournament_id, player_steam_id, party_id)
-           VALUES ($1, $2, $3)`,
-          [t.id, steamId, party],
-        );
-      }
-
-      const team = await registerTeam(t.id, owner, [owner]);
-      await addToRoster(t.id, team, agent);
-
-      expect(await agentRow(t.id, agent)).toBeUndefined();
-      const left = await agentRow(t.id, partner);
-      expect(left.status).toBe("registered");
-      expect(left.party_id).toBeNull();
     });
 
     it("takes a waitlisted free agent off the waitlist when they join a team", async () => {
@@ -663,6 +639,54 @@ describe("free agent flow (SQL-driven)", () => {
     });
   });
 
+  describe("the draft", () => {
+    // Standing Wingman ratings, hung off one finished match so
+    // get_tournament_player_elo has something to read.
+    const seedElo = async (ratings: Record<string, number>) => {
+      const { matchId } = await fx.bareMatch();
+      for (const [steamId, current] of Object.entries(ratings)) {
+        await postgres.query(
+          `INSERT INTO player_elo (steam_id, match_id, "type", current, change, created_at)
+           VALUES ($1, $2, 'Wingman', $3, 0, now() - interval '30 days')`,
+          [steamId, matchId, current],
+        );
+      }
+    };
+
+    it("balances the teams by rating", async () => {
+      const t = await openTournament();
+      const players = await fx.players(8);
+      await seedElo(
+        Object.fromEntries(
+          players.map((steamId, index) => [steamId, 8000 - index * 1000]),
+        ),
+      );
+      await joinAll(t.id, players);
+
+      expect((await draft(t)).teams_created).toBe(4);
+
+      const totals = await postgres.query<Array<{ total: string }>>(
+        `SELECT SUM(get_tournament_player_elo($1, ttr.player_steam_id))::text AS total
+           FROM tournament_team_roster ttr
+          WHERE ttr.tournament_id = $1
+          GROUP BY ttr.tournament_team_id`,
+        [t.id],
+      );
+
+      expect(totals.map((row) => Number(row.total))).toEqual([
+        9000, 9000, 9000, 9000,
+      ]);
+    });
+
+    it("drafts only once", async () => {
+      const t = await openTournament();
+      await joinAll(t.id, await fx.players(4));
+
+      expect((await draft(t)).teams_created).toBe(2);
+      expect((await draft(t)).teams_created).toBe(0);
+    });
+  });
+
   describe("signing up after the teams were drafted", () => {
     it("waitlists a late sign-up instead of leaving it waiting on a draft that already ran", async () => {
       const t = await openTournament();
@@ -694,45 +718,28 @@ describe("free agent flow (SQL-driven)", () => {
       return { t, team: team.id };
     };
 
-    // One statement, like the lobby sign-up writes it.
-    const signUpParty = async (tournamentId: string, steamIds: Array<string>) => {
-      const [{ party }] = await postgres.query<Array<{ party: string }>>(
-        "SELECT gen_random_uuid()::text AS party",
-      );
-      await postgres.query(
-        `INSERT INTO tournament_free_agents (tournament_id, player_steam_id, party_id)
-         SELECT $1, member, $3 FROM unnest($2::bigint[]) AS member`,
-        [tournamentId, steamIds, party],
-      );
-    };
-
-    it("keeps a lobby that signs up late together rather than splitting it into a single slot", async () => {
-      const { t, team } = await shortPickupTeam();
-      const lobby = await fx.players(2);
-
-      await signUpParty(t.id, lobby);
-
-      for (const steamId of lobby) {
-        expect(await statusOf(t.id, steamId)).toBe("waitlisted");
-      }
-      expect(await rosterOf(team)).toHaveLength(1);
-
-      const solo = await fx.player();
-      await join(t.id, solo);
-      expect(await teamOf(t.id, solo)).toBe(team);
-    });
-
     it("drafts a waiting player the organizer places on a pickup team by hand", async () => {
-      const { t, team } = await shortPickupTeam();
-      const [placed, partner] = await fx.players(2);
-      await signUpParty(t.id, [placed, partner]);
+      const t = await openTournament();
+      // A substitute seat: room on the roster that promotion, which only fills
+      // a team to its lineup, never offers.
+      await postgres.query(
+        `UPDATE match_options SET number_of_substitutes = 1
+          WHERE id = (SELECT match_options_id FROM tournaments WHERE id = $1)`,
+        [t.id],
+      );
+      const players = await fx.players(5);
+      await joinAll(t.id, players);
+      await draft(t);
 
-      await addToRoster(t.id, team, placed);
+      const placed = players[4];
+      expect(await statusOf(t.id, placed)).toBe("waitlisted");
+      const [team] = await pickupTeams(t.id);
+
+      await addToRoster(t.id, team.id, placed);
 
       const row = await agentRow(t.id, placed);
       expect(row.status).toBe("drafted");
-      expect(row.tournament_team_id).toBe(team);
-      expect(await statusOf(t.id, partner)).toBe("waitlisted");
+      expect(row.tournament_team_id).toBe(team.id);
     });
 
     it("puts a late sign-up straight into a slot a drafted player gave up", async () => {

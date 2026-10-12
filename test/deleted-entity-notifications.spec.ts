@@ -147,7 +147,6 @@ describe("notifications of deleted matches and tournaments (SQL-driven)", () => 
           notify("TournamentCreated", invitee, tournamentId),
           notify("TournamentCheckInOpen", invitee, tournamentId),
           notify("TournamentCheckInMissed", invitee, tournamentId),
-          notify("TournamentPartySignup", invitee, tournamentId),
           notify("TournamentReminder", invitee, `${tournamentId}:1h`),
           notify(
             "TournamentCheckInClosing",

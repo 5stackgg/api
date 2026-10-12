@@ -268,8 +268,7 @@ BEGIN
      WHERE (type IN (
                 'TournamentCreated',
                 'TournamentCheckInOpen',
-                'TournamentCheckInMissed',
-                'TournamentPartySignup'
+                'TournamentCheckInMissed'
             )
             AND entity_id = OLD.id::text)
         OR (type IN ('TournamentReminder', 'TournamentCheckInClosing')

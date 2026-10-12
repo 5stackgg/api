@@ -14,26 +14,44 @@ import {
 const HASURA_DIR = join(__dirname, "../../../hasura");
 
 // Notification types come from two places, and missing the second is how
-// MatchImported ended up live but absent from the enum seed file.
+// MatchImported ended up live but absent from the enum seed file. Read in the
+// order boot applies them -- migrations by version, then the seed -- so a type
+// a later migration deletes is gone.
 const notificationTypesInTree = (): string[] => {
-  const sources = [join(HASURA_DIR, "enums/notification-types.sql")];
+  const sources: string[] = [];
 
   const migrations = join(HASURA_DIR, "migrations/default");
-  for (const dir of readdirSync(migrations)) {
+  for (const dir of readdirSync(migrations).sort()) {
     const up = join(migrations, dir, "up.sql");
     if (existsSync(up)) {
       sources.push(up);
     }
   }
 
+  sources.push(join(HASURA_DIR, "enums/notification-types.sql"));
+
   const types = new Set<string>();
   for (const source of sources) {
-    const sql = readFileSync(source, "utf8");
+    let sql = readFileSync(source, "utf8");
     if (!sql.includes("e_notification_types")) {
       continue;
     }
+
+    const deletes =
+      sql.match(/DELETE FROM\s+(?:public\.)?e_notification_types[^;]*;/gi) ??
+      [];
+    for (const statement of deletes) {
+      sql = sql.replace(statement, "");
+    }
+
     for (const [, value] of sql.matchAll(/\('([A-Za-z]+)',\s*'/g)) {
       types.add(value);
+    }
+
+    for (const statement of deletes) {
+      for (const [, value] of statement.matchAll(/'([A-Za-z]+)'/g)) {
+        types.delete(value);
+      }
     }
   }
 

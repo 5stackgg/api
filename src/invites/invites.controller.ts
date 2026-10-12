@@ -320,7 +320,8 @@ export class InvitesController {
 
     if (
       seat &&
-      seat.tournament_team_id !== tournament_team_invites_by_pk.tournament_team_id
+      seat.tournament_team_id !==
+        tournament_team_invites_by_pk.tournament_team_id
     ) {
       throw Error("You are already on a team in this tournament");
     }

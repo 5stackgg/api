@@ -10,21 +10,14 @@
 -- player lands on; letting it decide who plays at all is the one thing a
 -- first-come pool must not do, and a promotion is a selection.
 --
--- Returns an array rather than one id because the waitlist is made of UNITS: a
--- party promotes whole or not at all, so one call can fill more than one slot.
---
--- _split_parties is false for a promotion run on sign-up: a lobby that has just
--- been told it will be drafted onto one team must not be split up the moment
--- it joins. A solo signing up later fills the gap instead.
---
--- The 2-argument form is dropped explicitly: left beside the defaulted
--- 3-argument one, every 2-argument call fails as ambiguous (42725).
+-- A 3-argument form existed briefly; left beside this one it would shadow
+-- every 2-argument call.
+DROP FUNCTION IF EXISTS public.promote_tournament_free_agent(uuid, uuid, boolean);
 DROP FUNCTION IF EXISTS public.promote_tournament_free_agent(uuid, uuid);
 
 CREATE OR REPLACE FUNCTION public.promote_tournament_free_agent(
     _tournament_id uuid,
-    _tournament_team_id uuid,
-    _split_parties boolean DEFAULT true
+    _tournament_team_id uuid
 )
 RETURNS bigint[]
 LANGUAGE plpgsql
@@ -109,67 +102,36 @@ BEGIN
         AND public.tournament_check_in_window_opened(_tournament)
         AND NOT public.tournament_check_in_open(_tournament);
 
-    WITH eligible AS (
-        SELECT fa.id,
-               fa.created_at,
-               COALESCE(fa.party_id::text, 'solo:' || fa.id::text) AS unit_key
-          FROM public.tournament_free_agents fa
-         WHERE fa.tournament_id = _tournament_id
-           AND fa.status = 'waitlisted'
-           AND (NOT _check_in_closed OR fa.checked_in_at IS NOT NULL)
-           AND public.player_meets_tournament_requirements(_tournament_id, fa.player_steam_id)
-           -- Already playing, under either identity. The roster key is unique per
-           -- (tournament, player) so the insert below would abort the caller's whole
-           -- statement, and owning a team counts as being in the tournament. Per
-           -- member: an ineligible member shrinks their party, it does not
-           -- disqualify the party.
-           AND NOT EXISTS (
-               SELECT 1 FROM public.tournament_team_roster ttr
-               WHERE ttr.tournament_id = _tournament_id
-                 AND ttr.player_steam_id = fa.player_steam_id
-           )
-           AND NOT EXISTS (
-               SELECT 1 FROM public.tournament_teams tt
-               WHERE tt.tournament_id = _tournament_id
-                 AND tt.owner_steam_id = fa.player_steam_id
-           )
-    ),
-    units AS (
-        SELECT e.unit_key,
-               COUNT(*)::int AS size,
-               MIN(e.created_at) AS first_at,
-               MIN(e.id::text) AS first_id
-          FROM eligible e
-         GROUP BY e.unit_key
-    ),
-    -- Units that fit the gap whole come first (false sorts before true), and
-    -- within each group the earliest signup wins. A solo is a unit of one, so a
-    -- single vacancy naturally goes to the earliest solo ahead of any party.
-    --
-    -- The second group is the deliberate compromise: when EVERY waitlisted unit
-    -- is a party too big for the gap, the earliest party is split and its
-    -- earliest members take the slots. Splitting a party is bad; leaving the
-    -- slot empty is worse for that same party, because a team below the minimum
-    -- lineup is cut at seeding and the whole bracket they are waiting on
-    -- shrinks. The members left behind keep their party_id, so they stay one
-    -- unit with their original priority and are first in line for the next gap.
-    pick AS (
-        SELECT u.unit_key
-          FROM units u
-         WHERE _split_parties OR u.size <= _free_slots
-         ORDER BY (u.size > _free_slots), u.first_at, u.first_id
-         LIMIT 1
-    )
     SELECT array_agg(e.id ORDER BY e.created_at, e.id)
       INTO _promoted_ids
-      FROM eligible e
-      JOIN pick p ON p.unit_key = e.unit_key;
+      FROM (
+          SELECT fa.id, fa.created_at
+            FROM public.tournament_free_agents fa
+           WHERE fa.tournament_id = _tournament_id
+             AND fa.status = 'waitlisted'
+             AND (NOT _check_in_closed OR fa.checked_in_at IS NOT NULL)
+             AND public.player_meets_tournament_requirements(_tournament_id, fa.player_steam_id)
+             -- Already playing, under either identity. The roster key is unique
+             -- per (tournament, player) so the insert below would abort the
+             -- caller's whole statement, and owning a team counts as being in
+             -- the tournament.
+             AND NOT EXISTS (
+                 SELECT 1 FROM public.tournament_team_roster ttr
+                 WHERE ttr.tournament_id = _tournament_id
+                   AND ttr.player_steam_id = fa.player_steam_id
+             )
+             AND NOT EXISTS (
+                 SELECT 1 FROM public.tournament_teams tt
+                 WHERE tt.tournament_id = _tournament_id
+                   AND tt.owner_steam_id = fa.player_steam_id
+             )
+           ORDER BY fa.created_at, fa.id
+           LIMIT _free_slots
+      ) e;
 
     IF _promoted_ids IS NULL THEN
         RETURN NULL;
     END IF;
-
-    _promoted_ids := _promoted_ids[1:_free_slots];
 
     -- tbi_tournament_team_roster redirects a non-organizer insert on a pickup
     -- team into an INVITE nobody sent; the same GUC the draft uses marks this as
