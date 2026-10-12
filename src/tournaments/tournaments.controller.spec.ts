@@ -41,6 +41,7 @@ describe("TournamentsController registration and check-in actions", () => {
   let claimedRows: Rows;
   let diagnosisRow: Record<string, unknown> | undefined;
   let draftedTeams: number;
+  let bracketRow: Record<string, unknown> | undefined;
   let statements: Array<string>;
 
   const player: User = {
@@ -90,6 +91,7 @@ describe("TournamentsController registration and check-in actions", () => {
     claimedRows = [{ invite_code_id: "code-1" }];
     diagnosisRow = undefined;
     draftedTeams = 2;
+    bracketRow = { tournament_id: "tournament-1" };
     statements = [];
 
     postgres.query.mockImplementation(async (sql: string) => {
@@ -158,6 +160,12 @@ describe("TournamentsController registration and check-in actions", () => {
       }
       if (sql.includes("tournament_pending_check_in_recipients")) {
         return [{ steam_id: "1" }];
+      }
+      if (sql.includes("FROM tournament_brackets tb")) {
+        return bracketRow ? [bracketRow] : [];
+      }
+      if (sql.includes("recreate_tournament_bracket_match")) {
+        return [{ match_id: "match-2" }];
       }
 
       throw new Error(`unexpected query: ${sql}`);
@@ -448,6 +456,47 @@ describe("TournamentsController registration and check-in actions", () => {
         statements.some((sql) => sql.includes("update_tournament_stages")),
       ).toBe(true);
       expect(statements.some((sql) => sql.includes("seed_stage"))).toBe(true);
+    });
+  });
+
+  describe("recreateTournamentBracketMatch", () => {
+    const recreated = () =>
+      statements.filter((sql) =>
+        sql.includes("recreate_tournament_bracket_match"),
+      );
+
+    it("refuses a bracket that does not exist", async () => {
+      bracketRow = undefined;
+
+      await expect(
+        controller.recreateTournamentBracketMatch({
+          user: organizer,
+          tournament_bracket_id: "bracket-1",
+        }),
+      ).rejects.toThrow(/not found/i);
+      expect(recreated()).toEqual([]);
+    });
+
+    it("refuses a non-organizer", async () => {
+      await expect(
+        controller.recreateTournamentBracketMatch({
+          user: player,
+          tournament_bracket_id: "bracket-1",
+        }),
+      ).rejects.toThrow(/organizer/i);
+      expect(recreated()).toEqual([]);
+    });
+
+    it("recreates the slot's match for the organizer", async () => {
+      tournamentRow = tournament({ is_organizer: true, status: "Live" });
+
+      await expect(
+        controller.recreateTournamentBracketMatch({
+          user: organizer,
+          tournament_bracket_id: "bracket-1",
+        }),
+      ).resolves.toEqual({ success: true });
+      expect(recreated().length).toBe(1);
     });
   });
 

@@ -2640,6 +2640,12 @@ type Mutation {
 }
 
 type Mutation {
+  recreateTournamentBracketMatch(
+    tournament_bracket_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   extendTournamentCheckIn(
     tournament_id: uuid!
     minutes: Int!

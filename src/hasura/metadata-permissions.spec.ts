@@ -227,6 +227,31 @@ describe("hasura table metadata", () => {
     });
   });
 
+  // A bracket keeps its slot when its match is deleted (match_id is ON DELETE
+  // SET NULL), and a won slot keeps its winner downstream with nothing to reset.
+  describe("matches", () => {
+    const deleteFilter = (role: string) =>
+      blocksByRole(
+        tables.find(({ file }) => file === "public_matches.yaml")?.metadata,
+        "delete_permissions",
+      ).get(role)?.filter;
+
+    it("never lets an administrator delete a tournament match", () => {
+      expect(deleteFilter("administrator")).toEqual({
+        _not: { tournament_brackets: {} },
+      });
+    });
+
+    it("only lets an organizer delete a match outside any tournament", () => {
+      expect(deleteFilter("user")).toEqual({
+        _and: [
+          { is_organizer: { _eq: true } },
+          { _not: { tournament_brackets: {} } },
+        ],
+      });
+    });
+  });
+
   describe("chat message deletions", () => {
     it("shows staff the files and GIF a deleted message carried", () => {
       const deletions = tables.find(
