@@ -3047,6 +3047,7 @@ export class MatchesController {
         },
         id: true,
         status: true,
+        is_tournament_match: true,
       },
     });
 
@@ -3056,6 +3057,12 @@ export class MatchesController {
 
     if (matches_by_pk.status === "Live") {
       throw Error("cannot delete a live match");
+    }
+
+    if (matches_by_pk.is_tournament_match) {
+      throw Error(
+        "cannot delete a tournament match; reset or cancel it from the bracket",
+      );
     }
 
     await this.clips.deleteClipsForMatch(match_id);

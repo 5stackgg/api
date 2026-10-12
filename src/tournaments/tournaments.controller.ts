@@ -373,6 +373,46 @@ export class TournamentsController {
     };
   }
 
+  @HasuraAction()
+  public async recreateTournamentBracketMatch(data: {
+    user: User;
+    tournament_bracket_id: string;
+  }) {
+    const { tournament_bracket_id } = data;
+
+    const [bracket] = await this.postgres.query<
+      Array<{ tournament_id: string }>
+    >(
+      `SELECT ts.tournament_id::text AS tournament_id
+         FROM tournament_brackets tb
+         JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
+        WHERE tb.id = $1::uuid`,
+      [tournament_bracket_id],
+    );
+
+    if (!bracket) {
+      throw Error("bracket not found");
+    }
+
+    const tournament = await this.getTournamentAccess(
+      bracket.tournament_id,
+      data.user,
+    );
+
+    this.requireOrganizer(tournament);
+
+    await this.postgres.query(
+      `SELECT recreate_tournament_bracket_match($1::uuid)`,
+      [tournament_bracket_id],
+    );
+
+    this.logger.log(
+      `[${bracket.tournament_id}] recreated the match of bracket ${tournament_bracket_id}`,
+    );
+
+    return { success: true };
+  }
+
   private async deleteTournamentMatches(
     tournament_id: string,
   ): Promise<{ matchCount: number }> {

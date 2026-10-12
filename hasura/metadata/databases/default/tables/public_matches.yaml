@@ -540,13 +540,18 @@ update_permissions:
 delete_permissions:
   - role: administrator
     permission:
-      filter: {}
+      filter:
+        _not:
+          tournament_brackets: {}
     comment: ""
   - role: user
     permission:
       filter:
-        is_organizer:
-          _eq: true
+        _and:
+          - is_organizer:
+              _eq: true
+          - _not:
+              tournament_brackets: {}
     comment: ""
 event_triggers:
   - name: match_events
