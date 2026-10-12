@@ -11,7 +11,6 @@ AS $$
 DECLARE
     _tournament public.tournaments;
     _team_size int;
-    _max_teams int;
     _existing_teams int;
     _pool_ids uuid[];
     _selected_ids uuid[];
@@ -36,72 +35,7 @@ BEGIN
         RETURN 0;
     END IF;
 
-    -- Idempotent on the DRAFTED teams only. Guarding on "any team exists" would
-    -- mean registration_type = 'both' never drafted at all: the first team that
-    -- registered normally would permanently block the free-agent pool, when the
-    -- whole point of 'both' is to top the field up with it.
-    IF EXISTS (
-        SELECT 1 FROM public.tournament_teams tt
-        WHERE tt.tournament_id = _tournament_id AND tt.is_drafted
-    ) THEN
-        RETURN 0;
-    END IF;
-
-    _team_size := COALESCE(
-        public.tournament_min_players_per_lineup(_tournament),
-        public.tournament_max_players_per_lineup(_tournament)
-    );
-
-    IF _team_size IS NULL OR _team_size < 1 THEN
-        RETURN 0;
-    END IF;
-
-    SELECT ts.max_teams INTO _max_teams
-    FROM public.tournament_stages ts
-    WHERE ts.tournament_id = _tournament_id AND ts."order" = 1
-    LIMIT 1;
-
-    SELECT COUNT(*) INTO _existing_teams
-    FROM public.tournament_teams tt
-    WHERE tt.tournament_id = _tournament_id;
-
-    -- A free agent who also ended up on a registered roster is skipped rather
-    -- than drafted: tournament_team_roster is unique per (tournament, player),
-    -- so drafting them would abort the whole transition on a key violation.
-    --
-    -- Owning a team counts as being in the tournament even with no roster row.
-    SELECT array_agg(fa.id ORDER BY fa.created_at, fa.id)
-    INTO _pool_ids
-    FROM public.tournament_free_agents fa
-    WHERE fa.tournament_id = _tournament_id
-      AND (
-          fa.status = 'registered'
-          OR (fa.status = 'waitlisted' AND fa.checked_in_at IS NOT NULL)
-      )
-      AND NOT EXISTS (
-          SELECT 1
-          FROM public.tournament_team_roster ttr
-          WHERE ttr.tournament_id = _tournament_id
-            AND ttr.player_steam_id = fa.player_steam_id
-      )
-      AND NOT EXISTS (
-          SELECT 1
-          FROM public.tournament_teams tt
-          WHERE tt.tournament_id = _tournament_id
-            AND tt.owner_steam_id = fa.player_steam_id
-      );
-
-    IF _pool_ids IS NULL THEN
-        RETURN 0;
-    END IF;
-
-    _teams := array_length(_pool_ids, 1) / _team_size;
-
-    -- The cap is the bracket's remaining room, not its total size: in 'both'
-    -- mode the teams that registered normally have already taken their slots.
-    IF _max_teams IS NOT NULL THEN
-        _teams := LEAST(_teams, GREATEST(_max_teams - _existing_teams, 0));
-    END IF;
+    _teams := public.tournament_free_agent_draft_team_count(_tournament);
 
     -- Before any status write, never after: waitlisting is one way (the pool
     -- only re-admits a waitlisted agent who has checked in, which needs
@@ -113,6 +47,17 @@ BEGIN
     IF _teams < 1 THEN
         RETURN 0;
     END IF;
+
+    _team_size := COALESCE(
+        public.tournament_min_players_per_lineup(_tournament),
+        public.tournament_max_players_per_lineup(_tournament)
+    );
+
+    _pool_ids := public.tournament_free_agent_draft_pool(_tournament_id);
+
+    SELECT COUNT(*) INTO _existing_teams
+    FROM public.tournament_teams tt
+    WHERE tt.tournament_id = _tournament_id;
 
     -- Stage 1: selection, in sign-up order. Everyone past the last full team
     -- waits; created_at is untouched, so a later pass still honours the order
@@ -214,5 +159,135 @@ BEGIN
     PERFORM set_config('fivestack.free_agent_draft', 'false', true);
 
     RETURN _teams;
+END;
+$$;
+
+-- The free agents the draft takes, in sign-up order.
+--
+-- A free agent who also ended up on a registered roster is skipped rather
+-- than drafted: tournament_team_roster is unique per (tournament, player),
+-- so drafting them would abort the whole transition on a key violation.
+--
+-- Owning a team counts as being in the tournament even with no roster row.
+CREATE OR REPLACE FUNCTION public.tournament_free_agent_draft_pool(_tournament_id uuid)
+RETURNS uuid[]
+LANGUAGE sql
+STABLE
+AS $$
+    SELECT array_agg(fa.id ORDER BY fa.created_at, fa.id)
+    FROM public.tournament_free_agents fa
+    WHERE fa.tournament_id = _tournament_id
+      AND (
+          fa.status = 'registered'
+          OR (fa.status = 'waitlisted' AND fa.checked_in_at IS NOT NULL)
+      )
+      AND NOT EXISTS (
+          SELECT 1
+          FROM public.tournament_team_roster ttr
+          WHERE ttr.tournament_id = _tournament_id
+            AND ttr.player_steam_id = fa.player_steam_id
+      )
+      AND NOT EXISTS (
+          SELECT 1
+          FROM public.tournament_teams tt
+          WHERE tt.tournament_id = _tournament_id
+            AND tt.owner_steam_id = fa.player_steam_id
+      );
+$$;
+
+-- How many pickup teams the draft would make right now. tournament_has_min_teams
+-- counts them before the draft runs, so the two cannot disagree on whether a
+-- pool makes the field.
+CREATE OR REPLACE FUNCTION public.tournament_free_agent_draft_team_count(_tournament public.tournaments)
+RETURNS integer
+LANGUAGE plpgsql
+STABLE
+AS $$
+DECLARE
+    _team_size int;
+    _max_teams int;
+    _existing_teams int;
+    _teams int;
+BEGIN
+    -- Idempotent on the DRAFTED teams only. Guarding on "any team exists" would
+    -- mean registration_type = 'both' never drafted at all: the first team that
+    -- registered normally would permanently block the free-agent pool, when the
+    -- whole point of 'both' is to top the field up with it.
+    IF EXISTS (
+        SELECT 1 FROM public.tournament_teams tt
+        WHERE tt.tournament_id = _tournament.id AND tt.is_drafted
+    ) THEN
+        RETURN 0;
+    END IF;
+
+    _team_size := COALESCE(
+        public.tournament_min_players_per_lineup(_tournament),
+        public.tournament_max_players_per_lineup(_tournament)
+    );
+
+    IF _team_size IS NULL OR _team_size < 1 THEN
+        RETURN 0;
+    END IF;
+
+    SELECT ts.max_teams INTO _max_teams
+    FROM public.tournament_stages ts
+    WHERE ts.tournament_id = _tournament.id AND ts."order" = 1
+    LIMIT 1;
+
+    SELECT COUNT(*) INTO _existing_teams
+    FROM public.tournament_teams tt
+    WHERE tt.tournament_id = _tournament.id;
+
+    _teams := COALESCE(
+        array_length(public.tournament_free_agent_draft_pool(_tournament.id), 1),
+        0
+    ) / _team_size;
+
+    -- The cap is the bracket's remaining room, not its total size: in 'both'
+    -- mode the teams that registered normally have already taken their slots.
+    IF _max_teams IS NOT NULL THEN
+        _teams := LEAST(_teams, GREATEST(_max_teams - _existing_teams, 0));
+    END IF;
+
+    RETURN _teams;
+END;
+$$;
+
+-- Undoes the draft: its pickup teams go, and everyone it placed or passed over
+-- is back in the pool in sign-up order. The draft runs once, so a field that
+-- takes entries again -- reset to Setup, registration reopened -- would
+-- otherwise never draft anyone who joins it.
+CREATE OR REPLACE FUNCTION public.undo_tournament_free_agent_draft(_tournament_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    _tournament public.tournaments;
+BEGIN
+    SELECT * INTO _tournament FROM public.tournaments t WHERE t.id = _tournament_id;
+
+    -- Before the teams go, so the roster deletes they cascade into find no
+    -- drafted row to withdraw and no waitlisted one to promote.
+    --
+    -- A check-in no-show stays waitlisted: the close pass put them there, not
+    -- the draft, and a team that missed the same window stays unseeded.
+    UPDATE public.tournament_free_agents fa
+       SET status = 'registered',
+           tournament_team_id = NULL
+     WHERE fa.tournament_id = _tournament_id
+       AND (
+           fa.status = 'drafted'
+           OR (
+               fa.status = 'waitlisted'
+               AND (
+                   NOT public.tournament_check_in_window_opened(_tournament)
+                   OR fa.checked_in_at IS NOT NULL
+               )
+           )
+       );
+
+    DELETE FROM public.tournament_teams tt
+     WHERE tt.tournament_id = _tournament_id
+       AND tt.is_drafted;
 END;
 $$;

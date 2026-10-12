@@ -806,6 +806,186 @@ describe("free agent flow (SQL-driven)", () => {
     });
   });
 
+  describe("the field before the draft", () => {
+    const tournamentStatus = async (tournamentId: string) => {
+      const [row] = await postgres.query<Array<{ status: string }>>(
+        "SELECT status FROM tournaments WHERE id = $1",
+        [tournamentId],
+      );
+      return row.status;
+    };
+
+    const hasMinTeams = async (tournamentId: string) => {
+      const [row] = await postgres.query<Array<{ ok: boolean }>>(
+        "SELECT tournament_has_min_teams(t) AS ok FROM tournaments t WHERE t.id = $1",
+        [tournamentId],
+      );
+      return row.ok;
+    };
+
+    const canStart = async (t: { id: string; organizer: string }) => {
+      const [row] = await postgres.query<Array<{ ok: boolean }>>(
+        `SELECT can_start_tournament(
+                  t,
+                  json_build_object('x-hasura-role', 'user', 'x-hasura-user-id', $2::text)
+                ) AS ok
+           FROM tournaments t WHERE t.id = $1`,
+        [t.id, t.organizer],
+      );
+      return row.ok;
+    };
+
+    // The update CancelInvalidTournaments sends once the start time passes;
+    // its has_min_teams filter is tournament_has_min_teams.
+    const cancelIfShort = async (tournamentId: string) => {
+      await postgres.query(
+        "UPDATE tournaments SET start = now() - interval '1 minute' WHERE id = $1",
+        [tournamentId],
+      );
+      await postgres.query(
+        `UPDATE tournaments t
+            SET status = 'CancelledMinTeams'
+          WHERE t.id = $1
+            AND t.status IN ('RegistrationOpen', 'CheckInReview')
+            AND NOT tournament_has_min_teams(t)
+            AND t.start <= now()`,
+        [tournamentId],
+      );
+    };
+
+    // Nothing closes registration on its own without check-in, so a pool that
+    // fills the bracket sits in RegistrationOpen past its start -- with zero
+    // teams until the draft.
+    it("counts the teams a full pool will make, and does not cancel it", async () => {
+      const t = await openTournament();
+      await joinAll(t.id, await fx.players(8));
+
+      expect(await hasMinTeams(t.id)).toBe(true);
+      expect(await canStart(t)).toBe(true);
+
+      await cancelIfShort(t.id);
+      expect(await tournamentStatus(t.id)).toBe("RegistrationOpen");
+    });
+
+    it("still cancels a pool that cannot make the field, counting only the room the bracket has left", async () => {
+      const short = await openTournament();
+      await joinAll(short.id, await fx.players(7));
+      expect(await hasMinTeams(short.id)).toBe(false);
+      await cancelIfShort(short.id);
+      expect(await tournamentStatus(short.id)).toBe("CancelledMinTeams");
+
+      // Two full teams and a third still recruiting leave room for one pickup
+      // team, however many the pool could make.
+      const both = await openTournament({ registrationType: "both" });
+      for (let i = 0; i < 2; i++) {
+        const [owner, member] = await fx.players(2);
+        await registerTeam(both.id, owner, [owner, member]);
+      }
+      const recruiting = await fx.player();
+      await registerTeam(both.id, recruiting, [recruiting]);
+      await joinAll(both.id, await fx.players(4));
+
+      expect(await hasMinTeams(both.id)).toBe(false);
+      expect(await canStart(both)).toBe(false);
+      expect((await draft(both)).teams_created).toBe(1);
+    });
+
+    // The draft runs once, so whatever a cancelled run drafted has to be undone
+    // or the next close drafts nobody.
+    it("drafts the whole pool again after a cancelled start is reset", async () => {
+      const t = await openTournament();
+      const early = await fx.players(5);
+      await joinAll(t.id, early);
+
+      await setStatus(t.id, t.organizer, "Live");
+      expect(await tournamentStatus(t.id)).toBe("CancelledMinTeams");
+      expect(await pickupTeams(t.id)).toHaveLength(2);
+
+      await setStatus(t.id, t.organizer, "Setup");
+      expect(await pickupTeams(t.id)).toEqual([]);
+      for (const steamId of early) {
+        const row = await agentRow(t.id, steamId);
+        expect(row.status).toBe("registered");
+        expect(row.tournament_team_id).toBeNull();
+      }
+
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+      const late = await fx.players(3);
+      await joinAll(t.id, late);
+      for (const steamId of late) {
+        expect(await statusOf(t.id, steamId)).toBe("registered");
+      }
+
+      await setStatus(t.id, t.organizer, "Live");
+      expect(await tournamentStatus(t.id)).toBe("Live");
+      expect(await pickupTeams(t.id)).toHaveLength(4);
+    });
+
+    it("drafts the late sign-ups too when registration is reopened after closing", async () => {
+      const t = await openTournament();
+      const early = await fx.players(5);
+      await joinAll(t.id, early);
+
+      await setStatus(t.id, t.organizer, "RegistrationClosed");
+      expect(await pickupTeams(t.id)).toHaveLength(2);
+
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+      expect(await pickupTeams(t.id)).toEqual([]);
+
+      const late = await fx.players(3);
+      await joinAll(t.id, late);
+
+      await setStatus(t.id, t.organizer, "RegistrationClosed");
+      expect(await pickupTeams(t.id)).toHaveLength(4);
+      for (const steamId of [...early, ...late]) {
+        expect(await statusOf(t.id, steamId)).toBe("drafted");
+      }
+    });
+
+    // The close pass waitlisted them, not the draft -- the same no-show a team
+    // that missed the window stays unseeded for.
+    it("leaves a check-in no-show on the waitlist when the draft is undone", async () => {
+      const job = () =>
+        new ProcessTournamentCheckIn(
+          new Logger("TournamentFreeAgentUndoJobTest"),
+          postgres,
+          notifications as never,
+        );
+
+      const t = await openTournament({
+        columns: { check_in_required: true },
+      });
+      const players = await fx.players(5);
+      await joinAll(t.id, players);
+
+      await postgres.query(
+        "UPDATE tournaments SET start = now() + interval '30 minutes' WHERE id = $1",
+        [t.id],
+      );
+      await job().process();
+
+      const [noShow, ...present] = players;
+      for (const steamId of present) {
+        await checkIn(t.id, steamId);
+      }
+
+      await postgres.query(
+        "UPDATE tournaments SET check_in_ends_at = now() - interval '1 minute' WHERE id = $1",
+        [t.id],
+      );
+      await job().process();
+      expect(await tournamentStatus(t.id)).toBe("RegistrationClosed");
+      expect(await pickupTeams(t.id)).toHaveLength(2);
+
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+
+      expect(await statusOf(t.id, noShow)).toBe("waitlisted");
+      for (const steamId of present) {
+        expect(await statusOf(t.id, steamId)).toBe("registered");
+      }
+    });
+  });
+
   describe("check-in", () => {
     const job = () =>
       new ProcessTournamentCheckIn(
