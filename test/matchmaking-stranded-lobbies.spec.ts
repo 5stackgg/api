@@ -36,11 +36,14 @@ describe("stranded matchmaking lobbies", () => {
   let gateway: MatchmakingGateway;
   let queue: { add: jest.Mock; remove: jest.Mock };
   let published: Array<{ steamId: string; event: string; data: any }>;
+  let broadcasts: string[];
+  let createMatch: jest.Mock;
   // players whose is_in_another_match reads true
   let busy: Set<string>;
   // players who have joined a party since they queued alone
   let partyOf: Map<string, string>;
   let onBusyCheck: (steamIds: string[]) => Promise<void>;
+  let onRegionStats: () => Promise<void>;
 
   beforeAll(async () => {
     container = await new GenericContainer("redis:8.8-alpine")
@@ -61,9 +64,16 @@ describe("stranded matchmaking lobbies", () => {
     await redis.flushall();
 
     published = [];
+    broadcasts = [];
     busy = new Set();
     partyOf = new Map();
     onBusyCheck = async () => {};
+    onRegionStats = async () => {};
+    createMatch = jest.fn(async () => ({
+      id: "match-1",
+      lineup_1_id: "lineup-1",
+      lineup_2_id: "lineup-2",
+    }));
 
     jest.spyOn(redis, "publish").mockImplementation((async (
       channel: string,
@@ -71,6 +81,9 @@ describe("stranded matchmaking lobbies", () => {
     ) => {
       if (channel === "send-message-to-steam-id") {
         published.push(JSON.parse(message));
+      }
+      if (channel === "broadcast-message") {
+        broadcasts.push(JSON.parse(message).event);
       }
       return 0;
     }) as any);
@@ -88,6 +101,10 @@ describe("stranded matchmaking lobbies", () => {
           return { settings: [] as Array<{ name: string; value: string }> };
         }
         if (payload.server_regions) {
+          // the Play count's query; a join asks by status instead
+          if (payload.server_regions.__args.where._and) {
+            await onRegionStats();
+          }
           return {
             server_regions: [
               { value: REGION, is_lan: false, status: "Online" },
@@ -171,11 +188,7 @@ describe("stranded matchmaking lobbies", () => {
       hasura as any,
       redisManager as any,
       {
-        createMatchBasedOnType: jest.fn(async () => ({
-          id: "match-1",
-          lineup_1_id: "lineup-1",
-          lineup_2_id: "lineup-2",
-        })),
+        createMatchBasedOnType: createMatch,
         updateMatchStatus: jest.fn(),
       } as any,
       lobbies,
@@ -272,16 +285,34 @@ describe("stranded matchmaking lobbies", () => {
   }
 
   // Its ten minutes ran out before the cancel job got to it.
-  async function expireReadyCheck(
-    confirmationId: string,
-    { keepConfirmed = false } = {},
-  ) {
+  async function expireReadyCheck(confirmationId: string) {
     const key = getMatchmakingConformationCacheKey(confirmationId);
-    await redis.del(key);
-    if (!keepConfirmed) {
-      await redis.del(`${key}:confirmed`);
-    }
+    await redis.del(key, `${key}:confirmed`, lobbyLock(A), lobbyLock(B));
+  }
+
+  async function readyCheckExpired(confirmationId: string, secondsAgo: number) {
+    await redis.hset(
+      getMatchmakingConformationCacheKey(confirmationId),
+      "expiresAt",
+      new Date(Date.now() - secondsAgo * 1000).toISOString(),
+    );
     await redis.del(lobbyLock(A), lobbyLock(B));
+  }
+
+  const sweep = () => matchmake.healStrandedLobbies();
+
+  // What the sweep saw last time is a key that runs down, so a minute passing
+  // is a minute off its ttl.
+  async function aMinuteLater() {
+    for (const key of await redis.keys("matchmaking:v20:stranded:*")) {
+      await redis.pexpire(key, (await redis.pttl(key)) - 60_000);
+    }
+  }
+
+  async function sweepTwice() {
+    await sweep();
+    await aMinuteLater();
+    await sweep();
   }
 
   async function strandedByDeadPass() {
@@ -311,7 +342,7 @@ describe("stranded matchmaking lobbies", () => {
     await join(A);
     expect(errorCodes(A)).toEqual(["already_queued"]);
 
-    await matchmake.healStrandedLobbies();
+    await sweepTwice();
 
     expect(await queued()).toEqual([A, B]);
     expect(await ranked()).toEqual([A, B]);
@@ -332,6 +363,112 @@ describe("stranded matchmaking lobbies", () => {
     expect(await stampOf(B)).toBe(readyChecks()[0]);
   });
 
+  it("touches a stranded lobby only once it has seen it a minute apart", async () => {
+    await strandedByDeadPass();
+    await redis.del(regionLock, lobbyLock(A), lobbyLock(B));
+    const before = published.length;
+    const playCounts = broadcasts.length;
+
+    await sweep();
+    await sweep();
+
+    expect(await queued()).toEqual([]);
+    expect(published.slice(before)).toEqual([]);
+    expect(broadcasts).toHaveLength(playCounts);
+
+    await aMinuteLater();
+    await sweep();
+
+    expect(await queued()).toEqual([A, B]);
+  });
+
+  it("starts over when the lobby was not stranded in between", async () => {
+    await strandedByDeadPass();
+    await redis.del(regionLock, lobbyLock(A), lobbyLock(B));
+
+    await sweep();
+
+    // a pass is running in the region the next time round
+    await redis.set(regionLock, 1);
+    await aMinuteLater();
+    await sweep();
+    await redis.del(regionLock);
+
+    await aMinuteLater();
+    await sweep();
+    expect(await queued()).toEqual([]);
+
+    await aMinuteLater();
+    await sweep();
+    expect(await queued()).toEqual([A, B]);
+  });
+
+  it("starts over when the lobby was in a ready check in between", async () => {
+    const frozen = await strandedByDeadPass();
+    await redis.del(regionLock, lobbyLock(A), lobbyLock(B));
+
+    await sweep();
+
+    // the pass was slow, not dead: its ready check starts after all
+    frozen.mockRestore();
+    await (matchmake as any).createMatchConfirmation(REGION, "Duel", {
+      team1: { lobbies: [A], players: [{ steam_id: A, rank: 5000 }] },
+      team2: { lobbies: [B], players: [{ steam_id: B, rank: 5000 }] },
+    });
+    const [confirmationId] = readyChecks();
+    await aMinuteLater();
+    await sweep();
+
+    // only A accepts, so the cancel puts A back, and the next pass to claim it
+    // does die
+    await confirm(confirmationId, A);
+    await matchmake.cancelMatchMaking(confirmationId);
+    expect(await queued()).toEqual([A]);
+    await (matchmake as any).claimLobby(A);
+    await redis.del(lobbyLock(A));
+
+    await aMinuteLater();
+    await sweep();
+    expect(await queued()).toEqual([]);
+
+    await aMinuteLater();
+    await sweep();
+    expect(await queued()).toEqual([A]);
+  });
+
+  // Every leave takes the lobby out of the queue, sends the Play count, and
+  // only then deletes its details.
+  it("does not put back a lobby that is part way through leaving", async () => {
+    await join(A);
+
+    let finishLeave: () => void;
+    const midLeave = new Promise<void>((reached) => {
+      onRegionStats = () => {
+        onRegionStats = async () => {};
+        reached();
+        return new Promise<void>((finish) => {
+          finishLeave = finish;
+        });
+      };
+    });
+    const leaving = gateway.leaveQueue(clientOf(A));
+    await midLeave;
+
+    await sweep();
+    finishLeave();
+    await leaving;
+
+    expect(await detailsOf(A)).toBeNull();
+    expect(await queued()).toEqual([]);
+    expect(await ranked()).toEqual([]);
+
+    await aMinuteLater();
+    await sweep();
+
+    expect(await queued()).toEqual([]);
+    expect(await ranked()).toEqual([]);
+  });
+
   it("drops a ready check's lobbies when its cancel ran after it expired", async () => {
     await join(A);
     await join(B);
@@ -345,7 +482,7 @@ describe("stranded matchmaking lobbies", () => {
     await join(A);
     expect(errorCodes(A)).toEqual(["already_queued"]);
 
-    await matchmake.healStrandedLobbies();
+    await sweepTwice();
 
     for (const lobbyId of [A, B]) {
       expect(await detailsOf(lobbyId)).toBeNull();
@@ -360,37 +497,62 @@ describe("stranded matchmaking lobbies", () => {
     expect(await queued()).toEqual([A]);
   });
 
-  // A pass that died after the stamps but before queueing the cancel job, or a
-  // match creation that died after taking the job away.
-  it("requeues the lobby that accepted a ready check nothing cancelled", async () => {
+  // createMatch takes the cancel job away before the match exists.
+  it("drops the lobbies of a ready check nothing will cancel, once its retries would be over", async () => {
     await join(A);
     await join(B);
     await runPass();
     const [confirmationId] = readyChecks();
+    const key = getMatchmakingConformationCacheKey(confirmationId);
 
+    createMatch.mockRejectedValueOnce(new Error("hasura unavailable"));
     await confirm(confirmationId, A);
-    await expireReadyCheck(confirmationId, { keepConfirmed: true });
+    await expect(confirm(confirmationId, B)).rejects.toThrow(
+      "hasura unavailable",
+    );
+    expect(queue.remove).toHaveBeenCalledWith(
+      `matchmaking.cancel.${confirmationId}`,
+    );
 
-    await matchmake.healStrandedLobbies();
+    // a cancel job could still be retrying
+    await readyCheckExpired(confirmationId, 60);
+    await sweepTwice();
 
+    for (const lobbyId of [A, B]) {
+      expect(await stampOf(lobbyId)).toBe(confirmationId);
+    }
+
+    await readyCheckExpired(confirmationId, 10 * 60);
+    await sweepTwice();
+
+    for (const lobbyId of [A, B]) {
+      expect(await detailsOf(lobbyId)).toBeNull();
+      expect(await stampOf(lobbyId)).toBeNull();
+      expect(sentTo(lobbyId, "matchmaking:details").at(-1).data).toEqual({});
+    }
+    expect(await queued()).toEqual([]);
+    expect(await redis.exists(key, `${key}:confirmed`, `${key}:creating`)).toBe(
+      0,
+    );
+
+    // nobody can accept it into a match now
+    await confirm(confirmationId, A);
+    await confirm(confirmationId, B);
+    expect(createMatch).toHaveBeenCalledTimes(1);
+
+    await join(A);
+    expect(errorCodes(A)).toEqual([]);
     expect(await queued()).toEqual([A]);
-    expect(await stampOf(A)).toBeNull();
-    expect(await detailsOf(B)).toBeNull();
   });
 
   it("never requeues a lobby whose player went into another match", async () => {
-    await join(A);
-    await join(B);
-    await runPass();
-    const [confirmationId] = readyChecks();
-
-    await confirm(confirmationId, A);
-    await expireReadyCheck(confirmationId, { keepConfirmed: true });
+    await strandedByDeadPass();
+    await redis.del(regionLock, lobbyLock(A), lobbyLock(B));
     busy.add(A);
 
-    await matchmake.healStrandedLobbies();
+    await sweepTwice();
 
-    expect(await queued()).toEqual([]);
+    expect(await queued()).toEqual([B]);
     expect(await detailsOf(A)).toBeNull();
     expect(errorCodes(A)).toEqual(["player_in_match"]);
     expect(sentTo(A, "matchmaking:details").at(-1).data).toEqual({});
@@ -403,7 +565,7 @@ describe("stranded matchmaking lobbies", () => {
     partyOf.set(A, PARTY);
     partyOf.set("76561198000000003", PARTY);
 
-    await matchmake.healStrandedLobbies();
+    await sweepTwice();
 
     expect(await detailsOf(A)).toBeNull();
     expect(await queued()).toEqual([B]);
@@ -419,7 +581,7 @@ describe("stranded matchmaking lobbies", () => {
     await redis.del(lobbyLock(A), lobbyLock(B));
     const before = published.length;
 
-    await matchmake.healStrandedLobbies();
+    await sweepTwice();
 
     expect(await queued()).toEqual([]);
     for (const lobbyId of [A, B]) {
@@ -437,7 +599,9 @@ describe("stranded matchmaking lobbies", () => {
       ),
     ).toBe("match-1");
 
-    await matchmake.healStrandedLobbies();
+    // the match outlives its ready check by hours
+    await readyCheckExpired(confirmationId, 3 * 60 * 60);
+    await sweepTwice();
 
     expect(await queued()).toEqual([]);
     for (const lobbyId of [A, B]) {
@@ -450,19 +614,19 @@ describe("stranded matchmaking lobbies", () => {
     await strandedByDeadPass();
     const before = published.length;
 
-    await matchmake.healStrandedLobbies();
+    await sweepTwice();
     expect(await queued()).toEqual([]);
 
     // the lobby lock runs out first, the pass still holds the region
     await redis.del(lobbyLock(A), lobbyLock(B));
-    await matchmake.healStrandedLobbies();
+    await sweepTwice();
     expect(await queued()).toEqual([]);
 
     expect(await detailsOf(A)).not.toBeNull();
     expect(published.slice(before)).toEqual([]);
 
     await redis.del(regionLock);
-    await matchmake.healStrandedLobbies();
+    await sweepTwice();
     expect(await queued()).toEqual([A, B]);
   });
 
@@ -478,7 +642,7 @@ describe("stranded matchmaking lobbies", () => {
       }
     };
 
-    await matchmake.healStrandedLobbies();
+    await sweepTwice();
 
     expect(await queued()).toEqual([B]);
     expect(await ranked()).toEqual([B]);
@@ -495,8 +659,20 @@ describe("stranded matchmaking lobbies", () => {
       "expired-confirmation",
     );
 
-    await matchmake.healStrandedLobbies();
+    await sweepTwice();
 
     expect(await redis.exists(getMatchmakingLobbyDetailsCacheKey(A))).toBe(0);
+  });
+
+  it("ignores a lobby that is gone by the time it is read", async () => {
+    const scan = jest
+      .spyOn(redis, "scan")
+      .mockResolvedValue(["0", [getMatchmakingLobbyDetailsCacheKey(A)]] as any);
+
+    await sweepTwice();
+    scan.mockRestore();
+
+    expect(broadcasts).toEqual([]);
+    expect(await redis.keys("*")).toEqual([]);
   });
 });

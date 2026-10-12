@@ -19,6 +19,7 @@ import {
   getMatchmakingConformationCacheKey,
   getMatchmakingLobbyDetailsCacheKey,
   getMatchmakingRankCacheKey,
+  getMatchmakingStrandedCacheKey,
 } from "./utilities/cacheKeys";
 import { QueuedLobbyStat } from "./types/QueuedLobbyStat";
 import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
@@ -740,10 +741,6 @@ export class MatchmakeService {
       return false;
     }
 
-    return await this.isConfirmationLive(confirmationId);
-  }
-
-  private async isConfirmationLive(confirmationId: string) {
     return !!(await this.redis.hget(
       getMatchmakingConformationCacheKey(confirmationId),
       "lobbyIds",
@@ -824,32 +821,60 @@ export class MatchmakeService {
     await this.redis.expire(this.getLobbyLockKey(lobbyId), seconds);
   }
 
-  // KEYS: the lobby's details, ARGV[5] locks, then a queue and rank key per
-  // region. Acts only while the lobby is exactly as the caller read it and is
-  // still in none of its queues with none of the locks held.
+  private static readonly STRANDED_SIGHTING_TTL_MS = 5 * 60 * 1000;
+  private static readonly STRANDED_MIN_AGE_MS = 30 * 1000;
+
+  // KEYS: the lobby's details, the last sweep's sighting of it, ARGV[5] locks,
+  // then a queue and rank key per region.
+  //
+  // A leave, a join and a cancel each pass through the stranded state on their
+  // way, so one look proves nothing. The first look only records what it saw.
+  // The lobby is acted on when a later look, STRANDED_MIN_AGE_MS on, finds the
+  // same details and stamp still stranded, with no look in between that found
+  // it otherwise.
   private static readonly HEAL_STRANDED_LOBBY_SCRIPT = `
-    local details = redis.call('HGET', KEYS[1], 'details') or ''
-    local stamp = redis.call('HGET', KEYS[1], 'confirmationId') or ''
-    if details ~= ARGV[2] or stamp ~= ARGV[3] then
+    local locks = tonumber(ARGV[5])
+
+    local function stranded()
+      local details = redis.call('HGET', KEYS[1], 'details') or ''
+      local stamp = redis.call('HGET', KEYS[1], 'confirmationId') or ''
+      if details ~= ARGV[2] or stamp ~= ARGV[3] then
+        return false
+      end
+      for i = 3, 2 + locks do
+        if redis.call('EXISTS', KEYS[i]) == 1 then
+          return false
+        end
+      end
+      for i = 3 + locks, #KEYS do
+        if redis.call('ZSCORE', KEYS[i], ARGV[1]) then
+          return false
+        end
+      end
+      return true
+    end
+
+    if not stranded() then
+      redis.call('DEL', KEYS[2])
       return 0
     end
-    local locks = tonumber(ARGV[5])
-    for i = 2, 1 + locks do
-      if redis.call('EXISTS', KEYS[i]) == 1 then
-        return 0
-      end
+
+    local sighting = redis.sha1hex(ARGV[2] .. '|' .. ARGV[3])
+    if redis.call('GET', KEYS[2]) ~= sighting then
+      redis.call('SET', KEYS[2], sighting, 'PX', ARGV[7])
+      return 0
     end
-    for i = 2 + locks, #KEYS do
-      if redis.call('ZSCORE', KEYS[i], ARGV[1]) then
-        return 0
-      end
+    if redis.call('PTTL', KEYS[2]) > tonumber(ARGV[7]) - tonumber(ARGV[8]) then
+      return 0
     end
+
     if ARGV[4] == 'check' then
       return 1
     end
+    redis.call('DEL', KEYS[2])
     redis.call('HDEL', KEYS[1], 'confirmationId')
     if ARGV[4] == 'requeue' then
-      for i = 2 + locks, #KEYS, 2 do
+      for i = 3 + locks, #KEYS, 2 do
         redis.call('ZADD', KEYS[i], 0, ARGV[1])
         redis.call('ZADD', KEYS[i + 1], ARGV[6], ARGV[1])
       end
@@ -860,9 +885,9 @@ export class MatchmakeService {
   `;
 
   // A lobby keeps its details from the join until it leaves or its match
-  // ends, and all that time it is in its queues, in a live ready check, or
-  // under the lock of whatever is moving it. A pod that dies mid-pass, or a
-  // cancel that runs after its ready check expired, leaves it in none of
+  // ends, and all that time it is in its queues, in a ready check or the match
+  // it made, or under the lock of whatever is moving it. A pod that dies
+  // mid-pass, or a ready check that nothing cancels, leaves it in none of
   // those, and every rejoin is refused until the player clicks Leave.
   public async healStrandedLobbies() {
     const prefix = getMatchmakingLobbyDetailsCacheKey("");
@@ -904,7 +929,14 @@ export class MatchmakeService {
       getMatchmakingLobbyDetailsCacheKey(lobbyId),
     );
 
-    if (confirmationId && (await this.isConfirmationLive(confirmationId))) {
+    if (!details && !confirmationId) {
+      return false;
+    }
+
+    const sighting = getMatchmakingStrandedCacheKey(lobbyId);
+
+    if (confirmationId && !(await this.isReadyCheckOver(confirmationId))) {
+      await this.redis.del(sighting);
       return false;
     }
 
@@ -919,6 +951,7 @@ export class MatchmakeService {
     ];
     const keys = [
       getMatchmakingLobbyDetailsCacheKey(lobbyId),
+      sighting,
       ...locks,
       ...regions.flatMap((region) => [
         getMatchmakingQueueCacheKey(lobby.type, region),
@@ -937,19 +970,18 @@ export class MatchmakeService {
         action,
         locks.length,
         lobby?.avgRank ?? 0,
+        MatchmakeService.STRANDED_SIGHTING_TTL_MS,
+        MatchmakeService.STRANDED_MIN_AGE_MS,
       )) === 1;
 
     if (!(await heal("check"))) {
       return false;
     }
 
-    // As cancelMatchMaking does, a lobby back from a ready check is requeued
-    // only if all of its players accepted. A late cancel has already deleted
-    // who accepted, so its lobbies are dropped.
+    // Nobody can say who accepted a ready check that is over, so, as a cancel
+    // does with a lobby that was not all ready, its lobbies leave the queue.
     let requeue =
-      regions.length > 0 &&
-      Number.isFinite(lobby.avgRank) &&
-      (!confirmationId || (await this.wasLobbyReady(confirmationId, lobby)));
+      !confirmationId && regions.length > 0 && Number.isFinite(lobby.avgRank);
 
     let busy = new Map<string, string>();
     if (requeue) {
@@ -978,6 +1010,11 @@ export class MatchmakeService {
 
     this.logger.warn(`dropped stranded matchmaking lobby ${lobbyId}`);
 
+    // its lobbies are free to queue again, so it must not become a match
+    if (confirmationId) {
+      await this.removeConfirmationDetails(confirmationId);
+    }
+
     if (lobby) {
       if (busy.size > 0) {
         await this.sendPlayerInMatch(lobby, this.busyPlayerName(lobby, busy));
@@ -988,13 +1025,28 @@ export class MatchmakeService {
     return true;
   }
 
-  private async wasLobbyReady(confirmationId: string, lobby: MatchmakingLobby) {
-    const ready = await this.redis.hmget(
-      `${getMatchmakingConformationCacheKey(confirmationId)}:confirmed`,
-      ...lobby.players.map((player) => player.steam_id),
+  // Over, whether or not a cancel ever ran: createMatch takes the cancel job
+  // away before the match exists, and a pass can die before queueing it.
+  private async isReadyCheckOver(confirmationId: string) {
+    const [lobbyIds, matchId, expiresAt] = await this.redis.hmget(
+      getMatchmakingConformationCacheKey(confirmationId),
+      "lobbyIds",
+      "matchId",
+      "expiresAt",
     );
 
-    return ready.every(Boolean);
+    if (matchId) {
+      return false;
+    }
+
+    if (!lobbyIds) {
+      return true;
+    }
+
+    return (
+      Date.now() >
+      new Date(expiresAt).getTime() + MatchmakeService.CANCEL_RETRY_BUDGET_MS
+    );
   }
 
   // What a join checks, as far as it can without the captain who joined.
@@ -1109,6 +1161,16 @@ export class MatchmakeService {
     }
   }
 
+  private static readonly CANCEL_ATTEMPTS = 5;
+  private static readonly CANCEL_BACKOFF_MS = 5000;
+
+  // The waits between the cancel job's attempts, and as long again for the
+  // attempts themselves.
+  private static readonly CANCEL_RETRY_BUDGET_MS =
+    2 *
+    MatchmakeService.CANCEL_BACKOFF_MS *
+    (2 ** (MatchmakeService.CANCEL_ATTEMPTS - 1) - 1);
+
   public async cancelMatchMakingDueToReadyCheck(confirmationId: string) {
     await this.queue.add(
       "CancelMatchMaking",
@@ -1118,8 +1180,11 @@ export class MatchmakeService {
       {
         delay: 30 * 1000,
         jobId: this.getMatchMakingCancelJobId(confirmationId),
-        attempts: 5,
-        backoff: { type: "exponential", delay: 5000 },
+        attempts: MatchmakeService.CANCEL_ATTEMPTS,
+        backoff: {
+          type: "exponential",
+          delay: MatchmakeService.CANCEL_BACKOFF_MS,
+        },
       },
     );
   }
