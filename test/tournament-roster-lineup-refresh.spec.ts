@@ -250,8 +250,8 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
   const rosterLocked =
     /minimum lineup of \d+ players while the tournament is underway/i;
 
-  const unseatable =
-    /could not field the minimum lineup of \d+ players.*banned player/i;
+  const stillNeeded =
+    /unstarted match still needs them for its minimum lineup of \d+ players.*add a replacement first/i;
 
   const ban = (steamId: string) =>
     postgres.query(
@@ -450,12 +450,36 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
           actor: cup.organizer,
           role: "tournament_organizer",
         }),
-      ).rejects.toThrow(unseatable);
+      ).rejects.toThrow(stillNeeded);
 
       expect(await roster(cup.tt1)).toContain(removed);
       expect(await seated(cup.lineup1)).toEqual(before);
     },
   );
+
+  it("refuses to remove a seated player when their only cover stands in for the other side", async () => {
+    const cup = await drawnCupAt("WaitingForCheckIn", 4);
+    const standIn = await fx.player();
+    await runAsUser(postgres, cup.organizer, "admin", (query) =>
+      query(
+        "INSERT INTO match_lineup_players (match_lineup_id, steam_id) VALUES ($1, $2)",
+        [cup.lineup2, standIn],
+      ),
+    );
+    await addToRoster(cup, standIn);
+    const removed = await nonCaptain(cup);
+    const before = await seated(cup.lineup1);
+
+    const refusal = await removeFromRoster(cup, removed, {
+      actor: cup.organizer,
+      role: "tournament_organizer",
+    }).catch((error: unknown) => String(error));
+
+    expect(refusal).toMatch(stillNeeded);
+    expect(refusal).not.toMatch(/a banned player on the roster/i);
+    expect(await roster(cup.tt1)).toContain(removed);
+    expect(await seated(cup.lineup1)).toEqual(before);
+  });
 
   it("always lets a banned player go, and drops their seat once a replacement joins", async () => {
     const cup = await drawnCupAt("WaitingForCheckIn", 4);
@@ -492,7 +516,7 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
     await addToRoster(cup, unseated);
     expect(await roster(cup.tt1)).toHaveLength(6);
 
-    await expect(removeFromRoster(cup, removed)).rejects.toThrow(unseatable);
+    await expect(removeFromRoster(cup, removed)).rejects.toThrow(stillNeeded);
     await expect(addToRoster(cup)).rejects.toThrow(/too many players/i);
 
     await removeFromRoster(cup, unseated);

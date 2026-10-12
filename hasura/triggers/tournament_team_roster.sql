@@ -328,12 +328,12 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    -- The refresh leaves a lineup it cannot keep at the minimum as it is, which
-    -- only an unseatable banned player on the roster can cause: the roster lock
-    -- counts them, the lineup cannot seat them. The removed player would then
-    -- keep a seat in a match they are no longer rostered for. A banned player
-    -- may always go, since that is how a full roster makes room for a
-    -- replacement.
+    -- The refresh leaves a lineup it cannot keep at the minimum as it is. That
+    -- takes a rostered player the lineup cannot seat -- banned, or standing in
+    -- for the other side -- since the roster lock counts them all the same. The
+    -- removed player would then keep a seat in a match they are no longer
+    -- rostered for. A banned player may always go, since that is how a full
+    -- roster makes room for a replacement.
     SELECT match_min_players_per_lineup(m)
       INTO _min_players
       FROM tournament_teams tt
@@ -358,8 +358,8 @@ BEGIN
     IF FOUND THEN
         RAISE EXCEPTION USING
             ERRCODE = '22000',
-            MESSAGE = 'Cannot remove player: the team could not field the minimum lineup of ' || _min_players
-                || ' players in its next match, because a banned player on the roster cannot be seated. Remove or replace the banned player first';
+            MESSAGE = 'Cannot remove player: an unstarted match still needs them for its minimum lineup of ' || _min_players
+                || ' players. Add a replacement first; if the roster is full, remove a player who cannot be seated in that match (banned, or playing for the other side)';
     END IF;
 
     RETURN NULL;
