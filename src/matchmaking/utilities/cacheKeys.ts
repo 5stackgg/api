@@ -13,6 +13,10 @@ export function getMatchmakingLobbyDetailsCacheKey(lobbyId: string) {
   return `matchmaking:${version}:details:${lobbyId}`;
 }
 
+export function getMatchmakingStrandedCacheKey(lobbyId: string) {
+  return `matchmaking:${version}:stranded:${lobbyId}`;
+}
+
 export function getMatchmakingConformationCacheKey(confirmationId: string) {
   return `matchmaking:${version}:${confirmationId}`;
 }

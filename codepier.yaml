@@ -6,3 +6,4 @@ sync:
   - .:/opt/5stack
 ignore:
   - "/dist"
+  - "/.claude/worktrees"

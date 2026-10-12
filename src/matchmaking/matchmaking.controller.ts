@@ -39,14 +39,7 @@ export class MatchmakingController {
 
   private async removeLobbyFromQueue(lobbyId: string) {
     try {
-      const removed =
-        await this.matchmakingLobbyService.removeLobbyFromQueue(lobbyId);
-
-      if (!removed) {
-        return;
-      }
-
-      await this.matchmakingLobbyService.removeLobbyDetails(lobbyId);
+      await this.matchmakingLobbyService.removeLobbyFromQueue(lobbyId);
     } catch (error) {
       this.logger.error(`error removing lobby from queue`, error);
     }

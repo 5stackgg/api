@@ -9,6 +9,7 @@ import { MatchmakingGateway } from "./matchmaking.gateway";
 import { MatchmakeService } from "./matchmake.service";
 import { MatchmakingLobbyService } from "./matchmaking-lobby.service";
 import { FakeRedis } from "./testing/fakeRedis";
+import { CacheService } from "../cache/cache.service";
 import {
   getMatchmakingConformationCacheKey,
   getMatchmakingLobbyDetailsCacheKey,
@@ -41,6 +42,7 @@ describe("MatchmakingGateway.joinQueue", () => {
   let matchmake: MatchmakeService;
   let lobbies: MatchmakingLobbyService;
   let queue: { add: jest.Mock; remove: jest.Mock };
+  let settings: Array<{ name: string; value: string }>;
 
   const clientOf = (player: typeof CAPTAIN) =>
     ({
@@ -53,11 +55,12 @@ describe("MatchmakingGateway.joinQueue", () => {
 
   beforeEach(() => {
     redis = new FakeRedis();
+    settings = [];
 
     const hasura = {
       query: jest.fn(async (payload: Record<string, any>) => {
         if (payload.settings) {
-          return { settings: [] };
+          return { settings };
         }
         if (payload.server_regions) {
           return {
@@ -135,10 +138,7 @@ describe("MatchmakingGateway.joinQueue", () => {
       redisManager as any,
       matchmake,
       lobbies,
-      {
-        lock: async (_key: string, callback: () => Promise<unknown>) =>
-          callback(),
-      } as any,
+      new CacheService(redisManager as any, logger),
     );
   });
 
@@ -322,6 +322,56 @@ describe("MatchmakingGateway.joinQueue", () => {
     expect(
       messages("matchmaking:details").at(-1).data.confirmation,
     ).toBeFalsy();
+  });
+
+  it.each([
+    ["public.matchmaking", "false", "matchmaking_disabled"],
+    ["public.matchmaking_competitive", "false", "queue_disabled"],
+    ["public.matchmaking_min_role", "administrator", "role_required"],
+  ])(
+    "tells the player why they cannot queue when %s is %s",
+    async (name, value, code) => {
+      settings = [{ name, value }];
+
+      await join("Competitive");
+
+      expect(queueEntries()).toEqual([]);
+      expect(errors()).toEqual([
+        {
+          steamId: CAPTAIN.steam_id,
+          event: "matchmaking:error",
+          data: expect.objectContaining({ code }),
+        },
+      ]);
+    },
+  );
+
+  // A second tab, or a double click, can hold the join lock for longer than
+  // the second join waits on it.
+  it("leaves a queued lobby alone when another join holds its lock", async () => {
+    await join("Competitive");
+    const details = await redis.hget(
+      getMatchmakingLobbyDetailsCacheKey(LOBBY_ID),
+      "details",
+    );
+
+    await redis.set(`lock:matchmaking:verify:${LOBBY_ID}`, 1, "EX", 60, "NX");
+    await join("Competitive");
+
+    expect(queueEntries()).toEqual([
+      "Competitive/us-east",
+      "Competitive/us-east/ranks",
+    ]);
+    expect(
+      await redis.hget(getMatchmakingLobbyDetailsCacheKey(LOBBY_ID), "details"),
+    ).toBe(details);
+    expect(errors()).toEqual([
+      {
+        steamId: CAPTAIN.steam_id,
+        event: "matchmaking:error",
+        data: expect.objectContaining({ code: "queue_busy" }),
+      },
+    ]);
   });
 
   it("clears a lobby's stamp when it leaves, even with no details left", async () => {

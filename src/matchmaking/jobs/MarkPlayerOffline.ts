@@ -57,6 +57,5 @@ export class MarkPlayerOffline extends WorkerHost {
     }
 
     await this.matchmakingLobbyService.removeLobbyFromQueue(lobby.id);
-    await this.matchmakingLobbyService.removeLobbyDetails(lobby.id);
   }
 }

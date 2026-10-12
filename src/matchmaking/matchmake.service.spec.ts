@@ -21,6 +21,7 @@ import { MatchmakingLobbyService } from "./matchmaking-lobby.service";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { MatchmakingQueues } from "./enums/MatchmakingQueues";
+import { getMatchmakingLobbyDetailsCacheKey } from "./utilities/cacheKeys";
 
 type ConfirmationTeams = { team1: MatchmakingTeam; team2: MatchmakingTeam };
 
@@ -668,9 +669,11 @@ describe("MatchmakeService", () => {
       const numKeys = evalCall[1] as number;
       const keys = evalCall.slice(2, 2 + numKeys);
 
-      // Should have: 1 lock key + 2 regions * 2 keys (queue + rank) = 5 keys
-      expect(numKeys).toBe(5);
+      expect(numKeys).toBe(6);
       expect(keys[0]).toBe("matchmaking:lock:lobby-keys-test");
+      expect(keys[1]).toBe(
+        getMatchmakingLobbyDetailsCacheKey("lobby-keys-test"),
+      );
       expect(keys).toContainEqual(expect.stringContaining("us-east"));
       expect(keys).toContainEqual(expect.stringContaining("eu-west"));
     });
