@@ -18,12 +18,25 @@ import { MapAssetsQueues } from "./enums/MapAssetsQueues";
 import { UtilityQueues } from "../utility/enums/UtilityQueues";
 import { UtilityJobs } from "../utility/enums/UtilityJobs";
 
-export type MapAssetKind = "tri" | "grenadeclip" | "view" | "callouts";
+export type MapAssetKind =
+  | "tri"
+  | "grenadeclip"
+  | "view"
+  | "callouts"
+  | "prep"
+  | "blast";
 
 export type MapAssetsManifestEntry = Partial<Record<MapAssetKind, string>> & {
   sha256?: Partial<Record<MapAssetKind, string>>;
-  source?: { vpk_sha256?: string; pipeline?: string };
+  source?: {
+    vpk_sha256?: string;
+    pipeline?: string;
+    prep?: number;
+    workshop?: string;
+  };
 };
+
+export type MapAssetsWorkshopMap = { name: string; workshopMapId: string };
 
 export type MapAssetsManifest = {
   version: number;
@@ -107,9 +120,18 @@ export class MapAssetsService {
     "grenadeclip",
     "view",
     "callouts",
+    "prep",
+    "blast",
   ];
 
   public static readonly IMAGE = "ghcr.io/5stackgg/map-assets:latest";
+
+  // Where host_workshop_map downloads land, inside the serverfiles volume the
+  // job already mounts: the game-server image keeps
+  // game/bin/linuxsteamrt64/steamapps on that volume, so every server on the
+  // node fills the same folder (one <workshop id>/ per map).
+  public static readonly WORKSHOP_DIR =
+    "/serverdata/serverfiles/game/bin/linuxsteamrt64/steamapps/workshop/content/730";
 
   public static readonly TIMEOUT_MS = 2 * 60 * 60 * 1000;
 
@@ -253,6 +275,7 @@ export class MapAssetsService {
     buildId: string,
     force = false,
     maps: Array<string> = [],
+    workshopMaps: Array<MapAssetsWorkshopMap> = [],
   ): V1Job {
     const volume = `serverfiles-${gameServerNodeId.replaceAll(".", "-")}`;
 
@@ -315,6 +338,19 @@ export class MapAssetsService {
                   "/work",
                   "--publish",
                   ...(maps.length ? ["--only-maps", maps.join(",")] : []),
+                  ...(workshopMaps.length
+                    ? [
+                        "--workshop",
+                        MapAssetsService.WORKSHOP_DIR,
+                        "--workshop-maps",
+                        workshopMaps
+                          .map(
+                            ({ name, workshopMapId }) =>
+                              `${name}=${workshopMapId}`,
+                          )
+                          .join(","),
+                      ]
+                    : []),
                   ...(force ? ["--force"] : []),
                 ],
                 env: [
@@ -899,26 +935,48 @@ export class MapAssetsService {
         }
       });
 
+    const { names, workshop } = await this.knownMaps();
+
     await this.batchApi.createNamespacedJob({
       namespace: this.namespace,
       body: MapAssetsService.jobSpec(
         gameServerNodeId,
         buildId,
         force,
-        await this.knownMaps(),
+        names,
+        workshop,
       ),
     });
   }
 
   // Only maps with a row are built and published. Every instance seeds the
-  // same Valve maps, and custom maps are workshop maps no install carries, so
-  // this instance's table speaks for all of them.
-  private async knownMaps(): Promise<Array<string>> {
-    const rows = await this.postgres.query<Array<{ name: string }>>(
-      `SELECT DISTINCT name FROM public.maps ORDER BY name`,
-    );
+  // same maps, so this instance's table speaks for all of them. A row with a
+  // workshop_map_id is built from the node's workshop downloads when the
+  // install does not carry it; one the node never downloaded keeps whatever
+  // is already published.
+  private async knownMaps(): Promise<{
+    names: Array<string>;
+    workshop: Array<MapAssetsWorkshopMap>;
+  }> {
+    const rows = await this.postgres.query<
+      Array<{ name: string; workshop_map_id: string | null }>
+    >(`SELECT DISTINCT name, workshop_map_id FROM public.maps ORDER BY name`);
 
-    return rows.map(({ name }) => name);
+    const names = [...new Set(rows.map(({ name }) => name))];
+    const workshop = new Map<string, string>();
+    for (const { name, workshop_map_id } of rows) {
+      if (workshop_map_id && !workshop.has(name)) {
+        workshop.set(name, String(workshop_map_id));
+      }
+    }
+
+    return {
+      names,
+      workshop: [...workshop].map(([name, workshopMapId]) => ({
+        name,
+        workshopMapId,
+      })),
+    };
   }
 
   private async waitForJob(

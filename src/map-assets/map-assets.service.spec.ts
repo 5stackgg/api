@@ -10,7 +10,7 @@ describe("MapAssetsService", () => {
     claimed: boolean;
     existing: string | null;
     previous: { build_id: string; maps: Record<string, unknown> } | null;
-    maps: Array<string>;
+    maps: Array<string | { name: string; workshop_map_id: string | null }>;
     stranded: Array<Record<string, string | null>>;
   };
 
@@ -57,7 +57,11 @@ describe("MapAssetsService", () => {
           return db.claimed ? [{ build_id: params[0] }] : [];
         }
         if (sql.includes("FROM public.maps")) {
-          return db.maps.map((name) => ({ name }));
+          return db.maps.map((row) =>
+            typeof row === "string"
+              ? { name: row, workshop_map_id: null }
+              : row,
+          );
         }
         if (sql.includes("SELECT build_id, maps")) {
           return db.previous ? [db.previous] : [];
@@ -175,6 +179,33 @@ describe("MapAssetsService", () => {
         "--force",
       ]);
       expect(container.args).not.toContain("--only-maps");
+    });
+
+    it("adds the workshop maps, read from the downloads on the mounted install", () => {
+      const withWorkshop = MapAssetsService.jobSpec(
+        "node.one",
+        "25537370",
+        true,
+        ["de_mirage", "de_thera"],
+        [
+          { name: "de_thera", workshopMapId: "3121217565" },
+          { name: "de_mills", workshopMapId: "3152430710" },
+        ],
+      );
+      const { args, volumeMounts } =
+        withWorkshop.spec.template.spec.containers[0];
+
+      expect(args.slice(args.indexOf("--only-maps"))).toEqual([
+        "--only-maps",
+        "de_mirage,de_thera",
+        "--workshop",
+        "/serverdata/serverfiles/game/bin/linuxsteamrt64/steamapps/workshop/content/730",
+        "--workshop-maps",
+        "de_thera=3121217565,de_mills=3152430710",
+        "--force",
+      ]);
+      expect(volumeMounts).toEqual(container.volumeMounts);
+      expect(container.args).not.toContain("--workshop-maps");
     });
 
     it("only forces a full rebuild when asked", () => {
@@ -541,6 +572,32 @@ describe("MapAssetsService", () => {
           "de_ancient",
           "de_mirage",
         ]),
+      });
+    });
+
+    it("passes the maps table's workshop ids, once per map", async () => {
+      finished({ succeeded: 1 });
+      db.maps = [
+        "de_mirage",
+        { name: "de_thera", workshop_map_id: "3121217565" },
+        { name: "de_thera", workshop_map_id: "3121217565" },
+        { name: "de_inferno_night", workshop_map_id: "3124567099" },
+      ];
+
+      await service.build("node-1", "25537370");
+
+      expect(batchApi.createNamespacedJob).toHaveBeenCalledWith({
+        namespace: "5stack",
+        body: MapAssetsService.jobSpec(
+          "node-1",
+          "25537370",
+          false,
+          ["de_mirage", "de_thera", "de_inferno_night"],
+          [
+            { name: "de_thera", workshopMapId: "3121217565" },
+            { name: "de_inferno_night", workshopMapId: "3124567099" },
+          ],
+        ),
       });
     });
 
