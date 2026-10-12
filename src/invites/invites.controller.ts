@@ -326,20 +326,30 @@ export class InvitesController {
     }
 
     if (!seat) {
-      await this.hasura.mutation({
-        insert_tournament_team_roster_one: {
-          __args: {
-            object: {
-              role: "Member",
-              tournament_id: tournament_team_invites_by_pk.team.tournament_id,
-              tournament_team_id:
-                tournament_team_invites_by_pk.tournament_team_id,
-              player_steam_id: user.steam_id,
+      try {
+        await this.hasura.mutation({
+          insert_tournament_team_roster_one: {
+            __args: {
+              object: {
+                role: "Member",
+                tournament_id: tournament_team_invites_by_pk.team.tournament_id,
+                tournament_team_id:
+                  tournament_team_invites_by_pk.tournament_team_id,
+                player_steam_id: user.steam_id,
+              },
             },
+            __typename: true,
           },
-          __typename: true,
-        },
-      });
+        });
+      } catch (error) {
+        // Two accepts racing past the seat check above.
+        const message = error instanceof Error ? error.message : String(error);
+        if (message.includes("tournament_roster_pkey")) {
+          throw Error("You are already on a team in this tournament");
+        }
+
+        throw error;
+      }
     }
 
     await this.hasura.mutation({

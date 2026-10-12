@@ -36,9 +36,9 @@ select_permissions:
           - player:
               steam_id:
                 _eq: X-Hasura-User-Id
-          - _and:
-              - team:
-                  roster:
+          - team:
+              _or:
+                - roster:
                     _and:
                       - player_steam_id:
                           _eq: X-Hasura-User-Id
@@ -47,6 +47,21 @@ select_permissions:
                               _eq: Admin
                           - role:
                               _eq: Invite
+                - owner_steam_id:
+                    _eq: X-Hasura-User-Id
+                - team:
+                    owner_steam_id:
+                      _eq: X-Hasura-User-Id
+                - team:
+                    captain_steam_id:
+                      _eq: X-Hasura-User-Id
+                - team:
+                    roster:
+                      _and:
+                        - player_steam_id:
+                            _eq: X-Hasura-User-Id
+                        - role:
+                            _eq: Admin
     comment: ""
 delete_permissions:
   - role: user
@@ -56,9 +71,9 @@ delete_permissions:
           - player:
               steam_id:
                 _eq: X-Hasura-User-Id
-          - _and:
-              - team:
-                  roster:
+          - team:
+              _or:
+                - roster:
                     _and:
                       - player_steam_id:
                           _eq: X-Hasura-User-Id
@@ -67,4 +82,19 @@ delete_permissions:
                               _eq: Admin
                           - role:
                               _eq: Invite
+                - owner_steam_id:
+                    _eq: X-Hasura-User-Id
+                - team:
+                    owner_steam_id:
+                      _eq: X-Hasura-User-Id
+                - team:
+                    captain_steam_id:
+                      _eq: X-Hasura-User-Id
+                - team:
+                    roster:
+                      _and:
+                        - player_steam_id:
+                            _eq: X-Hasura-User-Id
+                        - role:
+                            _eq: Admin
     comment: ""

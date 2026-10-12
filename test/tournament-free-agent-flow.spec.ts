@@ -455,6 +455,86 @@ describe("free agent flow (SQL-driven)", () => {
       expect(await agentRow(t.id, agent)).toBeUndefined();
     });
 
+    it("will not let a player invite themselves onto someone else's team", async () => {
+      const t = await openTournament({ registrationType: "both" });
+      const squad = await fx.team();
+      const [captain, agent] = await fx.players(2);
+      await join(t.id, agent);
+      const adHoc = await registerTeam(t.id, captain, [captain]);
+      const teamBacked = await runAsUser(
+        postgres,
+        squad.owner,
+        "user",
+        async (query) => {
+          const [row] = (await query(
+            `INSERT INTO tournament_teams (tournament_id, team_id, name)
+             VALUES ($1, $2, 'Squad') RETURNING id`,
+            [t.id, squad.id],
+          )) as Array<{ id: string }>;
+          return row.id;
+        },
+      );
+
+      for (const team of [adHoc, teamBacked]) {
+        await expect(addAsCaptain(t.id, team, agent, agent)).rejects.toThrow(
+          /cannot add players to this team/i,
+        );
+        expect(await invitedTo(team)).toEqual([]);
+      }
+      expect(await statusOf(t.id, agent)).toBe("registered");
+    });
+
+    it("lets the tournament's organizer place a free agent outright", async () => {
+      const t = await openTournament({ registrationType: "both" });
+      const squad = await fx.team();
+      const agent = await fx.player();
+      await join(t.id, agent);
+      const teamBacked = await runAsUser(
+        postgres,
+        squad.owner,
+        "user",
+        async (query) => {
+          const [row] = (await query(
+            `INSERT INTO tournament_teams (tournament_id, team_id, name)
+             VALUES ($1, $2, 'Squad') RETURNING id`,
+            [t.id, squad.id],
+          )) as Array<{ id: string }>;
+          return row.id;
+        },
+      );
+
+      await addAsCaptain(t.id, teamBacked, t.organizer, agent);
+
+      expect(await teamOf(t.id, agent)).toBe(teamBacked);
+      expect(await agentRow(t.id, agent)).toBeUndefined();
+    });
+
+    it("will not put a team from one tournament on another's roster", async () => {
+      const t = await openTournament({ registrationType: "both" });
+      const other = await openTournament({ registrationType: "both" });
+      const [captain, agent] = await fx.players(2);
+      await join(t.id, agent);
+      const team = await registerTeam(other.id, captain, [captain]);
+
+      await expect(addAsCaptain(t.id, team, captain, agent)).rejects.toThrow(
+        /not in this tournament/i,
+      );
+      expect(await invitedTo(team)).toEqual([]);
+    });
+
+    it("stops recruiting when registration closes", async () => {
+      const t = await openTournament({ registrationType: "both" });
+      const [captain, agent] = await fx.players(2);
+      await join(t.id, agent);
+      const team = await registerTeam(t.id, captain, [captain]);
+      await setStatus(t.id, t.organizer, "RegistrationClosed");
+
+      await expect(addAsCaptain(t.id, team, captain, agent)).rejects.toThrow(
+        /cannot add players to this team/i,
+      );
+      expect(await invitedTo(team)).toEqual([]);
+    });
+
     it("will not invite a player who is already on a team", async () => {
       const t = await openTournament({ registrationType: "both" });
       const [captain, rival, taken] = await fx.players(3);

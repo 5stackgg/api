@@ -62,6 +62,17 @@ describe("InvitesController accepting a tournament team invite", () => {
     expect(hasura.mutation).not.toHaveBeenCalled();
   });
 
+  it("explains a seat taken by an accept racing this one", async () => {
+    hasura.mutation.mockRejectedValueOnce(
+      new Error(
+        'Uniqueness violation. duplicate key value violates unique constraint "tournament_roster_pkey"',
+      ),
+    );
+
+    await expect(accept()).rejects.toThrow(/already on a team/);
+    expect(mutated("delete_tournament_team_invites_by_pk")).toBe(false);
+  });
+
   it("clears the invite of a player already on the inviting team", async () => {
     seat = [{ tournament_team_id: "inviting-team" }];
 

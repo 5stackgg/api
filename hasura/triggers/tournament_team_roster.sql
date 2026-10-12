@@ -75,8 +75,11 @@ CREATE OR REPLACE FUNCTION public.tbi_tournament_team_roster() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 DECLARE
-    _team_id uuid;
-    _owner_steam_id bigint;
+    _session json;
+    _team public.tournament_teams;
+    _tournament public.tournaments;
+    _organizer boolean;
+    _invite boolean := false;
 BEGIN
     -- draft_tournament_free_agent_teams builds pickup teams out of players who
     -- never invited each other, so the invite redirect below would turn every
@@ -88,8 +91,17 @@ BEGIN
         RETURN NEW;
     END IF;
 
-    IF current_setting('hasura.user')::jsonb ->> 'x-hasura-role' IN ('admin', 'administrator', 'tournament_organizer') THEN
+    _session := current_setting('hasura.user')::json;
+
+    IF _session ->> 'x-hasura-role' IN ('admin', 'administrator', 'tournament_organizer') THEN
         RETURN NEW;
+    END IF;
+
+    SELECT * INTO _team FROM tournament_teams WHERE id = NEW.tournament_team_id;
+
+    IF _team.tournament_id IS DISTINCT FROM NEW.tournament_id THEN
+        RAISE EXCEPTION USING ERRCODE = '22000',
+            MESSAGE = 'That team is not in this tournament';
     END IF;
 
     -- Gates the player being ADDED, not the session adding them: a captain
@@ -100,44 +112,52 @@ BEGIN
             MESSAGE = 'Player does not meet this tournament''s entry requirements';
     END IF;
 
-    SELECT team_id, owner_steam_id INTO _team_id, _owner_steam_id FROM tournament_teams WHERE id = NEW.tournament_team_id;
+    SELECT * INTO _tournament FROM tournaments WHERE id = NEW.tournament_id;
+    _organizer := public.is_tournament_organizer(_tournament, _session);
 
-    IF _team_id IS NULL THEN
-        IF _owner_steam_id = NEW.player_steam_id THEN 
+    IF _team.team_id IS NULL THEN
+        IF _team.owner_steam_id = NEW.player_steam_id THEN
             NEW.role = 'Admin';
             RETURN NEW;
         END IF;
 
-        INSERT INTO tournament_team_invites (tournament_team_id, steam_id, invited_by_player_steam_id)
-            VALUES (NEW.tournament_team_id, NEW.player_steam_id, (current_setting('hasura.user')::jsonb->>'x-hasura-user-id')::bigint);
-
-        RETURN NULL;
-    END IF;
-
+        _invite := true;
     -- A team-backed roster takes a player with no invite at all, so somebody
     -- from outside the team is a force-add rather than a lineup pick.
-    IF NOT EXISTS (
+    ELSIF NOT EXISTS (
         SELECT 1 FROM team_roster tr
-        WHERE tr.team_id = _team_id AND tr.player_steam_id = NEW.player_steam_id
+        WHERE tr.team_id = _team.team_id AND tr.player_steam_id = NEW.player_steam_id
     ) THEN
         -- A free agent signed up to be drafted, not to be put on whichever team
-        -- picks them, so the force-add becomes an invite they answer.
-        IF EXISTS (
+        -- picks them, so a captain's force-add becomes an invite they answer.
+        _invite := NOT _organizer AND EXISTS (
             SELECT 1 FROM tournament_free_agents fa
             WHERE fa.tournament_id = NEW.tournament_id
               AND fa.player_steam_id = NEW.player_steam_id
               AND fa.status IN ('registered', 'waitlisted')
-        ) THEN
-            INSERT INTO tournament_team_invites (tournament_team_id, steam_id, invited_by_player_steam_id)
-                VALUES (NEW.tournament_team_id, NEW.player_steam_id, (current_setting('hasura.user')::jsonb->>'x-hasura-user-id')::bigint);
+        );
 
-            RETURN NULL;
+        IF NOT _invite THEN
+            PERFORM public.assert_session_not_blocked(NEW.player_steam_id, 'tournament_organizer');
         END IF;
-
-        PERFORM public.assert_session_not_blocked(NEW.player_steam_id, 'tournament_organizer');
     END IF;
 
-    RETURN NEW;
+    IF NOT _invite THEN
+        RETURN NEW;
+    END IF;
+
+    -- Hasura checks an insert's permission against the rows it returns, and a
+    -- redirected insert returns none, so the invite repeats that check here.
+    IF _tournament.status NOT IN ('Setup', 'RegistrationOpen')
+       OR NOT (_organizer OR public.can_manage_tournament_team(_team, _session)) THEN
+        RAISE EXCEPTION USING ERRCODE = '22000',
+            MESSAGE = 'You cannot add players to this team';
+    END IF;
+
+    INSERT INTO tournament_team_invites (tournament_team_id, steam_id, invited_by_player_steam_id)
+        VALUES (NEW.tournament_team_id, NEW.player_steam_id, (_session ->> 'x-hasura-user-id')::bigint);
+
+    RETURN NULL;
 END;
 $$;
 
