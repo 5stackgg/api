@@ -120,6 +120,20 @@ BEGIN
         SELECT 1 FROM team_roster tr
         WHERE tr.team_id = _team_id AND tr.player_steam_id = NEW.player_steam_id
     ) THEN
+        -- A free agent signed up to be drafted, not to be put on whichever team
+        -- picks them, so the force-add becomes an invite they answer.
+        IF EXISTS (
+            SELECT 1 FROM tournament_free_agents fa
+            WHERE fa.tournament_id = NEW.tournament_id
+              AND fa.player_steam_id = NEW.player_steam_id
+              AND fa.status IN ('registered', 'waitlisted')
+        ) THEN
+            INSERT INTO tournament_team_invites (tournament_team_id, steam_id, invited_by_player_steam_id)
+                VALUES (NEW.tournament_team_id, NEW.player_steam_id, (current_setting('hasura.user')::jsonb->>'x-hasura-user-id')::bigint);
+
+            RETURN NULL;
+        END IF;
+
         PERFORM public.assert_session_not_blocked(NEW.player_steam_id, 'tournament_organizer');
     END IF;
 

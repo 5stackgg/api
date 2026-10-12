@@ -227,7 +227,7 @@ describe("free agent flow (SQL-driven)", () => {
     const [team] = await postgres.query<Array<{ id: string }>>(
       `INSERT INTO tournament_teams (tournament_id, name, owner_steam_id, captain_steam_id)
        VALUES ($1, $2, $3, $3) RETURNING id`,
-      [tournamentId, fx.nextName("squad"), owner],
+      [tournamentId, `squad-${owner}`, owner],
     );
 
     for (const member of members) {
@@ -394,6 +394,77 @@ describe("free agent flow (SQL-driven)", () => {
       await leave(t.id, first);
       expect(await teamOf(t.id, waitlisted)).toBe(team);
       expect(await teamOf(t.id, second)).toBe(pickup);
+    });
+  });
+
+  describe("recruiting from the pool", () => {
+    // What the web's add-player and pool Invite buttons both send.
+    const addAsCaptain = (
+      tournamentId: string,
+      teamId: string,
+      captain: string,
+      steamId: string,
+    ) =>
+      runAsUser(postgres, captain, "user", (query) =>
+        query(
+          `INSERT INTO tournament_team_roster (tournament_team_id, player_steam_id, tournament_id)
+           VALUES ($1, $2, $3)`,
+          [teamId, steamId, tournamentId],
+        ),
+      );
+
+    const invitedTo = async (teamId: string) =>
+      (
+        await postgres.query<Array<{ steam_id: string }>>(
+          `SELECT steam_id::text AS steam_id FROM tournament_team_invites
+            WHERE tournament_team_id = $1`,
+          [teamId],
+        )
+      ).map((invite) => invite.steam_id);
+
+    it("asks a free agent before a 5stack team puts them on its roster", async () => {
+      const t = await openTournament({ registrationType: "both" });
+      const squad = await fx.team();
+      const agent = await fx.player();
+      await join(t.id, agent);
+
+      const tournamentTeam = await runAsUser(
+        postgres,
+        squad.owner,
+        "user",
+        async (query) => {
+          const [row] = (await query(
+            `INSERT INTO tournament_teams (tournament_id, team_id, name)
+             VALUES ($1, $2, 'Squad') RETURNING id`,
+            [t.id, squad.id],
+          )) as Array<{ id: string }>;
+          return row.id;
+        },
+      );
+
+      await addAsCaptain(t.id, tournamentTeam, squad.owner, agent);
+
+      expect(await teamOf(t.id, agent)).toBeNull();
+      expect(await statusOf(t.id, agent)).toBe("registered");
+      expect(await invitedTo(tournamentTeam)).toEqual([agent]);
+
+      // What acceptTournamentTeamInvite writes, through the admin client.
+      await addToRoster(t.id, tournamentTeam, agent);
+
+      expect(await teamOf(t.id, agent)).toBe(tournamentTeam);
+      expect(await agentRow(t.id, agent)).toBeUndefined();
+    });
+
+    it("will not invite a player who is already on a team", async () => {
+      const t = await openTournament({ registrationType: "both" });
+      const [captain, rival, taken] = await fx.players(3);
+      const team = await registerTeam(t.id, captain, [captain]);
+      await registerTeam(t.id, rival, [rival, taken]);
+
+      await expect(addAsCaptain(t.id, team, captain, taken)).rejects.toThrow(
+        /already on a team/i,
+      );
+      expect(await invitedTo(team)).toEqual([]);
     });
   });
 
