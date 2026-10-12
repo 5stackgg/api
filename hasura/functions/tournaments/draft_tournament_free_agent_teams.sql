@@ -172,9 +172,6 @@ $$;
 -- so drafting them would abort the whole transition on a key violation.
 --
 -- Owning a team counts as being in the tournament even with no roster row.
---
--- plpgsql so the body resolves at call time: the function files load in
--- alphabetical order, and a SQL body is checked against whatever exists then.
 CREATE OR REPLACE FUNCTION public.tournament_free_agent_draft_pool(_tournament_id uuid)
 RETURNS uuid[]
 LANGUAGE plpgsql
