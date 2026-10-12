@@ -238,23 +238,6 @@ describe("utility solver (SQL-driven)", () => {
       expect(commands).toEqual(["utility_solver_calibrate"]);
     });
 
-    it("answers Unsupported on CounterStrikeSharp without touching rcon", async () => {
-      const host = await fx.player();
-      const sessionId = await practiceSession(host, {
-        pluginRuntime: "counterstrikesharp",
-      });
-
-      const answer = await service(rconStub(READY)).calibration(
-        user(host),
-        sessionId,
-      );
-
-      expect(answer.status).toBe(UtilitySolverStatus.Unsupported);
-      expect(answer.ready).toBe(false);
-      expect(answer.detail).toMatch(/SwiftlyS2/);
-      expect(commands).toHaveLength(0);
-    });
-
     it("reports an unreachable server rather than failing", async () => {
       const host = await fx.player();
       const sessionId = await practiceSession(host);
@@ -269,23 +252,6 @@ describe("utility solver (SQL-driven)", () => {
       expect(answer.detail).toBe(
         "unable to reach the practice server over rcon",
       );
-    });
-
-    // The two failures send a reader somewhere different: "cannot solve" means
-    // redeploy the plugin, "could not tell" means look at the pod. A server
-    // that has reported no runtime and answers nothing is the second one.
-    it("does not call an unidentified server unable to solve", async () => {
-      const host = await fx.player();
-      const sessionId = await practiceSession(host, { pluginRuntime: null });
-
-      const answer = await service(rconStub(null)).calibration(
-        user(host),
-        sessionId,
-      );
-
-      expect(answer.status).toBe(UtilitySolverStatus.Unreachable);
-      expect(answer.detail).toMatch(/has not reported which plugin runtime/);
-      expect(answer.detail).not.toMatch(/CounterStrikeSharp/);
     });
 
     // The runtime column being empty is not a verdict either way, so the

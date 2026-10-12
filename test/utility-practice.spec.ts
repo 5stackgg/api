@@ -268,6 +268,7 @@ describe("utility practice sessions (SQL-driven)", () => {
         // An install that can boot pods, unless a test says otherwise: the
         // other answer is a different refusal, not a busier one.
         hasOnDemandNodes: jest.fn(async (): Promise<boolean> => true),
+        practiceNodeIds: jest.fn(async (): Promise<string[]> => ["node-1"]),
         sendUtilityPracticeRefresh: jest.fn(async (): Promise<void> => undefined),
         updateMatchStatus: jest.fn(async (): Promise<void> => undefined),
         ...(overrides.matchAssistant ?? {}),
@@ -425,6 +426,7 @@ describe("utility practice sessions (SQL-driven)", () => {
         matchAssistant: {
           countFreeOnDemandServers: jest.fn(async (): Promise<number> => 0),
           hasOnDemandNodes: jest.fn(async (): Promise<boolean> => false),
+          practiceNodeIds: jest.fn(async (): Promise<string[]> => []),
         },
       });
 
