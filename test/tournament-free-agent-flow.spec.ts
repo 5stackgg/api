@@ -757,6 +757,32 @@ describe("free agent flow (SQL-driven)", () => {
       expect(await statusOf(t.id, late)).toBe("drafted");
       expect(await teamOf(t.id, late)).toBe(team);
     });
+
+    // A registered team chose its players; a stranger off the waitlist is not
+    // a replacement it asked for. Its captain recruits by invite instead.
+    it("never fills a registered team's vacancy from the waitlist", async () => {
+      const t = await openTournament({ registrationType: "both" });
+      const [owner, member] = await fx.players(2);
+      const premade = await registerTeam(t.id, owner, [owner, member]);
+
+      const players = await fx.players(5);
+      await joinAll(t.id, players);
+      expect((await draft(t)).teams_created).toBe(2);
+      const waiting = players[4];
+      expect(await statusOf(t.id, waiting)).toBe("waitlisted");
+
+      await postgres.query(
+        `DELETE FROM tournament_team_roster
+          WHERE tournament_id = $1 AND player_steam_id = $2`,
+        [t.id, member],
+      );
+
+      expect((await rosterOf(premade)).map((row) => row.steam_id)).toEqual([
+        owner,
+      ]);
+      expect(await statusOf(t.id, waiting)).toBe("waitlisted");
+      expect(await teamOf(t.id, waiting)).toBeNull();
+    });
   });
 
   describe("a pickup team's stand-in owner leaving", () => {

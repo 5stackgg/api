@@ -65,9 +65,15 @@ BEGIN
     -- The team may already be gone: deleting a tournament_teams row cascades
     -- into its roster, and the parent is removed before the children, so this
     -- runs with no slot left to fill.
+    --
+    -- Pickup teams only. In 'both' a registered team chose its own players, and
+    -- the roster-delete trigger calls this for every departure in a tournament
+    -- with a pool; its captain recruits a replacement by invite.
     IF NOT EXISTS (
         SELECT 1 FROM public.tournament_teams tt
-        WHERE tt.id = _tournament_team_id AND tt.tournament_id = _tournament_id
+        WHERE tt.id = _tournament_team_id
+          AND tt.tournament_id = _tournament_id
+          AND tt.is_drafted
     ) THEN
         RETURN NULL;
     END IF;
