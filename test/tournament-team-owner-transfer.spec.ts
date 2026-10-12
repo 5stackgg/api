@@ -181,15 +181,12 @@ describe("tournament entry owner follows a team ownership transfer (SQL-driven)"
           );
         }
       });
-      const partner = await fx.player();
-      const [{ party_id: partyId }] = await postgres.query<
-        Array<{ party_id: string }>
-      >("SELECT gen_random_uuid()::text AS party_id");
-      for (const player of [heir, partner]) {
+      const bystander = await fx.player();
+      for (const player of [heir, bystander]) {
         await postgres.query(
-          `INSERT INTO tournament_free_agents (tournament_id, player_steam_id, party_id)
-           VALUES ($1, $2, $3)`,
-          [t.id, player, partyId],
+          `INSERT INTO tournament_free_agents (tournament_id, player_steam_id)
+           VALUES ($1, $2)`,
+          [t.id, player],
         );
       }
       await postgres.query(
@@ -202,18 +199,14 @@ describe("tournament entry owner follows a team ownership transfer (SQL-driven)"
 
       expect((await entry(t.id, team.id)).owner_steam_id).toBe(heir);
       const pool = await postgres.query<
-        Array<{
-          player_steam_id: string;
-          status: string;
-          party_id: string | null;
-        }>
+        Array<{ player_steam_id: string; status: string }>
       >(
-        `SELECT player_steam_id::text, status, party_id::text
+        `SELECT player_steam_id::text, status
          FROM tournament_free_agents WHERE tournament_id = $1`,
         [t.id],
       );
       expect(pool).toEqual([
-        { player_steam_id: partner, status: "registered", party_id: null },
+        { player_steam_id: bystander, status: "registered" },
       ]);
     },
   );
