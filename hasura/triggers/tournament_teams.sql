@@ -34,6 +34,16 @@ BEGIN
             MESSAGE = 'This tournament is invite only';
     END IF;
 
+    -- The draft fills the bracket from the pool, so a team registered beside it
+    -- takes a slot the draft counts on. Organizers keep seating teams by hand.
+    IF (_session ->> 'x-hasura-role') IS NOT NULL
+       AND tournament.registration_type = 'free_agents'
+       AND NOT NEW.is_drafted
+       AND NOT is_tournament_organizer(tournament, _session) THEN
+        RAISE EXCEPTION USING ERRCODE = '22000',
+            MESSAGE = 'This tournament only accepts free agents';
+    END IF;
+
     IF NEW.team_id IS NOT NULL THEN
        SELECT owner_steam_id, captain_steam_id
        INTO NEW.owner_steam_id, _team_captain_steam_id

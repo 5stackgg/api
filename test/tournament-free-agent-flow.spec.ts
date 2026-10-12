@@ -371,6 +371,37 @@ describe("free agent flow (SQL-driven)", () => {
       expect(await teamOf(t.id, waitlisted)).toBe(team);
       expect(await teamOf(t.id, second)).toBe(pickup);
     });
+
+    // The pool is the field: a team entered beside it takes a bracket slot the
+    // draft was counting on. The organizer can still seat one by hand.
+    it("refuses a team registration in a free-agents-only tournament, except from its organizer", async () => {
+      const t = await openTournament();
+      const owner = await fx.player();
+
+      await expect(
+        runAsUser(postgres, owner, "user", (query) =>
+          query(
+            `INSERT INTO tournament_teams (tournament_id, name, owner_steam_id)
+             VALUES ($1, $2, $3)`,
+            [t.id, `squad-${owner}`, owner],
+          ),
+        ),
+      ).rejects.toThrow(/only accepts free agents/i);
+
+      await runAsUser(postgres, t.organizer, "user", (query) =>
+        query(
+          `INSERT INTO tournament_teams (tournament_id, name, owner_steam_id)
+           VALUES ($1, 'Seated', $2)`,
+          [t.id, t.organizer],
+        ),
+      );
+
+      const teams = await postgres.query<Array<{ name: string }>>(
+        "SELECT name FROM tournament_teams WHERE tournament_id = $1",
+        [t.id],
+      );
+      expect(teams).toEqual([{ name: "Seated" }]);
+    });
   });
 
   describe("recruiting from the pool", () => {
