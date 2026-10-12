@@ -299,12 +299,61 @@ describe("tournament winner reassignment (SQL-driven)", () => {
 
     await expect(
       tfx.winMatch(semis[0].match_id!, "lineup_2_id"),
-    ).rejects.toThrow(/minimum lineup/i);
+    ).rejects.toThrow(/cannot field the minimum lineup/i);
 
     expect([
       await lineupSteamIds(finalMatch.lineup_1_id),
       await lineupSteamIds(finalMatch.lineup_2_id),
     ]).toEqual(before);
+  });
+
+  it("leaves the unchanged side's hand-edited lineup alone when a winner is reassigned", async () => {
+    const { semis, final } = await semisPlayed();
+    const [finalRow] = await postgres.query<
+      Array<{
+        tournament_team_id_1: string;
+        lineup_1_id: string;
+        lineup_2_id: string;
+      }>
+    >(
+      `SELECT tb.tournament_team_id_1, m.lineup_1_id, m.lineup_2_id
+         FROM tournament_brackets tb JOIN matches m ON m.id = tb.match_id
+        WHERE tb.id = $1`,
+      [final!.id],
+    );
+    const [semi] = await postgres.query<
+      Array<{ tournament_team_id_1: string }>
+    >("SELECT tournament_team_id_1 FROM tournament_brackets WHERE id = $1", [
+      semis[1].id,
+    ]);
+    const unchanged = semi.tournament_team_id_1;
+    const lineup =
+      finalRow.tournament_team_id_1 === unchanged
+        ? finalRow.lineup_1_id
+        : finalRow.lineup_2_id;
+
+    // The organizer stands someone in for a banned player by hand.
+    const [, banned] = await rosterOfTournamentTeam(unchanged);
+    await postgres.query(
+      "INSERT INTO player_sanctions (player_steam_id, type) VALUES ($1, 'ban')",
+      [banned],
+    );
+    const standIn = await fx.player();
+    await runAsUser(postgres, standIn, "admin", async (query) => {
+      await query(
+        "DELETE FROM match_lineup_players WHERE match_lineup_id = $1 AND steam_id = $2",
+        [lineup, banned],
+      );
+      await query(
+        "INSERT INTO match_lineup_players (match_lineup_id, steam_id) VALUES ($1, $2)",
+        [lineup, standIn],
+      );
+    });
+    const before = await lineupSteamIds(lineup);
+
+    await tfx.winMatch(semis[0].match_id!, "lineup_2_id");
+
+    expect(await lineupSteamIds(lineup)).toEqual(before);
   });
 
   it("does not trip the minimum-player guard while swapping the roster", async () => {

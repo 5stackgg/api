@@ -44,27 +44,29 @@ BEGIN
         RETURN OLD;
     END IF;
 
-    -- Rosters are locked once the bracket has been seeded, or once the team has
-    -- a match waiting to be played (re-admitting a team during CheckInReview
-    -- draws round 1 early). Before that teams edit their lineup freely and
-    -- dropping below the minimum just makes them ineligible.
-    IF _tournament.status NOT IN ('RegistrationClosed', 'Live', 'Paused')
-       AND NOT EXISTS (
-           SELECT 1
-           FROM tournament_brackets tb
-           INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
-           INNER JOIN matches m ON m.id = tb.match_id
-           WHERE ts.tournament_id = _tournament.id
-             AND OLD.tournament_team_id IN (tb.tournament_team_id_1, tb.tournament_team_id_2)
-             AND m.status IN ('Scheduled', 'WaitingForCheckIn')
-       ) THEN
+    -- Rosters are locked once registration has closed: the bracket is drawn
+    -- then, or (CheckInReview) can be redrawn by a re-admit at any moment.
+    -- Before that teams edit their lineup freely, dropping below the minimum
+    -- just makes them ineligible, and any match an early reseed drew is rebuilt
+    -- when registration closes.
+    IF _tournament.status NOT IN ('RegistrationClosed', 'CheckInReview', 'Live', 'Paused') THEN
+        RETURN OLD;
+    END IF;
+
+    -- Not counted below, so letting them go cannot take the team under it.
+    IF EXISTS (
+        SELECT 1
+        FROM players p
+        WHERE p.steam_id = OLD.player_steam_id
+          AND is_banned(p)
+    ) THEN
         RETURN OLD;
     END IF;
 
     _min_players := tournament_min_players_per_lineup(_tournament);
 
-    -- A banned player cannot be seated, so they do not hold the team at the
-    -- minimum.
+    -- A banned player is never newly seated (one already seated keeps the
+    -- seat), so they cannot be counted on to hold the team at the minimum.
     SELECT COUNT(*) INTO _seatable
         FROM tournament_team_roster ttr
         INNER JOIN players p ON p.steam_id = ttr.player_steam_id
@@ -78,7 +80,7 @@ BEGIN
     IF _seatable < _min_players THEN
         RAISE EXCEPTION USING
             ERRCODE = '22000',
-            MESSAGE = 'Cannot remove player: the team would drop below the minimum lineup of ' || _min_players || ' players while the tournament is underway';
+            MESSAGE = 'Cannot remove player: the team would drop below the minimum lineup of ' || _min_players || ' players now that registration has closed';
     END IF;
 
     RETURN OLD;

@@ -8,23 +8,33 @@ CREATE OR REPLACE FUNCTION public.refresh_unstarted_tournament_team_lineups(
 AS $$
 DECLARE
     _tournament_id uuid;
+    _status text;
     _match_id uuid;
     _match_lineup_id uuid;
     _match matches%ROWTYPE;
 BEGIN
-    SELECT tt.tournament_id
-    INTO _tournament_id
+    -- Every path takes the team row, then the matches, then the lineup rows:
+    -- the roster lock and check_team_eligibility write the team row, and a
+    -- status change locks team rows before it rebuilds matches.
+    SELECT tt.tournament_id, t.status
+    INTO _tournament_id, _status
     FROM tournament_teams tt
-    WHERE tt.id = _tournament_team_id;
+    INNER JOIN tournaments t ON t.id = tt.tournament_id
+    WHERE tt.id = _tournament_team_id
+    FOR NO KEY UPDATE OF tt;
 
     IF NOT FOUND THEN
         RETURN;
     END IF;
 
+    -- A match drawn before registration closes is rebuilt when it does.
+    IF _status IN ('Setup', 'RegistrationOpen') THEN
+        RETURN;
+    END IF;
+
     -- FOR SHARE so a match moving past check-in either waits for this write or
-    -- is re-read as started and skipped. Lock order is match then lineup rows,
-    -- the same order the check-in status change takes (tau_matches clears
-    -- checked_in after the match row is locked).
+    -- is re-read as started and skipped. The check-in status change also locks
+    -- the match before its lineup rows (tau_matches clears checked_in).
     FOR _match_id, _match_lineup_id IN
         SELECT m.id,
                CASE

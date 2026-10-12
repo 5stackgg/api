@@ -133,10 +133,6 @@ BEGIN
         WHERE id = _vacated[_index];
     END LOOP;
 
-    IF LEAST(cardinality(_vacated), cardinality(_incoming)) > 0 THEN
-        PERFORM assign_lobby_parties(_match.id);
-    END IF;
-
     IF cardinality(_incoming) > cardinality(_vacated) THEN
         INSERT INTO match_lineup_players (match_lineup_id, steam_id)
         SELECT _match_lineup_id, d.steam_id
@@ -149,6 +145,10 @@ BEGIN
         WHERE id = ANY(_vacated[cardinality(_incoming) + 1 :]);
     END IF;
 
+    IF LEAST(cardinality(_vacated), cardinality(_incoming)) > 0 THEN
+        PERFORM assign_lobby_parties(_match.id);
+    END IF;
+
     IF _captain_steam_id = ANY(_desired)
        AND (_follow_captain OR NOT COALESCE(_lineup_captain = ANY(_desired), false)) THEN
         UPDATE match_lineup_players
@@ -159,15 +159,21 @@ BEGIN
 END;
 $$;
 
+DROP FUNCTION IF EXISTS public.refresh_tournament_match_lineup_teams(public.tournament_brackets);
+
 -- Re-point an already-created tournament match's lineups at whatever teams the
 -- bracket now holds. Needed when an organizer reassigns a winner: the bracket's
 -- tournament_team_id_N is updated, but the downstream match already exists, so
 -- its lineups would otherwise stay attached to the team that was advanced by
--- mistake.
+-- mistake. Only the side whose team changed is touched: the other side may
+-- carry an organizer's hand edits.
 --
 -- Only touches matches that have not been played yet. Anything further along
 -- has to go through the explicit reset/recreate flow instead.
-CREATE OR REPLACE FUNCTION public.refresh_tournament_match_lineup_teams(bracket public.tournament_brackets) RETURNS VOID
+CREATE OR REPLACE FUNCTION public.refresh_tournament_match_lineup_teams(
+    bracket public.tournament_brackets,
+    previous public.tournament_brackets
+) RETURNS VOID
     LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -196,11 +202,12 @@ BEGIN
 
     FOR _lineup IN
         SELECT * FROM (VALUES
-            (_match.lineup_1_id, bracket.tournament_team_id_1),
-            (_match.lineup_2_id, bracket.tournament_team_id_2)
-        ) AS l(match_lineup_id, tournament_team_id)
+            (_match.lineup_1_id, bracket.tournament_team_id_1, previous.tournament_team_id_1),
+            (_match.lineup_2_id, bracket.tournament_team_id_2, previous.tournament_team_id_2)
+        ) AS l(match_lineup_id, tournament_team_id, previous_tournament_team_id)
     LOOP
-        CONTINUE WHEN _lineup.match_lineup_id IS NULL;
+        CONTINUE WHEN _lineup.match_lineup_id IS NULL
+            OR _lineup.tournament_team_id IS NOT DISTINCT FROM _lineup.previous_tournament_team_id;
 
         UPDATE match_lineups ml
            SET team_id = tt.team_id

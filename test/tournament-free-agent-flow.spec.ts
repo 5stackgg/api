@@ -742,6 +742,26 @@ describe("free agent flow (SQL-driven)", () => {
       expect(row.tournament_team_id).toBe(team.id);
     });
 
+    // A full field drafted while registration is open already has round-1
+    // matches; the seat a drafted player leaves goes to the waitlist, and the
+    // matches are rebuilt when registration closes.
+    it("promotes the waitlist into a slot a drafted player leaves once the bracket is filled", async () => {
+      const t = await openTournament({ maxTeams: 4 });
+      const players = await fx.players(9);
+      await joinAll(t.id, players);
+      await draft(t);
+      expect(await pickupTeams(t.id)).toHaveLength(4);
+      const waitlisted = players[8];
+      expect(await statusOf(t.id, waitlisted)).toBe("waitlisted");
+
+      const leaver = await nonOwner(t.id);
+      const team = await teamOf(t.id, leaver);
+      await expect(leave(t.id, leaver)).resolves.toEqual({ success: true });
+
+      expect(await statusOf(t.id, waitlisted)).toBe("drafted");
+      expect(await teamOf(t.id, waitlisted)).toBe(team);
+    });
+
     it("puts a late sign-up straight into a slot a drafted player gave up", async () => {
       const t = await openTournament();
       const players = await fx.players(4);
