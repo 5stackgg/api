@@ -52,12 +52,21 @@ export class CheckForScheduledMatches extends WorkerHost {
                   tournament_brackets: {
                     stage: {
                       tournament: {
-                        status: {
-                          _in: ["RegistrationClosed", "CheckInReview"],
-                        },
-                        start: {
-                          _gt: new Date(Date.now() - 60 * 1000),
-                        },
+                        _or: [
+                          {
+                            status: {
+                              _in: ["Setup", "RegistrationOpen"],
+                            },
+                          },
+                          {
+                            status: {
+                              _in: ["RegistrationClosed", "CheckInReview"],
+                            },
+                            start: {
+                              _gt: new Date(Date.now() - 60 * 1000),
+                            },
+                          },
+                        ],
                       },
                     },
                   },

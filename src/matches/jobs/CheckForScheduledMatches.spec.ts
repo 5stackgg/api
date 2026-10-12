@@ -34,10 +34,18 @@ describe("CheckForScheduledMatches", () => {
     );
     expect(excluded).toBeDefined();
 
-    const tournament = excluded._not.tournament_brackets.stage.tournament;
-    expect(tournament.status).toEqual({
+    const [registering, holding] =
+      excluded._not.tournament_brackets.stage.tournament._or;
+
+    // A round re-seeded before registration closes stays parked even once the
+    // start has passed.
+    expect(registering).toEqual({
+      status: { _in: ["Setup", "RegistrationOpen"] },
+    });
+
+    expect(holding.status).toEqual({
       _in: ["RegistrationClosed", "CheckInReview"],
     });
-    expect(tournament.start._gt).toBeInstanceOf(Date);
+    expect(holding.start._gt).toBeInstanceOf(Date);
   });
 });

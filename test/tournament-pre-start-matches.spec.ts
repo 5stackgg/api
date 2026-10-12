@@ -364,4 +364,70 @@ describe("tournament matches before the tournament starts (SQL-driven)", () => {
       expect(matches.every((match) => match.status === "Scheduled")).toBe(true);
     });
   });
+
+  // An organizer's draft or re-admit, or a drafted free agent leaving, re-runs
+  // the seeding before registration closes; once the field is past half full
+  // that pairs teams in round 1. The close rebuilds the bracket anyway.
+  describe("registration still open", () => {
+    const reseed = async (tournamentId: string) => {
+      await postgres.query(
+        "SELECT assign_seeds_to_teams(t) FROM tournaments t WHERE t.id = $1",
+        [tournamentId],
+      );
+      await postgres.query("SELECT update_tournament_stages($1)", [
+        tournamentId,
+      ]);
+      await postgres.query(
+        `SELECT seed_stage(ts.id) FROM tournament_stages ts
+          WHERE ts.tournament_id = $1 AND ts."order" = 1`,
+        [tournamentId],
+      );
+    };
+
+    const reseededCup = async (status: string) => {
+      const t = await createTournament();
+      if (status !== "Setup") {
+        await setStatus(t.id, t.organizer, status);
+      }
+      for (let i = 1; i <= 3; i++) {
+        await registerTeam(t.id, `T${i}`);
+      }
+      await reseed(t.id);
+      return t;
+    };
+
+    it.each(["Setup", "RegistrationOpen"])(
+      "parks a round drawn in %s",
+      async (status) => {
+        const t = await reseededCup(status);
+
+        const matches = await tournamentMatches(t.id);
+        expect(matches).toHaveLength(1);
+        expect(matches[0].status).toBe("Scheduled");
+      },
+    );
+
+    // Registration can stay open past the start: nothing closes it on its own
+    // without check-in.
+    it("keeps it parked past the start until registration closes", async () => {
+      const t = await reseededCup("RegistrationOpen");
+      await postgres.query(
+        "UPDATE tournaments SET start = now() - interval '1 minute' WHERE id = $1",
+        [t.id],
+      );
+      const [match] = await tournamentMatches(t.id);
+
+      await postgres.query(
+        "UPDATE matches SET status = 'WaitingForCheckIn' WHERE id = $1",
+        [match.id],
+      );
+      expect(await matchStatus(match.id)).toBe("Scheduled");
+
+      await expect(
+        runAsUser(postgres, t.organizer, "admin", (query) =>
+          query("UPDATE matches SET status = 'Live' WHERE id = $1", [match.id]),
+        ),
+      ).rejects.toThrow(/cannot start before its tournament/i);
+    });
+  });
 });
