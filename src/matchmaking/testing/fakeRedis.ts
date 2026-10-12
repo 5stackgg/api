@@ -35,7 +35,26 @@ export class FakeRedis {
     return false;
   }
 
+  // Redis refuses a command against a key of another type, which is what
+  // catches a fixture that stores something the real code never would.
+  private assertType(key: string, type: "string" | "hash" | "zset") {
+    const actual = this.strings.has(key)
+      ? "string"
+      : this.hashes.has(key)
+        ? "hash"
+        : this.sortedSets.has(key)
+          ? "zset"
+          : undefined;
+
+    if (actual && actual !== type) {
+      throw new Error(
+        `WRONGTYPE Operation against a key holding the wrong kind of value (${key} is a ${actual}, not a ${type})`,
+      );
+    }
+  }
+
   private zset(key: string) {
+    this.assertType(key, "zset");
     let set = this.sortedSets.get(key);
     if (!set) {
       set = new Map();
@@ -45,6 +64,7 @@ export class FakeRedis {
   }
 
   private hash(key: string) {
+    this.assertType(key, "hash");
     let hash = this.hashes.get(key);
     if (!hash) {
       hash = new Map();
@@ -55,6 +75,7 @@ export class FakeRedis {
 
   async set(key: string, value: unknown, ...args: unknown[]) {
     this.expireIfDue(key);
+    this.assertType(key, "string");
 
     const nx = args.some(
       (arg) => typeof arg === "string" && arg.toUpperCase() === "NX",
@@ -79,6 +100,7 @@ export class FakeRedis {
 
   async get(key: string) {
     this.expireIfDue(key);
+    this.assertType(key, "string");
     return this.strings.get(key) ?? null;
   }
 
@@ -122,23 +144,38 @@ export class FakeRedis {
     return this.zadds;
   }
 
+  private readZset(key: string) {
+    this.assertType(key, "zset");
+    return this.sortedSets.get(key) ?? new Map<string, number>();
+  }
+
   async zrem(key: string, member: string) {
-    return this.zset(key).delete(member) ? 1 : 0;
+    const set = this.readZset(key);
+    const removed = set.delete(member);
+    if (set.size === 0) {
+      this.sortedSets.delete(key);
+    }
+    return removed ? 1 : 0;
+  }
+
+  async zscore(key: string, member: string) {
+    const score = this.readZset(key).get(member);
+    return score === undefined ? null : String(score);
   }
 
   async zrank(key: string, member: string) {
-    const rank = [...this.zset(key).entries()]
+    const rank = [...this.readZset(key).entries()]
       .sort((a, b) => (a[1] !== b[1] ? a[1] - b[1] : a[0].localeCompare(b[0])))
       .findIndex(([entry]) => entry === member);
     return rank === -1 ? null : rank;
   }
 
   async zcard(key: string) {
-    return this.zset(key).size;
+    return this.readZset(key).size;
   }
 
   async zrange(key: string, start: number, stop: number, withScores?: string) {
-    const entries = [...this.zset(key).entries()].sort((a, b) =>
+    const entries = [...this.readZset(key).entries()].sort((a, b) =>
       a[1] !== b[1] ? a[1] - b[1] : a[0].localeCompare(b[0]),
     );
 
@@ -170,18 +207,17 @@ export class FakeRedis {
   // Reads never create the key, and a hash goes with its last field, as in
   // redis: the orphan sweep asks whether a lobby's details key exists at all.
   async hget(key: string, field: string) {
+    this.assertType(key, "hash");
     return this.hashes.get(key)?.get(field) ?? null;
   }
 
-  async hmget(key: string, ...fields: string[]) {
-    return fields.map((field) => this.hashes.get(key)?.get(field) ?? null);
-  }
-
   async hgetall(key: string) {
+    this.assertType(key, "hash");
     return Object.fromEntries(this.hashes.get(key) ?? []);
   }
 
   async hdel(key: string, field: string) {
+    this.assertType(key, "hash");
     const hash = this.hashes.get(key);
     const removed = hash?.delete(field) ?? false;
     if (hash?.size === 0) {
@@ -201,8 +237,8 @@ export class FakeRedis {
    * by their first command, and both are atomic here by virtue of being
    * synchronous, which is the property the real scripts buy with lua.
    *
-   * CLAIM_LOBBY_SCRIPT: SET NX the lock, and on success ZREM the lobby from
-   * every queue key passed in.
+   * CLAIM_LOBBY_SCRIPT: while the lobby is still in one of the queue keys
+   * passed in, SET NX the lock, and on success ZREM it from all of them.
    *
    * SWEEP_ORPHANED_ENTRY_SCRIPT: ZREM the lobby from every queue key passed in,
    * but only while its details key is still missing.
@@ -223,6 +259,11 @@ export class FakeRedis {
       return 1;
     }
 
+    const queued = keys.slice(1).some((key) => this.readZset(key).has(member));
+    if (!queued) {
+      return 0;
+    }
+
     const acquired = await this.set(keys[0], 1, "EX", ttl, "NX");
     if (!acquired) {
       return 0;
@@ -238,7 +279,7 @@ export class FakeRedis {
   // --- test helpers
 
   members(key: string) {
-    return [...this.zset(key).keys()].sort();
+    return [...this.readZset(key).keys()].sort();
   }
 
   has(key: string) {

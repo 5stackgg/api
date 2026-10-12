@@ -250,6 +250,11 @@ export class MatchmakingGateway {
             );
           }
 
+          // whatever stamp is left names a ready check that is over
+          await this.matchmakingLobbyService.removeConfirmationIdFromLobby(
+            lobby.id,
+          );
+
           await this.matchmakingLobbyService.setLobbyDetails(
             regions,
             type,

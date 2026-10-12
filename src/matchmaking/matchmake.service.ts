@@ -27,7 +27,9 @@ import { balanceTeams, canFillTeams } from "./utilities/balanceTeams";
 import { selectMatchCandidates } from "./utilities/selectMatchCandidates";
 import { WINDOW_CAP, winProbability } from "./utilities/matchmakingTuning";
 
-type MatchmakePass = { claimed: boolean };
+type MatchmakePass = { claimed: boolean; unchecked?: boolean };
+
+type NextPass = { delay: number; failures: number };
 
 function averageRank(players: Array<{ rank: number }>) {
   return players.reduce((acc, player) => acc + player.rank, 0) / players.length;
@@ -184,10 +186,15 @@ export class MatchmakeService {
     );
   }
 
+  /**
+   * Resolves to the pass it queued to follow this one, if any. `failures`
+   * counts the passes in a row that could not check who is busy.
+   */
   public async matchmake(
     type: e_match_types_enum,
     region: string,
-  ): Promise<void> {
+    failures = 0,
+  ): Promise<NextPass | undefined> {
     const lock = await this.aquireMatchmakeRegionLock(region);
     if (!lock) {
       this.logger.warn(
@@ -216,6 +223,19 @@ export class MatchmakeService {
 
       if (lobbies.length === 0) {
         await this.releaseMatchmakeRegionLock(region);
+
+        if (pass.unchecked) {
+          return await this.scheduleExpandedSearch(
+            type,
+            region,
+            Math.min(
+              MatchmakeService.UNCHECKED_RETRY_MS * 2 ** failures,
+              MatchmakeService.UNCHECKED_RETRY_CAP_MS,
+            ),
+            failures + 1,
+          );
+        }
+
         return;
       }
 
@@ -237,7 +257,7 @@ export class MatchmakeService {
         `${totalPlayerNotQueued} players not queued, expanding search....`,
       );
 
-      await this.scheduleExpandedSearch(
+      return await this.scheduleExpandedSearch(
         type,
         region,
         10000 + Math.floor(Math.random() * 10000),
@@ -262,11 +282,12 @@ export class MatchmakeService {
     type: e_match_types_enum,
     region: string,
     delay: number,
-  ) {
+    failures = 0,
+  ): Promise<NextPass> {
     try {
       await this.queue.add(
         "ExpandMatchmaking",
-        { type, region },
+        { type, region, failures },
         {
           delay,
           jobId: `matchmaking.expand.${type}.${region}`,
@@ -280,7 +301,12 @@ export class MatchmakeService {
         error,
       );
     }
+
+    return { delay, failures };
   }
+
+  private static readonly UNCHECKED_RETRY_MS = 10 * 1000;
+  private static readonly UNCHECKED_RETRY_CAP_MS = 5 * 60 * 1000;
 
   private async processLobbyData(
     lobbiesData: string[],
@@ -302,9 +328,8 @@ export class MatchmakeService {
       // However it got back in the queue, a lobby in a ready check, or in the
       // match that came out of one, must not be claimed into another.
       if (await this.hasCurrentConfirmation(details.lobbyId)) {
-        await this.matchmakingLobbyService.removeLobbyFromQueue(
-          details.lobbyId,
-        );
+        await this.matchmakingLobbyService.dequeueLobby(details.lobbyId);
+        pass.claimed = true;
         continue;
       }
 
@@ -323,20 +348,28 @@ export class MatchmakeService {
         `Unable to check who is already in a match for ${type}/${region}:`,
         error,
       );
-      await this.scheduleExpandedSearch(
-        type,
-        region,
-        10000 + Math.floor(Math.random() * 10000),
-      );
+      pass.unchecked = true;
       return [];
     }
 
     const lobbyDetails = [];
+    // A player who joined a party is still in their solo entry until the
+    // lobby_players event removes it.
+    const seated = new Set<string>();
 
     for (const details of queued) {
       if (details.players.some((player) => busy.has(player.steam_id))) {
         await this.dropLobbyWithBusyPlayers(details, busy);
+        pass.claimed = true;
         continue;
+      }
+
+      if (details.players.some((player) => seated.has(player.steam_id))) {
+        continue;
+      }
+
+      for (const player of details.players) {
+        seated.add(player.steam_id);
       }
 
       if (details.players.length === ExpectedPlayers[details.type]) {
@@ -613,7 +646,18 @@ export class MatchmakeService {
     }
   }
 
+  // A lobby that left after the pass read it is no longer in any of its
+  // queues, and must not be claimed into a ready check it would never see.
   private static readonly CLAIM_LOBBY_SCRIPT = `
+    local queued = false
+    for i = 2, #KEYS do
+      if redis.call('ZSCORE', KEYS[i], ARGV[1]) then
+        queued = true
+      end
+    end
+    if not queued then
+      return 0
+    end
     local acquired = redis.call('SET', KEYS[1], 1, 'EX', ARGV[2], 'NX')
     if not acquired then
       return 0
@@ -656,13 +700,12 @@ export class MatchmakeService {
 
   private async releaseLobbyAndRequeue(lobbyId: string): Promise<void> {
     await this.releaseLobbyLock(lobbyId, 0);
-    // A ready check that failed part way may already have stamped the lobby
-    // with its id, and every pass skips a lobby stamped by a live ready check.
-    await this.matchmakingLobbyService.removeConfirmationIdFromLobby(lobbyId);
     await this.addLobbyToQueue(lobbyId);
   }
 
-  private async hasCurrentConfirmation(lobbyId: string) {
+  // A stamp can outlive its ready check when the lobby left first, so it only
+  // counts while the confirmation it names still exists.
+  public async hasCurrentConfirmation(lobbyId: string) {
     const confirmationId = await this.redis.hget(
       getMatchmakingLobbyDetailsCacheKey(lobbyId),
       "confirmationId",
@@ -721,7 +764,7 @@ export class MatchmakeService {
     );
 
     await this.releaseLobbyLock(lobby.lobbyId, 0);
-    await this.matchmakingLobbyService.removeLobbyFromQueue(lobby.lobbyId);
+    await this.matchmakingLobbyService.dequeueLobby(lobby.lobbyId);
     await this.matchmakingLobbyService.removeLobbyDetails(lobby.lobbyId);
 
     for (const player of lobby.players) {
@@ -783,37 +826,59 @@ export class MatchmakeService {
 
     const confirmationId = uuidv4();
 
-    await this.setConfirmationDetails(
-      region,
-      type,
-      confirmationId,
-      team1,
-      team2,
-    );
+    // Only this call can stamp these lobbies while it holds their locks.
+    const stamped: string[] = [];
 
-    for (const lobbyId of [...team1.lobbies, ...team2.lobbies]) {
-      await this.matchmakingLobbyService.setMatchConformationIdForLobby(
-        lobbyId,
-        confirmationId,
-      );
-      await this.matchmakingLobbyService.sendQueueDetailsToLobby(lobbyId);
-    }
-
-    void this.notifications
-      .notifyMatchFound(
-        confirmationId,
-        [...team1.players, ...team2.players].map(({ steam_id }) => steam_id),
+    try {
+      await this.setConfirmationDetails(
+        region,
         type,
-        30,
-      )
-      .catch((error) => {
-        this.logger.warn(
-          `unable to push match found for confirmation ${confirmationId}`,
-          error,
-        );
-      });
+        confirmationId,
+        team1,
+        team2,
+      );
 
-    await this.cancelMatchMakingDueToReadyCheck(confirmationId);
+      for (const lobbyId of [...team1.lobbies, ...team2.lobbies]) {
+        await this.matchmakingLobbyService.setMatchConformationIdForLobby(
+          lobbyId,
+          confirmationId,
+        );
+        stamped.push(lobbyId);
+        await this.matchmakingLobbyService.sendQueueDetailsToLobby(lobbyId);
+      }
+
+      void this.notifications
+        .notifyMatchFound(
+          confirmationId,
+          [...team1.players, ...team2.players].map(({ steam_id }) => steam_id),
+          type,
+          30,
+        )
+        .catch((error) => {
+          this.logger.warn(
+            `unable to push match found for confirmation ${confirmationId}`,
+            error,
+          );
+        });
+
+      await this.cancelMatchMakingDueToReadyCheck(confirmationId);
+    } catch (error) {
+      try {
+        for (const lobbyId of stamped) {
+          await this.matchmakingLobbyService.removeConfirmationIdFromLobby(
+            lobbyId,
+          );
+        }
+        await this.removeConfirmationDetails(confirmationId);
+      } catch (cleanupError) {
+        this.logger.error(
+          `Unable to clean up confirmation ${confirmationId}:`,
+          cleanupError,
+        );
+      }
+
+      throw error;
+    }
   }
 
   public async cancelMatchMakingDueToReadyCheck(confirmationId: string) {
@@ -955,6 +1020,8 @@ export class MatchmakeService {
       }
 
       shouldMatchmake = true;
+      // the ready check's lock would otherwise hold it out of the next pass
+      await this.releaseLobbyLock(lobbyId, 0);
       await this.addLobbyToQueue(lobbyId);
     }
 
@@ -1047,9 +1114,10 @@ export class MatchmakeService {
       players.map((player) => player.steam_id),
     );
 
+    // The cancel job stays queued until the match is made: if this abort
+    // fails part way it still cleans up, and on a removed confirmation it
+    // does nothing.
     if (busy.size > 0) {
-      await this.removeCancelMatchMakingJob(confirmationId);
-
       for (const lobbyId of lobbyIds) {
         const lobby =
           await this.matchmakingLobbyService.getLobbyDetails(lobbyId);

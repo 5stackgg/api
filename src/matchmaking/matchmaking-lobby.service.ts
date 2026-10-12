@@ -203,6 +203,8 @@ export class MatchmakingLobbyService {
     const lobbyDetails = await this.getLobbyDetails(lobbyId);
 
     if (!lobbyDetails) {
+      // a pass that claimed the lobby just before it left still stamps it
+      await this.removeConfirmationIdFromLobby(lobbyId);
       return;
     }
 
@@ -307,13 +309,14 @@ export class MatchmakingLobbyService {
   // Details stay set from the join until the lobby leaves or its match ends,
   // through the ready check and the match itself.
   public async isLobbyQueued(lobbyId: string) {
-    const [details, confirmationId] = await this.redis.hmget(
+    const details = await this.redis.hget(
       getMatchmakingLobbyDetailsCacheKey(lobbyId),
       "details",
-      "confirmationId",
     );
 
-    return !!details || !!confirmationId;
+    return (
+      !!details || (await this.matchmaking.hasCurrentConfirmation(lobbyId))
+    );
   }
 
   // TODO - extermly inefficient
