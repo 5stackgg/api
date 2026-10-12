@@ -5,6 +5,19 @@ DECLARE
     first_stage_id uuid;
     bracket_row tournament_brackets%ROWTYPE;
 BEGIN
+    -- The free agent draft runs once, so a field taking entries again starts
+    -- from an undrafted pool. Not out of CheckInReview: reopening there only
+    -- extends check-in for the field already in.
+    IF NEW.status IS DISTINCT FROM OLD.status AND (
+        NEW.status = 'Setup'
+        OR (
+            NEW.status = 'RegistrationOpen'
+            AND OLD.status IN ('RegistrationClosed', 'Cancelled', 'CancelledMinTeams')
+        )
+    ) THEN
+        PERFORM undo_tournament_free_agent_draft(NEW.id);
+    END IF;
+
     IF (
          NEW.status IS DISTINCT FROM OLD.status AND
          NEW.status IN ('RegistrationOpen')
