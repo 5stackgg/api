@@ -9,9 +9,11 @@ import { DemoParserService, ParsedDemo } from "./demo-parser.service";
 
 // The PLAYBACK BLOB's shape, not the parser's (ParsedDemo.schema_version).
 // v10 adds `ducked` to positions and carries the parser's own version through.
-// Both additions are additive, so a reader that tolerates unknown fields keeps
-// working; a reader that pins `schema_version === 9` will reject every new blob.
-export const DEMO_METADATA_VERSION = 10;
+// v11 adds `smoke_voxels` (each smoke as the game simulated it, parser schema
+// 3+), `flashes`, and weapon / hitgroup / armor damage on `damages`.
+// Every addition is additive, so a reader that tolerates unknown fields keeps
+// working; a reader that pins an exact `schema_version` rejects every new blob.
+export const DEMO_METADATA_VERSION = 11;
 
 export type DemoRow = {
   id: string;
@@ -753,8 +755,10 @@ export class DemoMetadataService {
         `${blob.shots_fired.length} shots, ` +
         `${blob.grenade_throws.length} grenade events, ` +
         `${blob.smoke_volumes.length} smoke volumes, ` +
+        `${blob.smoke_voxels.length} smoke voxel grids, ` +
         `${blob.infernos.length} infernos, ` +
-        `${blob.damages.length} damages)`,
+        `${blob.damages.length} damages, ` +
+        `${blob.flashes.length} flashes)`,
     );
     return key;
   }
@@ -941,13 +945,28 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
     ),
   ];
 
+  // The parser omits zero values, so an absent hitgroup is 0 (generic) and an
+  // absent armor figure is no armor damage.
   const damages = (parsed.damages ?? []).map((d) => ({
     round: d.round ?? 0,
     time: String(d.tick),
     attacker_steam_id: d.attacker ?? null,
     attacked_steam_id: d.victim ?? null,
+    weapon: d.weapon ?? null,
+    hitgroup: d.hitgroup ?? 0,
     damage: d.damage,
+    damage_armor: d.damage_armor ?? 0,
     health: d.health ?? null,
+  }));
+
+  const flashes = (parsed.flashes ?? []).map((f) => ({
+    round: f.round ?? 0,
+    tick: f.tick,
+    attacker_steam_id: f.attacker ?? null,
+    attacked_steam_id: f.victim ?? null,
+    // Seconds of blindness.
+    duration: f.duration ?? 0,
+    team_flash: f.team_flash ?? false,
   }));
 
   const round_inventory = (parsed.round_inventory ?? []).map((r) => ({
@@ -987,8 +1006,10 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
     grenade_throws,
     grenade_trajectories: parsed.grenade_trajectories ?? [],
     smoke_volumes: parsed.smoke_volumes ?? [],
+    smoke_voxels: parsed.smoke_voxels ?? [],
     infernos: parsed.infernos ?? [],
     damages,
+    flashes,
     round_inventory,
   };
 }

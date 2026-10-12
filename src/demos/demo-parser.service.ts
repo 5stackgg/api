@@ -213,6 +213,27 @@ export type ParsedSmokeVolume = {
   den?: string;
 };
 
+// One smoke as the game itself simulated it, rebuilt by the parser from the
+// voxel log CS2 networks on the projectile. `arr` is base64, one byte per cell
+// over dx*dy*dz cells, x fastest, then y, then z: cell (i,j,k) is at index
+// (k*dy + j)*dx + i and has its minimum corner at (ox,oy,oz) + (i,j,k)*vs. A
+// byte is when the cell filled after detonation in 1/40 s (0-254), or 255 for
+// a cell the smoke never reached.
+export type ParsedSmokeVoxels = {
+  gid: number;
+  round: number;
+  start_tick: number;
+  end_tick: number;
+  ox: number;
+  oy: number;
+  oz: number;
+  vs: number;
+  dx: number;
+  dy: number;
+  dz: number;
+  arr: string;
+};
+
 // What POST /smoke-volume answers with: the same EventSmokeVolume the playback
 // blob carries, inline, plus the two numbers only the standalone endpoint knows.
 export type ParsedSmokeVolumeResponse = ParsedSmokeVolume & {
@@ -405,6 +426,7 @@ export type ParsedDemo = {
     pts: Array<{ t: number; x: number; y: number; z: number }>;
   }>;
   smoke_volumes?: ParsedSmokeVolume[];
+  smoke_voxels?: ParsedSmokeVoxels[];
   infernos?: ParsedInferno[];
   flashes?: Array<{
     tick: number;
