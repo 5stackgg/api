@@ -432,9 +432,9 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
     expect(lineup).toEqual(await roster(cup.tt1));
   });
 
-  // Only an unseatable banned player can get the roster this far: the lock
-  // counts them, the lineup cannot seat them, so the lineup would be left as
-  // it is with the removed player still in it.
+  // A rostered player the lineup cannot seat, banned here, gets the roster
+  // this far: the lock counts them all the same, so the lineup would be left
+  // as it is with the removed player still in it.
   it.each(["Scheduled", "WaitingForCheckIn"])(
     "refuses to remove a seated player when a %s match could not field the minimum without them",
     async (status) => {

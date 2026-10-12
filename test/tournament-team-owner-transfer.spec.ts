@@ -256,8 +256,6 @@ describe("tournament entry owner follows a team ownership transfer (SQL-driven)"
     rollback(): Promise<void>;
   };
 
-  // A transaction left open on its own connection, so a second write can be
-  // started against whatever it holds.
   const openSession = async (
     steamId?: string,
     role?: string,
@@ -430,8 +428,13 @@ describe("tournament entry owner follows a team ownership transfer (SQL-driven)"
       expect(await poolOf(t.id)).toEqual([]);
     });
 
+    // Not seated, though the entry has room: the transfer read the pool
+    // before it waited, and seating them after the wait would hold the entry
+    // lock while taking the roster key.
     it("removes a pool sign-up the transfer waited for", async () => {
-      const { t, team, heir } = await entryWithHeir();
+      const { t, team, entryId, heir, starter } = await entryWithHeir({
+        substitutes: 1,
+      });
       const signingUp = await openSession(heir, "user");
       let transferred: Promise<string> | undefined;
       try {
@@ -451,9 +454,10 @@ describe("tournament entry owner follows a team ownership transfer (SQL-driven)"
       expect(await transferred).toBe("done");
       expect((await entry(t.id, team.id)).owner_steam_id).toBe(heir);
       expect(await poolOf(t.id)).toEqual([]);
+      expect(await rosterIds(entryId)).toEqual([team.owner, starter].sort());
     });
 
-    // Every roster insert takes the (tournament, player) roster key first and
+    // A player joining a roster takes the (tournament, player) roster key and
     // the tournament_entry lock after it. Taken the other way round here, a
     // new owner joining another roster at the same moment deadlocks with the
     // transfer.

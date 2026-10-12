@@ -339,10 +339,12 @@ BEGIN
         END IF;
     END IF;
 
-    -- After the roster row, never before: every roster insert takes the
-    -- roster key first and this lock in tai_tournament_team_roster_free_agents,
-    -- so the other order deadlocks against a new owner who is joining a
-    -- roster at the same moment.
+    -- After the roster row, never before. A player joining a roster holds its
+    -- key by the time tai_tournament_team_roster_free_agents takes this lock,
+    -- so waiting on the key with the lock held deadlocks against a new owner
+    -- who is joining one at the same moment. That is also why the pool row was
+    -- read before the lock: a sign-up still in flight then is removed here,
+    -- but not seated.
     PERFORM pg_advisory_xact_lock(
         hashtext('tournament_entry'),
         hashtext(NEW.tournament_id::text || ':' || NEW.owner_steam_id::text)

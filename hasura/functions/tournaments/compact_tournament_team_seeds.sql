@@ -1,5 +1,3 @@
--- Renumbers a tournament's seeded teams 1..n in their current order. Unseeded
--- teams stay unseeded.
 CREATE OR REPLACE FUNCTION public.compact_tournament_team_seeds(_tournament_id uuid)
 RETURNS void
 LANGUAGE plpgsql
