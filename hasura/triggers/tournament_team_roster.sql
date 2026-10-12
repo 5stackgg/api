@@ -286,6 +286,7 @@ CREATE OR REPLACE FUNCTION public.taid_tournament_team_roster_lineups() RETURNS 
     AS $$
 DECLARE
     _heir bigint;
+    _min_players int;
 BEGIN
     IF TG_OP = 'DELETE' THEN
         -- The team's own captain and owner are its registration defaults (see
@@ -312,6 +313,44 @@ BEGIN
     END IF;
 
     PERFORM refresh_unstarted_tournament_team_lineups(COALESCE(NEW.tournament_team_id, OLD.tournament_team_id), false);
+
+    IF TG_OP <> 'DELETE' THEN
+        RETURN NULL;
+    END IF;
+
+    -- The refresh leaves a lineup it cannot keep at the minimum as it is, which
+    -- only an unseatable banned player on the roster can cause: the roster lock
+    -- counts them, the lineup cannot seat them. The removed player would then
+    -- keep a seat in a match they are no longer rostered for. A banned player
+    -- may always go, since that is how a full roster makes room for a
+    -- replacement.
+    SELECT match_min_players_per_lineup(m)
+      INTO _min_players
+      FROM tournament_teams tt
+      INNER JOIN tournaments t ON t.id = tt.tournament_id
+      INNER JOIN tournament_stages ts ON ts.tournament_id = t.id
+      INNER JOIN tournament_brackets tb ON tb.tournament_stage_id = ts.id
+      INNER JOIN matches m ON m.id = tb.match_id
+      INNER JOIN match_lineup_players mlp
+         ON mlp.match_lineup_id = CASE
+                WHEN tb.tournament_team_id_1 = tt.id THEN m.lineup_1_id
+                ELSE m.lineup_2_id
+            END
+      INNER JOIN players p ON p.steam_id = mlp.steam_id
+     WHERE tt.id = OLD.tournament_team_id
+       AND t.status IN ('RegistrationClosed', 'Live', 'Paused')
+       AND tt.id IN (tb.tournament_team_id_1, tb.tournament_team_id_2)
+       AND m.status IN ('Scheduled', 'WaitingForCheckIn')
+       AND mlp.steam_id = OLD.player_steam_id
+       AND NOT is_banned(p)
+     LIMIT 1;
+
+    IF FOUND THEN
+        RAISE EXCEPTION USING
+            ERRCODE = '22000',
+            MESSAGE = 'Cannot remove player: the team could not field the minimum lineup of ' || _min_players
+                || ' players in its next match, because a banned player on the roster cannot be seated. Remove or replace the banned player first';
+    END IF;
 
     RETURN NULL;
 END;
