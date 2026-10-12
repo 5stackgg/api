@@ -27,6 +27,7 @@ function makeService() {
     del: jest.fn().mockResolvedValue(1),
     hdel: jest.fn().mockResolvedValue(1),
     keys: jest.fn().mockResolvedValue([]),
+    exists: jest.fn().mockResolvedValue(1),
     publish: jest.fn().mockResolvedValue(1),
     subscribe: jest.fn().mockResolvedValue(1),
     on: jest.fn(),
@@ -427,6 +428,13 @@ describe("SocketsService presence", () => {
 
     await service.heartbeat(USER.steam_id, "client-1");
 
+    expect(redis.set).toHaveBeenCalledWith(
+      `players:${USER.steam_id}`,
+      expect.any(String),
+      "EX",
+      expect.any(Number),
+      "GET",
+    );
     expect(matchmaking.cancelOffline).toHaveBeenCalledWith(USER.steam_id);
     expect(redis.publish).toHaveBeenCalledWith(
       "broadcast-message",
@@ -442,5 +450,116 @@ describe("SocketsService presence", () => {
 
     expect(matchmaking.cancelOffline).not.toHaveBeenCalled();
     expect(redis.publish).not.toHaveBeenCalled();
+  });
+});
+
+describe("SocketsService offline", () => {
+  afterEach(() => {
+    sessionLoad.impl = (_request, next) => next();
+    jest.useRealTimers();
+  });
+
+  const settle = () => new Promise((resolve) => setImmediate(resolve));
+
+  const closeListener = (client: any) =>
+    client.on.mock.calls.find(([event]: [string]) => event === "close")[1];
+
+  async function connect(service: SocketsService): Promise<any> {
+    const client = socket();
+    signIn(USER);
+    await service.setupSocket(client, {} as any);
+    await settle();
+    return client;
+  }
+
+  // A reload's new socket registers while the old one is closing; whatever it
+  // cancels has to be queued already.
+  it("queues the offline job before anyone can see the player gone", async () => {
+    const { service, redis, matchmaking } = makeService();
+    const client = await connect(service);
+
+    await closeListener(client)();
+
+    const queued = matchmaking.markOffline.mock.invocationCallOrder[0];
+    const removed =
+      redis.del.mock.invocationCallOrder[
+        redis.del.mock.calls.findIndex(
+          ([key]: [string]) => key === `players:${USER.steam_id}`,
+        )
+      ];
+    const announced = redis.publish.mock.invocationCallOrder.at(-1);
+
+    expect(queued).toBeLessThan(removed);
+    expect(queued).toBeLessThan(announced);
+  });
+
+  it("counts a tab on a pod that has died as gone", async () => {
+    const { service, redis, matchmaking } = makeService();
+    const client = await connect(service);
+    redis.keys.mockResolvedValue([
+      `clients:${USER.steam_id}:dead-pod:client-9`,
+    ]);
+    redis.exists.mockImplementation(async (key: string) =>
+      key === "sockets:pod:dead-pod" ? 0 : 1,
+    );
+
+    await closeListener(client)();
+
+    expect(matchmaking.markOffline).toHaveBeenCalledWith(USER.steam_id);
+  });
+
+  it("keeps a player online while a tab of theirs is on a live pod", async () => {
+    const { service, redis, matchmaking } = makeService();
+    const client = await connect(service);
+    redis.keys.mockResolvedValue([
+      `clients:${USER.steam_id}:other-pod:client-9`,
+    ]);
+
+    await closeListener(client)();
+
+    expect(matchmaking.markOffline).not.toHaveBeenCalled();
+  });
+
+  it("keeps this pod marked alive", async () => {
+    jest.useFakeTimers();
+    const { service, redis } = makeService();
+    const podWrites = () =>
+      redis.set.mock.calls.filter(
+        ([key]: [string]) => key === `sockets:pod:${undefined}`,
+      );
+
+    service.onModuleInit();
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(podWrites()).toHaveLength(1);
+    const [, , ex, ttl] = podWrites()[0];
+    expect(ex).toBe("EX");
+    expect(ttl).toBeLessThanOrEqual(30);
+
+    await jest.advanceTimersByTimeAsync((ttl * 1000) / 2);
+    expect(podWrites().length).toBeGreaterThan(1);
+
+    service.onApplicationShutdown();
+  });
+
+  it("drops a socket that has been silent for longer than presence lasts", async () => {
+    const { service } = makeService();
+    const silent = await connect(service);
+    const pinging = await connect(service);
+
+    jest.useFakeTimers({
+      now: Date.now(),
+      doNotFake: ["setImmediate", "nextTick"],
+    });
+    service.onModuleInit();
+
+    await jest.advanceTimersByTimeAsync(100 * 1000);
+    await service.heartbeat(USER.steam_id, pinging.id);
+    await jest.advanceTimersByTimeAsync(60 * 1000);
+
+    expect(silent.terminate).toHaveBeenCalled();
+    expect(pinging.terminate).not.toHaveBeenCalled();
+
+    service.onApplicationShutdown();
   });
 });
