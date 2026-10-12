@@ -331,27 +331,32 @@ export class DemoMetadataService {
     return results;
   }
 
-  public async ensureParsedById(matchMapDemoId: string): Promise<void> {
+  // True only when this call is the one that parsed the demo. A demo that was
+  // already parsed, one another caller is parsing, and a failed parse are all
+  // false, so the caller can tell when the stats have just landed.
+  public async ensureParsedById(matchMapDemoId: string): Promise<boolean> {
     const demo = await this.fetchDemoById(matchMapDemoId);
     if (!demo) {
       this.logger.warn(
         `[demo-parser] ensureParsedById: no row for ${matchMapDemoId}`,
       );
-      return;
+      return false;
     }
 
     if (isDemoFresh(demo)) {
-      return;
+      return false;
     }
 
     const existing = this.inFlight.get(demo.id);
     if (existing) {
       await existing;
-      return;
+      return false;
     }
 
+    let parsed = true;
     const parsing = this.parseAndPersist(demo)
       .catch((error) => {
+        parsed = false;
         this.logger.warn(
           `[demo-parser] parse failed for ${demo.id}: ${(error as Error)?.message}`,
         );
@@ -360,6 +365,7 @@ export class DemoMetadataService {
       .finally(() => this.inFlight.delete(demo.id));
     this.inFlight.set(demo.id, parsing);
     await parsing;
+    return parsed;
   }
 
   public async reparseById(matchMapDemoId: string): Promise<DemoRow> {

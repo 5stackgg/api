@@ -256,7 +256,11 @@ export class DemosController {
     );
 
     if (matchMapDemoId) {
-      void this.demoMetadata.ensureParsedById(matchMapDemoId);
+      void this.demoMetadata.ensureParsedById(matchMapDemoId).then((parsed) => {
+        if (parsed) {
+          return this.notifyStatsReady(matchId);
+        }
+      });
     }
 
     return response.status(200).send();
@@ -295,26 +299,41 @@ export class DemosController {
 
     await this.demoMetadata.persistParsed(matchMapDemoId, parsed);
 
-    // The end of the wait the stats-ready countdown has been showing since
-    // WaitingForTV (see the tbu_match_maps trigger). Everyone who played is
-    // waiting on exactly this.
     void this.notifyStatsReady(matchId);
 
     return response.status(200).json({ matchMapDemoId });
   }
 
+  // The end of the wait the stats-ready countdown has been showing since
+  // WaitingForTV (see the tbu_match_maps trigger). Everyone who played is
+  // waiting on exactly this.
   private async notifyStatsReady(matchId: string) {
     try {
-      // Fired once per match, not once per demo. A Bo3 parses three of them,
-      // and a reparse runs the whole thing again -- either would otherwise send
-      // the same "your stats are ready" several times over.
-      const [alreadySent] = await this.postgres.query<Array<{ id: string }>>(
-        `SELECT id FROM public.notifications
-          WHERE type = 'MatchStatsReady' AND entity_id = $1 LIMIT 1`,
+      // Once per match, after its last demo: a Bo3 parses one per map, the
+      // first while the next map is still being played. The deciding map's
+      // demo is posted before that map is Finished, so a decided series counts
+      // as over. Only an upload's first parse gets here, never a reparse, so a
+      // Reparse All cannot send it for every match already played. A demo
+      // that failed to parse holds it back as well -- that map's stats are not
+      // ready.
+      const [ready] = await this.postgres.query<Array<{ ready: boolean }>>(
+        `SELECT true AS ready
+           FROM public.matches m
+          WHERE m.id = $1::uuid
+            AND (m.status IN ('Finished', 'Tie', 'Forfeit', 'Surrendered')
+                 OR public.match_series_decided(m.id))
+            AND NOT EXISTS (
+              SELECT 1 FROM public.match_map_demos d
+               WHERE d.match_id = m.id AND d.metadata_parsed_at IS NULL
+            )
+            AND NOT EXISTS (
+              SELECT 1 FROM public.notifications n
+               WHERE n.type = 'MatchStatsReady' AND n.entity_id = m.id::text
+            )`,
         [matchId],
       );
 
-      if (alreadySent) {
+      if (!ready) {
         return;
       }
 

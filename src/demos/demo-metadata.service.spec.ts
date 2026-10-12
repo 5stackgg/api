@@ -187,3 +187,70 @@ describe("DemoMetadataService.uploadPlaybackBlob", () => {
     expect(blob.parser_schema_version).toBeNull();
   });
 });
+
+describe("DemoMetadataService.ensureParsedById", () => {
+  const ROW = {
+    id: "demo-1",
+    match_id: "match-1",
+    match_map_id: "map-1",
+    file: "demos/match-1/map-1/1-de_inferno.dem",
+    playback_file: null,
+    total_ticks: null,
+    tick_rate: null,
+    round_ticks: null,
+    workshop_id: null,
+    cs2_build: null,
+    metadata_parsed_at: null,
+  };
+
+  function make(row: Record<string, unknown>, parse: jest.Mock) {
+    return new DemoMetadataService(
+      new Logger("DemoMetadataTest"),
+      {
+        query: jest.fn(async () => ({ match_map_demos_by_pk: row })),
+      } as never,
+      { query: jest.fn(async () => []) } as never,
+      { put: jest.fn(async () => {}) } as never,
+      { parseFromS3Key: parse } as never,
+      null as never,
+      null as never,
+    );
+  }
+
+  const parsed = { total_ticks: 100, tick_rate: 64, round_ticks: [] };
+
+  // The upload path reads this to know the stats have just been written.
+  it("answers true when this call parsed the demo", async () => {
+    const parse = jest.fn(async () => parsed);
+
+    await expect(make(ROW, parse).ensureParsedById("demo-1")).resolves.toBe(
+      true,
+    );
+    expect(parse).toHaveBeenCalledTimes(1);
+  });
+
+  it("answers false for a demo that is already parsed", async () => {
+    const parse = jest.fn(async () => parsed);
+    const fresh = {
+      ...ROW,
+      total_ticks: 100,
+      metadata_parsed_at: "2026-10-12T00:00:00Z",
+      playback_file: `demos/match-1/map-1/playback/playback.v${DEMO_METADATA_VERSION}.1.json.gz`,
+    };
+
+    await expect(make(fresh, parse).ensureParsedById("demo-1")).resolves.toBe(
+      false,
+    );
+    expect(parse).not.toHaveBeenCalled();
+  });
+
+  it("answers false when the parse fails", async () => {
+    const parse = jest.fn(async () => {
+      throw new Error("demo-parser 500");
+    });
+
+    await expect(make(ROW, parse).ensureParsedById("demo-1")).resolves.toBe(
+      false,
+    );
+  });
+});
