@@ -119,10 +119,12 @@ export class ParseImportedDemo extends WorkerHost {
     demoUrl: string,
     matchStartTime: string | null,
   ): Promise<void> {
+    const startedAt = Date.now();
     const parsed = await this.demoParser.parseFromUrl(demoUrl);
     if (!parsed) {
       throw new Error("demo parse failed");
     }
+    const parsedAt = Date.now();
 
     const result = await this.matchImport.importExternalDemo(
       parsed,
@@ -144,8 +146,10 @@ export class ParseImportedDemo extends WorkerHost {
       [valveMatchId],
     );
 
+    const doneAt = Date.now();
     this.logger.log(
-      `parse-imported-demo done valve_match_id=${valveMatchId} match_id=${result.matchId}`,
+      `parse-imported-demo done valve_match_id=${valveMatchId} match_id=${result.matchId} ` +
+        `in ${((doneAt - startedAt) / 1000).toFixed(1)}s (parse ${((parsedAt - startedAt) / 1000).toFixed(1)}s, import ${((doneAt - parsedAt) / 1000).toFixed(1)}s)`,
     );
   }
 

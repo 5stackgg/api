@@ -600,10 +600,14 @@ export class DemoMetadataService {
     parsed: ParsedDemo,
     prevPlaybackFile: string | null = null,
   ): Promise<string> {
-    const key = playbackBlobKey(matchId, matchMapId, Date.now());
+    const startedAt = Date.now();
+    const key = playbackBlobKey(matchId, matchMapId, startedAt);
     const blob = buildPlaybackBlob(matchMapId, parsed);
+    const builtAt = Date.now();
     const gz = zlib.gzipSync(Buffer.from(JSON.stringify(blob)));
+    const gzippedAt = Date.now();
     await this.s3.put(key, gz);
+    const uploadedAt = Date.now();
     await this.postgres.query(
       `UPDATE public.match_map_demos
          SET playback_file = $1,
@@ -640,7 +644,9 @@ export class DemoMetadataService {
         `${blob.smoke_voxels.length} smoke voxel grids, ` +
         `${blob.infernos.length} infernos, ` +
         `${blob.damages.length} damages, ` +
-        `${blob.flashes.length} flashes)`,
+        `${blob.flashes.length} flashes) ` +
+        `in ${Date.now() - startedAt}ms (build ${builtAt - startedAt}ms, ` +
+        `gzip ${gzippedAt - builtAt}ms, upload ${uploadedAt - gzippedAt}ms)`,
     );
     return key;
   }
