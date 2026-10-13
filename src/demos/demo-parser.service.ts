@@ -509,13 +509,27 @@ export class DemoParserService {
       `[demo-parser] POST ${this.appConfig.demoParserUrl}/parse (s3_key=${s3Key}${matchMapDemoId ? ` id=${matchMapDemoId}` : ""})`,
     );
 
+    const startedAt = Date.now();
     const res = await this.postParse(presignedUrl, matchMapDemoId);
+    const respondedAt = Date.now();
 
     const parsed = (await res.json()) as ParsedDemo;
     this.logger.log(
-      `[demo-parser] parsed: ${parsed.total_ticks} ticks @ ${parsed.tick_rate} tps, ${parsed.round_ticks?.length ?? 0} rounds, ${parsed.kills?.length ?? 0} kills, ${parsed.bombs?.length ?? 0} bombs, ${parsed.shots_fired?.length ?? 0} shots, ${parsed.damages?.length ?? 0} dmg, ${parsed.spotted?.length ?? 0} spotted, ${parsed.grenade_throws?.length ?? 0} thrown, ${parsed.grenade_detonations?.length ?? 0} detonated, map=${parsed.map_name ?? "<unknown>"}${parsed.workshop_id ? ` (workshop ${parsed.workshop_id})` : ""}`,
+      `[demo-parser] parsed ${DemoParserService.timing(startedAt, respondedAt)}: ${DemoParserService.summarize(parsed)}`,
     );
     return parsed;
+  }
+
+  // How long a parse took as the api saw it: until the parser answered (it
+  // downloads, parses and starts writing before it does) and then reading the
+  // JSON off the wire. The parser's own log has the split inside the first.
+  private static timing(startedAt: number, respondedAt: number): string {
+    const done = Date.now();
+    return `in ${((done - startedAt) / 1000).toFixed(1)}s (answered after ${((respondedAt - startedAt) / 1000).toFixed(1)}s, body read in ${done - respondedAt}ms)`;
+  }
+
+  private static summarize(parsed: ParsedDemo): string {
+    return `${parsed.total_ticks} ticks @ ${parsed.tick_rate} tps, ${parsed.round_ticks?.length ?? 0} rounds, ${parsed.kills?.length ?? 0} kills, ${parsed.bombs?.length ?? 0} bombs, ${parsed.shots_fired?.length ?? 0} shots, ${parsed.damages?.length ?? 0} dmg, ${parsed.spotted?.length ?? 0} spotted, ${parsed.grenade_throws?.length ?? 0} thrown, ${parsed.grenade_detonations?.length ?? 0} detonated, map=${parsed.map_name ?? "<unknown>"}${parsed.workshop_id ? ` (workshop ${parsed.workshop_id})` : ""}`;
   }
 
   public async parseFromUrl(demoUrl: string): Promise<ParsedDemo | null> {
@@ -523,17 +537,23 @@ export class DemoParserService {
       `[demo-parser] POST ${this.appConfig.demoParserUrl}/parse (external url)`,
     );
 
+    const startedAt = Date.now();
     let res: Response;
     try {
       res = await this.postParse(demoUrl);
     } catch (error) {
       this.logger.error(
-        `[demo-parser] external url failed: ${(error as Error).message}`,
+        `[demo-parser] external url failed after ${((Date.now() - startedAt) / 1000).toFixed(1)}s: ${(error as Error).message}`,
       );
       return null;
     }
+    const respondedAt = Date.now();
 
-    return (await res.json()) as ParsedDemo;
+    const parsed = (await res.json()) as ParsedDemo;
+    this.logger.log(
+      `[demo-parser] external url parsed ${DemoParserService.timing(startedAt, respondedAt)}: ${DemoParserService.summarize(parsed)}`,
+    );
+    return parsed;
   }
 
   private async postParse(

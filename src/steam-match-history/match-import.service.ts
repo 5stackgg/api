@@ -224,9 +224,13 @@ export class MatchImportService {
       // persist_imported_demo writes rounds/kills/stats and the premier rank
       // history + players.premier_rank in one shot, so there is no separate
       // JS premier-rank write here.
+      const persistStartedAt = Date.now();
       await this.postgres.query(
         `SELECT public.persist_imported_demo($1::uuid, $2::jsonb)`,
         [demoId, JSON.stringify(parsed)],
+      );
+      this.logger.log(
+        `[persist] done FULL import match=${matchId} demo=${demoId} in ${Date.now() - persistStartedAt}ms`,
       );
     } catch (error) {
       // Roll back the half-written match; otherwise findExistingByFile treats
