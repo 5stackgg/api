@@ -36,6 +36,26 @@ describe("SteamRelay", () => {
     });
   });
 
+  // The address is spliced into the connect command players run.
+  it("takes nothing but a Steam ID as an address", () => {
+    for (const address of [
+      "1.2.3.4:27015",
+      `${ADDRESS}; quit`,
+      "[A:1:3653557264:51859] ; bind w kill",
+      "[A:1:3653557264]",
+      "STEAM_1:0:1234",
+    ]) {
+      expect(SteamRelay.word(true, address)).toEqual({
+        onRelay: true,
+        address: null,
+      });
+    }
+
+    expect(SteamRelay.word(true, "[G:1:12345:0]").address).toBe(
+      "[G:1:12345:0]",
+    );
+  });
+
   it("records the address of a server on the relay", async () => {
     const { postgres } = make();
 

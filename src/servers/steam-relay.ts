@@ -18,6 +18,11 @@ export type SteamRelayWord = {
  * ever lands here.
  */
 export class SteamRelay {
+  // A Steam ID as the plugins render it, e.g. [A:1:3653557264:51859]. The
+  // address ends up inside the connect command players run, so anything else a
+  // server sends is no address at all.
+  private static readonly ADDRESS = /^\[[A-Za-z]:\d{1,3}:\d{1,10}:\d{1,10}\]$/;
+
   // Request fields are whatever the plugin sent, as a body value or a query
   // string.
   public static word(onRelay: unknown, address: unknown): SteamRelayWord {
@@ -29,8 +34,8 @@ export class SteamRelay {
             ? false
             : null,
       address:
-        typeof address === "string" && address.trim()
-          ? address.trim().slice(0, 64)
+        typeof address === "string" && SteamRelay.ADDRESS.test(address.trim())
+          ? address.trim()
           : null,
     };
   }
