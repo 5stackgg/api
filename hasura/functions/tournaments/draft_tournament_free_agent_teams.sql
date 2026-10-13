@@ -355,15 +355,10 @@ BEGIN
     DELETE FROM public.tournament_teams tt
      WHERE tt.id = ANY(_pickup_team_ids);
 
-    -- assign_seeds_to_teams keeps the seeds it finds and fills the gaps, and a
-    -- smaller bracket drops every seed past its size along with its team. The
-    -- seeds were drawn for a field that no longer exists, an organizer's hand
-    -- seeds included: nothing tells those apart, and a kept seed beyond the
-    -- next field's size takes its team out of the bracket.
-    UPDATE public.tournament_teams tt
-       SET seed = NULL
-     WHERE tt.tournament_id = _tournament_id
-       AND tt.seed IS NOT NULL;
+    -- The seeds were drawn for a field the pickup teams were part of. The
+    -- teams that remain keep their order, an organizer's hand seeding
+    -- included, numbered for the field that is left.
+    PERFORM public.compact_tournament_team_seeds(_tournament_id);
 
     -- Filtered to what tbi_tournament_free_agents accepts, since its refusal
     -- would abort the status change: whoever now fails the requirements or

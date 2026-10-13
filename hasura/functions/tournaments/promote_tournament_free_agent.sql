@@ -69,12 +69,19 @@ BEGIN
     -- Pickup teams only. In 'both' a registered team chose its own players, and
     -- the roster-delete trigger calls this for every departure in a tournament
     -- with a pool; its captain recruits a replacement by invite.
-    IF NOT EXISTS (
-        SELECT 1 FROM public.tournament_teams tt
-        WHERE tt.id = _tournament_team_id
-          AND tt.tournament_id = _tournament_id
-          AND tt.is_drafted
-    ) THEN
+    --
+    -- Locked before the roster is counted. A roster insert holds this row
+    -- (tbi_tournament_team_roster), so a count taken first misses a player an
+    -- organizer is placing by hand, and the promotion then fails on a team
+    -- that is already full instead of promoting nobody.
+    PERFORM 1
+       FROM public.tournament_teams tt
+      WHERE tt.id = _tournament_team_id
+        AND tt.tournament_id = _tournament_id
+        AND tt.is_drafted
+        FOR NO KEY UPDATE;
+
+    IF NOT FOUND THEN
         RETURN NULL;
     END IF;
 

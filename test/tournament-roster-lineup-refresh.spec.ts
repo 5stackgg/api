@@ -50,19 +50,20 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
     team2: { id: string; owner: string };
   };
 
-  // Four Competitive teams of 1 + `mates` players with two substitute slots,
-  // so a lineup holds up to 7. Round 1 is seated either by closing
-  // registration, or (`review`) by the organizer re-admitting teams while the
-  // tournament is held in CheckInReview.
+  // Four Competitive teams of 1 + `mates` players with two substitute slots
+  // unless `substitutes` says otherwise, so a lineup holds up to 7. Round 1 is
+  // seated either by closing registration, or (`review`) by the organizer
+  // re-admitting teams while the tournament is held in CheckInReview.
   const drawnCup = async (
     mates: number,
-    { review = false } = {},
+    { review = false, substitutes = 2 } = {},
   ): Promise<Cup> => {
     const organizer = await fx.player();
     const [options] = await postgres.query<Array<{ id: string }>>(
       `INSERT INTO match_options (mr, best_of, type, map_pool_id, map_veto, region_veto, regions, number_of_substitutes)
-       SELECT 8, 1, 'Competitive', id, false, true, '{TestA}', 2
+       SELECT 8, 1, 'Competitive', id, false, true, '{TestA}', $1
        FROM map_pools WHERE type = 'Competitive' AND seed = true RETURNING id`,
+      [substitutes],
     );
     const [tournament] = await postgres.query<Array<{ id: string }>>(
       `INSERT INTO tournaments (name, start, organizer_steam_id, match_options_id, status, check_in_required)
@@ -249,6 +250,9 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
   const rosterLocked =
     /minimum lineup of \d+ players while the tournament is underway/i;
 
+  const stillNeeded =
+    /unstarted match still needs them for its minimum lineup of \d+ players.*add a replacement first/i;
+
   const ban = (steamId: string) =>
     postgres.query(
       "INSERT INTO player_sanctions (player_steam_id, type) VALUES ($1, 'ban')",
@@ -428,10 +432,114 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
     expect(lineup).toEqual(await roster(cup.tt1));
   });
 
-  // Only an unseatable banned player can get the roster this far: the lock
-  // counts them, the lineup cannot seat them.
-  it("leaves the lineup as it is, and lets the write through, when the roster cannot keep it at the minimum", async () => {
+  // A rostered player the lineup cannot seat, banned here, gets the roster
+  // this far: the lock counts them all the same, so the lineup would be left
+  // as it is with the removed player still in it.
+  it.each(["Scheduled", "WaitingForCheckIn"])(
+    "refuses to remove a seated player when a %s match could not field the minimum without them",
+    async (status) => {
+      const cup = await drawnCupAt(status, 4);
+      const banned = await fx.player();
+      await ban(banned);
+      await addToRoster(cup, banned);
+      const removed = await nonCaptain(cup);
+      const before = await seated(cup.lineup1);
+
+      await expect(
+        removeFromRoster(cup, removed, {
+          actor: cup.organizer,
+          role: "tournament_organizer",
+        }),
+      ).rejects.toThrow(stillNeeded);
+
+      expect(await roster(cup.tt1)).toContain(removed);
+      expect(await seated(cup.lineup1)).toEqual(before);
+    },
+  );
+
+  it("refuses to remove a seated player when their only cover stands in for the other side", async () => {
     const cup = await drawnCupAt("WaitingForCheckIn", 4);
+    const standIn = await fx.player();
+    await runAsUser(postgres, cup.organizer, "admin", (query) =>
+      query(
+        "INSERT INTO match_lineup_players (match_lineup_id, steam_id) VALUES ($1, $2)",
+        [cup.lineup2, standIn],
+      ),
+    );
+    await addToRoster(cup, standIn);
+    const removed = await nonCaptain(cup);
+    const before = await seated(cup.lineup1);
+
+    const refusal = await removeFromRoster(cup, removed, {
+      actor: cup.organizer,
+      role: "tournament_organizer",
+    }).catch((error: unknown) => String(error));
+
+    expect(refusal).toMatch(stillNeeded);
+    expect(refusal).not.toMatch(/a banned player on the roster/i);
+    expect(await roster(cup.tt1)).toContain(removed);
+    expect(await seated(cup.lineup1)).toEqual(before);
+  });
+
+  it("always lets a banned player go, and drops their seat once a replacement joins", async () => {
+    const cup = await drawnCupAt("WaitingForCheckIn", 4);
+    const seatedBanned = await nonCaptain(cup);
+    await ban(seatedBanned);
+    const unseated = await fx.player();
+    await ban(unseated);
+    await addToRoster(cup, unseated);
+
+    await removeFromRoster(cup, seatedBanned, {
+      actor: cup.organizer,
+      role: "tournament_organizer",
+    });
+    expect(await roster(cup.tt1)).not.toContain(seatedBanned);
+
+    const replacement = await addToRoster(cup);
+
+    const lineup = await seatedSteamIds(cup.lineup1);
+    expect(lineup).not.toContain(seatedBanned);
+    expect(lineup).toContain(replacement);
+    expect(lineup).toEqual(
+      (await roster(cup.tt1)).filter((steamId) => steamId !== unseated),
+    );
+  });
+
+  it("swaps a player out of a full roster with two banned players by removing the unseatable one first", async () => {
+    const cup = await drawnCup(4, { substitutes: 1 });
+    const [seatedBanned, removed] = (await roster(cup.tt1)).filter(
+      (steamId) => steamId !== cup.team1.owner,
+    );
+    await ban(seatedBanned);
+    const unseated = await fx.player();
+    await ban(unseated);
+    await addToRoster(cup, unseated);
+    expect(await roster(cup.tt1)).toHaveLength(6);
+
+    await expect(removeFromRoster(cup, removed)).rejects.toThrow(stillNeeded);
+    await expect(addToRoster(cup)).rejects.toThrow(/too many players/i);
+
+    await removeFromRoster(cup, unseated);
+    const replacement = await addToRoster(cup);
+    await removeFromRoster(cup, removed);
+
+    const lineup = await seatedSteamIds(cup.lineup1);
+    expect(lineup).not.toContain(removed);
+    expect(lineup).toContain(replacement);
+    expect(lineup).toContain(seatedBanned);
+    expect(lineup).toEqual(await roster(cup.tt1));
+  });
+
+  it("lets a team whose match has started drop a player its banned teammate cannot replace", async () => {
+    const cup = await drawnCupAt("WaitingForCheckIn", 4);
+    await postgres.query(
+      `INSERT INTO match_maps (match_id, map_id, "order")
+       SELECT $1, id, 1 FROM maps WHERE type = 'Competitive' ORDER BY name LIMIT 1`,
+      [cup.matchId],
+    );
+    await postgres.query("UPDATE matches SET status = 'Live' WHERE id = $1", [
+      cup.matchId,
+    ]);
     const banned = await fx.player();
     await ban(banned);
     await addToRoster(cup, banned);

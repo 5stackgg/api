@@ -4,14 +4,12 @@ import { MatchmakingController } from "./matchmaking.controller";
 describe("MatchmakingController.lobby_players", () => {
   let lobbies: {
     removeLobbyFromQueue: jest.Mock;
-    removeLobbyDetails: jest.Mock;
   };
   let controller: MatchmakingController;
 
   beforeEach(() => {
     lobbies = {
       removeLobbyFromQueue: jest.fn(async () => false),
-      removeLobbyDetails: jest.fn(async () => undefined),
     };
     controller = new MatchmakingController(
       new Logger("MatchmakingControllerTest"),

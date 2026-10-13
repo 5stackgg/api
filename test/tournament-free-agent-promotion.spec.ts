@@ -296,31 +296,43 @@ describe("free agent waitlist promotion (SQL-driven)", () => {
       expect(await teamOf(t.id, t.players[9])).toBe(team);
     });
 
-    // tournament_teams is UNIQUE (owner_steam_id, tournament_id) and every
-    // pickup team takes one of its own players as owner -- the collision that
-    // hard-stalled the draft once already.
+    // Owning a team is being in the tournament, with or without a roster row.
     it("skips a waitlisted agent who owns a team in this tournament", async () => {
       const t = await draftedPool();
 
-      // Registering a team takes them out of the pool, so ownership is written
-      // past that trigger -- the state two racing requests can still leave
-      // behind.
+      // Taking a team over takes them out of the pool, so the ownership is
+      // written with that trigger off -- the state two racing requests can
+      // still leave behind.
       const outsider = await fx.player();
       const [owned] = await postgres.query<Array<{ id: string }>>(
         `INSERT INTO tournament_teams (tournament_id, name, owner_steam_id, captain_steam_id)
          VALUES ($1, 'Owned', $2, $2) RETURNING id`,
         [t.id, outsider],
       );
-      await postgres.query(
-        "UPDATE tournament_teams SET owner_steam_id = $2 WHERE id = $1",
-        [owned.id, t.players[8]],
-      );
+      await runAsUser(postgres, t.organizer, "admin", async (query) => {
+        await query(
+          "ALTER TABLE tournament_teams DISABLE TRIGGER tau_tournament_team_owner",
+        );
+        await query(
+          "UPDATE tournament_teams SET owner_steam_id = $2 WHERE id = $1",
+          [owned.id, t.players[8]],
+        );
+        await query(
+          "ALTER TABLE tournament_teams ENABLE TRIGGER tau_tournament_team_owner",
+        );
+      });
+      const waiting = async () =>
+        (await agents(t.id)).find(
+          (agent) => agent.player_steam_id === t.players[8],
+        )?.status;
+      expect(await waiting()).toBe("waitlisted");
 
       const team = await teamOf(t.id, t.players[0]);
       await removeFromRoster(t.id, t.players[0]);
 
       expect(await teamOf(t.id, t.players[9])).toBe(team);
       expect(await teamOf(t.id, t.players[8])).toBeNull();
+      expect(await waiting()).toBe("waitlisted");
     });
 
     it("skips a waitlisted agent who no longer meets the entry requirements", async () => {
@@ -455,6 +467,78 @@ describe("free agent waitlist promotion (SQL-driven)", () => {
       ];
       expect(promoted).toContain(a.tournament_team_id);
       expect(promoted).toContain(b.tournament_team_id);
+    });
+
+    // A roster insert holds its team's row, so a promotion that counted the
+    // roster first would miss the placement and then fail on a full team,
+    // taking the sign-up that triggered it down with it.
+    it("promotes nobody into a slot an organizer is filling by hand, and keeps the sign-up", async () => {
+      const t = await draftedPool({ agents: 8 });
+      const team = (await teamOf(t.id, t.players[0]))!;
+      await removeFromRoster(t.id, t.players[0]);
+      expect(await roster(team)).toHaveLength(1);
+      const [placed, late] = [await fx.player(), await fx.player()];
+
+      const organizer = await (
+        postgres as unknown as {
+          pool: {
+            connect(): Promise<{
+              query(sql: string, params?: Array<unknown>): Promise<unknown>;
+              release(): void;
+            }>;
+          };
+        }
+      ).pool.connect();
+      let signedUp: Promise<string> | undefined;
+      try {
+        await organizer.query("BEGIN");
+        await organizer.query("SELECT set_config('hasura.user', $1, true)", [
+          JSON.stringify({
+            "x-hasura-role": "admin",
+            "x-hasura-user-id": t.organizer,
+          }),
+        ]);
+        await organizer.query(
+          `INSERT INTO tournament_team_roster (tournament_team_id, player_steam_id, tournament_id)
+           VALUES ($1, $2, $3)`,
+          [team, placed, t.id],
+        );
+        signedUp = registerFreeAgent(t.id, late, new Date().toISOString()).then(
+          () => "done",
+          (error: unknown) => String(error),
+        );
+        for (let attempt = 0; ; attempt++) {
+          const [row] = await postgres.query<Array<{ waiting: number }>>(
+            `SELECT count(*)::int AS waiting FROM pg_stat_activity
+             WHERE datname = current_database() AND wait_event_type = 'Lock'`,
+          );
+          if (row.waiting > 0) {
+            break;
+          }
+          if (attempt > 400) {
+            throw new Error("the sign-up never waited on the placement");
+          }
+          await new Promise((resolve) => setTimeout(resolve, 25));
+        }
+        await organizer.query("COMMIT");
+      } catch (error) {
+        await organizer.query("ROLLBACK");
+        throw error;
+      } finally {
+        await organizer.query("SELECT set_config('hasura.user', '{}', false)");
+        organizer.release();
+        await signedUp;
+      }
+
+      expect(await signedUp).toBe("done");
+      expect(
+        (await roster(team)).map((row) => String(row.player_steam_id)),
+      ).toContain(placed);
+      expect(await teamOf(t.id, late)).toBeNull();
+      expect(
+        (await agents(t.id)).find((agent) => agent.player_steam_id === late)
+          ?.status,
+      ).toBe("waitlisted");
     });
   });
 

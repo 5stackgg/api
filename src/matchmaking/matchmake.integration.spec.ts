@@ -196,7 +196,6 @@ describe("matchmaking (end to end)", () => {
   async function enqueue(lobbies: MatchmakingLobby[]) {
     for (const lobby of lobbies) {
       lobbyStore.set(lobby.lobbyId, lobby);
-      // where setLobbyDetails puts it; the orphan sweep checks the key exists
       await redis.hset(
         getMatchmakingLobbyDetailsCacheKey(lobby.lobbyId),
         "details",
@@ -1452,7 +1451,6 @@ describe("matchmaking (end to end)", () => {
     async function leave(lobbyId: string) {
       await service.releaseLobbyLock(lobbyId, 0);
       await lobbyService.removeLobbyFromQueue(lobbyId);
-      await lobbyService.removeLobbyDetails(lobbyId);
     }
 
     const stampOf = (lobbyId: string) =>

@@ -19,6 +19,7 @@ import {
   getMatchmakingConformationCacheKey,
   getMatchmakingLobbyDetailsCacheKey,
   getMatchmakingRankCacheKey,
+  getMatchmakingStrandedCacheKey,
 } from "./utilities/cacheKeys";
 import { QueuedLobbyStat } from "./types/QueuedLobbyStat";
 import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
@@ -147,7 +148,7 @@ export class MatchmakeService {
               await this.matchmakingLobbyService.getLobbyDetails(lobbyId);
 
             if (!details) {
-              await this.sweepOrphanedQueueEntry(lobbyId, type, regionValues);
+              await this.dropStrayQueueEntries(lobbyId, type, regionValues);
               continue;
             }
 
@@ -328,7 +329,14 @@ export class MatchmakeService {
         lobbiesData[i],
       );
 
-      if (!details) {
+      if (
+        !details ||
+        details.type !== type ||
+        !details.regions.includes(region)
+      ) {
+        if (await this.dropStrayQueueEntries(lobbiesData[i], type, [region])) {
+          pass.claimed = true;
+        }
         continue;
       }
 
@@ -408,11 +416,10 @@ export class MatchmakeService {
             avgRank: averageRank(players2),
           };
 
-          await this.createMatchConfirmation(
-            details.regions.includes(region) ? region : details.regions.at(0),
-            details.type,
-            { team1, team2 },
-          );
+          await this.createMatchConfirmation(region, details.type, {
+            team1,
+            team2,
+          });
         } catch (error) {
           this.logger.error(
             `Error creating match confirmation for lobby ${details.lobbyId}:`,
@@ -599,9 +606,13 @@ export class MatchmakeService {
     type: e_match_types_enum,
     region: string,
   ): Promise<boolean> {
-    const lockKey = `matchmaking:lock:${region}:${type}`;
-
-    const result = await this.redis.set(lockKey, 1, "EX", 60, "NX");
+    const result = await this.redis.set(
+      this.getRegionLockKey(type, region),
+      1,
+      "EX",
+      60,
+      "NX",
+    );
 
     if (result === null) {
       return false;
@@ -614,28 +625,50 @@ export class MatchmakeService {
     type: e_match_types_enum,
     region: string,
   ) {
-    const lockKey = `matchmaking:lock:${region}:${type}`;
-    await this.redis.del(lockKey);
+    await this.redis.del(this.getRegionLockKey(type, region));
   }
 
-  // Removing the queue entry unconditionally would drop a lobby that left and
-  // rejoined between the details read and this call, so the details key is
-  // re-checked inside the script: if it is back, the entry is the fresh one.
-  private static readonly SWEEP_ORPHANED_ENTRY_SCRIPT = `
-    if redis.call('EXISTS', KEYS[1]) == 1 then
-      return 0
+  private getRegionLockKey(type: e_match_types_enum, region: string) {
+    return `matchmaking:lock:${region}:${type}`;
+  }
+
+  private getLobbyLockKey(lobbyId: string) {
+    return `matchmaking:lock:${lobbyId}`;
+  }
+
+  // KEYS: the lobby's details, then a queue and rank key for each region in
+  // ARGV[3..]. An entry is the lobby's only where its details name that type
+  // and region. The details are read inside the script, so an entry that was
+  // stray when the caller looked and has since been queued for real is kept.
+  private static readonly DROP_STRAY_ENTRIES_SCRIPT = `
+    local queuedIn = {}
+    local details = redis.call('HGET', KEYS[1], 'details')
+    if details then
+      local lobby = cjson.decode(details)
+      if lobby.type == ARGV[2] then
+        for _, region in ipairs(lobby.regions) do
+          queuedIn[region] = true
+        end
+      end
     end
-    for i = 2, #KEYS do
-      redis.call('ZREM', KEYS[i], ARGV[1])
+    local dropped = 0
+    for i = 3, #ARGV do
+      if not queuedIn[ARGV[i]] then
+        local queue = 2 * (i - 2)
+        dropped = dropped + redis.call('ZREM', KEYS[queue], ARGV[1])
+        dropped = dropped + redis.call('ZREM', KEYS[queue + 1], ARGV[1])
+      end
     end
-    return 1
+    return dropped
   `;
 
-  // A queue entry can outlive its details: addLobbyToQueue reads the details
-  // and then zadds, so a leave landing in between leaves an entry behind with
-  // nothing to read. Nothing expires the sorted sets, so it would sit in the
-  // queue - and in the queue counts - forever.
-  private async sweepOrphanedQueueEntry(
+  // A queue entry can outlive what it was queued for: addLobbyToQueue reads
+  // the details and then zadds, so a leave, or a leave and a join for another
+  // type, landing in between leaves an entry behind. Nothing expires the
+  // sorted sets, so it would sit in the queue - and in the queue counts -
+  // forever, and a pass would match the lobby for a type or region it is not
+  // queued for.
+  private async dropStrayQueueEntries(
     lobbyId: string,
     type: e_match_types_enum,
     regions: string[],
@@ -647,25 +680,38 @@ export class MatchmakeService {
       keys.push(getMatchmakingRankCacheKey(type, region));
     }
 
-    const swept = await this.redis.eval(
-      MatchmakeService.SWEEP_ORPHANED_ENTRY_SCRIPT,
-      keys.length,
-      ...keys,
-      lobbyId,
+    const dropped = Number(
+      await this.redis.eval(
+        MatchmakeService.DROP_STRAY_ENTRIES_SCRIPT,
+        keys.length,
+        ...keys,
+        lobbyId,
+        type,
+        ...regions,
+      ),
     );
 
-    if (swept === 1) {
+    if (dropped > 0) {
       this.logger.warn(
-        `removed orphaned ${type} queue entry for lobby ${lobbyId}`,
+        `removed stray ${type} queue entry for lobby ${lobbyId}`,
       );
     }
+
+    return dropped > 0;
   }
 
   // A lobby that left after the pass read it is no longer in any of its
   // queues, and must not be claimed into a ready check it would never see.
+  // One that left and queued again is not the lobby the pass matched either,
+  // whatever entry the old one left behind: joinedAt is set by the join, so it
+  // tells the two apart.
   private static readonly CLAIM_LOBBY_SCRIPT = `
+    local details = redis.call('HGET', KEYS[2], 'details')
+    if not details or cjson.decode(details).joinedAt ~= ARGV[3] then
+      return 0
+    end
     local queued = false
-    for i = 2, #KEYS do
+    for i = 3, #KEYS do
       if redis.call('ZSCORE', KEYS[i], ARGV[1]) then
         queued = true
       end
@@ -677,7 +723,7 @@ export class MatchmakeService {
     if not acquired then
       return 0
     end
-    for i = 2, #KEYS do
+    for i = 3, #KEYS do
       redis.call('ZREM', KEYS[i], ARGV[1])
     end
     return 1
@@ -694,8 +740,10 @@ export class MatchmakeService {
       return false;
     }
 
-    const lockKey = `matchmaking:lock:${lobbyId}`;
-    const keys: string[] = [lockKey];
+    const keys: string[] = [
+      this.getLobbyLockKey(lobbyId),
+      getMatchmakingLobbyDetailsCacheKey(lobbyId),
+    ];
 
     for (const region of lobby.regions) {
       keys.push(getMatchmakingQueueCacheKey(lobby.type, region));
@@ -708,6 +756,7 @@ export class MatchmakeService {
       ...keys,
       lobbyId,
       10, // TTL in seconds
+      new Date(lobby.joinedAt).toISOString(),
     );
 
     return result === 1;
@@ -770,9 +819,7 @@ export class MatchmakeService {
     lobby: MatchmakingLobby,
     busy: Map<string, string>,
   ) {
-    const name = lobby.players
-      .map((player) => busy.get(player.steam_id))
-      .find((playerName) => playerName !== undefined);
+    const name = this.busyPlayerName(lobby, busy);
 
     this.logger.warn(
       `Dropping lobby ${lobby.lobbyId} from the queue: ${name} is already in a match`,
@@ -782,6 +829,10 @@ export class MatchmakeService {
     await this.matchmakingLobbyService.dequeueLobby(lobby.lobbyId);
     await this.matchmakingLobbyService.removeLobbyDetails(lobby.lobbyId);
 
+    await this.sendPlayerInMatch(lobby, name);
+  }
+
+  private async sendPlayerInMatch(lobby: MatchmakingLobby, name: string) {
     for (const player of lobby.players) {
       await this.redis.publish(
         "send-message-to-steam-id",
@@ -798,9 +849,275 @@ export class MatchmakeService {
     }
   }
 
+  private busyPlayerName(lobby: MatchmakingLobby, busy: Map<string, string>) {
+    return lobby.players
+      .map((player) => busy.get(player.steam_id))
+      .find((playerName) => playerName !== undefined);
+  }
+
   public async releaseLobbyLock(lobbyId: string, seconds: number) {
-    const lockKey = `matchmaking:lock:${lobbyId}`;
-    await this.redis.expire(lockKey, seconds);
+    await this.redis.expire(this.getLobbyLockKey(lobbyId), seconds);
+  }
+
+  private static readonly STRANDED_SIGHTING_TTL_MS = 5 * 60 * 1000;
+  private static readonly STRANDED_MIN_AGE_MS = 30 * 1000;
+
+  // KEYS: the lobby's details, the last sweep's sighting of it, its stamp's
+  // confirmation and the claim on creating that confirmation's match, ARGV[5]
+  // locks, then a queue and rank key per region.
+  //
+  // A leave, a join and a cancel each pass through the stranded state on their
+  // way, so one look proves nothing. The first look only records what it saw.
+  // The lobby is acted on when a later look, STRANDED_MIN_AGE_MS on, finds the
+  // same details and stamp still stranded, with no look in between that found
+  // it otherwise.
+  //
+  // A ready check that is over can still be accepted while its hash lasts, so
+  // a lobby whose ready check has a match, or a creation still running, is
+  // not stranded either.
+  private static readonly HEAL_STRANDED_LOBBY_SCRIPT = `
+    local locks = tonumber(ARGV[5])
+
+    local function stranded()
+      local details = redis.call('HGET', KEYS[1], 'details') or ''
+      local stamp = redis.call('HGET', KEYS[1], 'confirmationId') or ''
+      if details ~= ARGV[2] or stamp ~= ARGV[3] then
+        return false
+      end
+      if redis.call('HEXISTS', KEYS[3], 'matchId') == 1 then
+        return false
+      end
+      if redis.call('PTTL', KEYS[4]) > tonumber(ARGV[9]) then
+        return false
+      end
+      for i = 5, 4 + locks do
+        if redis.call('EXISTS', KEYS[i]) == 1 then
+          return false
+        end
+      end
+      for i = 5 + locks, #KEYS do
+        if redis.call('ZSCORE', KEYS[i], ARGV[1]) then
+          return false
+        end
+      end
+      return true
+    end
+
+    if not stranded() then
+      redis.call('DEL', KEYS[2])
+      return 0
+    end
+
+    local sighting = redis.sha1hex(ARGV[2] .. '|' .. ARGV[3])
+    if redis.call('GET', KEYS[2]) ~= sighting then
+      redis.call('SET', KEYS[2], sighting, 'PX', ARGV[7])
+      return 0
+    end
+    if redis.call('PTTL', KEYS[2]) > tonumber(ARGV[7]) - tonumber(ARGV[8]) then
+      return 0
+    end
+
+    if ARGV[4] == 'check' then
+      return 1
+    end
+    redis.call('DEL', KEYS[2])
+    redis.call('HDEL', KEYS[1], 'confirmationId')
+    if ARGV[4] == 'requeue' then
+      for i = 5 + locks, #KEYS, 2 do
+        redis.call('ZADD', KEYS[i], 0, ARGV[1])
+        redis.call('ZADD', KEYS[i + 1], ARGV[6], ARGV[1])
+      end
+      return 1
+    end
+    redis.call('HDEL', KEYS[1], 'details')
+    return 1
+  `;
+
+  // A lobby keeps its details from the join until it leaves or its match
+  // ends, and all that time it is in its queues, in a ready check or the match
+  // it made, or under the lock of whatever is moving it. A pod that dies
+  // mid-pass, or a ready check that nothing cancels, leaves it in none of
+  // those, and every rejoin is refused until the player clicks Leave.
+  public async healStrandedLobbies() {
+    const prefix = getMatchmakingLobbyDetailsCacheKey("");
+    let cursor = "0";
+    let healed = false;
+
+    do {
+      const [next, keys] = await this.redis.scan(
+        cursor,
+        "MATCH",
+        `${prefix}*`,
+        "COUNT",
+        1000,
+      );
+      cursor = next;
+
+      for (const key of keys) {
+        const lobbyId = key.slice(prefix.length);
+        try {
+          if (await this.healStrandedLobby(lobbyId)) {
+            healed = true;
+          }
+        } catch (error) {
+          this.logger.error(
+            `unable to heal matchmaking lobby ${lobbyId}`,
+            error,
+          );
+        }
+      }
+    } while (cursor !== "0");
+
+    if (healed) {
+      await this.refreshRegionStats();
+    }
+  }
+
+  private async healStrandedLobby(lobbyId: string): Promise<boolean> {
+    const { details = "", confirmationId = "" } = await this.redis.hgetall(
+      getMatchmakingLobbyDetailsCacheKey(lobbyId),
+    );
+
+    if (!details && !confirmationId) {
+      return false;
+    }
+
+    const sighting = getMatchmakingStrandedCacheKey(lobbyId);
+
+    if (confirmationId && !(await this.isReadyCheckOver(confirmationId))) {
+      await this.redis.del(sighting);
+      return false;
+    }
+
+    const lobby: MatchmakingLobby | undefined = details
+      ? JSON.parse(details)
+      : undefined;
+    const regions = lobby?.regions ?? [];
+
+    const locks = [
+      this.getLobbyLockKey(lobbyId),
+      ...regions.map((region) => this.getRegionLockKey(lobby.type, region)),
+    ];
+    const keys = [
+      getMatchmakingLobbyDetailsCacheKey(lobbyId),
+      sighting,
+      getMatchmakingConformationCacheKey(confirmationId),
+      this.getMatchCreationClaimKey(confirmationId),
+      ...locks,
+      ...regions.flatMap((region) => [
+        getMatchmakingQueueCacheKey(lobby.type, region),
+        getMatchmakingRankCacheKey(lobby.type, region),
+      ]),
+    ];
+
+    const heal = async (action: "check" | "requeue" | "clear") =>
+      (await this.redis.eval(
+        MatchmakeService.HEAL_STRANDED_LOBBY_SCRIPT,
+        keys.length,
+        ...keys,
+        lobbyId,
+        details,
+        confirmationId,
+        action,
+        locks.length,
+        lobby?.avgRank ?? 0,
+        MatchmakeService.STRANDED_SIGHTING_TTL_MS,
+        MatchmakeService.STRANDED_MIN_AGE_MS,
+        MatchmakeService.CREATION_RUNNING_TTL_MS,
+      )) === 1;
+
+    if (!(await heal("check"))) {
+      return false;
+    }
+
+    // Nobody can say who accepted a ready check that is over, so, as a cancel
+    // does with a lobby that was not all ready, its lobbies leave the queue.
+    let requeue =
+      !confirmationId && regions.length > 0 && Number.isFinite(lobby.avgRank);
+
+    let busy = new Map<string, string>();
+    if (requeue) {
+      busy = await this.getBusyPlayers(
+        lobby.players.map((player) => player.steam_id),
+      );
+      requeue = busy.size === 0 && (await this.canRequeue(lobby));
+    }
+
+    if (!(await heal(requeue ? "requeue" : "clear"))) {
+      return false;
+    }
+
+    if (requeue) {
+      this.logger.warn(`requeued stranded matchmaking lobby ${lobbyId}`);
+      await this.matchmakingLobbyService.sendQueueDetailsToLobby(lobbyId);
+      for (const region of lobby.regions) {
+        await this.scheduleExpandedSearch(
+          lobby.type,
+          region,
+          Math.floor(Math.random() * 10000),
+        );
+      }
+      return true;
+    }
+
+    this.logger.warn(`dropped stranded matchmaking lobby ${lobbyId}`);
+
+    // its lobbies are free to queue again, so it must not become a match
+    if (confirmationId) {
+      await this.removeConfirmationDetails(confirmationId);
+    }
+
+    if (lobby) {
+      if (busy.size > 0) {
+        await this.sendPlayerInMatch(lobby, this.busyPlayerName(lobby, busy));
+      }
+      await this.matchmakingLobbyService.sendRemovedFromQueue(lobby.players);
+    }
+
+    return true;
+  }
+
+  // Over, whether or not a cancel ever ran: createMatch takes the cancel job
+  // away before the match exists, and a pass can die before queueing it.
+  private async isReadyCheckOver(confirmationId: string) {
+    const [lobbyIds, matchId, expiresAt] = await this.redis.hmget(
+      getMatchmakingConformationCacheKey(confirmationId),
+      "lobbyIds",
+      "matchId",
+      "expiresAt",
+    );
+
+    if (matchId) {
+      return false;
+    }
+
+    if (!lobbyIds) {
+      return true;
+    }
+
+    return (
+      Date.now() >
+      new Date(expiresAt).getTime() + MatchmakeService.CANCEL_RETRY_BUDGET_MS
+    );
+  }
+
+  // What a join checks, as far as it can without the captain who joined.
+  private async canRequeue(lobby: MatchmakingLobby) {
+    const steamIds = lobby.players.map((player) => player.steam_id);
+    const current = await this.matchmakingLobbyService.getPlayerLobby(
+      steamIds[0],
+    );
+
+    return (
+      current.id === lobby.lobbyId &&
+      current.players.length === steamIds.length &&
+      current.players.every(
+        (player) =>
+          steamIds.includes(player.steam_id) &&
+          !player.is_banned &&
+          !player.matchmaking_cooldown,
+      )
+    );
   }
 
   public async markOffline(steamId: string) {
@@ -896,6 +1213,16 @@ export class MatchmakeService {
     }
   }
 
+  private static readonly CANCEL_ATTEMPTS = 5;
+  private static readonly CANCEL_BACKOFF_MS = 5000;
+
+  // The waits between the cancel job's attempts, and as long again for the
+  // attempts themselves.
+  private static readonly CANCEL_RETRY_BUDGET_MS =
+    2 *
+    MatchmakeService.CANCEL_BACKOFF_MS *
+    (2 ** (MatchmakeService.CANCEL_ATTEMPTS - 1) - 1);
+
   public async cancelMatchMakingDueToReadyCheck(confirmationId: string) {
     await this.queue.add(
       "CancelMatchMaking",
@@ -905,8 +1232,11 @@ export class MatchmakeService {
       {
         delay: 30 * 1000,
         jobId: this.getMatchMakingCancelJobId(confirmationId),
-        attempts: 5,
-        backoff: { type: "exponential", delay: 5000 },
+        attempts: MatchmakeService.CANCEL_ATTEMPTS,
+        backoff: {
+          type: "exponential",
+          delay: MatchmakeService.CANCEL_BACKOFF_MS,
+        },
       },
     );
   }
@@ -922,6 +1252,14 @@ export class MatchmakeService {
   // Outlives the cancel job and all of its retries. A ready check that becomes
   // a match is kept for as long as the match is, see createMatch.
   private static readonly READY_CHECK_TTL_SECONDS = 10 * 60;
+
+  // The claim on creating a match is taken with the ready check's ttl. While
+  // it has more than this left it is younger than the cancel job's retry
+  // budget and the creation may still be running. Past that the creation
+  // failed, and the claim only stops a second one.
+  private static readonly CREATION_RUNNING_TTL_MS =
+    MatchmakeService.READY_CHECK_TTL_SECONDS * 1000 -
+    MatchmakeService.CANCEL_RETRY_BUDGET_MS;
 
   private async setConfirmationDetails(
     region: string,
