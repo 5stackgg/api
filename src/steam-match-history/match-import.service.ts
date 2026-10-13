@@ -9,6 +9,7 @@ import { HasuraService } from "../hasura/hasura.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { DemoMetadataService } from "../demos/demo-metadata.service";
 import { ParsedDemo, ParsedPlayer } from "../demos/demo-parser.service";
+import { persistPayload } from "../demos/persist-payload";
 import { S3Service } from "../s3/s3.service";
 import { FaceitService } from "../faceit/faceit.service";
 import { SteamPresenceService } from "../steam-presence/steam-presence.service";
@@ -227,7 +228,7 @@ export class MatchImportService {
       const persistStartedAt = Date.now();
       await this.postgres.query(
         `SELECT public.persist_imported_demo($1::uuid, $2::jsonb)`,
-        [demoId, JSON.stringify(parsed)],
+        [demoId, persistPayload(parsed)],
       );
       this.logger.log(
         `[persist] done FULL import match=${matchId} demo=${demoId} in ${Date.now() - persistStartedAt}ms`,

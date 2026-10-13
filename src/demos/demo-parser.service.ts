@@ -403,6 +403,9 @@ export type ParsedDemo = {
   map_name?: string;
   workshop_id?: string;
   cs2_build?: string;
+  // Whether the parser had the map's collision mesh, so its sightline-gated
+  // stats were checked against the world rather than estimated.
+  geometry_validated?: boolean;
   // Match-type signals from the demo's game rules.
   server_name?: string;
   max_rounds?: number;
