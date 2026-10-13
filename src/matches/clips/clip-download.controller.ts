@@ -220,6 +220,11 @@ export class ClipDownloadController {
     if (!match) {
       return null;
     }
+    // The role Hasura would give them now. The session still holds the one
+    // they signed in with, which a demoted moderator would keep for weeks.
+    const session = viewer
+      ? await this.hasura.getHasuraHeaders(viewer.steam_id)
+      : {};
     const [lineup] = await this.postgres.query<Array<{ public: boolean }>>(
       `SELECT public.can_view_utility_lineup(l, '{}'::json) IS TRUE AS public
          FROM public.utility_lineups l
@@ -230,18 +235,7 @@ export class ClipDownloadController {
                  SELECT 1
                    FROM jsonb_each_text(COALESCE(l.preview_stills, '{}'::jsonb)) still
                   WHERE still.value = $2))`,
-      [
-        match[1],
-        key,
-        JSON.stringify(
-          viewer
-            ? {
-                "x-hasura-role": viewer.role,
-                "x-hasura-user-id": viewer.steam_id,
-              }
-            : {},
-        ),
-      ],
+      [match[1], key, JSON.stringify(session)],
     );
     return lineup
       ? { extension: match[2].toLowerCase(), public: lineup.public }

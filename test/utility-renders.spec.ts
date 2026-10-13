@@ -336,9 +336,20 @@ describe("utility lineup renders (SQL-driven)", () => {
         stat: jest.fn().mockResolvedValue({ size: 4 }),
         get: jest.fn(async () => Readable.from([Buffer.alloc(4)])),
       };
+      // As HasuraService does: the player's role today, whatever their
+      // session says.
+      const hasura = {
+        getHasuraHeaders: async (steamId: string) => {
+          const [player] = await postgres.query<Array<{ role: string }>>(
+            "SELECT role FROM players WHERE steam_id = $1::bigint",
+            [steamId],
+          );
+          return { "x-hasura-role": player?.role, "x-hasura-user-id": steamId };
+        },
+      };
       const controller = new ClipDownloadController(
         s3 as never,
-        null as never,
+        hasura as never,
         postgres,
         null as never,
         new Logger("UtilityRendersTest"),
@@ -481,10 +492,11 @@ describe("utility lineup renders (SQL-driven)", () => {
         const stranger = await fx.player();
         const { s3, fetch } = api();
 
+        // The last one was a moderator when they signed in and is not now.
         for (const viewer of [
           undefined,
           { steam_id: stranger, role: "user" },
-          { steam_id: stranger, role: "verified_user" },
+          { steam_id: stranger, role: "moderator" },
         ]) {
           for (const key of Object.values(files)) {
             expect((await fetch(key, viewer)).status).toBe(404);
@@ -496,6 +508,10 @@ describe("utility lineup renders (SQL-driven)", () => {
       it("is served to its author and to a moderator, asked for again each time", async () => {
         const { files } = await unpublished();
         const moderator = await fx.player();
+        await postgres.query(
+          "UPDATE players SET role = 'moderator' WHERE steam_id = $1::bigint",
+          [moderator],
+        );
         const { fetch } = api();
 
         for (const viewer of [

@@ -24,6 +24,7 @@ const BODY = Buffer.from("{}".padEnd(SIZE));
 describe("ClipDownloadController lineup files", () => {
   let app: INestApplication;
   let viewer: { steam_id: string; role: string } | undefined;
+  let roleNow: string;
   let postgres: { query: jest.Mock };
   let s3: { stat: jest.Mock; get: jest.Mock; getPartial: jest.Mock };
 
@@ -31,6 +32,7 @@ describe("ClipDownloadController lineup files", () => {
 
   beforeEach(async () => {
     viewer = undefined;
+    roleNow = "user";
     postgres = { query: jest.fn().mockResolvedValue([{ public: true }]) };
     s3 = {
       stat: jest.fn().mockResolvedValue({ size: SIZE }),
@@ -54,6 +56,10 @@ describe("ClipDownloadController lineup files", () => {
                 thumbnail_url: MATCH_CLIP_THUMBNAIL,
               },
             }),
+            getHasuraHeaders: jest.fn(async (steamId: string) => ({
+              "x-hasura-role": roleNow,
+              "x-hasura-user-id": steamId,
+            })),
           },
         },
         { provide: PostgresService, useValue: postgres },
@@ -132,8 +138,11 @@ describe("ClipDownloadController lineup files", () => {
     );
   });
 
-  it("asks whether the signed-in viewer may see the lineup", async () => {
-    viewer = { steam_id: "76561198000000001", role: "user" };
+  // The session keeps the role its owner signed in with for as long as it
+  // lives, so a moderator demoted since would still open every lineup.
+  it("asks as the role the signed-in viewer holds now, not the session's", async () => {
+    viewer = { steam_id: "76561198000000001", role: "moderator" };
+    roleNow = "user";
 
     await get(CLIP);
 
