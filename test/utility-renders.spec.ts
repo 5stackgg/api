@@ -1,7 +1,9 @@
 import { Logger } from "@nestjs/common";
+import { Readable, Writable } from "stream";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 import { PostgresService } from "./../src/postgres/postgres.service";
+import { ClipDownloadController } from "./../src/matches/clips/clip-download.controller";
 import {
   UTILITY_RENDER_VERSION,
   UtilityRendersService,
@@ -256,6 +258,221 @@ describe("utility lineup renders (SQL-driven)", () => {
         aim: `https://demo-dl.5stack.gg/clips/utility/${id}/aim.jpg?v=1000000`,
         landing: `https://demo-dl.5stack.gg/clips/utility/${id}/landing.jpg?v=1000000`,
       });
+    });
+  });
+
+  // A panel that never set up the Cloudflare worker has no
+  // cloudflare_worker_url. A filmed lineup had no preview url at all there, so
+  // its render read "done" and the lineup showed nothing.
+  describe("without a Cloudflare worker", () => {
+    const RENDER = "560035c5-ea95-41f4-bcb9-6f0d5985be94";
+
+    beforeEach(async () => {
+      await postgres.query(
+        "DELETE FROM settings WHERE name = 'cloudflare_worker_url'",
+      );
+      await postgres.query(
+        `INSERT INTO settings (name, value)
+         VALUES ('demos_domain', 'https://demos.example.test')
+         ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value`,
+      );
+    });
+
+    async function filmed(overrides: Record<string, unknown> = {}) {
+      const id = await lineup(overrides);
+      const files = {
+        clip: `clips/utility/${id}/${RENDER}.mp4`,
+        thumbnail: `clips/utility/${id}/${RENDER}.jpg`,
+        aim: `clips/utility/${id}/${RENDER}/aim.webp`,
+        smoke: `clips/utility/${id}.smoke.1700000000000.json`,
+      };
+      await postgres.query(
+        `UPDATE utility_lineups
+            SET preview_file = $2,
+                preview_thumbnail = $3,
+                preview_stills = $4::jsonb,
+                preview_rendered_at = to_timestamp(1000000),
+                smoke_voxels_file = $5,
+                smoke_voxels_at = to_timestamp(2000000)
+          WHERE id = $1::uuid`,
+        [
+          id,
+          files.clip,
+          files.thumbnail,
+          JSON.stringify({ aim: files.aim }),
+          files.smoke,
+        ],
+      );
+      return { id, files };
+    }
+
+    const urls = async (id: string) => {
+      const [row] = await postgres.query<
+        Array<{
+          url: string | null;
+          thumb: string | null;
+          stills: Record<string, string> | null;
+          smoke: string | null;
+        }>
+      >(
+        `SELECT public.utility_lineup_preview_url(l) AS url,
+                public.utility_lineup_preview_thumbnail_url(l) AS thumb,
+                public.utility_lineup_preview_stills_url(l) AS stills,
+                public.utility_lineup_smoke_voxels_url(l) AS smoke
+           FROM utility_lineups l WHERE l.id = $1::uuid`,
+        [id],
+      );
+      return row;
+    };
+
+    const archive = (id: string) =>
+      postgres.query(
+        "UPDATE utility_lineups SET archived_at = now() WHERE id = $1::uuid",
+        [id],
+      );
+
+    function api() {
+      const s3 = {
+        stat: jest.fn().mockResolvedValue({ size: 4 }),
+        get: jest.fn(async () => Readable.from([Buffer.alloc(4)])),
+      };
+      const controller = new ClipDownloadController(
+        s3 as never,
+        null as never,
+        postgres,
+        null as never,
+        new Logger("UtilityRendersTest"),
+      );
+
+      const fetch = async (key: string) => {
+        const response: any = new Writable({
+          write(_chunk, _encoding, callback) {
+            callback();
+          },
+        });
+        const headers: Record<string, unknown> = {};
+        response.setHeader = (name: string, value: unknown) => {
+          headers[name.toLowerCase()] = value;
+        };
+        response.status = (code: number) => {
+          response.statusCode = code;
+          return response;
+        };
+        response.json = () => response.end();
+        const finished = new Promise((resolve) =>
+          response.on("finish", resolve),
+        );
+
+        await controller.utilityLineupFile(
+          key.replace("clips/utility/", "").split("/"),
+          undefined,
+          undefined,
+          { headers: {} } as never,
+          response,
+        );
+        await finished;
+        return { status: response.statusCode, type: headers["content-type"] };
+      };
+
+      return { s3, fetch };
+    }
+
+    it("serves a filmed lineup's files from the demos domain", async () => {
+      const { id, files } = await filmed();
+
+      const row = await urls(id);
+
+      expect(row.url).toBe(
+        `https://demos.example.test/${files.clip}?v=1000000`,
+      );
+      expect(row.thumb).toBe(
+        `https://demos.example.test/${files.thumbnail}?v=1000000`,
+      );
+      expect(row.stills).toEqual({
+        aim: `https://demos.example.test/${files.aim}?v=1000000`,
+      });
+      expect(row.smoke).toBe(
+        `https://demos.example.test/${files.smoke}?v=2000000`,
+      );
+    });
+
+    it("answers at those paths with only the files the lineup points at", async () => {
+      const { id, files } = await filmed();
+      const { s3, fetch } = api();
+
+      expect(await fetch(files.clip)).toEqual({
+        status: 200,
+        type: "video/mp4",
+      });
+      expect(await fetch(files.thumbnail)).toEqual({
+        status: 200,
+        type: "image/jpeg",
+      });
+      expect(await fetch(files.aim)).toEqual({
+        status: 200,
+        type: "image/webp",
+      });
+      expect(await fetch(files.smoke)).toEqual({
+        status: 200,
+        type: "application/json",
+      });
+      expect(s3.stat.mock.calls.map(([key]) => key)).toEqual([
+        files.clip,
+        files.thumbnail,
+        files.aim,
+        files.smoke,
+      ]);
+
+      s3.stat.mockClear();
+      const other = await lineup({ name: "Jungle from T spawn" });
+      for (const key of [
+        `clips/utility/${id}/11111111-1111-1111-1111-111111111111.mp4`,
+        `clips/utility/${id}/${RENDER}/landing.webp`,
+        `clips/utility/${other}/${RENDER}.mp4`,
+        `clips/utility/22222222-2222-2222-2222-222222222222/${RENDER}.mp4`,
+      ]) {
+        expect((await fetch(key)).status).toBe(404);
+      }
+      expect(s3.stat).not.toHaveBeenCalled();
+    });
+
+    // Nobody is signed in on the demos domain, so the API cannot tell a
+    // lineup's owner from anyone who was handed, or guessed, its key.
+    it.each([
+      ["a private lineup", { visibility: "Private" }, false],
+      ["a lineup archived after it was filmed", {}, true],
+    ])(
+      "neither names nor serves the files of %s",
+      async (_label, overrides, archived) => {
+        const { id, files } = await filmed(overrides);
+        if (archived) {
+          await archive(id);
+        }
+        const { s3, fetch } = api();
+
+        expect(await urls(id)).toEqual({
+          url: null,
+          thumb: null,
+          stills: null,
+          smoke: null,
+        });
+        for (const key of Object.values(files)) {
+          expect((await fetch(key)).status).toBe(404);
+        }
+        expect(s3.stat).not.toHaveBeenCalled();
+      },
+    );
+
+    it("leaves that lineup its urls where a worker serves them", async () => {
+      const { id, files } = await filmed({ visibility: "Private" });
+      await postgres.query(
+        `INSERT INTO settings (name, value)
+         VALUES ('cloudflare_worker_url', 'https://demo-dl.5stack.gg')`,
+      );
+
+      expect((await urls(id)).url).toBe(
+        `https://demo-dl.5stack.gg/${files.clip}?v=1000000`,
+      );
     });
   });
 

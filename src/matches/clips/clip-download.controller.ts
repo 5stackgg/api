@@ -11,6 +11,7 @@ import { Request, Response } from "express";
 import { createHash } from "crypto";
 import { S3Service } from "../../s3/s3.service";
 import { HasuraService } from "../../hasura/hasura.service";
+import { PostgresService } from "../../postgres/postgres.service";
 import { ClipsService } from "./clips.service";
 
 // View counting mirrors the clip Worker (5stack-panel
@@ -21,16 +22,63 @@ const VIEW_FRACTION = 0.5;
 const BOT_UA =
   /bot|crawl|spider|facebookexternalhit|slack|discord|telegram|whatsapp|preview|unfurl|embed|scrape|metainspector|skype|vkshare|redditbot|pinterest|googlebot|bingbot/i;
 
-@Controller("/clips/:clipId")
+const UTILITY_LINEUP_FILE =
+  /^clips\/utility\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:[/.].*)?\.(mp4|jpg|webp|json)$/i;
+const UTILITY_LINEUP_FILE_TYPES: Record<string, string> = {
+  mp4: "video/mp4",
+  jpg: "image/jpeg",
+  webp: "image/webp",
+  json: "application/json",
+};
+// A lineup's files are keyed per render and per recording, so a key never
+// changes what it holds. The worker caches them for the same 30 days.
+const UTILITY_LINEUP_FILE_CACHE = "public, max-age=2592000, immutable";
+
+@Controller("/clips")
 export class ClipDownloadController {
   constructor(
     private readonly s3: S3Service,
     private readonly hasura: HasuraService,
+    private readonly postgres: PostgresService,
     private readonly clips: ClipsService,
     private readonly logger: Logger,
   ) {}
 
-  @Get()
+  // A lineup's preview clip, thumbnail, stills and recorded smoke on a panel
+  // with no Cloudflare worker: the path is the object's key, as it is on the
+  // worker (utility_lineup_file_base_url). Nobody is signed in on this
+  // domain, so only a lineup a signed-out visitor could open is served.
+  @Get("utility/*key")
+  public async utilityLineupFile(
+    @Param("key") path: string | Array<string>,
+    @Query("name") name: string | undefined,
+    @Query("dl") dl: string | undefined,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const key = `clips/utility/${[path].flat().join("/")}`;
+    const extension = await this.utilityLineupFileExtension(key);
+    if (!extension) {
+      response.setHeader("Cache-Control", "no-store");
+      response.status(404).json({ error: "not found" });
+      return;
+    }
+    await this.stream(
+      key,
+      UTILITY_LINEUP_FILE_TYPES[extension],
+      name,
+      dl === "1",
+      request,
+      response,
+      // A download's headers are the caller's to choose, and a cache shared
+      // with other visitors must never keep an answer one of them shaped.
+      name === undefined && dl === undefined
+        ? UTILITY_LINEUP_FILE_CACHE
+        : undefined,
+    );
+  }
+
+  @Get(":clipId")
   public async download(
     @Param("clipId") clipId: string,
     @Query("name") name: string | undefined,
@@ -59,7 +107,7 @@ export class ClipDownloadController {
     }
   }
 
-  @Get("thumbnail")
+  @Get(":clipId/thumbnail")
   public async thumbnail(
     @Param("clipId") clipId: string,
     @Req() request: Request,
@@ -157,6 +205,30 @@ export class ClipDownloadController {
     return match_clips_by_pk;
   }
 
+  // Only a file that a lineup anyone may see points at today, so the path
+  // being a key opens neither the rest of the bucket nor a private lineup.
+  private async utilityLineupFileExtension(
+    key: string,
+  ): Promise<string | null> {
+    const match = UTILITY_LINEUP_FILE.exec(key);
+    if (!match) {
+      return null;
+    }
+    const [lineup] = await this.postgres.query<Array<{ id: string }>>(
+      `SELECT l.id::text AS id
+         FROM public.utility_lineups l
+        WHERE l.id = $1::uuid
+          AND public.can_view_utility_lineup(l, '{}'::json)
+          AND ($2 IN (l.preview_file, l.preview_thumbnail, l.smoke_voxels_file)
+               OR EXISTS (
+                 SELECT 1
+                   FROM jsonb_each_text(COALESCE(l.preview_stills, '{}'::jsonb)) still
+                  WHERE still.value = $2))`,
+      [match[1], key],
+    );
+    return lineup ? match[2].toLowerCase() : null;
+  }
+
   private async stream(
     key: string,
     contentType: string,
@@ -164,7 +236,12 @@ export class ClipDownloadController {
     forceDownload: boolean,
     request: Request,
     response: Response,
+    cacheControl = "private, max-age=0, must-revalidate",
   ) {
+    // Until the bytes are in hand below: a failure answered under a lineup
+    // file's policy would be cached as that file for a month.
+    response.setHeader("Cache-Control", "no-store");
+
     let stat;
     try {
       stat = await this.s3.stat(key);
@@ -189,7 +266,6 @@ export class ClipDownloadController {
     response.setHeader("Content-Type", contentType);
     response.setHeader("Content-Disposition", disposition);
     response.setHeader("Accept-Ranges", "bytes");
-    response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");
 
     const rangeHeader = request.headers.range;
     const range = rangeHeader ? this.parseRange(rangeHeader, size) : null;
@@ -201,6 +277,7 @@ export class ClipDownloadController {
     }
 
     try {
+      let stream: NodeJS.ReadableStream;
       if (range) {
         const length = range.end - range.start + 1;
         response.status(206);
@@ -209,14 +286,14 @@ export class ClipDownloadController {
           `bytes ${range.start}-${range.end}/${size}`,
         );
         response.setHeader("Content-Length", String(length));
-        const stream = await this.s3.getPartial(key, range.start, length);
-        this.pipeWithCleanup(stream, response);
+        stream = await this.s3.getPartial(key, range.start, length);
       } else {
         response.status(200);
         response.setHeader("Content-Length", String(size));
-        const stream = await this.s3.get(key);
-        this.pipeWithCleanup(stream, response);
+        stream = await this.s3.get(key);
       }
+      response.setHeader("Cache-Control", cacheControl);
+      this.pipeWithCleanup(stream, response);
     } catch (error) {
       this.logger.error(
         `failed to stream ${key}: ${(error as Error)?.message}`,
