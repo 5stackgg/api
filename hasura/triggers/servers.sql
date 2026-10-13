@@ -131,8 +131,12 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS tad_servers ON public.servers;
-CREATE TRIGGER tad_servers AFTER DELETE ON public.servers FOR EACH ROW EXECUTE FUNCTION public.tad_servers();
+-- A row's AFTER triggers fire in name order and the foreign keys' own are
+-- RI_ConstraintTrigger_*, so the capital A puts this one ahead of them:
+-- clearing matches.server_id re-checks the match's regions, which must already
+-- count the slot as free.
+DROP TRIGGER IF EXISTS "A_tad_servers" ON public.servers;
+CREATE TRIGGER "A_tad_servers" AFTER DELETE ON public.servers FOR EACH ROW EXECUTE FUNCTION public.tad_servers();
 
 DROP TRIGGER IF EXISTS "set_public_servers_updated_at" ON "public"."servers";
 CREATE TRIGGER "set_public_servers_updated_at"
