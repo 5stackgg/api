@@ -125,29 +125,26 @@ describe("ClipDownloadController lineup files", () => {
     );
   });
 
-  // Its headers are the caller's, so a cache that drops the query string
-  // would otherwise hand one visitor's download name to everybody else.
-  it.each([{ dl: "1" }, { name: "invoice.exe" }, { dl: "1", name: "a.mp4" }])(
-    "keeps an answer shaped by %j out of shared caches",
+  // The key never holds anything else, so the visitor's own browser may keep
+  // it. A cache shared between visitors may not: it would go on serving a
+  // lineup that has since stopped being public, and would hand one visitor's
+  // download name to the rest wherever it drops the query string.
+  it.each([
+    {},
+    { dl: "1" },
+    { name: "invoice.exe" },
+    { dl: "1", name: "a.mp4" },
+  ])(
+    "lets only the visitor's own browser keep the answer to %j",
     async (query) => {
       const response = await get(CLIP).query(query);
 
       expect(response.status).toBe(200);
       expect(response.headers["cache-control"]).toBe(
-        "private, max-age=0, must-revalidate",
+        "private, max-age=2592000, immutable",
       );
     },
   );
-
-  // The key names the render or the recording, so it never holds anything
-  // else.
-  it("lets a served file be cached for as long as the worker caches it", async () => {
-    const response = await get(CLIP);
-
-    expect(response.headers["cache-control"]).toBe(
-      "public, max-age=2592000, immutable",
-    );
-  });
 
   it.each([
     [
