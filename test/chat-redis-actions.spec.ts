@@ -393,6 +393,74 @@ describe("chat edits and self deletes (SQL-driven)", () => {
     ).resolves.toEqual({ edited: false, code: ChatErrorCode.NotFound });
   });
 
+  // A room is a redis hash, which hands its messages back in no order at all:
+  // eight sharing a millisecond come back as sent once in 40,320 reads.
+  describe("history order", () => {
+    const texts = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];
+
+    const atOneInstant = async (work: () => Promise<void>) => {
+      jest.useFakeTimers({
+        now: Date.now(),
+        doNotFake: [
+          "hrtime",
+          "nextTick",
+          "performance",
+          "queueMicrotask",
+          "setImmediate",
+          "clearImmediate",
+          "setInterval",
+          "clearInterval",
+          "setTimeout",
+          "clearTimeout",
+        ],
+      });
+
+      try {
+        await work();
+      } finally {
+        jest.useRealTimers();
+      }
+    };
+
+    it("keeps messages sent in the same millisecond in the order they were sent", async () => {
+      const user = await author();
+      const matchId = randomUUID();
+
+      await atOneInstant(async () => {
+        for (const text of texts) {
+          await chat.sendMessageToChat(
+            ChatLobbyType.Match,
+            matchId,
+            user,
+            text,
+            true,
+            "game",
+          );
+        }
+      });
+
+      const history = await chat["getMessages"](ChatLobbyType.Match, matchId);
+
+      expect(history.map(({ message }) => message)).toEqual(texts);
+    });
+
+    it("orders messages two pods stamped in the same millisecond by id, the same on every read", async () => {
+      const user = await author();
+      const matchId = randomUUID();
+      const ids: string[] = [];
+
+      await atOneInstant(async () => {
+        for (const _ of texts) {
+          ids.push(await place(matchId, user));
+        }
+      });
+
+      const history = await chat["getMessages"](ChatLobbyType.Match, matchId);
+
+      expect(history.map(({ id }) => id)).toEqual([...ids].sort());
+    });
+  });
+
   describe("an action in the draft room while it moves into the match", () => {
     // Runs the action the first time the move writes into the match room from
     // outside redis, which is the gap a move made of separate calls leaves.

@@ -464,6 +464,10 @@ export class ChatService {
   // for the one before them rather than letting an older state land last.
   private readonly reactionBroadcasts = new Map<string, Promise<void>>();
 
+  // History is ordered by timestamp and a room's hash keeps no order of its
+  // own, so no two messages this pod stamps may share a millisecond.
+  private lastMessageAt = 0;
+
   constructor(
     private readonly logger: Logger,
     private readonly rcon: RconService,
@@ -480,6 +484,29 @@ export class ChatService {
 
   public updateChatMessageTTL(type: ChatLobbyType, expiresIn: number) {
     this.ttls.set(type, expiresIn);
+  }
+
+  private nextMessageTimestamp(): Date {
+    this.lastMessageAt = Math.max(Date.now(), this.lastMessageAt + 1);
+
+    return new Date(this.lastMessageAt);
+  }
+
+  // Two pods can still stamp the same millisecond; the id settles those the
+  // same way for every reader.
+  private static inSentOrder(a: ChatMessage, b: ChatMessage): number {
+    const elapsed =
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+
+    if (elapsed !== 0) {
+      return elapsed;
+    }
+
+    if (a.id === b.id) {
+      return 0;
+    }
+
+    return a.id < b.id ? -1 : 1;
   }
 
   private ttlFor(type: ChatLobbyType): number {
@@ -897,10 +924,7 @@ export class ChatService {
           ),
         }),
       )
-      .sort(
-        (a, b) =>
-          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-      );
+      .sort(ChatService.inSentOrder);
   }
 
   // The stores keep reactions in whatever order they like (a Lua table's,
@@ -1196,7 +1220,7 @@ export class ChatService {
       HasuraService.PLAYER_ROLE_CACHE_KEY(player.steam_id),
     );
 
-    const timestamp = new Date();
+    const timestamp = this.nextMessageTimestamp();
     const message: ChatMessage = {
       // Both the history snapshot sent on join and the live broadcast carry the
       // message, so clients need something stable to recognize it by.
