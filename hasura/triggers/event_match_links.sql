@@ -2,9 +2,14 @@
 -- single source of truth for "which matches belong to an event". Every input
 -- of the derivation has a trigger: the event window, memberships, tournament
 -- brackets, the matches themselves, and lineup membership.
+--
+-- The sync functions are plpgsql rather than sql on purpose: a sql function
+-- re-plans v_event_matches on every trigger fire (~8ms of planning for <1ms of
+-- work), while plpgsql keeps the plan cached on the connection.
 
 CREATE OR REPLACE FUNCTION public.sync_event_match_links(_event_id uuid)
-RETURNS void LANGUAGE sql AS $$
+RETURNS void LANGUAGE plpgsql AS $$
+BEGIN
     DELETE FROM public.event_match_links l
      WHERE l.event_id = _event_id
        AND NOT EXISTS (
@@ -16,10 +21,11 @@ RETURNS void LANGUAGE sql AS $$
     FROM public.v_event_matches v
     WHERE v.event_id = _event_id
     ON CONFLICT DO NOTHING;
-$$;
+END $$;
 
 CREATE OR REPLACE FUNCTION public.sync_match_event_links(_match_id uuid)
-RETURNS void LANGUAGE sql AS $$
+RETURNS void LANGUAGE plpgsql AS $$
+BEGIN
     DELETE FROM public.event_match_links l
      WHERE l.match_id = _match_id
        AND NOT EXISTS (
@@ -31,7 +37,7 @@ RETURNS void LANGUAGE sql AS $$
     FROM public.v_event_matches v
     WHERE v.match_id = _match_id
     ON CONFLICT DO NOTHING;
-$$;
+END $$;
 
 CREATE OR REPLACE FUNCTION public.tg_sync_event_match_links()
 RETURNS trigger LANGUAGE plpgsql AS $$

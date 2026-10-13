@@ -459,7 +459,12 @@ describe("ChatAttachmentsService", () => {
       ).resolves.toBeNull();
 
       expect(s3.uploadPart.mock.calls[0][3]).toBeInstanceOf(Readable);
-      expect(sent).toEqual([{ part: 1, bytes, length: PART }]);
+      expect(sent).toEqual([
+        { part: 1, bytes: expect.any(Buffer), length: PART },
+      ]);
+      // toEqual walks a Buffer byte by byte in JS, which takes most of a
+      // minute at a full part's size; compare the bytes natively instead.
+      expect(sent[0].bytes.equals(bytes)).toBe(true);
     });
 
     it("refuses a part that runs past the length it gave", async () => {
