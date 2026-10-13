@@ -57,6 +57,18 @@ describe("servers and game server nodes (SQL-driven)", () => {
     return server.id;
   };
 
+  // One statement deleting several servers visits them in disk order. The
+  // lowest id, clustered on the primary key, puts the dedicated server ahead
+  // of the on-demand server whose slot it took.
+  const createDedicatedServerFirstOnDisk = async (nodeId: string) => {
+    await postgres.query(
+      `INSERT INTO servers (id, host, label, rcon_password, port, tv_port, region, type, is_dedicated, enabled, game_server_node_id)
+       VALUES ('00000000-0000-0000-0000-000000000001', '203.0.113.1', 'dedicated', $1, 28000, 28001, 'NodeRegion', 'Casual', true, true, $2)`,
+      [Buffer.from("secret"), nodeId],
+    );
+    await postgres.query("CLUSTER servers USING servers_pkey");
+  };
+
   const dedicatedServer = async (id: string) => {
     const [server] = await postgres.query<
       Array<{
@@ -342,6 +354,35 @@ describe("servers and game server nodes (SQL-driven)", () => {
         [Buffer.from("x")],
       ),
     ).rejects.toThrow(/without a node assigned/i);
+  });
+
+  it("deletes a dedicated server and the slot it took in one statement, whichever is first on disk", async () => {
+    const nodeId = await createNode();
+    await createDedicatedServerFirstOnDisk(nodeId);
+
+    await postgres.query("DELETE FROM servers WHERE game_server_node_id = $1", [
+      nodeId,
+    ]);
+
+    const servers = await postgres.query<Array<unknown>>(
+      "SELECT 1 FROM servers WHERE game_server_node_id = $1",
+      [nodeId],
+    );
+    expect(servers.length).toBe(0);
+  });
+
+  it("deleting a node removes a dedicated server it hosts along with its slot", async () => {
+    const nodeId = await createNode();
+    await createDedicatedServerFirstOnDisk(nodeId);
+
+    await postgres.query("DELETE FROM game_server_nodes WHERE id = $1", [
+      nodeId,
+    ]);
+
+    const servers = await postgres.query<Array<unknown>>(
+      "SELECT 1 FROM servers",
+    );
+    expect(servers.length).toBe(0);
   });
 
   it("deleting a node removes its on-demand servers", async () => {
