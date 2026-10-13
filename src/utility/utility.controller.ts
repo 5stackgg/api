@@ -161,8 +161,19 @@ export class UtilityController {
   public async session(
     @Req() request: Request,
     @Query("map") reportedMap?: string,
+    @Query("on_steam_relay") onSteamRelay?: string,
+    @Query("steam_relay") steamRelay?: string,
   ) {
     const serverId = UtilityController.serverId(request);
+
+    // Ahead of everything else: the connect string is read the moment the
+    // session is ready, and has to say where the server is by then. A plugin
+    // from before this sends neither and is taken at its word as before.
+    const up = await this.practice.reportSteamRelay(
+      serverId,
+      steamRelay ? String(steamRelay) : null,
+      onSteamRelay === "true" ? true : onSteamRelay === "false" ? false : null,
+    );
 
     const session = await this.practice.sessionForServer(serverId);
 
@@ -172,8 +183,11 @@ export class UtilityController {
       );
     }
 
-    // The plugin asking at all is the definitive signal that the server is up.
-    await this.practice.markReady(session.match_id);
+    // The plugin asking is the definitive signal that the server is up, unless
+    // it is on the relay and has no address there yet.
+    if (up) {
+      await this.practice.markReady(session.match_id);
+    }
 
     // This fetch runs inside the plugin's map-load handler, so the map it names
     // is the one the level actually came up on -- the only thing that can end a

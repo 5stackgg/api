@@ -180,12 +180,20 @@ describe("UtilityPracticeService.reportOccupancy", () => {
     expect(params).toEqual(["server-1"]);
   });
 
-  it("keeps the relay address while a server on the relay has none to give yet", async () => {
-    const { service, postgres } = makeService([]);
+  // The only address left to hand out would be a host and port, and on the
+  // relay that reaches nobody.
+  it("does not call a server up that is on the relay with no address yet", async () => {
+    const { service, postgres, markReady } = makeService([]);
 
-    await service.reportOccupancy("server-1", [], null, true);
+    await service.reportOccupancy(
+      "server-1",
+      ["76561100000000001"],
+      null,
+      true,
+    );
 
-    expect(relayWrites(postgres)).toHaveLength(0);
+    expect(markReady).not.toHaveBeenCalled();
+    expect(postgres.query).not.toHaveBeenCalled();
   });
 
   it("keeps the relay address for a plugin that does not say either way", async () => {

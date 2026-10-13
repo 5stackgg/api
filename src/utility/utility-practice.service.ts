@@ -973,12 +973,16 @@ export class UtilityPracticeService {
    * No address alone is "nothing to say", never "clear it": a pod still
    * registering with the relay has none yet, and a plugin from before it said
    * which never has one to give off the relay.
+   *
+   * Answers whether the server can be called up. One that is on the relay and
+   * cannot yet say where cannot: the only address left to hand out for it is a
+   * host and port that nobody reaches.
    */
-  private async reportSteamRelay(
+  public async reportSteamRelay(
     serverId: string,
     steamRelay: string | null,
     onSteamRelay: boolean | null,
-  ): Promise<void> {
+  ): Promise<boolean> {
     if (onSteamRelay === false) {
       await this.postgres.query(
         `UPDATE public.servers
@@ -987,11 +991,11 @@ export class UtilityPracticeService {
             AND steam_relay IS NOT NULL`,
         [serverId],
       );
-      return;
+      return true;
     }
 
     if (!steamRelay) {
-      return;
+      return onSteamRelay !== true;
     }
 
     await this.postgres.query(
@@ -1001,6 +1005,8 @@ export class UtilityPracticeService {
           AND steam_relay IS DISTINCT FROM $2`,
       [serverId, steamRelay],
     );
+
+    return true;
   }
 
   /**
@@ -2068,7 +2074,9 @@ export class UtilityPracticeService {
     // Independent of the session: a pod reports where it can be reached
     // whether or not anyone is on it yet, and the connect string is read
     // before the first player arrives.
-    await this.reportSteamRelay(serverId, steamRelay, onSteamRelay);
+    if (!(await this.reportSteamRelay(serverId, steamRelay, onSteamRelay))) {
+      return;
+    }
 
     const session = await this.liveSessionForServer(serverId);
 
