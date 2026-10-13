@@ -189,6 +189,9 @@ describe("SystemService.setVersions", () => {
 describe("SystemService.getOutdated", () => {
   let system: SystemService;
   let images: Array<{ names: string[]; sizeBytes: number }>;
+  let container: Record<string, unknown>;
+  let containerStatus: Record<string, unknown>;
+  let cache: Map<string, unknown>;
 
   const repo = "ghcr.io/5stackgg/game-server-node-connector";
   const old = "sha256:d2dc";
@@ -196,8 +199,16 @@ describe("SystemService.getOutdated", () => {
 
   beforeEach(() => {
     images = [];
+    container = { image: `${repo}:latest` };
+    containerStatus = { imageID: `${repo}@${old}` };
+    cache = new Map();
     system = new SystemService(
-      {} as any,
+      {
+        get: jest.fn(async (key: string) => cache.get(key)),
+        put: jest.fn(async (key: string, value: unknown) => {
+          cache.set(key, value);
+        }),
+      } as any,
       {} as any,
       {} as any,
       { warn: jest.fn(), log: jest.fn() } as any,
@@ -225,10 +236,10 @@ describe("SystemService.getOutdated", () => {
             },
             spec: {
               nodeName: "node-1",
-              containers: [{ image: `${repo}:latest` }],
+              containers: [container],
             },
             status: {
-              containerStatuses: [{ imageID: `${repo}@${old}` }],
+              containerStatuses: [containerStatus],
             },
           },
         ],
@@ -273,6 +284,59 @@ describe("SystemService.getOutdated", () => {
     expect(await system.getOutdated()).toEqual([
       expect.objectContaining({ currentVersion: old, newVersion: latest }),
     ]);
+  });
+  // kubelet only lists a node's largest images, so the node can't always vouch
+  // for the running image. A container that pulls on every start and started
+  // after the tag moved has the new image whatever digest it reports.
+  describe("when the container pulls on every start", () => {
+    const tagMovedAt = new Date("2026-10-13T11:25:00Z");
+
+    beforeEach(() => {
+      container.imagePullPolicy = "Always";
+      cache.set(`version:v2:moved:${repo}:latest`, {
+        digest: latest,
+        at: tagMovedAt.getTime(),
+      });
+    });
+
+    it("counts it as current once it started after the tag moved", async () => {
+      containerStatus.state = {
+        running: { startedAt: new Date("2026-10-13T16:55:00Z") },
+      };
+
+      expect(await system.getOutdated()).toEqual([]);
+    });
+
+    it("reports it when it started before the tag moved", async () => {
+      containerStatus.state = {
+        running: { startedAt: new Date("2026-10-12T19:00:00Z") },
+      };
+
+      expect(await system.getOutdated()).toEqual([
+        expect.objectContaining({ currentVersion: old, newVersion: latest }),
+      ]);
+    });
+
+    it("dates a tag move from when it is first seen", async () => {
+      cache.clear();
+      containerStatus.state = {
+        running: { startedAt: new Date(Date.now() - 60_000) },
+      };
+
+      expect(await system.getOutdated()).toHaveLength(1);
+      expect(cache.get(`version:v2:moved:${repo}:latest`)).toEqual({
+        digest: latest,
+        at: expect.any(Number),
+      });
+    });
+  });
+
+  it("does not trust the start time of a container that may not have pulled", async () => {
+    container.imagePullPolicy = "IfNotPresent";
+    containerStatus.state = { running: { startedAt: new Date() } };
+    cache.set(`version:v2:moved:${repo}:latest`, { digest: latest, at: 0 });
+
+    expect(await system.getOutdated()).toHaveLength(1);
   });
 });
 

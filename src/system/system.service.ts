@@ -7,6 +7,8 @@ import {
   AppsV1Api,
   setHeaderOptions,
   PatchStrategy,
+  V1Container,
+  V1ContainerStatus,
   V1Node,
 } from "@kubernetes/client-node";
 import { HasuraService } from "src/hasura/hasura.service";
@@ -317,14 +319,33 @@ export class SystemService {
       image: string;
       version: string;
       versions: string[];
+      pulledAt?: Date;
     }> = [...(await this.getServices()), ...(await this.getPluginServices())];
 
-    for (const { service, plugin, pod, image, version, versions } of services) {
+    for (const {
+      service,
+      plugin,
+      pod,
+      image,
+      version,
+      versions,
+      pulledAt,
+    } of services) {
       const newVersion = await this.getLatestDigest(image);
 
       // An unreadable registry or pod tells us nothing. Reporting on it would
       // show a phantom update; restarting on it would be an endless rollout.
       if (!image || !version || !newVersion || versions.includes(newVersion)) {
+        continue;
+      }
+
+      // The digest a pod reports can stay behind (see imageDigests), and the
+      // node doesn't always list the image to say otherwise. A container that
+      // pulled its tag after the tag moved is running what it points at.
+      if (
+        pulledAt &&
+        pulledAt.getTime() > (await this.tagMovedAt(image, newVersion))
+      ) {
         continue;
       }
 
@@ -472,6 +493,7 @@ export class SystemService {
       image: string;
       version: string;
       versions: string[];
+      pulledAt?: Date;
     }> = [];
 
     for (const { pod, node } of await this.readyPods()) {
@@ -497,6 +519,7 @@ export class SystemService {
         image: spec?.image,
         version: SystemService.imageDigest(status?.imageID),
         versions: SystemService.imageDigests(node, status?.imageID),
+        pulledAt: SystemService.pulledAt(spec, status),
       });
     }
 
@@ -514,6 +537,7 @@ export class SystemService {
       image: string;
       version: string;
       versions: string[];
+      pulledAt?: Date;
     }> = [];
 
     let customPages: Array<{ title: string; deployments: unknown }>;
@@ -577,15 +601,16 @@ export class SystemService {
           }
 
           const { pod, node } = ready;
-          const imageID = pod.status?.containerStatuses?.[0]?.imageID;
+          const status = pod.status?.containerStatuses?.[0];
 
           services.push({
             pod: pod.metadata.name,
             service: name,
             plugin: title,
             image,
-            version: SystemService.imageDigest(imageID),
-            versions: SystemService.imageDigests(node, imageID),
+            version: SystemService.imageDigest(status?.imageID),
+            versions: SystemService.imageDigests(node, status?.imageID),
+            pulledAt: SystemService.pulledAt(pod.spec?.containers?.[0], status),
           });
         } catch (error) {
           // A plugin can name a deployment that was never installed, or was
@@ -660,6 +685,39 @@ export class SystemService {
         ...names.map((name) => SystemService.imageDigest(name)).filter(Boolean),
       ]),
     ];
+  }
+
+  // When the container last pulled its tag. An Always pull policy resolves the
+  // tag against the registry every time the container starts, and doesn't
+  // start it at all when that fails.
+  private static pulledAt(spec?: V1Container, status?: V1ContainerStatus) {
+    if (spec?.imagePullPolicy !== "Always") {
+      return undefined;
+    }
+
+    return (
+      status?.state?.running?.startedAt ?? status?.state?.terminated?.startedAt
+    );
+  }
+
+  // When the panel first saw the tag point at this digest, which is never
+  // before the tag actually moved there.
+  private async tagMovedAt(image: string, digest: string) {
+    const key = this.getServiceCacheKey(`moved:${image}`);
+
+    const seen = (await this.cache.get(key)) as
+      | { digest: string; at: number }
+      | undefined;
+
+    if (seen?.digest === digest) {
+      return seen.at;
+    }
+
+    const at = Date.now();
+
+    await this.cache.put(key, { digest, at });
+
+    return at;
   }
 
   private async getRegistryToken(registry: string, repository: string) {
