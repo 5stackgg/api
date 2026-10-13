@@ -18,7 +18,7 @@
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
-    "test:unit": "jest --testPathPatterns 'src/.*\\.spec\\.ts$' --runInBand",
+    "test:unit": "jest --testPathPatterns 'src/.*\\.spec\\.ts$'",
     "test:sql": "jest --config ./test/jest-sql.config.js",
     "typecheck:tests": "tsc -p tsconfig.spec.json",
     "test:watch": "jest --watch",
@@ -152,7 +152,8 @@
     "moduleNameMapper": {
       "^src/(.*)$": "<rootDir>/$1",
       "^@utilities/(.*)$": "<rootDir>/utilities/$1",
-      "^@kubernetes/client-node$": "<rootDir>/../test/mocks/kubernetes-client-node.ts"
+      "^@kubernetes/client-node$": "<rootDir>/../test/mocks/kubernetes-client-node.ts",
+      "^(?:\\.\\./)*generated$": "<rootDir>/../test/mocks/generated.ts"
     },
     "transformIgnorePatterns": [
       "node_modules/(?!(@kubernetes|uuid))"

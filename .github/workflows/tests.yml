@@ -19,38 +19,88 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24"
-          cache: yarn
+      # Cache node_modules itself rather than yarn's download cache: linking
+      # and the native builds are most of an install.
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-node24-${{ hashFiles('yarn.lock', 'patches/**') }}
       - name: Install dependencies
+        if: steps.node-modules.outputs.cache-hit != 'true'
         run: yarn install --frozen-lockfile
+      # ts-jest's output, chiefly for generated/ (~14MB of TypeScript that
+      # takes seconds to transpile cold). Entries are keyed by file content, so
+      # an older cache only misses on the files that changed since.
+      - name: Restore the jest cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/jest-cache
+          key: jest-unit-${{ runner.os }}-${{ hashFiles('yarn.lock', 'generated/**') }}
       - name: Typecheck test suites
         run: yarn typecheck:tests
       - name: Run unit tests
-        run: yarn test:unit
+        run: yarn test:unit --cacheDirectory "$RUNNER_TEMP/jest-cache"
 
   sql:
     # Boots one shared TimescaleDB via testcontainers, drives the real
     # HasuraService.setup() migration pipeline once, then suites clone the
     # template database and exercise the triggers/functions in parallel.
-    # Docker is available on GitHub-hosted runners.
+    # Docker is available on GitHub-hosted runners. The suites are split
+    # across runners, each with its own database; the sequencer in
+    # test/utils/slow-first-sequencer.js balances the shards by suite weight.
+    # Past six shards the heaviest suite sets the pace, not the split.
     runs-on: ubuntu-24.04
+    name: sql (${{ matrix.shard }}/6)
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
     env:
       # Locally the container is reused between runs to skip the boot and the
       # migration pipeline. A CI runner starts empty so there is nothing to
       # reuse, and on a shared runner a second job could rebuild the template
       # while this one is cloning it — so take the throwaway path.
       SQL_TEST_FRESH: "1"
+      # The runner is discarded after the job, so the reaper container has
+      # nothing to clean up. Skip pulling and starting it.
+      TESTCONTAINERS_RYUK_DISABLED: "true"
     steps:
+      # The database image is the slowest download in the job (~20s), so it
+      # starts first and pulls while the rest of the setup runs.
+      - name: Start pulling the database images
+        run: |
+          (docker pull -q timescale/timescaledb:latest-pg17 && docker pull -q redis:8.8-alpine) \
+            > "$RUNNER_TEMP/docker-pull.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/docker-pull.pid"
       - name: Check out the repo
         uses: actions/checkout@v4
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: "24"
-          cache: yarn
-      - name: Install dependencies (pre-pulling the database image)
+      # Cache node_modules itself rather than yarn's download cache: linking
+      # and the native builds are most of an install, and every shard pays it.
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-node24-${{ hashFiles('yarn.lock', 'patches/**') }}
+      - name: Install dependencies
+        if: steps.node-modules.outputs.cache-hit != 'true'
+        run: yarn install --frozen-lockfile
+      # See the unit job. The global setup loads the real generated/ client,
+      # so a cold cache costs every shard several seconds before it can migrate.
+      - name: Restore the jest cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/jest-cache
+          key: jest-sql-${{ runner.os }}-${{ hashFiles('yarn.lock', 'generated/**') }}
+      - name: Wait for the database images
         run: |
-          docker pull -q timescale/timescaledb:latest-pg17 &
-          yarn install --frozen-lockfile
-          wait
+          while kill -0 "$(cat "$RUNNER_TEMP/docker-pull.pid")" 2>/dev/null; do sleep 1; done
+          cat "$RUNNER_TEMP/docker-pull.log"
       - name: Run SQL tests
-        run: yarn test:sql
+        run: yarn test:sql --shard=${{ matrix.shard }}/6 --cacheDirectory "$RUNNER_TEMP/jest-cache"
