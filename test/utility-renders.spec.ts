@@ -344,7 +344,10 @@ describe("utility lineup renders (SQL-driven)", () => {
         new Logger("UtilityRendersTest"),
       );
 
-      const fetch = async (key: string) => {
+      const fetch = async (
+        key: string,
+        viewer?: { steam_id: string; role: string },
+      ) => {
         const response: any = new Writable({
           write(_chunk, _encoding, callback) {
             callback();
@@ -367,11 +370,15 @@ describe("utility lineup renders (SQL-driven)", () => {
           key.replace("clips/utility/", "").split("/"),
           undefined,
           undefined,
-          { headers: {} } as never,
+          { headers: {}, user: viewer } as never,
           response,
         );
         await finished;
-        return { status: response.statusCode, type: headers["content-type"] };
+        return {
+          status: response.statusCode,
+          type: headers["content-type"],
+          cache: headers["cache-control"],
+        };
       };
 
       return { s3, fetch };
@@ -400,21 +407,26 @@ describe("utility lineup renders (SQL-driven)", () => {
       const { id, files } = await filmed();
       const { s3, fetch } = api();
 
+      const kept = "private, max-age=2592000, immutable";
       expect(await fetch(files.clip)).toEqual({
         status: 200,
         type: "video/mp4",
+        cache: kept,
       });
       expect(await fetch(files.thumbnail)).toEqual({
         status: 200,
         type: "image/jpeg",
+        cache: kept,
       });
       expect(await fetch(files.aim)).toEqual({
         status: 200,
         type: "image/webp",
+        cache: kept,
       });
       expect(await fetch(files.smoke)).toEqual({
         status: 200,
         type: "application/json",
+        cache: kept,
       });
       expect(s3.stat.mock.calls.map(([key]) => key)).toEqual([
         files.clip,
@@ -436,43 +448,67 @@ describe("utility lineup renders (SQL-driven)", () => {
       expect(s3.stat).not.toHaveBeenCalled();
     });
 
-    // Nobody is signed in on the demos domain, so the API cannot tell a
-    // lineup's owner from anyone who was handed, or guessed, its key.
-    it.each([
-      ["a private lineup", { visibility: "Private" }, false],
-      ["a lineup archived after it was filmed", {}, true],
-    ])(
-      "neither names nor serves the files of %s",
-      async (_label, overrides, archived) => {
-        const { id, files } = await filmed(overrides);
+    // A lineup is only filmed while it is public, and keeps what was filmed
+    // when its author takes it back or archives it. The session cookie reaches
+    // the demos domain, so the API can tell who may still see it.
+    describe.each([
+      ["made private", { visibility: "Private" }, false],
+      ["archived", {}, true],
+    ])("a filmed lineup that is then %s", (_label, overrides, archived) => {
+      async function unpublished() {
+        const lineup = await filmed(overrides);
         if (archived) {
-          await archive(id);
+          await archive(lineup.id);
         }
-        const { s3, fetch } = api();
+        return lineup;
+      }
+
+      it("keeps its urls", async () => {
+        const { id, files } = await unpublished();
 
         expect(await urls(id)).toEqual({
-          url: null,
-          thumb: null,
-          stills: null,
-          smoke: null,
+          url: `https://demos.example.test/${files.clip}?v=1000000`,
+          thumb: `https://demos.example.test/${files.thumbnail}?v=1000000`,
+          stills: {
+            aim: `https://demos.example.test/${files.aim}?v=1000000`,
+          },
+          smoke: `https://demos.example.test/${files.smoke}?v=2000000`,
         });
-        for (const key of Object.values(files)) {
-          expect((await fetch(key)).status).toBe(404);
+      });
+
+      it("is served to nobody who cannot see the lineup", async () => {
+        const { files } = await unpublished();
+        const stranger = await fx.player();
+        const { s3, fetch } = api();
+
+        for (const viewer of [
+          undefined,
+          { steam_id: stranger, role: "user" },
+          { steam_id: stranger, role: "verified_user" },
+        ]) {
+          for (const key of Object.values(files)) {
+            expect((await fetch(key, viewer)).status).toBe(404);
+          }
         }
         expect(s3.stat).not.toHaveBeenCalled();
-      },
-    );
+      });
 
-    it("leaves that lineup its urls where a worker serves them", async () => {
-      const { id, files } = await filmed({ visibility: "Private" });
-      await postgres.query(
-        `INSERT INTO settings (name, value)
-         VALUES ('cloudflare_worker_url', 'https://demo-dl.5stack.gg')`,
-      );
+      it("is served to its author and to a moderator, asked for again each time", async () => {
+        const { files } = await unpublished();
+        const moderator = await fx.player();
+        const { fetch } = api();
 
-      expect((await urls(id)).url).toBe(
-        `https://demo-dl.5stack.gg/${files.clip}?v=1000000`,
-      );
+        for (const viewer of [
+          { steam_id: author, role: "user" },
+          { steam_id: moderator, role: "moderator" },
+        ]) {
+          expect(await fetch(files.clip, viewer)).toEqual({
+            status: 200,
+            type: "video/mp4",
+            cache: "private, max-age=0, must-revalidate",
+          });
+        }
+      });
     });
   });
 

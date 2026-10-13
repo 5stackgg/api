@@ -12,6 +12,7 @@ import { createHash } from "crypto";
 import { S3Service } from "../../s3/s3.service";
 import { HasuraService } from "../../hasura/hasura.service";
 import { PostgresService } from "../../postgres/postgres.service";
+import { User } from "../../auth/types/User";
 import { ClipsService } from "./clips.service";
 
 // View counting mirrors the clip Worker (5stack-panel
@@ -30,11 +31,11 @@ const UTILITY_LINEUP_FILE_TYPES: Record<string, string> = {
   webp: "image/webp",
   json: "application/json",
 };
-// A lineup's files are keyed per render and per recording, so a key never
-// changes what it holds and a browser may keep it. Private, because a lineup
-// can stop being public, and a cache shared between visitors would go on
-// serving it past the check that refuses it here.
-const UTILITY_LINEUP_FILE_CACHE = "private, max-age=2592000, immutable";
+// A public lineup's files are keyed per render and per recording, so a key
+// never changes what it holds and a browser may keep it. Private, because a
+// lineup can stop being public, and a cache shared between visitors would go
+// on serving it past the check that refuses it here.
+const PUBLIC_UTILITY_LINEUP_FILE_CACHE = "private, max-age=2592000, immutable";
 
 @Controller("/clips")
 export class ClipDownloadController {
@@ -48,8 +49,9 @@ export class ClipDownloadController {
 
   // A lineup's preview clip, thumbnail, stills and recorded smoke on a panel
   // with no Cloudflare worker: the path is the object's key, as it is on the
-  // worker (utility_lineup_file_base_url). Nobody is signed in on this
-  // domain, so only a lineup a signed-out visitor could open is served.
+  // worker (utility_lineup_file_base_url). The session cookie spans the web
+  // domain's subdomains, so a <video> or <img> on the page arrives here as
+  // whoever is signed in, and a lineup is served to those who may see it.
   @Get("utility/*key")
   public async utilityLineupFile(
     @Param("key") path: string | Array<string>,
@@ -59,20 +61,25 @@ export class ClipDownloadController {
     @Res() response: Response,
   ) {
     const key = `clips/utility/${[path].flat().join("/")}`;
-    const extension = await this.utilityLineupFileExtension(key);
-    if (!extension) {
+    const file = await this.utilityLineupFileFor(
+      key,
+      request.user as User | undefined,
+    );
+    if (!file) {
       response.setHeader("Cache-Control", "no-store");
       response.status(404).json({ error: "not found" });
       return;
     }
     await this.stream(
       key,
-      UTILITY_LINEUP_FILE_TYPES[extension],
+      UTILITY_LINEUP_FILE_TYPES[file.extension],
       name,
       dl === "1",
       request,
       response,
-      UTILITY_LINEUP_FILE_CACHE,
+      // What was served because of who asked is asked for again each time,
+      // so signing out, or losing the lineup, takes it away.
+      file.public ? PUBLIC_UTILITY_LINEUP_FILE_CACHE : undefined,
     );
   }
 
@@ -203,28 +210,42 @@ export class ClipDownloadController {
     return match_clips_by_pk;
   }
 
-  // Only a file that a lineup anyone may see points at today, so the path
+  // Only a file that a lineup the viewer may see points at today, so the path
   // being a key opens neither the rest of the bucket nor a private lineup.
-  private async utilityLineupFileExtension(
+  private async utilityLineupFileFor(
     key: string,
-  ): Promise<string | null> {
+    viewer: User | undefined,
+  ): Promise<{ extension: string; public: boolean } | null> {
     const match = UTILITY_LINEUP_FILE.exec(key);
     if (!match) {
       return null;
     }
-    const [lineup] = await this.postgres.query<Array<{ id: string }>>(
-      `SELECT l.id::text AS id
+    const [lineup] = await this.postgres.query<Array<{ public: boolean }>>(
+      `SELECT public.can_view_utility_lineup(l, '{}'::json) IS TRUE AS public
          FROM public.utility_lineups l
         WHERE l.id = $1::uuid
-          AND public.can_view_utility_lineup(l, '{}'::json)
+          AND public.can_view_utility_lineup(l, $3::json)
           AND ($2 IN (l.preview_file, l.preview_thumbnail, l.smoke_voxels_file)
                OR EXISTS (
                  SELECT 1
                    FROM jsonb_each_text(COALESCE(l.preview_stills, '{}'::jsonb)) still
                   WHERE still.value = $2))`,
-      [match[1], key],
+      [
+        match[1],
+        key,
+        JSON.stringify(
+          viewer
+            ? {
+                "x-hasura-role": viewer.role,
+                "x-hasura-user-id": viewer.steam_id,
+              }
+            : {},
+        ),
+      ],
     );
-    return lineup ? match[2].toLowerCase() : null;
+    return lineup
+      ? { extension: match[2].toLowerCase(), public: lineup.public }
+      : null;
   }
 
   private async stream(
