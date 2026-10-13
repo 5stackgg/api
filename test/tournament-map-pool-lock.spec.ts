@@ -1,3 +1,5 @@
+import { readFileSync } from "fs";
+import { join } from "path";
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { Fixtures } from "./utils/fixtures";
 import { TournamentFixtures } from "./utils/tournament-fixtures";
@@ -50,16 +52,19 @@ describe("a tournament's map pool once the bracket is drawn (SQL-driven)", () =>
 
   // What TournamentStageForm.createMatchOptions leaves behind: the stage holds
   // its own full copy of the tournament's options.
-  const tournamentWithStageOptions = async () => {
-    const tournament = await tfx.createTournament(SE4);
-    await postgres.query(
+  const giveStageOwnOptions = (tournamentId: string, stageId: string) =>
+    postgres.query(
       `UPDATE tournament_stages
        SET match_options_id = clone_match_options(
          (SELECT match_options_id FROM tournaments WHERE id = $1)
        )
        WHERE id = $2`,
-      [tournament.id, tournament.stageIds[0]],
+      [tournamentId, stageId],
     );
+
+  const tournamentWithStageOptions = async () => {
+    const tournament = await tfx.createTournament(SE4);
+    await giveStageOwnOptions(tournament.id, tournament.stageIds[0]);
     return tournament;
   };
 
@@ -303,6 +308,95 @@ describe("a tournament's map pool once the bracket is drawn (SQL-driven)", () =>
         stages: [{ map_pool_id: other }],
         matches: [],
       });
+    });
+  });
+
+  // Stages used to be able to hold a map pool of their own. Nothing shows or
+  // writes that any more, but rows from back then still differ.
+  describe("the one-time repair of stages left on a pool of their own", () => {
+    const GROUP_THEN_FINAL = [
+      { type: "RoundRobin", order: 1, minTeams: 4, maxTeams: 4 },
+      { type: "SingleElimination", order: 2, minTeams: 2, maxTeams: 2 },
+    ];
+
+    // Both stages hold their own options: the first on a Custom pool of its
+    // own, the second still on the tournament's.
+    const legacyTournament = async () => {
+      const tournament = await tfx.createTournament(GROUP_THEN_FINAL);
+      for (const stageId of tournament.stageIds) {
+        await giveStageOwnOptions(tournament.id, stageId);
+      }
+      const ownPool = await copyPool(tournament.id, { without: 1 });
+      await setStagePool(tournament.stageIds[0], ownPool);
+      const { template } = await tournamentOptions(tournament.id);
+      return { ...tournament, ownPool, pool: template.map_pool_id };
+    };
+
+    const stagePools = async (tournamentId: string) =>
+      (await tournamentOptions(tournamentId)).stages.map(
+        (stage) => stage.map_pool_id,
+      );
+
+    it("moves only the differing stages of tournaments that are not drawn, and changes nothing when run again", async () => {
+      const up = readFileSync(
+        join(
+          __dirname,
+          "../hasura/migrations/default/1890000000910_stage_map_pools_follow_tournament/up.sql",
+        ),
+        "utf8",
+      );
+
+      const inSetup = await legacyTournament();
+      const registering = await legacyTournament();
+      await openRegistration(registering);
+      const seeded = await legacyTournament();
+      await openRegistration(seeded);
+      await postgres.query(
+        "SELECT assign_seeds_to_teams(t) FROM tournaments t WHERE t.id = $1",
+        [seeded.id],
+      );
+      await postgres.query("SELECT seed_stage($1)", [seeded.stageIds[0]]);
+      const closed = await legacyTournament();
+      await openRegistration(closed);
+      await tfx.setStatus(closed.id, closed.organizer, "RegistrationClosed");
+
+      const drawn = async () => [
+        await tournamentOptions(seeded.id),
+        await tournamentOptions(closed.id),
+      ];
+      const drawnBefore = await drawn();
+      expect(drawnBefore.map(({ stages }) => stages[0].map_pool_id)).toEqual([
+        seeded.ownPool,
+        closed.ownPool,
+      ]);
+      expect(drawnBefore[1].matches.length).toBe(2);
+
+      for (let run = 0; run < 2; run++) {
+        await postgres.query(up);
+
+        expect(await stagePools(inSetup.id)).toEqual([
+          inSetup.pool,
+          inSetup.pool,
+        ]);
+        expect(await stagePools(registering.id)).toEqual([
+          registering.pool,
+          registering.pool,
+        ]);
+        expect(await drawn()).toEqual(drawnBefore);
+      }
+
+      const pools = await postgres.query<Array<{ id: string }>>(
+        "SELECT id FROM map_pools WHERE id = ANY($1::uuid[])",
+        [
+          [
+            inSetup.ownPool,
+            registering.ownPool,
+            seeded.ownPool,
+            closed.ownPool,
+          ],
+        ],
+      );
+      expect(pools.length).toBe(4);
     });
   });
 });
