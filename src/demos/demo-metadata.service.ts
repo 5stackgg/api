@@ -1,3 +1,4 @@
+import { promisify } from "util";
 import zlib from "zlib";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
@@ -6,6 +7,13 @@ import { PostgresService } from "../postgres/postgres.service";
 import { S3Service } from "../s3/s3.service";
 import { CacheService } from "../cache/cache.service";
 import { DemoParserService, ParsedDemo } from "./demo-parser.service";
+import { persistPayload } from "./persist-payload";
+
+// A playback blob is tens of MB of JSON. Compressing it on the event loop held
+// every other request and job for the second or more it took; these run on
+// libuv's thread pool.
+const gzip = promisify(zlib.gzip);
+const gunzip = promisify(zlib.gunzip);
 
 // The PLAYBACK BLOB's shape, not the parser's (ParsedDemo.schema_version).
 // v10 adds `ducked` to positions and carries the parser's own version through.
@@ -519,7 +527,7 @@ export class DemoMetadataService {
     const startedAt = Date.now();
     await this.postgres.query(`SELECT ${fn}($1::uuid, $2::jsonb)`, [
       matchMapDemoId,
-      JSON.stringify(parsed),
+      persistPayload(parsed),
     ]);
     this.logger.log(
       `[persist] done ${
@@ -604,7 +612,7 @@ export class DemoMetadataService {
     const key = playbackBlobKey(matchId, matchMapId, startedAt);
     const blob = buildPlaybackBlob(matchMapId, parsed);
     const builtAt = Date.now();
-    const gz = zlib.gzipSync(Buffer.from(JSON.stringify(blob)));
+    const gz = await gzip(Buffer.from(JSON.stringify(blob)));
     const gzippedAt = Date.now();
     await this.s3.put(key, gz);
     const uploadedAt = Date.now();
@@ -705,7 +713,7 @@ export class DemoMetadataService {
 
     let blob: PlaybackBlob;
     try {
-      const json = zlib.gunzipSync(gz).toString("utf8");
+      const json = (await gunzip(gz)).toString("utf8");
 
       blob = JSON.parse(json) as PlaybackBlob;
 
