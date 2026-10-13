@@ -30,6 +30,10 @@ export type ImportExternalDemoOptions = {
   // don't. The pending import row that carries it is deleted once the demo
   // parses, so it has to be copied onto the match.
   shareCode?: string | null;
+  // The id the match map is created with. The parse that produced `parsed`
+  // was asked for its playback blob under this id (see playbackRequest), and
+  // the blob carries it, so the row has to be created with it.
+  matchMapId?: string;
 };
 
 type SteamPlayerSummary = {
@@ -66,8 +70,14 @@ export class MatchImportService {
     sourceKey: string,
     options: ImportExternalDemoOptions = {},
   ): Promise<{ matchId: string | null; skipped?: string }> {
-    const { demoUrl, matchStartTime, externalId, sourceObjectKey, shareCode } =
-      options;
+    const {
+      demoUrl,
+      matchStartTime,
+      externalId,
+      sourceObjectKey,
+      shareCode,
+      matchMapId: reservedMatchMapId,
+    } = options;
 
     // Recorded on a 5Stack server: that match already lives in 5Stack (or was
     // removed on purpose), so never import a copy of it.
@@ -212,7 +222,12 @@ export class MatchImportService {
     let matchMapId: string;
     let demoId: string;
     try {
-      matchMapId = await this.insertMatchMap(matchId, mapId, startedAt);
+      matchMapId = await this.insertMatchMap(
+        matchId,
+        mapId,
+        startedAt,
+        reservedMatchMapId,
+      );
 
       if (sourceObjectKey) {
         const demoName = sourceObjectKey.replace(/^.*\//, "");
@@ -1166,6 +1181,7 @@ export class MatchImportService {
     matchId: string,
     mapId: string,
     createdAt: string | null,
+    id?: string,
   ): Promise<string> {
     const object: Record<string, unknown> = {
       match_id: matchId,
@@ -1173,6 +1189,9 @@ export class MatchImportService {
       order: 0,
       status: "Finished",
     };
+    if (id) {
+      object.id = id;
+    }
     if (createdAt) {
       object.created_at = createdAt;
     }

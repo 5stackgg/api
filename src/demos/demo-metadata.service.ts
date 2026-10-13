@@ -6,7 +6,12 @@ import { HasuraService } from "../hasura/hasura.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { S3Service } from "../s3/s3.service";
 import { CacheService } from "../cache/cache.service";
-import { DemoParserService, ParsedDemo } from "./demo-parser.service";
+import {
+  DemoParserService,
+  ParsedDemo,
+  ParsedPlayback,
+  PlaybackRequest,
+} from "./demo-parser.service";
 import { persistPayload } from "./persist-payload";
 
 // A playback blob is tens of MB of JSON. Compressing it on the event loop held
@@ -461,9 +466,10 @@ export class DemoMetadataService {
     this.logger.log(
       `[demo-parser] parsing match_map_demo ${demo.id} (file=${demo.file})`,
     );
+    const playback = playbackRequest(demo.match_map_id);
     const parsed = DemoMetadataService.isExternalDemoUrl(demo.file)
-      ? await this.demoParser.parseFromUrl(demo.file)
-      : await this.demoParser.parseFromS3Key(demo.file, demo.id);
+      ? await this.demoParser.parseFromUrl(demo.file, playback)
+      : await this.demoParser.parseFromS3Key(demo.file, demo.id, playback);
     if (!parsed) {
       throw new Error(`demo parse returned null for ${demo.id}`);
     }
@@ -601,6 +607,57 @@ export class DemoMetadataService {
     }
   }
 
+  // The parser builds the blob when asked (see playbackRequest), so a parse no
+  // longer crosses to the api as 50 MB of JSON only to be reshaped and
+  // compressed here. A parser that did not build one — an older image, or one
+  // that builds another blob version — returned the full parse instead, and the
+  // blob is built from that as it always was.
+  private static async playbackGzip(
+    matchMapId: string,
+    parsed: ParsedDemo,
+  ): Promise<{
+    gz: Buffer;
+    counts: Omit<ParsedPlayback, "schema_version" | "match_map_id" | "blob">;
+    source: string;
+  }> {
+    const prebuilt = parsed.playback;
+    if (prebuilt) {
+      // The parser only builds what it was asked for, and leaves the blob's
+      // fields out of the parse when it does, so a blob for another match map
+      // or version cannot be rebuilt from here — it is a bug upstream.
+      if (
+        prebuilt.schema_version !== DEMO_METADATA_VERSION ||
+        prebuilt.match_map_id !== matchMapId
+      ) {
+        throw new Error(
+          `parser built a v${prebuilt.schema_version} blob for match map ${prebuilt.match_map_id}; wanted v${DEMO_METADATA_VERSION} for ${matchMapId}`,
+        );
+      }
+      return {
+        gz: Buffer.from(prebuilt.blob, "base64"),
+        counts: prebuilt,
+        source: "built by parser, decode",
+      };
+    }
+
+    const blob = buildPlaybackBlob(matchMapId, parsed);
+    const gz = await gzip(Buffer.from(JSON.stringify(blob)));
+    return {
+      gz,
+      counts: {
+        positions: blob.positions.length,
+        shots_fired: blob.shots_fired.length,
+        grenade_events: blob.grenade_throws.length,
+        smoke_volumes: blob.smoke_volumes.length,
+        smoke_voxels: blob.smoke_voxels.length,
+        infernos: blob.infernos.length,
+        damages: blob.damages.length,
+        flashes: blob.flashes.length,
+      },
+      source: "build + gzip",
+    };
+  }
+
   public async uploadPlaybackBlob(
     matchId: string,
     matchMapId: string,
@@ -610,10 +667,11 @@ export class DemoMetadataService {
   ): Promise<string> {
     const startedAt = Date.now();
     const key = playbackBlobKey(matchId, matchMapId, startedAt);
-    const blob = buildPlaybackBlob(matchMapId, parsed);
+    const { gz, counts, source } = await DemoMetadataService.playbackGzip(
+      matchMapId,
+      parsed,
+    );
     const builtAt = Date.now();
-    const gz = await gzip(Buffer.from(JSON.stringify(blob)));
-    const gzippedAt = Date.now();
     await this.s3.put(key, gz);
     const uploadedAt = Date.now();
     await this.postgres.query(
@@ -645,16 +703,16 @@ export class DemoMetadataService {
     this.logger.log(
       `[playback-blob] uploaded ${key} ` +
         `(${gz.byteLength} bytes gzipped, ` +
-        `${blob.positions.length} positions, ` +
-        `${blob.shots_fired.length} shots, ` +
-        `${blob.grenade_throws.length} grenade events, ` +
-        `${blob.smoke_volumes.length} smoke volumes, ` +
-        `${blob.smoke_voxels.length} smoke voxel grids, ` +
-        `${blob.infernos.length} infernos, ` +
-        `${blob.damages.length} damages, ` +
-        `${blob.flashes.length} flashes) ` +
-        `in ${Date.now() - startedAt}ms (build ${builtAt - startedAt}ms, ` +
-        `gzip ${gzippedAt - builtAt}ms, upload ${uploadedAt - gzippedAt}ms)`,
+        `${counts.positions} positions, ` +
+        `${counts.shots_fired} shots, ` +
+        `${counts.grenade_events} grenade events, ` +
+        `${counts.smoke_volumes} smoke volumes, ` +
+        `${counts.smoke_voxels} smoke voxel grids, ` +
+        `${counts.infernos} infernos, ` +
+        `${counts.damages} damages, ` +
+        `${counts.flashes} flashes) ` +
+        `in ${Date.now() - startedAt}ms (${source} ${builtAt - startedAt}ms, ` +
+        `upload ${uploadedAt - builtAt}ms)`,
     );
     return key;
   }
@@ -761,6 +819,12 @@ function isDemoFresh(demo: DemoRow): boolean {
 
 export function demoKey(matchId: string, mapId: string, demo: string): string {
   return `demos/${matchId}/${mapId}/${demo}`;
+}
+
+// What to ask the parser for so it builds this match map's playback blob at
+// the version this api reads.
+export function playbackRequest(matchMapId: string): PlaybackRequest {
+  return { match_map_id: matchMapId, schema_version: DEMO_METADATA_VERSION };
 }
 
 export function playbackBlobKey(

@@ -1,8 +1,10 @@
+import { randomUUID } from "crypto";
 import { Job } from "bullmq";
 import { Logger } from "@nestjs/common";
 import { WorkerHost } from "@nestjs/bullmq";
 import { UseQueue } from "src/utilities/QueueProcessors";
 import { DemoParserService } from "../../demos/demo-parser.service";
+import { playbackRequest } from "../../demos/demo-metadata.service";
 import { S3Service } from "../../s3/s3.service";
 import { SteamMatchHistoryQueues } from "../enums/SteamMatchHistoryQueues";
 import { MatchImportService } from "../match-import.service";
@@ -34,7 +36,14 @@ export class ProcessUploadedDemo extends WorkerHost {
     try {
       this.logger.log(`process-uploaded-demo steam_id=${steam_id} key=${key}`);
 
-      const parsed = await this.demoParser.parseFromS3Key(key);
+      // Reserved before the parse so the parser can build the playback blob
+      // for the match map the import is about to create.
+      const matchMapId = randomUUID();
+      const parsed = await this.demoParser.parseFromS3Key(
+        key,
+        undefined,
+        playbackRequest(matchMapId),
+      );
       if (!parsed) {
         throw new Error("demo failed to parse");
       }
@@ -54,6 +63,7 @@ export class ProcessUploadedDemo extends WorkerHost {
           matchStartTime: null,
           externalId: dedupeKey,
           sourceObjectKey: key,
+          matchMapId,
         },
       );
 
