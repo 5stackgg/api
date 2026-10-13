@@ -639,6 +639,70 @@ describe("servers and game server nodes (SQL-driven)", () => {
       });
     });
 
+    it("refuses a region or port range change while a match is on the dedicated server, and leaves everything where it was", async () => {
+      const nodeId = await createNode();
+      const serverId = await createDedicatedServer(nodeId);
+      const { matchId } = await fx.bareMatch();
+      await postgres.query(
+        "UPDATE servers SET reserved_by_match_id = $1 WHERE id = $2",
+        [matchId, serverId],
+      );
+      const server = await dedicatedServer(serverId);
+      const slots = await slotStates(nodeId);
+
+      await expect(
+        postgres.query(
+          "UPDATE game_server_nodes SET region = 'OtherRegion' WHERE id = $1",
+          [nodeId],
+        ),
+      ).rejects.toThrow(/while matches are ongoing/i);
+      await expect(setPortRange(nodeId, 27115, 3)).rejects.toThrow(
+        /while matches are ongoing/i,
+      );
+
+      expect(await dedicatedServer(serverId)).toEqual(server);
+      expect(await slotStates(nodeId)).toEqual(slots);
+      const [node] = await postgres.query<
+        Array<{ region: string; start_port_range: number }>
+      >(
+        "SELECT region, start_port_range FROM game_server_nodes WHERE id = $1",
+        [nodeId],
+      );
+      expect([node.region, Number(node.start_port_range)]).toEqual([
+        "NodeRegion",
+        27015,
+      ]);
+    });
+
+    it("seats a dedicated server once a node whose range changed while it was disabled is enabled again", async () => {
+      const nodeId = await createNode();
+      const serverId = await createDedicatedServer(nodeId);
+      await postgres.query(
+        "UPDATE game_server_nodes SET enabled = false WHERE id = $1",
+        [nodeId],
+      );
+
+      await setPortRange(nodeId, 27115, 3);
+
+      expect(await dedicatedServer(serverId)).toMatchObject({ port: 27015 });
+      expect(await nodeServers(nodeId)).toEqual([]);
+
+      await postgres.query(
+        "UPDATE game_server_nodes SET enabled = true WHERE id = $1",
+        [nodeId],
+      );
+
+      expect(await dedicatedServer(serverId)).toMatchObject({
+        port: 27115,
+        tv_port: 27116,
+      });
+      expect(await slotStates(nodeId)).toEqual([
+        [27115, false],
+        [27117, true],
+        [27119, true],
+      ]);
+    });
+
     it("still refuses a direct port, host or region edit, even in the transaction that re-seated the server", async () => {
       const nodeId = await createNode();
       const serverId = await createDedicatedServer(nodeId);
