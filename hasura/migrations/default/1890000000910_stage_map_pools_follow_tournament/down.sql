@@ -1,0 +1,2 @@
+-- The pool each stage held before is not recorded, so there is nothing to put
+-- back.

@@ -306,7 +306,7 @@ event_triggers:
           - tv_port
           - port
           - rcon_password
-          - host
+          - region
           - label
           - game_server_node_id
           - type

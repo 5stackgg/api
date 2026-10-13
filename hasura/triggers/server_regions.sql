@@ -14,7 +14,14 @@ BEGIN
                 server_ip = server_node.public_ip;
             END IF;
 
-            UPDATE servers SET host = host(server_ip) WHERE game_server_node_id = server_node.id;
+            UPDATE servers SET host = host(server_ip) WHERE game_server_node_id = server_node.id AND is_dedicated = false;
+
+            PERFORM set_config('fivestack.node_server_sync', 'true', true);
+            UPDATE servers
+            SET host = host(server_ip)
+            WHERE game_server_node_id = server_node.id AND is_dedicated = true
+              AND host IS DISTINCT FROM host(server_ip) AND server_ip IS NOT NULL;
+            PERFORM set_config('fivestack.node_server_sync', 'false', true);
         END LOOP;
     END IF;
     
