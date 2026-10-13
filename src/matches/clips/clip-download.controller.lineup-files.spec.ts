@@ -125,6 +125,20 @@ describe("ClipDownloadController lineup files", () => {
     );
   });
 
+  // Its headers are the caller's, so a cache that drops the query string
+  // would otherwise hand one visitor's download name to everybody else.
+  it.each([{ dl: "1" }, { name: "invoice.exe" }, { dl: "1", name: "a.mp4" }])(
+    "keeps an answer shaped by %j out of shared caches",
+    async (query) => {
+      const response = await get(CLIP).query(query);
+
+      expect(response.status).toBe(200);
+      expect(response.headers["cache-control"]).toBe(
+        "private, max-age=0, must-revalidate",
+      );
+    },
+  );
+
   // The key names the render or the recording, so it never holds anything
   // else.
   it("lets a served file be cached for as long as the worker caches it", async () => {
@@ -135,16 +149,38 @@ describe("ClipDownloadController lineup files", () => {
     );
   });
 
-  it("does not let a failed fetch be cached as the file", async () => {
-    s3.get.mockRejectedValueOnce(new Error("s3 unavailable"));
+  it.each([
+    [
+      "a failed fetch (500)",
+      () => s3.get.mockRejectedValueOnce(new Error("s3 unavailable")),
+      CLIP,
+      500,
+    ],
+    [
+      "a file S3 no longer has (404)",
+      () => s3.stat.mockRejectedValueOnce({ code: "NotFound" }),
+      CLIP,
+      404,
+    ],
+    [
+      "a file no lineup points at (404)",
+      () => postgres.query.mockResolvedValueOnce([]),
+      `clips/utility/${LINEUP}/11111111-1111-1111-1111-111111111111.mp4`,
+      404,
+    ],
+  ])(
+    "does not let %s be cached as the file",
+    async (_label, fail, key, status) => {
+      fail();
 
-    const response = await get(CLIP);
+      const response = await get(key);
 
-    expect(response.status).toBe(500);
-    expect(response.headers["cache-control"]).toBeUndefined();
-  });
+      expect(response.status).toBe(status);
+      expect(response.headers["cache-control"]).toBe("no-store");
+    },
+  );
 
-  it("answers 404 without reading S3 for a file no lineup points at", async () => {
+  it("answers 404 without reading S3 for a file no visible lineup points at", async () => {
     postgres.query.mockResolvedValueOnce([]);
 
     const response = await get(

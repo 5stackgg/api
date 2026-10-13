@@ -46,7 +46,8 @@ export class ClipDownloadController {
 
   // A lineup's preview clip, thumbnail, stills and recorded smoke on a panel
   // with no Cloudflare worker: the path is the object's key, as it is on the
-  // worker (utility_lineup_file_base_url).
+  // worker (utility_lineup_file_base_url). Nobody is signed in on this
+  // domain, so only a lineup a signed-out visitor could open is served.
   @Get("utility/*key")
   public async utilityLineupFile(
     @Param("key") path: string | Array<string>,
@@ -58,6 +59,7 @@ export class ClipDownloadController {
     const key = `clips/utility/${[path].flat().join("/")}`;
     const extension = await this.utilityLineupFileExtension(key);
     if (!extension) {
+      response.setHeader("Cache-Control", "no-store");
       response.status(404).json({ error: "not found" });
       return;
     }
@@ -68,7 +70,11 @@ export class ClipDownloadController {
       dl === "1",
       request,
       response,
-      UTILITY_LINEUP_FILE_CACHE,
+      // A download's headers are the caller's to choose, and a cache shared
+      // with other visitors must never keep an answer one of them shaped.
+      name === undefined && dl === undefined
+        ? UTILITY_LINEUP_FILE_CACHE
+        : undefined,
     );
   }
 
@@ -199,8 +205,8 @@ export class ClipDownloadController {
     return match_clips_by_pk;
   }
 
-  // Only a file a lineup points at today, so the path being a key does not
-  // open the rest of the bucket.
+  // Only a file that a lineup anyone may see points at today, so the path
+  // being a key opens neither the rest of the bucket nor a private lineup.
   private async utilityLineupFileExtension(
     key: string,
   ): Promise<string | null> {
@@ -209,13 +215,14 @@ export class ClipDownloadController {
       return null;
     }
     const [lineup] = await this.postgres.query<Array<{ id: string }>>(
-      `SELECT id::text AS id
-         FROM public.utility_lineups
-        WHERE id = $1::uuid
-          AND ($2 IN (preview_file, preview_thumbnail, smoke_voxels_file)
+      `SELECT l.id::text AS id
+         FROM public.utility_lineups l
+        WHERE l.id = $1::uuid
+          AND public.can_view_utility_lineup(l, '{}'::json)
+          AND ($2 IN (l.preview_file, l.preview_thumbnail, l.smoke_voxels_file)
                OR EXISTS (
                  SELECT 1
-                   FROM jsonb_each_text(COALESCE(preview_stills, '{}'::jsonb)) still
+                   FROM jsonb_each_text(COALESCE(l.preview_stills, '{}'::jsonb)) still
                   WHERE still.value = $2))`,
       [match[1], key],
     );
@@ -231,6 +238,10 @@ export class ClipDownloadController {
     response: Response,
     cacheControl = "private, max-age=0, must-revalidate",
   ) {
+    // Until the bytes are in hand below: a failure answered under a lineup
+    // file's policy would be cached as that file for a month.
+    response.setHeader("Cache-Control", "no-store");
+
     let stat;
     try {
       stat = await this.s3.stat(key);
@@ -281,8 +292,6 @@ export class ClipDownloadController {
         response.setHeader("Content-Length", String(size));
         stream = await this.s3.get(key);
       }
-      // Only once the bytes are in hand: a failed fetch answered under a
-      // lineup file's policy would be cached as that file for a month.
       response.setHeader("Cache-Control", cacheControl);
       this.pipeWithCleanup(stream, response);
     } catch (error) {

@@ -1,15 +1,34 @@
 -- Where a lineup's stored files are fetched from. A panel without a Cloudflare
 -- worker has no cloudflare_worker_url, and the API serves the same key at the
 -- same path on the demos domain instead (ClipDownloadController), as it does a
--- highlight (clip_download_url).
-CREATE OR REPLACE FUNCTION public.utility_lineup_file_base_url()
+-- highlight (clip_download_url). The API does not know who is asking there, so
+-- it serves only a lineup a signed-out visitor could open, and any other
+-- lineup has no url rather than one that answers 404.
+CREATE OR REPLACE FUNCTION public.utility_lineup_file_base_url(lineup public.utility_lineups)
     RETURNS text
-    LANGUAGE sql STABLE
+    LANGUAGE plpgsql STABLE
     AS $$
-    SELECT COALESCE(
-        (SELECT value FROM settings WHERE name = 'cloudflare_worker_url'),
-        (SELECT value FROM settings WHERE name = 'demos_domain')
-    );
+    DECLARE
+        base_url text;
+    BEGIN
+        SELECT value INTO base_url
+        FROM settings
+        WHERE name = 'cloudflare_worker_url';
+
+        IF base_url IS NOT NULL THEN
+            RETURN base_url;
+        END IF;
+
+        IF public.can_view_utility_lineup(lineup, '{}'::json) IS NOT TRUE THEN
+            RETURN NULL;
+        END IF;
+
+        SELECT value INTO base_url
+        FROM settings
+        WHERE name = 'demos_domain';
+
+        RETURN base_url;
+    END;
 $$;
 
 -- The preview clip is served by the same Cloudflare worker as a highlight, so
@@ -36,7 +55,7 @@ CREATE OR REPLACE FUNCTION public.utility_lineup_preview_url(utility_lineups pub
             '0'
         );
 
-        base_url := public.utility_lineup_file_base_url();
+        base_url := public.utility_lineup_file_base_url(utility_lineups);
 
         IF base_url IS NULL THEN
             RETURN NULL;
@@ -63,7 +82,7 @@ CREATE OR REPLACE FUNCTION public.utility_lineup_preview_thumbnail_url(utility_l
             '0'
         );
 
-        base_url := public.utility_lineup_file_base_url();
+        base_url := public.utility_lineup_file_base_url(utility_lineups);
 
         IF base_url IS NULL THEN
             RETURN NULL;
@@ -94,7 +113,7 @@ CREATE OR REPLACE FUNCTION public.utility_lineup_preview_stills_url(utility_line
             '0'
         );
 
-        base_url := public.utility_lineup_file_base_url();
+        base_url := public.utility_lineup_file_base_url(utility_lineups);
 
         IF base_url IS NULL THEN
             RETURN NULL;
@@ -131,7 +150,7 @@ CREATE OR REPLACE FUNCTION public.utility_lineup_smoke_voxels_url(utility_lineup
             '0'
         );
 
-        base_url := public.utility_lineup_file_base_url();
+        base_url := public.utility_lineup_file_base_url(utility_lineups);
 
         IF base_url IS NULL THEN
             RETURN NULL;

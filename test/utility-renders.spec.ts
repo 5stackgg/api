@@ -278,8 +278,8 @@ describe("utility lineup renders (SQL-driven)", () => {
       );
     });
 
-    async function filmed() {
-      const id = await lineup();
+    async function filmed(overrides: Record<string, unknown> = {}) {
+      const id = await lineup(overrides);
       const files = {
         clip: `clips/utility/${id}/${RENDER}.mp4`,
         thumbnail: `clips/utility/${id}/${RENDER}.jpg`,
@@ -306,15 +306,13 @@ describe("utility lineup renders (SQL-driven)", () => {
       return { id, files };
     }
 
-    it("serves a filmed lineup's files from the demos domain", async () => {
-      const { id, files } = await filmed();
-
+    const urls = async (id: string) => {
       const [row] = await postgres.query<
         Array<{
-          url: string;
-          thumb: string;
-          stills: Record<string, string>;
-          smoke: string;
+          url: string | null;
+          thumb: string | null;
+          stills: Record<string, string> | null;
+          smoke: string | null;
         }>
       >(
         `SELECT public.utility_lineup_preview_url(l) AS url,
@@ -324,23 +322,16 @@ describe("utility lineup renders (SQL-driven)", () => {
            FROM utility_lineups l WHERE l.id = $1::uuid`,
         [id],
       );
+      return row;
+    };
 
-      expect(row.url).toBe(
-        `https://demos.example.test/${files.clip}?v=1000000`,
+    const archive = (id: string) =>
+      postgres.query(
+        "UPDATE utility_lineups SET archived_at = now() WHERE id = $1::uuid",
+        [id],
       );
-      expect(row.thumb).toBe(
-        `https://demos.example.test/${files.thumbnail}?v=1000000`,
-      );
-      expect(row.stills).toEqual({
-        aim: `https://demos.example.test/${files.aim}?v=1000000`,
-      });
-      expect(row.smoke).toBe(
-        `https://demos.example.test/${files.smoke}?v=2000000`,
-      );
-    });
 
-    it("answers at those paths with only the files the lineup points at", async () => {
-      const { id, files } = await filmed();
+    function api() {
       const s3 = {
         stat: jest.fn().mockResolvedValue({ size: 4 }),
         get: jest.fn(async () => Readable.from([Buffer.alloc(4)])),
@@ -383,6 +374,32 @@ describe("utility lineup renders (SQL-driven)", () => {
         return { status: response.statusCode, type: headers["content-type"] };
       };
 
+      return { s3, fetch };
+    }
+
+    it("serves a filmed lineup's files from the demos domain", async () => {
+      const { id, files } = await filmed();
+
+      const row = await urls(id);
+
+      expect(row.url).toBe(
+        `https://demos.example.test/${files.clip}?v=1000000`,
+      );
+      expect(row.thumb).toBe(
+        `https://demos.example.test/${files.thumbnail}?v=1000000`,
+      );
+      expect(row.stills).toEqual({
+        aim: `https://demos.example.test/${files.aim}?v=1000000`,
+      });
+      expect(row.smoke).toBe(
+        `https://demos.example.test/${files.smoke}?v=2000000`,
+      );
+    });
+
+    it("answers at those paths with only the files the lineup points at", async () => {
+      const { id, files } = await filmed();
+      const { s3, fetch } = api();
+
       expect(await fetch(files.clip)).toEqual({
         status: 200,
         type: "video/mp4",
@@ -417,6 +434,45 @@ describe("utility lineup renders (SQL-driven)", () => {
         expect((await fetch(key)).status).toBe(404);
       }
       expect(s3.stat).not.toHaveBeenCalled();
+    });
+
+    // Nobody is signed in on the demos domain, so the API cannot tell a
+    // lineup's owner from anyone who was handed, or guessed, its key.
+    it.each([
+      ["a private lineup", { visibility: "Private" }, false],
+      ["a lineup archived after it was filmed", {}, true],
+    ])(
+      "neither names nor serves the files of %s",
+      async (_label, overrides, archived) => {
+        const { id, files } = await filmed(overrides);
+        if (archived) {
+          await archive(id);
+        }
+        const { s3, fetch } = api();
+
+        expect(await urls(id)).toEqual({
+          url: null,
+          thumb: null,
+          stills: null,
+          smoke: null,
+        });
+        for (const key of Object.values(files)) {
+          expect((await fetch(key)).status).toBe(404);
+        }
+        expect(s3.stat).not.toHaveBeenCalled();
+      },
+    );
+
+    it("leaves that lineup its urls where a worker serves them", async () => {
+      const { id, files } = await filmed({ visibility: "Private" });
+      await postgres.query(
+        `INSERT INTO settings (name, value)
+         VALUES ('cloudflare_worker_url', 'https://demo-dl.5stack.gg')`,
+      );
+
+      expect((await urls(id)).url).toBe(
+        `https://demo-dl.5stack.gg/${files.clip}?v=1000000`,
+      );
     });
   });
 
