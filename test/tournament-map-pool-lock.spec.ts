@@ -5,6 +5,7 @@ import { Fixtures } from "./utils/fixtures";
 import { TournamentFixtures } from "./utils/tournament-fixtures";
 import {
   bootMigratedDb,
+  runAsUser,
   seedRegionWithServer,
   SqlTestDb,
 } from "./utils/sql-test-db";
@@ -218,6 +219,64 @@ describe("a tournament's map pool once the bracket is drawn (SQL-driven)", () =>
       expect(error?.message).toMatch(REFUSAL);
     });
 
+    it("waits for a close of registration already under way, and is refused once it has drawn the bracket", async () => {
+      const tournament = await tournamentWithStageOptions();
+      await openRegistration(tournament);
+      const other = await copyPool(tournament.id, { without: 1 });
+      const { template } = await tournamentOptions(tournament.id);
+
+      let commitClose!: () => void;
+      const closeHeld = new Promise<void>((resolve) => (commitClose = resolve));
+      let closeIssued!: () => void;
+      const bracketDrawn = new Promise<void>(
+        (resolve) => (closeIssued = resolve),
+      );
+      const closing = runAsUser(
+        postgres,
+        tournament.organizer,
+        "admin",
+        async (query) => {
+          await query(
+            "UPDATE tournaments SET status = 'RegistrationClosed' WHERE id = $1",
+            [tournament.id],
+          );
+          closeIssued();
+          await closeHeld;
+        },
+      );
+
+      let saveSettled = false;
+      let save: Promise<Error | null> = Promise.resolve(null);
+      let settledBeforeCommit = true;
+      try {
+        await bracketDrawn;
+        save = attempt(setTournamentPool(tournament.id, other)).finally(() => {
+          saveSettled = true;
+        });
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        settledBeforeCommit = saveSettled;
+      } finally {
+        commitClose();
+        await closing;
+      }
+      const error = await save;
+
+      const after = await tournamentOptions(tournament.id);
+      expect(after.matches.length).toBe(2);
+      expect(
+        [after.template, ...after.stages, ...after.matches].map(
+          (options) => options.map_pool_id,
+        ),
+      ).toEqual([
+        template.map_pool_id,
+        template.map_pool_id,
+        template.map_pool_id,
+        template.map_pool_id,
+      ]);
+      expect(settledBeforeCommit).toBe(false);
+      expect(error?.message).toMatch(REFUSAL);
+    });
+
     it("keeps its pool when a save brings a new Custom pool of the same maps, and still carries the save's other settings", async () => {
       const tournament = await drawnTournament();
       const before = await tournamentOptions(tournament.id);
@@ -337,8 +396,8 @@ describe("a tournament's map pool once the bracket is drawn (SQL-driven)", () =>
         (stage) => stage.map_pool_id,
       );
 
-    it("moves only the differing stages of tournaments that are not drawn, and changes nothing when run again", async () => {
-      const up = readFileSync(
+    const migration = () =>
+      readFileSync(
         join(
           __dirname,
           "../hasura/migrations/default/1890000000910_stage_map_pools_follow_tournament/up.sql",
@@ -346,6 +405,23 @@ describe("a tournament's map pool once the bracket is drawn (SQL-driven)", () =>
         "utf8",
       );
 
+    const stageOptionsId = async (stageId: string) => {
+      const [stage] = await postgres.query<Array<{ match_options_id: string }>>(
+        "SELECT match_options_id FROM tournament_stages WHERE id = $1",
+        [stageId],
+      );
+      return stage.match_options_id;
+    };
+
+    // Shapes today's triggers no longer produce, written the way a release
+    // from back then left them.
+    const behindTriggers = (sql: string, params: Array<unknown>) =>
+      postgres.transaction(async (client) => {
+        await client.query("SET LOCAL session_replication_role = replica");
+        await client.query(sql, params);
+      });
+
+    it("moves only the differing stages of tournaments that are not drawn, and changes nothing when run again", async () => {
       const inSetup = await legacyTournament();
       const registering = await legacyTournament();
       await openRegistration(registering);
@@ -372,7 +448,7 @@ describe("a tournament's map pool once the bracket is drawn (SQL-driven)", () =>
       expect(drawnBefore[1].matches.length).toBe(2);
 
       for (let run = 0; run < 2; run++) {
-        await postgres.query(up);
+        await postgres.query(migration());
 
         expect(await stagePools(inSetup.id)).toEqual([
           inSetup.pool,
@@ -397,6 +473,78 @@ describe("a tournament's map pool once the bracket is drawn (SQL-driven)", () =>
         ],
       );
       expect(pools.length).toBe(4);
+    });
+
+    it("leaves a stage alone while any match stands behind it", async () => {
+      // A cancel used to keep the bracket's matches, so a tournament reset
+      // to Setup afterwards still has them.
+      const reset = await legacyTournament();
+      await openRegistration(reset);
+      await tfx.setStatus(reset.id, reset.organizer, "RegistrationClosed");
+      await behindTriggers(
+        "UPDATE tournaments SET status = 'Setup' WHERE id = $1",
+        [reset.id],
+      );
+      // Matches used to play on the stage's options themselves, not a copy.
+      const shared = await legacyTournament();
+      const played = await fx.match(await stageOptionsId(shared.stageIds[0]));
+      await behindTriggers(
+        "UPDATE matches SET status = 'Finished' WHERE id = $1",
+        [played.id],
+      );
+      const before = [
+        await tournamentOptions(reset.id),
+        await tournamentOptions(shared.id),
+      ];
+      expect(before[0].matches.length).toBeGreaterThan(0);
+      expect(before.map(({ stages }) => stages[0].map_pool_id)).toEqual([
+        reset.ownPool,
+        shared.ownPool,
+      ]);
+
+      await postgres.query(migration());
+
+      expect([
+        await tournamentOptions(reset.id),
+        await tournamentOptions(shared.id),
+      ]).toEqual(before);
+    });
+
+    it("carries on past a stage it cannot repair", async () => {
+      const refused = await legacyTournament();
+      const repaired = await legacyTournament();
+      await postgres.query(
+        `CREATE FUNCTION public.refuse_one_options_row() RETURNS trigger LANGUAGE plpgsql AS $refuse$
+         BEGIN
+           IF OLD.id = TG_ARGV[0]::uuid THEN
+             RAISE EXCEPTION 'refused for the test';
+           END IF;
+           RETURN NEW;
+         END;
+         $refuse$`,
+      );
+      try {
+        await postgres.query(
+          `CREATE TRIGGER refuse_one_options_row BEFORE UPDATE ON match_options
+           FOR EACH ROW EXECUTE FUNCTION public.refuse_one_options_row('${await stageOptionsId(refused.stageIds[0])}')`,
+        );
+
+        await postgres.query(migration());
+      } finally {
+        await postgres.query(
+          "DROP TRIGGER IF EXISTS refuse_one_options_row ON match_options",
+        );
+        await postgres.query("DROP FUNCTION public.refuse_one_options_row()");
+      }
+
+      expect(await stagePools(refused.id)).toEqual([
+        refused.ownPool,
+        refused.pool,
+      ]);
+      expect(await stagePools(repaired.id)).toEqual([
+        repaired.pool,
+        repaired.pool,
+      ]);
     });
   });
 });

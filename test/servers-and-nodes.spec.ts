@@ -561,6 +561,48 @@ describe("servers and game server nodes (SQL-driven)", () => {
       expect(await updatedAt()).toEqual(before);
     });
 
+    it("moves only the address of a dedicated server a match is on, and its stale region once the node itself is changed", async () => {
+      const nodeId = await createNode();
+      const serverId = await createDedicatedServer(nodeId);
+      // What a node's region change used to leave behind.
+      await postgres.transaction(async (client) => {
+        await client.query(
+          "SELECT set_config('fivestack.node_server_sync', 'true', true)",
+        );
+        await client.query(
+          "UPDATE servers SET region = 'OtherRegion' WHERE id = $1",
+          [serverId],
+        );
+      });
+      const { matchId } = await fx.bareMatch();
+      await postgres.query(
+        "UPDATE servers SET reserved_by_match_id = $1 WHERE id = $2",
+        [matchId, serverId],
+      );
+
+      await postgres.query(
+        "UPDATE game_server_nodes SET public_ip = '203.0.113.50' WHERE id = $1",
+        [nodeId],
+      );
+
+      expect(await dedicatedServer(serverId)).toMatchObject({
+        host: "203.0.113.50",
+        region: "OtherRegion",
+      });
+
+      await postgres.query(
+        "UPDATE servers SET reserved_by_match_id = NULL WHERE id = $1",
+        [serverId],
+      );
+      await setPortRange(nodeId, 27015, 6);
+
+      expect(await dedicatedServer(serverId)).toMatchObject({
+        host: "203.0.113.50",
+        port: 27015,
+        region: "NodeRegion",
+      });
+    });
+
     it("still refuses a direct port, host or region edit, even in the transaction that re-seated the server", async () => {
       const nodeId = await createNode();
       const serverId = await createDedicatedServer(nodeId);
