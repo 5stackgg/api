@@ -7,6 +7,7 @@ import { ClipViewsController } from "./clip-views.controller";
 import { ClipsService } from "./clips.service";
 import { S3Service } from "../../s3/s3.service";
 import { HasuraService } from "../../hasura/hasura.service";
+import { PostgresService } from "../../postgres/postgres.service";
 
 const CLIP_ID = "166d93b9-1421-48a7-a40a-cb3a7135ea21";
 const FILE = "clips/76561198000000001/4d12968c-ed12-402e-a6bd-21543009f0e3.mp4";
@@ -149,6 +150,7 @@ describe("ClipDownloadController view counting", () => {
       providers: [
         { provide: S3Service, useValue: s3 },
         { provide: HasuraService, useValue: hasura },
+        { provide: PostgresService, useValue: {} },
         { provide: ClipsService, useValue: clips },
         { provide: Logger, useValue: logger },
       ],

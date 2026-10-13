@@ -1,3 +1,17 @@
+-- Where a lineup's stored files are fetched from. A panel without a Cloudflare
+-- worker has no cloudflare_worker_url, and the API serves the same key at the
+-- same path on the demos domain instead (ClipDownloadController), as it does a
+-- highlight (clip_download_url).
+CREATE OR REPLACE FUNCTION public.utility_lineup_file_base_url()
+    RETURNS text
+    LANGUAGE sql STABLE
+    AS $$
+    SELECT COALESCE(
+        (SELECT value FROM settings WHERE name = 'cloudflare_worker_url'),
+        (SELECT value FROM settings WHERE name = 'demos_domain')
+    );
+$$;
+
 -- The preview clip is served by the same Cloudflare worker as a highlight, so
 -- its key lives under clips/ -- that prefix is the only one the worker's route
 -- patterns match, and a new prefix would need a worker redeploy to be reachable
@@ -10,7 +24,7 @@ CREATE OR REPLACE FUNCTION public.utility_lineup_preview_url(utility_lineups pub
     LANGUAGE plpgsql STABLE
     AS $$
     DECLARE
-        worker_url text;
+        base_url text;
         version text;
     BEGIN
         IF utility_lineups.preview_file IS NULL THEN
@@ -22,15 +36,13 @@ CREATE OR REPLACE FUNCTION public.utility_lineup_preview_url(utility_lineups pub
             '0'
         );
 
-        SELECT value INTO worker_url
-        FROM settings
-        WHERE name = 'cloudflare_worker_url';
+        base_url := public.utility_lineup_file_base_url();
 
-        IF worker_url IS NULL THEN
+        IF base_url IS NULL THEN
             RETURN NULL;
         END IF;
 
-        RETURN CONCAT(worker_url, '/', utility_lineups.preview_file, '?v=', version);
+        RETURN CONCAT(base_url, '/', utility_lineups.preview_file, '?v=', version);
     END;
 $$;
 
@@ -39,7 +51,7 @@ CREATE OR REPLACE FUNCTION public.utility_lineup_preview_thumbnail_url(utility_l
     LANGUAGE plpgsql STABLE
     AS $$
     DECLARE
-        worker_url text;
+        base_url text;
         version text;
     BEGIN
         IF utility_lineups.preview_thumbnail IS NULL THEN
@@ -51,15 +63,13 @@ CREATE OR REPLACE FUNCTION public.utility_lineup_preview_thumbnail_url(utility_l
             '0'
         );
 
-        SELECT value INTO worker_url
-        FROM settings
-        WHERE name = 'cloudflare_worker_url';
+        base_url := public.utility_lineup_file_base_url();
 
-        IF worker_url IS NULL THEN
+        IF base_url IS NULL THEN
             RETURN NULL;
         END IF;
 
-        RETURN CONCAT(worker_url, '/', utility_lineups.preview_thumbnail, '?v=', version);
+        RETURN CONCAT(base_url, '/', utility_lineups.preview_thumbnail, '?v=', version);
     END;
 $$;
 
@@ -70,7 +80,7 @@ CREATE OR REPLACE FUNCTION public.utility_lineup_preview_stills_url(utility_line
     LANGUAGE plpgsql STABLE
     AS $$
     DECLARE
-        worker_url text;
+        base_url text;
         version text;
         still record;
         urls jsonb := '{}'::jsonb;
@@ -84,18 +94,16 @@ CREATE OR REPLACE FUNCTION public.utility_lineup_preview_stills_url(utility_line
             '0'
         );
 
-        SELECT value INTO worker_url
-        FROM settings
-        WHERE name = 'cloudflare_worker_url';
+        base_url := public.utility_lineup_file_base_url();
 
-        IF worker_url IS NULL THEN
+        IF base_url IS NULL THEN
             RETURN NULL;
         END IF;
 
         FOR still IN SELECT key, value FROM jsonb_each_text(utility_lineups.preview_stills) LOOP
             urls := urls || jsonb_build_object(
                 still.key,
-                CONCAT(worker_url, '/', still.value, '?v=', version)
+                CONCAT(base_url, '/', still.value, '?v=', version)
             );
         END LOOP;
 
@@ -111,7 +119,7 @@ CREATE OR REPLACE FUNCTION public.utility_lineup_smoke_voxels_url(utility_lineup
     LANGUAGE plpgsql STABLE
     AS $$
     DECLARE
-        worker_url text;
+        base_url text;
         version text;
     BEGIN
         IF utility_lineups.smoke_voxels_file IS NULL THEN
@@ -123,14 +131,12 @@ CREATE OR REPLACE FUNCTION public.utility_lineup_smoke_voxels_url(utility_lineup
             '0'
         );
 
-        SELECT value INTO worker_url
-        FROM settings
-        WHERE name = 'cloudflare_worker_url';
+        base_url := public.utility_lineup_file_base_url();
 
-        IF worker_url IS NULL THEN
+        IF base_url IS NULL THEN
             RETURN NULL;
         END IF;
 
-        RETURN CONCAT(worker_url, '/', utility_lineups.smoke_voxels_file, '?v=', version);
+        RETURN CONCAT(base_url, '/', utility_lineups.smoke_voxels_file, '?v=', version);
     END;
 $$;
