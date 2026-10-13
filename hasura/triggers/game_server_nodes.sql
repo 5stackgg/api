@@ -18,7 +18,21 @@ BEGIN
         OLD.lan_ip != NEW.lan_ip OR
         OLD.public_ip != NEW.public_ip 
     ) THEN
-        UPDATE servers SET host = host(server_ip) WHERE game_server_node_id = NEW.id;
+        UPDATE servers SET host = host(server_ip) WHERE game_server_node_id = NEW.id AND is_dedicated = false;
+    END IF;
+
+    -- The rebuild below is what moves on-demand servers to a new region.
+    -- Dedicated servers are not rebuilt, so they follow the node here.
+    IF TG_OP = 'UPDATE' AND (
+        OLD.lan_ip != NEW.lan_ip OR
+        OLD.public_ip != NEW.public_ip OR
+        OLD.region != NEW.region
+    ) THEN
+        PERFORM set_config('fivestack.node_server_sync', 'true', true);
+        UPDATE servers
+        SET host = COALESCE(host(server_ip), host), region = NEW.region
+        WHERE game_server_node_id = NEW.id AND is_dedicated = true;
+        PERFORM set_config('fivestack.node_server_sync', 'false', true);
     END IF;
 
     IF TG_OP = 'UPDATE' AND (

@@ -4,8 +4,14 @@ CREATE OR REPLACE FUNCTION public.tbiu_servers() RETURNS TRIGGER
 DECLARE
     enc_secret text;
     disable_game_node_server_id uuid;
+    node_sync boolean;
 BEGIN
     enc_secret = current_setting('fivestack.app_key');
+
+    -- Stood up by taiud_populate_game_servers and populate_game_servers around
+    -- their own writes: a dedicated server's host, region and ports follow its
+    -- node, and nothing else may set them.
+    node_sync = COALESCE(current_setting('fivestack.node_server_sync', true) = 'true', false);
 
     IF NEW.is_dedicated = true AND NEW.game_server_node_id IS NOT NULL AND (TG_OP = 'INSERT' OR NEW.game_server_node_id != OLD.game_server_node_id) THEN
         -- Set the region and host based on the assigned node and its LAN/public IP
@@ -50,7 +56,8 @@ BEGIN
         -- Prevent port/tv_port changes for dedicated servers; a move to another node takes that node's free slot above
         IF NEW.is_dedicated = true AND NEW.game_server_node_id IS NOT NULL
            AND NEW.game_server_node_id IS NOT DISTINCT FROM OLD.game_server_node_id
-           AND (NEW.port != OLD.port OR NEW.tv_port != OLD.tv_port) THEN
+           AND (NEW.port != OLD.port OR NEW.tv_port != OLD.tv_port)
+           AND NOT node_sync THEN
             RAISE EXCEPTION 'Cannot change the port or tv_port of a dedicated server' USING ERRCODE = '22000';
         END IF;
 
@@ -90,7 +97,7 @@ BEGIN
         END IF;
 
         -- For dedicated servers, lock host and port/region assignments if staying on the same node
-        IF NEW.is_dedicated = true AND NEW.game_server_node_id = OLD.game_server_node_id THEN
+        IF NEW.is_dedicated = true AND NEW.game_server_node_id = OLD.game_server_node_id AND NOT node_sync THEN
             NEW.host = OLD.host;
             NEW.port = OLD.port;
             NEW.tv_port = OLD.tv_port;

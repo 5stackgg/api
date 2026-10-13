@@ -21,33 +21,44 @@ BEGIN
     raise notice 'populate_game_servers: _server_ip: %', _server_ip;
     raise notice 'populate_game_servers: _region: %', _region;
 
-    -- Handle dedicated servers that are outside the new port range
-    FOR dedicated_server IN 
-        SELECT id, port, tv_port 
-        FROM servers 
-        WHERE game_server_node_id = _game_server_node_id 
-          AND is_dedicated = true 
-          AND (port < _start_port_range OR port >= _end_port_range)
+    -- A dedicated server keeps its ports only while they are one of the
+    -- range's pairs. Any other one, outside the range or across two of its
+    -- pairs, takes the lowest pair no dedicated server holds.
+    FOR dedicated_server IN
+        SELECT s.id
+        FROM servers s
+        WHERE s.game_server_node_id = _game_server_node_id
+          AND s.is_dedicated = true
+          AND NOT EXISTS (
+              SELECT 1
+              FROM generate_series(_start_port_range, _end_port_range - 1, 2) AS pair(port)
+              WHERE pair.port = s.port
+                AND pair.port + 1 = s.tv_port
+          )
+        ORDER BY s.port, s.id
     LOOP
-        -- Find the first available port for this dedicated server
-        SELECT port INTO available_port
-        FROM generate_series(_start_port_range, _end_port_range - 1, 2) AS port
-        WHERE port NOT IN (
-            SELECT s.port 
-            FROM servers s 
-            WHERE s.game_server_node_id = _game_server_node_id 
-              AND s.port IS NOT NULL
-              AND s.id != dedicated_server.id  -- Exclude the current server being updated
+        SELECT pair.port INTO available_port
+        FROM generate_series(_start_port_range, _end_port_range - 1, 2) AS pair(port)
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM servers s
+            WHERE s.game_server_node_id = _game_server_node_id
+              AND s.is_dedicated = true
+              AND s.port = pair.port
+              AND s.tv_port = pair.port + 1
         )
-        ORDER BY port
+        ORDER BY pair.port
         LIMIT 1;
-        
-        -- Update this dedicated server with the available port
-        IF available_port IS NOT NULL THEN
-            UPDATE servers 
-            SET port = available_port, tv_port = available_port + 1
-            WHERE id = dedicated_server.id;
+
+        IF available_port IS NULL THEN
+            RAISE EXCEPTION 'The port range has no room for the dedicated servers on this node' USING ERRCODE = '22000';
         END IF;
+
+        PERFORM set_config('fivestack.node_server_sync', 'true', true);
+        UPDATE servers
+        SET port = available_port, tv_port = available_port + 1
+        WHERE id = dedicated_server.id;
+        PERFORM set_config('fivestack.node_server_sync', 'false', true);
     END LOOP;
 
     game_port := _start_port_range;

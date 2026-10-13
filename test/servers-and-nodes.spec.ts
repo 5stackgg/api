@@ -16,7 +16,8 @@ describe("servers and game server nodes (SQL-driven)", () => {
     postgres = db.postgres;
     fx = new Fixtures(postgres, 76561192830000000n);
     await postgres.query(
-      `INSERT INTO server_regions (value, description) VALUES ('NodeRegion', 'NodeRegion'), ('OtherRegion', 'OtherRegion')
+      `INSERT INTO server_regions (value, description, is_lan)
+       VALUES ('NodeRegion', 'NodeRegion', false), ('OtherRegion', 'OtherRegion', false), ('LanRegion', 'LanRegion', true)
        ON CONFLICT (value) DO NOTHING`,
     );
   }, 600_000);
@@ -113,6 +114,15 @@ describe("servers and game server nodes (SQL-driven)", () => {
       `SELECT label, port, tv_port, enabled, is_dedicated FROM servers
        WHERE game_server_node_id = $1 AND is_dedicated = false ORDER BY port`,
       [nodeId],
+    );
+
+  const slotStates = async (nodeId: string) =>
+    (await nodeServers(nodeId)).map((s) => [Number(s.port), s.enabled]);
+
+  const setPortRange = (nodeId: string, startPort: number, slots: number) =>
+    postgres.query(
+      "UPDATE game_server_nodes SET start_port_range = $2, end_port_range = $3 WHERE id = $1",
+      [nodeId, startPort, startPort + slots * 2],
     );
 
   it("creating a node populates on-demand servers across its port range", async () => {
@@ -256,6 +266,293 @@ describe("servers and game server nodes (SQL-driven)", () => {
       [nodeId],
     );
     expect(await count(nodeId)).toBe(3);
+  });
+
+  describe("a node's changes reach its dedicated servers", () => {
+    it("seats a dedicated server on the new range's lowest pair when the range moves away from it", async () => {
+      const nodeId = await createNode();
+      const serverId = await createDedicatedServer(nodeId);
+
+      await setPortRange(nodeId, 27115, 3);
+
+      expect(await dedicatedServer(serverId)).toMatchObject({
+        port: 27115,
+        tv_port: 27116,
+      });
+      expect(await slotStates(nodeId)).toEqual([
+        [27115, false],
+        [27117, true],
+        [27119, true],
+      ]);
+    });
+
+    it("seats several dedicated servers in port order, each on its own pair", async () => {
+      const nodeId = await createNode();
+      const replaced = await createDedicatedServer(nodeId);
+      const second = await createDedicatedServer(nodeId);
+      // Created last, yet on the lowest port.
+      await postgres.query("DELETE FROM servers WHERE id = $1", [replaced]);
+      const first = await createDedicatedServer(nodeId);
+
+      await setPortRange(nodeId, 27115, 3);
+
+      expect(await dedicatedServer(first)).toMatchObject({
+        port: 27115,
+        tv_port: 27116,
+      });
+      expect(await dedicatedServer(second)).toMatchObject({
+        port: 27117,
+        tv_port: 27118,
+      });
+      expect(await slotStates(nodeId)).toEqual([
+        [27115, false],
+        [27117, false],
+        [27119, true],
+      ]);
+    });
+
+    it("seats a moved dedicated server past the pair another one keeps", async () => {
+      const nodeId = await createNode();
+      const moved = await createDedicatedServer(nodeId);
+      const kept = await createDedicatedServer(nodeId);
+
+      await setPortRange(nodeId, 27017, 3);
+
+      expect(await dedicatedServer(kept)).toMatchObject({
+        port: 27017,
+        tv_port: 27018,
+      });
+      expect(await dedicatedServer(moved)).toMatchObject({
+        port: 27019,
+        tv_port: 27020,
+      });
+      expect(await slotStates(nodeId)).toEqual([
+        [27017, false],
+        [27019, false],
+        [27021, true],
+      ]);
+    });
+
+    it("leaves a moved dedicated server's pair usable while that server is disabled", async () => {
+      const nodeId = await createNode();
+      const serverId = await createDedicatedServer(nodeId);
+      await postgres.query("UPDATE servers SET enabled = false WHERE id = $1", [
+        serverId,
+      ]);
+
+      await setPortRange(nodeId, 27115, 2);
+
+      expect(await dedicatedServer(serverId)).toMatchObject({ port: 27115 });
+      expect(await slotStates(nodeId)).toEqual([
+        [27115, true],
+        [27117, true],
+      ]);
+    });
+
+    it("keeps a dedicated server on its ports while they are still a pair of the range", async () => {
+      const nodeId = await createNode();
+      const serverId = await createDedicatedServer(nodeId);
+
+      await setPortRange(nodeId, 27015, 8);
+
+      expect(await dedicatedServer(serverId)).toMatchObject({
+        port: 27015,
+        tv_port: 27016,
+      });
+      expect(await slotEnabled(nodeId, 27015)).toBe(false);
+
+      await setPortRange(nodeId, 27011, 5);
+
+      expect(await dedicatedServer(serverId)).toMatchObject({
+        port: 27015,
+        tv_port: 27016,
+      });
+      expect(await slotStates(nodeId)).toEqual([
+        [27011, true],
+        [27013, true],
+        [27015, false],
+        [27017, true],
+        [27019, true],
+      ]);
+    });
+
+    it("re-seats a dedicated server an odd shift left across two pairs, so deleting it frees its slot", async () => {
+      const nodeId = await createNode();
+      const serverId = await createDedicatedServer(nodeId);
+
+      await setPortRange(nodeId, 27014, 5);
+
+      expect(await dedicatedServer(serverId)).toMatchObject({
+        port: 27014,
+        tv_port: 27015,
+      });
+      expect(await slotStates(nodeId)).toEqual([
+        [27014, false],
+        [27016, true],
+        [27018, true],
+        [27020, true],
+        [27022, true],
+      ]);
+
+      await postgres.query("DELETE FROM servers WHERE id = $1", [serverId]);
+
+      expect((await nodeServers(nodeId)).every((s) => s.enabled)).toBe(true);
+    });
+
+    it("refuses a port range with no room for the node's dedicated servers and changes nothing", async () => {
+      const nodeId = await createNode({ slots: 2 });
+      const first = await createDedicatedServer(nodeId);
+      const second = await createDedicatedServer(nodeId);
+
+      const unchanged = async () => {
+        const [node] = await postgres.query<
+          Array<{ start_port_range: number; end_port_range: number }>
+        >(
+          "SELECT start_port_range, end_port_range FROM game_server_nodes WHERE id = $1",
+          [nodeId],
+        );
+        expect([
+          Number(node.start_port_range),
+          Number(node.end_port_range),
+        ]).toEqual([27015, 27019]);
+        expect(await dedicatedServer(first)).toMatchObject({
+          port: 27015,
+          tv_port: 27016,
+        });
+        expect(await dedicatedServer(second)).toMatchObject({
+          port: 27017,
+          tv_port: 27018,
+        });
+        expect(await slotStates(nodeId)).toEqual([
+          [27015, false],
+          [27017, false],
+        ]);
+      };
+
+      await expect(setPortRange(nodeId, 27015, 1)).rejects.toThrow(
+        /no room for the dedicated servers/i,
+      );
+      await unchanged();
+
+      await expect(setPortRange(nodeId, 27115, 1)).rejects.toThrow(
+        /no room for the dedicated servers/i,
+      );
+      await unchanged();
+    });
+
+    it("carries the node's new IP to a dedicated server's host", async () => {
+      const nodeId = await createNode();
+      const serverId = await createDedicatedServer(nodeId);
+
+      await postgres.query(
+        "UPDATE game_server_nodes SET public_ip = '203.0.113.50' WHERE id = $1",
+        [nodeId],
+      );
+
+      expect(await dedicatedServer(serverId)).toMatchObject({
+        host: "203.0.113.50",
+        port: 27015,
+      });
+    });
+
+    it("carries the node's new region to a dedicated server", async () => {
+      const nodeId = await createNode();
+      const serverId = await createDedicatedServer(nodeId);
+
+      await postgres.query(
+        "UPDATE game_server_nodes SET region = 'OtherRegion' WHERE id = $1",
+        [nodeId],
+      );
+
+      expect(await dedicatedServer(serverId)).toEqual({
+        game_server_node_id: nodeId,
+        host: "203.0.113.1",
+        port: 27015,
+        tv_port: 27016,
+        region: "OtherRegion",
+      });
+      expect(await slotEnabled(nodeId, 27015)).toBe(false);
+    });
+
+    it("re-addresses a dedicated server when its node moves between an online and a LAN region", async () => {
+      const nodeId = await createNode();
+      const serverId = await createDedicatedServer(nodeId);
+      await postgres.query(
+        "UPDATE game_server_nodes SET lan_ip = '10.0.0.5' WHERE id = $1",
+        [nodeId],
+      );
+
+      await postgres.query(
+        "UPDATE game_server_nodes SET region = 'LanRegion' WHERE id = $1",
+        [nodeId],
+      );
+
+      expect(await dedicatedServer(serverId)).toMatchObject({
+        host: "10.0.0.5",
+        region: "LanRegion",
+      });
+
+      await postgres.query(
+        "UPDATE game_server_nodes SET region = 'NodeRegion' WHERE id = $1",
+        [nodeId],
+      );
+
+      expect(await dedicatedServer(serverId)).toMatchObject({
+        host: "203.0.113.1",
+        region: "NodeRegion",
+      });
+    });
+
+    it("still refuses a direct port, host or region edit, even in the transaction that re-seated the server", async () => {
+      const nodeId = await createNode();
+      const serverId = await createDedicatedServer(nodeId);
+      const seated = {
+        game_server_node_id: nodeId,
+        host: "203.0.113.50",
+        port: 27115,
+        tv_port: 27116,
+        region: "NodeRegion",
+      };
+
+      const refusal = await postgres.transaction(async (client) => {
+        await client.query(
+          `UPDATE game_server_nodes
+           SET public_ip = '203.0.113.50', start_port_range = 27115, end_port_range = 27121
+           WHERE id = $1`,
+          [nodeId],
+        );
+        await client.query(
+          "UPDATE servers SET host = '198.51.100.9', region = 'OtherRegion' WHERE id = $1",
+          [serverId],
+        );
+        await client.query("SAVEPOINT direct_edit");
+        try {
+          await client.query(
+            "UPDATE servers SET port = 27117, tv_port = 27118 WHERE id = $1",
+            [serverId],
+          );
+          return null;
+        } catch (error) {
+          await client.query("ROLLBACK TO SAVEPOINT direct_edit");
+          return error as Error;
+        }
+      });
+
+      expect(refusal?.message).toMatch(/Cannot change the port or tv_port/i);
+      expect(await dedicatedServer(serverId)).toEqual(seated);
+
+      await postgres.query(
+        "UPDATE servers SET host = '198.51.100.9', region = 'OtherRegion' WHERE id = $1",
+        [serverId],
+      );
+      await expect(
+        postgres.query(
+          "UPDATE servers SET port = 27117, tv_port = 27118 WHERE id = $1",
+          [serverId],
+        ),
+      ).rejects.toThrow(/Cannot change the port or tv_port/i);
+      expect(await dedicatedServer(serverId)).toEqual(seated);
+    });
   });
 
   describe("server moves", () => {
