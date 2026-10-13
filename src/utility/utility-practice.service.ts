@@ -966,15 +966,30 @@ export class UtilityPracticeService {
    * plugin_version and plugin_runtime, which decide how the panel talks to a
    * server, and the utility plugin's version is not the answer to that.
    *
-   * A null is "nothing to say", never "clear it": a pod still registering with
-   * the relay would otherwise flap the address out from under a player joining.
-   * The stale value that caused the original bug is cleared when the row is
-   * reserved, which is the moment it is known to be wrong.
+   * The server is the only one that knows whether it listens on the relay, so
+   * its word is the whole answer: an address when it does, and the address
+   * cleared when it says it does not. The region's setting is never consulted.
+   *
+   * No address alone is "nothing to say", never "clear it": a pod still
+   * registering with the relay has none yet, and a plugin from before it said
+   * which never has one to give off the relay.
    */
   private async reportSteamRelay(
     serverId: string,
     steamRelay: string | null,
+    onSteamRelay: boolean | null,
   ): Promise<void> {
+    if (onSteamRelay === false) {
+      await this.postgres.query(
+        `UPDATE public.servers
+            SET steam_relay = NULL
+          WHERE id = $1::uuid
+            AND steam_relay IS NOT NULL`,
+        [serverId],
+      );
+      return;
+    }
+
     if (!steamRelay) {
       return;
     }
@@ -2048,11 +2063,12 @@ export class UtilityPracticeService {
     serverId: string,
     steamIds: Array<string>,
     steamRelay: string | null = null,
+    onSteamRelay: boolean | null = null,
   ): Promise<void> {
     // Independent of the session: a pod reports where it can be reached
     // whether or not anyone is on it yet, and the connect string is read
     // before the first player arrives.
-    await this.reportSteamRelay(serverId, steamRelay);
+    await this.reportSteamRelay(serverId, steamRelay, onSteamRelay);
 
     const session = await this.liveSessionForServer(serverId);
 

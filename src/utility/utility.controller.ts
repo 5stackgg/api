@@ -84,12 +84,19 @@ export class UtilityController {
   @UseGuards(UtilityPluginKeyGuard)
   public async occupancy(
     @Req() request: Request,
-    @Body() body: { steam_ids?: Array<string>; steam_relay?: string | null },
+    @Body()
+    body: {
+      steam_ids?: Array<string>;
+      steam_relay?: string | null;
+      on_steam_relay?: boolean;
+    },
   ) {
     await this.practice.reportOccupancy(
       UtilityController.serverId(request),
       Array.isArray(body?.steam_ids) ? body.steam_ids : [],
       typeof body?.steam_relay === "string" ? body.steam_relay : null,
+      // A plugin from before this never says, which is not the same as "no".
+      typeof body?.on_steam_relay === "boolean" ? body.on_steam_relay : null,
     );
 
     return { ok: true };

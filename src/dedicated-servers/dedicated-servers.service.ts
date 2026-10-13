@@ -1050,6 +1050,7 @@ export class DedicatedServersService {
       servers_by_pk: {
         __args: { id: serverId },
         game: true,
+        type: true,
         label: true,
         enabled: true,
         connected: true,
@@ -1124,7 +1125,9 @@ export class DedicatedServersService {
 
     await this.redis.expire("dedicated-servers:stats", 120);
 
-    if (server.steam_relay !== steamId) {
+    // A practice server says for itself whether it is on the relay, with its
+    // occupancy report, so its address is never this ping's to decide.
+    if (server.type !== "Practice" && server.steam_relay !== steamId) {
       await this.hasura.mutation({
         update_servers_by_pk: {
           __args: {
