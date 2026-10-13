@@ -23,13 +23,17 @@ const BODY = Buffer.from("{}".padEnd(SIZE));
 // route a path lands on is the thing under test.
 describe("ClipDownloadController lineup files", () => {
   let app: INestApplication;
+  let viewer: { steam_id: string; role: string } | undefined;
+  let roleNow: string;
   let postgres: { query: jest.Mock };
   let s3: { stat: jest.Mock; get: jest.Mock; getPartial: jest.Mock };
 
   const get = (key: string) => request(app.getHttpServer()).get(`/${key}`);
 
   beforeEach(async () => {
-    postgres = { query: jest.fn().mockResolvedValue([{ id: LINEUP }]) };
+    viewer = undefined;
+    roleNow = "user";
+    postgres = { query: jest.fn().mockResolvedValue([{ public: true }]) };
     s3 = {
       stat: jest.fn().mockResolvedValue({ size: SIZE }),
       get: jest.fn(async () => Readable.from([BODY])),
@@ -52,6 +56,10 @@ describe("ClipDownloadController lineup files", () => {
                 thumbnail_url: MATCH_CLIP_THUMBNAIL,
               },
             }),
+            getHasuraHeaders: jest.fn(async (steamId: string) => ({
+              "x-hasura-role": roleNow,
+              "x-hasura-user-id": steamId,
+            })),
           },
         },
         { provide: PostgresService, useValue: postgres },
@@ -67,6 +75,11 @@ describe("ClipDownloadController lineup files", () => {
     }).compile();
 
     app = module.createNestApplication({ logger: false });
+    // What passport does with the session cookie.
+    app.use((request: any, _response: any, next: () => void) => {
+      request.user = viewer;
+      next();
+    });
     await app.init();
   });
 
@@ -80,7 +93,7 @@ describe("ClipDownloadController lineup files", () => {
     expect(response.status).toBe(200);
     expect(response.headers["content-type"]).toBe("video/mp4");
     expect(response.headers["content-length"]).toBe(String(SIZE));
-    expect(postgres.query.mock.calls[0][1]).toEqual([LINEUP, CLIP]);
+    expect(postgres.query.mock.calls[0][1]).toEqual([LINEUP, CLIP, "{}"]);
     expect(s3.get).toHaveBeenCalledWith(CLIP);
   });
 
@@ -95,7 +108,7 @@ describe("ClipDownloadController lineup files", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers["content-type"]).toBe(contentType);
-    expect(postgres.query.mock.calls[0][1]).toEqual([LINEUP, key]);
+    expect(postgres.query.mock.calls[0][1]).toEqual([LINEUP, key, "{}"]);
     expect(s3.stat).toHaveBeenCalledWith(key);
   });
 
@@ -125,10 +138,38 @@ describe("ClipDownloadController lineup files", () => {
     );
   });
 
-  // The key never holds anything else, so the visitor's own browser may keep
-  // it. A cache shared between visitors may not: it would go on serving a
-  // lineup that has since stopped being public, and would hand one visitor's
-  // download name to the rest wherever it drops the query string.
+  // The session keeps the role its owner signed in with for as long as it
+  // lives, so a moderator demoted since would still open every lineup.
+  it("asks as the role the signed-in viewer holds now, not the session's", async () => {
+    viewer = { steam_id: "76561198000000001", role: "moderator" };
+    roleNow = "user";
+
+    await get(CLIP);
+
+    expect(JSON.parse(postgres.query.mock.calls[0][1][2])).toEqual({
+      "x-hasura-role": "user",
+      "x-hasura-user-id": "76561198000000001",
+    });
+  });
+
+  // Signing out, or being dropped from the lineup's team, has to take the
+  // file away, so the browser asks again each time.
+  it("does not let the browser keep a file served because of who asked", async () => {
+    viewer = { steam_id: "76561198000000001", role: "user" };
+    postgres.query.mockResolvedValueOnce([{ public: false }]);
+
+    const response = await get(CLIP);
+
+    expect(response.status).toBe(200);
+    expect(response.headers["cache-control"]).toBe(
+      "private, max-age=0, must-revalidate",
+    );
+  });
+
+  // A public lineup's key never holds anything else, so the visitor's own
+  // browser may keep it. A cache shared between visitors may not: it would go
+  // on serving a lineup that has since stopped being public, and would hand
+  // one visitor's download name to the rest wherever it drops the query string.
   it.each([
     {},
     { dl: "1" },
