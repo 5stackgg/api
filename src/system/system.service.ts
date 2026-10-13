@@ -7,6 +7,7 @@ import {
   AppsV1Api,
   setHeaderOptions,
   PatchStrategy,
+  V1Node,
 } from "@kubernetes/client-node";
 import { HasuraService } from "src/hasura/hasura.service";
 import { ConfigService } from "@nestjs/config";
@@ -315,14 +316,15 @@ export class SystemService {
       plugin?: string;
       image: string;
       version: string;
+      versions: string[];
     }> = [...(await this.getServices()), ...(await this.getPluginServices())];
 
-    for (const { service, plugin, pod, image, version } of services) {
+    for (const { service, plugin, pod, image, version, versions } of services) {
       const newVersion = await this.getLatestDigest(image);
 
       // An unreadable registry or pod tells us nothing. Reporting on it would
       // show a phantom update; restarting on it would be an endless rollout.
-      if (!image || !version || !newVersion || version === newVersion) {
+      if (!image || !version || !newVersion || versions.includes(newVersion)) {
         continue;
       }
 
@@ -469,9 +471,10 @@ export class SystemService {
       service: string;
       image: string;
       version: string;
+      versions: string[];
     }> = [];
 
-    for (const pod of await this.readyPods()) {
+    for (const { pod, node } of await this.readyPods()) {
       const service = pod.metadata.labels?.app;
 
       if (!SystemService.TRACKED_APPS.includes(service)) {
@@ -493,6 +496,7 @@ export class SystemService {
         service,
         image: spec?.image,
         version: SystemService.imageDigest(status?.imageID),
+        versions: SystemService.imageDigests(node, status?.imageID),
       });
     }
 
@@ -509,6 +513,7 @@ export class SystemService {
       plugin: string;
       image: string;
       version: string;
+      versions: string[];
     }> = [];
 
     let customPages: Array<{ title: string; deployments: unknown }>;
@@ -561,24 +566,26 @@ export class SystemService {
             continue;
           }
 
-          const [pod] = await this.readyPods(
+          const [ready] = await this.readyPods(
             Object.entries(deployment.spec?.selector?.matchLabels ?? {})
               .map(([label, value]) => `${label}=${value}`)
               .join(","),
           );
 
-          if (!pod) {
+          if (!ready) {
             continue;
           }
+
+          const { pod, node } = ready;
+          const imageID = pod.status?.containerStatuses?.[0]?.imageID;
 
           services.push({
             pod: pod.metadata.name,
             service: name,
             plugin: title,
             image,
-            version: SystemService.imageDigest(
-              pod.status?.containerStatuses?.[0]?.imageID,
-            ),
+            version: SystemService.imageDigest(imageID),
+            versions: SystemService.imageDigests(node, imageID),
           });
         } catch (error) {
           // A plugin can name a deployment that was never installed, or was
@@ -602,24 +609,57 @@ export class SystemService {
       labelSelector,
     });
 
-    return podList.items.filter((pod) => {
-      if (pod.metadata.labels?.codepier) {
-        return false;
-      }
+    return podList.items
+      .map((pod) => ({
+        pod,
+        node: nodes.items.find((node) => {
+          return node.metadata.name === pod.spec?.nodeName;
+        }),
+      }))
+      .filter(({ pod, node }) => {
+        if (pod.metadata.labels?.codepier) {
+          return false;
+        }
 
-      const node = nodes.items.find((node) => {
-        return node.metadata.name === pod.spec?.nodeName;
+        return (
+          node?.status?.conditions.find(
+            (condition) => condition.type === "Ready",
+          )?.status === "True"
+        );
       });
-
-      return (
-        node?.status?.conditions.find((condition) => condition.type === "Ready")
-          ?.status === "True"
-      );
-    });
   }
 
   private static imageDigest(imageID?: string) {
     return imageID?.includes("@") ? imageID.split("@")[1] : undefined;
+  }
+
+  // Every digest the node knows the running image by. containerd reports a
+  // pod's imageID as the first of its image's repo digests in sorted order,
+  // not the one it last pulled. A rebuild that changes nothing in the image
+  // still moves the tag to a new index digest (its provenance attestation
+  // differs), and the re-pull only adds that digest to the image already on
+  // the node, so the pod can keep reporting the old one however often it is
+  // restarted.
+  private static imageDigests(node: V1Node | undefined, imageID?: string) {
+    const version = SystemService.imageDigest(imageID);
+
+    if (!version) {
+      return [];
+    }
+
+    // kubelet lists a bounded number of images per node; one that didn't make
+    // the list is only known by the digest the pod reports.
+    const names =
+      node?.status?.images?.find(({ names }) =>
+        names?.some((name) => SystemService.imageDigest(name) === version),
+      )?.names ?? [];
+
+    return [
+      ...new Set([
+        version,
+        ...names.map((name) => SystemService.imageDigest(name)).filter(Boolean),
+      ]),
+    ];
   }
 
   private async getRegistryToken(registry: string, repository: string) {

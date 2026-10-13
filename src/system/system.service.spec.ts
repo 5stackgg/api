@@ -186,6 +186,96 @@ describe("SystemService.setVersions", () => {
   });
 });
 
+describe("SystemService.getOutdated", () => {
+  let system: SystemService;
+  let images: Array<{ names: string[]; sizeBytes: number }>;
+
+  const repo = "ghcr.io/5stackgg/game-server-node-connector";
+  const old = "sha256:d2dc";
+  const latest = "sha256:f501";
+
+  beforeEach(() => {
+    images = [];
+    system = new SystemService(
+      {} as any,
+      {} as any,
+      {} as any,
+      { warn: jest.fn(), log: jest.fn() } as any,
+      {} as any,
+    );
+
+    (system as any).apiClient = {
+      listNode: jest.fn(async () => ({
+        items: [
+          {
+            metadata: { name: "node-1" },
+            status: {
+              conditions: [{ type: "Ready", status: "True" }],
+              images,
+            },
+          },
+        ],
+      })),
+      listNamespacedPod: jest.fn(async () => ({
+        items: [
+          {
+            metadata: {
+              name: "game-server-node-connector-x7k2p",
+              labels: { app: "game-server-node-connector" },
+            },
+            spec: {
+              nodeName: "node-1",
+              containers: [{ image: `${repo}:latest` }],
+            },
+            status: {
+              containerStatuses: [{ imageID: `${repo}@${old}` }],
+            },
+          },
+        ],
+      })),
+    };
+
+    jest.spyOn(system as any, "getPluginServices").mockResolvedValue([]);
+    jest.spyOn(system, "getLatestDigest").mockResolvedValue(latest);
+  });
+
+  // A rebuild that changes nothing in the image moves :latest to a new digest,
+  // and the re-pull files it under the image the node already has. containerd
+  // keeps reporting the first digest in sorted order, so a restart can never
+  // make the pod report the new one.
+  it("counts any digest the node knows the running image by", async () => {
+    images.push({
+      names: [`${repo}@${old}`, `${repo}@${latest}`, `${repo}:latest`],
+      sizeBytes: 1,
+    });
+
+    expect(await system.getOutdated()).toEqual([]);
+  });
+
+  it("reports an update the node has not pulled", async () => {
+    images.push({
+      names: [`${repo}@${old}`, `${repo}:latest`],
+      sizeBytes: 1,
+    });
+
+    expect(await system.getOutdated()).toEqual([
+      {
+        service: "game-server-node-connector",
+        plugin: undefined,
+        pod: "game-server-node-connector-x7k2p",
+        currentVersion: old,
+        newVersion: latest,
+      },
+    ]);
+  });
+
+  it("falls back to the pod's digest when the node does not list the image", async () => {
+    expect(await system.getOutdated()).toEqual([
+      expect.objectContaining({ currentVersion: old, newVersion: latest }),
+    ]);
+  });
+});
+
 describe("SystemService.syncImportedHighlightsSupport", () => {
   let hasura: { mutation: jest.Mock };
   let postgres: { query: jest.Mock };
