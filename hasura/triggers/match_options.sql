@@ -123,6 +123,29 @@ BEGIN
         END IF;
     END IF;
 
+    IF NEW.map_pool_id IS DISTINCT FROM OLD.map_pool_id AND EXISTS (
+        SELECT 1
+        FROM tournaments t
+        WHERE (
+                t.match_options_id = OLD.id
+                OR EXISTS (
+                    SELECT 1 FROM tournament_stages ts
+                    WHERE ts.tournament_id = t.id AND ts.match_options_id = OLD.id
+                )
+              )
+          AND tournament_is_drawn(t.id)
+    ) THEN
+        -- The web's tournament form saves a fresh Custom pool every time, maps
+        -- changed or not, so a new id alone is not a new pool.
+        IF (SELECT array_agg(map_id ORDER BY map_id) FROM _map_pool WHERE map_pool_id = NEW.map_pool_id)
+           IS DISTINCT FROM
+           (SELECT array_agg(map_id ORDER BY map_id) FROM _map_pool WHERE map_pool_id = OLD.map_pool_id) THEN
+            RAISE EXCEPTION 'Unable to change the map pool once the bracket has been drawn' USING ERRCODE = '22000';
+        END IF;
+
+        NEW.map_pool_id := OLD.map_pool_id;
+    END IF;
+
     IF (NEW.game_mode_id IS DISTINCT FROM OLD.game_mode_id) THEN
         PERFORM assert_game_mode_selectable(NEW.game_mode_id);
     END IF;
