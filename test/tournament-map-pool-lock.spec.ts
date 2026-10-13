@@ -249,7 +249,7 @@ describe("a tournament's map pool once the bracket is drawn (SQL-driven)", () =>
       let save: Promise<Error | null> = Promise.resolve(null);
       let settledBeforeCommit = true;
       try {
-        await bracketDrawn;
+        await Promise.race([bracketDrawn, closing]);
         save = attempt(setTournamentPool(tournament.id, other)).finally(() => {
           saveSettled = true;
         });
@@ -487,11 +487,7 @@ describe("a tournament's map pool once the bracket is drawn (SQL-driven)", () =>
       );
       // Matches used to play on the stage's options themselves, not a copy.
       const shared = await legacyTournament();
-      const played = await fx.match(await stageOptionsId(shared.stageIds[0]));
-      await behindTriggers(
-        "UPDATE matches SET status = 'Finished' WHERE id = $1",
-        [played.id],
-      );
+      await fx.match(await stageOptionsId(shared.stageIds[0]));
       const before = [
         await tournamentOptions(reset.id),
         await tournamentOptions(shared.id),

@@ -603,6 +603,42 @@ describe("servers and game server nodes (SQL-driven)", () => {
       });
     });
 
+    it("leaves a stale region alone when a disabled node only reports in", async () => {
+      const nodeId = await createNode();
+      const serverId = await createDedicatedServer(nodeId);
+      await postgres.query(
+        "UPDATE game_server_nodes SET enabled = false WHERE id = $1",
+        [nodeId],
+      );
+      await postgres.transaction(async (client) => {
+        await client.query(
+          "SELECT set_config('fivestack.node_server_sync', 'true', true)",
+        );
+        await client.query(
+          "UPDATE servers SET region = 'OtherRegion' WHERE id = $1",
+          [serverId],
+        );
+      });
+
+      await postgres.query(
+        "UPDATE game_server_nodes SET label = 'reported in' WHERE id = $1",
+        [nodeId],
+      );
+
+      expect(await dedicatedServer(serverId)).toMatchObject({
+        region: "OtherRegion",
+      });
+
+      await postgres.query(
+        "UPDATE game_server_nodes SET enabled = true WHERE id = $1",
+        [nodeId],
+      );
+
+      expect(await dedicatedServer(serverId)).toMatchObject({
+        region: "NodeRegion",
+      });
+    });
+
     it("still refuses a direct port, host or region edit, even in the transaction that re-seated the server", async () => {
       const nodeId = await createNode();
       const serverId = await createDedicatedServer(nodeId);

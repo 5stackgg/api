@@ -55,8 +55,14 @@ BEGIN
     END IF;
 
     -- The on-demand servers are rebuilt below. Dedicated ones are not, so they
-    -- take the node's region and address here.
-    IF TG_OP = 'UPDATE' THEN
+    -- take the node's region and address here. A disabled node gets this far
+    -- on every heartbeat, which is no reason to rebuild a server.
+    IF TG_OP = 'UPDATE' AND (
+        OLD.enabled IS DISTINCT FROM NEW.enabled OR
+        OLD.region IS DISTINCT FROM NEW.region OR
+        OLD.start_port_range IS DISTINCT FROM NEW.start_port_range OR
+        OLD.end_port_range IS DISTINCT FROM NEW.end_port_range
+    ) THEN
         PERFORM set_config('fivestack.node_server_sync', 'true', true);
         UPDATE servers
         SET host = COALESCE(host(server_ip), host), region = NEW.region
