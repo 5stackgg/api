@@ -73,6 +73,7 @@ describe("GameServerNodeController ping disk alerts", () => {
 
 describe("GameServerNodeController server ping hibernation", () => {
   let hasura: { query: jest.Mock; mutation: jest.Mock };
+  let reportSteamRelay: jest.Mock;
   let controller: GameServerNodeController;
 
   const server = (hibernating: boolean) => ({
@@ -106,6 +107,7 @@ describe("GameServerNodeController server ping hibernation", () => {
       mutation: jest.fn().mockResolvedValue({}),
     };
     const queue = { add: jest.fn(), remove: jest.fn() };
+    reportSteamRelay = jest.fn().mockResolvedValue(true);
 
     controller = new GameServerNodeController(
       { warn: jest.fn(), log: jest.fn() } as any,
@@ -115,7 +117,7 @@ describe("GameServerNodeController server ping hibernation", () => {
       {} as any,
       {} as any,
       {} as any,
-      {} as any,
+      { reportSteamRelay } as any,
       {} as any,
       {} as any,
       queue as any,
@@ -151,6 +153,41 @@ describe("GameServerNodeController server ping hibernation", () => {
 
     expect(hasura.mutation).not.toHaveBeenCalledWith(setsHibernating(true));
     expect(hasura.mutation).not.toHaveBeenCalledWith(setsHibernating(false));
+  });
+
+  // The match plugin names the relay only when it is on it.
+  it("takes the relay address the ping names as where the server is", async () => {
+    hasura.query.mockResolvedValue({ servers_by_pk: server(false) });
+
+    await ping({ steamRelay: "true", steamID: "[A:1:3653557264:51859]" });
+
+    expect(reportSteamRelay).toHaveBeenCalledWith("server-1", {
+      onRelay: true,
+      address: "[A:1:3653557264:51859]",
+    });
+  });
+
+  it("takes a ping that does not name the relay as a server off it", async () => {
+    hasura.query.mockResolvedValue({ servers_by_pk: server(false) });
+
+    await ping({});
+
+    expect(reportSteamRelay).toHaveBeenCalledWith("server-1", {
+      onRelay: false,
+      address: null,
+    });
+  });
+
+  it("does not call a server up that is on the relay with no address yet", async () => {
+    hasura.query.mockResolvedValue({
+      servers_by_pk: { ...server(false), connected: false },
+    });
+
+    await ping({ steamRelay: "true" });
+
+    expect(reportSteamRelay).not.toHaveBeenCalled();
+    expect(hasura.query).not.toHaveBeenCalled();
+    expect(hasura.mutation).not.toHaveBeenCalled();
   });
 
   // Plugins from before the flag existed never send it.

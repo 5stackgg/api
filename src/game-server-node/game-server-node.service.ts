@@ -28,6 +28,7 @@ import { PluginRuntimeService } from "src/plugin-runtime/plugin-runtime.service"
 import { PluginRuntime } from "src/configs/types/GameServersConfig";
 import { MapAssetsService } from "src/map-assets/map-assets.service";
 import { PostgresService } from "src/postgres/postgres.service";
+import { SteamRelay, SteamRelayWord } from "../servers/steam-relay";
 
 export type GamedataValidationRuntime = PluginRuntime;
 
@@ -151,6 +152,14 @@ export class GameServerNodeService {
 
     this.coreApi = kc.makeApiClient(CoreV1Api);
     this.batchApi = kc.makeApiClient(BatchV1Api);
+  }
+
+  // The match plugin's word on Steam's relay, taken as every plugin's is.
+  public async reportSteamRelay(
+    serverId: string,
+    relay: SteamRelayWord,
+  ): Promise<boolean> {
+    return await SteamRelay.report(this.postgres, serverId, relay);
   }
 
   // long enough to read a failed update's logs; the monitor deletes succeeded jobs itself

@@ -35,6 +35,8 @@ export class SanctionsController {
       steam_ids?: unknown;
       plugin_version?: unknown;
       plugin_runtime?: unknown;
+      on_steam_relay?: unknown;
+      steam_relay?: unknown;
       players?: unknown;
       departed?: unknown;
     },
@@ -51,6 +53,8 @@ export class SanctionsController {
         steamIds: body?.steam_ids,
         pluginVersion: body?.plugin_version,
         pluginRuntime: body?.plugin_runtime,
+        onSteamRelay: body?.on_steam_relay,
+        steamRelay: body?.steam_relay,
       },
     );
 

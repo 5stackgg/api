@@ -26,6 +26,7 @@ import {
 import { UtilityPracticeModeService } from "./utility-practice-mode.service";
 import { NoPracticeServerHere } from "./errors/NoPracticeServerHere";
 import { PRACTICE_PLUGIN_RUNTIME } from "../configs/types/GameServersConfig";
+import { SteamRelay } from "../servers/steam-relay";
 
 export type UtilityPracticeSession = {
   id: string;
@@ -957,56 +958,18 @@ export class UtilityPracticeService {
     return row ?? null;
   }
 
-  /**
-   * Record where a practice pod can be reached over Steam's relay network.
-   *
-   * Nothing else ever writes this for a practice server: the match plugin's
-   * ping is what maintains it everywhere else, and a practice pod does not run
-   * the match plugin. Deliberately not that endpoint either -- it also writes
-   * plugin_version and plugin_runtime, which decide how the panel talks to a
-   * server, and the utility plugin's version is not the answer to that.
-   *
-   * The server is the only one that knows whether it listens on the relay, so
-   * its word is the whole answer: an address when it does, and the address
-   * cleared when it says it does not. The region's setting is never consulted.
-   *
-   * No address alone is "nothing to say", never "clear it": a pod still
-   * registering with the relay has none yet, and a plugin from before it said
-   * which never has one to give off the relay.
-   *
-   * Answers whether the server can be called up. One that is on the relay and
-   * cannot yet say where cannot: the only address left to hand out for it is a
-   * host and port that nobody reaches.
-   */
+  // A practice pod runs no match plugin, so its word on Steam's relay arrives
+  // with its session fetch and its occupancy instead of on the ping. Where it
+  // lands and what it means is SteamRelay's, the same as for every plugin.
   public async reportSteamRelay(
     serverId: string,
     steamRelay: string | null,
     onSteamRelay: boolean | null,
   ): Promise<boolean> {
-    if (onSteamRelay === false) {
-      await this.postgres.query(
-        `UPDATE public.servers
-            SET steam_relay = NULL
-          WHERE id = $1::uuid
-            AND steam_relay IS NOT NULL`,
-        [serverId],
-      );
-      return true;
-    }
-
-    if (!steamRelay) {
-      return onSteamRelay !== true;
-    }
-
-    await this.postgres.query(
-      `UPDATE public.servers
-          SET steam_relay = $2
-        WHERE id = $1::uuid
-          AND steam_relay IS DISTINCT FROM $2`,
-      [serverId, steamRelay],
-    );
-
-    return true;
+    return await SteamRelay.report(this.postgres, serverId, {
+      onRelay: onSteamRelay,
+      address: steamRelay,
+    });
   }
 
   /**

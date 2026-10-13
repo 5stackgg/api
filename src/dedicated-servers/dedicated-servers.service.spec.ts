@@ -271,18 +271,20 @@ describe("DedicatedServersService.pingDedicatedServer", () => {
 
   const alerts = () => notifications.send.mock.calls.length;
 
-  it("gives a practice server no relay address it did not report itself", async () => {
-    row.type = "Practice";
+  // Whether a server is on Steam's relay is the server's to say, on its
+  // plugin's own report. A Steam ID is not an address it listens on, and the
+  // region's setting only decided how the pod was booted.
+  it("gives no server a relay address, whatever its region says", async () => {
     row.server_region = { steam_relay: true };
     steamId = "[A:1:3653557264:51859]";
 
     await service.pingDedicatedServer("server-1");
 
     expect(row.steam_relay).toBeNull();
+    expect(hasura.mutation).not.toHaveBeenCalled();
   });
 
-  it("keeps the relay address a practice server reported", async () => {
-    row.type = "Practice";
+  it("keeps the relay address a server reported", async () => {
     row.steam_relay = "[A:1:3653557264:51859]";
 
     await service.pingDedicatedServer("server-1");

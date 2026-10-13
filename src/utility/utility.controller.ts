@@ -33,6 +33,7 @@ import {
   UtilityServerContext,
 } from "./utility-lineups.service";
 import { UtilityPluginKeyGuard } from "./utility-plugin-key.guard";
+import { SteamRelay } from "../servers/steam-relay";
 import { UtilityPracticeService } from "./utility-practice.service";
 
 @Controller("utility")
@@ -91,12 +92,13 @@ export class UtilityController {
       on_steam_relay?: boolean;
     },
   ) {
+    const relay = SteamRelay.word(body?.on_steam_relay, body?.steam_relay);
+
     await this.practice.reportOccupancy(
       UtilityController.serverId(request),
       Array.isArray(body?.steam_ids) ? body.steam_ids : [],
-      typeof body?.steam_relay === "string" ? body.steam_relay : null,
-      // A plugin from before this never says, which is not the same as "no".
-      typeof body?.on_steam_relay === "boolean" ? body.on_steam_relay : null,
+      relay.address,
+      relay.onRelay,
     );
 
     return { ok: true };
@@ -169,10 +171,11 @@ export class UtilityController {
     // Ahead of everything else: the connect string is read the moment the
     // session is ready, and has to say where the server is by then. A plugin
     // from before this sends neither and is taken at its word as before.
+    const relay = SteamRelay.word(onSteamRelay, steamRelay);
     const up = await this.practice.reportSteamRelay(
       serverId,
-      steamRelay ? String(steamRelay) : null,
-      onSteamRelay === "true" ? true : onSteamRelay === "false" ? false : null,
+      relay.address,
+      relay.onRelay,
     );
 
     const session = await this.practice.sessionForServer(serverId);
