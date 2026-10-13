@@ -450,7 +450,7 @@ describe("chat edits and self deletes (SQL-driven)", () => {
       const ids: string[] = [];
 
       await atOneInstant(async () => {
-        for (const _ of texts) {
+        while (ids.length < texts.length) {
           ids.push(await place(matchId, user));
         }
       });

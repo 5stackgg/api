@@ -227,26 +227,6 @@ describe("hasura table metadata", () => {
     });
   });
 
-  // A stage that chose its tournament's own seeded pool holds the same id as one
-  // that inherited it; only this marker keeps the choice through a tournament
-  // pool change, so whoever edits stage options has to be able to send it.
-  describe("match_options", () => {
-    const options = () =>
-      tables.find(({ file }) => file === "public_match_options.yaml")?.metadata;
-
-    it.each([
-      ["insert_permissions", "user"],
-      ["insert_permissions", "match_organizer"],
-      ["update_permissions", "user"],
-      ["update_permissions", "match_organizer"],
-      ["select_permissions", "guest"],
-    ])("grants map_pool_explicit in %s for %s", (section, role) => {
-      expect(
-        blocksByRole(options(), section).get(role)?.columns ?? [],
-      ).toContain("map_pool_explicit");
-    });
-  });
-
   // A bracket keeps its slot when its match is deleted (match_id is ON DELETE
   // SET NULL), and a won slot keeps its winner downstream with nothing to reset.
   describe("matches", () => {

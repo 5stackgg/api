@@ -11,20 +11,18 @@ BEGIN
     -- A descendant follows a column only while it still holds the template's
     -- old value; anything else is a deliberate stage override or a hand-edited
     -- match. best_of is never inherited: schedule_tournament_match resolves it
-    -- from the stage's round config. A pool picked on purpose can still be the
-    -- template's own seeded pool, so map_pool_explicit is what keeps that one.
+    -- from the stage's round config.
     SELECT string_agg(
         format(
-            '%1$I = CASE WHEN %2$s%1$I IS NOT DISTINCT FROM ($1).%1$I THEN ($2).%1$I ELSE %1$I END',
-            changed.key,
-            CASE WHEN changed.key = 'map_pool_id' THEN 'NOT map_pool_explicit AND ' ELSE '' END
+            '%1$I = CASE WHEN %1$I IS NOT DISTINCT FROM ($1).%1$I THEN ($2).%1$I ELSE %1$I END',
+            changed.key
         ),
         ', '
     )
     INTO _assignments
     FROM jsonb_each(to_jsonb(_new)) changed
     WHERE changed.value IS DISTINCT FROM to_jsonb(_old) -> changed.key
-      AND changed.key NOT IN ('id', 'invite_code', 'best_of', 'map_pool_explicit');
+      AND changed.key NOT IN ('id', 'invite_code', 'best_of');
 
     IF _assignments IS NULL THEN
         RETURN;

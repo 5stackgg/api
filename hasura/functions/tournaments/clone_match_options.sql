@@ -22,8 +22,6 @@ BEGIN
     -- were added (round_restart_delay, halftime_pausematch, auto_cancellation),
     -- producing tournaments whose matches quietly ignore their own settings.
     _options.id := gen_random_uuid();
-    -- A clone follows the pool of the row it was cloned from.
-    _options.map_pool_explicit := false;
 
     INSERT INTO match_options VALUES (_options.*);
 
