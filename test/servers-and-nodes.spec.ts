@@ -1,4 +1,5 @@
 import { PostgresService } from "./../src/postgres/postgres.service";
+import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 
 // Exercises the game-server-node / servers SQL: on-demand server population
@@ -7,11 +8,13 @@ import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 describe("servers and game server nodes (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
+  let fx: Fixtures;
   let nodeSeq = 0;
 
   beforeAll(async () => {
     db = await bootMigratedDb("ServersNodesTest");
     postgres = db.postgres;
+    fx = new Fixtures(postgres, 76561192830000000n);
     await postgres.query(
       `INSERT INTO server_regions (value, description) VALUES ('NodeRegion', 'NodeRegion'), ('OtherRegion', 'OtherRegion')
        ON CONFLICT (value) DO NOTHING`,
@@ -27,9 +30,14 @@ describe("servers and game server nodes (SQL-driven)", () => {
     await postgres.query("DELETE FROM game_server_nodes");
   });
 
-  // A node whose port range yields five paired game/tv ports.
+  // A node whose port range yields five paired game/tv ports unless told fewer.
   const createNode = async (
-    options: { startPort?: number; ip?: string; region?: string } = {},
+    options: {
+      startPort?: number;
+      slots?: number;
+      ip?: string;
+      region?: string;
+    } = {},
   ) => {
     const id = `test-node-${++nodeSeq}`;
     const startPort = options.startPort ?? 27015;
@@ -40,7 +48,7 @@ describe("servers and game server nodes (SQL-driven)", () => {
         id,
         options.ip ?? "203.0.113.1",
         startPort,
-        startPort + 10,
+        startPort + (options.slots ?? 5) * 2,
         options.region ?? "NodeRegion",
       ],
     );
@@ -55,6 +63,18 @@ describe("servers and game server nodes (SQL-driven)", () => {
       [Buffer.from("secret"), nodeId],
     );
     return server.id;
+  };
+
+  // One statement deleting several servers visits them in disk order. The
+  // lowest id, clustered on the primary key, puts the dedicated server ahead
+  // of the on-demand server whose slot it took.
+  const createDedicatedServerFirstOnDisk = async (nodeId: string) => {
+    await postgres.query(
+      `INSERT INTO servers (id, host, label, rcon_password, port, tv_port, region, type, is_dedicated, enabled, game_server_node_id)
+       VALUES ('00000000-0000-0000-0000-000000000001', '203.0.113.1', 'dedicated', $1, 28000, 28001, 'NodeRegion', 'Casual', true, true, $2)`,
+      [Buffer.from("secret"), nodeId],
+    );
+    await postgres.query("CLUSTER servers USING servers_pkey");
   };
 
   const dedicatedServer = async (id: string) => {
@@ -342,6 +362,59 @@ describe("servers and game server nodes (SQL-driven)", () => {
         [Buffer.from("x")],
       ),
     ).rejects.toThrow(/without a node assigned/i);
+  });
+
+  it("deletes a dedicated server and the slot it took in one statement, whichever is first on disk", async () => {
+    const nodeId = await createNode();
+    await createDedicatedServerFirstOnDisk(nodeId);
+
+    await postgres.query("DELETE FROM servers WHERE game_server_node_id = $1", [
+      nodeId,
+    ]);
+
+    const servers = await postgres.query<Array<unknown>>(
+      "SELECT 1 FROM servers WHERE game_server_node_id = $1",
+      [nodeId],
+    );
+    expect(servers.length).toBe(0);
+  });
+
+  it("deleting a node removes a dedicated server it hosts along with its slot", async () => {
+    const nodeId = await createNode();
+    await createDedicatedServerFirstOnDisk(nodeId);
+
+    await postgres.query("DELETE FROM game_server_nodes WHERE id = $1", [
+      nodeId,
+    ]);
+
+    const servers = await postgres.query<Array<unknown>>(
+      "SELECT 1 FROM servers",
+    );
+    expect(servers.length).toBe(0);
+  });
+
+  it("keeps a match on its region when the dedicated server it was pinned to is deleted, even on a one-slot region", async () => {
+    const nodeId = await createNode({ region: "OtherRegion", slots: 1 });
+    const serverId = await createDedicatedServer(nodeId);
+    const match = await fx.match({ regions: ["OtherRegion"] });
+
+    try {
+      await postgres.query("UPDATE matches SET server_id = $1 WHERE id = $2", [
+        serverId,
+        match.id,
+      ]);
+
+      await postgres.query("DELETE FROM servers WHERE id = $1", [serverId]);
+
+      const [options] = await postgres.query<Array<{ regions: string[] }>>(
+        "SELECT regions FROM match_options WHERE id = $1",
+        [match.options_id],
+      );
+      expect(options.regions).toEqual(["OtherRegion"]);
+      expect(await slotEnabled(nodeId, 27015)).toBe(true);
+    } finally {
+      await postgres.query("DELETE FROM matches WHERE id = $1", [match.id]);
+    }
   });
 
   it("deleting a node removes its on-demand servers", async () => {

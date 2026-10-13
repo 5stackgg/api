@@ -60,7 +60,6 @@ insert_permissions:
         - default_models
         - knife_round
         - map_pool_id
-        - map_pool_explicit
         - map_veto
         - match_mode
         - mr
@@ -91,7 +90,6 @@ insert_permissions:
         - default_models
         - knife_round
         - map_pool_id
-        - map_pool_explicit
         - map_veto
         - mr
         - number_of_substitutes
@@ -120,7 +118,6 @@ select_permissions:
         - id
         - knife_round
         - map_pool_id
-        - map_pool_explicit
         - map_veto
         - match_mode
         - mr
@@ -155,7 +152,6 @@ update_permissions:
         - default_models
         - knife_round
         - map_pool_id
-        - map_pool_explicit
         - map_veto
         - match_mode
         - mr
@@ -219,7 +215,6 @@ update_permissions:
         - default_models
         - knife_round
         - map_pool_id
-        - map_pool_explicit
         - map_veto
         - mr
         - number_of_substitutes

@@ -1,4 +1,4 @@
--- Must match the free-slot lookup in tbiud_servers, which is what a dedicated
+-- Must match the free-slot lookup in tbiu_servers, which is what a dedicated
 -- server moving onto this node actually claims.
 CREATE OR REPLACE FUNCTION public.available_dedicated_slot_count(game_server_node public.game_server_nodes)
 RETURNS int

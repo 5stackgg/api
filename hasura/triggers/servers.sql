@@ -1,19 +1,10 @@
-CREATE OR REPLACE FUNCTION public.tbiud_servers() RETURNS TRIGGER
+CREATE OR REPLACE FUNCTION public.tbiu_servers() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 DECLARE
     enc_secret text;
     disable_game_node_server_id uuid;
 BEGIN
-    IF TG_OP = 'DELETE' THEN
-        -- If the server is dedicated (has a node), revert any other servers with same node/port/tv_port and different id to enabled
-        IF OLD.is_dedicated = true AND OLD.game_server_node_id IS NOT NULL THEN
-            UPDATE servers SET enabled = true where port = OLD.port and tv_port = OLD.tv_port and game_server_node_id = OLD.game_server_node_id and id != OLD.id and is_dedicated = false;
-        END IF;
-
-        RETURN OLD;
-    END IF;
-
     enc_secret = current_setting('fivestack.app_key');
 
     IF NEW.is_dedicated = true AND NEW.game_server_node_id IS NOT NULL AND (TG_OP = 'INSERT' OR NEW.game_server_node_id != OLD.game_server_node_id) THEN
@@ -118,10 +109,34 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS tbiu_servers ON public.servers;
-
 DROP TRIGGER IF EXISTS tbiud_servers ON public.servers;
-CREATE TRIGGER tbiud_servers BEFORE INSERT OR UPDATE OR DELETE ON public.servers FOR EACH ROW EXECUTE FUNCTION public.tbiud_servers();
+DROP FUNCTION IF EXISTS public.tbiud_servers();
+
+DROP TRIGGER IF EXISTS tbiu_servers ON public.servers;
+CREATE TRIGGER tbiu_servers BEFORE INSERT OR UPDATE ON public.servers FOR EACH ROW EXECUTE FUNCTION public.tbiu_servers();
+
+-- Gives a deleted dedicated server's slot back to its on-demand server. It has
+-- to run after the statement's deletes: one statement can delete both (a node
+-- going away takes every server on it), and a row changed from a BEFORE trigger
+-- can no longer be deleted by the statement that fired it.
+CREATE OR REPLACE FUNCTION public.tad_servers() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF OLD.is_dedicated = true AND OLD.game_server_node_id IS NOT NULL THEN
+        UPDATE servers SET enabled = true where port = OLD.port and tv_port = OLD.tv_port and game_server_node_id = OLD.game_server_node_id and id != OLD.id and is_dedicated = false;
+    END IF;
+
+    RETURN NULL;
+END;
+$$;
+
+-- A row's AFTER triggers fire in name order and the foreign keys' own are
+-- RI_ConstraintTrigger_*, so the capital A puts this one ahead of them:
+-- clearing matches.server_id re-checks the match's regions, which must already
+-- count the slot as free.
+DROP TRIGGER IF EXISTS "A_tad_servers" ON public.servers;
+CREATE TRIGGER "A_tad_servers" AFTER DELETE ON public.servers FOR EACH ROW EXECUTE FUNCTION public.tad_servers();
 
 DROP TRIGGER IF EXISTS "set_public_servers_updated_at" ON "public"."servers";
 CREATE TRIGGER "set_public_servers_updated_at"
