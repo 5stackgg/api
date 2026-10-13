@@ -31,8 +31,10 @@ const UTILITY_LINEUP_FILE_TYPES: Record<string, string> = {
   json: "application/json",
 };
 // A lineup's files are keyed per render and per recording, so a key never
-// changes what it holds. The worker caches them for the same 30 days.
-const UTILITY_LINEUP_FILE_CACHE = "public, max-age=2592000, immutable";
+// changes what it holds and a browser may keep it. Private, because a lineup
+// can stop being public, and a cache shared between visitors would go on
+// serving it past the check that refuses it here.
+const UTILITY_LINEUP_FILE_CACHE = "private, max-age=2592000, immutable";
 
 @Controller("/clips")
 export class ClipDownloadController {
@@ -70,11 +72,7 @@ export class ClipDownloadController {
       dl === "1",
       request,
       response,
-      // A download's headers are the caller's to choose, and a cache shared
-      // with other visitors must never keep an answer one of them shaped.
-      name === undefined && dl === undefined
-        ? UTILITY_LINEUP_FILE_CACHE
-        : undefined,
+      UTILITY_LINEUP_FILE_CACHE,
     );
   }
 
