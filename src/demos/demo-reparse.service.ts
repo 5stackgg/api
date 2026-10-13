@@ -6,6 +6,9 @@ import { DemoMetadataService } from "./demo-metadata.service";
 const STATUS_KEY = "scans/reparse-all-demos.latest.json";
 const PAGE_SIZE = 1000;
 const PERSIST_EVERY = 25;
+// Demos re-parsed at once. Each is a ~20s parse plus its writes, so a full
+// re-parse after a schema bump otherwise runs for hours one demo at a time.
+const REPARSE_CONCURRENCY = 2;
 
 export type ReparseStatus = {
   running: boolean;
@@ -79,31 +82,34 @@ export class DemoReparseService {
     await this.persistStatus();
 
     try {
-      const ids = await this.fetchAllDemoIds();
-      this.status.total = ids.length;
+      const demos = await this.fetchAllDemos();
+      this.status.total = demos.length;
       await this.persistStatus();
 
-      this.logger.log(`[reparse-all] starting reparse of ${ids.length} demos`);
+      this.logger.log(
+        `[reparse-all] starting reparse of ${demos.length} demos, ${REPARSE_CONCURRENCY} at a time`,
+      );
 
-      for (const id of ids) {
-        if (this.cancelRequested) {
-          this.status.canceled = true;
-          this.logger.warn("[reparse-all] canceled by request");
-          break;
+      // A worker takes every demo of one match map, so two demos never write
+      // the same map's stats at once.
+      const maps = DemoReparseService.groupByMatchMap(demos);
+      let next = 0;
+      const worker = async () => {
+        while (next < maps.length && !this.cancelRequested) {
+          for (const id of maps[next++]) {
+            if (this.cancelRequested) {
+              return;
+            }
+            await this.reparseOne(id);
+          }
         }
-        this.status.current_demo_id = id;
-        try {
-          await this.demoMetadata.reparseById(id);
-        } catch (error) {
-          this.status.failed += 1;
-          this.logger.warn(
-            `[reparse-all] demo ${id} failed: ${(error as Error)?.message}`,
-          );
-        }
-        this.status.completed += 1;
-        if (this.status.completed % PERSIST_EVERY === 0) {
-          await this.persistStatus();
-        }
+      };
+      await Promise.all(
+        Array.from({ length: REPARSE_CONCURRENCY }, () => worker()),
+      );
+      if (this.cancelRequested && this.status.completed < demos.length) {
+        this.status.canceled = true;
+        this.logger.warn("[reparse-all] canceled by request");
       }
     } finally {
       this.status.running = false;
@@ -117,8 +123,42 @@ export class DemoReparseService {
     }
   }
 
-  private async fetchAllDemoIds(): Promise<string[]> {
-    const ids: string[] = [];
+  private async reparseOne(id: string): Promise<void> {
+    this.status.current_demo_id = id;
+    try {
+      await this.demoMetadata.reparseById(id);
+    } catch (error) {
+      this.status.failed += 1;
+      this.logger.warn(
+        `[reparse-all] demo ${id} failed: ${(error as Error)?.message}`,
+      );
+    }
+    this.status.completed += 1;
+    if (this.status.completed % PERSIST_EVERY === 0) {
+      await this.persistStatus();
+    }
+  }
+
+  // Demo ids grouped by match map, maps in the order their first demo came.
+  public static groupByMatchMap(
+    demos: Array<{ id: string; match_map_id: string }>,
+  ): string[][] {
+    const groups = new Map<string, string[]>();
+    for (const demo of demos) {
+      const group = groups.get(demo.match_map_id);
+      if (group) {
+        group.push(demo.id);
+      } else {
+        groups.set(demo.match_map_id, [demo.id]);
+      }
+    }
+    return [...groups.values()];
+  }
+
+  private async fetchAllDemos(): Promise<
+    Array<{ id: string; match_map_id: string }>
+  > {
+    const demos: Array<{ id: string; match_map_id: string }> = [];
     let lastId: string | null = null;
     for (;;) {
       const where = lastId ? { id: { _gt: lastId } } : {};
@@ -130,20 +170,21 @@ export class DemoReparseService {
             limit: PAGE_SIZE,
           },
           id: true,
+          match_map_id: true,
         },
       });
       if (!match_map_demos.length) {
         break;
       }
       for (const demo of match_map_demos) {
-        ids.push(demo.id);
+        demos.push({ id: demo.id, match_map_id: demo.match_map_id });
       }
       lastId = match_map_demos[match_map_demos.length - 1].id;
       if (match_map_demos.length < PAGE_SIZE) {
         break;
       }
     }
-    return ids;
+    return demos;
   }
 
   private async persistStatus(): Promise<void> {

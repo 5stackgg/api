@@ -1,9 +1,11 @@
+import { randomUUID } from "crypto";
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { HasuraService } from "../hasura/hasura.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { DemoParserService } from "../demos/demo-parser.service";
+import { playbackRequest } from "../demos/demo-metadata.service";
 import { MatchImportService } from "../steam-match-history/match-import.service";
 import { FaceitService } from "./faceit.service";
 import { FaceitQueues } from "./enums/FaceitQueues";
@@ -81,7 +83,13 @@ export class FaceitMatchImportService {
       );
     }
 
-    const parsed = await this.demoParser.parseFromUrl(fetchUrl);
+    // Reserved before the parse so the parser can build the playback blob for
+    // the match map the import is about to create.
+    const matchMapId = randomUUID();
+    const parsed = await this.demoParser.parseFromUrl(
+      fetchUrl,
+      playbackRequest(matchMapId),
+    );
     if (!parsed) {
       throw new Error("demo parse failed");
     }
@@ -90,6 +98,7 @@ export class FaceitMatchImportService {
       demoUrl: resourceUrl,
       matchStartTime: startedAt,
       externalId: matchId,
+      matchMapId,
     });
   }
 

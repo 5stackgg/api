@@ -1,9 +1,11 @@
+import { randomUUID } from "crypto";
 import { Job } from "bullmq";
 import { Logger } from "@nestjs/common";
 import { WorkerHost } from "@nestjs/bullmq";
 import { UseQueue } from "src/utilities/QueueProcessors";
 import { PostgresService } from "../../postgres/postgres.service";
 import { DemoParserService } from "../../demos/demo-parser.service";
+import { playbackRequest } from "../../demos/demo-metadata.service";
 import { SteamMatchHistoryQueues } from "../enums/SteamMatchHistoryQueues";
 import { MatchImportService } from "../match-import.service";
 
@@ -17,8 +19,12 @@ export type ParseImportedDemoPayload = {
   match_start_time?: string | null;
 };
 
+// Two at a time: a burst of finished matches otherwise waits in line behind
+// one ~30s parse each. Jobs are keyed parse-<valve match id>, so one match is
+// never imported twice at once, and the parser serializes downloads per Valve
+// replay host by itself. A parse peaks around 370 MB in the parser.
 @UseQueue("SteamMatchHistory", SteamMatchHistoryQueues.ParseImportedDemo, {
-  concurrency: 1,
+  concurrency: 2,
   limiter: { max: 4, duration: 60_000 },
 })
 export class ParseImportedDemo extends WorkerHost {
@@ -120,7 +126,13 @@ export class ParseImportedDemo extends WorkerHost {
     matchStartTime: string | null,
   ): Promise<void> {
     const startedAt = Date.now();
-    const parsed = await this.demoParser.parseFromUrl(demoUrl);
+    // Reserved before the parse so the parser can build the playback blob for
+    // the match map the import is about to create.
+    const matchMapId = randomUUID();
+    const parsed = await this.demoParser.parseFromUrl(
+      demoUrl,
+      playbackRequest(matchMapId),
+    );
     if (!parsed) {
       throw new Error("demo parse failed");
     }
@@ -135,6 +147,7 @@ export class ParseImportedDemo extends WorkerHost {
         matchStartTime,
         externalId: valveMatchId,
         shareCode,
+        matchMapId,
       },
     );
     if (!result.matchId) {

@@ -171,6 +171,72 @@ describe("DemoMetadataService.uploadPlaybackBlob", () => {
     ]);
   });
 
+  // The parser builds the blob when asked, and the api stores it as it came.
+  describe("a blob the parser built", () => {
+    const gz = zlib.gzipSync(Buffer.from('{"match_map_id":"map"}'));
+    const built = (matchMapId: string): ParsedDemo => ({
+      total_ticks: 100,
+      tick_rate: 64,
+      round_ticks: [],
+      kills: [],
+      bombs: [],
+      playback: {
+        schema_version: DEMO_METADATA_VERSION,
+        match_map_id: matchMapId,
+        blob: gz.toString("base64"),
+        positions: 3,
+        shots_fired: 2,
+        grenade_events: 1,
+        smoke_volumes: 0,
+        smoke_voxels: 0,
+        infernos: 0,
+        damages: 0,
+        flashes: 0,
+      },
+    });
+    const mocks = () => ({
+      put: jest.fn<Promise<void>, [string, Buffer]>(async () => {}),
+      query: jest.fn<Promise<Array<unknown>>, [string, Array<unknown>]>(
+        async () => [],
+      ),
+    });
+    const service = ({ put, query }: ReturnType<typeof mocks>) =>
+      new DemoMetadataService(
+        new Logger("DemoMetadataTest"),
+        null as never,
+        { query } as never,
+        { put } as never,
+        null as never,
+        null as never,
+        null as never,
+      );
+
+    it("is uploaded byte for byte", async () => {
+      const m = mocks();
+      await service(m).uploadPlaybackBlob("match", "map", "demo", built("map"));
+
+      expect(Buffer.compare(m.put.mock.calls[0][1], gz)).toBe(0);
+      expect(m.query.mock.calls[0][1]).toEqual(
+        expect.arrayContaining([gz.byteLength, DEMO_METADATA_VERSION]),
+      );
+    });
+
+    // The parse leaves the blob's fields out once the parser built one, so a
+    // blob for the wrong map cannot be rebuilt here; storing it would be worse.
+    it("is refused when it was built for another match map", async () => {
+      const m = mocks();
+      await expect(
+        service(m).uploadPlaybackBlob(
+          "match",
+          "map",
+          "demo",
+          built("other-map"),
+        ),
+      ).rejects.toThrow(/other-map/);
+      expect(m.put).not.toHaveBeenCalled();
+    });
+  });
+
   // A parser older than these fields still produces a well-formed blob.
   it("defaults the new arrays to empty for an older parser", async () => {
     const { blob } = await upload({

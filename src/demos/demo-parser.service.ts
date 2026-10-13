@@ -392,6 +392,33 @@ export type ParsedInferno = {
   fires?: Array<{ x: number; y: number; z: number; s: number; e: number }>;
 };
 
+// Asks the parser to build the demo's playback blob (the document the 2D/3D
+// replay reads) for this match map, at the blob version this api reads. A
+// parser that builds a different version ignores it and returns the full
+// parse, which the api then builds the blob from itself.
+export type PlaybackRequest = {
+  match_map_id: string;
+  schema_version: number;
+};
+
+// The blob the parser built: gzipped JSON, base64 on the wire, plus the counts
+// the api logs for it. When present, the parse left out what only the blob
+// needed (positions, grenade trajectories, smoke volumes and voxels,
+// infernos, kit drops).
+export type ParsedPlayback = {
+  schema_version: number;
+  match_map_id: string;
+  blob: string;
+  positions: number;
+  shots_fired: number;
+  grenade_events: number;
+  smoke_volumes: number;
+  smoke_voxels: number;
+  infernos: number;
+  damages: number;
+  flashes: number;
+};
+
 export type ParsedDemo = {
   // The PARSER's own contract version, not the playback blob's
   // (DEMO_METADATA_VERSION). Different numbers for different things: this one
@@ -406,6 +433,7 @@ export type ParsedDemo = {
   // Whether the parser had the map's collision mesh, so its sightline-gated
   // stats were checked against the world rather than estimated.
   geometry_validated?: boolean;
+  playback?: ParsedPlayback;
   // Match-type signals from the demo's game rules.
   server_name?: string;
   max_rounds?: number;
@@ -500,6 +528,7 @@ export class DemoParserService {
   public async parseFromS3Key(
     s3Key: string,
     matchMapDemoId?: string,
+    playback?: PlaybackRequest,
   ): Promise<ParsedDemo> {
     const presignedUrl = await this.s3.getPresignedUrl(
       s3Key,
@@ -513,7 +542,7 @@ export class DemoParserService {
     );
 
     const startedAt = Date.now();
-    const res = await this.postParse(presignedUrl, matchMapDemoId);
+    const res = await this.postParse(presignedUrl, matchMapDemoId, playback);
     const respondedAt = Date.now();
 
     const parsed = (await res.json()) as ParsedDemo;
@@ -535,7 +564,10 @@ export class DemoParserService {
     return `${parsed.total_ticks} ticks @ ${parsed.tick_rate} tps, ${parsed.round_ticks?.length ?? 0} rounds, ${parsed.kills?.length ?? 0} kills, ${parsed.bombs?.length ?? 0} bombs, ${parsed.shots_fired?.length ?? 0} shots, ${parsed.damages?.length ?? 0} dmg, ${parsed.spotted?.length ?? 0} spotted, ${parsed.grenade_throws?.length ?? 0} thrown, ${parsed.grenade_detonations?.length ?? 0} detonated, map=${parsed.map_name ?? "<unknown>"}${parsed.workshop_id ? ` (workshop ${parsed.workshop_id})` : ""}`;
   }
 
-  public async parseFromUrl(demoUrl: string): Promise<ParsedDemo | null> {
+  public async parseFromUrl(
+    demoUrl: string,
+    playback?: PlaybackRequest,
+  ): Promise<ParsedDemo | null> {
     this.logger.log(
       `[demo-parser] POST ${this.appConfig.demoParserUrl}/parse (external url)`,
     );
@@ -543,7 +575,7 @@ export class DemoParserService {
     const startedAt = Date.now();
     let res: Response;
     try {
-      res = await this.postParse(demoUrl);
+      res = await this.postParse(demoUrl, undefined, playback);
     } catch (error) {
       this.logger.error(
         `[demo-parser] external url failed after ${((Date.now() - startedAt) / 1000).toFixed(1)}s: ${(error as Error).message}`,
@@ -562,6 +594,7 @@ export class DemoParserService {
   private async postParse(
     demoUrl: string,
     matchMapDemoId?: string,
+    playback?: PlaybackRequest,
   ): Promise<Response> {
     let res: Response;
     try {
@@ -571,6 +604,7 @@ export class DemoParserService {
         body: JSON.stringify({
           match_map_demo_id: matchMapDemoId ?? "",
           demo_url: demoUrl,
+          ...(playback ? { playback } : {}),
         }),
         signal: AbortSignal.timeout(5 * 60_000),
       });
