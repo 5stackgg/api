@@ -31,7 +31,8 @@ BEGIN
         PERFORM set_config('fivestack.node_server_sync', 'true', true);
         UPDATE servers
         SET host = COALESCE(host(server_ip), host), region = NEW.region
-        WHERE game_server_node_id = NEW.id AND is_dedicated = true;
+        WHERE game_server_node_id = NEW.id AND is_dedicated = true
+          AND (host, region) IS DISTINCT FROM (COALESCE(host(server_ip), host), NEW.region);
         PERFORM set_config('fivestack.node_server_sync', 'false', true);
     END IF;
 

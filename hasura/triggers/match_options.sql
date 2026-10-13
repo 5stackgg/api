@@ -125,15 +125,12 @@ BEGIN
 
     IF NEW.map_pool_id IS DISTINCT FROM OLD.map_pool_id AND EXISTS (
         SELECT 1
-        FROM tournaments t
-        WHERE (
-                t.match_options_id = OLD.id
-                OR EXISTS (
-                    SELECT 1 FROM tournament_stages ts
-                    WHERE ts.tournament_id = t.id AND ts.match_options_id = OLD.id
-                )
-              )
-          AND tournament_is_drawn(t.id)
+        FROM (
+            SELECT t.id FROM tournaments t WHERE t.match_options_id = OLD.id
+            UNION ALL
+            SELECT ts.tournament_id FROM tournament_stages ts WHERE ts.match_options_id = OLD.id
+        ) owner
+        WHERE tournament_is_drawn(owner.id)
     ) THEN
         -- The web's tournament form saves a fresh Custom pool every time, maps
         -- changed or not, so a new id alone is not a new pool.

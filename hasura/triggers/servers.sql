@@ -8,9 +8,9 @@ DECLARE
 BEGIN
     enc_secret = current_setting('fivestack.app_key');
 
-    -- Stood up by taiud_populate_game_servers and populate_game_servers around
-    -- their own writes: a dedicated server's host, region and ports follow its
-    -- node, and nothing else may set them.
+    -- Raised by taiud_populate_game_servers, populate_game_servers and
+    -- tau_validate_lan_regions around their own writes: a dedicated server's
+    -- host, region and ports follow its node, and nothing else may set them.
     node_sync = COALESCE(current_setting('fivestack.node_server_sync', true) = 'true', false);
 
     IF NEW.is_dedicated = true AND NEW.game_server_node_id IS NOT NULL AND (TG_OP = 'INSERT' OR NEW.game_server_node_id != OLD.game_server_node_id) THEN

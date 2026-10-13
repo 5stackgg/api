@@ -503,6 +503,64 @@ describe("servers and game server nodes (SQL-driven)", () => {
       });
     });
 
+    it("re-addresses a dedicated server when its region is switched to LAN and back", async () => {
+      await postgres.query(
+        `INSERT INTO server_regions (value, description, is_lan) VALUES ('FlipRegion', 'FlipRegion', false)
+         ON CONFLICT (value) DO UPDATE SET is_lan = false`,
+      );
+      const nodeId = await createNode({ region: "FlipRegion" });
+      await postgres.query(
+        "UPDATE game_server_nodes SET lan_ip = '10.0.0.5' WHERE id = $1",
+        [nodeId],
+      );
+      const serverId = await createDedicatedServer(nodeId);
+
+      await postgres.query(
+        "UPDATE server_regions SET is_lan = true WHERE value = 'FlipRegion'",
+      );
+
+      expect(await dedicatedServer(serverId)).toMatchObject({
+        host: "10.0.0.5",
+        region: "FlipRegion",
+      });
+
+      await postgres.query(
+        "UPDATE server_regions SET is_lan = false WHERE value = 'FlipRegion'",
+      );
+
+      expect(await dedicatedServer(serverId)).toMatchObject({
+        host: "203.0.113.1",
+        region: "FlipRegion",
+      });
+    });
+
+    it("leaves a dedicated server on a LAN region alone when only the node's public IP changes", async () => {
+      const nodeId = await createNode();
+      const serverId = await createDedicatedServer(nodeId);
+      await postgres.query(
+        "UPDATE game_server_nodes SET lan_ip = '10.0.0.5' WHERE id = $1",
+        [nodeId],
+      );
+      await postgres.query(
+        "UPDATE game_server_nodes SET region = 'LanRegion' WHERE id = $1",
+        [nodeId],
+      );
+      const updatedAt = () =>
+        postgres.query<Array<{ host: string; updated_at: Date }>>(
+          "SELECT host, updated_at FROM servers WHERE id = $1",
+          [serverId],
+        );
+      const before = await updatedAt();
+      expect(before[0].host).toBe("10.0.0.5");
+
+      await postgres.query(
+        "UPDATE game_server_nodes SET public_ip = '203.0.113.50' WHERE id = $1",
+        [nodeId],
+      );
+
+      expect(await updatedAt()).toEqual(before);
+    });
+
     it("still refuses a direct port, host or region edit, even in the transaction that re-seated the server", async () => {
       const nodeId = await createNode();
       const serverId = await createDedicatedServer(nodeId);
