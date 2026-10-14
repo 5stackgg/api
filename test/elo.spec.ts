@@ -62,7 +62,13 @@ describe("ELO engine (SQL-driven)", () => {
       winner = "a",
       endedDaysAgo = 1,
       bestOf = 1,
-    }: { winner?: "a" | "b"; endedDaysAgo?: number; bestOf?: number } = {},
+      played = true,
+    }: {
+      winner?: "a" | "b";
+      endedDaysAgo?: number;
+      bestOf?: number;
+      played?: boolean;
+    } = {},
   ) => {
     const match = await fx.match({
       type: "Duel",
@@ -82,6 +88,9 @@ describe("ELO engine (SQL-driven)", () => {
       `UPDATE matches SET ended_at = now() - make_interval(days => $2) WHERE id = $1`,
       [match.id, endedDaysAgo],
     );
+    if (played) {
+      await fx.playFirstMap(match.id);
+    }
     return match;
   };
 
@@ -94,7 +103,13 @@ describe("ELO engine (SQL-driven)", () => {
       winner = "a",
       endedDaysAgo = 1,
       substitutes = 0,
-    }: { winner?: "a" | "b"; endedDaysAgo?: number; substitutes?: number } = {},
+      played = true,
+    }: {
+      winner?: "a" | "b";
+      endedDaysAgo?: number;
+      substitutes?: number;
+      played?: boolean;
+    } = {},
   ) => {
     const match = await fx.match({ type: "Wingman", substitutes });
     for (const steamId of teamA) {
@@ -109,6 +124,9 @@ describe("ELO engine (SQL-driven)", () => {
       }, ended_at = now() - make_interval(days => $2) WHERE id = $1`,
       [match.id, endedDaysAgo],
     );
+    if (played) {
+      await fx.playFirstMap(match.id);
+    }
     return match;
   };
 
@@ -307,6 +325,7 @@ describe("ELO engine (SQL-driven)", () => {
       (b) => b.round === 1,
     )!;
     await tfx.winMatch(semi.match_id!);
+    await fx.playFirstMap(semi.match_id!);
 
     expect(await generate(semi.match_id!)).toBeGreaterThan(0);
     const rows = await postgres.query<Array<{ season_id: string | null }>>(
@@ -383,8 +402,7 @@ describe("ELO engine (SQL-driven)", () => {
     const [c, d] = await fx.players(2);
     const fought = await duel(c, d, { endedDaysAgo: 3 });
     const [map] = await postgres.query<Array<{ id: string }>>(
-      `INSERT INTO match_maps (match_id, map_id, "order")
-       SELECT $1, id, 1 FROM maps ORDER BY name LIMIT 1 RETURNING id`,
+      `SELECT id FROM match_maps WHERE match_id = $1 ORDER BY "order" LIMIT 1`,
       [fought.id],
     );
     const ctx = { matchId: fought.id, mapId: map.id };
@@ -418,6 +436,7 @@ describe("ELO engine (SQL-driven)", () => {
          ended_at = now() - interval '1 day' WHERE id = $1`,
       [match.id],
     );
+    await fx.playFirstMap(match.id);
 
     expect(await generate(match.id)).toBe(6);
 
@@ -592,6 +611,57 @@ describe("ELO engine (SQL-driven)", () => {
 
       const winner = (await eloRows(match.id)).find((r) => r.steam_id === a)!;
       expect(Number(winner.change)).toBe(-150);
+    });
+
+    it("rates only the no-shows of a forfeit, not the players who turned up", async () => {
+      const [a, b, sub, c, d] = await fx.players(5);
+      const match = await wingman([a, b, sub], [c, d], {
+        substitutes: 1,
+        played: false,
+      });
+      await abandon(match.id, c);
+      await abandon(match.id, d);
+
+      expect(await generate(match.id)).toBe(2);
+
+      const rows = await eloRows(match.id);
+      expect(rows.map((r) => r.steam_id).sort()).toEqual([c, d].sort());
+      expect(rows.every((r) => Number(r.change) === -150)).toBe(true);
+    });
+
+    it("rates nobody on the side that turned up, even when they lost the forfeit", async () => {
+      const [a, b, c, d] = await fx.players(4);
+      const match = await wingman([a, b], [c, d], {
+        winner: "b",
+        played: false,
+      });
+      await abandon(match.id, a);
+
+      await generate(match.id);
+
+      const steamIds = (await eloRows(match.id)).map((r) => r.steam_id);
+      expect(steamIds).toEqual([a]);
+    });
+
+    it("rates nobody for a forfeit at check-in, where no one is recorded as a no-show", async () => {
+      const [a, b, sub, c, d] = await fx.players(5);
+      const match = await wingman([a, b, sub], [c, d], {
+        substitutes: 1,
+        played: false,
+      });
+
+      expect(await generate(match.id)).toBe(0);
+    });
+
+    it("still rates both sides when someone quit a match that was played", async () => {
+      const [a, b, c, d] = await fx.players(4);
+      const match = await wingman([a, b], [c, d]);
+      await abandon(match.id, d);
+
+      await generate(match.id);
+
+      const steamIds = (await eloRows(match.id)).map((r) => r.steam_id);
+      expect(steamIds.sort()).toEqual([a, b, c, d].sort());
     });
 
     it("honours the configured penalty, and 0 disables it", async () => {
