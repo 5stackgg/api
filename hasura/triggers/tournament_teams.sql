@@ -220,6 +220,8 @@ BEGIN
 
     END IF;
 
+    PERFORM public.ensure_tournament_team_captain(NEW.id);
+
     RETURN NEW;
 END;
 $$;
