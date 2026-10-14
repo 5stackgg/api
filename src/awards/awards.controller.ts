@@ -5,6 +5,7 @@ import {
   Delete,
   Param,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
   ParseFilePipe,
   MaxFileSizeValidator,
@@ -24,6 +25,11 @@ import { isRoleAbove } from "src/utilities/isRoleAbove";
 import { e_player_roles_enum } from "generated";
 import { AwardsService } from "./awards.service";
 import { User } from "../auth/types/User";
+import { SteamGuard } from "../auth/strategies/SteamGuard";
+import { RoleSettingGuard } from "../system/role-setting.guard";
+import { TournamentAwardUploadGuard } from "./tournament-award-upload.guard";
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 // Image routes live under the /avatars prefix so award artwork reuses the
 // ingress path already exposed for every other uploaded image; the Hasura
@@ -124,14 +130,17 @@ export class AwardsController {
   }
 
   @Post("awards/:awardId")
-  @UseInterceptors(FileInterceptor("file"))
+  @UseGuards(SteamGuard, RoleSettingGuard(SystemSettingName.CreateAwardsRole))
+  @UseInterceptors(
+    FileInterceptor("file", { limits: { fileSize: MAX_IMAGE_BYTES } }),
+  )
   public async uploadAwardImage(
     @Req() request: Request,
     @Param("awardId") awardId: string,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new MaxFileSizeValidator({ maxSize: MAX_IMAGE_BYTES }),
           new FileTypeValidator({ fileType: /image\/(png|jpeg|webp)/ }),
         ],
       }),
@@ -158,7 +167,10 @@ export class AwardsController {
   }
 
   @Post("awards/tournament/:tournamentId/:placement")
-  @UseInterceptors(FileInterceptor("file"))
+  @UseGuards(SteamGuard, TournamentAwardUploadGuard)
+  @UseInterceptors(
+    FileInterceptor("file", { limits: { fileSize: MAX_IMAGE_BYTES } }),
+  )
   public async uploadTournamentAwardImage(
     @Req() request: Request,
     @Param("tournamentId") tournamentId: string,
@@ -166,7 +178,7 @@ export class AwardsController {
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new MaxFileSizeValidator({ maxSize: MAX_IMAGE_BYTES }),
           new FileTypeValidator({ fileType: /image\/(png|jpeg|webp)/ }),
         ],
       }),

@@ -6,6 +6,7 @@ import {
   Param,
   Body,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
   ParseFilePipe,
   MaxFileSizeValidator,
@@ -19,19 +20,26 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express";
 import { Request, Response } from "express";
 import { BrandingService } from "./branding.service";
+import { SteamGuard } from "../auth/strategies/SteamGuard";
+import { AdministratorGuard } from "../auth/strategies/AdministratorGuard";
+
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 @Controller("branding")
 export class BrandingController {
   constructor(private readonly brandingService: BrandingService) {}
 
   @Post("upload")
-  @UseInterceptors(FileInterceptor("file"))
+  @UseGuards(SteamGuard, AdministratorGuard)
+  @UseInterceptors(
+    FileInterceptor("file", { limits: { fileSize: MAX_UPLOAD_BYTES } }),
+  )
   async upload(
     @Req() request: Request,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new MaxFileSizeValidator({ maxSize: MAX_UPLOAD_BYTES }),
           new FileTypeValidator({
             fileType: /image\/(png|jpeg|svg\+xml|webp|x-icon)/,
           }),

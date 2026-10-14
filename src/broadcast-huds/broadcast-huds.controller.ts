@@ -10,11 +10,14 @@ import {
   Post,
   Req,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { Request } from "express";
 import { User } from "src/auth/types/User";
+import { SteamGuard } from "src/auth/strategies/SteamGuard";
+import { AdministratorGuard } from "src/auth/strategies/AdministratorGuard";
 import { isRoleAbove } from "src/utilities/isRoleAbove";
 import { BroadcastHudsService } from "./broadcast-huds.service";
 
@@ -25,7 +28,10 @@ export class BroadcastHudsController {
   constructor(private readonly huds: BroadcastHudsService) {}
 
   @Post("import")
-  @UseInterceptors(FileInterceptor("hud"))
+  @UseGuards(SteamGuard, AdministratorGuard)
+  @UseInterceptors(
+    FileInterceptor("hud", { limits: { fileSize: MAX_UPLOAD_BYTES } }),
+  )
   public async import(
     @Req() request: Request,
     @UploadedFile(
