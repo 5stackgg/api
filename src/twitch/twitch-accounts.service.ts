@@ -6,7 +6,10 @@ import { PostgresService } from "../postgres/postgres.service";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 import { AppConfig } from "../configs/types/AppConfig";
 import { SteamGuard } from "../auth/strategies/SteamGuard";
+import { AvatarsService } from "../avatars/avatars.service";
+import { StreamAccessService } from "../matches/game-streamer/stream-access.service";
 import { TwitchService } from "./twitch.service";
+import { TwitchCredentials } from "./types/TwitchCredentials";
 import { HelixStream } from "./types/HelixStream";
 import { HelixUser } from "./types/HelixUser";
 import { TwitchLinkError } from "./types/TwitchLinkError";
@@ -16,9 +19,11 @@ import {
   TwitchPlayerStream,
 } from "./types/TwitchStreams";
 
-// Every read takes the viewer, and leaves out anyone sharing a Live match with
-// them (public.live_match_peers): a player must never be able to watch the
-// match they are in from someone else's stream.
+// Every read takes the viewer and leaves out anyone sharing a Live match with
+// them (public.live_match_peers): a player must never watch the match they are
+// in from someone else's stream. A guest could be one of those players signed
+// out, so while streams require a login a guest sees nobody in a Live match
+// (public.live_match_participants).
 @Injectable()
 export class TwitchAccountsService {
   // A live flag the poller has not confirmed for this long is not believed, so
@@ -29,7 +34,7 @@ export class TwitchAccountsService {
 
   private static readonly STATE = /^[A-Za-z0-9_-]{32,128}$/;
 
-  private static readonly STEAM_ID = /^\d{1,20}$/;
+  private static readonly MAX_BIGINT = 9223372036854775807n;
 
   private static readonly UUID =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -37,6 +42,10 @@ export class TwitchAccountsService {
   private static readonly POLL_LOCK = "twitch:poll-lock";
 
   private static readonly POLL_LOCK_SECONDS = 300;
+
+  private static readonly NAMES_REFRESHED = "twitch:names-refreshed";
+
+  private static readonly NAMES_REFRESH_SECONDS = 3600;
 
   private static readonly RELEASE_LOCK_SCRIPT = `
     if redis.call('GET', KEYS[1]) == ARGV[1] then
@@ -57,6 +66,7 @@ export class TwitchAccountsService {
     private readonly postgres: PostgresService,
     private readonly redisManager: RedisManagerService,
     private readonly twitch: TwitchService,
+    private readonly streamAccess: StreamAccessService,
   ) {
     this.redis = this.redisManager.getConnection();
   }
@@ -126,8 +136,13 @@ export class TwitchAccountsService {
       return this.linkResult(pending.redirect, "twitch_unavailable");
     }
 
-    if (!(await this.link(steamId, user))) {
-      return this.linkResult(pending.redirect, "already_linked");
+    try {
+      if (!(await this.link(steamId, user))) {
+        return this.linkResult(pending.redirect, "already_linked");
+      }
+    } catch (error) {
+      this.logger.error("[twitch] unable to save a linked account", error);
+      return this.linkResult(pending.redirect, "twitch_unavailable");
     }
 
     return this.linkResult(pending.redirect);
@@ -136,7 +151,6 @@ export class TwitchAccountsService {
   public async link(steamId: string, user: HelixUser): Promise<boolean> {
     try {
       await this.postgres.transaction(async (client) => {
-        // A different Twitch account replaces the old one, live state and all.
         await client.query(
           `DELETE FROM public.player_twitch_accounts
             WHERE steam_id = $1 AND twitch_user_id <> $2`,
@@ -197,29 +211,8 @@ export class TwitchAccountsService {
 
       const ids = accounts.map(({ twitch_user_id }) => twitch_user_id);
 
-      for (
-        let start = 0;
-        start < ids.length;
-        start += TwitchService.STREAMS_PER_REQUEST
-      ) {
-        const batch = ids.slice(
-          start,
-          start + TwitchService.STREAMS_PER_REQUEST,
-        );
-
-        let streams: Array<HelixStream>;
-        try {
-          streams = await this.twitch.liveStreams(credentials, batch);
-        } catch (error) {
-          // The last known state stands -- an outage must not take every
-          // stream offline -- until LIVE stops believing it.
-          this.logger.warn(
-            `[twitch] stream check failed, keeping the last known state: ${(error as Error)?.message}`,
-          );
-          return;
-        }
-
-        await this.recordLiveStatus(batch, streams);
+      if (await this.refreshLiveStatus(credentials, ids)) {
+        await this.refreshNamesWhenDue(credentials, ids);
       }
     } finally {
       await this.redis.eval(
@@ -229,6 +222,81 @@ export class TwitchAccountsService {
         token,
       );
     }
+  }
+
+  private async refreshLiveStatus(
+    credentials: TwitchCredentials,
+    twitchUserIds: Array<string>,
+  ): Promise<boolean> {
+    for (const batch of TwitchAccountsService.batches(
+      twitchUserIds,
+      TwitchService.STREAMS_PER_REQUEST,
+    )) {
+      let streams: Array<HelixStream>;
+      try {
+        streams = await this.twitch.liveStreams(credentials, batch);
+      } catch (error) {
+        // An outage must not take every stream offline; LIVE stops believing
+        // the last known state on its own.
+        this.logger.warn(
+          `[twitch] stream check failed, keeping the last known state: ${(error as Error)?.message}`,
+        );
+        return false;
+      }
+
+      await this.recordLiveStatus(batch, streams);
+    }
+
+    return true;
+  }
+
+  // A live Counter-Strike stream carries its channel's login; an offline
+  // channel's login is only learned here, so a rename would otherwise leave
+  // the profile linking a dead or reassigned channel.
+  private async refreshNamesWhenDue(
+    credentials: TwitchCredentials,
+    twitchUserIds: Array<string>,
+  ): Promise<void> {
+    const due = await this.redis.set(
+      TwitchAccountsService.NAMES_REFRESHED,
+      "1",
+      "EX",
+      TwitchAccountsService.NAMES_REFRESH_SECONDS,
+      "NX",
+    );
+
+    if (due !== "OK") {
+      return;
+    }
+
+    for (const batch of TwitchAccountsService.batches(
+      twitchUserIds,
+      TwitchService.USERS_PER_REQUEST,
+    )) {
+      let users: Array<HelixUser>;
+      try {
+        users = await this.twitch.users(credentials, batch);
+      } catch (error) {
+        this.logger.warn(
+          `[twitch] name refresh failed: ${(error as Error)?.message}`,
+        );
+        await this.redis.del(TwitchAccountsService.NAMES_REFRESHED);
+        return;
+      }
+
+      await this.recordNames(users);
+    }
+  }
+
+  private static batches(
+    values: Array<string>,
+    size: number,
+  ): Array<Array<string>> {
+    const batches: Array<Array<string>> = [];
+    for (let start = 0; start < values.length; start += size) {
+      batches.push(values.slice(start, start + size));
+    }
+    return batches;
   }
 
   private async recordLiveStatus(
@@ -293,6 +361,35 @@ export class TwitchAccountsService {
     );
   }
 
+  private async recordNames(users: Array<HelixUser>): Promise<void> {
+    const rows = users
+      .filter((user) => user?.id && user?.login)
+      .map((user) => ({
+        twitch_user_id: user.id,
+        login: user.login,
+        display_name: user.display_name || null,
+      }));
+
+    if (rows.length === 0) {
+      return;
+    }
+
+    await this.postgres.query(
+      `UPDATE public.player_twitch_accounts a
+          SET login = v.login,
+              display_name = v.display_name
+         FROM jsonb_to_recordset($1::jsonb) AS v(
+                twitch_user_id text,
+                login text,
+                display_name text
+              )
+        WHERE a.twitch_user_id = v.twitch_user_id
+          AND (a.login IS DISTINCT FROM v.login
+               OR a.display_name IS DISTINCT FROM v.display_name)`,
+      [JSON.stringify(rows)],
+    );
+  }
+
   private static thumbnail(template?: string): string | null {
     if (!template) {
       return null;
@@ -340,12 +437,17 @@ export class TwitchAccountsService {
 
   public async player(
     steamId: string,
-    viewerSteamId?: string,
+    viewerSteamId?: unknown,
   ): Promise<TwitchPlayerStream | null> {
     if (
-      !TwitchAccountsService.STEAM_ID.test(steamId ?? "") ||
+      !TwitchAccountsService.isSteamId(steamId) ||
       !(await this.twitch.credentials())
     ) {
+      return null;
+    }
+
+    const audience = await this.audience(viewerSteamId);
+    if (!audience) {
       return null;
     }
 
@@ -361,15 +463,20 @@ export class TwitchAccountsService {
               a.thumbnail_url
          FROM public.player_twitch_accounts a
         WHERE a.steam_id = $1
-          AND ${TwitchAccountsService.notHiddenFrom("$2")}`,
-      [steamId, TwitchAccountsService.viewer(viewerSteamId)],
+          AND ${TwitchAccountsService.visibleTo("$2", "$3")}`,
+      [steamId, audience.viewer, audience.guestsHidden],
     );
 
     return player ? TwitchAccountsService.withoutStaleStream(player) : null;
   }
 
-  public async liveSteamIds(viewerSteamId?: string): Promise<Array<string>> {
+  public async liveSteamIds(viewerSteamId?: unknown): Promise<Array<string>> {
     if (!(await this.twitch.credentials())) {
+      return [];
+    }
+
+    const audience = await this.audience(viewerSteamId);
+    if (!audience) {
       return [];
     }
 
@@ -377,9 +484,9 @@ export class TwitchAccountsService {
       `SELECT a.steam_id::text AS steam_id
          FROM public.player_twitch_accounts a
         WHERE ${TwitchAccountsService.LIVE}
-          AND ${TwitchAccountsService.notHiddenFrom("$1")}
+          AND ${TwitchAccountsService.visibleTo("$1", "$2")}
         ORDER BY a.viewer_count DESC NULLS LAST, a.steam_id`,
-      [TwitchAccountsService.viewer(viewerSteamId)],
+      [audience.viewer, audience.guestsHidden],
     );
 
     return rows.map(({ steam_id }) => steam_id);
@@ -387,7 +494,7 @@ export class TwitchAccountsService {
 
   public async matchStreams(
     matchId: string,
-    viewerSteamId?: string,
+    viewerSteamId?: unknown,
   ): Promise<Array<TwitchMatchStream>> {
     if (
       !TwitchAccountsService.UUID.test(matchId ?? "") ||
@@ -396,10 +503,15 @@ export class TwitchAccountsService {
       return [];
     }
 
-    return await this.postgres.query<Array<TwitchMatchStream>>(
+    const audience = await this.audience(viewerSteamId);
+    if (!audience || (audience.viewer === null && audience.guestsHidden)) {
+      return [];
+    }
+
+    const streams = await this.postgres.query<Array<TwitchMatchStream>>(
       `SELECT a.steam_id::text AS steam_id,
               p.name,
-              p.avatar_url,
+              COALESCE(NULLIF(btrim(p.custom_avatar_url), ''), p.avatar_url) AS avatar_url,
               mlp.match_lineup_id,
               a.login,
               a.display_name,
@@ -417,20 +529,54 @@ export class TwitchAccountsService {
           AND m.source <> 'practice'
           AND public.is_server_online(m) IS TRUE
           AND ${TwitchAccountsService.LIVE}
-          AND ${TwitchAccountsService.notHiddenFrom("$2")}
+          AND ${TwitchAccountsService.visibleTo("$2", "$3")}
         ORDER BY mlp.match_lineup_id = m.lineup_2_id, p.name, a.steam_id`,
-      [matchId, TwitchAccountsService.viewer(viewerSteamId)],
+      [matchId, audience.viewer, audience.guestsHidden],
     );
+
+    const { apiDomain } = this.config.get<AppConfig>("app");
+
+    return streams.map((stream) => ({
+      ...stream,
+      avatar_url: AvatarsService.publicUrl(stream.avatar_url, apiDomain),
+    }));
   }
 
-  private static notHiddenFrom(viewer: string): string {
-    return `(${viewer}::bigint IS NULL OR a.steam_id NOT IN (SELECT public.live_match_peers(${viewer}::bigint)))`;
+  // null fails closed: a viewer that is present but not a steam id is never
+  // treated as a guest.
+  private async audience(
+    viewerSteamId: unknown,
+  ): Promise<{ viewer: string | null; guestsHidden: boolean } | null> {
+    if (viewerSteamId === undefined || viewerSteamId === null) {
+      return {
+        viewer: null,
+        guestsHidden: await this.streamAccess.requireLoginForLiveStreams(),
+      };
+    }
+
+    if (!TwitchAccountsService.isSteamId(viewerSteamId)) {
+      return null;
+    }
+
+    return { viewer: viewerSteamId, guestsHidden: false };
   }
 
-  private static viewer(steamId?: string): string | null {
-    return steamId && TwitchAccountsService.STEAM_ID.test(steamId)
-      ? steamId
-      : null;
+  private static visibleTo(viewer: string, guestsHidden: string): string {
+    return `CASE
+              WHEN ${viewer}::bigint IS NOT NULL
+                THEN a.steam_id NOT IN (SELECT public.live_match_peers(${viewer}::bigint))
+              WHEN ${guestsHidden}::boolean
+                THEN a.steam_id NOT IN (SELECT public.live_match_participants())
+              ELSE true
+            END`;
+  }
+
+  private static isSteamId(value: unknown): value is string {
+    return (
+      typeof value === "string" &&
+      /^\d{1,19}$/.test(value) &&
+      BigInt(value) <= TwitchAccountsService.MAX_BIGINT
+    );
   }
 
   private static withoutStaleStream<
@@ -470,8 +616,11 @@ export class TwitchAccountsService {
     return "/";
   }
 
-  private linkResult(redirect: string, error?: TwitchLinkError): string {
-    const url = new URL(redirect, this.config.get<AppConfig>("app").webDomain);
+  private linkResult(redirect: unknown, error?: TwitchLinkError): string {
+    const url = new URL(
+      this.safeRedirect(redirect),
+      this.config.get<AppConfig>("app").webDomain,
+    );
 
     if (error) {
       url.searchParams.set("twitch_error", error);

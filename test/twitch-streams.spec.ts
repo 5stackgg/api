@@ -1,11 +1,13 @@
 import { PostgresService } from "../src/postgres/postgres.service";
+import { StreamAccessService } from "../src/matches/game-streamer/stream-access.service";
 import { TwitchAccountsService } from "../src/twitch/twitch-accounts.service";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 
 // The anti-ghosting rule: nobody sharing a Live match with a player -- on
 // either lineup, or coaching -- may see that player's stream through any of the
-// Twitch reads.
+// Twitch reads. A guest could be one of them signed out, so while streams
+// require a login, guests see nobody who is in a Live match.
 describe("twitch streams", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
@@ -13,7 +15,9 @@ describe("twitch streams", () => {
   let serverId: string;
   let configured: boolean;
   let liveStreams: jest.Mock;
+  let users: jest.Mock;
   let accounts: TwitchAccountsService;
+  let outsider: string;
 
   const redisStore = new Map<string, string>();
 
@@ -25,6 +29,7 @@ describe("twitch streams", () => {
     [{ id: serverId }] = await postgres.query<Array<{ id: string }>>(
       "SELECT id FROM servers WHERE label = 'TestA-server'",
     );
+    outsider = await fx.player("Outsider");
   }, 600_000);
 
   afterAll(async () => {
@@ -34,6 +39,7 @@ describe("twitch streams", () => {
   beforeEach(async () => {
     configured = true;
     liveStreams = jest.fn();
+    users = jest.fn(async (): Promise<Array<unknown>> => []);
     redisStore.clear();
 
     accounts = new TwitchAccountsService(
@@ -41,6 +47,7 @@ describe("twitch streams", () => {
       {
         get: () => ({
           webDomain: "https://5stack.gg",
+          apiDomain: "https://api.5stack.gg",
           authCookieDomain: ".5stack.gg",
         }),
       } as any,
@@ -51,6 +58,7 @@ describe("twitch streams", () => {
             redisStore.set(key, value);
             return "OK";
           },
+          del: async () => 1,
           eval: async () => 1,
         }),
       } as any,
@@ -58,10 +66,15 @@ describe("twitch streams", () => {
         credentials: async () =>
           configured ? { clientId: "id", clientSecret: "secret" } : null,
         liveStreams,
+        users,
       } as any,
+      new StreamAccessService(postgres),
     );
 
     await postgres.query("DELETE FROM player_twitch_accounts");
+    await postgres.query("DELETE FROM settings WHERE name = $1", [
+      "public.require_login_for_live_streams",
+    ]);
   });
 
   // Bypasses the match lifecycle triggers, which would demand a real veto and
@@ -189,39 +202,99 @@ describe("twitch streams", () => {
       }
     });
 
-    it("show it to everyone else", async () => {
+    it("show it to everyone else who is signed in", async () => {
       const match = await liveMatch();
       await goLive(match.streamer, { login: "seated" });
-      const outsider = await fx.player("Outsider");
+      await postgres.query(
+        "UPDATE players SET custom_avatar_url = 'avatars/seated.png' WHERE steam_id = $1",
+        [match.streamer],
+      );
 
-      for (const viewer of [undefined, outsider]) {
-        expect(await accounts.liveSteamIds(viewer)).toEqual([match.streamer]);
-        expect(await accounts.player(match.streamer, viewer)).toEqual({
+      expect(await accounts.liveSteamIds(outsider)).toEqual([match.streamer]);
+      expect(await accounts.player(match.streamer, outsider)).toEqual({
+        steam_id: match.streamer,
+        login: "seated",
+        display_name: "SEATED",
+        is_live: true,
+        title: "title",
+        game_name: "Counter-Strike",
+        viewer_count: 10,
+        started_at: expect.any(Date),
+        thumbnail_url: "https://thumb",
+      });
+      expect(await accounts.matchStreams(match.matchId, outsider)).toEqual([
+        {
           steam_id: match.streamer,
+          name: expect.any(String),
+          avatar_url: "https://api.5stack.gg/avatars/seated.png",
+          match_lineup_id: match.lineup_1_id,
           login: "seated",
           display_name: "SEATED",
-          is_live: true,
           title: "title",
-          game_name: "Counter-Strike",
           viewer_count: 10,
           started_at: expect.any(Date),
           thumbnail_url: "https://thumb",
-        });
-        expect(await accounts.matchStreams(match.matchId, viewer)).toEqual([
-          {
-            steam_id: match.streamer,
-            name: expect.any(String),
-            avatar_url: null,
-            match_lineup_id: match.lineup_1_id,
-            login: "seated",
-            display_name: "SEATED",
-            title: "title",
-            viewer_count: 10,
-            started_at: expect.any(Date),
-            thumbnail_url: "https://thumb",
-          },
-        ]);
+        },
+      ]);
+    });
+
+    // A guest may be a player of the match signed out, or curl.
+    it("hide everyone in a Live match from guests while streams require a login", async () => {
+      const match = await liveMatch();
+      const elsewhere = await fx.player("NotPlaying");
+      for (const steamId of [match.streamer, match.coach, elsewhere]) {
+        await goLive(steamId);
       }
+
+      expect(await accounts.liveSteamIds()).toEqual([elsewhere]);
+      expect(await accounts.player(match.streamer)).toBeNull();
+      expect(await accounts.player(match.coach)).toBeNull();
+      expect(await accounts.player(elsewhere)).toEqual(
+        expect.objectContaining({ steam_id: elsewhere, is_live: true }),
+      );
+      expect(await accounts.matchStreams(match.matchId)).toEqual([]);
+    });
+
+    it("show guests a practice server's host", async () => {
+      const practice = await liveMatch({ source: "practice" });
+      await goLive(practice.streamer);
+
+      expect(await accounts.liveSteamIds()).toEqual([practice.streamer]);
+    });
+
+    it("show guests everything once streams no longer require a login", async () => {
+      const match = await liveMatch();
+      await goLive(match.streamer);
+      await postgres.query(
+        "INSERT INTO settings (name, value) VALUES ('public.require_login_for_live_streams', 'false')",
+      );
+
+      expect(await accounts.liveSteamIds()).toEqual([match.streamer]);
+      expect(await accounts.player(match.streamer)).toEqual(
+        expect.objectContaining({ steam_id: match.streamer }),
+      );
+      expect(
+        (await accounts.matchStreams(match.matchId)).map(
+          ({ steam_id }) => steam_id,
+        ),
+      ).toEqual([match.streamer]);
+
+      expect(await accounts.liveSteamIds(match.opponent)).toEqual([]);
+    });
+
+    it("show a malformed viewer nothing", async () => {
+      const match = await liveMatch();
+      await goLive(match.streamer);
+
+      for (const viewer of ["abc", "99999999999999999999"]) {
+        expect(await accounts.liveSteamIds(viewer)).toEqual([]);
+        expect(await accounts.player(match.streamer, viewer)).toBeNull();
+        expect(await accounts.matchStreams(match.matchId, viewer)).toEqual([]);
+      }
+    });
+
+    it("answer a steam id too large for the column with nothing", async () => {
+      expect(await accounts.player("99999999999999999999")).toBeNull();
     });
 
     it("show it to the match's players again once it is over", async () => {
@@ -243,7 +316,7 @@ describe("twitch streams", () => {
       expect(await accounts.liveSteamIds(mine.opponent)).toEqual([
         theirs.streamer,
       ]);
-      expect(await accounts.liveSteamIds()).toEqual([
+      expect(await accounts.liveSteamIds(outsider)).toEqual([
         theirs.streamer,
         mine.streamer,
       ]);
@@ -253,9 +326,9 @@ describe("twitch streams", () => {
       const match = await liveMatch();
       await goLive(match.streamer, { checkedAgo: "11 minutes" });
 
-      expect(await accounts.liveSteamIds()).toEqual([]);
-      expect(await accounts.matchStreams(match.matchId)).toEqual([]);
-      expect(await accounts.player(match.streamer)).toEqual(
+      expect(await accounts.liveSteamIds(outsider)).toEqual([]);
+      expect(await accounts.matchStreams(match.matchId, outsider)).toEqual([]);
+      expect(await accounts.player(match.streamer, outsider)).toEqual(
         expect.objectContaining({
           is_live: false,
           title: null,
@@ -269,7 +342,7 @@ describe("twitch streams", () => {
       const match = await liveMatch({ online: false });
       await goLive(match.streamer);
 
-      expect(await accounts.matchStreams(match.matchId)).toEqual([]);
+      expect(await accounts.matchStreams(match.matchId, outsider)).toEqual([]);
     });
 
     it("show no match POVs outside a Live match", async () => {
@@ -278,17 +351,18 @@ describe("twitch streams", () => {
 
       for (const status of ["Veto", "WaitingForServer", "Finished"]) {
         await stage(match.matchId, status);
-        expect(await accounts.matchStreams(match.matchId)).toEqual([]);
+        expect(await accounts.matchStreams(match.matchId, outsider)).toEqual(
+          [],
+        );
       }
     });
 
     it("only make POVs of the match's own lineups", async () => {
       const match = await liveMatch();
-      const outsider = await fx.player("OutsiderStreamer");
-      await goLive(outsider);
+      await goLive(await fx.player("StreamerElsewhere"));
       await goLive(match.coach);
 
-      expect(await accounts.matchStreams(match.matchId)).toEqual([]);
+      expect(await accounts.matchStreams(match.matchId, outsider)).toEqual([]);
     });
 
     it("show nothing while Twitch is not configured", async () => {
@@ -296,9 +370,9 @@ describe("twitch streams", () => {
       await goLive(match.streamer);
       configured = false;
 
-      expect(await accounts.liveSteamIds()).toEqual([]);
-      expect(await accounts.player(match.streamer)).toBeNull();
-      expect(await accounts.matchStreams(match.matchId)).toEqual([]);
+      expect(await accounts.liveSteamIds(outsider)).toEqual([]);
+      expect(await accounts.player(match.streamer, outsider)).toBeNull();
+      expect(await accounts.matchStreams(match.matchId, outsider)).toEqual([]);
     });
 
     it("show the player their own account during their own match", async () => {
@@ -444,6 +518,34 @@ describe("twitch streams", () => {
           }),
         );
       }
+    });
+
+    it("refreshes an offline channel's name", async () => {
+      const player = await fx.player("Renamer");
+      await accounts.link(player, {
+        id: "500",
+        login: "oldname",
+        display_name: "OldName",
+      });
+      liveStreams.mockResolvedValueOnce([]);
+      users.mockResolvedValueOnce([
+        { id: "500", login: "newname", display_name: "NewName" },
+      ]);
+
+      await accounts.pollLiveStatus();
+
+      expect(users).toHaveBeenCalledWith(expect.anything(), ["500"]);
+      const [row] = await postgres.query<
+        Array<{ login: string; display_name: string; is_live: boolean }>
+      >(
+        "SELECT login, display_name, is_live FROM player_twitch_accounts WHERE steam_id = $1",
+        [player],
+      );
+      expect(row).toEqual({
+        login: "newname",
+        display_name: "NewName",
+        is_live: false,
+      });
     });
 
     it("leaves every account as it was when Twitch fails", async () => {

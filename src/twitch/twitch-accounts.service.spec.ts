@@ -4,8 +4,10 @@ describe("TwitchAccountsService", () => {
   const CREDENTIALS = { clientId: "client-id", clientSecret: "client-secret" };
   const PLAYER = "76561198000000001";
   const OTHER = "76561198000000002";
+  const MATCH = "00000000-0000-4000-8000-000000000000";
 
   let configured: boolean;
+  let loginRequired: boolean;
   let cache: Map<string, string>;
   let service: TwitchAccountsService;
 
@@ -14,6 +16,7 @@ describe("TwitchAccountsService", () => {
   const config = {
     get: jest.fn(() => ({
       webDomain: "https://5stack.gg",
+      apiDomain: "https://api.5stack.gg",
       authCookieDomain: ".5stack.gg",
     })),
   };
@@ -32,6 +35,7 @@ describe("TwitchAccountsService", () => {
       cache.set(key, value);
       return "OK";
     }),
+    del: jest.fn(async (key: string) => (cache.delete(key) ? 1 : 0)),
     eval: jest.fn(
       async (_script: string, _keys: number, key: string, token: string) => {
         if (cache.get(key) === token) {
@@ -66,13 +70,19 @@ describe("TwitchAccountsService", () => {
     ),
     exchangeCode: jest.fn(),
     authenticatedUser: jest.fn(),
-    revokeToken: jest.fn(async () => undefined),
+    revokeToken: jest.fn(async (): Promise<void> => undefined),
     liveStreams: jest.fn(),
+    users: jest.fn(),
+  };
+
+  const streamAccess = {
+    requireLoginForLiveStreams: jest.fn(async () => loginRequired),
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
     configured = true;
+    loginRequired = true;
     cache = new Map();
     postgres.query.mockResolvedValue([]);
     service = new TwitchAccountsService(
@@ -81,6 +91,7 @@ describe("TwitchAccountsService", () => {
       postgres as any,
       { getConnection: () => redis } as any,
       twitch as any,
+      streamAccess as any,
     );
   });
 
@@ -112,16 +123,27 @@ describe("TwitchAccountsService", () => {
       ...overrides,
     });
 
-    const updates = () =>
+    const writes = (column: string) =>
       postgres.query.mock.calls
-        .filter(([sql]) => sql.includes("UPDATE public.player_twitch_accounts"))
+        .filter(([sql]) => sql.includes(`SET ${column} = v.${column}`))
         .map(([, [rows]]) => JSON.parse(rows));
+
+    const updates = () => writes("is_live");
+
+    const renames = () => writes("login");
 
     beforeEach(() => {
       postgres.query.mockImplementation(async (sql: string) =>
         sql.includes("SELECT twitch_user_id") ? linked(250) : [],
       );
       twitch.liveStreams.mockResolvedValue([]);
+      twitch.users.mockImplementation(async (_credentials, ids: string[]) =>
+        ids.map((id) => ({
+          id,
+          login: `renamed${id}`,
+          display_name: `Renamed${id}`,
+        })),
+      );
     });
 
     it("asks Twitch about a hundred linked accounts at a time", async () => {
@@ -224,6 +246,51 @@ describe("TwitchAccountsService", () => {
 
       expect(cache.has("twitch:poll-lock")).toBe(false);
     });
+
+    // An offline channel's login is otherwise only learned while it is live in
+    // Counter-Strike, so a rename would leave the profile linking a dead login.
+    it("refreshes every linked account's name once an hour", async () => {
+      await service.pollLiveStatus();
+      await service.pollLiveStatus();
+
+      expect(twitch.users.mock.calls.map(([, ids]) => ids.length)).toEqual([
+        100, 100, 50,
+      ]);
+      expect(renames().map((rows) => rows.length)).toEqual([100, 100, 50]);
+      expect(renames()[0][0]).toEqual({
+        twitch_user_id: "1",
+        login: "renamed1",
+        display_name: "Renamed1",
+      });
+      expect(redis.set).toHaveBeenCalledWith(
+        "twitch:names-refreshed",
+        "1",
+        "EX",
+        3600,
+        "NX",
+      );
+    });
+
+    it("tries the name refresh again next minute when Twitch fails it", async () => {
+      twitch.users.mockRejectedValueOnce(
+        new Error("twitch helix answered 503"),
+      );
+
+      await service.pollLiveStatus();
+      await service.pollLiveStatus();
+
+      expect(twitch.users).toHaveBeenCalledTimes(4);
+      expect(renames().map((rows) => rows.length)).toEqual([100, 100, 50]);
+    });
+
+    it("leaves names alone while the stream check is failing", async () => {
+      twitch.liveStreams.mockRejectedValueOnce(new Error("503"));
+
+      await service.pollLiveStatus();
+
+      expect(twitch.users).not.toHaveBeenCalled();
+      expect(cache.has("twitch:names-refreshed")).toBe(false);
+    });
   });
 
   describe("linking", () => {
@@ -290,12 +357,26 @@ describe("TwitchAccountsService", () => {
       "https://evil.example/steal",
       "//evil.example/steal",
       "javascript:alert(1)",
+      "/\\evil.com",
+      "/\t/evil.com",
       ["/a", "/b"],
     ])("never returns to %j", async (redirect) => {
       configured = false;
 
       expect((await start(redirect)).url).toBe(
         "https://5stack.gg/?twitch_error=not_configured",
+      );
+    });
+
+    it("checks the stored redirect again before using it", async () => {
+      const state = "s".repeat(43);
+      cache.set(
+        `twitch:oauth-state:${state}`,
+        JSON.stringify({ steam_id: PLAYER, redirect: "/\\evil.com" }),
+      );
+
+      expect(await finish(PLAYER, { state, code: "code" })).toBe(
+        "https://5stack.gg/?twitch=linked",
       );
     });
 
@@ -345,13 +426,14 @@ describe("TwitchAccountsService", () => {
       );
     });
 
-    it("rethrows anything else the database refuses", async () => {
+    it("reports any other database failure as Twitch being unavailable", async () => {
       postgres.transaction.mockRejectedValueOnce(new Error("connection lost"));
       const { state } = await start("/settings");
 
-      await expect(finish(PLAYER, { state, code: "code" })).rejects.toThrow(
-        "connection lost",
+      expect(await finish(PLAYER, { state, code: "code" })).toBe(
+        "https://5stack.gg/settings?twitch_error=twitch_unavailable",
       );
+      expect(logger.error).toHaveBeenCalled();
     });
 
     it("refuses a state it never issued", async () => {
@@ -443,22 +525,103 @@ describe("TwitchAccountsService", () => {
 
       expect(await service.liveSteamIds()).toEqual([]);
       expect(await service.player(PLAYER)).toBeNull();
-      expect(
-        await service.matchStreams("00000000-0000-4000-8000-000000000000"),
-      ).toEqual([]);
+      expect(await service.matchStreams(MATCH)).toEqual([]);
       expect(postgres.query).not.toHaveBeenCalled();
     });
 
-    it("reject ids that are not ids", async () => {
-      expect(await service.player("1 OR 1=1")).toBeNull();
+    it.each(["1 OR 1=1", "99999999999999999999", "9223372036854775808"])(
+      "reject %j without asking the database",
+      async (steamId) => {
+        expect(await service.player(steamId)).toBeNull();
+        expect(postgres.query).not.toHaveBeenCalled();
+      },
+    );
+
+    it("reject a match id that is not a uuid", async () => {
       expect(await service.matchStreams("not-a-uuid")).toEqual([]);
       expect(postgres.query).not.toHaveBeenCalled();
     });
 
-    it("never pass a malformed viewer through as one", async () => {
-      await service.liveSteamIds("abc");
+    it("accept the largest steam id that fits", async () => {
+      await service.player("9223372036854775807");
 
-      expect(postgres.query.mock.calls[0][1]).toEqual([null]);
+      expect(postgres.query.mock.calls[0][1][0]).toBe("9223372036854775807");
+    });
+
+    it.each(["abc", "", "99999999999999999999", "9223372036854775808"])(
+      "show a malformed viewer %j nothing, never what a guest sees",
+      async (viewer) => {
+        expect(await service.liveSteamIds(viewer)).toEqual([]);
+        expect(await service.player(PLAYER, viewer)).toBeNull();
+        expect(await service.matchStreams(MATCH, viewer)).toEqual([]);
+        expect(postgres.query).not.toHaveBeenCalled();
+      },
+    );
+
+    it("filter by the signed-in viewer", async () => {
+      await service.liveSteamIds(OTHER);
+      await service.player(PLAYER, OTHER);
+      await service.matchStreams(MATCH, OTHER);
+
+      expect(postgres.query.mock.calls.map(([, params]) => params)).toEqual([
+        [OTHER, false],
+        [PLAYER, OTHER, false],
+        [MATCH, OTHER, false],
+      ]);
+      expect(streamAccess.requireLoginForLiveStreams).not.toHaveBeenCalled();
+    });
+
+    it("show guests no match POVs while streams require a login", async () => {
+      expect(await service.matchStreams(MATCH)).toEqual([]);
+      expect(postgres.query).not.toHaveBeenCalled();
+    });
+
+    it("hide everyone in a Live match from guests while streams require a login", async () => {
+      await service.liveSteamIds();
+      await service.player(PLAYER);
+
+      expect(postgres.query.mock.calls.map(([, params]) => params)).toEqual([
+        [null, true],
+        [PLAYER, null, true],
+      ]);
+    });
+
+    it("show guests everything once streams no longer require a login", async () => {
+      loginRequired = false;
+
+      await service.liveSteamIds();
+      await service.player(PLAYER);
+      await service.matchStreams(MATCH);
+
+      expect(postgres.query.mock.calls.map(([, params]) => params)).toEqual([
+        [null, false],
+        [PLAYER, null, false],
+        [MATCH, null, false],
+      ]);
+    });
+
+    it("resolve an uploaded avatar the way the other player reads do", async () => {
+      postgres.query.mockResolvedValueOnce([
+        { steam_id: PLAYER, avatar_url: "avatars/76561198000000001.png" },
+        {
+          steam_id: OTHER,
+          avatar_url: "https://avatars.steamstatic.com/x.jpg",
+        },
+        { steam_id: "3", avatar_url: null },
+      ]);
+
+      expect(
+        (await service.matchStreams(MATCH, OTHER)).map(
+          ({ avatar_url }) => avatar_url,
+        ),
+      ).toEqual([
+        "https://api.5stack.gg/avatars/76561198000000001.png",
+        "https://avatars.steamstatic.com/x.jpg",
+        null,
+      ]);
+      expect(postgres.query.mock.calls[0][0]).toContain(
+        "COALESCE(NULLIF(btrim(p.custom_avatar_url), ''), p.avatar_url)",
+      );
     });
   });
 });

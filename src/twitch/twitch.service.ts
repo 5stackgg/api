@@ -8,9 +8,8 @@ import { TwitchCredentials } from "./types/TwitchCredentials";
 import { HelixStream } from "./types/HelixStream";
 import { HelixUser } from "./types/HelixUser";
 
-// Twitch over HTTP. The keys are the operator's, read from settings on every
-// call so a change in Application Settings needs no restart, and no Twitch
-// token belonging to a player outlives the request that obtained it.
+// The keys are read from settings on every call, so changing them in
+// Application Settings needs no restart.
 @Injectable()
 export class TwitchService {
   public static readonly COUNTER_STRIKE_GAME_ID = "32399";
@@ -18,6 +17,8 @@ export class TwitchService {
   public static readonly COUNTER_STRIKE_GAME_NAME = "Counter-Strike";
 
   public static readonly STREAMS_PER_REQUEST = 100;
+
+  public static readonly USERS_PER_REQUEST = 100;
 
   private static readonly OAUTH = "https://id.twitch.tv/oauth2";
 
@@ -79,6 +80,9 @@ export class TwitchService {
     url.searchParams.set("redirect_uri", redirectUri);
     url.searchParams.set("scope", "");
     url.searchParams.set("state", state);
+    // Otherwise re-linking after an unlink skips Twitch's consent screen, and
+    // a page could link whichever Twitch account the browser is signed into.
+    url.searchParams.set("force_verify", "true");
     return url.toString();
   }
 
@@ -171,6 +175,33 @@ export class TwitchService {
     }
 
     const { data } = await this.helix<{ data?: Array<HelixStream> }>(
+      credentials,
+      url,
+    );
+
+    return data ?? [];
+  }
+
+  public async users(
+    credentials: TwitchCredentials,
+    userIds: Array<string>,
+  ): Promise<Array<HelixUser>> {
+    if (userIds.length === 0) {
+      return [];
+    }
+
+    if (userIds.length > TwitchService.USERS_PER_REQUEST) {
+      throw new Error(
+        `at most ${TwitchService.USERS_PER_REQUEST} users per users request`,
+      );
+    }
+
+    const url = new URL(`${TwitchService.HELIX}/users`);
+    for (const id of userIds) {
+      url.searchParams.append("id", id);
+    }
+
+    const { data } = await this.helix<{ data?: Array<HelixUser> }>(
       credentials,
       url,
     );

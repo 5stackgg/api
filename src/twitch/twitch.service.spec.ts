@@ -199,6 +199,35 @@ describe("TwitchService", () => {
     });
   });
 
+  describe("users", () => {
+    const ids = Array.from({ length: 100 }, (_, index) => String(index + 1));
+
+    it("looks up to a hundred users by id in one call", async () => {
+      fetchMock
+        .mockResolvedValueOnce(appToken("app-1"))
+        .mockResolvedValueOnce(
+          json({ data: [{ id: "7", login: "seven", display_name: "Seven" }] }),
+        );
+
+      expect(await service.users(CREDENTIALS, ids)).toEqual([
+        { id: "7", login: "seven", display_name: "Seven" },
+      ]);
+
+      const [url, init] = fetchMock.mock.calls[1];
+      const query = new URL(String(url));
+      expect(query.pathname).toBe("/helix/users");
+      expect(query.searchParams.getAll("id")).toEqual(ids);
+      expect(init.headers.Authorization).toBe("Bearer app-1");
+    });
+
+    it("refuses more than a hundred users", async () => {
+      await expect(
+        service.users(CREDENTIALS, [...ids, "101"]),
+      ).rejects.toThrow();
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+  });
+
   describe("isCounterStrike", () => {
     it.each([
       [{ game_id: "32399", game_name: "Counter-Strike" }, true],
@@ -212,7 +241,7 @@ describe("TwitchService", () => {
   });
 
   describe("linking", () => {
-    it("asks for no scopes", () => {
+    it("asks for no scopes and always shows Twitch's consent screen", () => {
       const url = new URL(
         service.authorizeUrl(
           CREDENTIALS,
@@ -230,6 +259,7 @@ describe("TwitchService", () => {
         redirect_uri: "https://5stack.gg/auth/twitch/callback",
         scope: "",
         state: "state",
+        force_verify: "true",
       });
     });
 

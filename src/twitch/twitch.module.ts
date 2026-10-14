@@ -13,6 +13,7 @@ import { TwitchAccountsService } from "./twitch-accounts.service";
 import { TwitchController } from "./twitch.controller";
 import { TwitchAuthController } from "./twitch-auth.controller";
 import { PollTwitchStreams } from "./jobs/PollTwitchStreams";
+import { StreamAccessService } from "../matches/game-streamer/stream-access.service";
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { PollTwitchStreams } from "./jobs/PollTwitchStreams";
   providers: [
     TwitchService,
     TwitchAccountsService,
+    StreamAccessService,
     PollTwitchStreams,
     ...getQueuesProcessors("Twitch"),
     loggerFactory(),
@@ -46,7 +48,6 @@ export class TwitchModule implements OnModuleInit {
       return;
     }
 
-    // Once a minute is one Helix call per hundred linked players.
     void this.queue.add(
       PollTwitchStreams.name,
       {},
