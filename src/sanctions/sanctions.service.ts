@@ -55,6 +55,7 @@ export class SanctionsService {
       pluginRuntime?: unknown;
       onSteamRelay?: unknown;
       steamRelay?: unknown;
+      hibernating?: unknown;
     },
   ): Promise<
     Array<{
@@ -74,6 +75,8 @@ export class SanctionsService {
       serverId,
       SteamRelay.word(params.onSteamRelay, params.steamRelay),
     );
+
+    await this.recordHibernating(serverId, params.hibernating);
 
     const steamIds = SanctionsService.syncSteamIds(params.steamIds);
 
@@ -376,6 +379,33 @@ export class SanctionsService {
     } catch (error) {
       this.logger.warn(
         `unable to record the player management heartbeat for ${serverId}`,
+        error,
+      );
+    }
+  }
+
+  // A community server runs no match plugin, so only this sync can say it is
+  // asleep. Plugins that predate the flag never send it, and their silence
+  // leaves the column as it is.
+  private async recordHibernating(
+    serverId: string,
+    hibernating: unknown,
+  ): Promise<void> {
+    if (typeof hibernating !== "boolean") {
+      return;
+    }
+
+    try {
+      await this.postgres.query(
+        `UPDATE public.servers
+            SET hibernating = $2
+          WHERE id = $1::uuid
+            AND hibernating IS DISTINCT FROM $2`,
+        [serverId, hibernating],
+      );
+    } catch (error) {
+      this.logger.warn(
+        `unable to record whether ${serverId} is hibernating`,
         error,
       );
     }

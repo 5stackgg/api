@@ -222,6 +222,33 @@ describe("SanctionsService", () => {
         service.syncServerSanctions("server-1", { steamIds: [steamId] }),
       ).resolves.toEqual([]);
     });
+
+    const hibernationWrites = () =>
+      postgres.query.mock.calls.filter(([sql]) =>
+        sql.includes("SET hibernating"),
+      );
+
+    it("records a community server going to sleep and waking up", async () => {
+      await service.syncServerSanctions("server-1", { hibernating: true });
+      await service.syncServerSanctions("server-1", { hibernating: false });
+
+      expect(hibernationWrites().map(([, params]) => params)).toEqual([
+        ["server-1", true],
+        ["server-1", false],
+      ]);
+      expect(hibernationWrites()[0][0]).toContain(
+        "hibernating IS DISTINCT FROM $2",
+      );
+    });
+
+    it("leaves hibernating alone for a plugin that never reports it", async () => {
+      await service.syncServerSanctions("server-1", {
+        pluginVersion: "0.0.412",
+      });
+      await service.syncServerSanctions("server-1", { hibernating: "yes" });
+
+      expect(hibernationWrites()).toHaveLength(0);
+    });
   });
 
   describe("syncing a community server", () => {

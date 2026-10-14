@@ -59,7 +59,20 @@ describe("SanctionsController.syncServerSanctions", () => {
       pluginRuntime: "swiftlys2",
       onSteamRelay: undefined,
       steamRelay: undefined,
+      hibernating: undefined,
     });
+  });
+
+  it("passes on whether the server is hibernating", async () => {
+    await controller.syncServerSanctions(serverA, {
+      steam_ids: [],
+      hibernating: true,
+    });
+
+    expect(syncServerSanctions).toHaveBeenCalledWith(
+      serverA,
+      expect.objectContaining({ hibernating: true }),
+    );
   });
 
   // The sync is a community server's only word to the panel.
