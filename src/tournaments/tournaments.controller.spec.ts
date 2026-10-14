@@ -294,32 +294,92 @@ describe("TournamentsController registration and check-in actions", () => {
     });
 
     describe("Captains", () => {
-      it("lets someone who can manage the team confirm it", async () => {
-        teamRow = { id: "team-1", can_manage: true, is_captain: false };
+      const checkIn = (user = player) =>
+        controller.checkIntoTournament({
+          user,
+          tournament_id: "tournament-1",
+          tournament_team_id: "team-1",
+        });
 
-        await expect(
-          controller.checkIntoTournament({
-            user: player,
-            tournament_id: "tournament-1",
-            tournament_team_id: "team-1",
-          }),
-        ).resolves.toEqual({ success: true });
+      it("lets the captain on the roster confirm the team", async () => {
+        teamRow = {
+          id: "team-1",
+          can_manage: false,
+          is_captain: true,
+          on_roster: true,
+        };
 
+        await expect(checkIn()).resolves.toEqual({ success: true });
         expect(
           statements.some((sql) => sql.includes("UPDATE tournament_teams")),
         ).toBe(true);
       });
 
-      it("refuses a rostered player who is not the captain", async () => {
-        teamRow = { id: "team-1", can_manage: false, is_captain: false };
+      it("lets a manager who plays on the team confirm it", async () => {
+        teamRow = {
+          id: "team-1",
+          can_manage: true,
+          is_captain: false,
+          on_roster: true,
+        };
 
-        await expect(
-          controller.checkIntoTournament({
-            user: player,
-            tournament_id: "tournament-1",
-            tournament_team_id: "team-1",
-          }),
-        ).rejects.toThrow(/only the team captain or a team admin/i);
+        await expect(checkIn()).resolves.toEqual({ success: true });
+      });
+
+      it("refuses an owner who is not on the roster", async () => {
+        teamRow = {
+          id: "team-1",
+          can_manage: true,
+          is_captain: false,
+          on_roster: false,
+        };
+
+        await expect(checkIn()).rejects.toThrow(/on its roster/i);
+        expect(
+          statements.some((sql) => sql.includes("UPDATE tournament_teams")),
+        ).toBe(false);
+      });
+
+      it("refuses a rostered player who is not the captain", async () => {
+        teamRow = {
+          id: "team-1",
+          can_manage: false,
+          is_captain: false,
+          on_roster: true,
+        };
+
+        await expect(checkIn()).rejects.toThrow(/captain/i);
+      });
+
+      it("lets an organizer confirm any team", async () => {
+        tournamentRow = tournament({ is_organizer: true });
+        teamRow = {
+          id: "team-1",
+          can_manage: true,
+          is_captain: false,
+          on_roster: false,
+        };
+
+        await expect(checkIn(organizer)).resolves.toEqual({ success: true });
+      });
+
+      it("asks the database whether the caller sits on the team's roster", async () => {
+        teamRow = {
+          id: "team-1",
+          can_manage: false,
+          is_captain: true,
+          on_roster: true,
+        };
+
+        await checkIn();
+
+        const lookup = statements.find((sql) =>
+          sql.includes("can_manage_tournament_team"),
+        )!;
+        expect(lookup).toContain("AS on_roster");
+        expect(lookup).toContain(
+          "tt.captain_steam_id = $4::bigint AS is_captain",
+        );
       });
     });
 

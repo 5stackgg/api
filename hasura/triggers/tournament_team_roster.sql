@@ -371,3 +371,20 @@ CREATE TRIGGER taid_tournament_team_roster_lineups
     AFTER INSERT OR DELETE ON public.tournament_team_roster
     FOR EACH ROW
     EXECUTE FUNCTION public.taid_tournament_team_roster_lineups();
+
+-- Deferred, so a roster written in several statements (a nested insert, the
+-- registration auto-fill) is complete before the captaincy is settled from it.
+CREATE OR REPLACE FUNCTION public.tai_tournament_team_roster_captain() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    PERFORM public.ensure_tournament_team_captain(NEW.tournament_team_id);
+    RETURN NULL;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tai_tournament_team_roster_captain ON public.tournament_team_roster;
+CREATE CONSTRAINT TRIGGER tai_tournament_team_roster_captain
+    AFTER INSERT ON public.tournament_team_roster
+    DEFERRABLE INITIALLY DEFERRED
+    FOR EACH ROW EXECUTE FUNCTION public.tai_tournament_team_roster_captain();

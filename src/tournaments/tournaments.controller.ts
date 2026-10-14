@@ -49,6 +49,7 @@ type CheckInTeam = {
   id: string;
   can_manage: boolean;
   is_captain: boolean;
+  on_roster: boolean;
 };
 
 @Controller("tournaments")
@@ -600,10 +601,16 @@ export class TournamentsController {
         // into the team once the minimum lineup has confirmed.
         return { success: true };
       }
+      // Someone who plays on the team confirms it, never an owner managing it
+      // from outside: an owner with several entries hands each one's
+      // check-in to its captain. Organizers can still mark any team present.
       default: {
-        if (!team.can_manage && !team.is_captain) {
+        if (
+          !tournament.is_organizer &&
+          !(team.on_roster && (team.is_captain || team.can_manage))
+        ) {
           throw Error(
-            "only the team captain or a team admin can check this team in",
+            "only the team captain or a team admin on its roster can check this team in",
           );
         }
         break;
@@ -633,7 +640,12 @@ export class TournamentsController {
       const [team] = await this.postgres.query<Array<CheckInTeam>>(
         `SELECT tt.id::text AS id,
                 COALESCE(can_manage_tournament_team(tt, $3::json), false) AS can_manage,
-                tt.captain_steam_id = $4::bigint OR tt.owner_steam_id = $4::bigint AS is_captain
+                tt.captain_steam_id = $4::bigint AS is_captain,
+                EXISTS (
+                  SELECT 1 FROM tournament_team_roster ttr
+                   WHERE ttr.tournament_team_id = tt.id
+                     AND ttr.player_steam_id = $4::bigint
+                ) AS on_roster
            FROM tournament_teams tt
           WHERE tt.id = $1::uuid AND tt.tournament_id = $2::uuid`,
         [tournamentTeamId, tournamentId, session, user.steam_id],
@@ -655,7 +667,8 @@ export class TournamentsController {
     const [team] = await this.postgres.query<Array<CheckInTeam>>(
       `SELECT tt.id::text AS id,
               COALESCE(can_manage_tournament_team(tt, $2::json), false) AS can_manage,
-              tt.captain_steam_id = $3::bigint OR tt.owner_steam_id = $3::bigint AS is_captain
+              tt.captain_steam_id = $3::bigint AS is_captain,
+              ttr.player_steam_id IS NOT NULL AS on_roster
          FROM tournament_teams tt
          LEFT JOIN tournament_team_roster ttr
                 ON ttr.tournament_team_id = tt.id
