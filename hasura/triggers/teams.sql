@@ -80,7 +80,7 @@ BEGIN
 
     -- tournament_teams copies the owner at registration. Entries still in play
     -- follow the transfer, even when the new owner already owns another entry
-    -- (the one-team-per-owner rule only gates registering); a finished or
+    -- (the made-up-team rule only gates registering); a finished or
     -- cancelled tournament keeps its owner of record.
     UPDATE tournament_teams tt
     SET owner_steam_id = NEW.owner_steam_id

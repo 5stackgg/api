@@ -70,10 +70,13 @@ BEGIN
        NEW.captain_steam_id = COALESCE(NEW.owner_steam_id, _session_steam_id);
     END IF;
 
-    -- One team per owner per tournament, except for organizers, who add teams
-    -- by hand and own every one of them through the owner_steam_id preset.
-    -- The lock stands in for the unique constraint this replaced: without it
-    -- two concurrent registrations both pass the check.
+    -- A made-up team has to be its owner's only entry, except for organizers,
+    -- who add teams by hand and own every one of them through the
+    -- owner_steam_id preset. A real team carries its own owner, who may enter
+    -- each team they own once. Checked from both sides so the order the two
+    -- arrive in cannot matter. The lock stands in for the unique constraint
+    -- this replaced: without it two concurrent registrations both pass the
+    -- check.
     IF (_session ->> 'x-hasura-role') IS NOT NULL
        AND NEW.owner_steam_id IS NOT NULL
        AND NOT is_tournament_organizer(tournament, _session) THEN
@@ -87,6 +90,7 @@ BEGIN
             FROM tournament_teams tt
             WHERE tt.tournament_id = NEW.tournament_id
               AND tt.owner_steam_id = NEW.owner_steam_id
+              AND (NEW.team_id IS NULL OR tt.team_id IS NULL)
         ) THEN
             RAISE EXCEPTION USING ERRCODE = '22000',
                 MESSAGE = 'You already have a team in this tournament';
