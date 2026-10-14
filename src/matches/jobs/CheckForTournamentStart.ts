@@ -13,8 +13,11 @@ export class CheckForTournamentStart extends WorkerHost {
     super();
   }
   async process(): Promise<number> {
-    const fifteenMinutesAhead = new Date();
+    const now = new Date();
+    const fifteenMinutesAhead = new Date(now);
     fifteenMinutesAhead.setMinutes(fifteenMinutesAhead.getMinutes() + 15);
+
+    let started = 0;
 
     try {
       const { update_tournaments } = await this.hasura.mutation({
@@ -42,15 +45,77 @@ export class CheckForTournamentStart extends WorkerHost {
         },
       });
 
-      if (update_tournaments.affected_rows > 0) {
-        this.logger.log(
-          `${update_tournaments.affected_rows} tournaments started`,
-        );
-      }
-
-      return update_tournaments.affected_rows;
+      started += update_tournaments.affected_rows;
     } catch (error) {
       this.logger.error(`cannot update tournaments`, JSON.stringify(error));
     }
+
+    started += await this.startOpenTournaments(now);
+
+    if (started > 0) {
+      this.logger.log(`${started} tournaments started`);
+    }
+
+    return started;
+  }
+
+  // Without check-in nothing closes registration, so a tournament left open
+  // starts at its start time, the moment registration was promised to close.
+  // Only one whose start has just passed: one left open longer than that is
+  // its organizer's to start, and short of teams is CancelInvalidTournaments'
+  // to cancel. One at a time: going Live from open drafts, seeds and draws the
+  // bracket, and one tournament that cannot must not hold back the rest.
+  private async startOpenTournaments(now: Date): Promise<number> {
+    const fifteenMinutesAgo = new Date(now);
+    fifteenMinutesAgo.setMinutes(fifteenMinutesAgo.getMinutes() - 15);
+
+    let due: Array<{ id: string }>;
+    try {
+      ({ tournaments: due } = await this.hasura.query({
+        tournaments: [
+          {
+            where: {
+              status: { _eq: "RegistrationOpen" },
+              check_in_required: { _eq: false },
+              start: { _lte: now, _gt: fifteenMinutesAgo },
+              has_min_teams: { _eq: true },
+            },
+          },
+          { id: true },
+        ],
+      }));
+    } catch (error) {
+      this.logger.error(`cannot find open tournaments`, JSON.stringify(error));
+      return 0;
+    }
+
+    let started = 0;
+    for (const { id } of due) {
+      try {
+        const { update_tournaments } = await this.hasura.mutation({
+          update_tournaments: {
+            __args: {
+              where: {
+                id: { _eq: id },
+                status: { _eq: "RegistrationOpen" },
+                check_in_required: { _eq: false },
+              },
+              _set: {
+                status: "Live",
+              },
+            },
+            affected_rows: true,
+          },
+        });
+        started += update_tournaments.affected_rows;
+      } catch (error) {
+        this.logger.error(
+          `cannot start tournament ${id}`,
+          JSON.stringify(error),
+        );
+      }
+    }
+
+    return started;
   }
 }
