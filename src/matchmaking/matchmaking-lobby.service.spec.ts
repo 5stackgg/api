@@ -482,3 +482,48 @@ describe("MatchmakingLobbyService.removeLobbyFromQueue", () => {
     expect(matchmaking.sendRegionStats).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("MatchmakingLobbyService.sendQueueDetailsToLobby", () => {
+  const published: Array<{ steamId: string; event: string; data: any }> = [];
+  let service: MatchmakingLobbyService;
+
+  beforeEach(() => {
+    jest.useFakeTimers().setSystemTime(new Date("2026-10-17T18:00:00Z"));
+    published.length = 0;
+
+    const redis = {
+      hget: jest.fn().mockResolvedValue(null),
+      publish: jest.fn(async (_channel: string, message: string) => {
+        published.push(JSON.parse(message));
+        return 1;
+      }),
+    } as unknown as Redis;
+
+    service = new MatchmakingLobbyService(
+      new Logger("Test"),
+      {} as HasuraService,
+      { getConnection: () => redis } as any,
+      {} as MatchmakeService,
+    );
+    jest.spyOn(service, "getLobbyDetails").mockResolvedValue({
+      players: [{ steam_id: "steam-1" }, { steam_id: "steam-2" }],
+    } as any);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it("tells every player the api's time", async () => {
+    await service.sendQueueDetailsToLobby("lobby-1");
+
+    expect(published.map((message) => message.steamId)).toEqual([
+      "steam-1",
+      "steam-2",
+    ]);
+    for (const message of published) {
+      expect(message.event).toBe("matchmaking:details");
+      expect(message.data.serverNow).toBe("2026-10-17T18:00:00.000Z");
+    }
+  });
+});

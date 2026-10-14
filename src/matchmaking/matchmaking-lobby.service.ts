@@ -456,6 +456,7 @@ export class MatchmakingLobbyService {
           steamId: player.steam_id,
           event: "matchmaking:details",
           data: {
+            serverNow: new Date().toISOString(),
             details: await this.getLobbyDetails(lobbyId),
             confirmation: confirmationId && {
               ...confirmationDetails,
