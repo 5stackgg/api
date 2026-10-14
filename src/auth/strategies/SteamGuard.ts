@@ -99,10 +99,13 @@ export class SteamGuard extends AuthGuard("steam") {
     if (process.env.DEV) {
       return true;
     }
-    if (redirect.startsWith("/") && !redirect.startsWith("//")) {
-      return true;
-    }
+    // Resolved the way a browser will: it reads "\\" as "/" and drops tabs
+    // and newlines, so "/\\evil.com" is another host despite its single "/".
     try {
+      if (/^[\\/]/.test(redirect.trim())) {
+        const panel = new URL(webDomain);
+        return new URL(redirect, panel).origin === panel.origin;
+      }
       return isAllowedOrigin({ origins: [webDomain], cookieDomain })(
         new URL(redirect).origin,
       );
