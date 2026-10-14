@@ -214,15 +214,14 @@ describe("ChatService direct messages", () => {
   };
 
   // Every statement in a transaction goes through the same fake as the rest.
-  Object.assign(postgres, {
-    transaction: jest.fn(async (work: (client: any) => Promise<unknown>) =>
-      work({
-        query: async (sql: string, bindings: any[]) => ({
-          rows: await postgres.query(sql, bindings),
-        }),
+  const transaction = jest.fn(async (work: (client: any) => Promise<unknown>) =>
+    work({
+      query: async (sql: string, bindings: any[]) => ({
+        rows: await postgres.query(sql, bindings),
       }),
-    ),
-  });
+    }),
+  );
+  Object.assign(postgres, { transaction });
 
   // [blocker, blocked]
   let blocks: Array<[string, string]>;
@@ -3043,7 +3042,7 @@ describe("ChatService direct messages", () => {
         );
         const toggle = queries[toggleAt];
 
-        expect(postgres.transaction).toHaveBeenCalledTimes(1);
+        expect(transaction).toHaveBeenCalledTimes(1);
         expect(queries[lock].bindings).toEqual([MESSAGE_ID, room]);
         expect(lock).toBeLessThan(toggleAt);
         expect(toggle.bindings).toEqual([MESSAGE_ID, ME, "heart", room]);
@@ -3763,7 +3762,7 @@ describe("ChatService direct messages", () => {
           }
           return 1;
         });
-        let releaseFirst = () => undefined;
+        let releaseFirst: () => void = () => undefined;
         playerBlocks.blockedAmong.mockImplementationOnce(
           () =>
             new Promise((resolve) => {

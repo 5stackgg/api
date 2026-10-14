@@ -1,4 +1,4 @@
-import { DemoParserService } from "./demo-parser.service";
+import { DemoParserService, ParsedDemo } from "./demo-parser.service";
 
 const CAPTURE = {
   log: "AAECAwQ=",
@@ -105,7 +105,8 @@ describe("DemoParserService parse", () => {
   let fetchMock: jest.Mock;
   let parser: DemoParserService;
 
-  const PARSED = { total_ticks: 100, tick_rate: 64, round_ticks: [] };
+  const PARSED: Pick<ParsedDemo, "total_ticks" | "tick_rate" | "round_ticks"> =
+    { total_ticks: 100, tick_rate: 64, round_ticks: [] };
 
   beforeEach(() => {
     fetchMock = jest.fn();

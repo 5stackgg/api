@@ -3,6 +3,7 @@ import { Logger } from "@nestjs/common";
 import {
   DEMO_METADATA_VERSION,
   DemoMetadataService,
+  DemoRow,
   PlaybackBlob,
 } from "./demo-metadata.service";
 import { ParsedDemo } from "./demo-parser.service";
@@ -255,7 +256,7 @@ describe("DemoMetadataService.uploadPlaybackBlob", () => {
 });
 
 describe("DemoMetadataService.ensureParsedById", () => {
-  const ROW = {
+  const ROW: DemoRow = {
     id: "demo-1",
     match_id: "match-1",
     match_map_id: "map-1",
@@ -275,7 +276,7 @@ describe("DemoMetadataService.ensureParsedById", () => {
       {
         query: jest.fn(async () => ({ match_map_demos_by_pk: row })),
       } as never,
-      { query: jest.fn(async () => []) } as never,
+      { query: jest.fn(async (): Promise<unknown[]> => []) } as never,
       { put: jest.fn(async () => {}) } as never,
       { parseFromS3Key: parse } as never,
       null as never,
@@ -283,7 +284,8 @@ describe("DemoMetadataService.ensureParsedById", () => {
     );
   }
 
-  const parsed = { total_ticks: 100, tick_rate: 64, round_ticks: [] };
+  const parsed: Pick<ParsedDemo, "total_ticks" | "tick_rate" | "round_ticks"> =
+    { total_ticks: 100, tick_rate: 64, round_ticks: [] };
 
   // The upload path reads this to know the stats have just been written.
   it("answers true when this call parsed the demo", async () => {

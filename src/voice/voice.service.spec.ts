@@ -1100,7 +1100,7 @@ describe("VoiceService", () => {
     const MEMBER = {
       steam_id: ME.steam_id,
       name: "me",
-      avatar_url: null,
+      avatar_url: null as string | null,
       coach: false,
     };
 

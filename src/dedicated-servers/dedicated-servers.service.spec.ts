@@ -1,5 +1,8 @@
 import { DedicatedServersService } from "./dedicated-servers.service";
-import { GameModesService } from "../game-plugins/game-modes.service";
+import {
+  GameModesService,
+  ResolvedGameMode,
+} from "../game-plugins/game-modes.service";
 
 // Remove-then-create is not atomic. Two overlapping rebuilds of one server used
 // to interleave: both removed, one created, and the other's AlreadyExists
@@ -232,7 +235,7 @@ describe("DedicatedServersService.pingDedicatedServer", () => {
           : null,
       ),
       disconnect: jest.fn(),
-      listCvars: jest.fn(async () => []),
+      listCvars: jest.fn(async (): Promise<unknown[]> => []),
     };
 
     service = new DedicatedServersService(
@@ -498,7 +501,7 @@ describe("DedicatedServersService.getServerPlayerList", () => {
       hasura as never,
       null as never,
       rcon as never,
-      { getConnection: () => null } as never,
+      { getConnection: (): null => null } as never,
       null as never,
       null as never,
       null as never,
@@ -612,7 +615,9 @@ describe("DedicatedServersService.launchMode", () => {
 });
 
 describe("DedicatedServersService.withServerCfg", () => {
-  const mode = (overrides: Record<string, unknown> = {}) => ({
+  const mode = (
+    overrides: Partial<ResolvedGameMode> = {},
+  ): ResolvedGameMode => ({
     id: "mode-1",
     slug: "deathmatch",
     name: "Deathmatch",
@@ -752,7 +757,7 @@ describe("DedicatedServersService.setupDedicatedServer", () => {
     "invsim_ws_enabled 1",
   ].join("\n");
 
-  const pluginsOnly = {
+  const pluginsOnly: ResolvedGameMode = {
     id: "",
     slug: "",
     name: "",

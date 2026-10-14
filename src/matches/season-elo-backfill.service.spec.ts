@@ -11,7 +11,7 @@ import { BackfillSeasonElo } from "./jobs/BackfillSeasonElo";
 
 const WINDOW = {
   starts_at: "2025-11-08 00:00:00.123456+00",
-  ends_at: null,
+  ends_at: null as string | null,
 };
 
 describe("SeasonEloBackfillService.runBackfill", () => {
