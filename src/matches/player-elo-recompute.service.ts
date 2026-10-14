@@ -114,7 +114,11 @@ export class PlayerEloRecomputeService {
     // Hard single-execution guarantee: only the lock holder runs. Critical here
     // because the run TRUNCATEs player_elo — two overlapping runs would corrupt
     // the chronological rebuild. Duplicates (rapid clicks, multiple pods) no-op.
-    if (!(await this.cache.acquireLock(LOCK_KEY, RUNNING_TTL_SECONDS))) {
+    const lockToken = await this.cache.acquireLock(
+      LOCK_KEY,
+      RUNNING_TTL_SECONDS,
+    );
+    if (!lockToken) {
       this.logger.warn("[elo-recompute] already running, skipping duplicate");
       return;
     }
@@ -166,7 +170,11 @@ export class PlayerEloRecomputeService {
         if (status.completed % PERSIST_EVERY === 0) {
           await this.saveStatus(status, RUNNING_TTL_SECONDS);
           await this.cache.put(SUPPRESS_KEY, true, RUNNING_TTL_SECONDS);
-          await this.cache.refreshLock(LOCK_KEY, RUNNING_TTL_SECONDS);
+          await this.cache.refreshLock(
+            LOCK_KEY,
+            lockToken,
+            RUNNING_TTL_SECONDS,
+          );
         }
       }
     } finally {
@@ -176,7 +184,7 @@ export class PlayerEloRecomputeService {
       await this.saveStatus(status, FINAL_TTL_SECONDS);
       await this.cache.forget(CANCEL_KEY);
       await this.cache.forget(SUPPRESS_KEY);
-      await this.cache.forget(LOCK_KEY);
+      await this.cache.releaseLock(LOCK_KEY, lockToken);
 
       // Per-row player_elo events were suppressed during the run, so reindex
       // every player once here to sync search with the rebuilt ELO. Stable

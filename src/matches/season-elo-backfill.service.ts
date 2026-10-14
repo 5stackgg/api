@@ -113,7 +113,11 @@ export class SeasonEloBackfillService {
 
     // Single-execution guarantee mirrors the recompute: the lock holder is the
     // only writer, so overlapping runs can't corrupt the chronological rebuild.
-    if (!(await this.cache.acquireLock(LOCK_KEY, RUNNING_TTL_SECONDS))) {
+    const lockToken = await this.cache.acquireLock(
+      LOCK_KEY,
+      RUNNING_TTL_SECONDS,
+    );
+    if (!lockToken) {
       this.logger.warn(
         `[season-backfill] another backfill holds the lock, retrying season ${seasonId}`,
       );
@@ -172,7 +176,11 @@ export class SeasonEloBackfillService {
         if (status.completed % PERSIST_EVERY === 0) {
           await this.saveStatus(status, RUNNING_TTL_SECONDS);
           await this.eloRecompute.setSuppressEvents(true);
-          await this.cache.refreshLock(LOCK_KEY, RUNNING_TTL_SECONDS);
+          await this.cache.refreshLock(
+            LOCK_KEY,
+            lockToken,
+            RUNNING_TTL_SECONDS,
+          );
         }
       }
 
@@ -205,7 +213,7 @@ export class SeasonEloBackfillService {
       // the search index would otherwise keep serving pre-backfill ELO forever.
       // One deduped reindex at the end syncs it without the per-row fan-out.
       await this.eloRecompute.setSuppressEvents(false);
-      await this.cache.forget(LOCK_KEY);
+      await this.cache.releaseLock(LOCK_KEY, lockToken);
 
       await this.reindexQueue.add(
         RefreshAllPlayersJob.name,

@@ -202,6 +202,7 @@ describe("stranded matchmaking lobbies", () => {
         retractMatchFound: jest.fn().mockResolvedValue(undefined),
       } as any,
       queue as any,
+      new CacheService(redisManager as any, logger),
     );
     (lobbies as any).matchmaking = matchmake;
 
@@ -547,22 +548,26 @@ describe("stranded matchmaking lobbies", () => {
     expect(await queued()).toEqual([A]);
   });
 
-  // createMatch takes the cancel job away before the match exists.
-  it("drops the lobbies of a ready check nothing will cancel, once its retries would be over", async () => {
+  // The pod died while it was creating the match, and the cancel job leaves a
+  // ready check to the creation that has it.
+  it("drops the lobbies of a ready check whose creation died, once its retries would be over", async () => {
     await join(A);
     await join(B);
     await runPass();
     const [confirmationId] = readyChecks();
     const key = getMatchmakingConformationCacheKey(confirmationId);
 
-    createMatch.mockRejectedValueOnce(new Error("hasura unavailable"));
+    const died = new Promise<void>((reached) => {
+      createMatch.mockImplementationOnce(() => {
+        reached();
+        return new Promise(() => {});
+      });
+    });
     await confirm(confirmationId, A);
-    await expect(confirm(confirmationId, B)).rejects.toThrow(
-      "hasura unavailable",
-    );
-    expect(queue.remove).toHaveBeenCalledWith(
-      `matchmaking.cancel.${confirmationId}`,
-    );
+    void confirm(confirmationId, B);
+    await died;
+
+    await matchmake.cancelMatchMaking(confirmationId);
 
     // a cancel job could still be retrying
     await readyCheckExpired(confirmationId, 60);
@@ -594,6 +599,79 @@ describe("stranded matchmaking lobbies", () => {
     await join(A);
     expect(errorCodes(A)).toEqual([]);
     expect(await queued()).toEqual([A]);
+  });
+
+  it("puts every lobby back when its match cannot be created", async () => {
+    await join(A);
+    await join(B);
+    await runPass();
+    const [confirmationId] = readyChecks();
+    const key = getMatchmakingConformationCacheKey(confirmationId);
+
+    createMatch.mockRejectedValueOnce(new Error("hasura unavailable"));
+    await confirm(confirmationId, A);
+    await expect(confirm(confirmationId, B)).rejects.toThrow(
+      "hasura unavailable",
+    );
+
+    expect(await queued()).toEqual([A, B]);
+    expect(await ranked()).toEqual([A, B]);
+    for (const lobbyId of [A, B]) {
+      expect(await detailsOf(lobbyId)).not.toBeNull();
+      expect(await stampOf(lobbyId)).toBeNull();
+      expect(await redis.exists(lobbyLock(lobbyId))).toBe(0);
+    }
+    expect(await redis.exists(key, `${key}:confirmed`, `${key}:creating`)).toBe(
+      0,
+    );
+
+    // the cancel job, 30s later, has nothing left to do
+    await matchmake.cancelMatchMaking(confirmationId);
+    expect(await queued()).toEqual([A, B]);
+  });
+
+  it("leaves a ready check to its creation when the cancel job fires during it", async () => {
+    await join(A);
+    await join(B);
+    await runPass();
+    const [confirmationId] = readyChecks();
+    const key = getMatchmakingConformationCacheKey(confirmationId);
+
+    let finishCreating: () => void;
+    const creating = new Promise<void>((reached) => {
+      createMatch.mockImplementationOnce(() => {
+        reached();
+        return new Promise((finish) => {
+          finishCreating = () =>
+            finish({
+              id: "match-1",
+              lineup_1_id: "lineup-1",
+              lineup_2_id: "lineup-2",
+            });
+        });
+      });
+    });
+    await confirm(confirmationId, A);
+    const accepted = confirm(confirmationId, B);
+    await creating;
+
+    await matchmake.cancelMatchMaking(confirmationId);
+
+    expect(await queued()).toEqual([]);
+    for (const lobbyId of [A, B]) {
+      expect(await stampOf(lobbyId)).toBe(confirmationId);
+    }
+    expect(await redis.hget(key, "lobbyIds")).not.toBeNull();
+
+    finishCreating();
+    await accepted;
+
+    expect(await redis.hget(key, "matchId")).toBe("match-1");
+    expect(await queued()).toEqual([]);
+    for (const lobbyId of [A, B]) {
+      expect(await detailsOf(lobbyId)).not.toBeNull();
+      expect(await stampOf(lobbyId)).toBe(confirmationId);
+    }
   });
 
   // The hash outlives the ready check, so one that nothing cancelled can

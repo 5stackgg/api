@@ -3,13 +3,33 @@ import { RefreshAllPlayersJob } from "./jobs/RefreshAllPlayers";
 
 describe("PlayerReindexService indexed-schema marker", () => {
   let cache: Record<string, jest.Mock>;
+  // the token the run lock is held by
+  let holder: string | null;
   let typeSense: { updatePlayer: jest.Mock; markPlayersIndexed: jest.Mock };
   let service: PlayerReindexService;
 
   beforeEach(() => {
+    holder = null;
     cache = {
-      acquireLock: jest.fn().mockResolvedValue(true),
-      refreshLock: jest.fn().mockResolvedValue(undefined),
+      acquireLock: jest.fn(
+        async (_key: string, _ttl: number, token: string) => {
+          if (holder !== null) {
+            return null;
+          }
+          holder = token;
+          return token;
+        },
+      ),
+      refreshLock: jest.fn(async (_key: string, token: string) => {
+        return holder === token;
+      }),
+      releaseLock: jest.fn(async (_key: string, token: string) => {
+        if (holder !== token) {
+          return false;
+        }
+        holder = null;
+        return true;
+      }),
       forget: jest.fn().mockResolvedValue(undefined),
       put: jest.fn().mockResolvedValue(true),
       get: jest.fn().mockResolvedValue(undefined),
@@ -41,8 +61,7 @@ describe("PlayerReindexService indexed-schema marker", () => {
   });
 
   it("takes over the lock a stalled run of the same job left behind", async () => {
-    cache.acquireLock.mockResolvedValue(false);
-    cache.getRaw.mockResolvedValue("RefreshAllPlayersJob:1700000000000");
+    holder = "RefreshAllPlayersJob:1700000000000";
 
     await service.runReindexAll("RefreshAllPlayersJob:1700000000000");
 
@@ -51,13 +70,12 @@ describe("PlayerReindexService indexed-schema marker", () => {
   });
 
   it("skips while a different run holds the lock", async () => {
-    cache.acquireLock.mockResolvedValue(false);
-    cache.getRaw.mockResolvedValue("RefreshAllPlayersJob:1600000000000");
+    holder = "RefreshAllPlayersJob:1600000000000";
 
     await service.runReindexAll("RefreshAllPlayersJob:1700000000000");
 
     expect(typeSense.updatePlayer).not.toHaveBeenCalled();
-    expect(cache.forget).not.toHaveBeenCalledWith("player-reindex:lock");
+    expect(holder).toBe("RefreshAllPlayersJob:1600000000000");
   });
 
   it("locks under the job's id and creation time, which a stalled retry keeps", async () => {

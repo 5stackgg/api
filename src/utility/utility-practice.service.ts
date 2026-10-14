@@ -152,12 +152,12 @@ export class UtilityPracticeService {
 
     const lockKey = UtilityPracticeService.startLockKey(user.steam_id);
 
-    if (
-      !(await this.cache.acquireLock(
-        lockKey,
-        UtilityPracticeService.START_LOCK_SECONDS,
-      ))
-    ) {
+    const lockToken = await this.cache.acquireLock(
+      lockKey,
+      UtilityPracticeService.START_LOCK_SECONDS,
+    );
+
+    if (!lockToken) {
       throw Error("you are already starting a practice session");
     }
 
@@ -260,7 +260,7 @@ export class UtilityPracticeService {
         throw error;
       }
     } finally {
-      await this.cache.forget(lockKey);
+      await this.cache.releaseLock(lockKey, lockToken);
     }
   }
 
@@ -1624,12 +1624,12 @@ export class UtilityPracticeService {
 
     const lockKey = `utility:practice:map:${session.id}`;
 
-    if (
-      !(await this.cache.acquireLock(
-        lockKey,
-        UtilityPracticeService.MAP_CHANGE_LOCK_SECONDS,
-      ))
-    ) {
+    const lockToken = await this.cache.acquireLock(
+      lockKey,
+      UtilityPracticeService.MAP_CHANGE_LOCK_SECONDS,
+    );
+
+    if (!lockToken) {
       throw Error("that server is already changing map");
     }
 
@@ -1670,7 +1670,7 @@ export class UtilityPracticeService {
 
       return { success: true, map_name: map.name, queued: sent.queued };
     } finally {
-      await this.cache.forget(lockKey);
+      await this.cache.releaseLock(lockKey, lockToken);
     }
   }
 
@@ -1749,12 +1749,12 @@ export class UtilityPracticeService {
 
     const lockKey = `utility:practice:map:${session.id}`;
 
-    if (
-      !(await this.cache.acquireLock(
-        lockKey,
-        UtilityPracticeService.MAP_CHANGE_LOCK_SECONDS,
-      ))
-    ) {
+    const lockToken = await this.cache.acquireLock(
+      lockKey,
+      UtilityPracticeService.MAP_CHANGE_LOCK_SECONDS,
+    );
+
+    if (!lockToken) {
       throw Error("that server is already changing map");
     }
 
@@ -1780,7 +1780,7 @@ export class UtilityPracticeService {
 
       return map.name;
     } finally {
-      await this.cache.forget(lockKey);
+      await this.cache.releaseLock(lockKey, lockToken);
     }
   }
 

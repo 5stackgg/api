@@ -370,9 +370,7 @@ export class DedicatedServerMigrationService {
     } finally {
       clearInterval(heartbeat);
 
-      if ((await this.cache.getRaw(lockKey)) === token) {
-        await this.cache.forget(lockKey);
-      }
+      await this.cache.releaseLock(lockKey, token);
     }
   }
 
@@ -773,25 +771,23 @@ export class DedicatedServerMigrationService {
     abort: AbortController,
   ): Promise<void> {
     try {
-      const holder = await this.cache.getRaw(lockKey);
       const held =
-        holder === token ||
-        (holder === null &&
-          (await this.cache.acquireLock(
-            lockKey,
-            DedicatedServerMigrationService.LOCK_TTL_SECONDS,
-            token,
-          )));
+        (await this.cache.refreshLock(
+          lockKey,
+          token,
+          DedicatedServerMigrationService.LOCK_TTL_SECONDS,
+        )) ||
+        (await this.cache.acquireLock(
+          lockKey,
+          DedicatedServerMigrationService.LOCK_TTL_SECONDS,
+          token,
+        )) !== null;
 
       if (!held) {
         abort.abort(new Error("The move was taken over by another worker"));
         return;
       }
 
-      await this.cache.refreshLock(
-        lockKey,
-        DedicatedServerMigrationService.LOCK_TTL_SECONDS,
-      );
       await this.postgres.query(
         `UPDATE server_migrations SET updated_at = now()
           WHERE id = $1 AND status = ANY($2::text[])`,

@@ -19,7 +19,8 @@ describe("UtilityPracticeService.startForRender", () => {
       hasOnDemandNodes: jest.fn().mockResolvedValue(true),
     };
     const cache = {
-      acquireLock: jest.fn().mockResolvedValue(true),
+      acquireLock: jest.fn().mockResolvedValue("token"),
+      releaseLock: jest.fn().mockResolvedValue(true),
       forget: jest.fn().mockResolvedValue(undefined),
     };
 
@@ -189,7 +190,8 @@ describe("UtilityPracticeService.start on an unsupported CS2 build", () => {
       { query: jest.fn().mockResolvedValue([]) } as any,
       {} as any,
       {
-        acquireLock: jest.fn().mockResolvedValue(true),
+        acquireLock: jest.fn().mockResolvedValue("token"),
+        releaseLock: jest.fn().mockResolvedValue(true),
         forget: jest.fn().mockResolvedValue(undefined),
       } as any,
       matchAssistant as any,

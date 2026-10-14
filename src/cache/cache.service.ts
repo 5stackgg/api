@@ -1,4 +1,5 @@
 import Redis from "ioredis";
+import { randomUUID } from "crypto";
 import { Injectable, Logger } from "@nestjs/common";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 import { CacheTag } from "./CacheTag";
@@ -81,29 +82,71 @@ export class CacheService {
     }
   }
 
-  // Atomically acquire a lock (SET NX EX). Returns true only for the caller
-  // that took it; everyone else gets false until it expires or is released.
-  // Refresh the TTL by calling again while held is NOT possible (NX) — use
-  // refreshLock for that. Release with forget(key).
+  // A lock can run out while its holder is still working and be taken by
+  // someone else, so it is only refreshed or released by the token it was
+  // taken with.
+  private static readonly RELEASE_LOCK_SCRIPT = `
+    if redis.call('GET', KEYS[1]) == ARGV[1] then
+      return redis.call('DEL', KEYS[1])
+    end
+    return 0
+  `;
+
+  private static readonly REFRESH_LOCK_SCRIPT = `
+    if redis.call('GET', KEYS[1]) == ARGV[1] then
+      return redis.call('EXPIRE', KEYS[1], ARGV[2])
+    end
+    return 0
+  `;
+
   public async acquireLock(
     key: string,
     seconds: number,
-    value = "1",
-  ): Promise<boolean> {
+    token: string = randomUUID(),
+  ): Promise<string | null> {
     try {
-      const result = await this.connection.set(key, value, "EX", seconds, "NX");
-      return result === "OK";
+      const result = await this.connection.set(key, token, "EX", seconds, "NX");
+      return result === "OK" ? token : null;
     } catch (error) {
       this.logger.error("unable to acquire lock in redis", error);
+      return null;
+    }
+  }
+
+  public async refreshLock(
+    key: string,
+    token: string,
+    seconds: number,
+  ): Promise<boolean> {
+    try {
+      return (
+        (await this.connection.eval(
+          CacheService.REFRESH_LOCK_SCRIPT,
+          1,
+          key,
+          token,
+          seconds,
+        )) === 1
+      );
+    } catch (error) {
+      this.logger.error("unable to refresh lock in redis", error);
       return false;
     }
   }
 
-  public async refreshLock(key: string, seconds: number): Promise<void> {
+  public async releaseLock(key: string, token: string): Promise<boolean> {
     try {
-      await this.connection.expire(key, seconds);
+      return (
+        (await this.connection.eval(
+          CacheService.RELEASE_LOCK_SCRIPT,
+          1,
+          key,
+          token,
+        )) === 1
+      );
     } catch (error) {
-      this.logger.error("unable to refresh lock in redis", error);
+      this.logger.error("unable to release lock in redis", error);
+      return false;
     }
   }
 
@@ -148,11 +191,12 @@ export class CacheService {
   ): Promise<CachedValue> {
     const lockKey = `lock:${key}`;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      if (await this.connection.set(lockKey, 1, "EX", expires, "NX")) {
+      const token = randomUUID();
+      if (await this.connection.set(lockKey, token, "EX", expires, "NX")) {
         try {
           return await callback();
         } finally {
-          await this.forget(lockKey);
+          await this.releaseLock(lockKey, token);
         }
       }
       await new Promise((resolve) => setTimeout(resolve, 100));
