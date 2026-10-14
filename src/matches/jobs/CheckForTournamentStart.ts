@@ -72,8 +72,8 @@ export class CheckForTournamentStart extends WorkerHost {
     let due: Array<{ id: string }>;
     try {
       ({ tournaments: due } = await this.hasura.query({
-        tournaments: [
-          {
+        tournaments: {
+          __args: {
             where: {
               status: { _eq: "RegistrationOpen" },
               check_in_required: { _eq: false },
@@ -81,8 +81,8 @@ export class CheckForTournamentStart extends WorkerHost {
               has_min_teams: { _eq: true },
             },
           },
-          { id: true },
-        ],
+          id: true,
+        },
       }));
     } catch (error) {
       this.logger.error(`cannot find open tournaments`, JSON.stringify(error));

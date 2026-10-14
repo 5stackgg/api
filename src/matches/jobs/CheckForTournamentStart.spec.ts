@@ -41,7 +41,7 @@ describe("CheckForTournamentStart", () => {
 
     await expect(job.process()).resolves.toBe(2);
 
-    const where = hasura.query.mock.calls[0][0].tournaments[0].where;
+    const where = hasura.query.mock.calls[0][0].tournaments.__args.where;
     expect(where).toEqual({
       status: { _eq: "RegistrationOpen" },
       check_in_required: { _eq: false },
