@@ -606,16 +606,27 @@ select_permissions:
       allow_aggregations: true
     comment: ""
 update_permissions:
-  - role: match_organizer
+  - role: administrator
     permission:
       columns:
         - avatar_url
         - country
-        - discord_id
         - language
         - last_read_news_at
         - name
-        - profile_url
+        - role
+        - show_match_ready_modal
+        - allow_message_requests
+      filter: {}
+      check: null
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - country
+        - language
+        - last_read_news_at
+        - name
         - role
         - show_match_ready_modal
         - allow_message_requests

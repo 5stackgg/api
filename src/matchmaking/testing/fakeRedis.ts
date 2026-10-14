@@ -103,6 +103,12 @@ export class FakeRedis {
     return "OK";
   }
 
+  async incr(key: string) {
+    const value = Number((await this.get(key)) ?? 0) + 1;
+    this.strings.set(key, String(value));
+    return value;
+  }
+
   async get(key: string) {
     this.expireIfDue(key);
     this.assertType(key, "string");
@@ -283,7 +289,11 @@ export class FakeRedis {
       return this.claimReadyCheckForCancel(keys, argv);
     }
 
-    if (script.includes("'HDEL', KEYS[1], 'confirmationId'")) {
+    if (
+      script.includes(
+        "if redis.call('HGET', KEYS[1], 'confirmationId') == ARGV[1] then",
+      )
+    ) {
       return this.takeLobbyStamp(keys, argv);
     }
 

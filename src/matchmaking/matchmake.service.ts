@@ -1403,8 +1403,7 @@ export class MatchmakeService {
     matchId: string;
     expiresAt: string;
     confirmed: string[];
-    creationFailed: boolean;
-    creationRefusal: string | null;
+    droppedLobbies: Record<string, { code: string; message: string }>;
   }> {
     const {
       type,
@@ -1414,8 +1413,7 @@ export class MatchmakeService {
       team2,
       matchId,
       expiresAt,
-      creationFailed,
-      creationRefusal,
+      droppedLobbies,
     } = await this.redis.hgetall(
       getMatchmakingConformationCacheKey(confirmationId),
     );
@@ -1433,8 +1431,7 @@ export class MatchmakeService {
       team2: JSON.parse(team2 || "[]"),
       lobbyIds: JSON.parse(lobbyIds || "[]"),
       confirmed: Object.keys(confirmed),
-      creationFailed: creationFailed !== undefined,
-      creationRefusal: creationRefusal ?? null,
+      droppedLobbies: JSON.parse(droppedLobbies || "{}"),
     };
   }
 
@@ -1455,14 +1452,8 @@ export class MatchmakeService {
       return;
     }
 
-    const {
-      lobbyIds,
-      type,
-      region,
-      confirmed,
-      creationFailed,
-      creationRefusal,
-    } = await this.getMatchConfirmationDetails(confirmationId);
+    const { lobbyIds, type, region, confirmed, droppedLobbies } =
+      await this.getMatchConfirmationDetails(confirmationId);
 
     const settling: MatchmakingLobby[] = [];
     for (const lobbyId of lobbyIds) {
@@ -1478,18 +1469,22 @@ export class MatchmakeService {
       }
     }
 
-    let requeue = hasMatch
+    const requeue = hasMatch
       ? []
-      : settling.filter((lobby) =>
-          lobby.players.every((player) => confirmed.includes(player.steam_id)),
+      : settling.filter(
+          (lobby) =>
+            !droppedLobbies[lobby.lobbyId] &&
+            lobby.players.every((player) =>
+              confirmed.includes(player.steam_id),
+            ),
         );
-
-    if (creationFailed) {
-      requeue = await this.lobbiesToRetry(requeue, creationRefusal);
-    }
 
     for (const lobby of settling) {
       await this.matchmakingLobbyService.dequeueLobby(lobby.lobbyId);
+
+      if (droppedLobbies[lobby.lobbyId]) {
+        await this.sendError(lobby, droppedLobbies[lobby.lobbyId]);
+      }
 
       if (!requeue.includes(lobby)) {
         await this.matchmakingLobbyService.removeLobbyDetails(lobby.lobbyId);
@@ -1523,41 +1518,6 @@ export class MatchmakeService {
         confirmationId,
       )) === 1
     );
-  }
-
-  // The lobbies of a match that could not be made, as far as they can go back
-  // in the queue. The next pass would put the same lobbies in the same match,
-  // so a lobby that could not join the queue now is dropped, and a refusal
-  // from the database that names no such lobby drops them all: it would only
-  // refuse them again.
-  private async lobbiesToRetry(
-    lobbies: MatchmakingLobby[],
-    refusal: string | null,
-  ) {
-    const retry: MatchmakingLobby[] = [];
-
-    for (const lobby of lobbies) {
-      const reason = await this.requeueRefusal(lobby);
-
-      if (reason) {
-        await this.sendError(lobby, { code: "not_requeued", message: reason });
-        continue;
-      }
-
-      retry.push(lobby);
-    }
-
-    if (refusal && retry.length === lobbies.length) {
-      for (const lobby of retry) {
-        await this.sendError(lobby, {
-          code: "match_refused",
-          message: refusal,
-        });
-      }
-      return [];
-    }
-
-    return retry;
   }
 
   private async claimReadyCheckForCancel(confirmationId: string) {
@@ -1739,10 +1699,7 @@ export class MatchmakeService {
         `unable to create the match for confirmation ${confirmationId}`,
         error,
       );
-      await this.abandonMatchCreation(
-        confirmationId,
-        MatchmakeService.refusalOf(error),
-      );
+      await this.abandonMatchCreation(confirmationId, error);
       throw error;
     }
 
@@ -1774,24 +1731,87 @@ export class MatchmakeService {
     }
   }
 
+  private static readonly CREATION_FAILURES_TTL_SECONDS = 10 * 60;
+
   // Everyone accepted, so nobody is to blame for a match that could not be
-  // made: the cancel puts every lobby that can go back where it was in the
-  // queue, and removes the match if it was made.
-  private async abandonMatchCreation(
-    confirmationId: string,
-    refusal: string | null,
-  ) {
+  // made, and the cancel puts each lobby back where it was in the queue. But
+  // the next pass would put the same lobbies in the same match, so a lobby
+  // that could not join the queue now is dropped, and a refusal that names no
+  // such lobby drops them all: it would only be refused again. Decided once,
+  // here, because more than one cancel can be settling the lobbies.
+  private async abandonMatchCreation(confirmationId: string, error: unknown) {
+    const { lobbyIds } = await this.getMatchConfirmationDetails(confirmationId);
+    const refusal = await this.creationRefusal(lobbyIds, error);
+
+    const dropped: Record<string, { code: string; message: string }> = {};
+
+    for (const lobbyId of lobbyIds) {
+      const lobby = await this.matchmakingLobbyService.getLobbyDetails(lobbyId);
+      if (!lobby) {
+        continue;
+      }
+
+      let reason: string | null = null;
+      try {
+        reason = await this.requeueRefusal(lobby);
+      } catch (lookupError) {
+        // the next pass's own checks back off from an outage; dropping the
+        // lobby would only punish its players for it
+        this.logger.warn(
+          `unable to check lobby ${lobbyId} before requeueing it`,
+          lookupError,
+        );
+      }
+
+      if (reason) {
+        dropped[lobbyId] = { code: "not_requeued", message: reason };
+      }
+    }
+
+    if (refusal && Object.keys(dropped).length === 0) {
+      for (const lobbyId of lobbyIds) {
+        dropped[lobbyId] = { code: "match_refused", message: refusal };
+      }
+    }
+
     await this.redis.hset(getMatchmakingConformationCacheKey(confirmationId), {
-      creationFailed: 1,
-      ...(refusal ? { creationRefusal: refusal } : {}),
+      droppedLobbies: JSON.stringify(dropped),
     });
     await this.handCreationToCancel(confirmationId);
     await this.cancelMatchMaking(confirmationId);
   }
 
   // A trigger refusing the write raises SQLSTATE 22000, which Hasura answers
-  // as a data-exception, and a constraint as a constraint-violation. Those
-  // come back the same every time; a timeout or an outage may not.
+  // as a data-exception, and most constraints answer as a
+  // constraint-violation: those come back the same every time. A CHECK
+  // violation answers as a permission-error and a plain RAISE as unexpected,
+  // like an outage would, so the same lobbies failing a second time is taken
+  // as a refusal too, rather than retried for as long as they keep accepting.
+  private async creationRefusal(
+    lobbyIds: string[],
+    error: unknown,
+  ): Promise<string | null> {
+    const failuresKey = `matchmaking:creation-failures:${[...lobbyIds].sort().join(",")}`;
+    const failures = await this.redis.incr(failuresKey);
+    if (failures === 1) {
+      await this.redis.expire(
+        failuresKey,
+        MatchmakeService.CREATION_FAILURES_TTL_SECONDS,
+      );
+    }
+
+    const refusal = MatchmakeService.refusalOf(error);
+    if (refusal) {
+      return refusal;
+    }
+
+    if (failures > 1) {
+      return "The match could not be created, try queueing again later";
+    }
+
+    return null;
+  }
+
   private static refusalOf(error: unknown): string | null {
     if (!(error instanceof GenqlError)) {
       return null;

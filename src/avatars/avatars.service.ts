@@ -28,8 +28,8 @@ export class AvatarsService {
 
   // An upload is stored as its key, which the API serves under /avatars; a
   // Steam avatar is stored as its URL. Whatever this returns is loaded by a
-  // render pod's browser, and an organizer can write a player's avatar_url, so
-  // anything that is neither an https URL nor one of our keys is no avatar.
+  // render pod's browser inside the cluster, so only our own keys and https
+  // URLs on Steam's avatar hosts or our own come out of it.
   public static publicUrl(
     avatar: string | null | undefined,
     apiDomain: string,
@@ -39,15 +39,37 @@ export class AvatarsService {
       return null;
     }
 
-    if (/^https:\/\/\S+$/i.test(value)) {
-      return value;
+    if (
+      /^\/?avatars\/[a-z-]+\/[\w.-]+$/i.test(value) &&
+      !value.includes("..")
+    ) {
+      return `${apiDomain.replace(/\/+$/, "")}/${value.replace(/^\/+/, "")}`;
     }
 
-    if (!/^\/?avatars\/[a-z-]+\/[\w.-]+$/i.test(value)) {
+    let url: URL;
+    let apiHost: string;
+    try {
+      url = new URL(value);
+      apiHost = new URL(apiDomain).hostname;
+    } catch {
       return null;
     }
 
-    return `${apiDomain.replace(/\/+$/, "")}/${value.replace(/^\/+/, "")}`;
+    if (url.protocol !== "https:" || url.username || url.password || url.port) {
+      return null;
+    }
+
+    const host = url.hostname.toLowerCase();
+    if (
+      host === "steamcdn-a.akamaihd.net" ||
+      host === "steamstatic.com" ||
+      host.endsWith(".steamstatic.com") ||
+      host === apiHost
+    ) {
+      return url.href;
+    }
+
+    return null;
   }
 
   async uploadTeamAvatar(

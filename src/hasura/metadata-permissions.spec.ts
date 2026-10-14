@@ -149,6 +149,25 @@ describe("hasura table metadata", () => {
     ).toEqual(["administrator"]);
   });
 
+  // Steam and Discord sync write these with the admin secret. A player's
+  // avatar_url is loaded by a render pod's browser inside the cluster, so
+  // whoever can write it chooses what that browser fetches.
+  it("only lets an administrator change a player's avatar, profile link or Discord id", () => {
+    const players = tables.find(({ file }) => file === "public_players.yaml");
+    const synced = ["avatar_url", "profile_url", "discord_id"];
+
+    expect(
+      (players?.metadata?.update_permissions ?? []).flatMap(
+        (entry: { role: string; permission: { columns: Array<string> } }) =>
+          entry.role === "administrator"
+            ? []
+            : entry.permission.columns
+                .filter((column) => synced.includes(column))
+                .map((column) => `${entry.role} ${column}`),
+      ),
+    ).toEqual([]);
+  });
+
   // A warning is a private note between the player and staff; every other
   // sanction stays on the public record.
   // A secret setting is kept from administrators by its name alone, so a role

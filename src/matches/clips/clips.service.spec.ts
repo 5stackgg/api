@@ -246,14 +246,34 @@ describe("ClipsService", () => {
     });
 
     it.each([
-      "http://avatars.steamstatic.com/abc_full.jpg",
-      "file:///etc/passwd",
-      "javascript:alert(1)",
-      "data:image/png;base64,AAAA",
-      "//evil.test/a.png",
-      "not an avatar",
-      "avatars/players/../../admin",
-    ])("has no avatar when the stored one is %s", async (stored) => {
+      "https://avatars.steamstatic.com/abc_full.jpg",
+      "https://avatars.cloudflare.steamstatic.com/abc_full.jpg",
+      "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/ab/abc_full.jpg",
+      "https://api.5stack.test/avatars/players/76561198000000009-a1b2c3.png",
+    ])("keeps the avatar at %s", async (stored) => {
+      expect(
+        await chipAvatarFor({ avatar_url: stored, custom_avatar_url: null }),
+      ).toBe(stored);
+    });
+
+    it.each([
+      ["plain http", "http://avatars.steamstatic.com/abc_full.jpg"],
+      ["a file", "file:///etc/passwd"],
+      ["script", "javascript:alert(1)"],
+      ["inline data", "data:image/png;base64,AAAA"],
+      ["no scheme", "//avatars.steamstatic.com/abc_full.jpg"],
+      ["an internal address", "https://10.0.0.1/avatar.png"],
+      ["cluster DNS", "https://api.5stack.svc.cluster.local/avatar.png"],
+      ["another host", "https://evil.test/avatar.png"],
+      ["a lookalike host", "https://evilsteamstatic.com/abc_full.jpg"],
+      ["a host under ours", "https://avatars.steamstatic.com.evil.test/a.png"],
+      ["credentials", "https://user:pass@avatars.steamstatic.com/a.png"],
+      ["a user", "https://user@avatars.steamstatic.com/a.png"],
+      ["a port", "https://avatars.steamstatic.com:8443/abc_full.jpg"],
+      ["not a URL", "not an avatar"],
+      ["a key that climbs", "avatars/players/../../admin"],
+      ["a key with a parent", "avatars/players/.."],
+    ])("has no avatar when the stored one is %s", async (_, stored) => {
       expect(
         await chipAvatarFor({ avatar_url: stored, custom_avatar_url: null }),
       ).toBeNull();

@@ -1248,6 +1248,49 @@ describe("matchmaking (end to end)", () => {
       expect([...matchRows.keys()]).toEqual([]);
     });
 
+    it("puts every lobby back when the players cannot be looked up after a failed creation", async () => {
+      const lobbies = tenSolos();
+      await enqueue(lobbies);
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      matchAssistant.createMatchBasedOnType.mockRejectedValueOnce(
+        new Error("hasura unavailable"),
+      );
+      jest
+        .spyOn(lobbyService, "getPlayerLobby")
+        .mockRejectedValue(new Error("hasura unavailable"));
+
+      await expect(confirmAll()).rejects.toThrow("hasura unavailable");
+
+      expect(queuedIn("us-east")).toEqual(
+        lobbies.map((lobby) => lobby.lobbyId).sort(),
+      );
+    });
+
+    it("drops the lobbies of a match that fails a second time", async () => {
+      const lobbies = tenSolos();
+      await enqueue(lobbies);
+
+      for (let attempt = 0; attempt < 2; attempt++) {
+        confirmations.length = 0;
+        confirmationIds.length = 0;
+        await service.matchmake(COMPETITIVE, "us-east");
+
+        matchAssistant.createMatchBasedOnType.mockRejectedValueOnce(
+          new Error("database query error"),
+        );
+        await expect(confirmAll()).rejects.toThrow("database query error");
+      }
+
+      expect(queuedIn("us-east")).toEqual([]);
+      for (const lobby of lobbies) {
+        expect(await detailsOf(lobby.lobbyId)).toBeNull();
+        expect(errorsTo(lobby.players[0].steam_id)).toEqual([
+          expect.objectContaining({ code: "match_refused" }),
+        ]);
+      }
+    });
+
     it("keeps a match that was started when the answer to starting it was lost", async () => {
       await enqueue(tenSolos());
       await service.matchmake(COMPETITIVE, "us-east");
@@ -1897,6 +1940,14 @@ describe("matchmaking (end to end)", () => {
       expect(await redis.ttl(key)).toBe(-1);
       expect(await redis.ttl(`${key}:confirmed`)).toBe(-1);
     });
+  });
+
+  // A script the fake does not know has to be tested against a real redis, not
+  // answered by whichever known script it happens to resemble.
+  it("refuses the stranded lobby sweep's script", async () => {
+    await expect(
+      redis.eval((MatchmakeService as any).HEAL_STRANDED_LOBBY_SCRIPT, 0),
+    ).rejects.toThrow("test it against a real redis");
   });
 
   describe("randomized queues", () => {
