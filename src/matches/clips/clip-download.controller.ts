@@ -91,7 +91,7 @@ export class ClipDownloadController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    const clip = await this.getClip(clipId);
+    const clip = await this.getClip(clipId, request.user as User | undefined);
     if (!clip?.file) {
       response.status(404).json({ error: "not found" });
       return;
@@ -118,7 +118,7 @@ export class ClipDownloadController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    const clip = await this.getClip(clipId);
+    const clip = await this.getClip(clipId, request.user as User | undefined);
     if (!clip?.thumbnail_url) {
       response.status(404).json({ error: "not found" });
       return;
@@ -196,18 +196,33 @@ export class ClipDownloadController {
       .slice(0, 32);
   }
 
-  private async getClip(clipId: string) {
+  // Hasura's match_clips select permission decides for a signed-in viewer;
+  // its guest permission is public clips only.
+  private async getClip(clipId: string, viewer: User | undefined) {
     if (!/^[0-9a-fA-F-]{36}$/.test(clipId)) {
       return null;
     }
-    const { match_clips_by_pk } = await this.hasura.query({
+    const selection = {
       match_clips_by_pk: {
         __args: { id: clipId },
         file: true,
         thumbnail_url: true,
+        visibility: true,
       },
-    });
-    return match_clips_by_pk;
+    };
+
+    if (viewer?.steam_id) {
+      const { match_clips_by_pk } = await this.hasura.query(
+        selection,
+        viewer.steam_id,
+      );
+      return match_clips_by_pk;
+    }
+
+    const { match_clips_by_pk } = await this.hasura.query(selection);
+    return match_clips_by_pk?.visibility === "public"
+      ? match_clips_by_pk
+      : null;
   }
 
   // Only a file that a lineup the viewer may see points at today, so the path

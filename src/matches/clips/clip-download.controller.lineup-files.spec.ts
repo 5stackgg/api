@@ -54,6 +54,7 @@ describe("ClipDownloadController lineup files", () => {
               match_clips_by_pk: {
                 file: MATCH_CLIP,
                 thumbnail_url: MATCH_CLIP_THUMBNAIL,
+                visibility: "public",
               },
             }),
             getHasuraHeaders: jest.fn(async (steamId: string) => ({

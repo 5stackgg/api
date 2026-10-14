@@ -121,7 +121,11 @@ describe("ClipDownloadController view counting", () => {
     };
     hasura = {
       query: jest.fn().mockResolvedValue({
-        match_clips_by_pk: { file: FILE, thumbnail_url: null },
+        match_clips_by_pk: {
+          file: FILE,
+          thumbnail_url: null,
+          visibility: "public",
+        },
       }),
       mutation: jest
         .fn()
