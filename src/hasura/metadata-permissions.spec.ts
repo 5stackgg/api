@@ -326,6 +326,17 @@ describe("hasura table metadata", () => {
     });
   });
 
+  describe("match_clips", () => {
+    const clips = () =>
+      tables.find(({ file }) => file === "public_match_clips.yaml")?.metadata;
+
+    it("shows guests public clips only, never a match-only one", () => {
+      expect(
+        blocksByRole(clips(), "select_permissions").get("guest")?.filter,
+      ).toEqual({ visibility: { _eq: "public" } });
+    });
+  });
+
   it("never lists the same name as both a column and a computed field", () => {
     const problems: Array<string> = [];
 
