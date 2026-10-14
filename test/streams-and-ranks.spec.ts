@@ -89,6 +89,43 @@ describe("stream priorities and premier rank history (SQL-driven)", () => {
     });
   });
 
+  describe("match stream links", () => {
+    const addStream = async (link: string) => {
+      const match = await fx.match();
+      return postgres.query(
+        `INSERT INTO match_streams (match_id, link, title, priority)
+         VALUES ($1, $2, 'stream', 1)`,
+        [match.id, link],
+      );
+    };
+
+    it.each([
+      "javascript:alert(document.cookie)",
+      "data:text/html,<script>alert(1)</script>",
+      "file:///etc/passwd",
+      "//evil.test/embed",
+      "twitch.tv/somebody",
+    ])("refuses %s", async (link) => {
+      await expect(addStream(link)).rejects.toThrow("match_streams_link_http");
+    });
+
+    it.each([
+      "https://www.twitch.tv/somebody",
+      "HTTPS://www.youtube.com/watch?v=abc",
+      "http://stream.example.test/live",
+    ])("takes %s", async (link) => {
+      await expect(addStream(link)).resolves.toBeDefined();
+    });
+
+    it("refuses changing a link to one that is not a web address", async () => {
+      await addStream("https://www.twitch.tv/somebody");
+
+      await expect(
+        postgres.query("UPDATE match_streams SET link = 'javascript:alert(1)'"),
+      ).rejects.toThrow("match_streams_link_http");
+    });
+  });
+
   describe("premier rank history", () => {
     it("deleting observations rolls players.premier_rank back to the latest remaining one", async () => {
       const player = await fx.player();
