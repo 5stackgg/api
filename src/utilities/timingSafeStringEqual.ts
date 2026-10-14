@@ -4,8 +4,10 @@ export function timingSafeStringEqual(a: unknown, b: unknown): boolean {
   if (typeof a !== "string" || typeof b !== "string") {
     return false;
   }
-  if (a.length !== b.length) {
+  const left = Buffer.from(a);
+  const right = Buffer.from(b);
+  if (left.length !== right.length) {
     return false;
   }
-  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+  return timingSafeEqual(left, right);
 }
