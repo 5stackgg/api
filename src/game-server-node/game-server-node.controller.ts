@@ -34,6 +34,7 @@ import { GamePluginsService } from "../game-plugins/game-plugins.service";
 import { PluginCvarsService } from "../game-plugins/plugin-cvars.service";
 import { MapAssetsService } from "../map-assets/map-assets.service";
 import { User } from "../auth/types/User";
+import { timingSafeStringEqual } from "../utilities/timingSafeStringEqual";
 
 @Controller("game-server-node")
 export class GameServerNodeController {
@@ -501,7 +502,11 @@ export class GameServerNodeController {
       },
     });
 
-    if (!game_server_nodes_by_pk || game_server_nodes_by_pk.token === null) {
+    if (
+      !game_server_nodes_by_pk ||
+      game_server_nodes_by_pk.token === null ||
+      !timingSafeStringEqual(request.query.token, game_server_nodes_by_pk.token)
+    ) {
       throw new Error("Game server not found");
     }
 

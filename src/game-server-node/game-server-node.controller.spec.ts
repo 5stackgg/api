@@ -199,3 +199,92 @@ describe("GameServerNodeController server ping hibernation", () => {
     expect(hasura.mutation).toHaveBeenCalledWith(setsHibernating(false));
   });
 });
+
+describe("GameServerNodeController setup script", () => {
+  const NODE_TOKEN = "tskey-node-setup-1234";
+  let hasura: { query: jest.Mock };
+  let controller: GameServerNodeController;
+
+  const fetchScript = (query: Record<string, unknown>) => {
+    const response = {
+      setHeader: jest.fn(),
+      write: jest.fn(),
+      end: jest.fn(),
+    };
+    const result = controller.script(
+      { params: { gameServerNodeId: "node-1.sh" }, query } as any,
+      response as any,
+    );
+    return { response, result };
+  };
+
+  beforeEach(() => {
+    hasura = {
+      query: jest.fn().mockResolvedValue({
+        game_server_nodes_by_pk: { token: NODE_TOKEN },
+        settings: [],
+      }),
+    };
+    const queue = { add: jest.fn(), remove: jest.fn() };
+
+    controller = new GameServerNodeController(
+      { warn: jest.fn(), log: jest.fn() } as any,
+      {} as any,
+      { get: jest.fn().mockReturnValue({}) } as any,
+      hasura as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      queue as any,
+      queue as any,
+      {} as any,
+      queue as any,
+      queue as any,
+      {} as any,
+      {} as any,
+    );
+  });
+
+  it("serves the script to the setup link's token", async () => {
+    const { response, result } = fetchScript({ token: NODE_TOKEN });
+
+    await result;
+
+    expect(response.write).toHaveBeenCalledWith(
+      expect.stringContaining(NODE_TOKEN),
+    );
+    expect(response.end).toHaveBeenCalled();
+  });
+
+  it.each([
+    ["no token", {}],
+    ["an empty token", { token: "" }],
+    ["a wrong token", { token: "tskey-node-setup-9999" }],
+    ["a token of another length", { token: `${NODE_TOKEN}0` }],
+    ["a token repeated in the query", { token: [NODE_TOKEN, NODE_TOKEN] }],
+    [
+      "a token as long in characters but not bytes",
+      { token: "é".repeat(NODE_TOKEN.length) },
+    ],
+  ])("refuses %s like a node that does not exist", async (_, query) => {
+    const { response, result } = fetchScript(query);
+
+    await expect(result).rejects.toThrow("Game server not found");
+    expect(response.write).not.toHaveBeenCalled();
+  });
+
+  it("refuses a node without a token", async () => {
+    hasura.query.mockResolvedValue({
+      game_server_nodes_by_pk: { token: null },
+      settings: [],
+    });
+
+    const { response, result } = fetchScript({ token: NODE_TOKEN });
+
+    await expect(result).rejects.toThrow("Game server not found");
+    expect(response.write).not.toHaveBeenCalled();
+  });
+});
