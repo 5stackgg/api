@@ -10,6 +10,7 @@ import { SystemSettingName } from "../system/enums/SystemSettingName";
 import {
   UtilityArtifactsService,
   UtilityTrajectoryPoint,
+  UtilityVector,
 } from "./utility-artifacts.service";
 import { UtilityCalloutsService } from "./utility-callouts.service";
 import { UtilityApproachPoint } from "./types/UtilityApproachPoint";
@@ -509,6 +510,113 @@ export class UtilityLineupsService {
         `[utility-smoke-voxels] dropped the recorded smoke of ${lineupId} by ${author}: ${(error as Error)?.message}`,
       );
     }
+  }
+
+  // A throw a lineup discovery found and a server then landed. Not ingest():
+  // nothing recorded it in a match, so there is no roster to check, and the
+  // seed is the one the server threw, so it is exact by construction.
+  public async insertDiscovered(input: {
+    author: string;
+    mapName: string;
+    side: string;
+    technique: string;
+    throwStrength: string;
+    jumpThrowBind: boolean;
+    name: string;
+    description: string | null;
+    confidence: "exact" | "derived";
+    origin: UtilityVector;
+    eyeZ: number;
+    yaw: number;
+    pitch: number;
+    land: UtilityVector;
+    flightTimeMs: number | null;
+    initialPosition: UtilityVector;
+    initialVelocity: UtilityVector;
+    path: Array<UtilityTrajectoryPoint>;
+  }): Promise<string> {
+    await this.assertDailyLineupLimit(input.author);
+
+    const [inserted] = await this.postgres.query<Array<{ id: string }>>(
+      `INSERT INTO public.utility_lineups
+         (map_name, utility_type, side, technique, throw_strength, jump_throw_bind,
+          origin_x, origin_y, origin_z, eye_z, view_yaw, view_pitch,
+          land_x, land_y, land_z, flight_time_ms,
+          initial_pos_x, initial_pos_y, initial_pos_z,
+          initial_vel_x, initial_vel_y, initial_vel_z,
+          name, description, visibility, author_steam_id,
+          origin_source, confidence, trajectory_preview)
+       VALUES ($1, 'Smoke', $2, $3, $4, $5,
+               $6, $7, $8, $9, $10, $11,
+               $12, $13, $14, $15,
+               $16, $17, $18, $19, $20, $21,
+               $22, $25, 'Private', $23::bigint,
+               'discovery', $26, $24::jsonb)
+       RETURNING id::text AS id`,
+      [
+        input.mapName,
+        input.side,
+        input.technique,
+        input.throwStrength,
+        input.jumpThrowBind,
+        input.origin.x,
+        input.origin.y,
+        input.origin.z,
+        input.eyeZ,
+        input.yaw,
+        input.pitch,
+        input.land.x,
+        input.land.y,
+        input.land.z,
+        input.flightTimeMs,
+        input.initialPosition.x,
+        input.initialPosition.y,
+        input.initialPosition.z,
+        input.initialVelocity.x,
+        input.initialVelocity.y,
+        input.initialVelocity.z,
+        UtilityLineupsService.sanitizeName(
+          input.name,
+          await this.calloutName(
+            input.mapName,
+            "Smoke",
+            input.origin,
+            input.land,
+          ),
+        ),
+        input.author,
+        JSON.stringify(UtilityLineupsService.preview(input.path)),
+        input.description,
+        input.confidence,
+      ],
+    );
+
+    // The row is the save; the 3D flight is extra. Failing here would leave a
+    // lineup the caller never hears about and saves a second time.
+    if (input.path.length > 0) {
+      await this.artifacts
+        .uploadTrajectory({
+          lineupId: inserted.id,
+          mapName: input.mapName,
+          utilityType: "Smoke",
+          throwerSteamId: input.author,
+          throwerTeam: input.side,
+          origin: input.origin,
+          land: input.land,
+          initialPosition: input.initialPosition,
+          initialVelocity: input.initialVelocity,
+          flightTimeMs: input.flightTimeMs,
+          tickRate: UtilityLineupsService.DEFAULT_TICK_RATE,
+          path: input.path,
+        })
+        .catch((error: Error) => {
+          this.logger.warn(
+            `[utility-discovery] lineup ${inserted.id} saved without its flight: ${error?.message}`,
+          );
+        });
+    }
+
+    return inserted.id;
   }
 
   // The columns the practice plugin's LineupRecord is deserialized from. Shared

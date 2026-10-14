@@ -299,6 +299,20 @@ describe("MatchAssistantService", () => {
       expect((await env(false)).HUD_WORKSHOP_ID).toBeUndefined();
     });
 
+    it("boots a discovery's server on any node: nothing films it", async () => {
+      postgres.query.mockImplementation(async (sql: string) =>
+        sql.includes("is_discovery")
+          ? [{ discovery: true }]
+          : [{ id: "node-A" }],
+      );
+
+      const where = await nodeWhere(true);
+
+      expect(where.gpu).toBeUndefined();
+      expect(where.gpu_rendering_enabled).toBeUndefined();
+      expect(where.id).toBeUndefined();
+    });
+
     it("leaves a human practice server free to boot on any node", async () => {
       const where = await nodeWhere(false);
 

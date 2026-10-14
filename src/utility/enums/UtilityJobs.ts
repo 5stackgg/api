@@ -6,4 +6,5 @@ export const UtilityJobs = {
   SyncMapCallouts: `SyncMapCallouts`,
   RunUtilityDriftScan: `RunUtilityDriftScan`,
   BatchUtilityRenderJob: `BatchUtilityRenderJob`,
+  RunUtilityDiscovery: `RunUtilityDiscovery`,
 } as const;

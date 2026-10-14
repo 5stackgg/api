@@ -69,6 +69,7 @@ export enum SystemSettingName {
   // alongside the rest.
   UtilityVerifyMasteries = "public.utility_verify_masteries",
   UtilitySolvesPerHour = "public.utility_solves_per_hour",
+  UtilityDiscoveriesPerHour = "public.utility_discoveries_per_hour",
   // Off by default. The seeder writes lineups nobody threw on this platform, so
   // it is an operator's deliberate act rather than a door that is always open.
   UtilityImportEnabled = "public.utility_import_enabled",

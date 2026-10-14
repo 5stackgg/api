@@ -129,6 +129,8 @@
 - "!include public_utility_collections.yaml"
 - "!include public_utility_demo_mines.yaml"
 - "!include public_utility_demo_throws.yaml"
+- "!include public_utility_discoveries.yaml"
+- "!include public_utility_discovery_results.yaml"
 - "!include public_utility_drift_results.yaml"
 - "!include public_utility_drift_scans.yaml"
 - "!include public_utility_lineup_favorites.yaml"

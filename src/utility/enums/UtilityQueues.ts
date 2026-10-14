@@ -3,4 +3,5 @@ export enum UtilityQueues {
   UtilityMeta = "utility-meta",
   UtilityDrift = "utility-drift",
   UtilityRenders = "utility-renders",
+  UtilityDiscovery = "utility-discovery",
 }

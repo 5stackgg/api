@@ -33,6 +33,7 @@ describe("UtilityModule boot", () => {
       meta as any,
       queue() as any,
       { reconcileQueued: jest.fn().mockResolvedValue(undefined) } as any,
+      { reconcile: jest.fn().mockResolvedValue(undefined) } as any,
     );
 
     expect(meta.add.mock.calls.map(([name]) => name)).not.toContain(

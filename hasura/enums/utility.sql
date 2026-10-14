@@ -29,7 +29,8 @@ insert into e_utility_sources ("value", "description") values
     ('demo', 'Derived from a parsed match demo'),
     ('editor', 'Placed by hand in the web editor'),
     ('import', 'Imported from an external source'),
-    ('fork', 'Copied from another lineup in the library')
+    ('fork', 'Copied from another lineup in the library'),
+    ('discovery', 'Found by a lineup discovery and thrown on a server')
 on conflict(value) do update set "description" = EXCLUDED."description";
 
 -- Starting/Ready are the two statuses the one-live-session-per-host index

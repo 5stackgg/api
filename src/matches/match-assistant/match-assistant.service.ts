@@ -952,9 +952,12 @@ export class MatchAssistantService {
 
     const isPractice = match.source === "practice";
     // A render pod reaches its practice server over loopback, so the server
-    // has to boot on a node the pod can be scheduled on.
+    // has to boot on a node the pod can be scheduled on. A discovery runs the
+    // same quiet plugin with no pod to film it, so any node will do.
     const isRender = isPractice && (await this.isRenderPracticeMatch(matchId));
-    const renderNodeFilter = isRender
+    const needsGpu =
+      isRender && !(await this.isDiscoveryPracticeMatch(matchId));
+    const renderNodeFilter = needsGpu
       ? {
           gpu: { _eq: true },
           gpu_rendering_enabled: { _eq: true },
@@ -991,7 +994,7 @@ export class MatchAssistantService {
 
     if (game_server_nodes.length === 0) {
       this.logger.warn(
-        `[${matchId}] no eligible game server node (Online + enabled + matchmaking${isRender ? " + GPU rendering" : ""}${match.region ? ` in ${match.region}` : ""}) — cannot boot an on-demand server`,
+        `[${matchId}] no eligible game server node (Online + enabled + matchmaking${needsGpu ? " + GPU rendering" : ""}${match.region ? ` in ${match.region}` : ""}) — cannot boot an on-demand server`,
       );
       return false;
     }
@@ -1559,6 +1562,21 @@ export class MatchAssistantService {
       },
     });
     return (utility_practice_sessions ?? []).length > 0;
+  }
+
+  // Read with SQL rather than the generated client, which predates the column.
+  private async isDiscoveryPracticeMatch(matchId: string): Promise<boolean> {
+    const [row] = await this.postgres.query<Array<{ discovery: boolean }>>(
+      `SELECT EXISTS (
+         SELECT 1
+           FROM public.utility_practice_sessions
+          WHERE match_id = $1::uuid
+            AND is_render = true
+            AND is_discovery = true
+       ) AS discovery`,
+      [matchId],
+    );
+    return row?.discovery === true;
   }
 
   // Same predicate as the render pod's GPU claim, so the server never lands on

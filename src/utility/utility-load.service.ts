@@ -469,6 +469,33 @@ export class UtilityLoadService {
     return { sent: fallback !== null, queued: false };
   }
 
+  // Tells a render server to throw a lineup discovery's proposals, or to stop.
+  // The plugin fetches the discovery itself; only its id goes over RCON.
+  public async discovery(
+    serverId: string,
+    verb: "run" | "cancel",
+    discoveryId: string,
+  ): Promise<boolean> {
+    UtilityLoadService.assertRconId(discoveryId);
+
+    const reply = await this.send(
+      serverId,
+      `utility_discovery_${verb} id=${discoveryId}`,
+    );
+
+    if (reply === null || UtilityLoadService.isUnknownCommand(reply)) {
+      return false;
+    }
+
+    // A run the server is already busy with is a run it took: the job that
+    // sent it lost track of it, not the server.
+    return (
+      verb === "cancel" ||
+      reply.includes("accepted") ||
+      reply.includes(`busy with discovery ${discoveryId}`)
+    );
+  }
+
   private static isUnknownCommand(reply: string): boolean {
     return reply.toLowerCase().includes("unknown command");
   }

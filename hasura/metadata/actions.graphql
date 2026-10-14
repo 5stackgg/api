@@ -2908,3 +2908,80 @@ type SiteContentOutput {
   news: Boolean!
   highlights: Boolean!
 }
+
+type Mutation {
+  discoverUtilityLineups(
+    map_name: String!
+    target_x: Float!
+    target_y: Float!
+    target_z: Float!
+    radius: Float!
+    area: UtilityDiscoveryAreaInput!
+    techniques: [UtilityDiscoveryTechniqueInput!]!
+    strengths: [String!]
+  ): UtilityDiscoveryOutput
+}
+
+type Mutation {
+  cancelUtilityDiscovery(
+    discovery_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  saveUtilityDiscoveryResult(
+    result_id: uuid!
+    name: String!
+    side: String!
+  ): UtilityDiscoverySaveOutput
+}
+
+type Query {
+  previewUtilitySmoke(
+    map_name: String!
+    x: Float!
+    y: Float!
+    z: Float!
+  ): UtilitySmokePreviewOutput
+}
+
+input UtilityDiscoveryAreaInput {
+  min_x: Float!
+  min_y: Float!
+  min_z: Float!
+  max_x: Float!
+  max_y: Float!
+  max_z: Float!
+  radius: Float
+}
+
+input UtilityDiscoveryTechniqueInput {
+  direction: String
+  gait: String
+  jump_throw: Boolean!
+}
+
+type UtilityDiscoveryOutput {
+  discovery_id: uuid
+  status: String!
+  predicted: Int!
+  message: String
+}
+
+type UtilityDiscoverySaveOutput {
+  lineup_id: uuid!
+}
+
+type UtilitySmokePreviewOutput {
+  x: Float!
+  y: Float!
+  z: Float!
+  ox: Float
+  oy: Float
+  oz: Float
+  vs: Float
+  dx: Int
+  dy: Int
+  dz: Int
+  den: String
+}
