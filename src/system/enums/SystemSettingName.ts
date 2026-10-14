@@ -21,6 +21,11 @@ export enum SystemSettingName {
   // select permission, and searches go through the api so it never reaches a
   // browser.
   GiphyApiKey = "giphy_api_key",
+  TwitchClientId = "twitch_client_id",
+  // Write-only for administrators, like the GIPHY key.
+  TwitchClientSecret = "twitch_client_secret",
+  // Written by the api, never by an admin: true once both Twitch keys are set.
+  SupportsTwitch = "public.supports_twitch",
   DemoNetworkLimiter = "demo_network_limiter",
   PublicDefaultModels = "public.default_models",
   VetoPickTimeout = "public.veto_pick_timeout",

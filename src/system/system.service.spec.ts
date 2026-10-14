@@ -344,3 +344,55 @@ describe("SystemService.syncImportedHighlightsSupport", () => {
     });
   });
 });
+
+describe("SystemService.syncTwitchSupport", () => {
+  let hasura: { mutation: jest.Mock };
+  let postgres: { query: jest.Mock };
+  let system: SystemService;
+
+  const run = async (settings: Record<string, string>) => {
+    postgres.query.mockImplementation(async (_sql: string, [name]: [string]) =>
+      name in settings ? [{ value: settings[name] }] : [],
+    );
+
+    await system.syncTwitchSupport();
+
+    return hasura.mutation.mock.calls[0][0].insert_settings_one.__args.object;
+  };
+
+  beforeEach(() => {
+    hasura = { mutation: jest.fn().mockResolvedValue({}) };
+    postgres = { query: jest.fn() };
+    system = new SystemService(
+      {} as any,
+      hasura as any,
+      {} as any,
+      { warn: jest.fn(), log: jest.fn() } as any,
+      postgres as any,
+    );
+  });
+
+  it("reports support once both keys are set", async () => {
+    expect(
+      await run({
+        twitch_client_id: "client-id",
+        twitch_client_secret: "client-secret",
+      }),
+    ).toEqual({ name: "public.supports_twitch", value: "true" });
+  });
+
+  it.each([
+    ["the secret is missing", { twitch_client_id: "client-id" }],
+    ["the client id is missing", { twitch_client_secret: "client-secret" }],
+    [
+      "a key was cleared",
+      { twitch_client_id: "client-id", twitch_client_secret: " " },
+    ],
+    ["neither key has ever been set", {}],
+  ])("reports no support when %s", async (_case, settings) => {
+    expect(await run(settings as Record<string, string>)).toEqual({
+      name: "public.supports_twitch",
+      value: "false",
+    });
+  });
+});
