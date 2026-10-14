@@ -1,3 +1,5 @@
+import { readFileSync } from "fs";
+import { join } from "path";
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { Fixtures } from "./utils/fixtures";
 import {
@@ -123,6 +125,43 @@ describe("stream priorities and premier rank history (SQL-driven)", () => {
       await expect(
         postgres.query("UPDATE match_streams SET link = 'javascript:alert(1)'"),
       ).rejects.toThrow("match_streams_link_http");
+    });
+
+    // The migration runs against links stored before there was a check.
+    it("removes a stored link that is not a web address, so the streams beside it can still be edited", async () => {
+      const migration = readFileSync(
+        join(
+          process.cwd(),
+          "hasura/migrations/default/1890000000930_match_streams_link_http/up.sql",
+        ),
+        "utf8",
+      );
+      await postgres.query(
+        "ALTER TABLE match_streams DROP CONSTRAINT match_streams_link_http",
+      );
+
+      const match = await fx.match();
+      const stream = async (link: string, priority: number) => {
+        const [row] = await postgres.query<Array<{ id: string }>>(
+          `INSERT INTO match_streams (match_id, link, title, priority)
+           VALUES ($1, $2, 'stream', $3) RETURNING id`,
+          [match.id, link, priority],
+        );
+        return row.id;
+      };
+      const first = await stream("https://www.twitch.tv/first", 1);
+      await stream("javascript:alert(1)", 2);
+      const last = await stream("https://www.twitch.tv/last", 3);
+
+      await postgres.query(migration);
+
+      await postgres.query("DELETE FROM match_streams WHERE id = $1", [first]);
+
+      const remaining = await postgres.query<Array<{ id: string }>>(
+        "SELECT id FROM match_streams WHERE match_id = $1",
+        [match.id],
+      );
+      expect(remaining.map((row) => row.id)).toEqual([last]);
     });
   });
 
