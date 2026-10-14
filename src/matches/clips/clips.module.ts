@@ -8,6 +8,7 @@ import { ClipsService } from "./clips.service";
 import { ClipRendersController } from "./clip-renders.controller";
 import { ClipDownloadController } from "./clip-download.controller";
 import { ClipViewsController } from "./clip-views.controller";
+import { FileUrlSigningService } from "./file-url-signing.service";
 import { HasuraModule } from "../../hasura/hasura.module";
 import { PostgresModule } from "../../postgres/postgres.module";
 import { S3Module } from "../../s3/s3.module";
@@ -51,6 +52,7 @@ import { ReconcileQueuedHighlights } from "./jobs/ReconcileQueuedHighlights";
   ],
   providers: [
     ClipsService,
+    FileUrlSigningService,
     BatchHighlightsRenderJob,
     BatchHighlightsRenderJobEvents,
     CleanClips,

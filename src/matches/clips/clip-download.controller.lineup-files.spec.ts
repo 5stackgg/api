@@ -1,9 +1,11 @@
 import { INestApplication, Logger } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
+import { createHmac } from "crypto";
 import { Readable } from "stream";
 import request from "supertest";
 import { ClipDownloadController } from "./clip-download.controller";
 import { ClipsService } from "./clips.service";
+import { FileUrlSigningService } from "./file-url-signing.service";
 import { S3Service } from "../../s3/s3.service";
 import { HasuraService } from "../../hasura/hasura.service";
 import { PostgresService } from "../../postgres/postgres.service";
@@ -17,6 +19,21 @@ const MATCH_CLIP_THUMBNAIL = "clips/76561198000000001/match-clip.jpg";
 const SIZE = 1000;
 // Valid as the recorded smoke's JSON, which the HTTP client parses.
 const BODY = Buffer.from("{}".padEnd(SIZE));
+const S3_SECRET = "bucket-secret";
+
+// What the computed fields put on a link (file_url_signature.sql), worked out
+// the way the Cloudflare worker checks it.
+function signed(key: string, exp = Math.floor(Date.now() / 1000) + 21600) {
+  const signingKey = createHmac("sha256", S3_SECRET)
+    .update("5stack-file-url-v1")
+    .digest();
+  return {
+    exp: String(exp),
+    sig: createHmac("sha256", signingKey)
+      .update(`${key}\n${exp}`)
+      .digest("base64url"),
+  };
+}
 
 // Without a Cloudflare worker a lineup's files are fetched from the demos
 // domain, where the path is the object's key. Asked over HTTP, because which
@@ -68,6 +85,14 @@ describe("ClipDownloadController lineup files", () => {
           useValue: { registerStreamedClipView: jest.fn() },
         },
         {
+          provide: FileUrlSigningService,
+          useValue: new FileUrlSigningService(
+            { warn: jest.fn() } as any,
+            { get: () => ({ secret: S3_SECRET }) } as any,
+            {} as any,
+          ),
+        },
+        {
           provide: Logger,
           useValue: { log: jest.fn(), warn: jest.fn(), error: jest.fn() },
         },
@@ -93,7 +118,12 @@ describe("ClipDownloadController lineup files", () => {
     expect(response.status).toBe(200);
     expect(response.headers["content-type"]).toBe("video/mp4");
     expect(response.headers["content-length"]).toBe(String(SIZE));
-    expect(postgres.query.mock.calls[0][1]).toEqual([LINEUP, CLIP, "{}"]);
+    expect(postgres.query.mock.calls[0][1]).toEqual([
+      LINEUP,
+      CLIP,
+      "{}",
+      false,
+    ]);
     expect(s3.get).toHaveBeenCalledWith(CLIP);
   });
 
@@ -108,7 +138,7 @@ describe("ClipDownloadController lineup files", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers["content-type"]).toBe(contentType);
-    expect(postgres.query.mock.calls[0][1]).toEqual([LINEUP, key, "{}"]);
+    expect(postgres.query.mock.calls[0][1]).toEqual([LINEUP, key, "{}", false]);
     expect(s3.stat).toHaveBeenCalledWith(key);
   });
 
@@ -244,8 +274,10 @@ describe("ClipDownloadController lineup files", () => {
   });
 
   it("still plays a match clip and its thumbnail by the clip's id", async () => {
-    const clip = await get(`clips/${MATCH_CLIP_ID}`);
-    const thumbnail = await get(`clips/${MATCH_CLIP_ID}/thumbnail`);
+    const clip = await get(`clips/${MATCH_CLIP_ID}`).query(signed(MATCH_CLIP));
+    const thumbnail = await get(`clips/${MATCH_CLIP_ID}/thumbnail`).query(
+      signed(MATCH_CLIP_THUMBNAIL),
+    );
 
     expect(clip.status).toBe(200);
     expect(clip.headers["cache-control"]).toBe(
@@ -257,5 +289,100 @@ describe("ClipDownloadController lineup files", () => {
       MATCH_CLIP_THUMBNAIL,
     ]);
     expect(postgres.query).not.toHaveBeenCalled();
+  });
+  // The demos domain carries no session, so anyone who has or guesses a clip's
+  // id could fetch it, private or not. Only a link the computed field signed
+  // for that file, and still in date, is served.
+  describe("signed links", () => {
+    const now = () => Math.floor(Date.now() / 1000);
+
+    it.each([
+      ["no signature", {}],
+      ["an expired link", signed(MATCH_CLIP, now() - 1)],
+      [
+        "a signature for another file",
+        signed("clips/76561198000000001/other.mp4"),
+      ],
+      ["a forged signature", { exp: String(now() + 600), sig: "A".repeat(43) }],
+      [
+        "a link whose expiry was pushed out",
+        { ...signed(MATCH_CLIP), exp: String(now() + 365 * 86400) },
+      ],
+    ])("refuses a clip on %s without reading S3", async (_label, query) => {
+      const clip = await get(`clips/${MATCH_CLIP_ID}`).query(query);
+
+      expect(clip.status).toBe(403);
+      expect(clip.headers["cache-control"]).toBe("no-store");
+      expect(s3.stat).not.toHaveBeenCalled();
+      expect(s3.get).not.toHaveBeenCalled();
+    });
+
+    it("refuses a thumbnail on the clip's signature or none", async () => {
+      for (const query of [{}, signed(MATCH_CLIP)]) {
+        const thumbnail = await get(`clips/${MATCH_CLIP_ID}/thumbnail`).query(
+          query,
+        );
+
+        expect(thumbnail.status).toBe(403);
+      }
+      expect(s3.stat).not.toHaveBeenCalled();
+    });
+
+    it("serves a clip on its signed link with the name, download and range it asks for", async () => {
+      const response = await get(`clips/${MATCH_CLIP_ID}`)
+        .query({ ...signed(MATCH_CLIP), dl: "1", name: "ace.mp4" })
+        .set("Range", "bytes=0-99");
+
+      expect(response.status).toBe(206);
+      expect(response.headers["content-disposition"]).toBe(
+        'attachment; filename="ace.mp4"',
+      );
+      expect(s3.getPartial).toHaveBeenCalledWith(MATCH_CLIP, 0, 100);
+    });
+
+    it("refuses every clip when the api has no bucket secret to check with", async () => {
+      const unkeyed = new FileUrlSigningService(
+        { warn: jest.fn() } as any,
+        { get: () => ({}) } as any,
+        {} as any,
+      );
+
+      expect(unkeyed.verify(MATCH_CLIP, signed(MATCH_CLIP).exp, "")).toBe(
+        false,
+      );
+    });
+
+    it("serves a lineup file on its signed link to a visitor with no session", async () => {
+      postgres.query.mockResolvedValueOnce([{ public: false }]);
+
+      const response = await get(CLIP).query(signed(CLIP));
+
+      expect(response.status).toBe(200);
+      expect(postgres.query.mock.calls[0][1]).toEqual([
+        LINEUP,
+        CLIP,
+        "{}",
+        true,
+      ]);
+      expect(response.headers["cache-control"]).toBe(
+        "private, max-age=0, must-revalidate",
+      );
+    });
+
+    it("checks the session instead when a lineup file's link is not signed for it", async () => {
+      viewer = { steam_id: "76561198000000001", role: "user" };
+
+      await get(CLIP).query(signed(`clips/utility/${LINEUP}.mp4`));
+
+      expect(postgres.query.mock.calls[0][1]).toEqual([
+        LINEUP,
+        CLIP,
+        JSON.stringify({
+          "x-hasura-role": "user",
+          "x-hasura-user-id": "76561198000000001",
+        }),
+        false,
+      ]);
+    });
   });
 });
