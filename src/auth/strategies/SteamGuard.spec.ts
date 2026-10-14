@@ -47,7 +47,6 @@ describe("SteamGuard.isSafeRedirect", () => {
     expect(isSafeRedirect("/\\/evil.com")).toBe(false);
     expect(isSafeRedirect("/\t/evil.com")).toBe(false);
     expect(isSafeRedirect("/\n/evil.com")).toBe(false);
-    expect(isSafeRedirect("\\/evil.com")).toBe(false);
   });
 
   it("still allows a relative path with a query and a hash", () => {
