@@ -18,6 +18,61 @@ AS $$
     );
 $$;
 
+-- Every tournament lineup seats the whole roster, substitutes included, so a
+-- seat is not proof of play; recorded activity is. A match that finished with
+-- nothing recorded for the lineup (a result set by hand after a crash, a LAN
+-- final) cannot say who played, so everyone seated in it counts. A no-show
+-- forfeit counts nobody: it also ends Finished (tbu_matches finishes any match
+-- with a winner), so it is told apart by the no-shows it records in
+-- abandoned_matches. A team left with no one at all, every match a forfeit,
+-- keeps every seated player.
+CREATE OR REPLACE FUNCTION public.tournament_team_medalists(_tournament_id uuid, _tournament_team_id uuid)
+RETURNS TABLE (player_steam_id bigint)
+LANGUAGE sql STABLE
+AS $$
+    WITH seats AS (
+        SELECT
+            roster.player_steam_id,
+            m.id AS match_id,
+            m.status,
+            public.player_has_match_activity(m.id, roster.player_steam_id) AS played
+        FROM public.tournament_team_roster roster
+        JOIN public.tournament_stages ts ON ts.tournament_id = roster.tournament_id
+        JOIN public.tournament_brackets tb
+          ON tb.tournament_stage_id = ts.id
+         AND roster.tournament_team_id IN (tb.tournament_team_id_1, tb.tournament_team_id_2)
+        JOIN public.matches m ON m.id = tb.match_id
+        JOIN public.match_lineup_players mlp
+          ON mlp.steam_id = roster.player_steam_id
+         AND mlp.match_lineup_id = CASE WHEN tb.tournament_team_id_1 = roster.tournament_team_id
+                                        THEN m.lineup_1_id ELSE m.lineup_2_id END
+        WHERE roster.tournament_id = _tournament_id
+          AND roster.tournament_team_id = _tournament_team_id
+    ),
+    unrecorded AS (
+        SELECT seat.match_id
+        FROM seats seat
+        WHERE seat.status IN ('Finished', 'Tie')
+          AND NOT EXISTS (
+              SELECT 1 FROM public.abandoned_matches am
+              WHERE am.match_id = seat.match_id
+          )
+        GROUP BY seat.match_id
+        HAVING NOT bool_or(seat.played)
+    ),
+    medalists AS (
+        SELECT DISTINCT seat.player_steam_id
+        FROM seats seat
+        WHERE seat.played
+           OR seat.match_id IN (SELECT match_id FROM unrecorded)
+    )
+    SELECT player_steam_id FROM medalists
+    UNION
+    SELECT seat.player_steam_id
+    FROM seats seat
+    WHERE NOT EXISTS (SELECT 1 FROM medalists);
+$$;
+
 CREATE OR REPLACE FUNCTION public.calculate_tournament_awards(_tournament_id uuid)
 RETURNS void
 LANGUAGE plpgsql
@@ -221,19 +276,18 @@ BEGIN
         ON CONFLICT DO NOTHING;
     END IF;
 
-    -- Roster-wide gold / silver / bronze. ON CONFLICT skips any player who
-    -- already has a matching hand-granted award at this placement. Leaving the
-    -- conflict target unspecified keeps this function tolerant of both the
-    -- placement-aware recipient key and the partial MVP index.
+    -- Gold / silver / bronze for the placing teams' rostered players who
+    -- played. ON CONFLICT skips any player who already has a matching
+    -- hand-granted award at this placement. Leaving the conflict target
+    -- unspecified keeps this function tolerant of both the placement-aware
+    -- recipient key and the partial MVP index.
     IF _winning_team_id IS NOT NULL THEN
         INSERT INTO public.award_recipients
             (award_id, tournament_id, tournament_team_id, player_steam_id, placement, source)
         SELECT
             public.resolve_tournament_award(_tournament_id, 1),
-            _tournament_id, _winning_team_id, roster.player_steam_id, 1, 'tournament'
-        FROM public.tournament_team_roster roster
-        WHERE roster.tournament_team_id = _winning_team_id
-          AND roster.tournament_id = _tournament_id
+            _tournament_id, _winning_team_id, medalist.player_steam_id, 1, 'tournament'
+        FROM public.tournament_team_medalists(_tournament_id, _winning_team_id) medalist
         ON CONFLICT DO NOTHING;
     END IF;
 
@@ -242,10 +296,8 @@ BEGIN
             (award_id, tournament_id, tournament_team_id, player_steam_id, placement, source)
         SELECT
             public.resolve_tournament_award(_tournament_id, 2),
-            _tournament_id, _runner_up_team_id, roster.player_steam_id, 2, 'tournament'
-        FROM public.tournament_team_roster roster
-        WHERE roster.tournament_team_id = _runner_up_team_id
-          AND roster.tournament_id = _tournament_id
+            _tournament_id, _runner_up_team_id, medalist.player_steam_id, 2, 'tournament'
+        FROM public.tournament_team_medalists(_tournament_id, _runner_up_team_id) medalist
         ON CONFLICT DO NOTHING;
     END IF;
 
@@ -254,10 +306,8 @@ BEGIN
             (award_id, tournament_id, tournament_team_id, player_steam_id, placement, source)
         SELECT
             public.resolve_tournament_award(_tournament_id, 3),
-            _tournament_id, _third_team_id, roster.player_steam_id, 3, 'tournament'
-        FROM public.tournament_team_roster roster
-        WHERE roster.tournament_team_id = _third_team_id
-          AND roster.tournament_id = _tournament_id
+            _tournament_id, _third_team_id, medalist.player_steam_id, 3, 'tournament'
+        FROM public.tournament_team_medalists(_tournament_id, _third_team_id) medalist
         ON CONFLICT DO NOTHING;
     END IF;
 END;

@@ -619,9 +619,9 @@ export class AwardsService {
   }
 
   // A team award has to reach the people on the team, otherwise it only ever
-  // shows on the team page. Tournament placements already work this way — the
-  // calculation writes one team row plus a row per roster player — so a
-  // hand-granted team award fans out the same way. Invites are skipped, and
+  // shows on the team page, so a hand-granted team award fans out to the
+  // team's roster. Unlike the calculated placements, which go only to the
+  // players who played, this is the organizer's call. Invites are skipped, and
   // members who already hold the award are filtered out here rather than left
   // to ON CONFLICT: tbi_award_recipients raises on a duplicate instead of
   // conflicting, so one existing holder would otherwise fail the whole grant.
