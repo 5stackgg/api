@@ -14,7 +14,7 @@ import { HasuraService } from "../../hasura/hasura.service";
 import { PostgresService } from "../../postgres/postgres.service";
 import { User } from "../../auth/types/User";
 import { ClipsService } from "./clips.service";
-import { FileUrlSigningService } from "./file-url-signing.service";
+import { FileUrlSigningService } from "../../hasura/file-url-signing.service";
 
 // View counting mirrors the clip Worker (5stack-panel
 // cloudflare-workers/backblaze-proxy) rule for rule, viewer key included, so a

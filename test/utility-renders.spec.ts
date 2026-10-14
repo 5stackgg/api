@@ -5,7 +5,7 @@ import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { ClipDownloadController } from "./../src/matches/clips/clip-download.controller";
-import { FileUrlSigningService } from "./../src/matches/clips/file-url-signing.service";
+import { FileUrlSigningService } from "./../src/hasura/file-url-signing.service";
 import {
   UTILITY_RENDER_VERSION,
   UtilityRendersService,

@@ -5,7 +5,7 @@ import { Readable } from "stream";
 import request from "supertest";
 import { ClipDownloadController } from "./clip-download.controller";
 import { ClipsService } from "./clips.service";
-import { FileUrlSigningService } from "./file-url-signing.service";
+import { FileUrlSigningService } from "../../hasura/file-url-signing.service";
 import { S3Service } from "../../s3/s3.service";
 import { HasuraService } from "../../hasura/hasura.service";
 import { PostgresService } from "../../postgres/postgres.service";

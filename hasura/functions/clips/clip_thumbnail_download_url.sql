@@ -19,16 +19,12 @@ CREATE OR REPLACE FUNCTION public.clip_thumbnail_download_url(match_clips public
 
         signature := public.file_url_signature(match_clips.thumbnail_url, match_clips.visibility = 'public');
 
-        IF signature IS NULL THEN
-            RETURN NULL;
-        END IF;
-
         SELECT value INTO worker_url
         FROM settings
         WHERE name = 'cloudflare_worker_url';
 
         IF worker_url IS NOT NULL THEN
-            RETURN CONCAT(worker_url, '/', match_clips.thumbnail_url, '?v=', version, '&', signature);
+            RETURN CONCAT(worker_url, '/', match_clips.thumbnail_url, '?v=', version, '&' || signature);
         END IF;
 
         SELECT value INTO demos_domain
@@ -39,6 +35,6 @@ CREATE OR REPLACE FUNCTION public.clip_thumbnail_download_url(match_clips public
             RETURN NULL;
         END IF;
 
-        RETURN CONCAT(demos_domain, '/clips/', match_clips.id, '/thumbnail?v=', version, '&', signature);
+        RETURN CONCAT(demos_domain, '/clips/', match_clips.id, '/thumbnail?v=', version, '&' || signature);
     END;
 $$;

@@ -5,8 +5,13 @@
 --
 -- exp is the end of the bucket after the current one: a link stays the same for
 -- a whole bucket, so it caches and a subscription does not push a new one, and
--- it always has at least a bucket left to run. NULL until the api has stored
--- the key.
+-- it always has at least a bucket left to run.
+--
+-- NULL until the api has stored the key, and the callers then hand the link out
+-- unsigned rather than not at all: these functions are applied by hasura's
+-- migrations container, which cannot derive the key, so a rollout reaches them
+-- before the api can sign. An unsigned link opens nothing where signatures are
+-- required.
 CREATE OR REPLACE FUNCTION public.file_url_signature(file_key text, public_file boolean)
     RETURNS text
     LANGUAGE sql STABLE

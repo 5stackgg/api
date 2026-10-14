@@ -34,11 +34,11 @@ CREATE OR REPLACE FUNCTION public.utility_lineup_file_url(
             public.can_view_utility_lineup(utility_lineups, '{}'::json) IS TRUE
         );
 
-        IF base_url IS NULL OR signature IS NULL THEN
+        IF base_url IS NULL THEN
             RETURN NULL;
         END IF;
 
-        RETURN CONCAT(base_url, '/', file_key, '?v=', version, '&', signature);
+        RETURN CONCAT(base_url, '/', file_key, '?v=', version, '&' || signature);
     END;
 $$;
 

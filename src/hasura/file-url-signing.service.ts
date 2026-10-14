@@ -1,9 +1,9 @@
 import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createHmac } from "crypto";
-import { PostgresService } from "../../postgres/postgres.service";
-import { S3Config } from "../../configs/types/S3Config";
-import { timingSafeStringEqual } from "../../utilities/timingSafeStringEqual";
+import { PostgresService } from "../postgres/postgres.service";
+import { S3Config } from "../configs/types/S3Config";
+import { timingSafeStringEqual } from "../utilities/timingSafeStringEqual";
 
 // A file under clips/ is served only on a link carrying `exp` and `sig`, which
 // the computed fields mint (file_url_signature.sql) for rows the viewer may
@@ -13,7 +13,7 @@ import { timingSafeStringEqual } from "../../utilities/timingSafeStringEqual";
 @Injectable()
 export class FileUrlSigningService implements OnApplicationBootstrap {
   public static readonly KEY_LABEL = "5stack-file-url-v1";
-  private static readonly STORE_RETRY_MS = 30_000;
+  private static readonly STORE_RETRY_MS = 5_000;
 
   private readonly key: Buffer | null;
 
@@ -30,10 +30,19 @@ export class FileUrlSigningService implements OnApplicationBootstrap {
       : null;
   }
 
-  // The table comes from a migration that hasura's init container runs, which
-  // can finish after this pod has booted.
-  public onApplicationBootstrap() {
-    void this.storeKeyUntilStored();
+  // Awaited, so a pod booting after the migrations signs from its first
+  // request. The table comes from a migration that hasura's init container
+  // runs, which can still be running when this pod boots; until then the
+  // computed fields hand links out unsigned (file_url_signature.sql).
+  public async onApplicationBootstrap() {
+    try {
+      await this.storeKey();
+    } catch (error) {
+      this.logger.warn(
+        `unable to store the file link signing key, retrying: ${(error as Error)?.message}`,
+      );
+      void this.storeKeyUntilStored();
+    }
   }
 
   public async storeKey() {
@@ -69,18 +78,15 @@ export class FileUrlSigningService implements OnApplicationBootstrap {
   }
 
   private async storeKeyUntilStored() {
-    for (;;) {
-      try {
-        await this.storeKey();
-        return;
-      } catch (error) {
-        this.logger.warn(
-          `unable to store the file link signing key, retrying: ${(error as Error)?.message}`,
-        );
-        await new Promise((resolve) =>
-          setTimeout(resolve, FileUrlSigningService.STORE_RETRY_MS).unref(),
-        );
-      }
+    let stored = false;
+    while (!stored) {
+      await new Promise((resolve) =>
+        setTimeout(resolve, FileUrlSigningService.STORE_RETRY_MS).unref(),
+      );
+      stored = await this.storeKey().then(
+        () => true,
+        () => false,
+      );
     }
   }
 }

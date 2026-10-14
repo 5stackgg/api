@@ -5,7 +5,7 @@ import { Readable, Writable } from "stream";
 import { ClipDownloadController } from "./clip-download.controller";
 import { ClipViewsController } from "./clip-views.controller";
 import { ClipsService } from "./clips.service";
-import { FileUrlSigningService } from "./file-url-signing.service";
+import { FileUrlSigningService } from "../../hasura/file-url-signing.service";
 import { S3Service } from "../../s3/s3.service";
 import { HasuraService } from "../../hasura/hasura.service";
 import { PostgresService } from "../../postgres/postgres.service";

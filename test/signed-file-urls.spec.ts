@@ -2,11 +2,12 @@ import { Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createHmac } from "crypto";
 import { readdirSync, readFileSync } from "fs";
+import * as yaml from "js-yaml";
 import { join } from "path";
 import { Readable, Writable } from "stream";
 import { PostgresService } from "../src/postgres/postgres.service";
 import { ClipDownloadController } from "../src/matches/clips/clip-download.controller";
-import { FileUrlSigningService } from "../src/matches/clips/file-url-signing.service";
+import { FileUrlSigningService } from "../src/hasura/file-url-signing.service";
 import { Fixtures } from "./utils/fixtures";
 import { HasuraPermissions } from "./utils/hasura-permissions";
 import {
@@ -61,8 +62,11 @@ describe("signed clip and lineup file links", () => {
     );
   });
 
-  async function clip(visibility: "public" | "private" | "match") {
-    const { mapId } = await fx.bareMatch();
+  async function clip(
+    visibility: "public" | "private" | "match",
+    mapId?: string,
+  ) {
+    mapId ??= (await fx.bareMatch()).mapId;
     const owner = await fx.player();
     const [row] = await postgres.query<
       Array<{ id: string; file: string; thumbnail: string }>
@@ -208,39 +212,171 @@ describe("signed clip and lineup file links", () => {
       },
     );
 
-    it("is only minted for clips the role can read", async () => {
-      const shown = await clip("public");
-      const hidden = await clip("private");
-      const params: Array<unknown> = [];
-      const guest = await new HasuraPermissions(postgres).where(
-        "match_clips",
-        "select",
-        "c",
-        { role: "guest", userId: "" },
-        params,
+    it("reaches a match clip's players through Hasura, and no other signed-in player", async () => {
+      const { matchId, mapId } = await fx.bareMatch();
+      const player = await fx.player();
+      const stranger = await fx.player();
+      await postgres.query(
+        `INSERT INTO match_lineup_players (match_lineup_id, steam_id)
+         SELECT lineup_1_id, $2::bigint FROM matches WHERE id = $1`,
+        [matchId, player],
       );
+      const row = await clip("match", mapId);
 
-      const rows = await postgres.query<Array<{ id: string; url: string }>>(
-        `SELECT c.id, public.clip_download_url(c) AS url
-           FROM match_clips c
-          WHERE c.id = ANY($${params.length + 1}::uuid[]) AND ${guest}`,
-        [...(params as Array<string>), [shown.id, hidden.id]],
-      );
+      const linksAs = async (steamId: string) => {
+        const params: Array<unknown> = [];
+        const filter = await new HasuraPermissions(postgres).where(
+          "match_clips",
+          "select",
+          "c",
+          { role: "user", userId: steamId },
+          params,
+        );
+        const rows = await postgres.query<Array<{ url: string }>>(
+          `SELECT public.clip_download_url(c) AS url
+             FROM match_clips c
+            WHERE c.id = $${params.length + 1} AND ${filter}`,
+          [...(params as Array<string>), row.id],
+        );
+        return rows.map(({ url }) => url);
+      };
 
-      expect(rows.map((row) => row.id)).toEqual([shown.id]);
+      const [link] = await linksAs(player);
+      const { exp, sig } = signatureOf(link);
+      expect(signing.verify(row.file, exp, sig)).toBe(true);
+      expect(expiresIn(link)).toBeLessThanOrEqual(2 * SIX_HOURS);
+
+      expect(await linksAs(stranger)).toEqual([]);
     });
 
-    it("is not given out before the api has stored the key", async () => {
-      const row = await clip("public");
+    // Hasura evaluates a computed field only on the rows a role's filter lets
+    // through, on every path to the table: relationships and aggregate nodes
+    // apply the same filter. So a link can only escape through a role whose
+    // filter does not check who may see the file, or through SQL that calls
+    // the link functions outside a computed field.
+    it("is minted only by the link fields, behind filters that check who may see the file", async () => {
+      const metadata = join(
+        process.cwd(),
+        "hasura",
+        "metadata",
+        "databases",
+        "default",
+      );
+      const LINK_FIELDS: Record<string, Array<string>> = {
+        match_clips: ["download_url", "thumbnail_download_url"],
+        utility_lineups: [
+          "preview_url",
+          "preview_thumbnail_url",
+          "preview_stills_url",
+          "smoke_voxels_url",
+        ],
+      };
+      const LINK_FUNCTIONS = [
+        "clip_download_url",
+        "clip_thumbnail_download_url",
+        "utility_lineup_preview_url",
+        "utility_lineup_preview_thumbnail_url",
+        "utility_lineup_preview_stills_url",
+        "utility_lineup_smoke_voxels_url",
+        "utility_lineup_file_url",
+        "file_url_signature",
+      ];
+
+      for (const file of readdirSync(join(metadata, "tables"))) {
+        const table = yaml.load(
+          readFileSync(join(metadata, "tables", file), "utf8"),
+        ) as {
+          table?: { name: string };
+          computed_fields?: Array<{
+            name: string;
+            definition: { function: { name: string } };
+          }>;
+          select_permissions?: Array<{
+            role: string;
+            permission: { filter: unknown; computed_fields?: Array<string> };
+          }>;
+        };
+        const name = table?.table?.name ?? "";
+        for (const field of table?.computed_fields ?? []) {
+          if (LINK_FUNCTIONS.includes(field.definition.function.name)) {
+            expect(LINK_FIELDS[name] ?? []).toContain(field.name);
+          }
+        }
+        for (const { role, permission } of table?.select_permissions ?? []) {
+          const exposed = (permission.computed_fields ?? []).filter((field) =>
+            LINK_FIELDS[name]?.includes(field),
+          );
+          if (exposed.length > 0 && role !== "administrator") {
+            expect([name, role, JSON.stringify(permission.filter)]).toEqual([
+              name,
+              role,
+              expect.stringMatching(/visibility|can_view/),
+            ]);
+          }
+        }
+      }
+      for (const file of readdirSync(join(metadata, "functions"))) {
+        const tracked = readFileSync(join(metadata, "functions", file), "utf8");
+        for (const fn of LINK_FUNCTIONS) {
+          expect(tracked).not.toMatch(new RegExp(`\\b${fn}\\b`));
+        }
+      }
+
+      const callers = await postgres.query<Array<{ name: string }>>(
+        `SELECT p.proname AS name
+           FROM pg_proc p
+           JOIN pg_namespace n ON n.oid = p.pronamespace
+          WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')
+            AND p.prosrc ~ ('\\m(' || array_to_string($1::text[], '|') || ')\\s*\\(')
+          ORDER BY 1`,
+        [LINK_FUNCTIONS],
+      );
+      expect(callers.map(({ name }) => name)).toEqual([
+        "clip_download_url",
+        "clip_thumbnail_download_url",
+        "utility_lineup_file_url",
+        "utility_lineup_preview_stills_url",
+        "utility_lineup_preview_thumbnail_url",
+        "utility_lineup_preview_url",
+        "utility_lineup_smoke_voxels_url",
+      ]);
+      const views = await postgres.query<Array<{ name: string }>>(
+        `SELECT schemaname || '.' || viewname AS name
+           FROM pg_views
+          WHERE definition ~ ('\\m(' || array_to_string($1::text[], '|') || ')\\s*\\(')
+         UNION ALL
+         SELECT schemaname || '.' || matviewname
+           FROM pg_matviews
+          WHERE definition ~ ('\\m(' || array_to_string($1::text[], '|') || ')\\s*\\(')`,
+        [LINK_FUNCTIONS],
+      );
+      expect(views).toEqual([]);
+    });
+
+    // Hasura's migrations container applies these functions and cannot derive
+    // the key, so a rollout reaches them before the api has stored it.
+    it("goes out unsigned, rather than not at all, until the api has stored the key", async () => {
+      const row = await clip("private");
       await postgres.query("DELETE FROM private.file_url_signing_key");
       try {
-        expect(await links(row.id)).toEqual({
-          download: null,
-          thumbnail: null,
-        });
+        const { download, thumbnail } = await links(row.id);
+        expect(download).toMatch(
+          new RegExp(
+            `^https://cf\\.example\\.test/${escape(row.file)}\\?name=Ace-on-B\\.mp4&v=\\d+$`,
+          ),
+        );
+        expect(thumbnail).toMatch(
+          new RegExp(
+            `^https://cf\\.example\\.test/${escape(row.thumbnail)}\\?v=\\d+$`,
+          ),
+        );
       } finally {
         await signing.storeKey();
       }
+
+      const { download } = await links(row.id);
+      const { exp, sig } = signatureOf(download!);
+      expect(signing.verify(row.file, exp, sig)).toBe(true);
     });
   });
 
