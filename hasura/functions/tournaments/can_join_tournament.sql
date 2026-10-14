@@ -4,7 +4,6 @@ CREATE OR REPLACE FUNCTION public.can_join_tournament(tournament public.tourname
 DECLARE
     _steam_id bigint;
     on_roster boolean;
-    is_team_admin boolean;
     is_organizer boolean;
 BEGIN
     -- Check if tournament is cancelled or registration is not open
@@ -41,26 +40,15 @@ BEGIN
             AND player_steam_id = _steam_id
     ) INTO on_roster;
 
-    -- Check if the player already owns a team in this tournament
-    SELECT EXISTS (
-        SELECT 1
-        FROM tournament_teams tt
-        WHERE
-            tournament_id = tournament.id
-            AND owner_steam_id = _steam_id
-    ) INTO is_team_admin;
-
-    -- First-time / pickup join: not yet on a roster and not already owning a
-    -- team in this tournament.
-    IF NOT on_roster AND NOT is_team_admin THEN
+    -- Not on a roster yet: free to join. Owning entries is no bar; a player
+    -- sitting on two rosters is (tournament_roster_pkey).
+    IF NOT on_roster THEN
         RETURN true;
     END IF;
 
     -- Otherwise they can still register another team they manage that is not
     -- already in this tournament (e.g. an A team and a B team that share
     -- members): being on another team's roster does not block registration.
-    -- The team's owner must not already have one here, or tbi_tournament_team
-    -- refuses the insert.
     RETURN EXISTS (
         SELECT 1
         FROM public.teams t
@@ -69,7 +57,7 @@ BEGIN
               SELECT 1
               FROM public.tournament_teams tt
               WHERE tt.tournament_id = tournament.id
-                AND (tt.team_id = t.id OR tt.owner_steam_id = t.owner_steam_id)
+                AND tt.team_id = t.id
           )
     );
 END;

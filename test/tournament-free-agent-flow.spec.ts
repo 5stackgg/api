@@ -344,13 +344,18 @@ describe("free agent flow (SQL-driven)", () => {
 
       expect(await canJoin()).toBe(true);
 
-      await runAsUser(postgres, agent, "user", (query) =>
-        query(
+      await runAsUser(postgres, agent, "user", async (query) => {
+        const [team] = (await query(
           `INSERT INTO tournament_teams (tournament_id, name, owner_steam_id)
-           VALUES ($1, 'Mine', $2)`,
+           VALUES ($1, 'Mine', $2) RETURNING id`,
           [t.id, agent],
-        ),
-      );
+        )) as Array<{ id: string }>;
+        await query(
+          `INSERT INTO tournament_team_roster (tournament_team_id, player_steam_id, tournament_id)
+           VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
+          [team.id, agent, t.id],
+        );
+      });
 
       expect(await agentRow(t.id, agent)).toBeUndefined();
       expect(await canJoin()).toBe(false);

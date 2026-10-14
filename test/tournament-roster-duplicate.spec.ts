@@ -228,26 +228,37 @@ describe("tournament roster duplicate key (SQL-driven)", () => {
     expect(count).toBe(2);
   });
 
-  it("a regular user cannot register a second team", async () => {
+  it("a regular user can own two made-up teams but sits on at most one roster", async () => {
     const { id: tournamentId } = await createTournament();
     const player = await fx.player();
 
     await addAdhocTeam(tournamentId, player, "user", "first");
-    await expect(
-      addAdhocTeam(tournamentId, player, "user", "second"),
-    ).rejects.toThrow(/already have a team in this tournament/);
+    await addAdhocTeam(tournamentId, player, "user", "second");
+
+    const [{ entries }] = await postgres.query<Array<{ entries: number }>>(
+      "SELECT count(*)::int AS entries FROM tournament_teams WHERE tournament_id = $1 AND owner_steam_id = $2",
+      [tournamentId, player],
+    );
+    const [{ seats }] = await postgres.query<Array<{ seats: number }>>(
+      "SELECT count(*)::int AS seats FROM tournament_team_roster WHERE tournament_id = $1 AND player_steam_id = $2",
+      [tournamentId, player],
+    );
+    expect(entries).toBe(2);
+    expect(seats).toBeLessThanOrEqual(1);
   });
 
-  it("a regular user cannot register a second team they own", async () => {
-    const { id: tournamentId } = await createTournament();
-    const teamA = await fx.team(1);
-    const [teamB] = await postgres.query<Array<{ id: string }>>(
-      "INSERT INTO teams (name, short_name, owner_steam_id) VALUES ($1, $1, $2) RETURNING id",
-      [fx.nextName("teamb"), teamA.owner],
-    );
+  describe("a team owner with two teams", () => {
+    const ownerWithTwoTeams = async () => {
+      const teamA = await fx.team(1);
+      const [teamB] = await postgres.query<Array<{ id: string }>>(
+        "INSERT INTO teams (name, short_name, owner_steam_id) VALUES ($1, $1, $2) RETURNING id",
+        [fx.nextName("teamb"), teamA.owner],
+      );
+      return { owner: teamA.owner, teamA: teamA.id, teamB: teamB.id };
+    };
 
-    const register = (teamId: string) =>
-      runAsUser(postgres, teamA.owner, "user", (query) =>
+    const register = (tournamentId: string, owner: string, teamId: string) =>
+      runAsUser(postgres, owner, "user", (query) =>
         query(
           `INSERT INTO tournament_teams (tournament_id, team_id, name)
            SELECT $1, id, name FROM teams WHERE id = $2`,
@@ -255,10 +266,71 @@ describe("tournament roster duplicate key (SQL-driven)", () => {
         ),
       );
 
-    await register(teamA.id);
-    await expect(register(teamB.id)).rejects.toThrow(
-      /already have a team in this tournament/,
-    );
+    it("can register both of them", async () => {
+      const { id: tournamentId } = await createTournament();
+      const { owner, teamA, teamB } = await ownerWithTwoTeams();
+
+      await register(tournamentId, owner, teamA);
+      await register(tournamentId, owner, teamB);
+
+      const rows = await postgres.query<Array<{ team_id: string }>>(
+        "SELECT team_id FROM tournament_teams WHERE tournament_id = $1 AND owner_steam_id = $2",
+        [tournamentId, owner],
+      );
+      expect(rows.map((r) => r.team_id).sort()).toEqual([teamA, teamB].sort());
+    });
+
+    it("still cannot register the same team twice", async () => {
+      const { id: tournamentId } = await createTournament();
+      const { owner, teamA } = await ownerWithTwoTeams();
+
+      await register(tournamentId, owner, teamA);
+      await expect(register(tournamentId, owner, teamA)).rejects.toThrow(
+        /tournament_teams_tournament_id_team_id_key/,
+      );
+    });
+
+    it("can add a made-up team next to a registered one", async () => {
+      const { id: tournamentId } = await createTournament();
+      const { owner, teamA } = await ownerWithTwoTeams();
+
+      await register(tournamentId, owner, teamA);
+      await addAdhocTeam(tournamentId, owner, "user", "extra");
+
+      const [{ entries }] = await postgres.query<Array<{ entries: number }>>(
+        "SELECT count(*)::int AS entries FROM tournament_teams WHERE tournament_id = $1 AND owner_steam_id = $2",
+        [tournamentId, owner],
+      );
+      expect(entries).toBe(2);
+    });
+
+    it("still never sits on two of the rosters", async () => {
+      const { id: tournamentId } = await createTournament();
+      const { owner, teamA, teamB } = await ownerWithTwoTeams();
+
+      await register(tournamentId, owner, teamA);
+      await register(tournamentId, owner, teamB);
+
+      const entries = await postgres.query<Array<{ id: string }>>(
+        "SELECT id FROM tournament_teams WHERE tournament_id = $1 AND owner_steam_id = $2",
+        [tournamentId, owner],
+      );
+      const seats = await postgres.query<Array<{ tournament_team_id: string }>>(
+        "SELECT tournament_team_id FROM tournament_team_roster WHERE tournament_id = $1 AND player_steam_id = $2",
+        [tournamentId, owner],
+      );
+      expect(seats.length).toBeLessThanOrEqual(1);
+
+      const unseated = entries.find(
+        (entry) => !seats.some((seat) => seat.tournament_team_id === entry.id),
+      )!;
+      await expect(
+        postgres.query(
+          "INSERT INTO tournament_team_roster (tournament_team_id, player_steam_id, tournament_id) VALUES ($1, $2, $3)",
+          [unseated.id, owner, tournamentId],
+        ),
+      ).rejects.toThrow(/tournament_roster_pkey/);
+    });
   });
 
   describe("can_join_tournament", () => {
@@ -328,10 +400,18 @@ describe("tournament roster duplicate key (SQL-driven)", () => {
       expect(await canJoin(tournamentId, await fx.player())).toBe(true);
     });
 
-    it("does not offer a second team the player also owns", async () => {
+    it("offers a second team the player also owns", async () => {
       const tournamentId = await openTournament();
       const teamA = await fx.team(1);
       await ownedTeam(teamA.owner);
+      await tfx.registerTeam(tournamentId, teamA);
+
+      expect(await canJoin(tournamentId, teamA.owner)).toBe(true);
+    });
+
+    it("offers nothing once every team the player manages is in", async () => {
+      const tournamentId = await openTournament();
+      const teamA = await fx.team(1);
       await tfx.registerTeam(tournamentId, teamA);
 
       expect(await canJoin(tournamentId, teamA.owner)).toBe(false);
@@ -347,7 +427,7 @@ describe("tournament roster duplicate key (SQL-driven)", () => {
       expect(await canJoin(tournamentId, teamA.owner)).toBe(true);
     });
 
-    it("does not offer a team whose owner already has a team in the tournament", async () => {
+    it("offers a team whose owner already has another team in the tournament", async () => {
       const tournamentId = await openTournament();
       const teamA = await fx.team(1);
       await tfx.registerTeam(tournamentId, teamA);
@@ -356,7 +436,7 @@ describe("tournament roster duplicate key (SQL-driven)", () => {
       const teamB = await ownedTeam(teamC.owner);
       await makeTeamAdmin(teamB, teamA.owner);
 
-      expect(await canJoin(tournamentId, teamA.owner)).toBe(false);
+      expect(await canJoin(tournamentId, teamA.owner)).toBe(true);
     });
 
     it("always lets a tournament organizer add teams", async () => {
