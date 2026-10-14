@@ -75,7 +75,7 @@ describe("warning sanctions (SQL-driven)", () => {
 
   it("enforces nothing on a player whose only sanction is a warning", async () => {
     const steamId = await fx.player();
-    const moderator = await fx.player();
+    const moderator = await fx.player(undefined, "moderator");
     await postgres.query(
       `INSERT INTO player_sanctions
          (player_steam_id, type, reason, sanctioned_by_steam_id)

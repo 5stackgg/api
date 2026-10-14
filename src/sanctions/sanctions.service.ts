@@ -129,6 +129,8 @@ export class SanctionsService {
       throw Error(`invalid sanction type ${type}`);
     }
 
+    await this.assertOutranks(sanctionedBySteamId, steamId);
+
     if (type === "warning") {
       return await this.warnPlayer(steamId, reason, sanctionedBySteamId);
     }
@@ -252,8 +254,11 @@ export class SanctionsService {
     serverId: string;
     steamId: string;
     reason?: string | null;
+    kickedBySteamId: string;
   }): Promise<{ kicked: boolean; message: string }> {
-    const { serverId, steamId, reason } = params;
+    const { serverId, steamId, reason, kickedBySteamId } = params;
+
+    await this.assertOutranks(kickedBySteamId, steamId);
 
     const userid = await this.dedicatedServersService.resolveServerUserId(
       serverId,
@@ -283,6 +288,22 @@ export class SanctionsService {
       return { kicked: false, message: "failed to kick player" };
     } finally {
       await this.rconService.disconnect(serverId);
+    }
+  }
+
+  private async assertOutranks(actorSteamId: string, targetSteamId: string) {
+    const [row] = await this.postgres.query<Array<{ allowed: boolean }>>(
+      `SELECT public.can_sanction_player(
+                (SELECT role::text FROM public.players WHERE steam_id = $1::bigint),
+                $2::bigint
+              ) AS allowed`,
+      [actorSteamId, targetSteamId],
+    );
+
+    if (!row?.allowed) {
+      throw Error(
+        "you cannot act on a player whose role is equal to or above your own",
+      );
     }
   }
 

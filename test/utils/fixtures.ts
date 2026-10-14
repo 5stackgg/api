@@ -81,11 +81,11 @@ export class Fixtures {
     return value;
   }
 
-  async player(name?: string): Promise<string> {
+  async player(name?: string, role = "user"): Promise<string> {
     const steam = this.nextSteam();
     await this.postgres.query(
-      "INSERT INTO players (steam_id, name) VALUES ($1, $2)",
-      [steam, name ?? `p${this.seq}`],
+      "INSERT INTO players (steam_id, name, role) VALUES ($1, $2, $3)",
+      [steam, name ?? `p${this.seq}`, role],
     );
     return steam;
   }

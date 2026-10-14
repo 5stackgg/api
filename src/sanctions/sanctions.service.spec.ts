@@ -28,7 +28,11 @@ describe("SanctionsService", () => {
           : {},
       ),
     };
-    postgres = { query: jest.fn().mockResolvedValue([]) };
+    postgres = {
+      query: jest.fn(async (sql: string) =>
+        sql.includes("can_sanction_player") ? [{ allowed: true }] : [],
+      ),
+    };
     rcon = { send: jest.fn().mockResolvedValue("") };
     rconService = {
       connect: jest.fn().mockResolvedValue(rcon),
@@ -48,6 +52,63 @@ describe("SanctionsService", () => {
       rconService as any,
       dedicatedServers as any,
     );
+  });
+
+  describe("role hierarchy", () => {
+    const refuseHierarchy = () =>
+      postgres.query.mockImplementation(async (sql: string) =>
+        sql.includes("can_sanction_player") ? [{ allowed: false }] : [],
+      );
+
+    it("asks about the sanctioner and the target", async () => {
+      await service.sanctionServerPlayer({
+        steamId,
+        type: "ban",
+        sanctionedBySteamId: moderator,
+      });
+
+      const [, params] = postgres.query.mock.calls.find(([sql]) =>
+        sql.includes("can_sanction_player"),
+      );
+      expect(params).toEqual([moderator, steamId]);
+    });
+
+    it.each(["ban", "mute", "gag", "silence", "warning"] as const)(
+      "refuses a %s on a player the sanctioner does not outrank, before touching the server",
+      async (type) => {
+        refuseHierarchy();
+
+        await expect(
+          service.sanctionServerPlayer({
+            serverId: "server-1",
+            steamId,
+            type,
+            reason: "toxic",
+            sanctionedBySteamId: moderator,
+          }),
+        ).rejects.toThrow("equal to or above your own");
+
+        expect(insertedSanction()).toBeUndefined();
+        expect(hasura.mutation).not.toHaveBeenCalled();
+        expect(dedicatedServers.getServerPlayerList).not.toHaveBeenCalled();
+        expect(rconService.connect).not.toHaveBeenCalled();
+      },
+    );
+
+    it("refuses a kick of a player the moderator does not outrank", async () => {
+      refuseHierarchy();
+
+      await expect(
+        service.kickServerPlayer({
+          serverId: "server-1",
+          steamId,
+          kickedBySteamId: moderator,
+        }),
+      ).rejects.toThrow("equal to or above your own");
+
+      expect(dedicatedServers.resolveServerUserId).not.toHaveBeenCalled();
+      expect(rconService.connect).not.toHaveBeenCalled();
+    });
   });
 
   describe("warnings", () => {
