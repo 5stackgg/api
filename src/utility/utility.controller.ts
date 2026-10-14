@@ -208,6 +208,50 @@ export class UtilityController {
     return session;
   }
 
+  // The in-game menu's map list. The session is the authenticated server's,
+  // and whether this player may move it is the panel's rule: the host only.
+  @Get("practice-maps")
+  @UseGuards(UtilityPluginKeyGuard)
+  public async practiceMaps(
+    @Req() request: Request,
+    @Query("steam_id") steamId: string,
+  ) {
+    const maps = await this.practice.mapsForServer(
+      UtilityController.serverId(request),
+      String(steamId ?? ""),
+    );
+
+    if (!maps) {
+      throw new NotFoundException(
+        "this server is not running a practice session",
+      );
+    }
+
+    return maps;
+  }
+
+  // The in-game menu asking for the same map change the panel makes. A
+  // refusal comes back as a reason the plugin can show, not a 500.
+  @Post("practice-map")
+  @UseGuards(UtilityPluginKeyGuard)
+  public async changePracticeMap(
+    @Req() request: Request,
+    @Body() body: { steam_id?: string; map_name?: string },
+  ) {
+    try {
+      return await this.practice.changeMapFromServer(
+        UtilityController.serverId(request),
+        String(body?.steam_id ?? ""),
+        String(body?.map_name ?? ""),
+      );
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
   // Scores one throw. The session is resolved from the authenticated server
   // for the same reason GET /utility/session is: a server may only speak for the
   // session it is running. A session_id in the body is accepted so the plugin

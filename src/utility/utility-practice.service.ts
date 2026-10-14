@@ -1491,6 +1491,94 @@ export class UtilityPracticeService {
   private static readonly MAP_CHANGE_LOCK_SECONDS = 20;
 
   /**
+   * Every map a practice server can be moved to, for the in-game menu, with
+   * whether this player may move it. Null when the server runs no session.
+   */
+  public async mapsForServer(
+    serverId: string,
+    steamId: string,
+  ): Promise<{
+    map_name: string;
+    can_change: boolean;
+    maps: Array<string>;
+  } | null> {
+    const live = await this.sessionForServer(serverId);
+
+    if (!live) {
+      return null;
+    }
+
+    const [session, player, maps] = await Promise.all([
+      this.session(live.session_id),
+      this.playerAsUser(steamId),
+      this.postgres.query<Array<{ name: string }>>(
+        `SELECT name
+           FROM public.maps
+          WHERE type = $1
+            AND enabled = true
+            AND deleted_at IS NULL
+          ORDER BY name`,
+        [UtilityPracticeService.MATCH_TYPE],
+      ),
+    ]);
+
+    return {
+      map_name: live.map_name,
+      can_change:
+        !!session &&
+        !!player &&
+        !session.is_render &&
+        (session.host_steam_id === player.steam_id ||
+          isRoleAbove(player.role, "administrator")),
+      maps: maps.map((map) => map.name),
+    };
+  }
+
+  /**
+   * changeMap, asked for from inside the game. The session is the one the
+   * calling server runs, and the player has to be somebody the panel knows.
+   */
+  public async changeMapFromServer(
+    serverId: string,
+    steamId: string,
+    mapName: string,
+  ): Promise<ChangeUtilityPracticeMapResult> {
+    const live = await this.sessionForServer(serverId);
+
+    if (!live) {
+      throw Error("this server is not running a practice session");
+    }
+
+    const player = await this.playerAsUser(steamId);
+
+    if (!player) {
+      throw Error("only the host can change this practice server's map");
+    }
+
+    return this.changeMap(player, {
+      session_id: live.session_id,
+      map_name: mapName,
+    });
+  }
+
+  private async playerAsUser(steamId: string): Promise<User | null> {
+    if (!/^\d+$/.test(steamId)) {
+      return null;
+    }
+
+    const [row] = await this.postgres.query<
+      Array<{ name: string; role: User["role"]; steam_id: string }>
+    >(
+      `SELECT name, role::text AS role, steam_id::text AS steam_id
+         FROM public.players
+        WHERE steam_id = $1::bigint`,
+      [steamId],
+    );
+
+    return row ?? null;
+  }
+
+  /**
    * Move a running practice server onto another map, optionally handing the
    * plugin something to stand the caller on once it is up.
    *
