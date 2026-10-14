@@ -1,6 +1,7 @@
 import { GUARDS_METADATA } from "@nestjs/common/constants";
 import { SteamGuard } from "../auth/strategies/SteamGuard";
 import { FileManagerController } from "./file-manager.controller";
+import { FileManagerUploadGuard } from "./file-manager-upload.guard";
 
 describe("FileManagerController uploads", () => {
   const service = { uploadFile: jest.fn().mockResolvedValue({ ok: true }) };
@@ -13,13 +14,13 @@ describe("FileManagerController uploads", () => {
   });
 
   it.each(["uploadFileToServer", "uploadFileToCustomPlugins"])(
-    "%s needs a signed-in session before the file is read",
+    "%s needs a signed-in administrator before the file is read",
     (handler) => {
       const guards = Reflect.getMetadata(
         GUARDS_METADATA,
         (FileManagerController.prototype as any)[handler],
       );
-      expect(guards).toContain(SteamGuard);
+      expect(guards).toEqual([SteamGuard, FileManagerUploadGuard]);
     },
   );
 

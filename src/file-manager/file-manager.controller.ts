@@ -15,6 +15,9 @@ import { Request } from "express";
 import { FileManagerService } from "./file-manager.service";
 import { HasuraAction } from "../hasura/hasura.controller";
 import { SteamGuard } from "../auth/strategies/SteamGuard";
+import { FileManagerUploadGuard } from "./file-manager-upload.guard";
+
+const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
 
 @Controller("file-manager")
 export class FileManagerController {
@@ -131,11 +134,12 @@ export class FileManagerController {
     );
   }
 
-  // The uploader is the session's player, never a form field: guards run before
-  // the interceptor, so nobody unauthenticated gets a file buffered either.
+  // The uploader is the session's player, never a form field.
   @Post("upload/:nodeId/:serverId")
-  @UseGuards(SteamGuard)
-  @UseInterceptors(FileInterceptor("file"))
+  @UseGuards(SteamGuard, FileManagerUploadGuard)
+  @UseInterceptors(
+    FileInterceptor("file", { limits: { fileSize: MAX_UPLOAD_BYTES } }),
+  )
   async uploadFileToServer(
     @Req() request: Request,
     @Param("nodeId") nodeId: string,
@@ -143,7 +147,7 @@ export class FileManagerController {
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 100 * 1024 * 1024 }), // 100MB
+          new MaxFileSizeValidator({ maxSize: MAX_UPLOAD_BYTES }),
         ],
       }),
     )
@@ -160,15 +164,17 @@ export class FileManagerController {
   }
 
   @Post("upload/:nodeId")
-  @UseGuards(SteamGuard)
-  @UseInterceptors(FileInterceptor("file"))
+  @UseGuards(SteamGuard, FileManagerUploadGuard)
+  @UseInterceptors(
+    FileInterceptor("file", { limits: { fileSize: MAX_UPLOAD_BYTES } }),
+  )
   async uploadFileToCustomPlugins(
     @Req() request: Request,
     @Param("nodeId") nodeId: string,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 100 * 1024 * 1024 }), // 100MB
+          new MaxFileSizeValidator({ maxSize: MAX_UPLOAD_BYTES }),
         ],
       }),
     )
