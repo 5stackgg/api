@@ -2,6 +2,7 @@ import { ForbiddenException } from "@nestjs/common";
 import { GUARDS_METADATA } from "@nestjs/common/constants";
 import { ChatController } from "./chat.controller";
 import { SteamGuard } from "../auth/strategies/SteamGuard";
+import { MatchChatLog } from "./types/MatchChatLog";
 
 const MATCH = "11111111-1111-4111-8111-111111111111";
 
@@ -28,10 +29,11 @@ describe("match chat log endpoint", () => {
   });
 
   it("hands back the log", async () => {
-    const read = {
+    const read: MatchChatLog = {
       match: [],
       teams: [],
       team_chat_withheld: true,
+      archive_truncated: false,
       expires_at: null,
     };
     const controller = new ChatController({

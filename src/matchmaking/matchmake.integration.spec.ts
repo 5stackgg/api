@@ -1305,7 +1305,7 @@ describe("matchmaking (end to end)", () => {
         return answer(payload);
       });
 
-      await confirmEveryone().catch(() => undefined);
+      await confirmEveryone().catch((): void => undefined);
 
       expect(matchAssistant.createMatchBasedOnType).not.toHaveBeenCalled();
       expect(queue.remove).not.toHaveBeenCalledWith(
@@ -1561,7 +1561,9 @@ describe("matchmaking (end to end)", () => {
         .spyOn(lobbyService, "removeLobbyDetails")
         .mockRejectedValueOnce(new Error("redis blipped"));
 
-      await confirm(confirmationId, ids("solo", 10)).catch(() => undefined);
+      await confirm(confirmationId, ids("solo", 10)).catch(
+        (): void => undefined,
+      );
       expect(queue.remove).not.toHaveBeenCalledWith(
         `matchmaking.cancel.${confirmationId}`,
       );

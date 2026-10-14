@@ -31,6 +31,7 @@ describe("UtilityController session", () => {
       {} as any,
       practice as any,
       {} as any,
+      {} as any,
     );
     return { controller, practice, calls };
   }

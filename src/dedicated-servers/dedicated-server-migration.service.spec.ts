@@ -5,6 +5,7 @@ import {
   ServerMigrationNode,
   ServerMigrationServer,
 } from "./dedicated-server-migration.service";
+import { ServerDirectorySummary } from "../file-manager/file-manager.service";
 
 const node = (
   overrides: Partial<ServerMigrationNode> = {},
@@ -181,13 +182,15 @@ describe("DedicatedServerMigrationService", () => {
     };
 
     fileManager = {
-      serverDirectorySize: jest.fn(async () => ({
-        exists: true,
-        entries: 10,
-        bytes: 1000,
-        archiveBytes: 6000,
-        skipped: [],
-      })),
+      serverDirectorySize: jest.fn(
+        async (): Promise<ServerDirectorySummary> => ({
+          exists: true,
+          entries: 10,
+          bytes: 1000,
+          archiveBytes: 6000,
+          skipped: [],
+        }),
+      ),
       relayServerDirectory: jest.fn(async () => {
         steps.push("relay");
         return { entries: 10, bytes: 1000 };
@@ -214,7 +217,7 @@ describe("DedicatedServerMigrationService", () => {
 
     queue = {
       add: jest.fn(),
-      remove: jest.fn(async () => undefined),
+      remove: jest.fn(async (): Promise<void> => undefined),
       getJob: jest.fn(),
     };
 

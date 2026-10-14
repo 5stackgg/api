@@ -133,7 +133,7 @@ describe("UtilityMiningService smoke voxels", () => {
         artifacts as any,
         {
           isLibraryEnabled: jest.fn(async () => true),
-          assertDailyLineupLimit: jest.fn(async () => undefined),
+          assertDailyLineupLimit: jest.fn(async (): Promise<void> => undefined),
         } as any,
         { autoName: jest.fn(async () => "Window") } as any,
       );

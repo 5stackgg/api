@@ -67,7 +67,11 @@ describe("ClipDownloadController view counting", () => {
     response.json = jest.fn(() => response);
     const finished = new Promise((resolve) => response.on("finish", resolve));
 
-    const query = { name: "ace.mp4", v: "1", ...(opts.query ?? {}) };
+    const query: Record<string, string> = {
+      name: "ace.mp4",
+      v: "1",
+      ...(opts.query ?? {}),
+    };
     const request: any = {
       method: opts.method ?? "GET",
       ip: "10.0.0.1",
@@ -239,7 +243,7 @@ describe("ClipDownloadController view counting", () => {
     ],
     [
       "an unsatisfiable range (416)",
-      () => undefined,
+      (): void => undefined,
       { range: "bytes=2000-" },
       416,
     ],

@@ -38,7 +38,9 @@ describe("DraftGameService player blocks", () => {
 
   beforeEach(() => {
     hasura = {
-      query: jest.fn(async () => ({ settings_by_pk: null })),
+      query: jest.fn(async () => ({
+        settings_by_pk: null as { value: string } | null,
+      })),
       mutation: jest.fn(async () => ({})),
     };
     playerBlocks = {

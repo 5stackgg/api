@@ -42,7 +42,9 @@ describe("CommunityStatsService.serverStats", () => {
             return [{ week_players: 1, week_seconds: weekSeconds, online: 0 }];
           }
           if (sql.includes("all_time_players")) {
-            return [{ all_time_players: 1, tracked_since: null }];
+            return [
+              { all_time_players: 1, tracked_since: null as string | null },
+            ];
           }
           return [];
         }),

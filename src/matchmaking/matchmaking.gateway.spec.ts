@@ -84,8 +84,8 @@ describe("MatchmakingGateway.joinQueue", () => {
               name: player.name,
               steam_id: player.steam_id,
               is_banned: false,
-              matchmaking_cooldown: null,
-              current_lobby_id: null,
+              matchmaking_cooldown: null as string | null,
+              current_lobby_id: null as string | null,
               is_in_another_match: false,
             },
           };

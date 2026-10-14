@@ -4,5 +4,5 @@
     "noEmit": true,
     "incremental": false
   },
-  "include": ["test/**/*", "src/**/*.d.ts"]
+  "include": ["test/**/*", "src/**/*.d.ts", "src/**/*.spec.ts"]
 }

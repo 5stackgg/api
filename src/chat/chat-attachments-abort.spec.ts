@@ -6,8 +6,12 @@ import {
 } from "http";
 import { AddressInfo } from "net";
 import { Readable, Writable } from "stream";
-import { ChatAttachmentsService } from "./chat-attachments.service";
+import {
+  ChatAttachmentRow,
+  ChatAttachmentsService,
+} from "./chat-attachments.service";
 import { ChatErrorCode } from "./enums/ChatErrorCode";
+import { ChatLobbyType } from "./enums/ChatLobbyTypes";
 
 const ID = "0b7d6c1e-1111-4a2b-9c3d-000000000001";
 const PART = ChatAttachmentsService.PART_SIZE;
@@ -23,10 +27,10 @@ describe("ChatAttachmentsService, a part whose sender goes away", () => {
   let started: Promise<void>;
   let result: Promise<ChatErrorCode | null>;
 
-  const row = {
+  const row: ChatAttachmentRow = {
     id: ID,
     uploader_steam_id: "1",
-    room_type: "matchmaking",
+    room_type: ChatLobbyType.MatchMaking,
     room_id: "lobby-1",
     storage_prefix: `chat-attachments/rooms/2026-10-02/${ID}/`,
     file_name: "clip.mp4",

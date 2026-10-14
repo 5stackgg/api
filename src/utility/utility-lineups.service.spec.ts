@@ -296,7 +296,7 @@ describe("UtilityLineupsService library progress", () => {
               successes: 4,
               current_streak: 2,
               best_streak: 3,
-              mastered_at: null,
+              mastered_at: null as string | null,
             },
           ];
         }

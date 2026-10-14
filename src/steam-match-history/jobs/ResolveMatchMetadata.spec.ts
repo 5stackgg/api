@@ -5,15 +5,17 @@ const VALVE_MATCH_ID = "1174469974867590708";
 const build = () => {
   const failures: unknown[][] = [];
   const postgres = {
-    query: jest.fn(async (sql: string, params: unknown[] = []) => {
-      if (sql.includes("SELECT share_code")) {
-        throw new Error('column "parties" does not exist');
-      }
-      if (sql.includes("SET status = 'Failed'")) {
-        failures.push(params);
-      }
-      return [];
-    }),
+    query: jest.fn(
+      async (sql: string, params: unknown[] = []): Promise<unknown[]> => {
+        if (sql.includes("SELECT share_code")) {
+          throw new Error('column "parties" does not exist');
+        }
+        if (sql.includes("SET status = 'Failed'")) {
+          failures.push(params);
+        }
+        return [];
+      },
+    ),
   };
   const logger = { log: jest.fn(), warn: jest.fn() };
 
