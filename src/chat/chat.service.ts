@@ -3656,8 +3656,10 @@ export class ChatService {
 
   // Staff at moderator and above, by the role held now, once the match has
   // ended. Someone who took part (on a lineup or coaching now, or seen
-  // writing in a team room) gets all chat only. Blocks are not applied:
-  // reviewing a match means seeing every line of it.
+  // writing in a team room) gets all chat only. So does a moderator who plays
+  // against either side: on either team's roster, or on any team in the same
+  // tournament, a team room is a future opponent's strategy. Blocks are not
+  // applied: reviewing a match means seeing every line of it.
   public async matchChatLog(
     matchId: string,
     user: User | undefined,
@@ -3680,6 +3682,7 @@ export class ChatService {
         lineup_1_id: string | null;
         lineup_2_id: string | null;
         on_lineup: boolean;
+        competing: boolean;
       }>
     >(
       `SELECT m.status, m.lineup_1_id::text, m.lineup_2_id::text,
@@ -3691,7 +3694,34 @@ export class ChatService {
                 SELECT 1 FROM public.match_lineups ml
                  WHERE ml.id IN (m.lineup_1_id, m.lineup_2_id)
                    AND ml.coach_steam_id = $2::bigint
-              ) AS on_lineup
+              ) AS on_lineup,
+              EXISTS (
+                SELECT 1 FROM public.match_lineups ml
+                  JOIN public.teams t ON t.id = ml.team_id
+                 WHERE ml.id IN (m.lineup_1_id, m.lineup_2_id)
+                   AND (
+                     t.owner_steam_id = $2::bigint
+                     OR EXISTS (
+                       SELECT 1 FROM public.team_roster tr
+                        WHERE tr.team_id = t.id
+                          AND tr.player_steam_id = $2::bigint
+                     )
+                   )
+              ) OR EXISTS (
+                SELECT 1 FROM public.tournament_brackets tb
+                  JOIN public.tournament_stages ts ON ts.id = tb.tournament_stage_id
+                  JOIN public.tournament_teams tt ON tt.tournament_id = ts.tournament_id
+                 WHERE tb.match_id = m.id
+                   AND (
+                     tt.owner_steam_id = $2::bigint
+                     OR tt.captain_steam_id = $2::bigint
+                     OR EXISTS (
+                       SELECT 1 FROM public.tournament_team_roster ttr
+                        WHERE ttr.tournament_team_id = tt.id
+                          AND ttr.player_steam_id = $2::bigint
+                     )
+                   )
+              ) AS competing
          FROM public.matches m
         WHERE m.id = $1::uuid`,
       [matchId, viewer],
@@ -3718,6 +3748,7 @@ export class ChatService {
 
     const withheld =
       match.on_lineup ||
+      (match.competing && !isRoleAbove(current.role, "match_organizer")) ||
       entries.some(
         (entry) => entry.room !== "match" && entry.from?.steam_id === viewer,
       );

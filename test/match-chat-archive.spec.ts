@@ -6,7 +6,8 @@ import { ChatLobbyType } from "./../src/chat/enums/ChatLobbyTypes";
 import { ChatErrorCode } from "./../src/chat/enums/ChatErrorCode";
 import { PlayerBlocksService } from "./../src/player-blocks/player-blocks.service";
 import { Fixtures } from "./utils/fixtures";
-import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
+import { TournamentFixtures } from "./utils/tournament-fixtures";
+import { bootMigratedDb, runAsUser, SqlTestDb } from "./utils/sql-test-db";
 
 const SEVEN_DAYS = 60 * 60 * 24 * 7;
 
@@ -154,7 +155,9 @@ describe("match chat archive (SQL-driven)", () => {
     await postgres.query("DELETE FROM chat_message_deletions");
     await postgres.query("DELETE FROM chat_message_edits");
     await postgres.query("DELETE FROM matches");
+    await postgres.query("DELETE FROM tournaments");
     await postgres.query("DELETE FROM match_options");
+    await postgres.query("DELETE FROM teams");
     await postgres.query("DELETE FROM players");
 
     organizer = await fx.player("Organizer");
@@ -1004,6 +1007,92 @@ describe("match chat archive (SQL-driven)", () => {
 
       expect(read!.teams).toHaveLength(2);
       expect(read!.team_chat_withheld).toBe(false);
+    });
+
+    describe("a moderator who also plays", () => {
+      const moderator = async () => {
+        const staff = await fx.player("Staff");
+        await setRole(staff, "moderator");
+        return staff;
+      };
+
+      it("gets all chat only when on either team's roster", async () => {
+        const staff = await moderator();
+        const team = await fx.team();
+        await runAsUser(postgres, team.owner, "admin", (query) =>
+          query(
+            "INSERT INTO team_roster (team_id, player_steam_id, status) VALUES ($1, $2, 'Benched')",
+            [team.id, staff],
+          ),
+        );
+        await postgres.query(
+          "UPDATE match_lineups SET team_id = $2 WHERE id = $1",
+          [match.lineup_2_id, team.id],
+        );
+        await status("Finished");
+
+        const read = await log(staff, "moderator");
+
+        expect(ids(read!.match)).toEqual([all]);
+        expect(read!.teams).toEqual([]);
+        expect(read!.team_chat_withheld).toBe(true);
+      });
+
+      it("gets all chat only when on any team in the same tournament", async () => {
+        const staff = await moderator();
+        const tfx = new TournamentFixtures(postgres, fx);
+        const tournament = await tfx.createTournament([
+          { type: "SingleElimination", order: 1, minTeams: 4, maxTeams: 4 },
+        ]);
+        await postgres.query(
+          `INSERT INTO tournament_brackets (tournament_stage_id, round, match_number, match_id)
+           VALUES ($1, 1, 1, $2)`,
+          [tournament.stageIds[0], match.id],
+        );
+        await postgres.query(
+          `INSERT INTO tournament_teams (tournament_id, name, owner_steam_id)
+           VALUES ($1, 'Next Opponent', $2)`,
+          [tournament.id, staff],
+        );
+        await status("Finished");
+
+        const read = await log(staff, "moderator");
+
+        expect(read!.teams).toEqual([]);
+        expect(read!.team_chat_withheld).toBe(true);
+      });
+
+      it("still gets both rooms from a match they have no tie to", async () => {
+        const staff = await moderator();
+        await fx.team();
+        await status("Finished");
+
+        const read = await log(staff, "moderator");
+
+        expect(read!.teams).toHaveLength(2);
+        expect(read!.team_chat_withheld).toBe(false);
+      });
+
+      it("leaves match organizers reading both rooms, roster or not", async () => {
+        const staff = await fx.player("Staff");
+        await setRole(staff, "match_organizer");
+        const team = await fx.team();
+        await runAsUser(postgres, team.owner, "admin", (query) =>
+          query(
+            "INSERT INTO team_roster (team_id, player_steam_id, status) VALUES ($1, $2, 'Benched')",
+            [team.id, staff],
+          ),
+        );
+        await postgres.query(
+          "UPDATE match_lineups SET team_id = $2 WHERE id = $1",
+          [match.lineup_2_id, team.id],
+        );
+        await status("Finished");
+
+        const read = await log(staff, "match_organizer");
+
+        expect(read!.teams).toHaveLength(2);
+      });
     });
 
     it("is closed to a streamer, the role just below", async () => {
