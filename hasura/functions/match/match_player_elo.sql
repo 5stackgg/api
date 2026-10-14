@@ -40,7 +40,8 @@ $$ LANGUAGE sql STABLE;
 -- abandoned it so the leaver penalty still lands on a player who never
 -- connected. A lineup with no recorded activity at all (a no-show forfeit, a
 -- match whose events never arrived) keeps every member, since there is nothing
--- to tell its players apart by.
+-- to tell its players apart by; a match never played rates only its no-shows
+-- (match_was_played).
 CREATE OR REPLACE FUNCTION public.match_elo_participants(
     _match_id UUID
 ) RETURNS TABLE (steam_id BIGINT, match_lineup_id UUID) AS $$
@@ -70,6 +71,33 @@ CREATE OR REPLACE FUNCTION public.match_elo_participants(
            WHERE teammate.lineup_id = lp.lineup_id
              AND teammate.played
        );
+$$ LANGUAGE sql STABLE;
+
+-- A match is rated only once a map has actually been played. One that never
+-- got that far -- a forfeit at check-in, a no-show in warmup, a winner set by
+-- hand on a match nobody played -- rates only the no-shows in
+-- abandoned_matches; the players who turned up, on either side, carry nothing
+-- for it. Not a status check: tbu_matches finishes any match with a winner, a
+-- forfeit included. match_elo_participants still holds everyone, since the
+-- team averages a no-show is rated against are read from it.
+CREATE OR REPLACE FUNCTION public.match_was_played(
+    _match_id UUID
+) RETURNS BOOLEAN AS $$
+    SELECT EXISTS (
+               SELECT 1
+               FROM match_maps mm
+               WHERE mm.match_id = _match_id
+                 AND mm.status IN ('Live', 'Overtime', 'Paused', 'Finished', 'Surrendered', 'WaitingForTV', 'UploadingDemo')
+           )
+        OR EXISTS (
+               SELECT 1
+               FROM matches m
+               JOIN match_lineup_players mlp
+                   ON mlp.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
+               WHERE m.id = _match_id
+                 AND mlp.steam_id IS NOT NULL
+                 AND public.player_has_match_activity(_match_id, mlp.steam_id)
+           );
 $$ LANGUAGE sql STABLE;
 
 CREATE OR REPLACE FUNCTION get_player_elo_for_match(
@@ -492,6 +520,7 @@ DECLARE
     _is_tournament BOOLEAN;
     _season_id UUID;
     _seasons_enabled BOOLEAN;
+    _was_played BOOLEAN;
 BEGIN
     -- Get the match record
     SELECT * INTO match_record FROM matches WHERE id = _match_id;
@@ -539,11 +568,19 @@ BEGIN
     -- Delete any existing ratings for this match to avoid duplicates
     DELETE FROM player_elo WHERE match_id = _match_id AND "type" = match_type;
 
-    -- Get all players in this match
+    _was_played := public.match_was_played(_match_id);
+
     FOR player_record IN
         SELECT DISTINCT p.*
         FROM players p
         JOIN public.match_elo_participants(_match_id) mep ON p.steam_id = mep.steam_id
+        WHERE _was_played
+           OR EXISTS (
+               SELECT 1
+               FROM abandoned_matches am
+               WHERE am.match_id = _match_id
+                 AND am.steam_id = p.steam_id
+           )
     LOOP
         -- Calculate ELO change for this player in this match
         elo_data := get_player_elo_for_match(match_record, player_record, _season_id, _is_tournament);

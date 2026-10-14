@@ -274,6 +274,7 @@ describe("read-side views and aggregations (SQL-driven)", () => {
       "UPDATE matches SET ended_at = now() - make_interval(days => $2) WHERE id = $1",
       [match.id, endedDaysAgo],
     );
+    await fx.playFirstMap(match.id);
     await postgres.query("SELECT generate_player_elo_for_match($1)", [
       match.id,
     ]);

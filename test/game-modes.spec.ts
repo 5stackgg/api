@@ -421,6 +421,7 @@ describe("unranked game modes (SQL-driven)", () => {
         WHERE id = $1`,
       [match.id],
     );
+    await fx.playFirstMap(match.id);
     return match;
   };
 
@@ -547,6 +548,7 @@ describe("unranked game modes (SQL-driven)", () => {
           WHERE id = $1`,
         [match.id],
       );
+      await fx.playFirstMap(match.id);
       await generate(match.id);
       return match;
     };
@@ -585,8 +587,7 @@ describe("unranked game modes (SQL-driven)", () => {
     const match = await playedMatch(gameModeId);
 
     const [map] = await postgres.query<Array<{ id: string }>>(
-      `INSERT INTO match_maps (match_id, map_id, "order")
-       SELECT $1, id, 1 FROM maps ORDER BY name LIMIT 1 RETURNING id`,
+      `SELECT id FROM match_maps WHERE match_id = $1 ORDER BY "order" LIMIT 1`,
       [match.id],
     );
 
@@ -606,8 +607,7 @@ describe("unranked game modes (SQL-driven)", () => {
     const build = async (gameModeId?: string) => {
       const match = await playedMatch(gameModeId);
       const [map] = await postgres.query<Array<{ id: string }>>(
-        `INSERT INTO match_maps (match_id, map_id, "order")
-         SELECT $1, id, 1 FROM maps ORDER BY name LIMIT 1 RETURNING id`,
+        `SELECT id FROM match_maps WHERE match_id = $1 ORDER BY "order" LIMIT 1`,
         [match.id],
       );
       const [attacker, victim] = await lineupSteamIds(match);

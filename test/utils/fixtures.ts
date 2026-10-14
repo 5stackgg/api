@@ -199,6 +199,24 @@ export class Fixtures {
     return { matchId: match.id, mapId: map.id };
   }
 
+  // A match is rated only once a map has actually been played: finishes its
+  // first map, creating one when it has none.
+  async playFirstMap(matchId: string): Promise<void> {
+    const updated = await this.postgres.query<Array<{ id: string }>>(
+      `UPDATE match_maps SET status = 'Finished'
+        WHERE id = (SELECT id FROM match_maps WHERE match_id = $1 ORDER BY "order" LIMIT 1)
+        RETURNING id`,
+      [matchId],
+    );
+    if (updated.length === 0) {
+      await this.postgres.query(
+        `INSERT INTO match_maps (match_id, map_id, "order", status)
+         SELECT $1, id, 1, 'Finished' FROM maps ORDER BY name LIMIT 1`,
+        [matchId],
+      );
+    }
+  }
+
   async lineupPlayer(lineupId: string, steam?: string): Promise<string> {
     const steamId = steam ?? (await this.player());
     await this.postgres.query(
