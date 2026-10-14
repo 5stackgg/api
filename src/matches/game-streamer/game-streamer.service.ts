@@ -24,6 +24,14 @@ import {
   BroadcastHud,
   BroadcastHudsService,
 } from "src/broadcast-huds/broadcast-huds.service";
+import { S3Service } from "../../s3/s3.service";
+import {
+  outroAccentFromSetting,
+  computeOutroVersion,
+  outroCacheKey,
+  buildOutroEnv,
+  sharedClipOutput,
+} from "./outro-branding";
 import { LoggingService } from "../../k8s/logging/logging.service";
 import {
   SteamAccountService,
@@ -177,6 +185,7 @@ export class GameStreamerService {
     private readonly loggingService: LoggingService,
     private readonly steamAccounts: SteamAccountService,
     private readonly broadcastHuds: BroadcastHudsService,
+    private readonly s3: S3Service,
   ) {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
     this.appConfig = this.config.get<AppConfig>("app");
@@ -368,6 +377,84 @@ export class GameStreamerService {
       process.env.CLIP_BAKE_BRANDING ??
       "1";
     return value === "false" || value === "0" ? "0" : "1";
+  }
+
+  // Branded outro env for the render pod. Active only when a custom logo is
+  // set. Returns {} (stock outro), a presigned cache URL (hit), or a render
+  // instruction + presigned PUT + branding props (miss). Best-effort: any
+  // failure returns {} so the pod falls back to the baked stock outro.
+  public async resolveOutroBranding(
+    dims: string,
+    fps: number,
+  ): Promise<Record<string, string>> {
+    try {
+      const logoPath = await this.readSetting("public.logo_url");
+      if (!logoPath) {
+        return {};
+      }
+      // An empty brandName (no public.brand_name) keeps the stock 5STACK.gg
+      // wordmark and tagline next to the custom logo, the same fallback the
+      // web uses (brandName || "5Stack"). The empty name is still part of the
+      // version hash, so keep the CLIP_BRAND_NAME key with an empty value.
+      const brandName = (await this.readSetting("public.brand_name")) ?? "";
+      // The web themes from the dark palette only (the light-mode
+      // `public.color_*` rows are deleted at boot), so this is its accent.
+      // Anything but an HSL triple renders the stock amber, which is then
+      // what the version hash covers.
+      const accent = outroAccentFromSetting(
+        await this.readSetting("public.color_dark_tactical_amber"),
+      );
+
+      let etag = logoPath;
+      try {
+        etag = (await this.s3.stat(logoPath))?.etag ?? logoPath;
+      } catch {
+        /* keep logoPath as the version seed */
+      }
+
+      const version = computeOutroVersion({ brandName, accent, etag });
+      const key = outroCacheKey({ version, dims, fps });
+
+      if (await this.s3.has(key)) {
+        return buildOutroEnv({
+          hit: true,
+          cacheUrl: await this.s3.getPresignedUrl(key, undefined, 3600, "get"),
+        });
+      }
+      return buildOutroEnv({
+        hit: false,
+        putUrl: await this.s3.getPresignedUrl(key, undefined, 3600, "put"),
+        logoUrl: await this.s3.getPresignedUrl(
+          logoPath,
+          undefined,
+          3600,
+          "get",
+        ),
+        brandName,
+        accent,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `resolveOutroBranding failed: ${(error as Error)?.message ?? error}`,
+      );
+      return {};
+    }
+  }
+
+  // The origin render-clip.mjs accepts the outro URLs from. They are signed
+  // through getPresignedUrl, which uses the demos domain only for the
+  // in-cluster store; a remote store signs against its own host.
+  private async resolveS3PublicOrigin(): Promise<string> {
+    try {
+      return await this.s3.getPresignedUrlOrigin();
+    } catch (error) {
+      this.logger.warn(
+        `failed to resolve the S3 presign origin, using the demos domain: ${
+          (error as Error)?.message ?? error
+        }`,
+      );
+      return this.appConfig.demosDomain;
+    }
   }
 
   public async resolveClipFps(): Promise<30 | 60> {
@@ -849,6 +936,11 @@ export class GameStreamerService {
         name: "CLIP_BAKE_BRANDING",
         value: await this.resolveClipBakeBranding(),
       },
+      // Trusted origin for render-clip.mjs's outro-env URL allowlist: the
+      // origin resolveOutroBranding's presigned URLs really carry (a remote
+      // store signs against its own host, not the demos domain). Independent
+      // of the demo source, so faceit/external demos still brand.
+      { name: "S3_PUBLIC_ORIGIN", value: await this.resolveS3PublicOrigin() },
     ];
     if (options.roundTicks != null) {
       env.push({
@@ -1140,6 +1232,7 @@ export class GameStreamerService {
       }>;
       output_dims: string;
       output_fps: number;
+      outro_env?: Record<string, string>;
     },
   ) {
     const url = this.getDemoSpecUrl(sessionId, "render-clip", "demo");
@@ -2388,6 +2481,26 @@ export class GameStreamerService {
       name: "CLIP_BAKE_BRANDING",
       value: await this.resolveClipBakeBranding(),
     });
+    {
+      // The pod gets one outro env, but each job renders at its own spec
+      // output (a re-queued job keeps the output it was created with). Key
+      // the outro on the output all the jobs share so it matches every clip
+      // it is appended to; when they differ, keep the stock outro.
+      const output = sharedClipOutput(jobs.map((j) => j.spec));
+      if (output) {
+        const outroEnv = await this.resolveOutroBranding(
+          output.dims,
+          output.fps,
+        );
+        for (const [name, value] of Object.entries(outroEnv)) {
+          env.push({ name, value });
+        }
+      } else {
+        this.logger.warn(
+          `[batch-highlights ${matchMapId}] jobs mix clip outputs, using the stock outro`,
+        );
+      }
+    }
     env.push(...(await this.buildNodeCs2OptionsEnv(nodeId)));
 
     this.logger.log(

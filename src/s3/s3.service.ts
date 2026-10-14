@@ -531,6 +531,21 @@ export class S3Service implements OnModuleDestroy {
     return await client.url(key, { expiresIn: expires });
   }
 
+  // The origin of the URLs getPresignedUrl signs for a bucket (without
+  // useLocal): the public demos domain for the in-cluster store, otherwise the
+  // store's own host (with the bucket in it under virtual-host style). It is
+  // read off a real signed URL rather than rebuilt from the config, so it
+  // follows whatever addressing the SDK picks; GET and PUT URLs come from the
+  // same client and share it. Signing is local, so the probe key is never
+  // requested.
+  public async getPresignedUrlOrigin(
+    bucket: string = this.bucket,
+  ): Promise<string> {
+    const url = await this.getPresignedUrl("origin-probe", bucket, 60, "get");
+
+    return new URL(url).origin;
+  }
+
   public async createMultipartUpload(
     key: string,
     bucket: string = this.bucket,
