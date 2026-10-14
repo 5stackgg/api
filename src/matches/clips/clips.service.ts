@@ -1,4 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { randomBytes } from "node:crypto";
 import { Readable } from "node:stream";
 import { e_player_roles_enum } from "generated/schema";
@@ -6,6 +7,8 @@ import { HasuraService } from "../../hasura/hasura.service";
 import { PostgresService } from "../../postgres/postgres.service";
 import { NotificationsService } from "../../notifications/notifications.service";
 import { S3Service } from "../../s3/s3.service";
+import { AvatarsService } from "../../avatars/avatars.service";
+import { AppConfig } from "../../configs/types/AppConfig";
 import { GameStreamerService } from "../game-streamer/game-streamer.service";
 import { SteamAccountService } from "../game-streamer/steam-account.service";
 import { RedisManagerService } from "../../redis/redis-manager/redis-manager.service";
@@ -28,6 +31,7 @@ type ClipSegmentSpec = ClipSpec["segments"][number];
 
 @Injectable()
 export class ClipsService {
+  private appConfig: AppConfig;
   private static readonly CLIP_VIEW_TTL_SECONDS = 6 * 60 * 60;
 
   constructor(
@@ -41,7 +45,10 @@ export class ClipsService {
     @InjectQueue(MatchQueues.Clips)
     private readonly batchQueue: Queue,
     private readonly notifications: NotificationsService,
-  ) {}
+    private readonly config: ConfigService,
+  ) {
+    this.appConfig = this.config.get<AppConfig>("app");
+  }
 
   public static GetClipS3Key(userSteamId: string, jobId: string) {
     return `clips/${userSteamId}/${jobId}.mp4`;
@@ -1673,10 +1680,10 @@ export class ClipsService {
       return {
         mapName,
         playerName: player?.name?.trim() || null,
-        avatarUrl:
-          player?.custom_avatar_url?.trim() ||
-          player?.avatar_url?.trim() ||
-          null,
+        avatarUrl: AvatarsService.publicUrl(
+          player?.custom_avatar_url?.trim() || player?.avatar_url,
+          this.appConfig.apiDomain,
+        ),
       };
     } catch (error) {
       this.logger.warn(
