@@ -3,14 +3,18 @@ import {
   Post,
   Param,
   Body,
+  Req,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
   ParseFilePipe,
   MaxFileSizeValidator,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
+import { Request } from "express";
 import { FileManagerService } from "./file-manager.service";
 import { HasuraAction } from "../hasura/hasura.controller";
+import { SteamGuard } from "../auth/strategies/SteamGuard";
 
 @Controller("file-manager")
 export class FileManagerController {
@@ -127,9 +131,13 @@ export class FileManagerController {
     );
   }
 
+  // The uploader is the session's player, never a form field: guards run before
+  // the interceptor, so nobody unauthenticated gets a file buffered either.
   @Post("upload/:nodeId/:serverId")
+  @UseGuards(SteamGuard)
   @UseInterceptors(FileInterceptor("file"))
   async uploadFileToServer(
+    @Req() request: Request,
     @Param("nodeId") nodeId: string,
     @Param("serverId") serverId: string,
     @UploadedFile(
@@ -141,10 +149,9 @@ export class FileManagerController {
     )
     file: Express.Multer.File,
     @Body("filePath") filePath: string,
-    @Body("userId") userId: string,
   ) {
     return await this.fileManagerService.uploadFile(
-      userId,
+      request.user.steam_id,
       nodeId,
       serverId,
       filePath,
@@ -153,8 +160,10 @@ export class FileManagerController {
   }
 
   @Post("upload/:nodeId")
+  @UseGuards(SteamGuard)
   @UseInterceptors(FileInterceptor("file"))
   async uploadFileToCustomPlugins(
+    @Req() request: Request,
     @Param("nodeId") nodeId: string,
     @UploadedFile(
       new ParseFilePipe({
@@ -165,10 +174,9 @@ export class FileManagerController {
     )
     file: Express.Multer.File,
     @Body("filePath") filePath: string,
-    @Body("userId") userId: string,
   ) {
     return await this.fileManagerService.uploadFile(
-      userId,
+      request.user.steam_id,
       nodeId,
       undefined,
       filePath,
