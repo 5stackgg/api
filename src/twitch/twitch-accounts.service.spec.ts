@@ -291,6 +291,36 @@ describe("TwitchAccountsService", () => {
       expect(twitch.users).not.toHaveBeenCalled();
       expect(cache.has("twitch:names-refreshed")).toBe(false);
     });
+
+    it("tries the name refresh again next minute when saving names fails", async () => {
+      const query = postgres.query.getMockImplementation();
+      postgres.query.mockImplementation(async (sql: string, params) => {
+        if (sql.includes("SET login = v.login")) {
+          throw new Error("connection lost");
+        }
+        return query(sql, params);
+      });
+
+      await expect(service.pollLiveStatus()).resolves.toBeUndefined();
+
+      expect(updates().map((rows) => rows.length)).toEqual([100, 100, 50]);
+      expect(cache.has("twitch:names-refreshed")).toBe(false);
+      expect(cache.has("twitch:poll-lock")).toBe(false);
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining("name refresh failed"),
+      );
+
+      const failedWrites = renames().length;
+      postgres.query.mockImplementation(query);
+      await service.pollLiveStatus();
+
+      expect(failedWrites).toBe(1);
+      expect(
+        renames()
+          .slice(failedWrites)
+          .map((rows) => rows.length),
+      ).toEqual([100, 100, 50]);
+    });
   });
 
   describe("linking", () => {
@@ -507,6 +537,25 @@ describe("TwitchAccountsService", () => {
         "user-token",
       );
       expect(postgres.transaction).not.toHaveBeenCalled();
+    });
+
+    it("reports Redis failing during the callback as Twitch being unavailable", async () => {
+      redis.multi.mockImplementationOnce(() => {
+        throw new Error("redis down");
+      });
+
+      expect(
+        await finish(PLAYER, { state: "s".repeat(43), code: "code" }),
+      ).toBe("https://5stack.gg/?twitch_error=twitch_unavailable");
+    });
+
+    it("reports the settings read failing during the callback as Twitch being unavailable", async () => {
+      const { state } = await start("/settings");
+      twitch.credentials.mockRejectedValueOnce(new Error("database down"));
+
+      expect(await finish(PLAYER, { state, code: "code" })).toBe(
+        "https://5stack.gg/settings?twitch_error=twitch_unavailable",
+      );
     });
 
     it("refuses when Twitch was unconfigured mid-link", async () => {

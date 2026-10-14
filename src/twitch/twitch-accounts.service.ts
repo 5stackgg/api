@@ -99,53 +99,50 @@ export class TwitchAccountsService {
     steamId: string | undefined,
     query: { code?: unknown; state?: unknown; error?: unknown },
   ): Promise<string> {
-    const pending = await this.consumeState(query.state);
+    let redirect = "/";
 
-    // Bound to the player who started it, so a callback URL carrying someone
-    // else's code cannot link their Twitch to whoever opens it.
-    if (!pending || !steamId || pending.steam_id !== steamId) {
-      return this.linkResult("/", "invalid_state");
-    }
-
-    if (query.error || typeof query.code !== "string" || !query.code) {
-      return this.linkResult(pending.redirect, "denied");
-    }
-
-    const credentials = await this.twitch.credentials();
-    if (!credentials) {
-      return this.linkResult(pending.redirect, "not_configured");
-    }
-
-    let user: HelixUser;
     try {
+      const pending = await this.consumeState(query.state);
+
+      // Bound to the player who started it, so a callback URL carrying someone
+      // else's code cannot link their Twitch to whoever opens it.
+      if (!pending || !steamId || pending.steam_id !== steamId) {
+        return this.linkResult("/", "invalid_state");
+      }
+
+      redirect = pending.redirect;
+
+      if (query.error || typeof query.code !== "string" || !query.code) {
+        return this.linkResult(redirect, "denied");
+      }
+
+      const credentials = await this.twitch.credentials();
+      if (!credentials) {
+        return this.linkResult(redirect, "not_configured");
+      }
+
       const token = await this.twitch.exchangeCode(
         credentials,
         query.code,
         this.redirectUri(),
       );
 
+      let user: HelixUser;
       try {
         user = await this.twitch.authenticatedUser(credentials, token);
       } finally {
         void this.twitch.revokeToken(credentials, token);
       }
-    } catch (error) {
-      this.logger.warn(
-        `[twitch] unable to link an account: ${(error as Error)?.message}`,
-      );
-      return this.linkResult(pending.redirect, "twitch_unavailable");
-    }
 
-    try {
       if (!(await this.link(steamId, user))) {
-        return this.linkResult(pending.redirect, "already_linked");
+        return this.linkResult(redirect, "already_linked");
       }
-    } catch (error) {
-      this.logger.error("[twitch] unable to save a linked account", error);
-      return this.linkResult(pending.redirect, "twitch_unavailable");
-    }
 
-    return this.linkResult(pending.redirect);
+      return this.linkResult(redirect);
+    } catch (error) {
+      this.logger.error("[twitch] unable to link an account", error);
+      return this.linkResult(redirect, "twitch_unavailable");
+    }
   }
 
   public async link(steamId: string, user: HelixUser): Promise<boolean> {
@@ -253,38 +250,37 @@ export class TwitchAccountsService {
   // A live Counter-Strike stream carries its channel's login; an offline
   // channel's login is only learned here, so a rename would otherwise leave
   // the profile linking a dead or reassigned channel.
+  // Never fails the tick: the live status it follows is already saved.
   private async refreshNamesWhenDue(
     credentials: TwitchCredentials,
     twitchUserIds: Array<string>,
   ): Promise<void> {
-    const due = await this.redis.set(
-      TwitchAccountsService.NAMES_REFRESHED,
-      "1",
-      "EX",
-      TwitchAccountsService.NAMES_REFRESH_SECONDS,
-      "NX",
-    );
+    try {
+      const due = await this.redis.set(
+        TwitchAccountsService.NAMES_REFRESHED,
+        "1",
+        "EX",
+        TwitchAccountsService.NAMES_REFRESH_SECONDS,
+        "NX",
+      );
 
-    if (due !== "OK") {
-      return;
-    }
-
-    for (const batch of TwitchAccountsService.batches(
-      twitchUserIds,
-      TwitchService.USERS_PER_REQUEST,
-    )) {
-      let users: Array<HelixUser>;
-      try {
-        users = await this.twitch.users(credentials, batch);
-      } catch (error) {
-        this.logger.warn(
-          `[twitch] name refresh failed: ${(error as Error)?.message}`,
-        );
-        await this.redis.del(TwitchAccountsService.NAMES_REFRESHED);
+      if (due !== "OK") {
         return;
       }
 
-      await this.recordNames(users);
+      for (const batch of TwitchAccountsService.batches(
+        twitchUserIds,
+        TwitchService.USERS_PER_REQUEST,
+      )) {
+        await this.recordNames(await this.twitch.users(credentials, batch));
+      }
+    } catch (error) {
+      this.logger.warn(
+        `[twitch] name refresh failed: ${(error as Error)?.message}`,
+      );
+      await this.redis
+        .del(TwitchAccountsService.NAMES_REFRESHED)
+        .catch(() => 0);
     }
   }
 
