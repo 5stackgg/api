@@ -70,8 +70,8 @@ export class MatchAssistantService {
   public static readonly ON_DEMAND_SERVER_BOOT_CHECK_DELAY_MS = 15 * 1000;
   public static readonly ON_DEMAND_SERVER_STOP_CHECK_DELAY_MS = 2 * 60 * 1000;
   private static readonly ON_DEMAND_SERVER_TEARDOWN_TIMEOUT_MS = 15 * 1000;
-  // Must outlast the previous Job's teardown (cache.lock releases by key, not owner),
-  // yet expire well inside assignServer's ~55s of retries.
+  // Must outlast the previous Job's teardown, yet expire well inside
+  // assignServer's ~55s of retries.
   private static readonly ON_DEMAND_ASSIGNMENT_LOCK_SECONDS = 45;
   private static readonly ORPHANED_JOB_CREATE_GRACE_MS = 5 * 60 * 1000;
   private static readonly ORPHANED_JOB_UNASSIGNED_GRACE_MS = 5 * 60 * 1000;

@@ -134,7 +134,7 @@ export class PlayerReindexService {
         }
         status.completed += 1;
         await this.saveStatus(status, RUNNING_TTL_SECONDS);
-        await this.cache.refreshLock(LOCK_KEY, RUNNING_TTL_SECONDS);
+        await this.cache.refreshLock(LOCK_KEY, runId, RUNNING_TTL_SECONDS);
       }
 
       if (!status.canceled && status.failed === 0) {
@@ -146,7 +146,7 @@ export class PlayerReindexService {
       status.finished_at = new Date().toISOString();
       await this.saveStatus(status, FINAL_TTL_SECONDS);
       await this.cache.forget(CANCEL_KEY);
-      await this.cache.forget(LOCK_KEY);
+      await this.cache.releaseLock(LOCK_KEY, runId);
       this.logger.log(
         `[player-reindex] finished: ${status.completed}/${status.total} processed, ${status.failed} failed${status.canceled ? " (canceled)" : ""}`,
       );
@@ -162,7 +162,7 @@ export class PlayerReindexService {
       return true;
     }
 
-    return (await this.cache.getRaw(LOCK_KEY)) === runId;
+    return await this.cache.refreshLock(LOCK_KEY, runId, RUNNING_TTL_SECONDS);
   }
 
   private async notifyComplete(status: ReindexStatus): Promise<void> {

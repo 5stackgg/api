@@ -127,6 +127,7 @@ describe("MatchmakingGateway.joinQueue", () => {
         retractMatchFound: jest.fn().mockResolvedValue(undefined),
       } as any,
       queue as any,
+      new CacheService(redisManager as any, logger),
     );
     (lobbies as any).matchmaking = matchmake;
 

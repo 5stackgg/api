@@ -59,7 +59,8 @@ describe("utility practice servers (SQL-driven)", () => {
       postgres,
       {} as never,
       {
-        acquireLock: jest.fn(async (): Promise<boolean> => true),
+        acquireLock: jest.fn(async (): Promise<string | null> => "token"),
+        releaseLock: jest.fn(async (): Promise<boolean> => true),
         forget: jest.fn(async (): Promise<boolean> => true),
         get: jest.fn(async (_key: string, fallback: unknown) => fallback),
         put: jest.fn(async (): Promise<void> => undefined),

@@ -89,10 +89,16 @@ describe("utility lineup discovery (SQL-driven)", () => {
       }),
       acquireLock: jest.fn(async (key: string) => {
         if (store.has(key)) {
+          return null;
+        }
+        store.set(key, "token");
+        return "token";
+      }),
+      releaseLock: jest.fn(async (key: string, token: string) => {
+        if (store.get(key) !== token) {
           return false;
         }
-        store.set(key, true);
-        return true;
+        return store.delete(key);
       }),
       forget: jest.fn(async (key: string) => store.delete(key)),
     } as unknown as CacheService;

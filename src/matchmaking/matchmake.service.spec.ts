@@ -19,6 +19,7 @@ import { HasuraService } from "../hasura/hasura.service";
 import { MatchAssistantService } from "../matches/match-assistant/match-assistant.service";
 import { MatchmakingLobbyService } from "./matchmaking-lobby.service";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
+import { CacheService } from "../cache/cache.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { MatchmakingQueues } from "./enums/MatchmakingQueues";
 import { getMatchmakingLobbyDetailsCacheKey } from "./utilities/cacheKeys";
@@ -101,6 +102,7 @@ describe("MatchmakeService", () => {
           useValue: logger,
         },
         MatchmakeService,
+        CacheService,
         {
           provide: HasuraService,
           useValue: mockHasura,

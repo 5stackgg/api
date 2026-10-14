@@ -79,11 +79,14 @@ export class FakeRedis {
     this.expireIfDue(key);
     this.assertType(key, "string");
 
-    const nx = args.some(
-      (arg) => typeof arg === "string" && arg.toUpperCase() === "NX",
-    );
+    const flag = (name: string) =>
+      args.some((arg) => typeof arg === "string" && arg.toUpperCase() === name);
 
-    if (nx && this.strings.has(key)) {
+    if (flag("NX") && this.strings.has(key)) {
+      return null;
+    }
+
+    if (flag("XX") && !this.strings.has(key)) {
       return null;
     }
 
@@ -276,6 +279,14 @@ export class FakeRedis {
       return this.dropStrayEntries(keys, argv);
     }
 
+    if (script.includes("'HEXISTS', KEYS[1], 'matchId'")) {
+      return this.claimReadyCheckForCancel(keys, argv);
+    }
+
+    if (script.includes("'DEL', KEYS[1]")) {
+      return this.releaseLock(keys, argv);
+    }
+
     throw new Error(
       `FakeRedis does not emulate this script, test it against a real redis: ${script.trim().split("\n")[0]}`,
     );
@@ -353,6 +364,40 @@ export class FakeRedis {
     });
 
     return dropped;
+  }
+
+  private claimReadyCheckForCancel(
+    [readyCheck, claim]: string[],
+    [creating, cancelling, ttl]: string[],
+  ) {
+    this.assertType(readyCheck, "hash");
+    if (this.hashes.get(readyCheck)?.has("matchId")) {
+      return 0;
+    }
+
+    this.assertType(claim, "string");
+    const holder = this.strings.get(claim);
+    if (holder === creating) {
+      return 0;
+    }
+
+    if (holder === undefined) {
+      this.strings.set(claim, cancelling);
+      this.expiries.set(claim, this.clock + Number(ttl) * 1000);
+    }
+
+    return 1;
+  }
+
+  private releaseLock([lock]: string[], [token]: string[]) {
+    this.assertType(lock, "string");
+    if (this.strings.get(lock) !== token) {
+      return 0;
+    }
+
+    this.expiries.delete(lock);
+    this.strings.delete(lock);
+    return 1;
   }
 
   // --- test helpers

@@ -257,7 +257,8 @@ describe("utility practice sessions (SQL-driven)", () => {
       postgres,
       {} as never,
       {
-        acquireLock: jest.fn(async (): Promise<boolean> => true),
+        acquireLock: jest.fn(async (): Promise<string | null> => "token"),
+        releaseLock: jest.fn(async (): Promise<boolean> => true),
         forget: jest.fn(async (): Promise<boolean> => true),
         get: jest.fn(async (_key: string, fallback: unknown) => fallback),
         put: jest.fn(async (): Promise<void> => undefined),
@@ -1321,7 +1322,9 @@ describe("utility practice sessions (SQL-driven)", () => {
       const { sessionId } = await readyServer(host, 27708);
 
       const service = makeService({
-        cache: { acquireLock: jest.fn(async (): Promise<boolean> => false) },
+        cache: {
+          acquireLock: jest.fn(async (): Promise<string | null> => null),
+        },
       });
 
       await expect(

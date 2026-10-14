@@ -642,7 +642,8 @@ describe("utility playbooks (SQL-driven)", () => {
         postgres,
         {} as never,
         {
-          acquireLock: jest.fn(async (): Promise<boolean> => true),
+          acquireLock: jest.fn(async (): Promise<string | null> => "token"),
+          releaseLock: jest.fn(async (): Promise<boolean> => true),
           forget: jest.fn(async (): Promise<boolean> => true),
         } as unknown as never,
         {

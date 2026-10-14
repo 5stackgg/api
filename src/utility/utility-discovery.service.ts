@@ -826,7 +826,8 @@ export class UtilityDiscoveryService {
     }
 
     const lockKey = `utility-discovery-save:${resultId}`;
-    if (!(await this.cache.acquireLock(lockKey, 60))) {
+    const lockToken = await this.cache.acquireLock(lockKey, 60);
+    if (!lockToken) {
       throw Error("that throw is already being saved");
     }
 
@@ -889,7 +890,7 @@ export class UtilityDiscoveryService {
 
       return lineupId;
     } finally {
-      await this.cache.forget(lockKey);
+      await this.cache.releaseLock(lockKey, lockToken);
     }
   }
 

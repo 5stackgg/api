@@ -22,6 +22,7 @@ describe("SeasonEloBackfillService.runBackfill", () => {
     forget: jest.Mock;
     acquireLock: jest.Mock;
     refreshLock: jest.Mock;
+    releaseLock: jest.Mock;
   };
   let service: SeasonEloBackfillService;
   let clearedRows: Array<{ id: string }>;
@@ -46,8 +47,9 @@ describe("SeasonEloBackfillService.runBackfill", () => {
       get: jest.fn().mockResolvedValue(undefined),
       put: jest.fn().mockResolvedValue(true),
       forget: jest.fn().mockResolvedValue(true),
-      acquireLock: jest.fn().mockResolvedValue(true),
-      refreshLock: jest.fn().mockResolvedValue(undefined),
+      acquireLock: jest.fn().mockResolvedValue("token"),
+      refreshLock: jest.fn().mockResolvedValue(true),
+      releaseLock: jest.fn().mockResolvedValue(true),
     };
     service = new SeasonEloBackfillService(
       { log: jest.fn(), warn: jest.fn() } as any,
@@ -70,7 +72,10 @@ describe("SeasonEloBackfillService.runBackfill", () => {
       WINDOW.starts_at,
       WINDOW.ends_at,
     ]);
-    expect(cache.forget).toHaveBeenCalledWith("season-elo-backfill:lock");
+    expect(cache.releaseLock).toHaveBeenCalledWith(
+      "season-elo-backfill:lock",
+      "token",
+    );
   });
 
   it("asks for a retry when the dates moved mid-run", async () => {
@@ -80,7 +85,7 @@ describe("SeasonEloBackfillService.runBackfill", () => {
   });
 
   it("asks for a retry instead of dropping the run when the lock is held", async () => {
-    cache.acquireLock.mockResolvedValue(false);
+    cache.acquireLock.mockResolvedValue(null);
 
     await expect(service.runBackfill("season-1")).resolves.toBe(false);
     expect(

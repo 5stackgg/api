@@ -220,16 +220,24 @@ describe("DedicatedServerMigrationService", () => {
 
     const cache = {
       acquireLock: jest.fn(
-        async (key: string, _seconds: number, value = "1") => {
+        async (key: string, _seconds: number, token = "token") => {
           if (cacheValues.has(key)) {
-            return false;
+            return null;
           }
-          cacheValues.set(key, value);
-          return true;
+          cacheValues.set(key, token);
+          return token;
         },
       ),
       getRaw: jest.fn(async (key: string) => cacheValues.get(key) ?? null),
-      refreshLock: jest.fn(),
+      refreshLock: jest.fn(
+        async (key: string, token: string) => cacheValues.get(key) === token,
+      ),
+      releaseLock: jest.fn(async (key: string, token: string) => {
+        if (cacheValues.get(key) !== token) {
+          return false;
+        }
+        return cacheValues.delete(key);
+      }),
       forget: jest.fn(async (...keys: Array<string>) => {
         keys.forEach((key) => cacheValues.delete(key));
       }),
