@@ -40,6 +40,22 @@ describe("SteamGuard.isSafeRedirect", () => {
     expect(isSafeRedirect("//evil.com/x")).toBe(false);
   });
 
+  // Browsers read a backslash as a slash and drop tabs and newlines, so these
+  // all leave for evil.com despite starting with a single "/".
+  it("refuses paths a browser turns into another host", () => {
+    expect(isSafeRedirect("/\\evil.com")).toBe(false);
+    expect(isSafeRedirect("/\\/evil.com")).toBe(false);
+    expect(isSafeRedirect("/\t/evil.com")).toBe(false);
+    expect(isSafeRedirect("/\n/evil.com")).toBe(false);
+    expect(isSafeRedirect("\\/evil.com")).toBe(false);
+  });
+
+  it("still allows a relative path with a query and a hash", () => {
+    expect(isSafeRedirect("/settings/linked-accounts?tab=twitch#top")).toBe(
+      true,
+    );
+  });
+
   it("allows the panel's own domain and its subdomains", () => {
     expect(isSafeRedirect("https://5stack.gg/login")).toBe(true);
     expect(isSafeRedirect("https://dev.5stack.gg/login")).toBe(true);
