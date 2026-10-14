@@ -26,6 +26,24 @@ export class AvatarsService {
     private readonly hasura: HasuraService,
   ) {}
 
+  // An upload is stored as its key, which the API serves under /avatars; a
+  // Steam avatar is stored as its URL. The same rule as web's resolveAvatarUrl.
+  public static publicUrl(
+    avatar: string | null | undefined,
+    apiDomain: string,
+  ): string | null {
+    const value = avatar?.trim();
+    if (!value) {
+      return null;
+    }
+
+    if (/^[a-z][a-z\d+\-.]*:/i.test(value) || value.startsWith("//")) {
+      return value;
+    }
+
+    return `${apiDomain.replace(/\/+$/, "")}/${value.replace(/^\/+/, "")}`;
+  }
+
   async uploadTeamAvatar(
     teamId: string,
     user: User,

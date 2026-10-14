@@ -143,6 +143,7 @@ describe("ClipDownloadController view counting", () => {
       { getConnection: () => redis } as any,
       {} as any,
       {} as any,
+      { get: () => ({}) } as any,
     );
 
     const module = await Test.createTestingModule({

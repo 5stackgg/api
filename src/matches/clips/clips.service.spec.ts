@@ -38,6 +38,7 @@ describe("ClipsService", () => {
       redisManager as any,
       batchQueue as any,
       { notifyPlayers: jest.fn() } as any,
+      { get: () => ({ apiDomain: "https://api.5stack.test" }) } as any,
     );
   });
 
@@ -196,6 +197,52 @@ describe("ClipsService", () => {
       );
 
       expect(count).toBe(5);
+    });
+  });
+
+  describe("highlight chip avatar", () => {
+    const STEAM_AVATAR = "https://avatars.steamstatic.com/abc_full.jpg";
+
+    const chipAvatarFor = async (player: {
+      avatar_url: string | null;
+      custom_avatar_url: string | null;
+    }) => {
+      hasura.query.mockResolvedValueOnce({
+        match_maps_by_pk: { map: { name: "de_inferno" } },
+        players: [{ name: "Player", ...player }],
+      });
+
+      const { avatarUrl } = await (service as any).resolveChipMeta(
+        "map-1",
+        "76561198000000009",
+      );
+      return avatarUrl;
+    };
+
+    it("points at the API's copy of an uploaded avatar", async () => {
+      expect(
+        await chipAvatarFor({
+          avatar_url: STEAM_AVATAR,
+          custom_avatar_url: "avatars/players/76561198000000009-a1b2c3.png",
+        }),
+      ).toBe(
+        "https://api.5stack.test/avatars/players/76561198000000009-a1b2c3.png",
+      );
+    });
+
+    it("keeps a Steam avatar as it is", async () => {
+      expect(
+        await chipAvatarFor({
+          avatar_url: STEAM_AVATAR,
+          custom_avatar_url: null,
+        }),
+      ).toBe(STEAM_AVATAR);
+    });
+
+    it("has no avatar for a player without one", async () => {
+      expect(
+        await chipAvatarFor({ avatar_url: null, custom_avatar_url: null }),
+      ).toBeNull();
     });
   });
 
