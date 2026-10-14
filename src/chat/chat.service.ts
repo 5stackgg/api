@@ -3654,8 +3654,8 @@ export class ChatService {
     await this.redis.hdel(lobbyKey, steamId);
   }
 
-  // Staff at match organizer and above, by the role held now, once the match
-  // has ended. Someone who took part (on a lineup or coaching now, or seen
+  // Staff at moderator and above, by the role held now, once the match has
+  // ended. Someone who took part (on a lineup or coaching now, or seen
   // writing in a team room) gets all chat only. Blocks are not applied:
   // reviewing a match means seeing every line of it.
   public async matchChatLog(
@@ -3668,7 +3668,7 @@ export class ChatService {
 
     const current = await this.getCurrentUser(user.steam_id);
 
-    if (!current || !isRoleAbove(current.role, "match_organizer")) {
+    if (!current || !isRoleAbove(current.role, "moderator")) {
       return null;
     }
 

@@ -995,34 +995,34 @@ describe("match chat archive (SQL-driven)", () => {
       expect(await log(admin, "administrator")).toBeNull();
     });
 
-    it("opens at match organizer for someone who took no part", async () => {
+    it("opens at moderator for someone who took no part", async () => {
       const staff = await fx.player("Staff");
-      await setRole(staff, "match_organizer");
+      await setRole(staff, "moderator");
       await status("Finished");
 
-      const read = await log(staff, "match_organizer");
+      const read = await log(staff, "moderator");
 
       expect(read!.teams).toHaveLength(2);
       expect(read!.team_chat_withheld).toBe(false);
     });
 
-    it("is closed to a moderator, the role just below", async () => {
+    it("is closed to a streamer, the role just below", async () => {
       const staff = await fx.player("Staff");
-      await setRole(staff, "moderator");
+      await setRole(staff, "streamer");
+      await status("Finished");
+
+      expect(await log(staff, "streamer")).toBeNull();
+    });
+
+    it("is closed to a moderator demoted to streamer", async () => {
+      const staff = await fx.player("Staff");
+      await setRole(staff, "streamer");
       await status("Finished");
 
       expect(await log(staff, "moderator")).toBeNull();
     });
 
-    it("is closed to a match organizer demoted to moderator", async () => {
-      const staff = await fx.player("Staff");
-      await setRole(staff, "moderator");
-      await status("Finished");
-
-      expect(await log(staff, "match_organizer")).toBeNull();
-    });
-
-    it("is closed below match organizer, organizer of the match or not", async () => {
+    it("is closed below moderator, organizer of the match or not", async () => {
       await postgres.query(
         "UPDATE matches SET organizer_steam_id = $2 WHERE id = $1",
         [match.id, player],
