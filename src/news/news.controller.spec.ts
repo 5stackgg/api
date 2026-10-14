@@ -1,4 +1,5 @@
 import { BadRequestException, INestApplication, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { Test } from "@nestjs/testing";
 import { Readable } from "stream";
 import request from "supertest";
@@ -49,6 +50,15 @@ describe("NewsController images", () => {
         { provide: PostgresService, useValue: { query: jest.fn() } },
         { provide: NotificationsService, useValue: {} },
         { provide: Logger, useValue: { log: jest.fn(), error: jest.fn() } },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: () => ({
+              webDomain: "https://5stack.gg",
+              authCookieDomain: ".5stack.gg",
+            }),
+          },
+        },
       ],
     }).compile();
 
