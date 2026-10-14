@@ -273,3 +273,91 @@ describe("UtilityLineupsService.parseSmokeVoxels", () => {
     }
   });
 });
+
+describe("UtilityLineupsService library progress", () => {
+  const OTHER = "44444444-4444-4444-4444-444444444444";
+  const SCRATCH = "scratch-1";
+
+  let postgres: { query: jest.Mock };
+  let pending: Array<unknown>;
+  let rows: Array<{ id: string }>;
+  let service: UtilityLineupsService;
+
+  beforeEach(() => {
+    pending = [];
+    rows = [{ id: LINEUP }, { id: OTHER }];
+    postgres = {
+      query: jest.fn(async (sql: string) => {
+        if (sql.includes("FROM public.utility_lineup_progress p")) {
+          return [
+            {
+              utility_lineup_id: LINEUP,
+              attempts: 7,
+              successes: 4,
+              current_streak: 2,
+              best_streak: 3,
+              mastered_at: null,
+            },
+          ];
+        }
+        if (sql.includes("LIMIT 500")) {
+          return rows;
+        }
+        return [];
+      }),
+    };
+
+    service = new UtilityLineupsService(
+      { warn: jest.fn(), log: jest.fn(), error: jest.fn() } as any,
+      postgres as any,
+      {} as any,
+      {} as any,
+      { pending: jest.fn(async () => pending) } as any,
+      {} as any,
+    );
+  });
+
+  function progressQueries() {
+    return postgres.query.mock.calls.filter(([sql]) =>
+      String(sql).includes("FROM public.utility_lineup_progress p"),
+    );
+  }
+
+  it("sends each lineup with where the asking player stands on it", async () => {
+    const library = await service.library(CONTEXT, AUTHOR);
+
+    expect(library).toEqual([
+      {
+        id: LINEUP,
+        progress: {
+          attempts: 7,
+          successes: 4,
+          current_streak: 2,
+          best_streak: 3,
+          mastered_at: null,
+        },
+      },
+      { id: OTHER, progress: null },
+    ]);
+    expect(progressQueries()).toEqual([
+      [expect.any(String), [AUTHOR, [LINEUP, OTHER]]],
+    ]);
+  });
+
+  it("asks for no progress on a lineup that was never saved", async () => {
+    rows = [];
+    pending = [
+      {
+        kind: "scratch",
+        lineup: { client_id: SCRATCH, map_name: CONTEXT.mapName },
+      },
+    ];
+
+    const library = await service.library(CONTEXT, AUTHOR);
+
+    expect(library).toEqual([
+      expect.objectContaining({ id: SCRATCH, progress: null }),
+    ]);
+    expect(progressQueries()).toEqual([]);
+  });
+});

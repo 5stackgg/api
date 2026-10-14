@@ -132,6 +132,9 @@ export class UtilityController {
     try {
       return {
         map_name: context.mapName,
+        // How many landed in a row the progress on each lineup is counting
+        // towards, so the plugin draws the same bar the panel judges by.
+        mastery_streak: UtilityLineupsService.MASTERY_STREAK,
         lineups: await this.lineups.library(context, String(steamId ?? "")),
       };
     } catch (error) {

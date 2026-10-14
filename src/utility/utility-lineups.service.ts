@@ -101,6 +101,16 @@ export type UtilityServerContext = {
   lineupSteamIds: Array<string>;
 };
 
+// Where one player stands on one lineup, in the same totals a practice result
+// answers with.
+export type UtilityLineupProgress = {
+  attempts: number;
+  successes: number;
+  current_streak: number;
+  best_streak: number;
+  mastered_at: Date | null;
+};
+
 export type UtilityLibraryRow = {
   id: string;
   name: string;
@@ -137,6 +147,9 @@ export type UtilityLibraryRow = {
   visibility: string;
   author_steam_id: string;
   approach: Array<UtilityApproachPoint> | null;
+  // The asking player's, and null for a lineup they have never thrown at.
+  // Absent on a render batch, which is nobody's library.
+  progress?: UtilityLineupProgress | null;
 };
 
 /**
@@ -672,7 +685,54 @@ export class UtilityLineupsService {
       );
     }
 
-    return [...rows, ...(await this.sentToPlayer(context, steamId, rows))];
+    return this.withProgress(steamId, [
+      ...rows,
+      ...(await this.sentToPlayer(context, steamId, rows)),
+    ]);
+  }
+
+  // A practice result only ever told the plugin about the lineup just thrown,
+  // so a player standing on one they mastered last week was shown nothing
+  // until they threw it again. Asked once for the whole library rather than
+  // joined into the select, which the render batch shares and has no player
+  // to join on.
+  private async withProgress(
+    steamId: string,
+    rows: Array<UtilityLibraryRow>,
+  ): Promise<Array<UtilityLibraryRow>> {
+    // A scratch lineup's id is deliberately not a uuid, and nothing has ever
+    // been scored against one.
+    const ids = rows
+      .map((row) => row.id)
+      .filter((id) => UtilityLineupsService.UUID.test(id));
+
+    if (ids.length === 0) {
+      return rows.map<UtilityLibraryRow>((row) => ({ ...row, progress: null }));
+    }
+
+    const scored = await this.postgres.query<
+      Array<UtilityLineupProgress & { utility_lineup_id: string }>
+    >(
+      `SELECT p.utility_lineup_id::text AS utility_lineup_id,
+              p.attempts, p.successes, p.current_streak, p.best_streak,
+              p.mastered_at
+         FROM public.utility_lineup_progress p
+        WHERE p.steam_id = $1::bigint
+          AND p.utility_lineup_id = ANY($2::uuid[])`,
+      [steamId, ids],
+    );
+
+    const byLineup = new Map(
+      scored.map(({ utility_lineup_id, ...progress }) => [
+        utility_lineup_id,
+        progress,
+      ]),
+    );
+
+    return rows.map<UtilityLibraryRow>((row) => ({
+      ...row,
+      progress: byLineup.get(row.id) ?? null,
+    }));
   }
 
   /**
