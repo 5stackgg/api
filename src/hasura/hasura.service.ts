@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
   createClient,
+  type e_player_roles_enum,
   FieldsSelection,
   type mutation_root,
   type mutation_rootGenqlSelection,
@@ -87,8 +88,10 @@ export class HasuraService {
     });
   }
 
-  public async getHasuraHeaders(steamId: string) {
-    const playerRole = await this.cache.remember(
+  public async getPlayerRole(
+    steamId: string,
+  ): Promise<e_player_roles_enum | undefined> {
+    return await this.cache.remember(
       HasuraService.PLAYER_ROLE_CACHE_KEY(steamId),
       async () => {
         const { players_by_pk } = await this.query({
@@ -104,9 +107,11 @@ export class HasuraService {
       },
       60 * 60 * 1000,
     );
+  }
 
+  public async getHasuraHeaders(steamId: string) {
     return {
-      "x-hasura-role": playerRole,
+      "x-hasura-role": await this.getPlayerRole(steamId),
       "x-hasura-user-id": steamId,
     };
   }
