@@ -244,6 +244,20 @@ describe("ClipsService", () => {
         await chipAvatarFor({ avatar_url: null, custom_avatar_url: null }),
       ).toBeNull();
     });
+
+    it.each([
+      "http://avatars.steamstatic.com/abc_full.jpg",
+      "file:///etc/passwd",
+      "javascript:alert(1)",
+      "data:image/png;base64,AAAA",
+      "//evil.test/a.png",
+      "not an avatar",
+      "avatars/players/../../admin",
+    ])("has no avatar when the stored one is %s", async (stored) => {
+      expect(
+        await chipAvatarFor({ avatar_url: stored, custom_avatar_url: null }),
+      ).toBeNull();
+    });
   });
 
   describe("pauseClipRenderBatch", () => {

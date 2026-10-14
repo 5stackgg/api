@@ -1,7 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { Logger } from "@nestjs/common";
 import { Queue } from "bullmq";
-import { e_match_types_enum } from "generated";
+import { e_match_types_enum, GenqlError } from "generated";
 import { MatchmakingLobby } from "./types/MatchmakingLobby";
 
 jest.mock("../matches/match-assistant/match-assistant.service", () => ({
@@ -65,12 +65,18 @@ describe("matchmaking (end to end)", () => {
   let queue: { add: jest.Mock; remove: jest.Mock };
   // players whose is_in_another_match reads true
   let busy: Set<string>;
+  // players banned since they queued
+  let banned: Set<string>;
+  // the matches table: id to status
+  let matchRows: Map<string, string>;
 
   beforeEach(async () => {
     redis = new FakeRedis();
     lobbyStore = new Map();
     confirmations = [];
     busy = new Set();
+    banned = new Set();
+    matchRows = new Map();
 
     queue = { add: jest.fn(), remove: jest.fn() };
 
@@ -78,12 +84,17 @@ describe("matchmaking (end to end)", () => {
     lineupInserts = [];
 
     matchAssistant = {
-      createMatchBasedOnType: jest.fn(async () => ({
-        id: "match-1",
-        lineup_1_id: "lineup-1",
-        lineup_2_id: "lineup-2",
-      })),
-      updateMatchStatus: jest.fn(),
+      createMatchBasedOnType: jest.fn(async () => {
+        matchRows.set("match-1", "PickingPlayers");
+        return {
+          id: "match-1",
+          lineup_1_id: "lineup-1",
+          lineup_2_id: "lineup-2",
+        };
+      }),
+      updateMatchStatus: jest.fn(async (matchId: string, status: string) => {
+        matchRows.set(matchId, status);
+      }),
     };
 
     hasura = {
@@ -113,6 +124,15 @@ describe("matchmaking (end to end)", () => {
         };
       }),
       mutation: jest.fn(async (payload: any) => {
+        if (payload?.delete_matches_by_pk) {
+          matchRows.delete(payload.delete_matches_by_pk.__args.id);
+        }
+        if (payload?.delete_matches) {
+          const { id, status } = payload.delete_matches.__args.where;
+          if (!status || matchRows.get(id._eq) === status._eq) {
+            matchRows.delete(id._eq);
+          }
+        }
         const objects = payload?.insert_match_lineup_players?.__args?.objects;
         if (objects) {
           lineupInserts.push(
@@ -154,6 +174,27 @@ describe("matchmaking (end to end)", () => {
 
     service = module.get<MatchmakeService>(MatchmakeService);
     lobbyService = module.get<MatchmakingLobbyService>(MatchmakingLobbyService);
+
+    // A player's lobby as the database has it: the one they queued in.
+    jest
+      .spyOn(lobbyService, "getPlayerLobby")
+      .mockImplementation(async (steamId: string) => {
+        const lobby = [...lobbyStore.values()].find(({ players }) =>
+          players.some((player) => player.steam_id === steamId),
+        );
+        return {
+          id: lobby?.lobbyId ?? steamId,
+          players: (lobby?.players ?? [{ steam_id: steamId }]).map(
+            (player, index) => ({
+              captain: index === 0,
+              name: `name-${player.steam_id}`,
+              steam_id: player.steam_id,
+              is_banned: banned.has(player.steam_id),
+              matchmaking_cooldown: false,
+            }),
+          ),
+        };
+      });
 
     const stamp =
       lobbyService.setMatchConformationIdForLobby.bind(lobbyService);
@@ -1080,12 +1121,12 @@ describe("matchmaking (end to end)", () => {
     });
 
     it.each([
-      ["making the match", "createMatchBasedOnType", false],
-      ["adding its players", "insert_match_lineup_players", true],
-      ["starting it", "updateMatchStatus", true],
+      ["making the match", "createMatchBasedOnType"],
+      ["adding its players", "insert_match_lineup_players"],
+      ["starting it", "updateMatchStatus"],
     ])(
       "deletes the match and puts every lobby back where it was when %s fails",
-      async (_, step, made) => {
+      async (_, step) => {
         const lobbies = tenSolos();
         await enqueue(lobbies);
         await service.matchmake(COMPETITIVE, "us-east");
@@ -1109,22 +1150,7 @@ describe("matchmaking (end to end)", () => {
 
         await expect(confirmAll()).rejects.toThrow("hasura unavailable");
 
-        const deletes = hasura.mutation.mock.calls.filter(
-          ([payload]) => payload?.delete_matches_by_pk,
-        );
-        expect(deletes).toEqual(
-          made
-            ? [
-                [
-                  expect.objectContaining({
-                    delete_matches_by_pk: expect.objectContaining({
-                      __args: { id: "match-1" },
-                    }),
-                  }),
-                ],
-              ]
-            : [],
-        );
+        expect([...matchRows.keys()]).toEqual([]);
 
         // every player accepted, so every lobby goes back with its place
         expect(queuedIn("us-east")).toEqual(
@@ -1149,6 +1175,94 @@ describe("matchmaking (end to end)", () => {
         expect(redis.has(`${key}:creating`)).toBe(false);
       },
     );
+
+    const refusal = (message: string) =>
+      new GenqlError([{ message, extensions: { code: "data-exception" } }], {});
+
+    const errorsTo = (steamId: string) =>
+      redis.published
+        .filter(({ channel }) => channel === "send-message-to-steam-id")
+        .map(({ message }) => JSON.parse(message))
+        .filter(
+          (message) =>
+            message.event === "matchmaking:error" &&
+            message.steamId === steamId,
+        )
+        .map((message) => message.data);
+
+    it("drops the lobby of a player banned since queueing instead of making the same match again", async () => {
+      const lobbies = tenSolos();
+      await enqueue(lobbies);
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      banned.add("solo-3-p0");
+      const answer = hasura.mutation.getMockImplementation();
+      hasura.mutation.mockImplementation(async (payload: any) => {
+        if (payload?.insert_match_lineup_players) {
+          throw refusal("Player is Currently Banned");
+        }
+        return answer(payload);
+      });
+
+      await expect(confirmAll()).rejects.toThrow("Player is Currently Banned");
+
+      expect(await detailsOf("solo-3")).toBeNull();
+      expect(errorsTo("solo-3-p0")).toEqual([
+        { code: "not_requeued", message: "name-solo-3-p0 is banned" },
+      ]);
+      expect(queuedIn("us-east")).toEqual(
+        lobbies
+          .map((lobby) => lobby.lobbyId)
+          .filter((lobbyId) => lobbyId !== "solo-3")
+          .sort(),
+      );
+      expect([...matchRows.keys()]).toEqual([]);
+
+      confirmations.length = 0;
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      expect(confirmations).toEqual([]);
+    });
+
+    it("drops every lobby when the database refuses the match for none of them", async () => {
+      const lobbies = tenSolos();
+      await enqueue(lobbies);
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      matchAssistant.updateMatchStatus.mockRejectedValueOnce(
+        refusal("No game servers are available in region us-east"),
+      );
+
+      await expect(confirmAll()).rejects.toThrow("No game servers");
+
+      expect(queuedIn("us-east")).toEqual([]);
+      for (const lobby of lobbies) {
+        expect(await detailsOf(lobby.lobbyId)).toBeNull();
+        expect(errorsTo(lobby.players[0].steam_id)).toEqual([
+          {
+            code: "match_refused",
+            message: "No game servers are available in region us-east",
+          },
+        ]);
+      }
+      expect([...matchRows.keys()]).toEqual([]);
+    });
+
+    it("keeps a match that was started when the answer to starting it was lost", async () => {
+      await enqueue(tenSolos());
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      matchAssistant.updateMatchStatus.mockImplementationOnce(
+        async (matchId: string, status: string) => {
+          matchRows.set(matchId, status);
+          throw new Error("socket hang up");
+        },
+      );
+
+      await expect(confirmAll()).rejects.toThrow("socket hang up");
+
+      expect(matchRows.get("match-1")).toBe("Live");
+    });
 
     it("leaves the ready check to a creation still running when its cancel job fires", async () => {
       await enqueue(tenSolos());

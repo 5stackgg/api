@@ -44,6 +44,10 @@ describe("stranded matchmaking lobbies", () => {
   let partyOf: Map<string, string>;
   let onBusyCheck: (steamIds: string[]) => Promise<void>;
   let onRegionStats: () => Promise<void>;
+  let onLineupInsert: () => Promise<void>;
+  let onMatchDelete: () => Promise<void>;
+  // the matches table: id to status
+  let matchRows: Map<string, string>;
   let statsRegions: string[];
 
   beforeAll(async () => {
@@ -70,12 +74,18 @@ describe("stranded matchmaking lobbies", () => {
     partyOf = new Map();
     onBusyCheck = async () => {};
     onRegionStats = async () => {};
+    onLineupInsert = async () => {};
+    onMatchDelete = async () => {};
+    matchRows = new Map();
     statsRegions = [REGION];
-    createMatch = jest.fn(async () => ({
-      id: "match-1",
-      lineup_1_id: "lineup-1",
-      lineup_2_id: "lineup-2",
-    }));
+    createMatch = jest.fn(async () => {
+      matchRows.set("match-1", "PickingPlayers");
+      return {
+        id: "match-1",
+        lineup_1_id: "lineup-1",
+        lineup_2_id: "lineup-2",
+      };
+    });
 
     jest.spyOn(redis, "publish").mockImplementation((async (
       channel: string,
@@ -174,7 +184,23 @@ describe("stranded matchmaking lobbies", () => {
         }
         throw new Error(`unexpected query ${Object.keys(payload)}`);
       }),
-      mutation: jest.fn(async () => ({})),
+      mutation: jest.fn(async (payload: Record<string, any>) => {
+        if (payload.insert_match_lineup_players) {
+          await onLineupInsert();
+        }
+        if (payload.delete_matches_by_pk) {
+          await onMatchDelete();
+          matchRows.delete(payload.delete_matches_by_pk.__args.id);
+        }
+        if (payload.delete_matches) {
+          await onMatchDelete();
+          const { id, status } = payload.delete_matches.__args.where;
+          if (!status || matchRows.get(id._eq) === status._eq) {
+            matchRows.delete(id._eq);
+          }
+        }
+        return {};
+      }),
     };
 
     const logger = new Logger("StrandedLobbiesTest");
@@ -599,6 +625,109 @@ describe("stranded matchmaking lobbies", () => {
     await join(A);
     expect(errorCodes(A)).toEqual([]);
     expect(await queued()).toEqual([A]);
+  });
+
+  it("removes the match a creation made before its pod died", async () => {
+    await join(A);
+    await join(B);
+    await runPass();
+    const [confirmationId] = readyChecks();
+
+    const died = new Promise<void>((reached) => {
+      onLineupInsert = () => {
+        reached();
+        return new Promise(() => {});
+      };
+    });
+    await confirm(confirmationId, A);
+    void confirm(confirmationId, B);
+    await died;
+    expect(matchRows.get("match-1")).toBe("PickingPlayers");
+
+    // the cancel job leaves it to the creation
+    await matchmake.cancelMatchMaking(confirmationId);
+    expect(matchRows.has("match-1")).toBe(true);
+
+    await readyCheckExpired(confirmationId, 5 * 60);
+    await sweepTwice();
+
+    expect(await queued()).toEqual([]);
+    expect(matchRows.has("match-1")).toBe(false);
+  });
+
+  it("lets the cancel job remove a match the failed creation could not", async () => {
+    await join(A);
+    await join(B);
+    await runPass();
+    const [confirmationId] = readyChecks();
+
+    onLineupInsert = async () => {
+      throw new Error("hasura unavailable");
+    };
+    onMatchDelete = async () => {
+      onMatchDelete = async () => {};
+      throw new Error("hasura unavailable");
+    };
+    await confirm(confirmationId, A);
+    await expect(confirm(confirmationId, B)).rejects.toThrow(
+      "hasura unavailable",
+    );
+    expect(matchRows.has("match-1")).toBe(true);
+    expect(await queued()).toEqual([A, B]);
+
+    // the cancel job, 30s later
+    await matchmake.cancelMatchMaking(confirmationId);
+
+    expect(matchRows.has("match-1")).toBe(false);
+    expect(await queued()).toEqual([A, B]);
+  });
+
+  it("leaves a lobby that a newer ready check took alone when two cancels settle the old one", async () => {
+    await join(A);
+    await join(B);
+    await runPass();
+    const [first] = readyChecks();
+    const key = getMatchmakingConformationCacheKey(first);
+
+    // both accepted, and the match was never made
+    await redis.hset(`${key}:confirmed`, A, 1, B, 1);
+
+    // one cancel stops with the first lobby in hand
+    let resume: () => void;
+    const paused = new Promise<void>((resolve) => {
+      resume = resolve;
+    });
+    const getLobbyDetails = lobbies.getLobbyDetails.bind(lobbies);
+    const holding = new Promise<void>((held) => {
+      jest
+        .spyOn(lobbies, "getLobbyDetails")
+        .mockImplementationOnce(async (lobbyId: string) => {
+          held();
+          await paused;
+          return getLobbyDetails(lobbyId);
+        });
+    });
+    const slow = matchmake.cancelMatchMaking(first);
+    await holding;
+
+    // the other runs to the end, and a pass puts what it requeued in a newer
+    // ready check
+    await matchmake.cancelMatchMaking(first);
+    await runPass();
+
+    resume();
+    await slow;
+
+    for (const lobbyId of [A, B]) {
+      expect(await detailsOf(lobbyId)).not.toBeNull();
+    }
+
+    await runPass();
+
+    const newer = readyChecks().at(-1);
+    expect(newer).not.toBe(first);
+    expect(await stampOf(A)).toBe(newer);
+    expect(await stampOf(B)).toBe(newer);
   });
 
   it("puts every lobby back when its match cannot be created", async () => {

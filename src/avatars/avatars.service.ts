@@ -27,7 +27,9 @@ export class AvatarsService {
   ) {}
 
   // An upload is stored as its key, which the API serves under /avatars; a
-  // Steam avatar is stored as its URL. The same rule as web's resolveAvatarUrl.
+  // Steam avatar is stored as its URL. Whatever this returns is loaded by a
+  // render pod's browser, and an organizer can write a player's avatar_url, so
+  // anything that is neither an https URL nor one of our keys is no avatar.
   public static publicUrl(
     avatar: string | null | undefined,
     apiDomain: string,
@@ -37,8 +39,12 @@ export class AvatarsService {
       return null;
     }
 
-    if (/^[a-z][a-z\d+\-.]*:/i.test(value) || value.startsWith("//")) {
+    if (/^https:\/\/\S+$/i.test(value)) {
       return value;
+    }
+
+    if (!/^\/?avatars\/[a-z-]+\/[\w.-]+$/i.test(value)) {
+      return null;
     }
 
     return `${apiDomain.replace(/\/+$/, "")}/${value.replace(/^\/+/, "")}`;

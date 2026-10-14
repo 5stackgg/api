@@ -283,6 +283,10 @@ export class FakeRedis {
       return this.claimReadyCheckForCancel(keys, argv);
     }
 
+    if (script.includes("'HDEL', KEYS[1], 'confirmationId'")) {
+      return this.takeLobbyStamp(keys, argv);
+    }
+
     if (script.includes("'DEL', KEYS[1]")) {
       return this.releaseLock(keys, argv);
     }
@@ -386,6 +390,20 @@ export class FakeRedis {
       this.expiries.set(claim, this.clock + Number(ttl) * 1000);
     }
 
+    return 1;
+  }
+
+  private takeLobbyStamp([details]: string[], [confirmationId]: string[]) {
+    this.assertType(details, "hash");
+    const hash = this.hashes.get(details);
+    if (hash?.get("confirmationId") !== confirmationId) {
+      return 0;
+    }
+
+    hash.delete("confirmationId");
+    if (hash.size === 0) {
+      this.hashes.delete(details);
+    }
     return 1;
   }
 
