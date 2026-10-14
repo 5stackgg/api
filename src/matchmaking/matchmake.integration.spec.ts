@@ -1291,6 +1291,146 @@ describe("matchmaking (end to end)", () => {
       }
     });
 
+    const failuresKeyOf = (lobbies: MatchmakingLobby[]) =>
+      `matchmaking:creation-failures:${lobbies
+        .map((lobby) => lobby.lobbyId)
+        .sort()
+        .join(",")}`;
+
+    it("puts every lobby back when what to drop cannot be decided", async () => {
+      const lobbies = tenSolos();
+      await enqueue(lobbies);
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      matchAssistant.createMatchBasedOnType.mockRejectedValueOnce(
+        new Error("hasura unavailable"),
+      );
+      jest.spyOn(redis, "incr").mockRejectedValue(new Error("redis blipped"));
+
+      await expect(confirmAll()).rejects.toThrow("hasura unavailable");
+
+      expect(queuedIn("us-east")).toEqual(
+        lobbies.map((lobby) => lobby.lobbyId).sort(),
+      );
+    });
+
+    it("puts every lobby back when its players cannot be looked up in time", async () => {
+      const lobbies = tenSolos();
+      await enqueue(lobbies);
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      const deadline = (MatchmakeService as any).DROP_DECISION_DEADLINE_MS;
+      (MatchmakeService as any).DROP_DECISION_DEADLINE_MS = 50;
+      try {
+        matchAssistant.createMatchBasedOnType.mockRejectedValueOnce(
+          new Error("hasura unavailable"),
+        );
+        jest
+          .spyOn(lobbyService, "getPlayerLobby")
+          .mockReturnValue(new Promise(() => {}));
+
+        await expect(confirmAll()).rejects.toThrow("hasura unavailable");
+      } finally {
+        (MatchmakeService as any).DROP_DECISION_DEADLINE_MS = deadline;
+      }
+
+      expect(queuedIn("us-east")).toEqual(
+        lobbies.map((lobby) => lobby.lobbyId).sort(),
+      );
+    });
+
+    it("forgets the failures of lobbies whose counter could not be given its ttl", async () => {
+      const lobbies = tenSolos();
+      await enqueue(lobbies);
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      const expire = redis.expire.bind(redis);
+      jest
+        .spyOn(redis, "expire")
+        .mockImplementation(async (key: string, seconds: number) => {
+          if (key.startsWith("matchmaking:creation-failures:")) {
+            throw new Error("redis blipped");
+          }
+          return expire(key, seconds);
+        });
+      matchAssistant.createMatchBasedOnType.mockRejectedValueOnce(
+        new Error("hasura unavailable"),
+      );
+
+      await confirmAll().catch((): void => undefined);
+
+      expect(await redis.ttl(failuresKeyOf(lobbies))).toBeGreaterThan(0);
+    });
+
+    it("forgets earlier failures once the lobbies' match is made", async () => {
+      const lobbies = tenSolos();
+      await enqueue(lobbies);
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      matchAssistant.createMatchBasedOnType.mockRejectedValueOnce(
+        new Error("hasura unavailable"),
+      );
+      await expect(confirmAll()).rejects.toThrow("hasura unavailable");
+
+      confirmations.length = 0;
+      confirmationIds.length = 0;
+      await service.matchmake(COMPETITIVE, "us-east");
+      await confirmAll();
+      expect(redis.has(failuresKeyOf(lobbies))).toBe(false);
+
+      // the match is played out, and the same lobbies queue again
+      await service.cancelMatchMakingByMatchId("match-1");
+      redis.advanceTime(31_000);
+      await enqueue(lobbies);
+      confirmations.length = 0;
+      confirmationIds.length = 0;
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      matchAssistant.createMatchBasedOnType.mockRejectedValueOnce(
+        new Error("hasura unavailable"),
+      );
+      await expect(confirmAll()).rejects.toThrow("hasura unavailable");
+
+      expect(queuedIn("us-east")).toEqual(
+        lobbies.map((lobby) => lobby.lobbyId).sort(),
+      );
+    });
+
+    it("tells players plainly when a constraint refuses their match", async () => {
+      const lobbies = tenSolos();
+      await enqueue(lobbies);
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      const answer = hasura.mutation.getMockImplementation();
+      hasura.mutation.mockImplementation(async (payload: any) => {
+        if (payload?.insert_match_lineup_players) {
+          throw new GenqlError(
+            [
+              {
+                message:
+                  'Uniqueness violation. duplicate key value violates unique constraint "match_lineup_players_pkey"',
+                extensions: { code: "constraint-violation" },
+              },
+            ],
+            {},
+          );
+        }
+        return answer(payload);
+      });
+
+      await expect(confirmAll()).rejects.toThrow("Uniqueness violation");
+
+      expect(queuedIn("us-east")).toEqual([]);
+      for (const lobby of lobbies) {
+        expect(errorsTo(lobby.players[0].steam_id)).toEqual([
+          {
+            code: "match_refused",
+            message: "The match couldn't be created, please queue again",
+          },
+        ]);
+      }
+    });
+
     it("keeps a match that was started when the answer to starting it was lost", async () => {
       await enqueue(tenSolos());
       await service.matchmake(COMPETITIVE, "us-east");

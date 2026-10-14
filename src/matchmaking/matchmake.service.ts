@@ -1724,6 +1724,8 @@ export class MatchmakeService {
 
     await this.redis.set(`matches:confirmation:${matchId}`, confirmationId);
 
+    await this.redis.del(MatchmakeService.creationFailuresKey(lobbyIds));
+
     await this.removeCancelMatchMakingJob(confirmationId);
 
     for (const lobbyId of lobbyIds) {
@@ -1733,13 +1735,52 @@ export class MatchmakeService {
 
   private static readonly CREATION_FAILURES_TTL_SECONDS = 10 * 60;
 
+  // The cancel only runs once this is decided, and until it runs the claim
+  // still reads as a creation in flight, which the cancel job leaves alone.
+  private static readonly DROP_DECISION_DEADLINE_MS = 10 * 1000;
+
+  private static readonly MATCH_NOT_CREATED =
+    "The match couldn't be created, please queue again";
+
   // Everyone accepted, so nobody is to blame for a match that could not be
   // made, and the cancel puts each lobby back where it was in the queue. But
   // the next pass would put the same lobbies in the same match, so a lobby
   // that could not join the queue now is dropped, and a refusal that names no
   // such lobby drops them all: it would only be refused again. Decided once,
-  // here, because more than one cancel can be settling the lobbies.
+  // here, because more than one cancel can be settling the lobbies. Whatever
+  // cannot be decided puts everyone back: the next pass checks them again.
   private async abandonMatchCreation(confirmationId: string, error: unknown) {
+    let dropped: Record<string, { code: string; message: string }> = {};
+
+    try {
+      dropped = await MatchmakeService.withinDeadline(
+        this.droppedLobbiesAfter(confirmationId, error),
+        MatchmakeService.DROP_DECISION_DEADLINE_MS,
+      );
+    } catch (decisionError) {
+      this.logger.warn(
+        `unable to decide which lobbies of confirmation ${confirmationId} to drop, requeueing them all`,
+        decisionError,
+      );
+    }
+
+    try {
+      await this.redis.hset(
+        getMatchmakingConformationCacheKey(confirmationId),
+        { droppedLobbies: JSON.stringify(dropped) },
+      );
+    } catch (recordError) {
+      this.logger.warn(
+        `unable to record the lobbies of confirmation ${confirmationId} to drop`,
+        recordError,
+      );
+    }
+
+    await this.handCreationToCancel(confirmationId);
+    await this.cancelMatchMaking(confirmationId);
+  }
+
+  private async droppedLobbiesAfter(confirmationId: string, error: unknown) {
     const { lobbyIds } = await this.getMatchConfirmationDetails(confirmationId);
     const refusal = await this.creationRefusal(lobbyIds, error);
 
@@ -1774,31 +1815,52 @@ export class MatchmakeService {
       }
     }
 
-    await this.redis.hset(getMatchmakingConformationCacheKey(confirmationId), {
-      droppedLobbies: JSON.stringify(dropped),
-    });
-    await this.handCreationToCancel(confirmationId);
-    await this.cancelMatchMaking(confirmationId);
+    return dropped;
   }
 
-  // A trigger refusing the write raises SQLSTATE 22000, which Hasura answers
-  // as a data-exception, and most constraints answer as a
-  // constraint-violation: those come back the same every time. A CHECK
+  private static async withinDeadline<T>(
+    work: Promise<T>,
+    milliseconds: number,
+  ): Promise<T> {
+    let timer: NodeJS.Timeout;
+
+    try {
+      return await Promise.race([
+        work,
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(
+            () => reject(new Error(`gave up after ${milliseconds}ms`)),
+            milliseconds,
+          );
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  private static creationFailuresKey(lobbyIds: string[]) {
+    return `matchmaking:creation-failures:${[...lobbyIds].sort().join(",")}`;
+  }
+
+  // A refusal comes back the same every time, so it is final at once. A CHECK
   // violation answers as a permission-error and a plain RAISE as unexpected,
-  // like an outage would, so the same lobbies failing a second time is taken
-  // as a refusal too, rather than retried for as long as they keep accepting.
+  // as an outage would, so the same lobbies failing a second time is taken as
+  // a refusal too, rather than retried for as long as they keep accepting. A
+  // successful creation forgets their failures.
   private async creationRefusal(
     lobbyIds: string[],
     error: unknown,
   ): Promise<string | null> {
-    const failuresKey = `matchmaking:creation-failures:${[...lobbyIds].sort().join(",")}`;
+    const failuresKey = MatchmakeService.creationFailuresKey(lobbyIds);
+    await this.redis.set(
+      failuresKey,
+      0,
+      "EX",
+      MatchmakeService.CREATION_FAILURES_TTL_SECONDS,
+      "NX",
+    );
     const failures = await this.redis.incr(failuresKey);
-    if (failures === 1) {
-      await this.redis.expire(
-        failuresKey,
-        MatchmakeService.CREATION_FAILURES_TTL_SECONDS,
-      );
-    }
 
     const refusal = MatchmakeService.refusalOf(error);
     if (refusal) {
@@ -1806,23 +1868,36 @@ export class MatchmakeService {
     }
 
     if (failures > 1) {
-      return "The match could not be created, try queueing again later";
+      return MatchmakeService.MATCH_NOT_CREATED;
     }
 
     return null;
   }
 
+  // Our triggers refuse a write with SQLSTATE 22000 and a message written for
+  // players, which Hasura answers as a data-exception. A constraint-violation
+  // is refused every time too, but in Postgres's words, so players are told
+  // plainly instead; createMatch logs the original.
   private static refusalOf(error: unknown): string | null {
     if (!(error instanceof GenqlError)) {
       return null;
     }
 
-    const refusal = error.errors.find((graphqlError) =>
-      ["data-exception", "constraint-violation"].includes(
-        graphqlError?.extensions?.code as string,
-      ),
+    const codes = error.errors.map(
+      (graphqlError) => graphqlError?.extensions?.code as string,
     );
 
-    return refusal ? refusal.message || error.message : null;
+    const ours = error.errors.find(
+      (graphqlError) => graphqlError?.extensions?.code === "data-exception",
+    );
+    if (ours) {
+      return ours.message || MatchmakeService.MATCH_NOT_CREATED;
+    }
+
+    if (codes.includes("constraint-violation")) {
+      return MatchmakeService.MATCH_NOT_CREATED;
+    }
+
+    return null;
   }
 }
