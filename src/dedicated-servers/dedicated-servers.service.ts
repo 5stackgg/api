@@ -806,8 +806,7 @@ export class DedicatedServersService {
   private async getServerStatusInfo(
     serverId: string,
     game: string,
-    steamRelayEnabled: boolean,
-  ): Promise<{ steamId: string | null; clients_human: number; map: string }> {
+  ): Promise<{ clients_human: number; map: string }> {
     const rcon = await this.RconService.connect(serverId);
     if (!rcon) {
       return;
@@ -818,14 +817,12 @@ export class DedicatedServersService {
       const mapMatch = output.match(/^map\s*:\s*(\S+)/m);
       const playersMatch = output.match(/^players\s*:\s*(\d+)\s+humans/m);
       return {
-        steamId: null,
         clients_human: playersMatch ? parseInt(playersMatch[1]) : 0,
         map: mapMatch ? mapMatch[1] : "unknown",
       };
     } else {
       const status = JSON.parse(await rcon.send("status_json"));
       return {
-        steamId: steamRelayEnabled ? status.server.steamid : null,
         clients_human: status.server.clients_human,
         map: status.server.map || "unknown",
       };
@@ -1053,11 +1050,7 @@ export class DedicatedServersService {
         label: true,
         enabled: true,
         connected: true,
-        steam_relay: true,
         game_server_node_id: true,
-        server_region: {
-          steam_relay: true,
-        },
       },
     });
 
@@ -1082,14 +1075,7 @@ export class DedicatedServersService {
       return;
     }
 
-    // TODO - fix steam relay for csgo
-    const steamRelayeEnabled =
-      server.game === "csgo" ? false : server.server_region?.steam_relay;
-    const statusInfo = await this.getServerStatusInfo(
-      serverId,
-      server.game,
-      steamRelayeEnabled,
-    );
+    const statusInfo = await this.getServerStatusInfo(serverId, server.game);
 
     if (!statusInfo) {
       await this.recordUnreachable(serverId, server);
@@ -1110,7 +1096,7 @@ export class DedicatedServersService {
       });
     }
 
-    const { steamId, clients_human, map } = statusInfo;
+    const { clients_human, map } = statusInfo;
 
     await this.redis.hset(
       "dedicated-servers:stats",
@@ -1123,21 +1109,6 @@ export class DedicatedServersService {
     );
 
     await this.redis.expire("dedicated-servers:stats", 120);
-
-    if (server.steam_relay !== steamId) {
-      await this.hasura.mutation({
-        update_servers_by_pk: {
-          __args: {
-            pk_columns: { id: serverId },
-            _set: {
-              steam_relay: steamId,
-              connected: !steamRelayeEnabled || steamId !== null,
-            },
-          },
-          id: true,
-        },
-      });
-    }
 
     // Not connected before this ping means it just came up, possibly with a
     // different plugin set than the last time it was asked.

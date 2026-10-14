@@ -148,6 +148,62 @@ describe("UtilityPracticeService.reportOccupancy", () => {
     expect(markReady).not.toHaveBeenCalled();
   });
 
+  // Only the server knows whether it listens on the relay, so what it says is
+  // the whole answer and nothing here second-guesses it.
+  const relayWrites = (postgres: { query: jest.Mock }) =>
+    postgres.query.mock.calls.filter(([sql]) => /SET steam_relay/.test(sql));
+
+  it("records the relay address of a server that says it is on the relay", async () => {
+    const { service, postgres } = makeService([]);
+
+    await service.reportOccupancy(
+      "server-1",
+      [],
+      "[A:1:3653557264:51859]",
+      true,
+    );
+
+    const [[sql, params]] = relayWrites(postgres);
+
+    expect(sql).toMatch(/SET steam_relay = \$2/);
+    expect(params).toEqual(["server-1", "[A:1:3653557264:51859]"]);
+  });
+
+  it("clears the relay address of a server that says it is not on the relay", async () => {
+    const { service, postgres } = makeService([]);
+
+    await service.reportOccupancy("server-1", [], null, false);
+
+    const [[sql, params]] = relayWrites(postgres);
+
+    expect(sql).toMatch(/SET steam_relay = NULL/);
+    expect(params).toEqual(["server-1"]);
+  });
+
+  // The only address left to hand out would be a host and port, and on the
+  // relay that reaches nobody.
+  it("does not call a server up that is on the relay with no address yet", async () => {
+    const { service, postgres, markReady } = makeService([]);
+
+    await service.reportOccupancy(
+      "server-1",
+      ["76561100000000001"],
+      null,
+      true,
+    );
+
+    expect(markReady).not.toHaveBeenCalled();
+    expect(postgres.query).not.toHaveBeenCalled();
+  });
+
+  it("keeps the relay address for a plugin that does not say either way", async () => {
+    const { service, postgres } = makeService([]);
+
+    await service.reportOccupancy("server-1", []);
+
+    expect(relayWrites(postgres)).toHaveLength(0);
+  });
+
   it("does not fail the occupancy write when a push cannot be delivered", async () => {
     const { service, publish } = makeService([{ steam_id: "76561100000000001" }]);
 

@@ -187,6 +187,7 @@ describe("DedicatedServersService.pingDedicatedServer", () => {
   let redis: FakeRedis;
   let row: Record<string, unknown>;
   let reachable: boolean;
+  let steamId: string | null;
   let hasura: { query: jest.Mock; mutation: jest.Mock };
   let notifications: { send: jest.Mock };
   let pluginCvars: { harvest: jest.Mock };
@@ -196,6 +197,7 @@ describe("DedicatedServersService.pingDedicatedServer", () => {
   beforeEach(() => {
     redis = new FakeRedis();
     reachable = true;
+    steamId = null;
     row = {
       game: "cs2",
       label: "Retakes #1",
@@ -221,7 +223,7 @@ describe("DedicatedServersService.pingDedicatedServer", () => {
               send: async () =>
                 JSON.stringify({
                   server: {
-                    steamid: null,
+                    steamid: steamId,
                     clients_human: 3,
                     map: "de_inferno",
                   },
@@ -268,6 +270,28 @@ describe("DedicatedServersService.pingDedicatedServer", () => {
   });
 
   const alerts = () => notifications.send.mock.calls.length;
+
+  // Whether a server is on Steam's relay is the server's to say, on its
+  // plugin's own report. A Steam ID is not an address it listens on, and the
+  // region's setting only decided how the pod was booted.
+  it("gives no server a relay address, whatever its region says", async () => {
+    row.server_region = { steam_relay: true };
+    steamId = "[A:1:3653557264:51859]";
+
+    await service.pingDedicatedServer("server-1");
+
+    expect(row.steam_relay).toBeNull();
+    expect(hasura.mutation).not.toHaveBeenCalled();
+  });
+
+  it("keeps the relay address a server reported", async () => {
+    row.steam_relay = "[A:1:3653557264:51859]";
+
+    await service.pingDedicatedServer("server-1");
+
+    expect(row.steam_relay).toBe("[A:1:3653557264:51859]");
+    expect(hasura.mutation).not.toHaveBeenCalled();
+  });
 
   it("does not mark an unreachable server connected", async () => {
     row.connected = false;

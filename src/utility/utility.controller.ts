@@ -34,6 +34,7 @@ import {
 } from "./utility-lineups.service";
 import { UtilityPlaybooksService } from "./utility-playbooks.service";
 import { UtilityPluginKeyGuard } from "./utility-plugin-key.guard";
+import { SteamRelay } from "../servers/steam-relay";
 import { UtilityPracticeService } from "./utility-practice.service";
 
 @Controller("utility")
@@ -86,12 +87,20 @@ export class UtilityController {
   @UseGuards(UtilityPluginKeyGuard)
   public async occupancy(
     @Req() request: Request,
-    @Body() body: { steam_ids?: Array<string>; steam_relay?: string | null },
+    @Body()
+    body: {
+      steam_ids?: Array<string>;
+      steam_relay?: string | null;
+      on_steam_relay?: boolean;
+    },
   ) {
+    const relay = SteamRelay.word(body?.on_steam_relay, body?.steam_relay);
+
     await this.practice.reportOccupancy(
       UtilityController.serverId(request),
       Array.isArray(body?.steam_ids) ? body.steam_ids : [],
-      typeof body?.steam_relay === "string" ? body.steam_relay : null,
+      relay.address,
+      relay.onRelay,
     );
 
     return { ok: true };
@@ -183,8 +192,20 @@ export class UtilityController {
   public async session(
     @Req() request: Request,
     @Query("map") reportedMap?: string,
+    @Query("on_steam_relay") onSteamRelay?: string,
+    @Query("steam_relay") steamRelay?: string,
   ) {
     const serverId = UtilityController.serverId(request);
+
+    // Ahead of everything else: the connect string is read the moment the
+    // session is ready, and has to say where the server is by then. A plugin
+    // from before this sends neither and is taken at its word as before.
+    const relay = SteamRelay.word(onSteamRelay, steamRelay);
+    const up = await this.practice.reportSteamRelay(
+      serverId,
+      relay.address,
+      relay.onRelay,
+    );
 
     const session = await this.practice.sessionForServer(serverId);
 
@@ -194,8 +215,11 @@ export class UtilityController {
       );
     }
 
-    // The plugin asking at all is the definitive signal that the server is up.
-    await this.practice.markReady(session.match_id);
+    // The plugin asking is the definitive signal that the server is up, unless
+    // it is on the relay and has no address there yet.
+    if (up) {
+      await this.practice.markReady(session.match_id);
+    }
 
     // This fetch runs inside the plugin's map-load handler, so the map it names
     // is the one the level actually came up on -- the only thing that can end a

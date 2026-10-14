@@ -1,6 +1,7 @@
 import { Controller, Get, Logger, Req, Res } from "@nestjs/common";
 import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { GameServerNodeService } from "./game-server-node.service";
+import { SteamRelay } from "../servers/steam-relay";
 import { TailscaleService } from "../tailscale/tailscale.service";
 import { HasuraService } from "../hasura/hasura.service";
 import { InjectQueue } from "@nestjs/bullmq";
@@ -830,7 +831,12 @@ UNIT
       pluginRuntime: string;
     };
 
-    if (steamRelay && !steamID) {
+    // The match plugin names the relay only when it is on it, so saying nothing
+    // is its "no". The ping is what calls a server up, and one on the relay
+    // with no address there yet is not.
+    const relay = SteamRelay.word(Boolean(steamRelay), steamID);
+
+    if (!SteamRelay.isUp(relay)) {
       return;
     }
 
@@ -854,7 +860,6 @@ UNIT
         connected: true,
         hibernating: true,
         enabled: true,
-        steam_relay: true,
         is_dedicated: true,
         game_server_node_id: true,
         current_match: {
@@ -954,12 +959,14 @@ UNIT
       }
     }
 
+    // Ahead of marking it connected: the connect string is read as soon as the
+    // server is, and has to say where it is by then.
+    await this.gameServerNodeService.reportSteamRelay(String(serverId), relay);
+
     if (
       !server.connected ||
       server.plugin_version !== pluginVersion ||
-      (pluginRuntime && server.plugin_runtime !== pluginRuntime) ||
-      (server.steam_relay && !steamRelay) ||
-      server.steam_relay !== steamID
+      (pluginRuntime && server.plugin_runtime !== pluginRuntime)
     ) {
       await this.hasura.mutation({
         update_servers_by_pk: {
@@ -969,7 +976,6 @@ UNIT
             },
             _set: {
               connected: true,
-              steam_relay: steamRelay ? steamID : null,
               plugin_version: pluginVersion,
               ...(pluginRuntime ? { plugin_runtime: pluginRuntime } : {}),
               offline_at: null,

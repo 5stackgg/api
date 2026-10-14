@@ -26,6 +26,7 @@ import {
 import { UtilityPracticeModeService } from "./utility-practice-mode.service";
 import { NoPracticeServerHere } from "./errors/NoPracticeServerHere";
 import { PRACTICE_PLUGIN_RUNTIME } from "../configs/types/GameServersConfig";
+import { SteamRelay } from "../servers/steam-relay";
 
 export type UtilityPracticeSession = {
   id: string;
@@ -962,35 +963,18 @@ export class UtilityPracticeService {
     return row ?? null;
   }
 
-  /**
-   * Record where a practice pod can be reached over Steam's relay network.
-   *
-   * Nothing else ever writes this for a practice server: the match plugin's
-   * ping is what maintains it everywhere else, and a practice pod does not run
-   * the match plugin. Deliberately not that endpoint either -- it also writes
-   * plugin_version and plugin_runtime, which decide how the panel talks to a
-   * server, and the utility plugin's version is not the answer to that.
-   *
-   * A null is "nothing to say", never "clear it": a pod still registering with
-   * the relay would otherwise flap the address out from under a player joining.
-   * The stale value that caused the original bug is cleared when the row is
-   * reserved, which is the moment it is known to be wrong.
-   */
-  private async reportSteamRelay(
+  // A practice pod runs no match plugin, so its word on Steam's relay arrives
+  // with its session fetch and its occupancy instead of on the ping. Where it
+  // lands and what it means is SteamRelay's, the same as for every plugin.
+  public async reportSteamRelay(
     serverId: string,
     steamRelay: string | null,
-  ): Promise<void> {
-    if (!steamRelay) {
-      return;
-    }
-
-    await this.postgres.query(
-      `UPDATE public.servers
-          SET steam_relay = $2
-        WHERE id = $1::uuid
-          AND steam_relay IS DISTINCT FROM $2`,
-      [serverId, steamRelay],
-    );
+    onSteamRelay: boolean | null,
+  ): Promise<boolean> {
+    return await SteamRelay.report(this.postgres, serverId, {
+      onRelay: onSteamRelay,
+      address: steamRelay,
+    });
   }
 
   /**
@@ -2159,11 +2143,14 @@ export class UtilityPracticeService {
     serverId: string,
     steamIds: Array<string>,
     steamRelay: string | null = null,
+    onSteamRelay: boolean | null = null,
   ): Promise<void> {
     // Independent of the session: a pod reports where it can be reached
     // whether or not anyone is on it yet, and the connect string is read
     // before the first player arrives.
-    await this.reportSteamRelay(serverId, steamRelay);
+    if (!(await this.reportSteamRelay(serverId, steamRelay, onSteamRelay))) {
+      return;
+    }
 
     const session = await this.liveSessionForServer(serverId);
 

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "src/hasura/hasura.service";
 import { PostgresService } from "src/postgres/postgres.service";
+import { SteamRelay, SteamRelayWord } from "../servers/steam-relay";
 import { RconService } from "src/rcon/rcon.service";
 import { DedicatedServersService } from "src/dedicated-servers/dedicated-servers.service";
 import { SanctionType, SERVER_ENFORCED_SANCTION_TYPES } from "./sanction-types";
@@ -52,6 +53,8 @@ export class SanctionsService {
       steamIds?: unknown;
       pluginVersion?: unknown;
       pluginRuntime?: unknown;
+      onSteamRelay?: unknown;
+      steamRelay?: unknown;
     },
   ): Promise<
     Array<{
@@ -65,6 +68,11 @@ export class SanctionsService {
       serverId,
       params.pluginVersion,
       params.pluginRuntime,
+    );
+
+    await this.recordSteamRelay(
+      serverId,
+      SteamRelay.word(params.onSteamRelay, params.steamRelay),
     );
 
     const steamIds = SanctionsService.syncSteamIds(params.steamIds);
@@ -368,6 +376,23 @@ export class SanctionsService {
     } catch (error) {
       this.logger.warn(
         `unable to record the player management heartbeat for ${serverId}`,
+        error,
+      );
+    }
+  }
+
+  // A community server's only word to the panel is this sync, so what it says
+  // about Steam's relay rides on it. Never worth failing the sync over: that
+  // is what gets a ban enforced.
+  private async recordSteamRelay(
+    serverId: string,
+    relay: SteamRelayWord,
+  ): Promise<void> {
+    try {
+      await SteamRelay.report(this.postgres, serverId, relay);
+    } catch (error) {
+      this.logger.warn(
+        `unable to record the steam relay address for ${serverId}`,
         error,
       );
     }

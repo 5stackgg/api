@@ -57,7 +57,26 @@ describe("SanctionsController.syncServerSanctions", () => {
       steamIds: ["76561198000000001"],
       pluginVersion: "0.0.412",
       pluginRuntime: "swiftlys2",
+      onSteamRelay: undefined,
+      steamRelay: undefined,
     });
+  });
+
+  // The sync is a community server's only word to the panel.
+  it("passes on what the server says about Steam's relay", async () => {
+    await controller.syncServerSanctions(serverA, {
+      steam_ids: [],
+      on_steam_relay: true,
+      steam_relay: "[A:1:3653557264:51859]",
+    });
+
+    expect(syncServerSanctions).toHaveBeenCalledWith(
+      serverA,
+      expect.objectContaining({
+        onSteamRelay: true,
+        steamRelay: "[A:1:3653557264:51859]",
+      }),
+    );
   });
 
   // Only well-formed ids reach the access check, the same filter the
