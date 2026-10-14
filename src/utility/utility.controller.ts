@@ -32,6 +32,7 @@ import {
   UtilityPracticeResultPayload,
   UtilityServerContext,
 } from "./utility-lineups.service";
+import { UtilityPlaybooksService } from "./utility-playbooks.service";
 import { UtilityPluginKeyGuard } from "./utility-plugin-key.guard";
 import { UtilityPracticeService } from "./utility-practice.service";
 
@@ -44,6 +45,7 @@ export class UtilityController {
     private readonly artifacts: UtilityArtifactsService,
     private readonly practice: UtilityPracticeService,
     private readonly callouts: UtilityCalloutsService,
+    private readonly playbooks: UtilityPlaybooksService,
   ) {}
 
   @Post("ingest")
@@ -117,6 +119,30 @@ export class UtilityController {
       map,
       Array.isArray(body?.callouts) ? body.callouts : [],
     );
+  }
+
+  // The executes somebody on this server can load from the in-game menu.
+  // Asked for by the server on a player's behalf, so the roster check is the
+  // library's: a practice server only reads for somebody it is hosting.
+  @Get("playbooks")
+  @UseGuards(UtilityPluginKeyGuard)
+  public async playbooksFor(
+    @Req() request: Request,
+    @Query("steam_id") steamId: string,
+  ) {
+    await this.assertLibraryEnabled();
+
+    const context = await this.context(request);
+    const asked = String(steamId ?? "");
+
+    if (!context.lineupSteamIds.includes(asked)) {
+      throw new BadRequestException("player is not in this match lineup");
+    }
+
+    return {
+      map_name: context.mapName,
+      playbooks: await this.playbooks.forPlayer(context.mapName, asked),
+    };
   }
 
   @Get("library")

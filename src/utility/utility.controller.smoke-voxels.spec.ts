@@ -31,6 +31,7 @@ describe("UtilityController smoke voxels", () => {
       {} as any,
       {} as any,
       {} as any,
+      {} as any,
     );
     return { controller, lineups };
   }

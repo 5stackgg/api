@@ -216,6 +216,44 @@ export class UtilityPlaybooksService {
     return { id: row.id, map_name: row.map_name };
   }
 
+  // A wheel in game shows a handful at a time. Past this it is a browsing
+  // problem, and the website already solves that one.
+  public static readonly MAX_FOR_PLAYER = 24;
+
+  /**
+   * The executes a player can pick from in game on one map: their own and
+   * their team's. Public ones are left out on purpose -- everybody's public
+   * executes for a map is a catalogue, not a list anybody chooses from in the
+   * middle of practice.
+   */
+  public async forPlayer(
+    mapName: string,
+    steamId: string,
+  ): Promise<Array<UtilityPlaybookPayload>> {
+    const playbooks = await this.postgres.query<
+      Array<{ id: string; name: string; map_name: string; side: string }>
+    >(
+      `SELECT p.id::text AS id, p.name, p.map_name, p.side
+         FROM public.utility_playbooks p
+        WHERE p.map_name = $1
+          AND (
+            p.owner_steam_id = $2::bigint
+            OR (p.visibility = 'Team'
+                AND public.is_utility_team_member(p.team_id, $2::bigint))
+          )
+        ORDER BY p.name ASC
+        LIMIT $3::int`,
+      [mapName, steamId, UtilityPlaybooksService.MAX_FOR_PLAYER],
+    );
+
+    return Promise.all(
+      playbooks.map(async (playbook) => ({
+        ...playbook,
+        steps: await this.steps(playbook.id),
+      })),
+    );
+  }
+
   public async forSession(
     sessionId: string,
   ): Promise<UtilityPlaybookPayload | null> {
