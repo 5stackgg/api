@@ -7,7 +7,7 @@ import { getCookieOptions } from "./utilities/getCookieOptions";
 import { isAllowedOrigin } from "./utilities/isAllowedOrigin";
 import { NestExpressApplication } from "@nestjs/platform-express";
 import passport from "passport";
-import { WsAdapter } from "@nestjs/platform-ws";
+import { WebSocketAdapter } from "./sockets/web-socket.adapter";
 import { RedisManagerService } from "./redis/redis-manager/redis-manager.service";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "./configs/types/AppConfig";
@@ -128,7 +128,7 @@ async function bootstrap() {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  app.useWebSocketAdapter(new WsAdapter(app));
+  app.useWebSocketAdapter(new WebSocketAdapter(app, allowOrigin));
 
   await app.startAllMicroservices();
   await app.listen(5585);
