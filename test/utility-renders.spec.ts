@@ -1,9 +1,11 @@
 import { Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { Readable, Writable } from "stream";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { ClipDownloadController } from "./../src/matches/clips/clip-download.controller";
+import { FileUrlSigningService } from "./../src/hasura/file-url-signing.service";
 import {
   UTILITY_RENDER_VERSION,
   UtilityRendersService,
@@ -18,12 +20,35 @@ describe("utility lineup renders (SQL-driven)", () => {
   let postgres: PostgresService;
   let fx: Fixtures;
   let author: string;
+  let signing: FileUrlSigningService;
 
   beforeAll(async () => {
     db = await bootMigratedDb("UtilityRendersTest");
     postgres = db.postgres;
     fx = new Fixtures(postgres, 76561199640000000n);
+    signing = new FileUrlSigningService(
+      new Logger("UtilityRendersTest"),
+      new ConfigService({ s3: { secret: "bucket-secret" } }),
+      postgres,
+    );
+    await signing.storeKey();
   }, 600_000);
+
+  // The link as it was before links were signed, once its signature checks
+  // out for the file it names.
+  function unsigned(url: string | null, key: string) {
+    const link = new URL(url!);
+    expect(
+      signing.verify(
+        key,
+        link.searchParams.get("exp"),
+        link.searchParams.get("sig"),
+      ),
+    ).toBe(true);
+    link.searchParams.delete("exp");
+    link.searchParams.delete("sig");
+    return link.toString();
+  }
 
   afterAll(async () => {
     await db?.stop();
@@ -196,10 +221,10 @@ describe("utility lineup renders (SQL-driven)", () => {
            FROM utility_lineups l WHERE l.id = $1::uuid`,
         [id],
       );
-      expect(first.url).toBe(
+      expect(unsigned(first.url, `clips/utility/${id}.mp4`)).toBe(
         `https://demo-dl.5stack.gg/clips/utility/${id}.mp4?v=1000000`,
       );
-      expect(first.thumb).toBe(
+      expect(unsigned(first.thumb, `clips/utility/${id}.jpg`)).toBe(
         `https://demo-dl.5stack.gg/clips/utility/${id}.jpg?v=1000000`,
       );
 
@@ -211,7 +236,7 @@ describe("utility lineup renders (SQL-driven)", () => {
         "SELECT public.utility_lineup_preview_url(l) AS url FROM utility_lineups l WHERE l.id = $1::uuid",
         [id],
       );
-      expect(second.url).toBe(
+      expect(unsigned(second.url, `clips/utility/${id}.mp4`)).toBe(
         `https://demo-dl.5stack.gg/clips/utility/${id}.mp4?v=2000000`,
       );
     });
@@ -254,10 +279,14 @@ describe("utility lineup renders (SQL-driven)", () => {
         ],
       );
 
-      expect(await stillsUrl(id)).toEqual({
-        aim: `https://demo-dl.5stack.gg/clips/utility/${id}/aim.jpg?v=1000000`,
-        landing: `https://demo-dl.5stack.gg/clips/utility/${id}/landing.jpg?v=1000000`,
-      });
+      const urls = await stillsUrl(id);
+      expect(Object.keys(urls!).sort()).toEqual(["aim", "landing"]);
+      expect(unsigned(urls!.aim, `clips/utility/${id}/aim.jpg`)).toBe(
+        `https://demo-dl.5stack.gg/clips/utility/${id}/aim.jpg?v=1000000`,
+      );
+      expect(unsigned(urls!.landing, `clips/utility/${id}/landing.jpg`)).toBe(
+        `https://demo-dl.5stack.gg/clips/utility/${id}/landing.jpg?v=1000000`,
+      );
     });
   });
 
@@ -352,12 +381,14 @@ describe("utility lineup renders (SQL-driven)", () => {
         hasura as never,
         postgres,
         null as never,
+        signing,
         new Logger("UtilityRendersTest"),
       );
 
       const fetch = async (
         key: string,
         viewer?: { steam_id: string; role: string },
+        link: { exp?: string | null; sig?: string | null } = {},
       ) => {
         const response: any = new Writable({
           write(_chunk, _encoding, callback) {
@@ -381,6 +412,8 @@ describe("utility lineup renders (SQL-driven)", () => {
           key.replace("clips/utility/", "").split("/"),
           undefined,
           undefined,
+          link.exp ?? undefined,
+          link.sig ?? undefined,
           { headers: {}, user: viewer } as never,
           response,
         );
@@ -400,16 +433,17 @@ describe("utility lineup renders (SQL-driven)", () => {
 
       const row = await urls(id);
 
-      expect(row.url).toBe(
+      expect(unsigned(row.url, files.clip)).toBe(
         `https://demos.example.test/${files.clip}?v=1000000`,
       );
-      expect(row.thumb).toBe(
+      expect(unsigned(row.thumb, files.thumbnail)).toBe(
         `https://demos.example.test/${files.thumbnail}?v=1000000`,
       );
-      expect(row.stills).toEqual({
-        aim: `https://demos.example.test/${files.aim}?v=1000000`,
-      });
-      expect(row.smoke).toBe(
+      expect(Object.keys(row.stills!)).toEqual(["aim"]);
+      expect(unsigned(row.stills!.aim, files.aim)).toBe(
+        `https://demos.example.test/${files.aim}?v=1000000`,
+      );
+      expect(unsigned(row.smoke, files.smoke)).toBe(
         `https://demos.example.test/${files.smoke}?v=2000000`,
       );
     });
@@ -477,7 +511,13 @@ describe("utility lineup renders (SQL-driven)", () => {
       it("keeps its urls", async () => {
         const { id, files } = await unpublished();
 
-        expect(await urls(id)).toEqual({
+        const row = await urls(id);
+        expect({
+          url: unsigned(row.url, files.clip),
+          thumb: unsigned(row.thumb, files.thumbnail),
+          stills: { aim: unsigned(row.stills!.aim, files.aim) },
+          smoke: unsigned(row.smoke, files.smoke),
+        }).toEqual({
           url: `https://demos.example.test/${files.clip}?v=1000000`,
           thumb: `https://demos.example.test/${files.thumbnail}?v=1000000`,
           stills: {
@@ -485,6 +525,34 @@ describe("utility lineup renders (SQL-driven)", () => {
           },
           smoke: `https://demos.example.test/${files.smoke}?v=2000000`,
         });
+      });
+
+      // Whoever was handed the link could see the lineup when it was signed;
+      // that is the grant, for as long as the link runs.
+      it("is served on the link its computed field signed", async () => {
+        const { id, files } = await unpublished();
+        const row = await urls(id);
+        const { fetch } = api();
+
+        const link = new URL(row.url!);
+        expect(
+          await fetch(files.clip, undefined, {
+            exp: link.searchParams.get("exp"),
+            sig: link.searchParams.get("sig"),
+          }),
+        ).toEqual({
+          status: 200,
+          type: "video/mp4",
+          cache: "private, max-age=0, must-revalidate",
+        });
+        expect(
+          (
+            await fetch(files.thumbnail, undefined, {
+              exp: link.searchParams.get("exp"),
+              sig: link.searchParams.get("sig"),
+            })
+          ).status,
+        ).toBe(404);
       });
 
       it("is served to nobody who cannot see the lineup", async () => {
