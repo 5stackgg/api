@@ -105,7 +105,7 @@ export class HasuraService {
 
         return players_by_pk?.role;
       },
-      60 * 60 * 1000,
+      60 * 60,
     );
   }
 

@@ -2,6 +2,7 @@ import { SteamSerializer } from "./SteamSerializer";
 import { HasuraService } from "../../hasura/hasura.service";
 import { CacheService } from "../../cache/cache.service";
 import { User } from "../types/User";
+import { TypeSenseController } from "../../type-sense/type-sense.controller";
 
 const STEAM_ID = "76561198000000001";
 
@@ -40,7 +41,7 @@ function makeSerializer(databaseRole: string | undefined) {
   const serializer = new SteamSerializer();
   Object.assign(serializer, { logger, cache, hasura });
 
-  return { serializer, store, query, logger };
+  return { serializer, store, query, logger, redis, cache };
 }
 
 function deserialize(serializer: SteamSerializer, user: User) {
@@ -90,6 +91,49 @@ describe("SteamSerializer.deserializeUser", () => {
     expect(store.get(HasuraService.PLAYER_ROLE_CACHE_KEY(STEAM_ID))).toBe(
       '"moderator"',
     );
+  });
+
+  it("caches a loaded role for an hour", async () => {
+    const { serializer, redis } = makeSerializer("moderator");
+
+    await deserialize(serializer, sessionUser());
+
+    expect(redis.set).toHaveBeenCalledWith(
+      HasuraService.PLAYER_ROLE_CACHE_KEY(STEAM_ID),
+      '"moderator"',
+      "EX",
+      60 * 60,
+    );
+  });
+
+  it("gives the next request the new role once a role change clears the cache", async () => {
+    const { serializer, query, cache } = makeSerializer("administrator");
+    await deserialize(serializer, sessionUser());
+
+    query.mockResolvedValue({ players_by_pk: { role: "user" } } as any);
+    const events = new TypeSenseController(
+      cache,
+      {} as any,
+      { updatePlayer: jest.fn() } as any,
+      {} as any,
+      { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    );
+    await events.player_events({
+      op: "UPDATE",
+      old: { steam_id: STEAM_ID, role: "administrator" },
+      new: { steam_id: STEAM_ID, role: "user" },
+    } as any);
+
+    const { user } = await deserialize(serializer, sessionUser());
+
+    expect(user && user.role).toBe("user");
+    expect(query).toHaveBeenCalledTimes(2);
   });
 
   it("keeps a change made to the user, so a session save still persists it", async () => {
