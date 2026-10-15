@@ -1,0 +1,1 @@
+-- An absent row is the default (on), so there is nothing to put back.
