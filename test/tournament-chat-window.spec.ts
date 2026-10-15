@@ -315,7 +315,6 @@ describe("tournament chat retention default", () => {
 
   it("keeps tournament chat seven days on a fresh install", async () => {
     expect(await value()).toBe("604800");
-    expect(await value("public.chat_ttl_organizers")).toBe("86400");
   });
 
   it("moves a stack still on the old one day seed", async () => {
@@ -336,6 +335,68 @@ describe("tournament chat retention default", () => {
 
   it("rolls back to the one day seed", async () => {
     await set("604800");
+
+    await db.postgres.query(down());
+
+    expect(await value()).toBe("86400");
+    await db.postgres.query(up());
+  });
+});
+
+describe("organizers' chat retention default", () => {
+  let db: SqlTestDb;
+
+  const migration = join(
+    __dirname,
+    "../hasura/migrations/default/1890000000970_organizer_chat_ninety_days",
+  );
+  const up = () => readFileSync(join(migration, "up.sql"), "utf8");
+  const down = () => readFileSync(join(migration, "down.sql"), "utf8");
+
+  const set = (value: string) =>
+    db.postgres.query(
+      `INSERT INTO settings (name, value) VALUES ('public.chat_ttl_organizers', $1)
+       ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value`,
+      [value],
+    );
+
+  const value = async () =>
+    (
+      await db.postgres.query<Array<{ value: string }>>(
+        "SELECT value FROM settings WHERE name = 'public.chat_ttl_organizers'",
+      )
+    )[0]?.value;
+
+  beforeAll(async () => {
+    db = await bootMigratedDb("OrganizerChatRetentionTest");
+  }, 600_000);
+
+  afterAll(async () => {
+    await db?.stop();
+  });
+
+  it("keeps organizer chat ninety days on a fresh install", async () => {
+    expect(await value()).toBe("7776000");
+  });
+
+  it("moves a stack still on the old one day seed", async () => {
+    await set("86400");
+
+    await db.postgres.query(up());
+
+    expect(await value()).toBe("7776000");
+  });
+
+  it("leaves an operator's own value alone", async () => {
+    await set("172800");
+
+    await db.postgres.query(up());
+
+    expect(await value()).toBe("172800");
+  });
+
+  it("rolls back to the one day seed", async () => {
+    await set("7776000");
 
     await db.postgres.query(down());
 

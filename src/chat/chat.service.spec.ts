@@ -294,6 +294,10 @@ describe("ChatService direct messages", () => {
   };
   // Who the organizers' role gate admits.
   let staff: string[];
+  // The role each player holds now, as the role cache answers it.
+  let currentRoles: Record<string, string>;
+  // Players whose role lookup fails.
+  let unreadableRoles: string[];
 
   // Answers the access query the way the database would, so the assertions are
   // about who gets in rather than about the shape of the query.
@@ -350,6 +354,13 @@ describe("ChatService direct messages", () => {
   };
 
   const hasuraService = {
+    getPlayerRole: jest.fn(async (steamId: string) => {
+      if (unreadableRoles.includes(String(steamId))) {
+        throw new Error("connection reset");
+      }
+
+      return currentRoles[String(steamId)] ?? role;
+    }),
     query: jest.fn(async (query: any) => {
       if (query.tournaments) {
         return {
@@ -497,6 +508,8 @@ describe("ChatService direct messages", () => {
       freeAgents: [],
     };
     staff = [];
+    currentRoles = {};
+    unreadableRoles = [];
     role = "user";
     queries = [];
     gagged = false;
@@ -944,6 +957,76 @@ describe("ChatService direct messages", () => {
       await service.to(ChatLobbyType.Match, "m-1", "chat", {}, ME);
 
       expect(deliveredTo()).toEqual([ME, FRIEND, STRANGER]);
+    });
+
+    it("keeps the organizers' room from someone who lost the role since joining", async () => {
+      present("chat:organizers:x", [ME, FRIEND, STRANGER]);
+      currentRoles = {
+        [ME]: "administrator",
+        [FRIEND]: "match_organizer",
+        [STRANGER]: "moderator",
+      };
+
+      await service.to(ChatLobbyType.Organizer, "x", "chat", {}, ME);
+
+      expect(deliveredTo()).toEqual([ME, FRIEND]);
+    });
+
+    it("still reaches the organizers' room when some roles cannot be read", async () => {
+      present("chat:organizers:x", [ME, FRIEND, STRANGER]);
+      currentRoles = { [ME]: "administrator" };
+      unreadableRoles = [FRIEND, STRANGER];
+
+      await service.to(ChatLobbyType.Organizer, "x", "chat", {}, ME);
+
+      expect(deliveredTo()).toEqual([ME]);
+      expect(logger.warn).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("the organizers' room", () => {
+    const organizer = () =>
+      ({ steam_id: ME, name: "Someone", role: "match_organizer" }) as any;
+
+    beforeEach(() => {
+      redis.hget.mockResolvedValue(JSON.stringify({ user: { steam_id: ME } }));
+    });
+
+    it("refuses a line from someone who lost the role since joining", async () => {
+      currentRoles = { [ME]: "moderator" };
+
+      await expect(
+        service.sendMessageToChat(
+          ChatLobbyType.Organizer,
+          "x",
+          organizer(),
+          "hi",
+        ),
+      ).resolves.toEqual({ accepted: false, code: ChatErrorCode.NotAllowed });
+
+      expect(redis.hset).not.toHaveBeenCalled();
+      expect(redis.publish).not.toHaveBeenCalled();
+    });
+
+    it("takes a line from someone who still holds it", async () => {
+      currentRoles = { [ME]: "tournament_organizer" };
+
+      await expect(
+        service.sendMessageToChat(
+          ChatLobbyType.Organizer,
+          "x",
+          organizer(),
+          "hi",
+        ),
+      ).resolves.toMatchObject({ accepted: true });
+    });
+
+    it("lets an organizer in", async () => {
+      role = "match_organizer";
+
+      await service.joinMatchLobby(client(ME), ChatLobbyType.Organizer, "x");
+
+      expect(joined()).toBe(true);
     });
   });
 
@@ -3577,6 +3660,21 @@ describe("ChatService direct messages", () => {
           "from me",
         ]);
         expect(playerBlocks.blockedBy).toHaveBeenCalledWith(ME, MODERATORS);
+      });
+
+      it("sends only the newest 200 lines on join", async () => {
+        for (let line = 1; line <= 205; line++) {
+          say(FRIEND, `line ${line}`);
+        }
+        hashes["chat_match_m-1"] = Object.fromEntries(
+          Object.entries(hashes["chat_match_m-1"]).reverse(),
+        );
+
+        const history = await historyOf(ME);
+
+        expect(history).toHaveLength(200);
+        expect(history[0]).toBe("line 6");
+        expect(history.at(-1)).toBe("line 205");
       });
 
       it("hides nothing from the player a block is aimed at", async () => {

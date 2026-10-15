@@ -60,10 +60,14 @@ export class ChatService {
     [ChatLobbyType.MatchMaking, 60 * 60],
     [ChatLobbyType.Draft, 60 * 60],
     [ChatLobbyType.Tournament, 60 * 60 * 24 * 7],
-    [ChatLobbyType.Organizer, 60 * 60 * 24],
+    [ChatLobbyType.Organizer, 60 * 60 * 24 * 90],
   ]);
 
   private static readonly DEFAULT_TTL = 60 * 60;
+
+  // How much history a join hands over, in any room; nothing pages back past
+  // it. A redis room keeps no order, so it is still read whole to find them.
+  private static readonly HISTORY_LIMIT = 200;
 
   // Measured in UTF-16 code units, the same unit a textarea's maxlength counts.
   public static readonly MAX_MESSAGE_LENGTH = 2000;
@@ -455,7 +459,7 @@ export class ChatService {
     {
       setting: SystemSettingName.ChatTtlOrganizers,
       type: ChatLobbyType.Organizer,
-      fallback: 60 * 60 * 24,
+      fallback: 60 * 60 * 24 * 90,
     },
   ];
 
@@ -773,7 +777,7 @@ export class ChatService {
         break;
       }
       case ChatLobbyType.Organizer:
-        if (!isRoleAbove(user.role, "match_organizer")) {
+        if (!(await this.isOrganizerNow(user.steam_id))) {
           return false;
         }
 
@@ -924,7 +928,8 @@ export class ChatService {
           ),
         }),
       )
-      .sort(ChatService.inSentOrder);
+      .sort(ChatService.inSentOrder)
+      .slice(-ChatService.HISTORY_LIMIT);
   }
 
   // The stores keep reactions in whatever order they like (a Lua table's,
@@ -3058,8 +3063,8 @@ export class ChatService {
          ${ChatService.DIRECT_MESSAGE_REACTIONS}
         WHERE dm.room_id = $1
         ORDER BY dm.created_at DESC, dm.seq DESC
-        LIMIT 200`,
-      [roomId],
+        LIMIT $2`,
+      [roomId, ChatService.HISTORY_LIMIT],
     );
 
     return rows.reverse().map(
@@ -3231,9 +3236,9 @@ export class ChatService {
   // Where this player has read up to in each thread.
   //
   // Cursors rather than counts, deliberately. The client is handed a room's
-  // whole history when it joins, so it can count what is newer than the cursor
-  // itself -- and counting server side would mean reaching into every lobby's
-  // redis hash on page load.
+  // latest history when it joins, so it can count what is newer than the
+  // cursor itself -- and counting server side would mean reaching into every
+  // lobby's redis hash on page load.
   public async getReadState(user: User) {
     const rows = await this.postgres.query<
       Array<{ thread: string; last_read_at: Date }>
@@ -3281,7 +3286,7 @@ export class ChatService {
   ): Promise<void> {
     const users = await this.getAllUsersInLobby(type, id);
     const eventName = `lobby:${type}:${id}:${event}`;
-    const roster = await this.teamRoomRoster(type, id);
+    const roster = await this.currentRoster(type, id, users);
 
     const hiding = await this.playerBlocks.blockedAmong(
       users.map(({ steamId }) => steamId),
@@ -3347,19 +3352,58 @@ export class ChatService {
     );
   }
 
-  // Presence outlives membership (see canPostIn), and a team room is the one
+  // Presence outlives membership (see canPostIn). A team room is the one
   // whose lines the rest of the match must never see: a player moved to the
   // other lineup, or benched, would otherwise keep receiving them until their
-  // presence expired.
-  private async teamRoomRoster(
+  // presence expired. The organizers' room is the role, which can be taken
+  // away from someone still sitting in it.
+  private async currentRoster(
     type: ChatLobbyType,
     id: string,
+    present: Array<{ steamId: string }>,
   ): Promise<Set<string> | null> {
+    if (type === ChatLobbyType.Organizer) {
+      const lookups = await Promise.allSettled(
+        present.map(async ({ steamId }) =>
+          (await this.isOrganizerNow(steamId)) ? String(steamId) : null,
+        ),
+      );
+
+      const failed = lookups.filter(
+        (lookup): lookup is PromiseRejectedResult =>
+          lookup.status === "rejected",
+      );
+
+      if (failed.length > 0) {
+        this.logger.warn(
+          `unable to read the role of ${failed.length} player(s) in ${type}:${id}`,
+          failed[0].reason,
+        );
+      }
+
+      return new Set(
+        lookups
+          .map((lookup) =>
+            lookup.status === "fulfilled" ? lookup.value : null,
+          )
+          .filter((steamId) => steamId !== null),
+      );
+    }
+
     if (type !== ChatLobbyType.MatchTeam) {
       return null;
     }
 
     return new Set(await this.getLobbyMemberSteamIds(type, id));
+  }
+
+  // A socket keeps the role it signed in with. The cached role is cleared on
+  // every role change (player_events), so it is current without a query.
+  private async isOrganizerNow(steamId: string): Promise<boolean> {
+    return isRoleAbove(
+      await this.hasuraService.getPlayerRole(String(steamId)),
+      "match_organizer",
+    );
   }
 
   public async removeFromLobby(
