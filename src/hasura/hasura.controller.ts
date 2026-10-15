@@ -65,6 +65,8 @@ export class HasuraController {
 
   @Post("actions")
   public async actions(@Req() request: Request, @Res() response: Response) {
+    this.hasuraService.verifyHook(request);
+
     const { input, action } = request.body;
 
     request.body = input;
@@ -93,6 +95,8 @@ export class HasuraController {
 
   @Post("events")
   public async events(@Req() request: Request) {
+    this.hasuraService.verifyHook(request);
+
     const { event, trigger } = request.body;
 
     const resolver = this.getResolver(_events[trigger.name]);

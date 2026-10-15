@@ -1,4 +1,12 @@
-import { Injectable, Logger } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  OnApplicationBootstrap,
+  OnApplicationShutdown,
+  UnauthorizedException,
+  UnsupportedMediaTypeException,
+} from "@nestjs/common";
+import { Request } from "express";
 import { ConfigService } from "@nestjs/config";
 import {
   createClient,
@@ -18,9 +26,17 @@ import { AppConfig } from "../configs/types/AppConfig";
 import { timingSafeStringEqual } from "../utilities/timingSafeStringEqual";
 
 @Injectable()
-export class HasuraService {
+export class HasuraService
+  implements OnApplicationBootstrap, OnApplicationShutdown
+{
+  public static readonly HOOK_SECRET_HEADER = "x-5stack-hook-secret";
+  public static readonly HOOK_SECRET_PROBE_MS = 15_000;
+  public static readonly HOOK_SECRET_GRACE_MS = 30_000;
+
   private config: HasuraConfig;
   private appConfig: AppConfig;
+  private hookSecretOptionalUntil = 0;
+  private hookSecretProbe?: NodeJS.Timeout;
 
   constructor(
     protected readonly logger: Logger,
@@ -46,6 +62,66 @@ export class HasuraService {
 
   public checkSecret(secret: string) {
     return timingSafeStringEqual(secret, this.config.secret);
+  }
+
+  public async onApplicationBootstrap() {
+    await this.refreshHookSecretMode();
+    this.hookSecretProbe = setInterval(
+      () => void this.refreshHookSecretMode(),
+      HasuraService.HOOK_SECRET_PROBE_MS,
+    );
+    this.hookSecretProbe.unref();
+  }
+
+  public onApplicationShutdown() {
+    clearInterval(this.hookSecretProbe);
+  }
+
+  // Hasura's metadata is applied by the hasura pod, not by this one, so the
+  // secret is only required once the live metadata sends it: either side can
+  // restart first. The grace lets another Hasura replica reload the metadata.
+  public async refreshHookSecretMode() {
+    let enforced = true;
+
+    try {
+      const [metadata] = await this.postgresService.query<
+        Array<{ enforced: boolean | null }>
+      >(
+        "select strpos(metadata::text, $1) > 0 as enforced from hdb_catalog.hdb_metadata",
+        [HasuraService.HOOK_SECRET_HEADER],
+      );
+      enforced = metadata?.enforced !== false;
+    } catch (error) {
+      this.logger.warn(
+        `unable to read hasura metadata, requiring the hook secret: ${error?.message ?? error}`,
+      );
+    }
+
+    if (!enforced) {
+      this.hookSecretOptionalUntil = Infinity;
+    } else if (this.hookSecretOptionalUntil === Infinity) {
+      this.hookSecretOptionalUntil =
+        Date.now() + HasuraService.HOOK_SECRET_GRACE_MS;
+    }
+  }
+
+  public verifyHook(request: Request) {
+    if (!request.is("application/json")) {
+      throw new UnsupportedMediaTypeException();
+    }
+
+    const secret = request.headers[HasuraService.HOOK_SECRET_HEADER];
+
+    if (secret === undefined && Date.now() < this.hookSecretOptionalUntil) {
+      return;
+    }
+
+    if (typeof secret !== "string" || !this.checkSecret(secret)) {
+      this.logger.warn(
+        `refused ${request.method} ${request.originalUrl} from ${request.ip}: ${secret === undefined ? "missing" : "wrong"} hook secret`,
+      );
+      throw new UnauthorizedException();
+    }
   }
 
   public async query<R extends query_rootGenqlSelection>(
