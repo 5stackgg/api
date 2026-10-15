@@ -335,6 +335,57 @@ describe("team chat (SQL-driven)", () => {
     });
   });
 
+  describe("roster lookup", () => {
+    it("reads the room's members through an index on the team, as every send does", async () => {
+      await join(team.starter);
+      const query = jest.spyOn(postgres, "query");
+
+      expect((await say(team.starter, "scrim at 8")).accepted).toBe(true);
+
+      const call = query.mock.calls.find(([sql]) =>
+        /JOIN public\.team_roster tr ON tr\.team_id = t\.id/.test(sql),
+      );
+      expect(call).toBeDefined();
+      query.mockRestore();
+
+      const [sql, params] = call!;
+      const nodes = await postgres.transaction(async (client) => {
+        await client.query("SET LOCAL enable_seqscan = off");
+        const { rows } = await client.query(
+          `EXPLAIN (FORMAT JSON) ${sql}`,
+          params,
+        );
+
+        const found: Array<Record<string, string>> = [];
+        const walk = (node: Record<string, any>) => {
+          found.push(node);
+          for (const child of node.Plans ?? []) {
+            walk(child);
+          }
+        };
+        walk(rows[0]["QUERY PLAN"][0].Plan);
+
+        return found;
+      });
+
+      expect(nodes.map((node) => node["Index Name"])).toContain(
+        "team_roster_team_id_idx",
+      );
+      expect(
+        nodes
+          .filter((node) => node["Relation Name"] === "team_roster")
+          .map((node) => node["Node Type"]),
+      ).not.toContain("Seq Scan");
+
+      const [index] = await postgres.query<Array<{ indexdef: string }>>(
+        "SELECT indexdef FROM pg_indexes WHERE indexname = 'team_roster_team_id_idx'",
+      );
+      expect(index?.indexdef).toMatch(
+        /ON public\.team_roster USING btree \(team_id\)$/,
+      );
+    });
+  });
+
   describe("retention", () => {
     const ttlOf = async (messageId: string) =>
       (
