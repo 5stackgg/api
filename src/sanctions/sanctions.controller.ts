@@ -131,6 +131,7 @@ export class SanctionsController {
       steamId: steam_id,
       type,
       sanctionId: sanction_id,
+      liftedBySteamId: user.steam_id,
     });
   }
 
@@ -151,6 +152,7 @@ export class SanctionsController {
       serverId,
       steamId: steam_id,
       reason,
+      kickedBySteamId: user.steam_id,
     });
   }
 }
