@@ -65,6 +65,10 @@ export class ChatService {
 
   private static readonly DEFAULT_TTL = 60 * 60;
 
+  // How much history a join hands over, in any room; nothing pages back past
+  // it. A redis room keeps no order, so it is still read whole to find them.
+  private static readonly HISTORY_LIMIT = 200;
+
   // Measured in UTF-16 code units, the same unit a textarea's maxlength counts.
   public static readonly MAX_MESSAGE_LENGTH = 2000;
 
@@ -924,7 +928,8 @@ export class ChatService {
           ),
         }),
       )
-      .sort(ChatService.inSentOrder);
+      .sort(ChatService.inSentOrder)
+      .slice(-ChatService.HISTORY_LIMIT);
   }
 
   // The stores keep reactions in whatever order they like (a Lua table's,
@@ -3058,8 +3063,8 @@ export class ChatService {
          ${ChatService.DIRECT_MESSAGE_REACTIONS}
         WHERE dm.room_id = $1
         ORDER BY dm.created_at DESC, dm.seq DESC
-        LIMIT 200`,
-      [roomId],
+        LIMIT $2`,
+      [roomId, ChatService.HISTORY_LIMIT],
     );
 
     return rows.reverse().map(
@@ -3231,9 +3236,9 @@ export class ChatService {
   // Where this player has read up to in each thread.
   //
   // Cursors rather than counts, deliberately. The client is handed a room's
-  // whole history when it joins, so it can count what is newer than the cursor
-  // itself -- and counting server side would mean reaching into every lobby's
-  // redis hash on page load.
+  // latest history when it joins, so it can count what is newer than the
+  // cursor itself -- and counting server side would mean reaching into every
+  // lobby's redis hash on page load.
   public async getReadState(user: User) {
     const rows = await this.postgres.query<
       Array<{ thread: string; last_read_at: Date }>
@@ -3358,13 +3363,31 @@ export class ChatService {
     present: Array<{ steamId: string }>,
   ): Promise<Set<string> | null> {
     if (type === ChatLobbyType.Organizer) {
-      const organizers = await Promise.all(
+      const lookups = await Promise.allSettled(
         present.map(async ({ steamId }) =>
           (await this.isOrganizerNow(steamId)) ? String(steamId) : null,
         ),
       );
 
-      return new Set(organizers.filter((steamId) => steamId !== null));
+      const failed = lookups.filter(
+        (lookup): lookup is PromiseRejectedResult =>
+          lookup.status === "rejected",
+      );
+
+      if (failed.length > 0) {
+        this.logger.warn(
+          `unable to read the role of ${failed.length} player(s) in ${type}:${id}`,
+          failed[0].reason,
+        );
+      }
+
+      return new Set(
+        lookups
+          .map((lookup) =>
+            lookup.status === "fulfilled" ? lookup.value : null,
+          )
+          .filter((steamId) => steamId !== null),
+      );
     }
 
     if (type !== ChatLobbyType.MatchTeam) {
