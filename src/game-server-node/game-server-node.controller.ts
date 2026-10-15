@@ -1,4 +1,11 @@
-import { Controller, Get, Logger, Req, Res } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Logger,
+  NotFoundException,
+  Req,
+  Res,
+} from "@nestjs/common";
 import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { GameServerNodeService } from "./game-server-node.service";
 import { SteamRelay } from "../servers/steam-relay";
@@ -507,7 +514,7 @@ export class GameServerNodeController {
       game_server_nodes_by_pk.token === null ||
       !timingSafeStringEqual(request.query.token, game_server_nodes_by_pk.token)
     ) {
-      throw new Error("Game server not found");
+      throw new NotFoundException("Game server not found");
     }
 
     const freshDiskGb =
