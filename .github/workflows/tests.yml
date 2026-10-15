@@ -71,7 +71,7 @@ jobs:
       # starts first and pulls while the rest of the setup runs.
       - name: Start pulling the database images
         run: |
-          (docker pull -q timescale/timescaledb:latest-pg17 && docker pull -q redis:8.8-alpine) \
+          (docker pull -q timescale/timescaledb:2.30.2-pg18@sha256:e72689191e1c977892c53d6f2c344dbc4a9657a867dc8cc1899229f9d3672b2e && docker pull -q redis:8.8-alpine) \
             > "$RUNNER_TEMP/docker-pull.log" 2>&1 &
           echo $! > "$RUNNER_TEMP/docker-pull.pid"
       - name: Check out the repo

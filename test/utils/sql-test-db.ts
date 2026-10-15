@@ -15,7 +15,8 @@ import { PostgresService } from "../../src/postgres/postgres.service";
 // (5stack-panel/base/timescaledb): create_hypertable migrations need
 // TimescaleDB, and setup() calls pg_stat_statements_reset() after migrating,
 // which requires pg_stat_statements in shared_preload_libraries.
-const IMAGE = "timescale/timescaledb:latest-pg17";
+const IMAGE =
+  "timescale/timescaledb:2.30.2-pg18@sha256:e72689191e1c977892c53d6f2c344dbc4a9657a867dc8cc1899229f9d3672b2e";
 const TEMPLATE_DB = "hasura";
 
 // Serializes CREATE DATABASE ... TEMPLATE across parallel jest workers; the
