@@ -95,7 +95,7 @@ export class ChatService implements OnApplicationBootstrap {
   // may still be storing: until it lapses, every read rebuilds its index.
   private static readonly INDEX_STARTING_KEY = "chat_index:starting";
 
-  private static readonly INDEX_STARTING_MS = 10 * 60 * 1000;
+  private static readonly INDEX_STARTING_MS = 3 * 60 * 1000;
 
   // Paging back, per socket: a few a second, and a short burst.
   private static readonly HISTORY_RATE_LIMIT = 6;
@@ -230,7 +230,7 @@ export class ChatService implements OnApplicationBootstrap {
     redis.call('ZADD', KEYS[2], 0, ARGV[1])
     local expiresAt = redis.call('HPEXPIRETIME', KEYS[1], 'FIELDS', 1, ARGV[2])[1]
     local indexExpiresAt = redis.call('PEXPIRETIME', KEYS[2])
-    if indexExpiresAt > 0 and expiresAt > indexExpiresAt then
+    if expiresAt > 0 and (indexExpiresAt == -1 or expiresAt > indexExpiresAt) then
       redis.call('PEXPIREAT', KEYS[2], expiresAt)
     end
     local stale = redis.call('ZRANGE', KEYS[2], '-', ARGV[3], 'BYLEX', 'LIMIT', 0, ARGV[4])
@@ -254,7 +254,10 @@ export class ChatService implements OnApplicationBootstrap {
   // left for a message that has gone, or a field that has expired but not
   // been reclaimed, would throw any count off. A message stored meanwhile is
   // either in the hash this reads or finds the index there and adds itself.
-  // The index lives as long as the room's longest-lived message.
+  // The index lives as long as the room's longest-lived message. A field
+  // whose store has not set its expiry yet counts for nothing here: that
+  // store extends the index once it has. With no expiry to go by at all, the
+  // index takes the room's TTL (ARGV[5]), so it is never left without one.
   private static readonly ROOM_PAGE_SCRIPT = `
     if redis.call('EXISTS', KEYS[2]) == 0
       or redis.call('GET', KEYS[4]) ~= ARGV[3]
@@ -267,16 +270,13 @@ export class ChatService implements OnApplicationBootstrap {
         local ok, message = pcall(cjson.decode, fields[i + 1])
         if ok and type(message) == 'table' and type(message.timestamp) == 'string' then
           redis.call('ZADD', KEYS[2], 0, message.timestamp .. '|' .. fields[i])
-          local expiresAt = redis.call('HPEXPIRETIME', KEYS[1], 'FIELDS', 1, fields[i])[1]
-          if expiresAt < 0 or latest < 0 then
-            latest = -1
-          elseif expiresAt > latest then
-            latest = expiresAt
-          end
+          latest = math.max(latest, redis.call('HPEXPIRETIME', KEYS[1], 'FIELDS', 1, fields[i])[1])
         end
       end
       if latest > 0 then
         redis.call('PEXPIREAT', KEYS[2], latest)
+      else
+        redis.call('PEXPIRE', KEYS[2], ARGV[5])
       end
     end
     local limit = tonumber(ARGV[2])
@@ -1198,6 +1198,7 @@ export class ChatService implements OnApplicationBootstrap {
       limit,
       ChatService.INDEX_VERSION,
       ChatService.INDEX_CHECK_MS,
+      this.ttlFor(type) * 1000,
     )) as [number, string, ...string[]];
 
     const messages: ChatMessage[] = [];
