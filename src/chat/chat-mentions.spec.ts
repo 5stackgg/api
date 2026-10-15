@@ -35,6 +35,7 @@ describe("ChatService mentions", () => {
   let roster: string[];
   let lineup: string[];
   let lobby: string[];
+  let team: string[];
   // [blocker, blocked]
   let blocks: Array<[string, string]>;
 
@@ -99,6 +100,10 @@ describe("ChatService mentions", () => {
 
       if (sql.includes("public.can_view_direct_room")) {
         return [{ allowed: true }];
+      }
+
+      if (sql.includes("public.team_roster")) {
+        return team.map((steam_id) => ({ steam_id, admin: false }));
       }
 
       if (sql.includes("INSERT INTO public.chat_message_edits")) {
@@ -340,6 +345,7 @@ describe("ChatService mentions", () => {
     roster = [VEXX, KAIRO, KASPR, OKAMI, ...FILLER];
     lineup = [VEXX, KAIRO, KASPR];
     lobby = [VEXX, KAIRO];
+    team = [VEXX, KAIRO, KASPR];
     blocks = [];
 
     service = new ChatService(
@@ -899,13 +905,18 @@ describe("ChatService mentions", () => {
       ).resolves.toBeNull();
     });
 
-    it("lists nobody in a team room, which nothing opens yet, and logs nothing", async () => {
+    it("lists a team room's members to a member, and nobody to staff off the team", async () => {
+      const teamId = "6f1c1c1e-5b1a-4c55-9a51-111111111111";
+
       await expect(
-        service.mentionCandidates(
-          ChatLobbyType.Team,
-          "6f1c1c1e-5b1a-4c55-9a51-111111111111",
-          as(VEXX),
-        ),
+        service.mentionCandidates(ChatLobbyType.Team, teamId, as(VEXX)),
+      ).resolves.toEqual([
+        expect.objectContaining({ steam_id: KAIRO, name: "kairo" }),
+        expect.objectContaining({ steam_id: KASPR, name: "kaspr" }),
+      ]);
+
+      await expect(
+        service.mentionCandidates(ChatLobbyType.Team, teamId, as(OKAMI)),
       ).resolves.toBeNull();
 
       expect(logger.warn).not.toHaveBeenCalled();
