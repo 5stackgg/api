@@ -10,6 +10,7 @@ export enum SystemSettingName {
   ChatTtlTournament = "public.chat_ttl_tournament",
   ChatTtlOrganizers = "public.chat_ttl_organizers",
   ChatTtlDraft = "public.chat_ttl_draft",
+  ChatTtlTeam = "public.chat_ttl_team",
   // Days, not seconds: DMs are swept rather than expired, because they live in
   // postgres. 0 keeps them forever.
   ChatRetentionDirectDays = "public.chat_retention_direct_days",

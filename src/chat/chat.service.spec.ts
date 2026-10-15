@@ -3281,7 +3281,7 @@ describe("ChatService direct messages", () => {
       ]);
     });
 
-    it("has nobody to notify in a team room", async () => {
+    it("has nobody to notify in a team room whose id is not a team", async () => {
       expect(
         await service.getLobbyMemberSteamIds(ChatLobbyType.Team, "x"),
       ).toEqual([]);
