@@ -5,6 +5,7 @@ import {
   Delete,
   Param,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
   ParseFilePipe,
   MaxFileSizeValidator,
@@ -18,20 +19,27 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import { Request, Response } from "express";
 import { AvatarsService } from "./avatars.service";
 import { User } from "../auth/types/User";
+import { SteamGuard } from "../auth/strategies/SteamGuard";
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_BANNER_BYTES = 10 * 1024 * 1024;
 
 @Controller("avatars")
 export class AvatarsController {
   constructor(private readonly avatarsService: AvatarsService) {}
 
   @Post("teams/:teamId")
-  @UseInterceptors(FileInterceptor("file"))
+  @UseGuards(SteamGuard)
+  @UseInterceptors(
+    FileInterceptor("file", { limits: { fileSize: MAX_IMAGE_BYTES } }),
+  )
   async uploadTeam(
     @Req() request: Request,
     @Param("teamId") teamId: string,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new MaxFileSizeValidator({ maxSize: MAX_IMAGE_BYTES }),
           new FileTypeValidator({ fileType: /image\/(png|jpeg|webp)/ }),
         ],
       }),
@@ -56,14 +64,17 @@ export class AvatarsController {
   }
 
   @Post("players/:steamId")
-  @UseInterceptors(FileInterceptor("file"))
+  @UseGuards(SteamGuard)
+  @UseInterceptors(
+    FileInterceptor("file", { limits: { fileSize: MAX_IMAGE_BYTES } }),
+  )
   async uploadPlayer(
     @Req() request: Request,
     @Param("steamId") steamId: string,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new MaxFileSizeValidator({ maxSize: MAX_IMAGE_BYTES }),
           new FileTypeValidator({ fileType: /image\/(png|jpeg|webp)/ }),
         ],
       }),
@@ -91,14 +102,17 @@ export class AvatarsController {
   }
 
   @Post("roster-players/:steamId")
-  @UseInterceptors(FileInterceptor("file"))
+  @UseGuards(SteamGuard)
+  @UseInterceptors(
+    FileInterceptor("file", { limits: { fileSize: MAX_IMAGE_BYTES } }),
+  )
   async uploadPlayerRoster(
     @Req() request: Request,
     @Param("steamId") steamId: string,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new MaxFileSizeValidator({ maxSize: MAX_IMAGE_BYTES }),
           new FileTypeValidator({ fileType: /image\/(png|jpeg|webp)/ }),
         ],
       }),
@@ -126,7 +140,10 @@ export class AvatarsController {
   }
 
   @Post("roster-teams/:teamId/:steamId")
-  @UseInterceptors(FileInterceptor("file"))
+  @UseGuards(SteamGuard)
+  @UseInterceptors(
+    FileInterceptor("file", { limits: { fileSize: MAX_IMAGE_BYTES } }),
+  )
   async uploadTeamRosterPlayer(
     @Req() request: Request,
     @Param("teamId") teamId: string,
@@ -134,7 +151,7 @@ export class AvatarsController {
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new MaxFileSizeValidator({ maxSize: MAX_IMAGE_BYTES }),
           new FileTypeValidator({ fileType: /image\/(png|jpeg|webp)/ }),
         ],
       }),
@@ -168,14 +185,17 @@ export class AvatarsController {
   }
 
   @Post("tournaments/:tournamentId")
-  @UseInterceptors(FileInterceptor("file"))
+  @UseGuards(SteamGuard)
+  @UseInterceptors(
+    FileInterceptor("file", { limits: { fileSize: MAX_IMAGE_BYTES } }),
+  )
   async uploadTournament(
     @Req() request: Request,
     @Param("tournamentId") tournamentId: string,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new MaxFileSizeValidator({ maxSize: MAX_IMAGE_BYTES }),
           new FileTypeValidator({ fileType: /image\/(png|jpeg|webp)/ }),
         ],
       }),
@@ -203,14 +223,17 @@ export class AvatarsController {
   }
 
   @Post("tournaments/:tournamentId/banner")
-  @UseInterceptors(FileInterceptor("file"))
+  @UseGuards(SteamGuard)
+  @UseInterceptors(
+    FileInterceptor("file", { limits: { fileSize: MAX_BANNER_BYTES } }),
+  )
   async uploadTournamentBanner(
     @Req() request: Request,
     @Param("tournamentId") tournamentId: string,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }),
+          new MaxFileSizeValidator({ maxSize: MAX_BANNER_BYTES }),
           new FileTypeValidator({ fileType: /image\/(png|jpeg|webp)/ }),
         ],
       }),
