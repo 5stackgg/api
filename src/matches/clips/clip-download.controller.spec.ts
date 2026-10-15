@@ -1,10 +1,11 @@
 import { Logger } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
-import { createHash } from "crypto";
+import { createHash, createHmac } from "crypto";
 import { Readable, Writable } from "stream";
 import { ClipDownloadController } from "./clip-download.controller";
 import { ClipViewsController } from "./clip-views.controller";
 import { ClipsService } from "./clips.service";
+import { FileUrlSigningService } from "../../hasura/file-url-signing.service";
 import { S3Service } from "../../s3/s3.service";
 import { HasuraService } from "../../hasura/hasura.service";
 import { PostgresService } from "../../postgres/postgres.service";
@@ -16,6 +17,18 @@ const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
 const CHROME =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36";
 const VIEWER_IP = "203.0.113.9";
+
+function signedFor(key: string, exp: number) {
+  const signingKey = createHmac("sha256", "worker-secret")
+    .update("5stack-file-url-v1")
+    .digest();
+  return {
+    exp: String(exp),
+    sig: createHmac("sha256", signingKey)
+      .update(`${key}\n${exp}`)
+      .digest("base64url"),
+  };
+}
 
 function workerViewerKey(ip: string, userAgent: string) {
   return createHash("sha256")
@@ -70,6 +83,7 @@ describe("ClipDownloadController view counting", () => {
     const query: Record<string, string> = {
       name: "ace.mp4",
       v: "1",
+      ...signedFor(FILE, Math.floor(now / 1000) + 21600),
       ...(opts.query ?? {}),
     };
     const request: any = {
@@ -85,7 +99,15 @@ describe("ClipDownloadController view counting", () => {
       },
     };
 
-    await controller.download(CLIP_ID, query.name, query.dl, request, response);
+    await controller.download(
+      CLIP_ID,
+      query.name,
+      query.dl,
+      query.exp,
+      query.sig,
+      request,
+      response,
+    );
     if (response.statusCode === 200 || response.statusCode === 206) {
       await finished;
     }
@@ -157,6 +179,14 @@ describe("ClipDownloadController view counting", () => {
         { provide: HasuraService, useValue: hasura },
         { provide: PostgresService, useValue: {} },
         { provide: ClipsService, useValue: clips },
+        {
+          provide: FileUrlSigningService,
+          useValue: new FileUrlSigningService(
+            logger as any,
+            { get: () => ({ secret: "worker-secret" }) } as any,
+            {} as any,
+          ),
+        },
         { provide: Logger, useValue: logger },
       ],
     }).compile();

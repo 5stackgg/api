@@ -1552,16 +1552,16 @@ export class ClipsService {
         Array<{
           user_steam_id: string;
           match_id: string | null;
-          thumbnail_clip_id: string | null;
+          thumbnail: string | null;
         }>
       >(
         `SELECT crj.user_steam_id::text AS user_steam_id,
                 mm.match_id::text AS match_id,
                 -- Only once the upload has landed a clip row with a poster
                 -- frame behind it; a render that reports before then simply
-                -- has no picture to show.
-                CASE WHEN mc.thumbnail_url IS NOT NULL THEN mc.id::text END
-                  AS thumbnail_clip_id
+                -- has no picture to show. Signed, because the push service
+                -- fetches it without the owner's session.
+                public.clip_thumbnail_download_url(mc) AS thumbnail
            FROM public.clip_render_jobs crj
       LEFT JOIN public.match_maps mm ON mm.id = crj.match_map_id
       LEFT JOIN public.match_clips mc ON mc.id = crj.clip_id
@@ -1582,9 +1582,7 @@ export class ClipsService {
         entity_id: jobId,
         steamIds: [job.user_steam_id],
         data: {
-          image: job.thumbnail_clip_id
-            ? `/clips/${job.thumbnail_clip_id}/thumbnail`
-            : null,
+          image: job.thumbnail,
         },
       });
     } catch (error) {

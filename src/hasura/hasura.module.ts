@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { HasuraService } from "./hasura.service";
+import { FileUrlSigningService } from "./file-url-signing.service";
 import { BullModule, InjectQueue } from "@nestjs/bullmq";
 import { PostgresModule } from "../postgres/postgres.module";
 import { HasuraMaintenanceJob } from "./jobs/HasuraMaintenanceJob";
@@ -28,11 +29,12 @@ import { AuthModule } from "src/auth/auth.module";
   ],
   providers: [
     HasuraService,
+    FileUrlSigningService,
     HasuraMaintenanceJob,
     loggerFactory(),
     ...getQueuesProcessors("Hasura"),
   ],
-  exports: [HasuraService],
+  exports: [HasuraService, FileUrlSigningService],
   controllers: [HasuraController],
 })
 export class HasuraModule {
