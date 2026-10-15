@@ -28,7 +28,15 @@ describe("GameStreamerService — nade previews", () => {
 
   let gameServers: Record<string, unknown>;
   const config = {
-    get: (key: string) => (key === "gameServers" ? gameServers : ({} as any)),
+    get: (key: string) => {
+      if (key === "gameServers") {
+        return gameServers;
+      }
+      if (key === "app") {
+        return { encSecret: "test-secret" };
+      }
+      return {} as any;
+    },
   };
 
   const CONNECT = {

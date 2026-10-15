@@ -1,4 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { createHmac } from "crypto";
 import {
   BatchV1Api,
   CoreV1Api,
@@ -423,9 +424,25 @@ export class GameStreamerService {
     return saved || GameStreamerService.GetLiveServiceName(matchId);
   }
 
-  private async getSpecServerUrl(matchId: string, action: string) {
+  private async getSpecServerTarget(matchId: string, action: string) {
     const svc = await this.resolveLiveServiceName(matchId);
-    return `http://${svc}.${this.namespace}.svc.cluster.local:1350/spec/${action}`;
+    return {
+      url: `http://${svc}.${this.namespace}.svc.cluster.local:1350/spec/${action}`,
+      headers: this.specServerHeaders(svc),
+    };
+  }
+
+  // A pod's spec-server refuses any call without the SPEC_SERVER_TOKEN its Job
+  // was started with. Derived from the Job name so nothing is stored: the
+  // Service in front of a live or demo pod carries its Job's name.
+  private specServerToken(jobName: string): string {
+    return createHmac("sha256", this.appConfig.encSecret)
+      .update(`spec-server:${jobName}`)
+      .digest("base64url");
+  }
+
+  private specServerHeaders(serviceName: string): Record<string, string> {
+    return { Authorization: `Bearer ${this.specServerToken(serviceName)}` };
   }
 
   // Wire `progress` arrives as a string from the bash reporter; coerce
@@ -513,12 +530,12 @@ export class GameStreamerService {
       | "skip-shaders",
     body: Record<string, unknown> = {},
   ): Promise<unknown> {
-    const url = await this.getSpecServerUrl(matchId, action);
+    const { url, headers } = await this.getSpecServerTarget(matchId, action);
     let res: Response;
     try {
       res = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...headers },
         body: JSON.stringify(body),
         signal: AbortSignal.timeout(5_000),
       });
@@ -607,7 +624,10 @@ export class GameStreamerService {
     const url = `http://${svc}.${this.namespace}.svc.cluster.local:1350/demo/state`;
     let res: Response;
     try {
-      res = await fetch(url, { signal: AbortSignal.timeout(3_000) });
+      res = await fetch(url, {
+        headers: this.specServerHeaders(svc),
+        signal: AbortSignal.timeout(3_000),
+      });
     } catch {
       return { gsi: null };
     }
@@ -1081,13 +1101,18 @@ export class GameStreamerService {
     const prefix = SPEC_PROXIED_DEMO_ACTIONS.has(action) ? "spec" : "demo";
     const url = this.getDemoSpecUrl(session.id, action, prefix);
     const method = action === "state" ? "GET" : "POST";
+    const authorization = this.specServerHeaders(
+      GameStreamerService.GetDemoServiceNameForSession(session.id),
+    );
 
     let res: Response;
     try {
       res = await fetch(url, {
         method,
         headers:
-          method === "POST" ? { "Content-Type": "application/json" } : {},
+          method === "POST"
+            ? { "Content-Type": "application/json", ...authorization }
+            : authorization,
         body: method === "POST" ? JSON.stringify(body) : undefined,
         signal: AbortSignal.timeout(5_000),
       });
@@ -1147,7 +1172,12 @@ export class GameStreamerService {
     try {
       res = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...this.specServerHeaders(
+            GameStreamerService.GetDemoServiceNameForSession(sessionId),
+          ),
+        },
         body: JSON.stringify(payload),
         signal: AbortSignal.timeout(5_000),
       });
@@ -2087,7 +2117,10 @@ export class GameStreamerService {
     // Resolve URL before mutating the row (resolveLiveServiceName keys off
     // the row's current match_id), then repoint the row, then call spec-server.
     // Revert the row on spec failure so the pod and row don't drift.
-    const url = await this.getSpecServerUrl(fromMatchId, "switch-match");
+    const { url, headers } = await this.getSpecServerTarget(
+      fromMatchId,
+      "switch-match",
+    );
 
     await this.hasura.mutation({
       update_match_streams: {
@@ -2131,7 +2164,7 @@ export class GameStreamerService {
     try {
       res = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...headers },
         body: JSON.stringify(switchBody),
         signal: AbortSignal.timeout(10_000),
       });
@@ -3624,6 +3657,10 @@ export class GameStreamerService {
                   : undefined,
                 env: [
                   { name: "MATCH_ID", value: matchId },
+                  {
+                    name: "SPEC_SERVER_TOKEN",
+                    value: this.specServerToken(jobName),
+                  },
                   { name: "DISPLAY_SIZEW", value: "1920" },
                   { name: "DISPLAY_SIZEH", value: "1080" },
                   { name: "API_BASE", value: resolveInClusterApiBase() },
