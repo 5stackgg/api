@@ -23,7 +23,10 @@ describe("GameStreamerService", () => {
         return { namespace: "test" };
       }
       if (key === "app") {
-        return { relayDomain: "https://tv.example.test" };
+        return {
+          relayDomain: "https://tv.example.test",
+          encSecret: "test-secret",
+        };
       }
       return {} as any;
     },
