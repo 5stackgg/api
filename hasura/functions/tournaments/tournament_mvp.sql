@@ -4,6 +4,8 @@
 -- Impact is a level 0.8-1.2 metric (KDA-vs-team + damage share), so the MVP
 -- reflects match performance rather than ELO swings, which favor low-rated
 -- upsetters.
+-- plpgsql, not sql: a sql body is parsed at CREATE time, and
+-- tournament_placements is created after this file.
 CREATE OR REPLACE FUNCTION public.tournament_mvp_candidates(_tournament_id uuid)
 RETURNS TABLE (
     player_steam_id bigint,
@@ -13,8 +15,11 @@ RETURNS TABLE (
     matches integer,
     rank integer
 )
-LANGUAGE sql STABLE
+LANGUAGE plpgsql STABLE
 AS $$
+#variable_conflict use_column
+BEGIN
+    RETURN QUERY
     WITH winner AS (
         SELECT p.tournament_team_id
         FROM public.tournament_placements(_tournament_id) p
@@ -35,7 +40,7 @@ AS $$
             SUM(COALESCE(pe.impact, 1.0))::float AS total_impact,
             COUNT(*)::int AS matches
         FROM public.player_elo pe
-        WHERE pe.match_id IN (SELECT match_id FROM t_matches)
+        WHERE pe.match_id IN (SELECT t_matches.match_id FROM t_matches)
         GROUP BY pe.steam_id
     )
     SELECT
@@ -54,6 +59,7 @@ AS $$
      AND roster.tournament_id = _tournament_id
      AND roster.tournament_team_id = winner.tournament_team_id
     WHERE pi.matches > 0;
+END;
 $$;
 
 -- Narrower than is_tournament_organizer: a site-wide tournament organizer who
@@ -79,8 +85,10 @@ $$;
 
 -- Puts the MVP in force: the latest organizer pick while its player is still a
 -- candidate, otherwise the automatic pick unless the organizers pick it
--- themselves. A hand-granted placement 0 row predates picks and is left alone.
--- Returns the new grant, or NULL when nothing changed.
+-- themselves. A kept automatic pick (keep_tournament_mvp) holds only while they
+-- do, and stays the automatic pick on the award row. A hand-granted
+-- placement 0 row predates picks and is left alone. Returns the new grant, or
+-- NULL when nothing changed.
 CREATE OR REPLACE FUNCTION public.apply_tournament_mvp(_tournament_id uuid)
 RETURNS uuid
 LANGUAGE plpgsql
@@ -108,13 +116,14 @@ BEGIN
     ORDER BY p.created_at DESC, p.id DESC
     LIMIT 1;
 
-    IF _pick.id IS NOT NULL THEN
+    IF _pick.id IS NOT NULL
+       AND (_tournament.organizer_picks_mvp OR NOT _pick.kept_automatic) THEN
         SELECT c.player_steam_id, c.tournament_team_id
           INTO _steam_id, _tournament_team_id
         FROM public.tournament_mvp_candidates(_tournament_id) c
         WHERE c.player_steam_id = _pick.player_steam_id;
 
-        IF _steam_id IS NOT NULL THEN
+        IF _steam_id IS NOT NULL AND NOT _pick.kept_automatic THEN
             _picked_by := _pick.picked_by_steam_id;
             _note := _pick.note;
         END IF;
@@ -207,6 +216,11 @@ BEGIN
 
     _note := NULLIF(btrim(_note), '');
 
+    IF char_length(_note) > 140 THEN
+        RAISE EXCEPTION USING ERRCODE = '22000',
+            MESSAGE = 'The note can be at most 140 characters';
+    END IF;
+
     SELECT * INTO _candidate
     FROM public.tournament_mvp_candidates(_tournament_id) c
     WHERE c.player_steam_id = _player_steam_id;
@@ -253,5 +267,44 @@ BEGIN
     END IF;
 
     RETURN _recipient_id;
+END;
+$$;
+
+-- Turning "I'll pick the MVP myself" on after the finish keeps the MVP already
+-- given. Recorded as a pick, or the next recalculation would find no pick and
+-- the switch on, and take it away.
+CREATE OR REPLACE FUNCTION public.keep_tournament_mvp(
+    _tournament_id uuid,
+    _kept_by_steam_id bigint
+) RETURNS void
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    _current public.award_recipients;
+    _candidate record;
+BEGIN
+    SELECT * INTO _current
+    FROM public.award_recipients r
+    WHERE r.tournament_id = _tournament_id
+      AND r.placement = 0;
+
+    IF _current.id IS NULL
+       OR _current.source IS DISTINCT FROM 'tournament'
+       OR _current.awarded_by_steam_id IS NOT NULL THEN
+        RETURN;
+    END IF;
+
+    SELECT * INTO _candidate
+    FROM public.tournament_mvp_candidates(_tournament_id) c
+    WHERE c.player_steam_id = _current.player_steam_id;
+
+    INSERT INTO public.tournament_mvp_picks
+        (tournament_id, player_steam_id, tournament_team_id, picked_by_steam_id,
+         player_impact, automatic_steam_id, automatic_impact, kept_automatic)
+    VALUES
+        (_tournament_id, _current.player_steam_id, _current.tournament_team_id,
+         (SELECT p.steam_id FROM public.players p WHERE p.steam_id = _kept_by_steam_id),
+         _candidate.avg_impact, _current.player_steam_id, _candidate.avg_impact,
+         true);
 END;
 $$;

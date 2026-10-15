@@ -42,6 +42,7 @@ describe("organizer MVP pick (SQL-driven)", () => {
     await postgres.query("DELETE FROM match_options");
     await postgres.query("DELETE FROM teams");
     await postgres.query("DELETE FROM players");
+    await postgres.query("DELETE FROM awards WHERE system_key IS NULL");
   });
 
   const SE4 = [
@@ -273,6 +274,40 @@ describe("organizer MVP pick (SQL-driven)", () => {
       [tournamentId, steamId],
     );
 
+  const setSwitch = (tournamentId: string, steamId: string, value: boolean) =>
+    runAsUser(postgres, steamId, "user", (query) =>
+      query("UPDATE tournaments SET organizer_picks_mvp = $2 WHERE id = $1", [
+        tournamentId,
+        value,
+      ]),
+    );
+
+  const createAward = async (name: string, tier = "special") => {
+    const [award] = await postgres.query<Array<{ id: string }>>(
+      "INSERT INTO awards (name, tier, allow_multiple) VALUES ($1, $2, true) RETURNING id",
+      [name, tier],
+    );
+    return award.id;
+  };
+
+  const systemMvpAward = async () => {
+    const [award] = await postgres.query<Array<{ id: string }>>(
+      "SELECT id FROM awards WHERE system_key = 'tournament_mvp'",
+    );
+    return award.id;
+  };
+
+  // int8 input accepts every one of these as the same steam id.
+  const disguised = (steamId: string) => [
+    `0${steamId}`,
+    ` ${steamId} `,
+    `+${steamId}`,
+    `${steamId.slice(0, 5)}_${steamId.slice(5)}`,
+    `0x${BigInt(steamId).toString(16)}`,
+  ];
+
+  const OUT_OF_RANGE = "9223372036854775808";
+
   const failure = async (work: Promise<unknown>) => {
     try {
       await work;
@@ -446,6 +481,18 @@ describe("organizer MVP pick (SQL-driven)", () => {
       expect(await history(cup.id)).toHaveLength(1);
     });
 
+    it("caps the note at 140 characters", async () => {
+      const cup = await finishedCup();
+
+      const error = await failure(
+        pick(cup.id, cup.second, cup.organizer, "x".repeat(141)),
+      );
+      expect(error.message).toMatch(/140 characters/);
+
+      await pick(cup.id, cup.second, cup.organizer, "x".repeat(140));
+      expect(await mvpOf(cup.id)).toBe(cup.second);
+    });
+
     it("survives recalculation, an awards toggle and an admin recalculation", async () => {
       const cup = await finishedCup();
       await pick(cup.id, cup.second, cup.organizer);
@@ -583,6 +630,96 @@ describe("organizer MVP pick (SQL-driven)", () => {
       );
 
       expect(await mvpOf(cup.id)).toBe(cup.best);
+    });
+
+    it("keeps that MVP through recalculation, the awards toggle and a replayed final", async () => {
+      const cup = await finishedCup();
+      await setSwitch(cup.id, cup.organizer, true);
+      await postgres.query(
+        "UPDATE player_elo SET impact = 1.2 WHERE steam_id = $1",
+        [cup.second],
+      );
+
+      await postgres.query("SELECT calculate_tournament_awards($1)", [cup.id]);
+      expect(await mvpOf(cup.id)).toBe(cup.best);
+
+      await postgres.query(
+        "UPDATE tournaments SET awards_enabled = false WHERE id = $1",
+        [cup.id],
+      );
+      await postgres.query(
+        "UPDATE tournaments SET awards_enabled = true WHERE id = $1",
+        [cup.id],
+      );
+      expect(await mvpOf(cup.id)).toBe(cup.best);
+
+      await postgres.query("SELECT recalculate_tournament_awards($1)", [
+        cup.id,
+      ]);
+      expect(await mvpOf(cup.id)).toBe(cup.best);
+
+      const [, final] = await teamMatches(cup.winner);
+      const [side] = await postgres.query<Array<{ lineup: string }>>(
+        `SELECT CASE WHEN tb.tournament_team_id_1 = $2 THEN 'lineup_1_id'
+                     ELSE 'lineup_2_id' END AS lineup
+           FROM tournament_brackets tb WHERE tb.match_id = $1`,
+        [final, cup.winner],
+      );
+      await postgres.query(
+        "SELECT * FROM reset_tournament_match($1, NULL, 'WaitingForCheckIn', NULL)",
+        [final],
+      );
+      expect(await mvpOf(cup.id)).toBeNull();
+      await tfx.winMatch(final, side.lineup as "lineup_1_id" | "lineup_2_id");
+      expect(await tfx.tournamentStatus(cup.id)).toBe("Finished");
+      expect(await mvpOf(cup.id)).toBe(cup.best);
+
+      expect((await mvpRows(cup.id))[0].awarded_by_steam_id).toBeNull();
+      const kept = await postgres.query<
+        Array<{
+          player_steam_id: string;
+          picked_by_steam_id: string | null;
+          kept_automatic: boolean;
+          replaced_steam_id: string | null;
+        }>
+      >(
+        `SELECT player_steam_id::text, picked_by_steam_id::text,
+                kept_automatic, replaced_steam_id::text
+           FROM tournament_mvp_picks WHERE tournament_id = $1`,
+        [cup.id],
+      );
+      expect(kept).toEqual([
+        {
+          player_steam_id: cup.best,
+          picked_by_steam_id: cup.organizer,
+          kept_automatic: true,
+          replaced_steam_id: null,
+        },
+      ]);
+    });
+
+    it("lets the automatic pick move again once the switch is turned back off", async () => {
+      const cup = await finishedCup();
+      await setSwitch(cup.id, cup.organizer, true);
+      await postgres.query(
+        "UPDATE player_elo SET impact = 1.2 WHERE steam_id = $1",
+        [cup.second],
+      );
+
+      await setSwitch(cup.id, cup.organizer, false);
+
+      expect(await mvpOf(cup.id)).toBe(cup.second);
+    });
+
+    it("records nothing when turned on over an organizer's pick", async () => {
+      const cup = await finishedCup();
+      await pick(cup.id, cup.second, cup.organizer);
+
+      await setSwitch(cup.id, cup.organizer, true);
+      await postgres.query("SELECT calculate_tournament_awards($1)", [cup.id]);
+
+      expect(await mvpOf(cup.id)).toBe(cup.second);
+      expect(await history(cup.id)).toHaveLength(1);
     });
 
     it("grants the automatic pick when turned off after a finish without one", async () => {
@@ -769,6 +906,101 @@ describe("organizer MVP pick (SQL-driven)", () => {
       expect(await canPick(stranger, "administrator")).toBe(true);
       expect(await canPick(stranger, "tournament_organizer")).toBe(false);
       expect(await canPick(stranger, "user")).toBe(false);
+    });
+  });
+
+  describe("steam ids", () => {
+    it("refuses a steam id written any way but plainly, so an organizer cannot pick themselves", async () => {
+      const cup = await finishedCup();
+      await coOrganize(cup.id, cup.second);
+
+      for (const steamId of [...disguised(cup.second), OUT_OF_RANGE]) {
+        const error = await failure(
+          controller().setTournamentMvp({
+            tournament_id: cup.id,
+            player_steam_id: steamId,
+            user: user(cup.second),
+          }),
+        );
+        expect(error).toBeInstanceOf(BadRequestException);
+      }
+      expect(await mvpOf(cup.id)).toBe(cup.best);
+      expect(await history(cup.id)).toHaveLength(0);
+    });
+
+    it("refuses the same on a hand grant, so an organizer cannot award themselves", async () => {
+      const cup = await finishedCup();
+      await coOrganize(cup.id, cup.second);
+      const awardId = await createAward("Clutch King");
+
+      for (const steamId of [...disguised(cup.second), OUT_OF_RANGE]) {
+        const error = await failure(
+          controller().grantAward({
+            award_id: awardId,
+            player_steam_id: steamId,
+            tournament_id: cup.id,
+            user: user(cup.second),
+          }),
+        );
+        expect(error).toBeInstanceOf(BadRequestException);
+      }
+
+      const [{ count }] = await postgres.query<Array<{ count: string }>>(
+        "SELECT count(*) AS count FROM award_recipients WHERE award_id = $1",
+        [awardId],
+      );
+      expect(Number(count)).toBe(0);
+    });
+  });
+
+  describe("hand grants", () => {
+    it("refuses the tournament's MVP award, which only the picker hands out", async () => {
+      const cup = await finishedCup();
+      const admin = user(
+        await fx.player(undefined, "administrator"),
+        "administrator",
+      );
+      const systemMvp = await systemMvpAward();
+      const custom = await createAward("Summer Cup MVP", "mvp");
+      await postgres.query(
+        `INSERT INTO tournament_awards (tournament_id, placement, award_id)
+          VALUES ($1, 0, $2)`,
+        [cup.id, custom],
+      );
+
+      for (const grant of [
+        { award_id: systemMvp, tournament_id: cup.id },
+        { award_id: systemMvp },
+        { award_id: custom, tournament_id: cup.id },
+      ]) {
+        const error = await failure(
+          controller().grantAward({
+            ...grant,
+            player_steam_id: cup.second,
+            user: admin,
+          }),
+        );
+        expect(error).toBeInstanceOf(BadRequestException);
+        expect(error.message).toMatch(/MVP/);
+      }
+      expect(await mvpCount(cup.second)).toBe(0);
+    });
+
+    it("still hands out an MVP-tier award that is not this tournament's MVP", async () => {
+      const cup = await finishedCup();
+      const admin = user(
+        await fx.player(undefined, "administrator"),
+        "administrator",
+      );
+
+      await controller().grantAward({
+        award_id: await createAward("Community MVP", "mvp"),
+        player_steam_id: cup.second,
+        tournament_id: cup.id,
+        user: admin,
+      });
+
+      expect(await mvpCount(cup.second)).toBe(0);
     });
   });
 

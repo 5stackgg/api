@@ -34,6 +34,7 @@ select_permissions:
         - automatic_steam_id
         - automatic_impact
         - replaced_steam_id
+        - kept_automatic
         - created_at
       filter:
         tournament:

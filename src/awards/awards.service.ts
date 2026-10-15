@@ -20,6 +20,8 @@ const EXTENSION_BY_MIMETYPE: Record<string, string> = {
 
 const AWARD_TIERS = ["mvp", "gold", "silver", "bronze", "special"];
 
+const MAX_BIGINT = BigInt("9223372036854775807");
+
 export interface AwardRow {
   id: string;
   name: string;
@@ -207,7 +209,8 @@ export class AwardsService {
 
     this.assertSingleScope(input);
 
-    await this.requireAward(input.award_id);
+    const award = await this.requireAward(input.award_id);
+    await this.assertNotTournamentMvp(award, input.tournament_id ?? null);
 
     let tournamentTeamId: string | null = null;
     let placement: number | null = null;
@@ -315,6 +318,19 @@ export class AwardsService {
         error,
       );
     }
+  }
+
+  // int8 input also reads leading zeros, padding, a sign, digit separators and
+  // hex as a steam id, so a self-check comparing the raw strings can be talked
+  // past. Only the canonical form gets through.
+  public parseSteamId(value: unknown): string {
+    const text = typeof value === "string" ? value : String(value ?? "");
+
+    if (!/^[1-9][0-9]{0,18}$/.test(text) || BigInt(text) > MAX_BIGINT) {
+      throw new BadRequestException("Invalid steam id");
+    }
+
+    return text;
   }
 
   public assertSingleScope(input: {
@@ -754,9 +770,32 @@ export class AwardsService {
     );
   }
 
+  // A tournament holds one MVP and the MVP picker owns it; a hand grant would
+  // land beside it as a second one.
+  private async assertNotTournamentMvp(
+    award: AwardRow,
+    tournamentId: string | null,
+  ): Promise<void> {
+    let isMvp = award.system_key === "tournament_mvp";
+
+    if (!isMvp && tournamentId) {
+      const [row] = await this.postgres.query<Array<{ is_mvp: boolean }>>(
+        `SELECT public.resolve_tournament_award($1, 0) = $2 AS is_mvp`,
+        [tournamentId, award.id],
+      );
+      isMvp = !!row?.is_mvp;
+    }
+
+    if (isMvp) {
+      throw new BadRequestException(
+        "The tournament MVP is picked in the tournament's Tournament MVP section, not granted by hand",
+      );
+    }
+  }
+
   // Granting a tournament's 1st/2nd/3rd award by hand is the organizer
   // deciding that placement, so the row carries it and lands on the podium.
-  // The MVP stays with the calculation: a tournament holds exactly one.
+  // The MVP is left to the MVP picker: a tournament holds exactly one.
   private async tournamentPlacementFor(
     tournamentId: string,
     awardId: string,

@@ -382,12 +382,19 @@ BEGIN
         END IF;
     END IF;
 
-    -- Only off grants anything: turned on after the finish, the MVP already
-    -- given stays.
     IF NEW.organizer_picks_mvp IS DISTINCT FROM OLD.organizer_picks_mvp
-       AND NOT NEW.organizer_picks_mvp
        AND NEW.status = 'Finished' THEN
-        PERFORM public.apply_tournament_mvp(NEW.id);
+        IF NEW.organizer_picks_mvp THEN
+            PERFORM public.keep_tournament_mvp(
+                NEW.id,
+                substring(
+                    nullif(current_setting('hasura.user', true), '')::json ->> 'x-hasura-user-id'
+                    FROM '^[1-9][0-9]{0,17}$'
+                )::bigint
+            );
+        ELSE
+            PERFORM public.apply_tournament_mvp(NEW.id);
+        END IF;
     END IF;
 
     RETURN NEW;
