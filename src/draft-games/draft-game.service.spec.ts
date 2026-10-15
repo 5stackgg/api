@@ -142,4 +142,77 @@ describe("DraftGameService player blocks", () => {
       expect(playerBlocks.filterUnblocked).not.toHaveBeenCalled();
     });
   });
+
+  describe("editing settings", () => {
+    const settings = {
+      type: "Duel",
+      mode: "Pug",
+      map_pool_id: "pool-1",
+      options: { mr: "8", map_pool_id: "pool-1", game_mode_id: "mode-1" },
+    } as never;
+
+    it("keeps the game mode a quick-hosted room is saved with, on an options row linked to the room", async () => {
+      jest.spyOn(service, "getDraftGame").mockResolvedValue({
+        ...draftGame(),
+        type: "Duel",
+        capacity: 2,
+      });
+      hasura.mutation.mockResolvedValue({
+        insert_match_options_one: { id: "options-1" },
+      });
+
+      await service.updateDraftSettings(organizer, "draft-1", settings);
+
+      expect(hasura.mutation).toHaveBeenCalledWith({
+        insert_match_options_one: {
+          __args: {
+            object: expect.objectContaining({
+              type: "Duel",
+              game_mode_id: "mode-1",
+              map_pool_id: "pool-1",
+            }),
+          },
+          id: true,
+        },
+      });
+      expect(hasura.mutation).toHaveBeenCalledWith({
+        update_draft_games_by_pk: {
+          __args: {
+            pk_columns: { id: "draft-1" },
+            _set: { match_options_id: "options-1" },
+          },
+          __typename: true,
+        },
+      });
+    });
+
+    it("updates an existing options row in place", async () => {
+      jest.spyOn(service, "getDraftGame").mockResolvedValue({
+        ...draftGame(),
+        type: "Duel",
+        capacity: 2,
+        match_options_id: "options-1",
+      });
+
+      await service.updateDraftSettings(organizer, "draft-1", settings);
+
+      expect(hasura.mutation).toHaveBeenCalledWith({
+        update_match_options_by_pk: {
+          __args: {
+            pk_columns: { id: "options-1" },
+            _set: expect.objectContaining({
+              type: "Duel",
+              game_mode_id: "mode-1",
+            }),
+          },
+          __typename: true,
+        },
+      });
+      expect(hasura.mutation).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          insert_match_options_one: expect.anything(),
+        }),
+      );
+    });
+  });
 });
