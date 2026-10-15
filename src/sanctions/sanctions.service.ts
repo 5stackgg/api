@@ -192,8 +192,9 @@ export class SanctionsService {
     steamId: string;
     type: SanctionType;
     sanctionId?: string | null;
+    liftedBySteamId: string;
   }): Promise<{ id: string | null; enforced: boolean; message: string }> {
-    const { serverId, steamId, type, sanctionId } = params;
+    const { serverId, steamId, type, sanctionId, liftedBySteamId } = params;
 
     if (!SanctionsService.SANCTION_TYPES.includes(type)) {
       throw Error(`invalid sanction type ${type}`);
@@ -205,18 +206,28 @@ export class SanctionsService {
       throw Error("a warning is removed by its sanction id");
     }
 
+    const liftedByRole = await this.assertOutranks(liftedBySteamId, steamId);
+    const session = JSON.stringify({
+      "x-hasura-role": liftedByRole,
+      "x-hasura-user-id": liftedBySteamId,
+    });
+
     let removedId: string | null = null;
 
     if (sanctionId) {
-      const removed = await this.postgres.query<Array<{ id: string }>>(
-        `UPDATE public.player_sanctions
-            SET deleted_at = now()
-          WHERE id = $1::uuid
-            AND player_steam_id = $2::bigint
-            AND type = $3
-            AND deleted_at IS NULL
-          RETURNING id`,
-        [sanctionId, steamId, type],
+      const { rows: removed } = await this.postgres.transaction(
+        (client) =>
+          client.query<{ id: string }>(
+            `UPDATE public.player_sanctions
+                SET deleted_at = now()
+              WHERE id = $1::uuid
+                AND player_steam_id = $2::bigint
+                AND type = $3
+                AND deleted_at IS NULL
+              RETURNING id`,
+            [sanctionId, steamId, type],
+          ),
+        session,
       );
       removedId = removed.at(0)?.id ?? null;
 
@@ -224,13 +235,17 @@ export class SanctionsService {
         throw Error("sanction not found");
       }
     } else {
-      await this.postgres.query(
-        `UPDATE public.player_sanctions
-            SET deleted_at = now()
-          WHERE player_steam_id = $1::bigint
-            AND type = $2
-            AND deleted_at IS NULL`,
-        [steamId, type],
+      await this.postgres.transaction(
+        (client) =>
+          client.query(
+            `UPDATE public.player_sanctions
+                SET deleted_at = now()
+              WHERE player_steam_id = $1::bigint
+                AND type = $2
+                AND deleted_at IS NULL`,
+            [steamId, type],
+          ),
+        session,
       );
     }
 
@@ -291,12 +306,15 @@ export class SanctionsService {
     }
   }
 
-  private async assertOutranks(actorSteamId: string, targetSteamId: string) {
-    const [row] = await this.postgres.query<Array<{ allowed: boolean }>>(
-      `SELECT public.can_sanction_player(
-                (SELECT role::text FROM public.players WHERE steam_id = $1::bigint),
-                $2::bigint
-              ) AS allowed`,
+  private async assertOutranks(
+    actorSteamId: string,
+    targetSteamId: string,
+  ): Promise<string> {
+    const [row] = await this.postgres.query<
+      Array<{ role: string | null; allowed: boolean }>
+    >(
+      `SELECT actor.role, public.can_sanction_player(actor.role, $2::bigint) AS allowed
+         FROM (SELECT (SELECT role::text FROM public.players WHERE steam_id = $1::bigint) AS role) actor`,
       [actorSteamId, targetSteamId],
     );
 
@@ -305,6 +323,8 @@ export class SanctionsService {
         "you cannot act on a player whose role is equal to or above your own",
       );
     }
+
+    return row.role;
   }
 
   private async warnPlayer(

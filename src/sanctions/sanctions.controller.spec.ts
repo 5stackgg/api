@@ -164,6 +164,33 @@ describe("SanctionsController.kickServerPlayer", () => {
   });
 });
 
+describe("SanctionsController.unsanctionServerPlayer", () => {
+  it("lifts as the signed-in moderator, so the service can check they outrank the player", async () => {
+    const unsanctionServerPlayer = jest
+      .fn()
+      .mockResolvedValue({ id: null, enforced: false, message: "removed" });
+    const controller = new SanctionsController(
+      { unsanctionServerPlayer } as any,
+      {} as any,
+      {} as any,
+    );
+
+    await controller.unsanctionServerPlayer({
+      steam_id: "76561198000000001",
+      type: "ban",
+      user: {
+        steam_id: "76561198000000009",
+        name: "mod",
+        role: "moderator",
+      },
+    });
+
+    expect(unsanctionServerPlayer).toHaveBeenCalledWith(
+      expect.objectContaining({ liftedBySteamId: "76561198000000009" }),
+    );
+  });
+});
+
 describe("SanctionsModule", () => {
   // Without the middleware on this exact route and method the endpoint would
   // answer anyone and record anyone's heartbeat.

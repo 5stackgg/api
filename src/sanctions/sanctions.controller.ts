@@ -131,6 +131,7 @@ export class SanctionsController {
       steamId: steam_id,
       type,
       sanctionId: sanction_id,
+      liftedBySteamId: user.steam_id,
     });
   }
 

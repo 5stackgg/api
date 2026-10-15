@@ -253,24 +253,126 @@ describe("sanction role hierarchy (SQL-driven)", () => {
     expect(row.sanctioned_by_steam_id).toBeNull();
   });
 
-  it("still lets the api lift a sanction on a player who has since been promoted", async () => {
+  const deletedAt = async (id: string) =>
+    (
+      await postgres.query<Array<{ deleted_at: Date | null }>>(
+        "SELECT deleted_at FROM player_sanctions WHERE id = $1",
+        [id],
+      )
+    )[0].deleted_at;
+
+  it("lifting a sanction on a player who has since been promoted takes a role above their new one", async () => {
     const moderator = await playerWithRole("moderator");
+    const administrator = await playerWithRole("administrator");
     const user = await playerWithRole("user");
     const [{ id }] = await sanction(user, moderator);
     await postgres.query(
-      "UPDATE players SET role = 'administrator' WHERE steam_id = $1::bigint",
+      "UPDATE players SET role = 'tournament_organizer' WHERE steam_id = $1::bigint",
       [user],
     );
+    const { sanctions } = service();
+
+    await expect(
+      sanctions.unsanctionServerPlayer({
+        steamId: user,
+        type: "ban",
+        sanctionId: id,
+        liftedBySteamId: moderator,
+      }),
+    ).rejects.toThrow(/equal to or above/);
+    expect(await deletedAt(id)).toBeNull();
+
+    await sanctions.unsanctionServerPlayer({
+      steamId: user,
+      type: "ban",
+      sanctionId: id,
+      liftedBySteamId: administrator,
+    });
+    expect(await deletedAt(id)).not.toBeNull();
+  });
+
+  it("refuses a moderator lifting their own sanction or a fellow moderator's", async () => {
+    const administrator = await playerWithRole("administrator");
+    const moderator = await playerWithRole("moderator");
+    const otherModerator = await playerWithRole("moderator");
+    const [{ id }] = await sanction(moderator, administrator, "mute");
+    const { sanctions } = service();
+
+    for (const lifter of [moderator, otherModerator]) {
+      await expect(
+        sanctions.unsanctionServerPlayer({
+          steamId: moderator,
+          type: "mute",
+          liftedBySteamId: lifter,
+        }),
+      ).rejects.toThrow(/equal to or above/);
+    }
+
+    expect(await deletedAt(id)).toBeNull();
+  });
+
+  it.each([
+    ["deleted_at = now()", "a lift"],
+    ["remove_sanction_date = now()", "an early expiry"],
+  ])(
+    "refuses a moderator session writing %s (%s) on their own sanction",
+    async (assignment) => {
+      const administrator = await playerWithRole("administrator");
+      const moderator = await playerWithRole("moderator");
+      const [{ id }] = await sanction(moderator, administrator);
+
+      await expect(
+        runAsUser(postgres, moderator, "moderator", (query) =>
+          query(`UPDATE player_sanctions SET ${assignment} WHERE id = $1`, [
+            id,
+          ]),
+        ),
+      ).rejects.toThrow(/equal to or above/);
+
+      const [row] = await postgres.query<
+        Array<{ deleted_at: Date | null; remove_sanction_date: Date | null }>
+      >(
+        "SELECT deleted_at, remove_sanction_date FROM player_sanctions WHERE id = $1",
+        [id],
+      );
+      expect(row).toEqual({ deleted_at: null, remove_sanction_date: null });
+    },
+  );
+
+  it("lets an administrator session lift a moderator's sanction", async () => {
+    const administrator = await playerWithRole("administrator");
+    const moderator = await playerWithRole("moderator");
+    const [{ id }] = await sanction(moderator, administrator);
+
+    await runAsUser(postgres, administrator, "administrator", (query) =>
+      query("UPDATE player_sanctions SET deleted_at = now() WHERE id = $1", [
+        id,
+      ]),
+    );
+
+    expect(await deletedAt(id)).not.toBeNull();
+  });
+
+  it("still lets the system lift and expire a sanction on anyone, VAC auto-bans included", async () => {
+    const administrator = await playerWithRole("administrator");
+    const [{ id: lifted }] = await sanction(administrator, null);
+    const [{ id: expired }] = await sanction(administrator, null, "mute");
 
     await postgres.query(
       "UPDATE player_sanctions SET deleted_at = now() WHERE id = $1",
-      [id],
+      [lifted],
+    );
+    await postgres.query(
+      "UPDATE player_sanctions SET remove_sanction_date = now() WHERE id = $1",
+      [expired],
     );
 
-    const [row] = await postgres.query<Array<{ deleted_at: Date | null }>>(
-      "SELECT deleted_at FROM player_sanctions WHERE id = $1",
-      [id],
-    );
-    expect(row.deleted_at).not.toBeNull();
+    expect(await deletedAt(lifted)).not.toBeNull();
+    const [row] = await postgres.query<
+      Array<{ remove_sanction_date: Date | null }>
+    >("SELECT remove_sanction_date FROM player_sanctions WHERE id = $1", [
+      expired,
+    ]);
+    expect(row.remove_sanction_date).not.toBeNull();
   });
 });
