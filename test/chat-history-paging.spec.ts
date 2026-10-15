@@ -394,7 +394,10 @@ describe("chat history paging (SQL-driven)", () => {
       await chat.onApplicationBootstrap();
       await join(team.starter);
       await join(team.starter);
-      expect(await redis.exists("chat_index:starting")).toBe(1);
+
+      const window = await redis.pttl("chat_index:starting");
+      expect(window).toBeGreaterThan(170_000);
+      expect(window).toBeLessThanOrEqual(180_000);
 
       await redis.del("chat_index:starting");
       await join(team.starter);
@@ -467,6 +470,55 @@ describe("chat history paging (SQL-driven)", () => {
       const kept = await say(team.starter, "kept");
 
       expect(await indexed()).toEqual([lasting, kept]);
+    });
+
+    // A store's HSET lands before its HEXPIRE, so a rebuild between the two
+    // finds a field with no expiry yet.
+    const storedWithoutExpiry = async () => {
+      const id = randomUUID();
+      await redis.hset(
+        roomKey(),
+        id,
+        JSON.stringify({
+          id,
+          message: "mid-store",
+          timestamp: new Date().toISOString(),
+          source: "web",
+          from: { role: "user", name: "Owner", steam_id: team.owner },
+        }),
+      );
+      return id;
+    };
+
+    it("gives an index rebuilt over a field with no expiry yet the room's TTL", async () => {
+      await storedWithoutExpiry();
+      await join(team.starter);
+
+      const ttl = await redis.pttl(indexKey());
+      expect(ttl).toBeGreaterThan(30 * 24 * 60 * 60 * 1000 - 60_000);
+      expect(ttl).toBeLessThanOrEqual(30 * 24 * 60 * 60 * 1000);
+    });
+
+    it("ignores a field with no expiry yet beside ones that have one", async () => {
+      await seed(1);
+      await storedWithoutExpiry();
+      await join(team.starter);
+
+      const ttl = await redis.pttl(indexKey());
+      expect(ttl).toBeGreaterThan(3_590_000);
+      expect(ttl).toBeLessThanOrEqual(3_600_000);
+    });
+
+    it("gives a store's expiry to an index that has none", async () => {
+      await seed(1);
+      await join(team.starter);
+      await redis.persist(indexKey());
+
+      await say(team.starter, "after");
+
+      expect(await redis.pttl(indexKey())).toBeGreaterThan(
+        30 * 24 * 60 * 60 * 1000 - 60_000,
+      );
     });
 
     it("lives as long as the room's longest-lived message", async () => {
