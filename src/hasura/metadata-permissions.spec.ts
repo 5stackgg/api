@@ -809,10 +809,29 @@ describe("hasura table metadata", () => {
       const [update] = settings()?.update_permissions ?? [];
 
       expect([...(update?.permission.columns ?? [])].sort()).toEqual([
+        "mute_minutes",
         "muted",
-        "muted_until",
         "notify",
       ]);
+    });
+
+    // A device's clock would move the end; the database works it out from
+    // the length asked for, and shows it back.
+    it("takes how long to mute for, never when the mute ends", () => {
+      const [insert] = settings()?.insert_permissions ?? [];
+      const [update] = settings()?.update_permissions ?? [];
+      const [select] = settings()?.select_permissions ?? [];
+
+      for (const columns of [
+        insert?.permission.columns,
+        update?.permission.columns,
+      ]) {
+        expect(columns).toContain("mute_minutes");
+        expect(columns).not.toContain("muted_until");
+      }
+      expect(select?.permission.columns).toEqual(
+        expect.arrayContaining(["muted_until", "mute_minutes"]),
+      );
     });
 
     it("relates to nothing, and nothing relates to it", () => {

@@ -10,15 +10,16 @@ insert_permissions:
       columns:
         - thread
         - muted
-        - muted_until
+        - mute_minutes
         - notify
-    comment: A player only ever sets how they are told about a room for themselves
+    comment: A player only ever sets how they are told about a room for themselves; tbiu_chat_room_settings works out muted_until from mute_minutes
 select_permissions:
   - role: user
     permission:
       columns:
         - thread
         - muted
+        - mute_minutes
         - muted_until
         - notify
       filter:
@@ -30,7 +31,7 @@ update_permissions:
     permission:
       columns:
         - muted
-        - muted_until
+        - mute_minutes
         - notify
       filter:
         steam_id:
