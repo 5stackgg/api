@@ -204,5 +204,82 @@ describe("tournament check-in belongs to the team (SQL-driven)", () => {
       ).resolves.toEqual({ success: true });
       expect(await checkedIn(entryId)).toBe(true);
     });
+
+    describe("registering while the window is open", () => {
+      // One transaction, the way Hasura writes a nested insert: the team row,
+      // then the roster the registrant picked.
+      const register = (
+        tournamentId: string,
+        team: { id: string },
+        registrant: string,
+        roster: Array<string> = [],
+      ) =>
+        runAsUser(postgres, registrant, "user", async (query) => {
+          const [row] = (await query(
+            `INSERT INTO tournament_teams (tournament_id, team_id, name)
+             SELECT $1, id, name FROM teams WHERE id = $2 RETURNING id`,
+            [tournamentId, team.id],
+          )) as Array<{ id: string }>;
+
+          for (const player of roster) {
+            await query(
+              `INSERT INTO tournament_team_roster (tournament_team_id, player_steam_id, tournament_id)
+               VALUES ($1, $2, $3)`,
+              [row.id, player, tournamentId],
+            );
+          }
+
+          return row.id;
+        });
+
+      it("leaves a team its owner enters without playing on it for the roster to check in", async () => {
+        const t = await openTournament();
+        await openWindow(t.id);
+        const team = await fx.team(2);
+
+        const entryId = await register(
+          t.id,
+          team,
+          team.owner,
+          await mates(team.id, team.owner),
+        );
+
+        expect((await entry(entryId)).roster).not.toContain(team.owner);
+        expect(await checkedIn(entryId)).toBe(false);
+      });
+
+      it("checks in a team its captain enters from the roster", async () => {
+        const t = await openTournament();
+        await openWindow(t.id);
+        const team = await fx.team(1);
+
+        const entryId = await register(t.id, team, team.owner);
+
+        const registered = await entry(entryId);
+        expect(registered.roster).toContain(team.owner);
+        expect(registered.captain_steam_id).toBe(team.owner);
+        expect(await checkedIn(entryId)).toBe(true);
+      });
+
+      it("checks in a team an organizer enters", async () => {
+        const t = await openTournament();
+        await openWindow(t.id);
+        const team = await fx.team(1);
+
+        const entryId = await register(t.id, team, t.organizer);
+
+        expect(await checkedIn(entryId)).toBe(true);
+      });
+
+      it("leaves a team entered before the window opened unchecked", async () => {
+        const t = await openTournament();
+        const team = await fx.team(1);
+
+        const entryId = await register(t.id, team, team.owner);
+        await openWindow(t.id);
+
+        expect(await checkedIn(entryId)).toBe(false);
+      });
+    });
   });
 });

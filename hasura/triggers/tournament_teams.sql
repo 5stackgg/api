@@ -72,8 +72,16 @@ BEGIN
 
     -- Registering after the window opened counts as checked in: a team that
     -- signs up at T-30 must not be swept at T-15 for failing to confirm a
-    -- prompt it was never shown.
-    IF NEW.checked_in_at IS NULL AND public.tournament_check_in_open(tournament) THEN
+    -- prompt it was never shown. Only from someone who could check it in,
+    -- though; a registrant who is neither an organizer nor an internal write
+    -- needs the roster, which is written after this row, so tai_tournament_team
+    -- decides for them.
+    IF NEW.checked_in_at IS NULL
+       AND public.tournament_check_in_open(tournament)
+       AND (
+           (_session ->> 'x-hasura-role') IS NULL
+           OR is_tournament_organizer(tournament, _session)
+       ) THEN
         NEW.checked_in_at = now();
     END IF;
 
@@ -140,6 +148,8 @@ AS $$
 DECLARE
     max_players_per_lineup INT;
     player_steam_id BIGINT;
+    _session json;
+    _registrant BIGINT;
 BEGIN
     -- When the client already provided a roster selection (e.g. picking a
     -- subset so an A team and B team can share members), leave it as-is.
@@ -221,6 +231,32 @@ BEGIN
     END IF;
 
     PERFORM public.ensure_tournament_team_captain(NEW.id);
+
+    -- The same rule checking in follows: a captain or a team admin who plays
+    -- on the team. An owner entering a team they do not play on leaves the
+    -- check-in to its roster.
+    _session := nullif(current_setting('hasura.user', true), '')::json;
+    _registrant := nullif(_session ->> 'x-hasura-user-id', '')::bigint;
+
+    IF _registrant IS NOT NULL THEN
+        UPDATE public.tournament_teams tt
+           SET checked_in_at = now()
+          FROM public.tournaments t
+         WHERE tt.id = NEW.id
+           AND t.id = tt.tournament_id
+           AND tt.checked_in_at IS NULL
+           AND public.tournament_check_in_open(t)
+           AND EXISTS (
+               SELECT 1
+               FROM public.tournament_team_roster ttr
+               WHERE ttr.tournament_team_id = tt.id
+                 AND ttr.player_steam_id = _registrant
+           )
+           AND (
+               tt.captain_steam_id = _registrant
+               OR public.can_manage_tournament_team(tt, _session)
+           );
+    END IF;
 
     RETURN NEW;
 END;
