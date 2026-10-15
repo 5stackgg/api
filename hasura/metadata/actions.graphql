@@ -585,6 +585,41 @@ type Mutation {
   ): SuccessOutput
 }
 
+type Mutation {
+  postNewsComment(
+    article_id: uuid!
+    parent_id: uuid
+    body: String!
+  ): NewsCommentOutput
+}
+
+type Mutation {
+  editNewsComment(
+    id: uuid!
+    body: String!
+  ): NewsCommentOutput
+}
+
+type Mutation {
+  deleteNewsComment(
+    id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  toggleNewsCommentVote(
+    id: uuid!
+  ): NewsCommentVoteOutput
+}
+
+type Mutation {
+  setNewsCommentHidden(
+    id: uuid!
+    hidden: Boolean!
+    reason: String
+  ): NewsCommentOutput
+}
+
 type Query {
   newsPostsAdmin: [NewsPost!]
 }
@@ -1067,6 +1102,17 @@ type DraftGamePreviewOutput {
 
 type TeamCalendarOutput {
   url: String!
+}
+
+type NewsCommentOutput {
+  id: uuid!
+  parent_id: uuid
+}
+
+type NewsCommentVoteOutput {
+  comment_id: uuid!
+  vote_count: Int!
+  voted: Boolean!
 }
 
 type NewsPost {

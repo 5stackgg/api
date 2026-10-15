@@ -1,0 +1,92 @@
+table:
+  name: news_comments
+  schema: public
+object_relationships:
+  - name: article
+    using:
+      foreign_key_constraint_on: article_id
+array_relationships:
+  - name: replies
+    using:
+      foreign_key_constraint_on:
+        column: parent_id
+        table:
+          name: news_comments
+          schema: public
+computed_fields:
+  - name: author
+    definition:
+      function:
+        name: news_comment_author
+        schema: public
+      session_argument: hasura_session
+    comment: The author as this viewer may see them, none once removed.
+  - name: hidden_by_name
+    definition:
+      function:
+        name: news_comment_hidden_by_name
+        schema: public
+    comment: Who hid the comment. Staff only.
+  - name: text
+    definition:
+      function:
+        name: news_comment_text
+        schema: public
+      session_argument: hasura_session
+    comment: The comment as this viewer may read it, blank once removed.
+  - name: viewer_voted
+    definition:
+      function:
+        name: news_comment_viewer_voted
+        schema: public
+      session_argument: hasura_session
+  - name: visible
+    definition:
+      function:
+        name: news_comment_visible
+        schema: public
+      session_argument: hasura_session
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - id
+        - article_id
+        - parent_id
+        - vote_count
+        - created_at
+        - edited_at
+        - deleted_at
+        - deleted_by_staff
+        - hidden_at
+      computed_fields:
+        - text
+        - viewer_voted
+      filter:
+        visible:
+          _eq: true
+      allow_aggregations: true
+    comment: Every reader inherits this. Writes go through the postNewsComment family of actions.
+  - role: moderator
+    permission:
+      columns:
+        - id
+        - article_id
+        - parent_id
+        - vote_count
+        - created_at
+        - edited_at
+        - deleted_at
+        - deleted_by_staff
+        - hidden_at
+        - hidden_by_steam_id
+        - hidden_reason
+      computed_fields:
+        - hidden_by_name
+        - text
+        - viewer_voted
+      filter:
+        visible:
+          _eq: true
+      allow_aggregations: true
+    comment: Staff inherit this, with who hid a comment and why.

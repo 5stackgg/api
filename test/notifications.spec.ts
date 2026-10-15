@@ -581,6 +581,12 @@ describe("notifications (SQL-driven)", () => {
       expect(posted).toEqual([]);
     });
 
+    it("keeps a reply to a news comment between the players", async () => {
+      await notify("NewsCommentReply", "kairo replied: agreed, B retake");
+
+      expect(posted).toEqual([]);
+    });
+
     it("keeps a warning between the player and staff", async () => {
       await notify("PlayerWarning", "toxic in voice");
 

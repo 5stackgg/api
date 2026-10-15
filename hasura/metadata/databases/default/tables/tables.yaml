@@ -145,6 +145,7 @@
 - "!include public_utility_practice_invites.yaml"
 - "!include public_utility_practice_sessions.yaml"
 - "!include public_news_articles.yaml"
+- "!include public_news_comments.yaml"
 - "!include public_notification_preferences.yaml"
 - "!include public_notifications.yaml"
 - "!include public_pending_match_import_players.yaml"

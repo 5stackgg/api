@@ -186,6 +186,24 @@ describe("notification categories", () => {
     });
   });
 
+  it("gives replies to your news comments their own push category, on by default, after news", () => {
+    expect(pushCategoryForType("NewsCommentReply")).toEqual({
+      key: "news_replies",
+      defaultEnabled: true,
+    });
+    expect(pushCategoryForType("NewsPublished")?.key).toBe("news");
+
+    const keys = PUSH_KEYS.map((entry) => entry.key);
+    expect(keys.indexOf("news_replies")).toBe(keys.indexOf("news") + 1);
+  });
+
+  it("lets the bell mute replies to your news comments, on by default", () => {
+    expect(inAppKeyForType("NewsCommentReply")).toEqual({
+      key: "NewsCommentReply",
+      defaultEnabled: true,
+    });
+  });
+
   it("resolves in-app keys back to their own type", () => {
     for (const entry of IN_APP_KEYS) {
       expect(inAppKeyForType(entry.key)).toEqual(entry);

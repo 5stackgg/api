@@ -1816,6 +1816,26 @@ describe("notificationUrl", () => {
     ).toBe("/news/a-slug");
   });
 
+  it("opens a reply to a news comment on the reply itself", () => {
+    expect(
+      notificationUrl(
+        {
+          type: "NewsCommentReply",
+          message:
+            'On <a href="/news/autumn-cup#comment-r1">Autumn Cup</a>: “&lt;a href=&quot;/elsewhere&quot;&gt;”',
+          entity_id: "r1",
+        },
+        webDomain,
+      ),
+    ).toBe("/news/autumn-cup#comment-r1");
+    expect(
+      notificationUrl(
+        { type: "NewsCommentReply", message: "A reply", entity_id: "r1" },
+        webDomain,
+      ),
+    ).toBe("/news");
+  });
+
   it("falls back to a route when the message has no link", () => {
     expect(
       notificationUrl(

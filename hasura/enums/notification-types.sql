@@ -37,6 +37,7 @@ INSERT INTO e_notification_types ("value", "description") VALUES
     ('TournamentCheckInClosing', 'Check-in for your tournament closes soon'),
     ('TournamentCheckInMissed', 'Your team missed check-in and was not seeded'),
     ('NewsPublished', 'A news article was published'),
+    ('NewsCommentReply', 'Someone replied to your comment on a news post'),
     ('TeamInvite', 'You were invited to a team'),
     ('TournamentTeamInvite', 'You were invited to play in a tournament'),
     ('TournamentInvite', 'You were invited to register for a tournament'),

@@ -42,7 +42,11 @@ const DELIVERY_POLICIES: Record<string, e_notification_types_enum[]> = {
 
   // Conversations. The only type where the recipient is routinely staring at
   // the thing being pushed to them.
-  "15s-unseen": ["ChatMessage", "MatchChatMessage"],
+  "15s-unseen": [
+    "ChatMessage",
+    "MatchChatMessage",
+    "NewsCommentReply" as e_notification_types_enum,
+  ],
 
   // A match alert describes a condition, and conditions flap -- pause, resume,
   // pause again. They are also retracted wholesale by resolveMatchAlerts, so a
