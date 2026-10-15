@@ -998,6 +998,22 @@ describe("match chat archive (SQL-driven)", () => {
       expect(await log(admin, "administrator")).toBeNull();
     });
 
+    it.each(["Canceled", "Finished"])(
+      "is closed for a practice session, even once it is %s",
+      async (ended) => {
+        const staff = await fx.player("Staff");
+        await setRole(staff, "moderator");
+        await postgres.query(
+          "UPDATE matches SET source = 'practice' WHERE id = $1",
+          [match.id],
+        );
+        await status(ended);
+
+        expect(await log(staff, "moderator")).toBeNull();
+        expect(await log(admin, "administrator")).toBeNull();
+      },
+    );
+
     it("opens at moderator for someone who took no part", async () => {
       const staff = await fx.player("Staff");
       await setRole(staff, "moderator");
