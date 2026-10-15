@@ -141,6 +141,9 @@ describe("ChatService mentions", () => {
 
   const push = {
     sendChatMessage: jest.fn(async () => {}),
+    claimMentionPushes: jest.fn(
+      async (_sender: string, steamIds: string[]) => steamIds,
+    ),
     editChatMessage: jest.fn(async () => {}),
     retractChatMessage: jest.fn(async () => {}),
   };
@@ -419,6 +422,10 @@ describe("ChatService mentions", () => {
       });
 
       expect(stored()).toEqual([]);
+      expect(hasuraService.query).not.toHaveBeenCalledWith(
+        expect.objectContaining({ players: expect.anything() }),
+      );
+      expect(push.claimMentionPushes).not.toHaveBeenCalled();
       expect(push.sendChatMessage).not.toHaveBeenCalled();
     });
 
@@ -426,12 +433,22 @@ describe("ChatService mentions", () => {
       const picks = FILLER.slice(0, 10);
       const text = picks.map((steamId) => `@${NAMES[steamId]}`).join(" ");
 
-      await expect(say(text, [...picks, picks[0], VEXX])).resolves.toEqual({
+      await expect(say(text, [...picks, picks[0]])).resolves.toEqual({
         accepted: true,
         messageId: expect.any(String),
       });
 
       expect(stored()[0].mentions).toHaveLength(10);
+    });
+
+    it("counts the sender's own id toward the ten", async () => {
+      const picks = FILLER.slice(0, 10);
+      const text = picks.map((steamId) => `@${NAMES[steamId]}`).join(" ");
+
+      await expect(say(`@vexx ${text}`, [VEXX, ...picks])).resolves.toEqual({
+        accepted: false,
+        code: ChatErrorCode.TooManyMentions,
+      });
     });
 
     it.each([
@@ -500,7 +517,7 @@ describe("ChatService mentions", () => {
         {
           steamIds: [KAIRO],
           push: expect.objectContaining({
-            title: "vexx mentioned you",
+            title: "vexx",
             message: "@kairo up next on Nuke",
             mention: true,
             threadKey: "chat:tournament:t-1",
@@ -524,6 +541,56 @@ describe("ChatService mentions", () => {
         OKAMI,
         MARLOWE,
       ]);
+    });
+
+    it("pushes a player the sender just tagged the room's ordinary message", async () => {
+      roster = [VEXX, KAIRO, KASPR];
+      push.claimMentionPushes.mockResolvedValueOnce([]);
+
+      await say("@kairo again", [KAIRO]);
+
+      expect(push.claimMentionPushes).toHaveBeenCalledWith(
+        VEXX,
+        [KAIRO],
+        "@kairo again",
+      );
+      expect(pushes()).toEqual([
+        {
+          steamIds: [KAIRO, KASPR, MARLOWE],
+          push: expect.not.objectContaining({ mention: true }),
+        },
+      ]);
+    });
+
+    it("asks to push a tag only for players who did not block the sender", async () => {
+      roster = [VEXX, KAIRO, OKAMI];
+      blocks = [[OKAMI, VEXX]];
+
+      await say("@okami @kairo look", [OKAMI, KAIRO]);
+
+      expect(push.claimMentionPushes).toHaveBeenCalledWith(
+        VEXX,
+        [KAIRO],
+        "@okami @kairo look",
+      );
+    });
+
+    it("pushes nothing again for an edit", async () => {
+      roster = [VEXX, KAIRO];
+      const sent = await say("@kairo check-in", [KAIRO]);
+      const before = push.sendChatMessage.mock.calls.length;
+
+      await service.editMessage(
+        ChatLobbyType.Tournament,
+        "t-1",
+        sent.accepted ? sent.messageId : "",
+        as(VEXX),
+        "@kairo check-in now",
+      );
+      await flush();
+
+      expect(push.sendChatMessage).toHaveBeenCalledTimes(before);
+      expect(push.claimMentionPushes).toHaveBeenCalledTimes(1);
     });
 
     it("pushes nothing to a player who blocked the sender", async () => {

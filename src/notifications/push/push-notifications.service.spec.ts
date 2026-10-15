@@ -98,6 +98,7 @@ describe("PushNotificationsService", () => {
     ),
     rpush: jest.fn().mockResolvedValue(1),
     expire: jest.fn().mockResolvedValue(1),
+    eval: jest.fn(),
     multi: jest.fn(() => chainableMulti([[null, []]])),
     pipeline: jest.fn(() => ({
       set: jest.fn(),
@@ -960,8 +961,7 @@ describe("PushNotificationsService", () => {
   });
 
   describe("mentions", () => {
-    const payloadOf = (call: number) =>
-      JSON.parse((webPush.sendNotification as jest.Mock).mock.calls[call][1]);
+    const TARGET = "76561100000000001";
 
     const payloads = () =>
       (webPush.sendNotification as jest.Mock).mock.calls.map(([, raw]) =>
@@ -970,7 +970,6 @@ describe("PushNotificationsService", () => {
 
     const mention = (overrides: Record<string, any> = {}) =>
       chatPush({
-        title: "Luke mentioned you",
         message: "@kairo you're up next",
         mention: true,
         ...overrides,
@@ -978,35 +977,131 @@ describe("PushNotificationsService", () => {
 
     const closeWindow = async (entries: string[]) => {
       redis.multi.mockReturnValueOnce(chainableMulti([[null, entries]]));
-      await service.sendPending("76561100000000001", ROOM);
+      await service.sendPending(TARGET, ROOM);
     };
 
-    const windowClaims = () =>
-      redis.set.mock.calls.filter(([key]: [string]) =>
-        key.startsWith("notifications:push-window:"),
+    // A redis that keeps what it is told, for the window and the pending list
+    // a burst actually builds up.
+    const keepState = () => {
+      const keys = new Map<string, string>();
+      const lists = new Map<string, string[]>();
+
+      redis.set.mockImplementation(
+        async (key: string, value: string, ...options: unknown[]) => {
+          if (options.includes("NX") && keys.has(key)) {
+            return null;
+          }
+          keys.set(key, String(value));
+          return "OK";
+        },
       );
-
-    it("pushes at once under a tag of its own, outside the room's window", async () => {
-      await service.sendChatMessage(["76561100000000001"], mention());
-
-      expect(payloadOf(0)).toMatchObject({
-        title: "Luke mentioned you · Ancients vs Ratz",
-        body: "@kairo you're up next",
-        tag: `${ROOM}:mention`,
-        threadKey: ROOM,
-        renotify: true,
+      redis.get.mockImplementation(
+        async (key: string) => keys.get(key) ?? null,
+      );
+      redis.ttl.mockImplementation(async (key: string) =>
+        keys.has(key) ? 15 : -2,
+      );
+      redis.rpush.mockImplementation(
+        async (key: string, ...items: string[]) => {
+          lists.set(key, [...(lists.get(key) ?? []), ...items]);
+          return lists.get(key).length;
+        },
+      );
+      redis.multi.mockImplementation(() => {
+        const multi: Record<string, any> = {};
+        for (const command of ["lrange", "expire"]) {
+          multi[command] = jest.fn(() => multi);
+        }
+        multi.del = jest.fn((key: string) => {
+          lists.delete(key);
+          return multi;
+        });
+        multi.rpush = jest.fn((key: string, ...items: string[]) => {
+          lists.set(key, [...(lists.get(key) ?? []), ...items]);
+          return multi;
+        });
+        multi.exec = jest.fn(async (): Promise<unknown[]> => []);
+        return multi;
       });
-      // A summary closing the room's window never replaces it, and a message
-      // after it is not held behind it.
-      expect(windowClaims()).toEqual([]);
-      expect(redis.rpush).not.toHaveBeenCalled();
-      expect(pushDeliveryQueue.add).not.toHaveBeenCalled();
+
+      return {
+        pending: () =>
+          lists.get(`notifications:push-pending:${TARGET}:${ROOM}`) ?? [],
+      };
+    };
+
+    afterEach(() => {
+      redis.set.mockReset().mockResolvedValue("OK");
+      redis.get.mockReset().mockResolvedValue(null);
+      redis.ttl.mockReset().mockResolvedValue(-2);
+      redis.rpush.mockReset().mockResolvedValue(1);
+      redis.multi
+        .mockReset()
+        .mockImplementation(() => chainableMulti([[null, []]]));
+      redis.eval.mockReset();
+    });
+
+    it("leads a burst like any message, saying who tagged you", async () => {
+      await service.sendChatMessage([TARGET], mention());
+
+      expect(payloads()).toEqual([
+        expect.objectContaining({
+          title: "Luke mentioned you · Ancients vs Ratz",
+          body: "@kairo you're up next",
+          tag: ROOM,
+          threadKey: ROOM,
+        }),
+      ]);
+      expect(redis.set).toHaveBeenCalledWith(
+        `notifications:push-window:${TARGET}:${ROOM}`,
+        expect.any(String),
+        "EX",
+        15,
+        "NX",
+      );
+    });
+
+    it("is held inside the room's open window", async () => {
+      redis.set.mockResolvedValueOnce(null);
+      redis.get.mockResolvedValueOnce("token-1");
+      redis.ttl.mockResolvedValueOnce(12);
+
+      await service.sendChatMessage([TARGET], mention());
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+      expect(redis.rpush).toHaveBeenCalledWith(
+        `notifications:push-pending:${TARGET}:${ROOM}`,
+        expect.stringContaining('"mention":true'),
+      );
+    });
+
+    it("pushes a flood of tags from one sender no more than one burst", async () => {
+      const state = keepState();
+
+      for (let index = 0; index < 20; index++) {
+        await service.sendChatMessage(
+          [TARGET],
+          mention({ messageId: `m-${index}` }),
+        );
+      }
+
+      expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
+      expect(state.pending()).toHaveLength(20);
+
+      await closeWindow(state.pending());
+
+      expect(webPush.sendNotification).toHaveBeenCalledTimes(2);
+      expect(payloads()[1]).toMatchObject({
+        title: "Luke · Ancients vs Ratz",
+        body: "20 new messages, 20 mentioning you",
+        tag: ROOM,
+      });
     });
 
     it("still says nothing to a player reading the room", async () => {
-      focus["76561100000000001"] = [ROOM];
+      focus[TARGET] = [ROOM];
 
-      await service.sendChatMessage(["76561100000000001"], mention());
+      await service.sendChatMessage([TARGET], mention());
 
       expect(webPush.sendNotification).not.toHaveBeenCalled();
     });
@@ -1014,66 +1109,104 @@ describe("PushNotificationsService", () => {
     it("waits out quiet hours like any other message", async () => {
       quietSeconds = 3600;
 
-      await service.sendChatMessage(["76561100000000001"], mention());
+      await service.sendChatMessage([TARGET], mention());
 
       expect(webPush.sendNotification).not.toHaveBeenCalled();
       expect(pushDeliveryQueue.add).toHaveBeenCalledWith(
         SendPushDelivery.name,
-        { steamId: "76561100000000001", thread: ROOM },
+        { steamId: TARGET, thread: ROOM },
         expect.objectContaining({ delay: 3600 * 1000 }),
       );
     });
 
-    it("comes out of a held window apart from the summary of the rest", async () => {
+    it("says a held burst tagged you", async () => {
       await closeWindow([
         heldChat({ messageId: "m-a" }),
-        heldChat({
-          messageId: "m-b",
-          title: "Ratz mentioned you",
-          message: "@kairo ready?",
-          mention: true,
-        }),
-        heldChat({ messageId: "m-c" }),
-      ]);
-
-      expect(payloads()).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            title: "Ratz mentioned you · Ancients vs Ratz",
-            body: "@kairo ready?",
-            tag: `${ROOM}:mention`,
-          }),
-          expect.objectContaining({
-            title: "Luke · Ancients vs Ratz",
-            body: "2 new messages",
-            tag: ROOM,
-          }),
-        ]),
-      );
-      expect(payloads()).toHaveLength(2);
-    });
-
-    it("sends only the mention when the rest is already on the device", async () => {
-      await closeWindow([
-        heldChat({ messageId: "m-a", pushed: true }),
-        heldChat({
-          messageId: "m-b",
-          mention: true,
-          title: "Ratz mentioned you",
-        }),
+        heldChat({ messageId: "m-b", mention: true }),
+        heldChat({ messageId: "m-c", title: "Ratz" }),
       ]);
 
       expect(payloads()).toEqual([
-        expect.objectContaining({ tag: `${ROOM}:mention` }),
+        expect.objectContaining({
+          title: "Ancients vs Ratz",
+          body: "3 new messages from Luke and Ratz, 1 mentioning you",
+          tag: ROOM,
+        }),
       ]);
     });
 
-    it("drops a held mention the player has read since", async () => {
+    it("drops a held tag the player has read since", async () => {
       readTo = "2026-10-02T12:00:30.000Z";
 
       await closeWindow([heldChat({ messageId: "m-b", mention: true })]);
 
       expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
+
+    describe("who may be pushed a tag", () => {
+      const keys = new Set<string>();
+
+      beforeEach(() => {
+        keys.clear();
+        redis.eval.mockImplementation(
+          async (
+            _script: string,
+            _count: number,
+            cooldown: string,
+            text: string,
+          ) => {
+            if (keys.has(text) || keys.has(cooldown)) {
+              return 0;
+            }
+            keys.add(cooldown);
+            keys.add(text);
+            return 1;
+          },
+        );
+      });
+
+      it("takes each player once per sender, whatever room it comes from", async () => {
+        await expect(
+          service.claimMentionPushes(
+            "sender-1",
+            ["a", "b"],
+            "@a @b in one room",
+          ),
+        ).resolves.toEqual(["a", "b"]);
+        await expect(
+          service.claimMentionPushes("sender-1", ["a"], "@a in another room"),
+        ).resolves.toEqual([]);
+        await expect(
+          service.claimMentionPushes("sender-2", ["a"], "@a in another room"),
+        ).resolves.toEqual(["a"]);
+      });
+
+      it("holds a player for the cooldown and the same text for an hour", async () => {
+        await service.claimMentionPushes("sender-1", ["a"], "@a hi");
+
+        expect(redis.eval).toHaveBeenCalledWith(
+          expect.stringContaining("NX"),
+          2,
+          "notifications:mention:sender-1:a",
+          expect.stringMatching(
+            /^notifications:mention-text:sender-1:a:[0-9a-f]{64}$/,
+          ),
+          PushNotificationsService.MENTION_COOLDOWN_SECONDS,
+          60 * 60,
+        );
+      });
+
+      it("never takes the same text twice, even after the cooldown", async () => {
+        await service.claimMentionPushes("sender-1", ["a"], "@a hi");
+        keys.delete("notifications:mention:sender-1:a");
+
+        await expect(
+          service.claimMentionPushes("sender-1", ["a"], "@a hi"),
+        ).resolves.toEqual([]);
+        await expect(
+          service.claimMentionPushes("sender-1", ["a"], "@a hello"),
+        ).resolves.toEqual(["a"]);
+      });
     });
   });
 

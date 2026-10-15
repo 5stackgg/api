@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
+import { createHash } from "crypto";
 import * as webPush from "web-push";
 import Redis from "ioredis";
 import { NotificationsQueues } from "../enums/NotificationsQueues";
@@ -87,9 +88,8 @@ export type ChatPush = {
   // Recipients whose block on the sender does not hide the message from them
   // (ChatService.blockExemptRoles).
   blockExemptRoles: e_player_roles_enum[];
-  // The message tags the recipient. It goes out at once under a device tag of
-  // its own, never held behind the room's window or folded into its summary,
-  // and is still held back while they read the room or sleep.
+  // The message tags the recipient. Only the wording changes: it is windowed,
+  // bundled and held back exactly like any other message in the room.
   mention?: boolean;
 };
 
@@ -240,6 +240,15 @@ const pendingKey = (steamId: string, thread: string) =>
 const pendingTtlFor = (windowSeconds: number) =>
   Math.max(900, windowSeconds + 300);
 
+const mentionCooldownKey = (senderSteamId: string, steamId: string) =>
+  `notifications:mention:${senderSteamId}:${steamId}`;
+
+const mentionTextKey = (
+  senderSteamId: string,
+  steamId: string,
+  digest: string,
+) => `notifications:mention-text:${senderSteamId}:${steamId}:${digest}`;
+
 const chatRetractedKey = (messageId: string) =>
   `notifications:chat-retracted:${messageId}`;
 
@@ -255,6 +264,23 @@ export class PushNotificationsService {
   // the bucket in batchJobId is. The two have to agree: a job id that outlives
   // the window it covers swallows a burst nothing will ever send.
   public static readonly BATCH_WINDOW_MINUTES = 15;
+
+  public static readonly MENTION_COOLDOWN_SECONDS = 5 * 60;
+
+  private static readonly MENTION_TEXT_SECONDS = 60 * 60;
+
+  // The text key is checked before the cooldown is taken, so a resend of the
+  // same words after the cooldown still finds it.
+  private static readonly CLAIM_MENTION_SCRIPT = `
+    if redis.call('EXISTS', KEYS[2]) == 1 then
+      return 0
+    end
+    if not redis.call('SET', KEYS[1], '1', 'NX', 'EX', ARGV[1]) then
+      return 0
+    end
+    redis.call('SET', KEYS[2], '1', 'EX', ARGV[2])
+    return 1
+  `;
 
   private readonly appConfig: AppConfig;
   private readonly webPushConfig: WebPushConfig;
@@ -797,6 +823,37 @@ export class PushNotificationsService {
     );
   }
 
+  // Which of these players a message from `senderSteamId` may push as a
+  // mention. Once per sender and player in MENTION_COOLDOWN_SECONDS, whatever
+  // room it comes from, and never twice for the same text within the hour. The
+  // rest are pushed as the room's ordinary message: the same window, so tagging
+  // someone never buzzes them more than talking to the room would.
+  public async claimMentionPushes(
+    senderSteamId: string,
+    steamIds: string[],
+    text: string,
+  ): Promise<string[]> {
+    const digest = createHash("sha256").update(text).digest("hex");
+    const claimed: string[] = [];
+
+    for (const steamId of steamIds) {
+      const won = await this.redis.eval(
+        PushNotificationsService.CLAIM_MENTION_SCRIPT,
+        2,
+        mentionCooldownKey(senderSteamId, steamId),
+        mentionTextKey(senderSteamId, steamId, digest),
+        PushNotificationsService.MENTION_COOLDOWN_SECONDS,
+        PushNotificationsService.MENTION_TEXT_SECONDS,
+      );
+
+      if (won === 1) {
+        claimed.push(steamId);
+      }
+    }
+
+    return claimed;
+  }
+
   // A chat window closing. Everything it held is checked again against what
   // happened in the meantime: deleted, edited, read, or its sender blocked.
   private async sendPendingChat(
@@ -880,12 +937,9 @@ export class PushNotificationsService {
         (readTo === null || new Date(push.at).getTime() > readTo),
     );
 
-    const mentions = unseen.filter(({ mention }) => mention);
-    const chatter = unseen.filter(({ mention }) => !mention);
-
     // Only what the device already shows: everything after it was deleted or
     // read, and saying it again would buzz for nothing new.
-    if (mentions.length === 0 && chatter.every(({ pushed }) => pushed)) {
+    if (unseen.every(({ pushed }) => pushed)) {
       return;
     }
 
@@ -912,30 +966,16 @@ export class PushNotificationsService {
       return;
     }
 
-    const subscriptions = rows.map(
-      ({ subscription_id, endpoint, p256dh, auth }) => ({
+    await this.deliver(
+      steamId,
+      rows.map(({ subscription_id, endpoint, p256dh, auth }) => ({
         id: subscription_id,
         endpoint,
         p256dh,
         auth,
-      }),
+      })),
+      unseen.map((push) => PushNotificationsService.chatRow(push)),
     );
-
-    // The newest tag stands for the rest: they share one device tag, so each
-    // would only replace the one before it.
-    if (mentions.length > 0) {
-      await this.deliver(steamId, subscriptions, [
-        PushNotificationsService.chatRow(mentions.at(-1)),
-      ]);
-    }
-
-    if (!chatter.every(({ pushed }) => pushed)) {
-      await this.deliver(
-        steamId,
-        subscriptions,
-        chatter.map((push) => PushNotificationsService.chatRow(push)),
-      );
-    }
   }
 
   // Drops what was deleted after it was queued, and shows the rest as edited.
@@ -1193,10 +1233,7 @@ export class PushNotificationsService {
         continue;
       }
 
-      if (
-        policy.bundleSeconds === 0 ||
-        delivery.notifications.every(({ data }) => data?.mention)
-      ) {
+      if (policy.bundleSeconds === 0) {
         await this.deliver(
           delivery.steamId,
           delivery.subscriptions,
@@ -1395,10 +1432,13 @@ export class PushNotificationsService {
   // only repeat the title.
   private static titleFor(notification: NotificationRow): string {
     const label = notification.data?.threadLabel;
+    const title = notification.data?.mention
+      ? `${notification.title} mentioned you`
+      : notification.title;
 
     return label && label !== notification.title
-      ? `${notification.title} · ${label}`
-      : notification.title;
+      ? `${title} · ${label}`
+      : title;
   }
 
   // What a bundle says when it replaces the notification already on the device.
@@ -1416,13 +1456,18 @@ export class PushNotificationsService {
     const noun = newest.type.endsWith("ChatMessage")
       ? "messages"
       : "notifications";
+    const mentions = notifications.filter(({ data }) => data?.mention).length;
+    const tagged = mentions > 0 ? `, ${mentions} mentioning you` : "";
 
     // One sender, so the title is still theirs -- and still needs the room
     // said, for the same reason a single message does.
     if (names.length === 1) {
       return {
-        title: PushNotificationsService.titleFor(newest),
-        body: `${count} new ${noun}`,
+        title: PushNotificationsService.titleFor({
+          ...newest,
+          data: { ...newest.data, mention: false },
+        }),
+        body: `${count} new ${noun}${tagged}`,
       };
     }
 
@@ -1433,7 +1478,7 @@ export class PushNotificationsService {
 
     return {
       title: newest.data?.threadLabel ?? newest.title,
-      body: `${count} new ${noun} from ${from}`,
+      body: `${count} new ${noun} from ${from}${tagged}`,
     };
   }
 
@@ -1721,9 +1766,8 @@ export class PushNotificationsService {
       icon: this.assetUrl(newest.data?.icon),
       image: this.assetUrl(newest.data?.image),
       // Lets a device collapse repeats of the same conversation or match
-      // rather than stacking a separate notification for each. A tag keeps a
-      // notification of its own, which the room's summary cannot replace.
-      tag: newest.data?.mention ? `${thread}:mention` : thread,
+      // rather than stacking a separate notification for each.
+      tag: thread,
       // A replacement under an existing tag is silent by default, which would
       // make the summary that closes a burst arrive unannounced. Requires
       // `tag`, which is always set above.

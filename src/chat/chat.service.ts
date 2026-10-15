@@ -1124,15 +1124,17 @@ export class ChatService {
       return { error: ChatErrorCode.Invalid };
     }
 
-    const steamIds = [...new Set(raw as string[])].filter(
-      (steamId) => steamId !== senderSteamId,
-    );
+    const steamIds = [...new Set(raw as string[])];
 
+    // Counted with the sender's own id in it, so naming yourself never makes
+    // room for an eleventh.
     if (steamIds.length > ChatService.MAX_MENTIONS) {
       return { error: ChatErrorCode.TooManyMentions };
     }
 
-    return { steamIds };
+    return {
+      steamIds: steamIds.filter((steamId) => steamId !== senderSteamId),
+    };
   }
 
   public static mentionIn(text: string, name: string): boolean {
@@ -2582,6 +2584,7 @@ export class ChatService {
       mentions,
       targets,
       senderSteamId,
+      message,
     );
 
     const push: ChatPush = {
@@ -2603,23 +2606,25 @@ export class ChatService {
       await this.pushNotifications.sendChatMessage(untagged, push);
     }
 
-    // In place of the push above, never as well as it.
+    // In place of the push above, never as well as it, and through the same
+    // window: a burst of tags is one push and a summary, like any burst.
     if (tagged.length > 0) {
       await this.pushNotifications.sendChatMessage(tagged, {
         ...push,
-        title: `${senderName} mentioned you`,
         mention: true,
       });
     }
   }
 
   // The tagged members this message still reaches who have not blocked its
-  // sender, whatever their role: a moderator's block leaves a group room's
-  // lines alone, never a tag aimed at them.
+  // sender, whatever their role (a moderator's block leaves a group room's
+  // lines alone, never a tag aimed at them), and whom the sender has not
+  // just tagged. The rest are pushed the room's ordinary message.
   private async mentionRecipients(
     mentions: ChatMention[],
     targets: string[],
     senderSteamId: string,
+    text: string,
   ): Promise<string[]> {
     const tagged = ChatService.mentionsOf({ mentions }).filter((steamId) =>
       targets.includes(steamId),
@@ -2633,7 +2638,11 @@ export class ChatService {
       senderSteamId,
     ]);
 
-    return tagged.filter((steamId) => !blocking.has(steamId));
+    return await this.pushNotifications.claimMentionPushes(
+      senderSteamId,
+      tagged.filter((steamId) => !blocking.has(steamId)),
+      text,
+    );
   }
 
   private static notificationPreview(message: string) {
