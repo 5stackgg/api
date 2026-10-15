@@ -335,6 +335,56 @@ export class ChatGateway {
     }
   }
 
+  // Scrolling back past what the join sent. Answered on the room's own
+  // `history` event, or with `chat:error` when the reader may not have it.
+  @SubscribeMessage("lobby:history")
+  async history(
+    @MessageBody()
+    data: {
+      id: string;
+      type: ChatLobbyType;
+      before: string;
+      requestId?: string;
+    },
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+  ) {
+    await client.authentication;
+
+    if (!client.user) {
+      return;
+    }
+
+    if (!ChatGateway.isLobbyType(data?.type) || typeof data.id !== "string") {
+      return;
+    }
+
+    const requestId =
+      typeof data.requestId === "string" ? data.requestId : undefined;
+
+    const page = await this.chat.olderMessages(
+      client,
+      data.type,
+      data.id,
+      data.before,
+    );
+
+    if ("code" in page) {
+      this.sendError(client, "history", page.code, requestId);
+      return;
+    }
+
+    client.send(
+      JSON.stringify({
+        event: `lobby:${data.type}:${data.id}:history`,
+        data: {
+          id: data.id,
+          ...page,
+          ...(requestId ? { requestId } : {}),
+        },
+      }),
+    );
+  }
+
   private static isLobbyType(value: unknown): value is ChatLobbyType {
     return Object.values(ChatLobbyType).includes(value as ChatLobbyType);
   }

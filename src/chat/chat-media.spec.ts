@@ -38,6 +38,7 @@ describe("ChatService attachments and GIFs", () => {
     publish: jest.fn(),
     sendCommand: jest.fn(),
     eval: jest.fn(),
+    zrem: jest.fn().mockResolvedValue(1),
   };
 
   let gagged: boolean;
