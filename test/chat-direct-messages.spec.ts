@@ -575,7 +575,7 @@ describe("direct messages (SQL-driven)", () => {
 
       await chat.editMessage(ChatLobbyType.Direct, room, id, as(me), "fixed");
 
-      expect(push.editChatMessage).toHaveBeenCalledWith(id, "fixed");
+      expect(push.editChatMessage).toHaveBeenCalledWith(id, "fixed", undefined);
     });
 
     it("deletes within the window and retracts a push still being held", async () => {

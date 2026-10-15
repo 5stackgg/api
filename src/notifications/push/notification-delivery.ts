@@ -187,6 +187,15 @@ export function isChatThreadKey(thread: string): boolean {
   return thread.startsWith("chat:");
 }
 
+// The threads whose focus means `thread` is on screen. A match's page, its hub
+// tab and its pop-out show each side's team room merged into the match room
+// and report focus on the match room alone.
+export function focusThreadsFor(thread: string): string[] {
+  const team = /^chat:match_team:([^:]+):/.exec(thread);
+
+  return team ? [thread, chatThreadKey("match", team[1])] : [thread];
+}
+
 // Where a client's focus reports land. Read by the delivery gate and written by
 // the socket gateway, which is why it lives here with the key it holds rather
 // than on either side of that exchange -- the two modules would otherwise have

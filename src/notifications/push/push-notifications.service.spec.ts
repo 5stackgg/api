@@ -98,6 +98,7 @@ describe("PushNotificationsService", () => {
     ),
     rpush: jest.fn().mockResolvedValue(1),
     expire: jest.fn().mockResolvedValue(1),
+    eval: jest.fn(),
     multi: jest.fn(() => chainableMulti([[null, []]])),
     pipeline: jest.fn(() => ({
       set: jest.fn(),
@@ -148,6 +149,8 @@ describe("PushNotificationsService", () => {
   let readTo: string | null;
   // Senders the recipient has blocked, among those a chat window holds.
   let blockedSenders: string[];
+  // Push preferences by `${steamId}:${category}`; unset is the default.
+  let prefs: Record<string, boolean>;
 
   // Keys are resolved from settings (with env taking precedence), so they are
   // not known until loadKeys() runs.
@@ -195,6 +198,7 @@ describe("PushNotificationsService", () => {
     overrides = {};
     readTo = null;
     blockedSenders = [];
+    prefs = {};
 
     postgres.query.mockImplementation(async (sql: string, bindings: any[]) => {
       if (sql.includes("AS unread")) {
@@ -218,7 +222,19 @@ describe("PushNotificationsService", () => {
           })),
         );
       }
+      if (
+        sql.includes("notification_preferences") &&
+        !sql.includes("push_subscriptions")
+      ) {
+        const [steamIds, key, enabledByDefault] = bindings;
+        return (steamIds as string[])
+          .filter((steamId) => prefs[`${steamId}:${key}`] ?? enabledByDefault)
+          .map((steam_id) => ({ steam_id }));
+      }
       if (sql.includes("chat_read_state crs")) {
+        if (!(prefs[`${bindings[0]}:${bindings[4]}`] ?? bindings[5])) {
+          return [];
+        }
         return subscriptions.map((sub) => ({
           quiet_seconds: quietSeconds,
           last_read_at: readTo ? new Date(readTo) : null,
@@ -955,6 +971,360 @@ describe("PushNotificationsService", () => {
       expect(payloadOf(0)).toMatchObject({
         title: "Match ready",
         body: "2 new notifications",
+      });
+    });
+  });
+
+  describe("mentions", () => {
+    const TARGET = "76561100000000001";
+
+    const payloads = () =>
+      (webPush.sendNotification as jest.Mock).mock.calls.map(([, raw]) =>
+        JSON.parse(raw),
+      );
+
+    const mention = (overrides: Record<string, any> = {}) =>
+      chatPush({
+        message: "@kairo you're up next",
+        mention: true,
+        ...overrides,
+      });
+
+    const closeWindow = async (entries: string[]) => {
+      redis.multi.mockReturnValueOnce(chainableMulti([[null, entries]]));
+      await service.sendPending(TARGET, ROOM);
+    };
+
+    // A redis that keeps what it is told, for the window and the pending list
+    // a burst actually builds up.
+    const keepState = () => {
+      const keys = new Map<string, string>();
+      const lists = new Map<string, string[]>();
+
+      redis.set.mockImplementation(
+        async (key: string, value: string, ...options: unknown[]) => {
+          if (options.includes("NX") && keys.has(key)) {
+            return null;
+          }
+          keys.set(key, String(value));
+          return "OK";
+        },
+      );
+      redis.get.mockImplementation(
+        async (key: string) => keys.get(key) ?? null,
+      );
+      redis.ttl.mockImplementation(async (key: string) =>
+        keys.has(key) ? 15 : -2,
+      );
+      redis.rpush.mockImplementation(
+        async (key: string, ...items: string[]) => {
+          lists.set(key, [...(lists.get(key) ?? []), ...items]);
+          return lists.get(key).length;
+        },
+      );
+      redis.multi.mockImplementation(() => {
+        const multi: Record<string, any> = {};
+        for (const command of ["lrange", "expire"]) {
+          multi[command] = jest.fn(() => multi);
+        }
+        multi.del = jest.fn((key: string) => {
+          lists.delete(key);
+          return multi;
+        });
+        multi.rpush = jest.fn((key: string, ...items: string[]) => {
+          lists.set(key, [...(lists.get(key) ?? []), ...items]);
+          return multi;
+        });
+        multi.exec = jest.fn(async (): Promise<unknown[]> => []);
+        return multi;
+      });
+
+      return {
+        pending: () =>
+          lists.get(`notifications:push-pending:${TARGET}:${ROOM}`) ?? [],
+      };
+    };
+
+    afterEach(() => {
+      redis.set.mockReset().mockResolvedValue("OK");
+      redis.get.mockReset().mockResolvedValue(null);
+      redis.ttl.mockReset().mockResolvedValue(-2);
+      redis.rpush.mockReset().mockResolvedValue(1);
+      redis.multi
+        .mockReset()
+        .mockImplementation(() => chainableMulti([[null, []]]));
+      redis.eval.mockReset();
+    });
+
+    it("leads a burst like any message, saying who tagged you", async () => {
+      await service.sendChatMessage([TARGET], mention());
+
+      expect(payloads()).toEqual([
+        expect.objectContaining({
+          title: "Luke mentioned you · Ancients vs Ratz",
+          body: "@kairo you're up next",
+          tag: ROOM,
+          threadKey: ROOM,
+        }),
+      ]);
+      expect(redis.set).toHaveBeenCalledWith(
+        `notifications:push-window:${TARGET}:${ROOM}`,
+        expect.any(String),
+        "EX",
+        15,
+        "NX",
+      );
+    });
+
+    it("is held inside the room's open window", async () => {
+      redis.set.mockResolvedValueOnce(null);
+      redis.get.mockResolvedValueOnce("token-1");
+      redis.ttl.mockResolvedValueOnce(12);
+
+      await service.sendChatMessage([TARGET], mention());
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+      expect(redis.rpush).toHaveBeenCalledWith(
+        `notifications:push-pending:${TARGET}:${ROOM}`,
+        expect.stringContaining('"mention":true'),
+      );
+    });
+
+    it("pushes a flood of tags from one sender no more than one burst", async () => {
+      const state = keepState();
+
+      for (let index = 0; index < 20; index++) {
+        await service.sendChatMessage(
+          [TARGET],
+          mention({ messageId: `m-${index}` }),
+        );
+      }
+
+      expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
+      expect(state.pending()).toHaveLength(20);
+
+      await closeWindow(state.pending());
+
+      expect(webPush.sendNotification).toHaveBeenCalledTimes(2);
+      expect(payloads()[1]).toMatchObject({
+        title: "Luke · Ancients vs Ratz",
+        body: "20 new messages, 20 mentioning you",
+        tag: ROOM,
+      });
+    });
+
+    it("says nothing to a player reading the match when its team room tags them", async () => {
+      const team = "chat:match_team:m-1:l-1";
+      focus[TARGET] = [ROOM];
+
+      await service.sendChatMessage(
+        [TARGET],
+        mention({ threadKey: team, entityId: "match_team:m-1:l-1" }),
+      );
+      redis.multi.mockReturnValueOnce(
+        chainableMulti([
+          [null, [heldChat({ mention: true, threadKey: team })]],
+        ]),
+      );
+      await service.sendPending(TARGET, team);
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
+
+    it("still pushes a team room tag to a player reading another match", async () => {
+      focus[TARGET] = ["chat:match:m-2"];
+
+      await service.sendChatMessage(
+        [TARGET],
+        mention({
+          threadKey: "chat:match_team:m-1:l-1",
+          entityId: "match_team:m-1:l-1",
+        }),
+      );
+
+      expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
+    });
+
+    it("still says nothing to a player reading the room", async () => {
+      focus[TARGET] = [ROOM];
+
+      await service.sendChatMessage([TARGET], mention());
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
+
+    it("waits out quiet hours like any other message", async () => {
+      quietSeconds = 3600;
+
+      await service.sendChatMessage([TARGET], mention());
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+      expect(pushDeliveryQueue.add).toHaveBeenCalledWith(
+        SendPushDelivery.name,
+        { steamId: TARGET, thread: ROOM },
+        expect.objectContaining({ delay: 3600 * 1000 }),
+      );
+    });
+
+    it("says a held burst tagged you", async () => {
+      await closeWindow([
+        heldChat({ messageId: "m-a" }),
+        heldChat({ messageId: "m-b", mention: true }),
+        heldChat({ messageId: "m-c", title: "Ratz" }),
+      ]);
+
+      expect(payloads()).toEqual([
+        expect.objectContaining({
+          title: "Ancients vs Ratz",
+          body: "3 new messages from Luke and Ratz, 1 mentioning you",
+          tag: ROOM,
+        }),
+      ]);
+    });
+
+    it("drops a held tag the player has read since", async () => {
+      readTo = "2026-10-02T12:00:30.000Z";
+
+      await closeWindow([heldChat({ messageId: "m-b", mention: true })]);
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
+
+    it("drops the tag from a held push once an edit takes it out", async () => {
+      overrides["notifications:chat-edited:m-b"] = "fixed";
+      overrides["notifications:chat-edited-mentions:m-b"] = JSON.stringify([
+        "76561100000000002",
+      ]);
+
+      await closeWindow([heldChat({ messageId: "m-b", mention: true })]);
+
+      expect(payloads()).toEqual([
+        expect.objectContaining({
+          title: "Luke · Ancients vs Ratz",
+          body: "fixed",
+        }),
+      ]);
+    });
+
+    it("drops a held tag an edit took out when the room's own pushes are off", async () => {
+      overrides["notifications:chat-edited:m-b"] = "fixed";
+      overrides["notifications:chat-edited-mentions:m-b"] = JSON.stringify([]);
+
+      await closeWindow([
+        heldChat({
+          messageId: "m-b",
+          mention: true,
+          type: "ChatMessage",
+          plainType: "MatchChatMessage",
+        }),
+      ]);
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
+
+    it("leaves an untagged line out of a burst the player still takes", async () => {
+      overrides["notifications:chat-edited-mentions:m-b"] = JSON.stringify([]);
+
+      await closeWindow([
+        heldChat({
+          messageId: "m-a",
+          message: "@kairo ready?",
+          mention: true,
+          type: "ChatMessage",
+          plainType: "MatchChatMessage",
+        }),
+        heldChat({
+          messageId: "m-b",
+          mention: true,
+          type: "ChatMessage",
+          plainType: "MatchChatMessage",
+        }),
+      ]);
+
+      expect(payloads()).toEqual([
+        expect.objectContaining({
+          title: "Luke mentioned you · Ancients vs Ratz",
+          body: "@kairo ready?",
+        }),
+      ]);
+    });
+
+    it("keeps the tag on a held push the edit left it in", async () => {
+      overrides["notifications:chat-edited:m-b"] = "fixed";
+      overrides["notifications:chat-edited-mentions:m-b"] = JSON.stringify([
+        TARGET,
+      ]);
+
+      await closeWindow([heldChat({ messageId: "m-b", mention: true })]);
+
+      expect(payloads()).toEqual([
+        expect.objectContaining({
+          title: "Luke mentioned you · Ancients vs Ratz",
+        }),
+      ]);
+    });
+
+    it("keeps who an edit still tags as long as the edit itself", async () => {
+      await service.editChatMessage("m-b", "fixed", ["a"]);
+
+      expect(redis.set).toHaveBeenCalledWith(
+        "notifications:chat-edited-mentions:m-b",
+        JSON.stringify(["a"]),
+        "EX",
+        25 * 60 * 60,
+      );
+    });
+
+    describe("who takes a kind of push", () => {
+      it("answers by each player's setting, or the category's default", async () => {
+        prefs["a:chat"] = false;
+
+        await expect(
+          service.takingPushes(["a", "b"], "ChatMessage"),
+        ).resolves.toEqual(["b"]);
+        await expect(
+          service.takingPushes(["a", "b"], "MatchChatMessage"),
+        ).resolves.toEqual([]);
+
+        prefs["b:match_chat"] = true;
+
+        await expect(
+          service.takingPushes(["a", "b"], "MatchChatMessage"),
+        ).resolves.toEqual(["b"]);
+      });
+    });
+
+    describe("who may be pushed a tag", () => {
+      it("asks redis once for every player in the message", async () => {
+        redis.eval.mockResolvedValue([1, 0, 1]);
+
+        await expect(
+          service.claimMentionPushes("sender-1", ["a", "b", "c"], "@a @b @c"),
+        ).resolves.toEqual(["a", "c"]);
+
+        expect(redis.eval).toHaveBeenCalledTimes(1);
+        expect(redis.eval).toHaveBeenCalledWith(
+          expect.stringContaining("NX"),
+          6,
+          "notifications:mention:sender-1:a",
+          expect.stringMatching(
+            /^notifications:mention-text:sender-1:a:[0-9a-f]{64}$/,
+          ),
+          "notifications:mention:sender-1:b",
+          expect.stringMatching(/^notifications:mention-text:sender-1:b:/),
+          "notifications:mention:sender-1:c",
+          expect.stringMatching(/^notifications:mention-text:sender-1:c:/),
+          PushNotificationsService.MENTION_COOLDOWN_SECONDS,
+          60 * 60,
+        );
+      });
+
+      it("asks nothing for nobody", async () => {
+        await expect(
+          service.claimMentionPushes("sender-1", [], "hi"),
+        ).resolves.toEqual([]);
+
+        expect(redis.eval).not.toHaveBeenCalled();
       });
     });
   });

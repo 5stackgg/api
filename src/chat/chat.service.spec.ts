@@ -2067,6 +2067,7 @@ describe("ChatService direct messages", () => {
         expect(push.editChatMessage).toHaveBeenCalledWith(
           MESSAGE_ID,
           "&lt;b&gt;fixed&lt;/b&gt;",
+          undefined,
         );
         expect(push.sendChatMessage).not.toHaveBeenCalled();
       });
@@ -2490,7 +2491,11 @@ describe("ChatService direct messages", () => {
             },
           },
         ]);
-        expect(push.editChatMessage).toHaveBeenCalledWith(MESSAGE_ID, "fixed");
+        expect(push.editChatMessage).toHaveBeenCalledWith(
+          MESSAGE_ID,
+          "fixed",
+          undefined,
+        );
       });
 
       it("never audits the edit of a direct message", async () => {

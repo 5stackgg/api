@@ -2,6 +2,7 @@ import { e_player_roles_enum } from "generated";
 import { ChatReactions } from "./ChatReactions";
 import { ChatAttachment } from "./ChatAttachment";
 import { ChatGif } from "./ChatGif";
+import { ChatMention } from "./ChatMention";
 
 export type ChatMessageSource = "web" | "game";
 
@@ -18,6 +19,8 @@ export interface ChatMessage {
   reactions?: ChatReactions;
   attachments?: ChatAttachment[];
   gif?: ChatGif;
+  // Who it tags. Absent when it tags nobody.
+  mentions?: ChatMention[];
   from: {
     role: e_player_roles_enum;
     name: string;

@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
+import { createHash } from "crypto";
 import * as webPush from "web-push";
 import Redis from "ioredis";
 import { NotificationsQueues } from "../enums/NotificationsQueues";
@@ -24,6 +25,7 @@ import {
   DEFAULT_DELIVERY_POLICY,
   DeliveryPolicy,
   deliveryPolicyForType,
+  focusThreadsFor,
   isChatThreadKey,
   presenceFocusKey,
   threadKeyFor,
@@ -46,6 +48,7 @@ export type NotificationData = {
   image?: string | null;
   senderSteamId?: string;
   messageId?: string;
+  mention?: boolean;
 };
 
 // The bell's buttons, as written by NotificationsService.send / notifyPlayers.
@@ -86,6 +89,12 @@ export type ChatPush = {
   // Recipients whose block on the sender does not hide the message from them
   // (ChatService.blockExemptRoles).
   blockExemptRoles: e_player_roles_enum[];
+  // The message tags the recipient. Only the wording changes: it is windowed,
+  // bundled and held back exactly like any other message in the room.
+  mention?: boolean;
+  // The room's own type, which a tag pushed as another falls back to once an
+  // edit takes the tag out.
+  plainType?: e_notification_types_enum;
 };
 
 // `at` is when it was queued by postgres's clock, the one the read cursor is
@@ -235,11 +244,23 @@ const pendingKey = (steamId: string, thread: string) =>
 const pendingTtlFor = (windowSeconds: number) =>
   Math.max(900, windowSeconds + 300);
 
+const mentionCooldownKey = (senderSteamId: string, steamId: string) =>
+  `notifications:mention:${senderSteamId}:${steamId}`;
+
+const mentionTextKey = (
+  senderSteamId: string,
+  steamId: string,
+  digest: string,
+) => `notifications:mention-text:${senderSteamId}:${steamId}:${digest}`;
+
 const chatRetractedKey = (messageId: string) =>
   `notifications:chat-retracted:${messageId}`;
 
 const chatEditedKey = (messageId: string) =>
   `notifications:chat-edited:${messageId}`;
+
+const chatEditedMentionsKey = (messageId: string) =>
+  `notifications:chat-edited-mentions:${messageId}`;
 
 // Outlives the longest a chat push is ever held: a whole night of quiet hours.
 const CHAT_OVERRIDE_TTL_SECONDS = 25 * 60 * 60;
@@ -250,6 +271,27 @@ export class PushNotificationsService {
   // the bucket in batchJobId is. The two have to agree: a job id that outlives
   // the window it covers swallows a burst nothing will ever send.
   public static readonly BATCH_WINDOW_MINUTES = 15;
+
+  public static readonly MENTION_COOLDOWN_SECONDS = 5 * 60;
+
+  private static readonly MENTION_TEXT_SECONDS = 60 * 60;
+
+  // KEYS are (cooldown, text) pairs, one per player. The text key is checked
+  // before the cooldown is taken, so a resend of the same words after the
+  // cooldown still finds it.
+  private static readonly CLAIM_MENTION_SCRIPT = `
+    local won = {}
+    for i = 1, #KEYS, 2 do
+      local claimed = 0
+      if redis.call('EXISTS', KEYS[i + 1]) == 0
+        and redis.call('SET', KEYS[i], '1', 'NX', 'EX', ARGV[1]) then
+        redis.call('SET', KEYS[i + 1], '1', 'EX', ARGV[2])
+        claimed = 1
+      end
+      won[#won + 1] = claimed
+    end
+    return won
+  `;
 
   private readonly appConfig: AppConfig;
   private readonly webPushConfig: WebPushConfig;
@@ -783,6 +825,7 @@ export class PushNotificationsService {
   public async editChatMessage(
     messageId: string,
     preview: string,
+    stillTagged?: string[],
   ): Promise<void> {
     await this.redis.set(
       chatEditedKey(messageId),
@@ -790,6 +833,71 @@ export class PushNotificationsService {
       "EX",
       CHAT_OVERRIDE_TTL_SECONDS,
     );
+
+    if (stillTagged) {
+      await this.redis.set(
+        chatEditedMentionsKey(messageId),
+        JSON.stringify(stillTagged),
+        "EX",
+        CHAT_OVERRIDE_TTL_SECONDS,
+      );
+    }
+  }
+
+  // Which of these players take pushes of `type`: their own setting for its
+  // category, or the category's default.
+  public async takingPushes(
+    steamIds: string[],
+    type: e_notification_types_enum,
+  ): Promise<string[]> {
+    if (steamIds.length === 0) {
+      return [];
+    }
+
+    const category = pushCategoryForType(type);
+    const rows = await this.postgres.query<Array<{ steam_id: string }>>(
+      `SELECT p.steam_id::text AS steam_id
+         FROM public.players p
+    LEFT JOIN public.notification_preferences np
+           ON np.steam_id = p.steam_id
+          AND np.channel = 'push'
+          AND np.key = $2
+        WHERE p.steam_id = ANY($1::bigint[])
+          AND COALESCE(np.enabled, $3::boolean) = true`,
+      [steamIds, category?.key ?? "", category?.defaultEnabled ?? true],
+    );
+    const taking = new Set(rows.map(({ steam_id }) => String(steam_id)));
+
+    return steamIds.filter((steamId) => taking.has(steamId));
+  }
+
+  // Which of these players a message from `senderSteamId` may push as a
+  // mention. Once per sender and player in MENTION_COOLDOWN_SECONDS, whatever
+  // room it comes from, and never twice for the same text within the hour. The
+  // rest are pushed as the room's ordinary message: the same window, so tagging
+  // someone never buzzes them more than talking to the room would.
+  public async claimMentionPushes(
+    senderSteamId: string,
+    steamIds: string[],
+    text: string,
+  ): Promise<string[]> {
+    if (steamIds.length === 0) {
+      return [];
+    }
+
+    const digest = createHash("sha256").update(text).digest("hex");
+    const won = (await this.redis.eval(
+      PushNotificationsService.CLAIM_MENTION_SCRIPT,
+      steamIds.length * 2,
+      ...steamIds.flatMap((steamId) => [
+        mentionCooldownKey(senderSteamId, steamId),
+        mentionTextKey(senderSteamId, steamId, digest),
+      ]),
+      PushNotificationsService.MENTION_COOLDOWN_SECONDS,
+      PushNotificationsService.MENTION_TEXT_SECONDS,
+    )) as number[] | null;
+
+    return steamIds.filter((_, index) => won?.[index] === 1);
   }
 
   // A chat window closing. Everything it held is checked again against what
@@ -807,13 +915,31 @@ export class PushNotificationsService {
           return [];
         }
       }),
+      steamId,
     );
 
-    if (held.length === 0) {
+    // An untagged line falls back to its room's own type, whose push the
+    // player may have turned off while the window held it under another.
+    const types = [...new Set(held.map(({ type }) => type))];
+    const taken =
+      types.length > 1
+        ? (
+            await Promise.all(
+              types.map(async (type) =>
+                (await this.takingPushes([steamId], type)).length > 0
+                  ? [type]
+                  : [],
+              ),
+            )
+          ).flat()
+        : types;
+    const kept = held.filter(({ type }) => taken.includes(type));
+
+    if (kept.length === 0) {
       return;
     }
 
-    const newest = held.at(-1);
+    const newest = kept.at(-1);
     const policy =
       deliveryPolicyForType(newest.type) ?? DEFAULT_DELIVERY_POLICY;
     const category = pushCategoryForType(newest.type);
@@ -854,7 +980,7 @@ export class PushNotificationsService {
       [
         steamId,
         thread,
-        [...new Set(held.map(({ senderSteamId }) => senderSteamId))],
+        [...new Set(kept.map(({ senderSteamId }) => senderSteamId))],
         newest.blockExemptRoles,
         category?.key ?? "",
         category?.defaultEnabled ?? true,
@@ -869,7 +995,7 @@ export class PushNotificationsService {
     const readTo = last_read_at ? new Date(last_read_at).getTime() : null;
     const hidden = new Set(blocked ?? []);
 
-    const unseen = held.filter(
+    const unseen = kept.filter(
       (push) =>
         !hidden.has(push.senderSteamId) &&
         (readTo === null || new Date(push.at).getTime() > readTo),
@@ -916,9 +1042,11 @@ export class PushNotificationsService {
     );
   }
 
-  // Drops what was deleted after it was queued, and shows the rest as edited.
+  // Drops what was deleted after it was queued, and shows the rest as edited:
+  // a tag an edit took out is no longer one for `recipient`.
   private async applyChatOverrides<T extends ChatPush>(
     pushes: T[],
+    recipient?: string,
   ): Promise<T[]> {
     if (pushes.length === 0) {
       return [];
@@ -928,17 +1056,32 @@ export class PushNotificationsService {
       ...pushes.flatMap(({ messageId }) => [
         chatRetractedKey(messageId),
         chatEditedKey(messageId),
+        chatEditedMentionsKey(messageId),
       ]),
     );
 
     return pushes.flatMap((push, index) => {
-      if (overrides[index * 2] !== null) {
+      if (overrides[index * 3] !== null) {
         return [];
       }
 
-      const edited = overrides[index * 2 + 1];
+      const edited = overrides[index * 3 + 1];
+      const stillTagged = overrides[index * 3 + 2];
+      const untagged =
+        push.mention &&
+        recipient !== undefined &&
+        stillTagged !== null &&
+        !(JSON.parse(stillTagged) as string[]).includes(recipient);
 
-      return [edited === null ? push : { ...push, message: edited }];
+      return [
+        {
+          ...push,
+          ...(edited === null ? {} : { message: edited }),
+          ...(untagged
+            ? { mention: false, type: push.plainType ?? push.type }
+            : {}),
+        },
+      ];
     });
   }
 
@@ -956,6 +1099,7 @@ export class PushNotificationsService {
         icon: push.icon,
         senderSteamId: push.senderSteamId,
         messageId: push.messageId,
+        ...(push.mention ? { mention: true } : {}),
       },
     };
   }
@@ -1346,6 +1490,7 @@ export class PushNotificationsService {
 
     const results = await pipeline.exec();
     const focused = new Set<string>();
+    const covering = focusThreadsFor(thread);
 
     for (const [index, steamId] of steamIds.entries()) {
       const [error, values] = results?.at(index) ?? [];
@@ -1354,7 +1499,7 @@ export class PushNotificationsService {
         continue;
       }
 
-      if ((values as string[]).includes(thread)) {
+      if ((values as string[]).some((value) => covering.includes(value))) {
         focused.add(steamId);
       }
     }
@@ -1369,10 +1514,13 @@ export class PushNotificationsService {
   // only repeat the title.
   private static titleFor(notification: NotificationRow): string {
     const label = notification.data?.threadLabel;
+    const title = notification.data?.mention
+      ? `${notification.title} mentioned you`
+      : notification.title;
 
     return label && label !== notification.title
-      ? `${notification.title} · ${label}`
-      : notification.title;
+      ? `${title} · ${label}`
+      : title;
   }
 
   // What a bundle says when it replaces the notification already on the device.
@@ -1390,13 +1538,18 @@ export class PushNotificationsService {
     const noun = newest.type.endsWith("ChatMessage")
       ? "messages"
       : "notifications";
+    const mentions = notifications.filter(({ data }) => data?.mention).length;
+    const tagged = mentions > 0 ? `, ${mentions} mentioning you` : "";
 
     // One sender, so the title is still theirs -- and still needs the room
     // said, for the same reason a single message does.
     if (names.length === 1) {
       return {
-        title: PushNotificationsService.titleFor(newest),
-        body: `${count} new ${noun}`,
+        title: PushNotificationsService.titleFor({
+          ...newest,
+          data: { ...newest.data, mention: false },
+        }),
+        body: `${count} new ${noun}${tagged}`,
       };
     }
 
@@ -1407,7 +1560,7 @@ export class PushNotificationsService {
 
     return {
       title: newest.data?.threadLabel ?? newest.title,
-      body: `${count} new ${noun} from ${from}`,
+      body: `${count} new ${noun} from ${from}${tagged}`,
     };
   }
 
