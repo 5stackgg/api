@@ -93,10 +93,16 @@ export class AwardsController {
     note?: string | null;
     user?: User;
   }) {
-    const user = await this.assertCanGrant(data.user, data, data);
+    const playerSteamId = data.player_steam_id
+      ? this.awards.parseSteamId(data.player_steam_id)
+      : null;
+    const user = await this.assertCanGrant(data.user, data, {
+      player_steam_id: playerSteamId,
+      team_id: data.team_id,
+    });
     return await this.awards.grantAward({
       award_id: data.award_id,
-      player_steam_id: data.player_steam_id,
+      player_steam_id: playerSteamId,
       team_id: data.team_id,
       tournament_id: data.tournament_id,
       event_id: data.event_id,
@@ -127,6 +133,48 @@ export class AwardsController {
     const user = this.requireUser(data.user);
     await this.awards.requireOrganizer(data.tournament_id, user);
     return await this.awards.setTournamentAward(data);
+  }
+
+  @HasuraAction()
+  public async tournamentMvpCandidates(data: {
+    tournament_id: string;
+    user?: User;
+  }) {
+    const user = this.requireUser(data.user);
+    await this.awards.requireOrganizer(data.tournament_id, user);
+    return await this.awards.listTournamentMvpCandidates(data.tournament_id);
+  }
+
+  // The MVP counts on the awards leaderboard, so as with grantAward an
+  // organizer's own name takes an administrator.
+  @HasuraAction()
+  public async setTournamentMvp(data: {
+    tournament_id: string;
+    player_steam_id: string;
+    note?: string | null;
+    user?: User;
+  }) {
+    const user = this.requireUser(data.user);
+    const playerSteamId = this.awards.parseSteamId(data.player_steam_id);
+    await this.awards.requireOrganizer(data.tournament_id, user);
+
+    if (
+      user.role !== "administrator" &&
+      playerSteamId === String(user.steam_id)
+    ) {
+      throw new ForbiddenException(
+        "Tournament organizers cannot pick themselves as MVP",
+      );
+    }
+
+    await this.awards.setTournamentMvp({
+      tournament_id: data.tournament_id,
+      player_steam_id: playerSteamId,
+      picked_by_steam_id: user.steam_id,
+      note: data.note,
+    });
+
+    return { success: true };
   }
 
   @Post("awards/:awardId")

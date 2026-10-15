@@ -159,6 +159,14 @@ BEGIN
             MESSAGE = 'Substitutes can only be turned off before registration closes';
     END IF;
 
+    -- Backs Hasura's update permission for writes made with a session.
+    IF NEW.organizer_picks_mvp IS DISTINCT FROM OLD.organizer_picks_mvp
+       AND nullif(current_setting('hasura.user', true), '')::json ->> 'x-hasura-role' IS NOT NULL
+       AND NOT public.can_pick_tournament_mvp(OLD, current_setting('hasura.user', true)::json) THEN
+        RAISE EXCEPTION USING ERRCODE = '22000',
+            MESSAGE = 'Only the tournament''s organizers can choose how its MVP is picked';
+    END IF;
+
     IF NEW.status IS DISTINCT FROM OLD.status THEN
         -- CheckInReview is a HOLD, not a lifecycle step: entering it is only
         -- legal out of RegistrationOpen with check-in actually in force, and
@@ -370,6 +378,21 @@ BEGIN
             WHERE tournament_id = NEW.id AND source = 'tournament';
         ELSIF NEW.status = 'Finished' THEN
             PERFORM public.calculate_tournament_awards(NEW.id);
+        END IF;
+    END IF;
+
+    IF NEW.organizer_picks_mvp IS DISTINCT FROM OLD.organizer_picks_mvp
+       AND NEW.status = 'Finished' THEN
+        IF NEW.organizer_picks_mvp THEN
+            PERFORM public.keep_tournament_mvp(
+                NEW.id,
+                substring(
+                    nullif(current_setting('hasura.user', true), '')::json ->> 'x-hasura-user-id'
+                    FROM '^[1-9][0-9]{0,17}$'
+                )::bigint
+            );
+        ELSE
+            PERFORM public.apply_tournament_mvp(NEW.id);
         END IF;
     END IF;
 

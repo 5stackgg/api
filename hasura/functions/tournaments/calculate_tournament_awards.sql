@@ -83,7 +83,6 @@ DECLARE
     _runner_up_team_id uuid;
     _third_team_id uuid;
     _award_third boolean := false;
-    _mvp_steam_id bigint;
 BEGIN
     SELECT awards_enabled INTO _awards_enabled
     FROM public.tournaments WHERE id = _tournament_id;
@@ -124,48 +123,9 @@ BEGIN
         _award_third := false;
     END IF;
 
-    -- MVP: highest avg in-match impact on the WINNING team across all tournament matches.
-    -- Impact is a level 0.8-1.2 metric (KDA-vs-team + damage share), so MVP reflects
-    -- match performance rather than ELO swings, which favor low-rated upsetters.
     -- Uniqueness key includes placement, so the MVP player also keeps their gold row.
     IF _winning_team_id IS NOT NULL THEN
-        WITH t_matches AS (
-            SELECT DISTINCT tb.match_id
-            FROM public.tournament_brackets tb
-            JOIN public.tournament_stages ts ON ts.id = tb.tournament_stage_id
-            WHERE ts.tournament_id = _tournament_id
-              AND tb.match_id IS NOT NULL
-        ),
-        player_impact AS (
-            SELECT
-                pe.steam_id,
-                AVG(COALESCE(pe.impact, 1.0))::float AS avg_impact,
-                SUM(COALESCE(pe.impact, 1.0))::float AS total_impact,
-                COUNT(*)::int AS matches
-            FROM public.player_elo pe
-            WHERE pe.match_id IN (SELECT match_id FROM t_matches)
-            GROUP BY pe.steam_id
-        )
-        SELECT pi.steam_id INTO _mvp_steam_id
-        FROM player_impact pi
-        JOIN public.tournament_team_roster roster
-          ON roster.player_steam_id = pi.steam_id
-         AND roster.tournament_id = _tournament_id
-         AND roster.tournament_team_id = _winning_team_id
-        WHERE pi.matches > 0
-        ORDER BY pi.avg_impact DESC,
-                 pi.total_impact DESC,
-                 pi.steam_id ASC
-        LIMIT 1;
-
-        IF _mvp_steam_id IS NOT NULL THEN
-            INSERT INTO public.award_recipients
-                (award_id, tournament_id, tournament_team_id, player_steam_id, placement, source)
-            VALUES
-                (public.resolve_tournament_award(_tournament_id, 0),
-                 _tournament_id, _winning_team_id, _mvp_steam_id, 0, 'tournament')
-            ON CONFLICT DO NOTHING;
-        END IF;
+        PERFORM public.apply_tournament_mvp(_tournament_id);
     END IF;
 
     -- Team-level placement awards. These are only granted when the tournament

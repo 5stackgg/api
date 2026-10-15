@@ -11,6 +11,7 @@ import { S3Service } from "../s3/s3.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { User } from "../auth/types/User";
+import { isRoleAbove } from "../utilities/isRoleAbove";
 
 const EXTENSION_BY_MIMETYPE: Record<string, string> = {
   "image/png": "png",
@@ -19,6 +20,8 @@ const EXTENSION_BY_MIMETYPE: Record<string, string> = {
 };
 
 const AWARD_TIERS = ["mvp", "gold", "silver", "bronze", "special"];
+
+const MAX_BIGINT = BigInt("9223372036854775807");
 
 export interface AwardRow {
   id: string;
@@ -48,6 +51,22 @@ export interface GrantAwardInput {
   league_season_id?: string | null;
   note?: string | null;
   awarded_by_steam_id: string;
+}
+
+export interface TournamentMvpCandidate {
+  player_steam_id: string;
+  name: string;
+  avatar_url: string | null;
+  tournament_team_id: string;
+  rank: number;
+  avg_impact: number;
+  total_impact: number;
+  matches: number;
+  kills: number;
+  deaths: number;
+  kdr: number;
+  adr: number;
+  headshot_percentage: number;
 }
 
 interface TournamentAwardRow {
@@ -191,7 +210,8 @@ export class AwardsService {
 
     this.assertSingleScope(input);
 
-    await this.requireAward(input.award_id);
+    const award = await this.requireAward(input.award_id);
+    await this.assertNotTournamentMvp(award, input.tournament_id ?? null);
 
     let tournamentTeamId: string | null = null;
     let placement: number | null = null;
@@ -301,6 +321,19 @@ export class AwardsService {
     }
   }
 
+  // int8 input also reads leading zeros, padding, a sign, digit separators and
+  // hex as a steam id, so a self-check comparing the raw strings can be talked
+  // past. Only the canonical form gets through.
+  public parseSteamId(value: unknown): string {
+    const text = typeof value === "string" ? value : String(value ?? "");
+
+    if (!/^[1-9][0-9]{0,18}$/.test(text) || BigInt(text) > MAX_BIGINT) {
+      throw new BadRequestException("Invalid steam id");
+    }
+
+    return text;
+  }
+
   public assertSingleScope(input: {
     tournament_id?: string | null;
     event_id?: string | null;
@@ -396,6 +429,74 @@ export class AwardsService {
     );
 
     return config;
+  }
+
+  public async listTournamentMvpCandidates(
+    tournamentId: string,
+  ): Promise<TournamentMvpCandidate[]> {
+    return await this.postgres.query<TournamentMvpCandidate[]>(
+      `SELECT c.player_steam_id::text AS player_steam_id,
+              p.name,
+              p.avatar_url,
+              c.tournament_team_id,
+              c.rank,
+              c.avg_impact,
+              c.total_impact,
+              c.matches,
+              COALESCE(stats.kills, 0) AS kills,
+              COALESCE(stats.deaths, 0) AS deaths,
+              COALESCE(stats.kdr, 0) AS kdr,
+              COALESCE(stats.adr, 0) AS adr,
+              COALESCE(stats.headshot_percentage, 0) AS headshot_percentage
+         FROM public.tournament_mvp_candidates($1) c
+         JOIN public.players p ON p.steam_id = c.player_steam_id
+         LEFT JOIN public.v_tournament_player_stats stats
+           ON stats.tournament_id = $1
+          AND stats.player_steam_id = c.player_steam_id
+        ORDER BY c.rank`,
+      [tournamentId],
+    );
+  }
+
+  public async setTournamentMvp(input: {
+    tournament_id: string;
+    player_steam_id: string;
+    picked_by_steam_id: string;
+    note?: string | null;
+  }): Promise<void> {
+    let recipientId: string | null = null;
+
+    try {
+      const [picked] = await this.postgres.query<
+        Array<{ recipient_id: string | null }>
+      >(`SELECT public.set_tournament_mvp($1, $2, $3, $4) AS recipient_id`, [
+        input.tournament_id,
+        input.player_steam_id,
+        input.picked_by_steam_id,
+        input.note ?? null,
+      ]);
+      recipientId = picked?.recipient_id ?? null;
+    } catch (error) {
+      if ((error as { code?: string })?.code === "22000") {
+        throw new BadRequestException((error as Error).message);
+      }
+      throw error;
+    }
+
+    if (!recipientId) {
+      return;
+    }
+
+    const [grant] = await this.postgres.query<Array<{ award_id: string }>>(
+      `SELECT award_id FROM public.award_recipients WHERE id = $1`,
+      [recipientId],
+    );
+
+    await this.notifyAwarded(
+      [input.player_steam_id],
+      grant.award_id,
+      recipientId,
+    );
   }
 
   public async uploadAwardImage(
@@ -549,7 +650,7 @@ export class AwardsService {
     const isOrganizer =
       String(rows[0].organizer_steam_id) === String(user.steam_id);
 
-    if (isOrganizer || user.role === "administrator") {
+    if (isOrganizer || isRoleAbove(user.role, "tournament_organizer")) {
       return;
     }
 
@@ -670,9 +771,36 @@ export class AwardsService {
     );
   }
 
+  // A tournament holds one MVP and the MVP picker owns it; a hand grant inside
+  // the tournament would land beside it as a second one.
+  private async assertNotTournamentMvp(
+    award: AwardRow,
+    tournamentId: string | null,
+  ): Promise<void> {
+    if (!tournamentId) {
+      return;
+    }
+
+    let isMvp = award.system_key === "tournament_mvp";
+
+    if (!isMvp) {
+      const [row] = await this.postgres.query<Array<{ is_mvp: boolean }>>(
+        `SELECT public.resolve_tournament_award($1, 0) = $2 AS is_mvp`,
+        [tournamentId, award.id],
+      );
+      isMvp = !!row?.is_mvp;
+    }
+
+    if (isMvp) {
+      throw new BadRequestException(
+        "The tournament MVP is picked in the tournament's Tournament MVP section, not granted by hand",
+      );
+    }
+  }
+
   // Granting a tournament's 1st/2nd/3rd award by hand is the organizer
   // deciding that placement, so the row carries it and lands on the podium.
-  // The MVP stays with the calculation: a tournament holds exactly one.
+  // The MVP is left to the MVP picker: a tournament holds exactly one.
   private async tournamentPlacementFor(
     tournamentId: string,
     awardId: string,

@@ -214,6 +214,7 @@
 - "!include public_tournament_invite_codes.yaml"
 - "!include public_tournament_invites.yaml"
 - "!include public_tournament_leaderboard_entries.yaml"
+- "!include public_tournament_mvp_picks.yaml"
 - "!include public_tournament_no_shows.yaml"
 - "!include public_tournament_organizer_teams.yaml"
 - "!include public_tournament_organizers.yaml"

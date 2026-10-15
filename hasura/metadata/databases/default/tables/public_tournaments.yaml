@@ -109,6 +109,13 @@ array_relationships:
         table:
           name: tournament_awards
           schema: public
+  - name: mvp_picks
+    using:
+      foreign_key_constraint_on:
+        column: tournament_id
+        table:
+          name: tournament_mvp_picks
+          schema: public
 computed_fields:
   - name: can_cancel
     definition:
@@ -126,6 +133,12 @@ computed_fields:
     definition:
       function:
         name: can_join_tournament
+        schema: public
+      session_argument: hasura_session
+  - name: can_pick_mvp
+    definition:
+      function:
+        name: can_pick_tournament_mvp
         schema: public
       session_argument: hasura_session
   - name: can_open_registration
@@ -347,6 +360,7 @@ select_permissions:
         - status
         - substitutes_enabled
         - awards_enabled
+        - organizer_picks_mvp
         - check_in_closes_before_minutes
         - check_in_ends_at
         - check_in_opens_before_minutes
@@ -363,6 +377,7 @@ select_permissions:
         - can_join
         - can_open_registration
         - can_pause
+        - can_pick_mvp
         - can_resume
         - can_setup
         - can_start
@@ -423,6 +438,7 @@ select_permissions:
         - status
         - substitutes_enabled
         - awards_enabled
+        - organizer_picks_mvp
         - check_in_closes_before_minutes
         - check_in_ends_at
         - check_in_opens_before_minutes
@@ -439,6 +455,7 @@ select_permissions:
         - can_join
         - can_open_registration
         - can_pause
+        - can_pick_mvp
         - can_resume
         - can_setup
         - can_start
@@ -485,6 +502,7 @@ select_permissions:
         - status
         - substitutes_enabled
         - awards_enabled
+        - organizer_picks_mvp
         - check_in_closes_before_minutes
         - check_in_ends_at
         - check_in_opens_before_minutes
@@ -501,6 +519,7 @@ select_permissions:
         - can_join
         - can_open_registration
         - can_pause
+        - can_pick_mvp
         - can_resume
         - can_setup
         - can_start
@@ -560,6 +579,7 @@ update_permissions:
         - status
         - substitutes_enabled
         - awards_enabled
+        - organizer_picks_mvp
         - check_in_closes_before_minutes
         - check_in_opens_before_minutes
         - check_in_required
@@ -593,6 +613,7 @@ update_permissions:
         - status
         - substitutes_enabled
         - awards_enabled
+        - organizer_picks_mvp
         - check_in_closes_before_minutes
         - check_in_opens_before_minutes
         - check_in_required

@@ -33,6 +33,7 @@ select_permissions:
         - matches_played
         - kdr
         - headshot_percentage
+        - adr
       filter: {}
       allow_aggregations: true
     comment: ""
