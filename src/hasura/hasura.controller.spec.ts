@@ -32,9 +32,10 @@ class HookSpecController {
 
 type Metadata = "with-secret" | "without-secret" | "unreadable";
 
+const warn = jest.fn();
 const logger = {
   log: jest.fn(),
-  warn: jest.fn(),
+  warn,
   error: jest.fn(),
 } as unknown as Logger;
 
@@ -158,12 +159,33 @@ describe("HasuraController hooks", () => {
       expect(handled).toEqual([]);
     });
 
-    it("refuses an event with the wrong secret, asking Hasura to retry it", async () => {
+    it("refuses an event with the wrong secret without asking for a retry", async () => {
       const response = await event().set(HEADER, "guess").send(eventBody);
 
       expect(response.status).toBe(401);
-      expect(response.headers["retry-after"]).toBe("10");
+      expect(response.headers["retry-after"]).toBeUndefined();
       expect(handled).toEqual([]);
+    });
+
+    it("logs a run of refusals once a minute, not once per retry", async () => {
+      const now = jest.spyOn(Date, "now");
+      const start = Date.now();
+      warn.mockClear();
+
+      try {
+        now.mockReturnValue(start);
+        await event().send(eventBody);
+        await event().send(eventBody);
+        now.mockReturnValue(start + 59_000);
+        await event().send(eventBody);
+        expect(warn).toHaveBeenCalledTimes(1);
+
+        now.mockReturnValue(start + 61_000);
+        await event().send(eventBody);
+        expect(warn).toHaveBeenCalledTimes(2);
+      } finally {
+        now.mockRestore();
+      }
     });
 
     it("refuses an event that is not JSON without asking for a retry", async () => {

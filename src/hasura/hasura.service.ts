@@ -33,10 +33,12 @@ export class HasuraService
   public static readonly HOOK_SECRET_PROBE_MS = 15_000;
   public static readonly HOOK_SECRET_GRACE_MS = 30_000;
   public static readonly HOOK_SECRET_RETRY_AFTER_SECONDS = 10;
+  public static readonly HOOK_SECRET_LOG_INTERVAL_MS = 60_000;
 
   private config: HasuraConfig;
   private appConfig: AppConfig;
   private hookSecretOptionalUntil = 0;
+  private hookRefusalLoggedAt = new Map<string, number>();
   private hookSecretProbe?: NodeJS.Timeout;
 
   constructor(
@@ -118,18 +120,38 @@ export class HasuraService
     }
 
     if (typeof secret !== "string" || !this.checkSecret(secret)) {
-      this.logger.warn(
-        `refused ${request.method} ${request.originalUrl} from ${request.ip}: ${secret === undefined ? "missing" : "wrong"} hook secret`,
-      );
+      const reason = secret === undefined ? "missing" : "wrong";
+      this.logHookRefusal(request, reason);
       // Hasura retries an event answered with Retry-After even after its
       // retries run out, and some triggers (season_backfill_events) have none,
-      // so a refusal at a rollout edge would otherwise drop the event for good.
-      eventResponse?.setHeader(
-        "Retry-After",
-        String(HasuraService.HOOK_SECRET_RETRY_AFTER_SECONDS),
-      );
+      // so a missing header at a rollout edge would otherwise drop the event
+      // for good. A wrong secret is a misconfiguration and is left to fail.
+      if (reason === "missing") {
+        eventResponse?.setHeader(
+          "Retry-After",
+          String(HasuraService.HOOK_SECRET_RETRY_AFTER_SECONDS),
+        );
+      }
       throw new UnauthorizedException();
     }
+  }
+
+  private logHookRefusal(request: Request, reason: "missing" | "wrong") {
+    const key = `${reason} ${request.path}`;
+    const now = Date.now();
+    const loggedAt = this.hookRefusalLoggedAt.get(key);
+
+    if (
+      loggedAt !== undefined &&
+      now - loggedAt < HasuraService.HOOK_SECRET_LOG_INTERVAL_MS
+    ) {
+      return;
+    }
+
+    this.hookRefusalLoggedAt.set(key, now);
+    this.logger.warn(
+      `refused ${request.method} ${request.originalUrl} from ${request.ip}: ${reason} hook secret`,
+    );
   }
 
   public async query<R extends query_rootGenqlSelection>(
