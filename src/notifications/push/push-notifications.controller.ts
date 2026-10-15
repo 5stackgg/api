@@ -5,6 +5,7 @@ import {
   Get,
   Post,
   Req,
+  UnsupportedMediaTypeException,
   UseGuards,
 } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bullmq";
@@ -51,6 +52,15 @@ export class PushNotificationsController {
     @Req() request: Request,
     @Body() body: { subscription: PushSubscriptionPayload },
   ) {
+    // A cross-site form can post urlencoded with the player's cookie, and the
+    // extended parser turns it into this same object, binding the attacker's
+    // device to them. JSON needs a CORS preflight only the panel's origins pass.
+    if (!request.is("application/json")) {
+      throw new UnsupportedMediaTypeException(
+        "push subscriptions are sent as JSON",
+      );
+    }
+
     await this.pushNotifications.subscribe(
       request.user.steam_id,
       body.subscription,
