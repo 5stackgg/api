@@ -21,11 +21,11 @@ $$;
 -- Every tournament lineup seats the whole roster, substitutes included, so a
 -- seat is not proof of play; recorded activity is. A match that finished with
 -- nothing recorded for the lineup (a result set by hand after a crash, a LAN
--- final) cannot say who played, so everyone seated in it counts. A no-show
--- forfeit counts nobody: it also ends Finished (tbu_matches finishes any match
--- with a winner), so it is told apart by the no-shows it records in
--- abandoned_matches. A team left with no one at all, every match a forfeit,
--- keeps every seated player.
+-- final) cannot say who played, so everyone seated in it counts. A forfeit is
+-- never such a match; one stored before forfeits kept their status reads
+-- Finished, and is told apart by the no-shows it records in abandoned_matches.
+-- A team left with no one at all, every match a forfeit, keeps every seated
+-- player.
 CREATE OR REPLACE FUNCTION public.tournament_team_medalists(_tournament_id uuid, _tournament_team_id uuid)
 RETURNS TABLE (player_steam_id bigint)
 LANGUAGE sql STABLE
@@ -52,7 +52,7 @@ AS $$
     unrecorded AS (
         SELECT seat.match_id
         FROM seats seat
-        WHERE seat.status IN ('Finished', 'Tie')
+        WHERE seat.status IN ('Finished', 'Tie', 'Surrendered')
           AND NOT EXISTS (
               SELECT 1 FROM public.abandoned_matches am
               WHERE am.match_id = seat.match_id

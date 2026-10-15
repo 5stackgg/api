@@ -86,10 +86,12 @@ describe("tournament placement medals (SQL-driven)", () => {
   // Four Wingman teams of four (two starters, two substitutes) through a
   // single-elimination bracket with a third-place decider, lineup 1 winning
   // every match. `plays` names who records activity in each lineup; a match
-  // in `forfeits` ends the way CancelExpiredMatches ends a no-show.
+  // in `forfeits` ends the way CancelExpiredMatches ends a no-show, or, without
+  // `noShows`, the way an organizer forfeits it.
   const playCup = async (
     plays: Plays,
     forfeits: (matchup: Matchup) => boolean = () => false,
+    noShows = true,
   ) => {
     const t = await tfx.createTournament([
       { type: "SingleElimination", order: 1, minTeams: 4, maxTeams: 4 },
@@ -185,7 +187,7 @@ describe("tournament placement medals (SQL-driven)", () => {
         }
 
         if (forfeits(matchup)) {
-          for (const steam of matchup.two.roster) {
+          for (const steam of noShows ? matchup.two.roster : []) {
             await postgres.query(
               "INSERT INTO abandoned_matches (steam_id, match_id) VALUES ($1, $2)",
               [steam, matchup.matchId],
@@ -299,6 +301,24 @@ describe("tournament placement medals (SQL-driven)", () => {
       (matchup, lineup) =>
         isForfeit(matchup) ? [] : starters(matchup, lineup),
       isForfeit,
+    );
+
+    const places = await podium(cup.id);
+    expect(places).toHaveLength(3);
+    for (const place of places) {
+      const roster = await rosterOf(place.tournamentTeamId);
+      expect(place.players).toEqual(roster.slice(0, 2));
+    }
+  });
+
+  it("an organizer's forfeit does not hand the medal to the bench either", async () => {
+    const isForfeit = (matchup: Matchup) =>
+      matchup.round === 1 && matchup.matchNumber === 1;
+    const cup = await playCup(
+      (matchup, lineup) =>
+        isForfeit(matchup) ? [] : starters(matchup, lineup),
+      isForfeit,
+      false,
     );
 
     const places = await podium(cup.id);

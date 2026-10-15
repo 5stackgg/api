@@ -353,6 +353,96 @@ describe("match lifecycle (SQL-driven)", () => {
       );
     });
 
+    it.each(["Forfeit", "Surrendered"])(
+      "a %s with a winner keeps its status, ends the match and frees the server",
+      async (status) => {
+        const match = await createMatch(
+          await createOptions({ mapPoolId: await createPool(1) }),
+        );
+        const [server] = await postgres.query<Array<{ id: string }>>(
+          "SELECT id FROM servers WHERE region = 'TestA'",
+        );
+        await postgres.query(
+          "UPDATE servers SET reserved_by_match_id = $1 WHERE id = $2",
+          [match.id, server.id],
+        );
+        await postgres.query(
+          "UPDATE matches SET server_id = $1 WHERE id = $2",
+          [server.id, match.id],
+        );
+        await setStatus(match.id, "Live");
+
+        await postgres.query(
+          "UPDATE matches SET status = $2, winning_lineup_id = lineup_2_id WHERE id = $1",
+          [match.id, status],
+        );
+
+        const ended = await getMatch(match.id);
+        expect(ended.status).toBe(status);
+        expect(ended.winning_lineup_id).toBe(match.lineup_2_id);
+        expect(ended.ended_at).not.toBeNull();
+        expect(ended.cancels_at).toBeNull();
+
+        const [freed] = await postgres.query<
+          Array<{ reserved_by_match_id: string | null }>
+        >("SELECT reserved_by_match_id FROM servers WHERE id = $1", [
+          server.id,
+        ]);
+        expect(freed.reserved_by_match_id).toBeNull();
+
+        await postgres.query(
+          "UPDATE matches SET server_id = NULL WHERE id = $1",
+          [match.id],
+        );
+        expect((await getMatch(match.id)).status).toBe(status);
+
+        await expect(setStatus(match.id, "Canceled")).rejects.toThrow(
+          /already finished/i,
+        );
+      },
+    );
+
+    it("a tie given a winner is Finished", async () => {
+      const match = await createMatch(
+        await createOptions({ mapPoolId: await createPool(1) }),
+      );
+      await setStatus(match.id, "Live");
+
+      await postgres.query(
+        "UPDATE matches SET status = 'Tie', winning_lineup_id = lineup_1_id WHERE id = $1",
+        [match.id],
+      );
+
+      expect((await getMatch(match.id)).status).toBe("Finished");
+    });
+
+    it("handing a forfeit to the other lineup keeps the maps it was played on", async () => {
+      const { poolId, mapIds } = await fx.mapPool(3);
+      const match = await createMatch(
+        await createOptions({ mapPoolId: poolId, mapVeto: true }),
+      );
+      await postgres.query(
+        `INSERT INTO match_maps (match_id, map_id, "order") VALUES ($1, $2, 1)`,
+        [match.id, mapIds[0]],
+      );
+      await setStatus(match.id, "Live");
+      await postgres.query(
+        "UPDATE matches SET status = 'Forfeit', winning_lineup_id = lineup_1_id WHERE id = $1",
+        [match.id],
+      );
+
+      await postgres.query(
+        "UPDATE matches SET status = 'Finished', winning_lineup_id = lineup_2_id WHERE id = $1",
+        [match.id],
+      );
+
+      const maps = await postgres.query<Array<{ id: string }>>(
+        "SELECT id FROM match_maps WHERE match_id = $1",
+        [match.id],
+      );
+      expect(maps).toHaveLength(1);
+    });
+
     it("cancelling stamps cancels_at and clears ended_at", async () => {
       const match = await createMatch(await createOptions());
       await setStatus(match.id, "Canceled");

@@ -322,7 +322,9 @@ BEGIN
         NEW.status = 'Live';
     END IF;
 
-    IF (
+    -- A forfeit or surrender with a winner is a result, like Finished: leaving
+    -- it keeps the maps it was played on.
+    IF OLD.winning_lineup_id IS NULL AND (
         OLD.status = 'Canceled' AND NEW.status != 'Canceled' OR
         OLD.status = 'Forfeit' AND NEW.status != 'Forfeit' OR
         OLD.status = 'Tie' AND NEW.status != 'Tie' OR
@@ -392,13 +394,13 @@ BEGIN
         END IF;
     END IF;
 
-    IF(OLD.status = 'Finished' AND NEW.status = 'Canceled') THEN
+    IF OLD.status IN ('Finished', 'Forfeit', 'Surrendered') AND NEW.status = 'Canceled' THEN
       RAISE EXCEPTION 'Cannot cancel a match that is already finished' USING ERRCODE = '22000';
     END IF;
 
-    IF NEW.winning_lineup_id IS NOT NULL THEN
+    IF NEW.winning_lineup_id IS NOT NULL AND NEW.status NOT IN ('Forfeit', 'Surrendered') THEN
         NEW.status = 'Finished';
-    END IF;   
+    END IF;
 
     IF NEW.scheduled_at IS NOT NULL AND NEW.status = 'Scheduled' THEN
         NEW.cancels_at = null;
@@ -483,6 +485,7 @@ BEGIN
         (NEW.status = 'Finished' AND OLD.status != 'Finished')
         OR (NEW.status = 'Forfeit' AND OLD.status != 'Forfeit')
         OR (NEW.status = 'Tie' AND OLD.status != 'Tie')
+        OR (NEW.status = 'Surrendered' AND OLD.status != 'Surrendered')
     THEN
         NEW.ended_at = NOW();
         NEW.cancels_at = null;

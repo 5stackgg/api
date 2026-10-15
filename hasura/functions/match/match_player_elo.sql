@@ -77,8 +77,8 @@ $$ LANGUAGE sql STABLE;
 -- got that far -- a forfeit at check-in, a no-show in warmup, a winner set by
 -- hand on a match nobody played -- rates only the no-shows in
 -- abandoned_matches; the players who turned up, on either side, carry nothing
--- for it. Not a status check: tbu_matches finishes any match with a winner, a
--- forfeit included. match_elo_participants still holds everyone, since the
+-- for it. Not a status check: a forfeit or surrender carries its winner like a
+-- Finished match does. match_elo_participants still holds everyone, since the
 -- team averages a no-show is rated against are read from it.
 CREATE OR REPLACE FUNCTION public.match_was_played(
     _match_id UUID
