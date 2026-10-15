@@ -18,7 +18,7 @@ import {
 
 const S3_SECRET = "bucket-secret";
 const SIX_HOURS = 6 * 60 * 60;
-const SEVEN_DAYS = 7 * 24 * 60 * 60;
+const ONE_YEAR = 365 * 24 * 60 * 60;
 
 const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -151,6 +151,128 @@ describe("signed clip and lineup file links", () => {
     });
   });
 
+  describe("the signature", () => {
+    const KEYS = [
+      "clips/76561198000000001/0b6e1b6a-6f0e-4d0e-9a52-1f5c8b1f3e2a.mp4",
+      "clips/utility/ffe58c95-4581-4320-a14e-f2efb95ccebe/still-land.jpg",
+      "clips/ünïcødé/ファイル name+with/slashes=.mp4",
+      `clips/${"x".repeat(500)}.mp4`,
+      "",
+    ];
+
+    function expected(key: string, now: number, bucket: number) {
+      const exp = (Math.floor(now / bucket) + 2) * bucket;
+      const sig = createHmac("sha256", SIGNING_KEY)
+        .update(`${key}\n${exp}`)
+        .digest("base64url");
+      return `exp=${exp}&sig=${sig}`;
+    }
+
+    it("is the one the worker checks, for a public and a private file", async () => {
+      const rows = await postgres.query<
+        Array<{
+          key: string;
+          now: string;
+          public_file: string;
+          private_file: string;
+        }>
+      >(
+        `SELECT key, extract(epoch FROM now())::text AS now,
+                public.file_url_signature(key, true) AS public_file,
+                public.file_url_signature(key, false) AS private_file
+           FROM unnest($1::text[]) AS key`,
+        [KEYS],
+      );
+
+      expect(rows).toHaveLength(KEYS.length);
+      for (const row of rows) {
+        expect(row.public_file).toBe(
+          expected(row.key, Number(row.now), ONE_YEAR),
+        );
+        expect(row.private_file).toBe(
+          expected(row.key, Number(row.now), SIX_HOURS),
+        );
+      }
+    });
+
+    // The body file_url_signature had as a sql function, whose links are
+    // already out there: a private file's must not change.
+    it("signs a private file byte for byte as it did before", async () => {
+      const rows = await postgres.transaction(async (client) => {
+        await client.query(`
+          CREATE FUNCTION pg_temp.file_url_signature_before(file_key text, public_file boolean)
+              RETURNS text
+              LANGUAGE sql STABLE
+              AS $$
+              SELECT CONCAT(
+                  'exp=', expiry.exp,
+                  '&sig=', rtrim(translate(encode(
+                      hmac(convert_to(file_key || E'\\n' || expiry.exp, 'UTF8'), signing.key, 'sha256'),
+                      'base64'
+                  ), '+/', '-_'), '=')
+              )
+              FROM private.file_url_signing_key signing,
+                   LATERAL (
+                       SELECT (floor(extract(epoch FROM now()) / bucket.seconds)::bigint + 2) * bucket.seconds AS exp
+                       FROM (SELECT CASE WHEN public_file THEN 604800 ELSE 21600 END::bigint AS seconds) bucket
+                   ) expiry
+              WHERE file_key IS NOT NULL;
+          $$`);
+        const { rows } = await client.query<{
+          after: string | null;
+          before: string | null;
+        }>(
+          `SELECT public.file_url_signature(key, public_file) AS after,
+                  pg_temp.file_url_signature_before(key, public_file) AS before
+             FROM unnest($1::text[]) AS key,
+                  unnest(ARRAY[false, NULL]::boolean[]) AS public_file`,
+          [[...KEYS, null]],
+        );
+        await client.query(
+          "DROP FUNCTION pg_temp.file_url_signature_before(text, boolean)",
+        );
+        return rows;
+      });
+
+      expect(rows).toHaveLength(2 * (KEYS.length + 1));
+      for (const row of rows) {
+        expect(row.after).toBe(row.before);
+      }
+      expect(rows.filter(({ after }) => after !== null)).toHaveLength(
+        2 * KEYS.length,
+      );
+    });
+
+    it("is null for a missing file, and for every file until the api has stored the key", async () => {
+      const signatures = () =>
+        postgres.query<Array<{ signature: string | null }>>(
+          `SELECT public.file_url_signature(key, public_file) AS signature
+             FROM unnest(ARRAY['clips/a.mp4', NULL]::text[]) AS key,
+                  unnest(ARRAY[true, false]) AS public_file
+            ORDER BY key NULLS LAST, public_file`,
+        );
+
+      expect((await signatures()).map(({ signature }) => signature)).toEqual([
+        expect.stringMatching(/^exp=\d+&sig=[A-Za-z0-9_-]{43}$/),
+        expect.stringMatching(/^exp=\d+&sig=[A-Za-z0-9_-]{43}$/),
+        null,
+        null,
+      ]);
+
+      await postgres.query("DELETE FROM private.file_url_signing_key");
+      try {
+        expect((await signatures()).map(({ signature }) => signature)).toEqual([
+          null,
+          null,
+          null,
+          null,
+        ]);
+      } finally {
+        await signing.storeKey();
+      }
+    });
+  });
+
   describe("a clip's links", () => {
     it.each(["public", "private", "match"] as const)(
       "verify for the %s clip's own file and thumbnail with the derived key",
@@ -188,13 +310,16 @@ describe("signed clip and lineup file links", () => {
     );
 
     // Bucketed, so a link stays the same for a whole bucket and caches, and
-    // always has at least a bucket left to run.
-    it("lets a public clip's link run a week or two", async () => {
-      const { download } = await links((await clip("public")).id);
+    // always has at least a bucket left to run. A year, so a link already
+    // embedded on Discord or Twitter keeps working.
+    it("lets a public clip's link run a year or two", async () => {
+      const { download, thumbnail } = await links((await clip("public")).id);
 
-      expect(Number(signatureOf(download!).exp) % SEVEN_DAYS).toBe(0);
-      expect(expiresIn(download!)).toBeGreaterThan(SEVEN_DAYS);
-      expect(expiresIn(download!)).toBeLessThanOrEqual(2 * SEVEN_DAYS);
+      for (const url of [download!, thumbnail!]) {
+        expect(Number(signatureOf(url).exp) % ONE_YEAR).toBe(0);
+        expect(expiresIn(url)).toBeGreaterThan(ONE_YEAR);
+        expect(expiresIn(url)).toBeLessThanOrEqual(2 * ONE_YEAR);
+      }
     });
 
     it.each(["private", "match"] as const)(
@@ -377,6 +502,66 @@ describe("signed clip and lineup file links", () => {
       const { download } = await links(row.id);
       const { exp, sig } = signatureOf(download!);
       expect(signing.verify(row.file, exp, sig)).toBe(true);
+    });
+  });
+
+  describe("a lineup's links", () => {
+    async function lineupLinks(visibility: "Public" | "Private") {
+      const author = await fx.player();
+      const [{ id }] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO utility_lineups
+           (map_name, utility_type, side, technique,
+            origin_x, origin_y, origin_z, view_yaw, view_pitch,
+            land_x, land_y, land_z, name, author_steam_id, visibility,
+            preview_file, preview_thumbnail, preview_stills,
+            preview_rendered_at, smoke_voxels_file, smoke_voxels_at)
+         VALUES ('de_mirage', 'Smoke', 'TERRORIST', 'Jump',
+                 1, 2, 3, 90, -20, 10, 20, 30, 'A main deep', $1::bigint, $2,
+                 'clips/utility/l/preview.mp4', 'clips/utility/l/preview.jpg',
+                 '{"land": "clips/utility/l/land.jpg"}'::jsonb, now(),
+                 'clips/utility/l/smoke.json', now())
+         RETURNING id::text AS id`,
+        [author, visibility],
+      );
+      const [row] = await postgres.query<
+        Array<{
+          preview: string;
+          thumbnail: string;
+          stills: Record<string, string>;
+          smoke: string;
+        }>
+      >(
+        `SELECT public.utility_lineup_preview_url(l) AS preview,
+                public.utility_lineup_preview_thumbnail_url(l) AS thumbnail,
+                public.utility_lineup_preview_stills_url(l) AS stills,
+                public.utility_lineup_smoke_voxels_url(l) AS smoke
+           FROM utility_lineups l WHERE l.id = $1::uuid`,
+        [id],
+      );
+      const urls = [row.preview, row.thumbnail, row.stills.land, row.smoke];
+      for (const url of urls) {
+        const link = new URL(url);
+        const { exp, sig } = signatureOf(url);
+        expect(link.origin).toBe("https://cf.example.test");
+        expect(signing.verify(link.pathname.slice(1), exp, sig)).toBe(true);
+      }
+      return urls;
+    }
+
+    it("lets a public lineup's files run a year or two", async () => {
+      for (const url of await lineupLinks("Public")) {
+        expect(Number(signatureOf(url).exp) % ONE_YEAR).toBe(0);
+        expect(expiresIn(url)).toBeGreaterThan(ONE_YEAR);
+        expect(expiresIn(url)).toBeLessThanOrEqual(2 * ONE_YEAR);
+      }
+    });
+
+    it("lets a private lineup's files run only six to twelve hours", async () => {
+      for (const url of await lineupLinks("Private")) {
+        expect(Number(signatureOf(url).exp) % SIX_HOURS).toBe(0);
+        expect(expiresIn(url)).toBeGreaterThan(SIX_HOURS);
+        expect(expiresIn(url)).toBeLessThanOrEqual(2 * SIX_HOURS);
+      }
     });
   });
 
