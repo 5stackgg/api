@@ -11,6 +11,7 @@ import { S3Service } from "../s3/s3.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { User } from "../auth/types/User";
+import { isRoleAbove } from "../utilities/isRoleAbove";
 
 const EXTENSION_BY_MIMETYPE: Record<string, string> = {
   "image/png": "png",
@@ -649,7 +650,7 @@ export class AwardsService {
     const isOrganizer =
       String(rows[0].organizer_steam_id) === String(user.steam_id);
 
-    if (isOrganizer || user.role === "administrator") {
+    if (isOrganizer || isRoleAbove(user.role, "tournament_organizer")) {
       return;
     }
 
@@ -770,15 +771,19 @@ export class AwardsService {
     );
   }
 
-  // A tournament holds one MVP and the MVP picker owns it; a hand grant would
-  // land beside it as a second one.
+  // A tournament holds one MVP and the MVP picker owns it; a hand grant inside
+  // the tournament would land beside it as a second one.
   private async assertNotTournamentMvp(
     award: AwardRow,
     tournamentId: string | null,
   ): Promise<void> {
+    if (!tournamentId) {
+      return;
+    }
+
     let isMvp = award.system_key === "tournament_mvp";
 
-    if (!isMvp && tournamentId) {
+    if (!isMvp) {
       const [row] = await this.postgres.query<Array<{ is_mvp: boolean }>>(
         `SELECT public.resolve_tournament_award($1, 0) = $2 AS is_mvp`,
         [tournamentId, award.id],

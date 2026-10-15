@@ -159,8 +159,7 @@ BEGIN
             MESSAGE = 'Substitutes can only be turned off before registration closes';
     END IF;
 
-    -- Writable through Hasura's update permission, whose is_organizer filter
-    -- also passes site-wide tournament organizers.
+    -- Backs Hasura's update permission for writes made with a session.
     IF NEW.organizer_picks_mvp IS DISTINCT FROM OLD.organizer_picks_mvp
        AND nullif(current_setting('hasura.user', true), '')::json ->> 'x-hasura-role' IS NOT NULL
        AND NOT public.can_pick_tournament_mvp(OLD, current_setting('hasura.user', true)::json) THEN

@@ -1,3 +1,5 @@
+import { readFileSync } from "fs";
+import { join } from "path";
 import {
   BadRequestException,
   ForbiddenException,
@@ -41,8 +43,10 @@ describe("organizer MVP pick (SQL-driven)", () => {
     await postgres.query("DELETE FROM tournaments");
     await postgres.query("DELETE FROM match_options");
     await postgres.query("DELETE FROM teams");
+    await postgres.query("DELETE FROM events");
     await postgres.query("DELETE FROM players");
     await postgres.query("DELETE FROM awards WHERE system_key IS NULL");
+    await postgres.query("DELETE FROM seasons");
   });
 
   const SE4 = [
@@ -407,14 +411,23 @@ describe("organizer MVP pick (SQL-driven)", () => {
       });
     });
 
-    it("is only offered to the tournament's organizers", async () => {
+    it("is offered to anyone who organizes it, the global role included, and nobody else", async () => {
       const cup = await finishedCup();
       const siteOrganizer = await fx.player(undefined, "tournament_organizer");
+
+      const rows = await controller().tournamentMvpCandidates({
+        tournament_id: cup.id,
+        user: user(siteOrganizer, "tournament_organizer"),
+      });
+      expect(rows.map((row) => row.player_steam_id)).toEqual([
+        cup.best,
+        cup.second,
+      ]);
 
       const error = await failure(
         controller().tournamentMvpCandidates({
           tournament_id: cup.id,
-          user: user(siteOrganizer, "tournament_organizer"),
+          user: user(cup.best),
         }),
       );
       expect(error).toBeInstanceOf(ForbiddenException);
@@ -794,14 +807,28 @@ describe("organizer MVP pick (SQL-driven)", () => {
       expect(notifyPlayers).toHaveBeenCalledTimes(1);
     });
 
-    it("refuses site-wide organizers who do not run this tournament, and everyone else", async () => {
+    it("lets the global tournament organizer role pick in a tournament it does not run", async () => {
       const cup = await finishedCup();
       const siteOrganizer = await fx.player(undefined, "tournament_organizer");
+
+      await controller().setTournamentMvp({
+        tournament_id: cup.id,
+        player_steam_id: cup.second,
+        user: user(siteOrganizer, "tournament_organizer"),
+      });
+
+      expect(await mvpOf(cup.id)).toBe(cup.second);
+      expect((await history(cup.id))[0].picked_by_steam_id).toBe(siteOrganizer);
+    });
+
+    it("refuses a moderator, a match organizer and a plain player", async () => {
+      const cup = await finishedCup();
       const moderator = await fx.player(undefined, "moderator");
+      const matchOrganizer = await fx.player(undefined, "match_organizer");
 
       for (const actor of [
-        user(siteOrganizer, "tournament_organizer"),
         user(moderator, "moderator"),
+        user(matchOrganizer, "match_organizer"),
         user(cup.best),
       ]) {
         const error = await failure(
@@ -838,6 +865,36 @@ describe("organizer MVP pick (SQL-driven)", () => {
       expect(await mvpOf(cup.id)).toBe(cup.second);
     });
 
+    it("stops a global tournament organizer from picking themselves too", async () => {
+      const cup = await finishedCup();
+
+      const error = await failure(
+        controller().setTournamentMvp({
+          tournament_id: cup.id,
+          player_steam_id: cup.second,
+          user: user(cup.second, "tournament_organizer"),
+        }),
+      );
+
+      expect(error).toBeInstanceOf(ForbiddenException);
+      expect(await mvpOf(cup.id)).toBe(cup.best);
+    });
+
+    it("lets the global tournament organizer role grant inside a tournament it does not run", async () => {
+      const cup = await finishedCup();
+      const siteOrganizer = await fx.player(undefined, "tournament_organizer");
+      const awardId = await createAward("Clutch King");
+
+      const granted = await controller().grantAward({
+        award_id: awardId,
+        player_steam_id: cup.second,
+        tournament_id: cup.id,
+        user: user(siteOrganizer, "tournament_organizer"),
+      });
+
+      expect(granted.id).toBeTruthy();
+    });
+
     it("reports a rule the pick breaks as a bad request", async () => {
       const cup = await finishedCup();
 
@@ -851,10 +908,11 @@ describe("organizer MVP pick (SQL-driven)", () => {
       expect(error).toBeInstanceOf(BadRequestException);
     });
 
-    it("lets only the tournament's own organizers flip the switch through Hasura", async () => {
+    it("lets only the tournament's organizers flip the switch through Hasura", async () => {
       const cup = await finishedCup();
       const coOrganizer = await fx.player();
       const siteOrganizer = await fx.player(undefined, "tournament_organizer");
+      const stranger = await fx.player();
       await coOrganize(cup.id, coOrganizer);
 
       const flip = (steamId: string, role: string, value: boolean) =>
@@ -867,11 +925,11 @@ describe("organizer MVP pick (SQL-driven)", () => {
 
       await flip(cup.organizer, "user", true);
       await flip(coOrganizer, "user", false);
+      await flip(siteOrganizer, "tournament_organizer", true);
+      await flip(coOrganizer, "user", false);
       await flip(siteOrganizer, "administrator", true);
 
-      const error = await failure(
-        flip(siteOrganizer, "tournament_organizer", false),
-      );
+      const error = await failure(flip(stranger, "user", false));
       expect(error.message).toMatch(/tournament's organizers/);
 
       const [row] = await postgres.query<
@@ -904,7 +962,8 @@ describe("organizer MVP pick (SQL-driven)", () => {
       expect(await canPick(cup.organizer, "user")).toBe(true);
       expect(await canPick(coOrganizer, "user")).toBe(true);
       expect(await canPick(stranger, "administrator")).toBe(true);
-      expect(await canPick(stranger, "tournament_organizer")).toBe(false);
+      expect(await canPick(stranger, "tournament_organizer")).toBe(true);
+      expect(await canPick(stranger, "match_organizer")).toBe(false);
       expect(await canPick(stranger, "user")).toBe(false);
     });
   });
@@ -970,7 +1029,6 @@ describe("organizer MVP pick (SQL-driven)", () => {
 
       for (const grant of [
         { award_id: systemMvp, tournament_id: cup.id },
-        { award_id: systemMvp },
         { award_id: custom, tournament_id: cup.id },
       ]) {
         const error = await failure(
@@ -984,6 +1042,28 @@ describe("organizer MVP pick (SQL-driven)", () => {
         expect(error.message).toMatch(/MVP/);
       }
       expect(await mvpCount(cup.second)).toBe(0);
+    });
+
+    it("still hands out the MVP award outside a tournament", async () => {
+      const cup = await finishedCup();
+      const adminSteamId = await fx.player(undefined, "administrator");
+      const admin = user(adminSteamId, "administrator");
+      const systemMvp = await systemMvpAward();
+      const season = await fx.season(new Date().toISOString());
+      const [event] = await postgres.query<Array<{ id: string }>>(
+        "INSERT INTO events (name, organizer_steam_id) VALUES ('LAN', $1) RETURNING id",
+        [adminSteamId],
+      );
+
+      for (const scope of [{}, { season_id: season }, { event_id: event.id }]) {
+        const granted = await controller().grantAward({
+          award_id: systemMvp,
+          player_steam_id: cup.second,
+          ...scope,
+          user: admin,
+        });
+        expect(granted.id).toBeTruthy();
+      }
     });
 
     it("still hands out an MVP-tier award that is not this tournament's MVP", async () => {
@@ -1018,6 +1098,46 @@ describe("organizer MVP pick (SQL-driven)", () => {
         [cup.id, cup.best],
       );
       expect(stats.adr).toBe(50);
+    });
+  });
+
+  describe("migration", () => {
+    it("brings a database that ran the first version of the table up to date", async () => {
+      await postgres.query(
+        "ALTER TABLE tournament_mvp_picks DROP COLUMN kept_automatic",
+      );
+      const checks = await postgres.query<Array<{ conname: string }>>(
+        `SELECT conname FROM pg_constraint
+          WHERE conrelid = 'public.tournament_mvp_picks'::regclass
+            AND contype = 'c'`,
+      );
+      for (const { conname } of checks) {
+        await postgres.query(
+          `ALTER TABLE tournament_mvp_picks DROP CONSTRAINT "${conname}"`,
+        );
+      }
+
+      await postgres.query(
+        readFileSync(
+          join(
+            __dirname,
+            "../hasura/migrations/default/1890000001010_tournament_mvp_picks_kept_automatic/up.sql",
+          ),
+          "utf8",
+        ),
+      );
+
+      const cup = await finishedCup();
+      await setSwitch(cup.id, cup.organizer, true);
+      expect(await mvpOf(cup.id)).toBe(cup.best);
+      const error = await failure(
+        postgres.query(
+          `INSERT INTO tournament_mvp_picks (tournament_id, player_steam_id, note)
+            VALUES ($1, $2, $3)`,
+          [cup.id, cup.second, "x".repeat(141)],
+        ),
+      );
+      expect(error.message).toMatch(/tournament_mvp_picks_note_length_check/);
     });
   });
 });

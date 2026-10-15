@@ -62,25 +62,16 @@ BEGIN
 END;
 $$;
 
--- Narrower than is_tournament_organizer: a site-wide tournament organizer who
--- does not run this tournament cannot pick its MVP.
+-- The same people Hasura lets manage the tournament (is_organizer): its owner
+-- and co-organizers, the global tournament organizer role and administrators.
+-- COALESCE so a guest session answers false rather than NULL.
 CREATE OR REPLACE FUNCTION public.can_pick_tournament_mvp(
     tournament public.tournaments,
     hasura_session json
 ) RETURNS boolean
 LANGUAGE sql STABLE
 AS $$
-    SELECT COALESCE(
-        hasura_session ->> 'x-hasura-role' IN ('admin', 'administrator')
-        OR tournament.organizer_steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint
-        OR EXISTS (
-            SELECT 1
-            FROM public.tournament_organizers o
-            WHERE o.tournament_id = tournament.id
-              AND o.steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint
-        ),
-        false
-    );
+    SELECT COALESCE(public.is_tournament_organizer(tournament, hasura_session), false);
 $$;
 
 -- Puts the MVP in force: the latest organizer pick while its player is still a

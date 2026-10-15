@@ -9,12 +9,11 @@ CREATE TABLE IF NOT EXISTS public.tournament_mvp_picks (
     player_steam_id bigint NOT NULL REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE CASCADE,
     tournament_team_id uuid REFERENCES public.tournament_teams(id) ON DELETE SET NULL,
     picked_by_steam_id bigint REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE SET NULL,
-    note text CHECK (note IS NULL OR char_length(note) <= 140),
+    note text,
     player_impact double precision,
     automatic_steam_id bigint REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE SET NULL,
     automatic_impact double precision,
     replaced_steam_id bigint REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE SET NULL,
-    kept_automatic boolean NOT NULL DEFAULT false,
     created_at timestamptz NOT NULL DEFAULT clock_timestamp()
 );
 
