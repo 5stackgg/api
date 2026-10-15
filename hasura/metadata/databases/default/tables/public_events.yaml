@@ -191,3 +191,6 @@ event_triggers:
       num_retries: 6
       timeout_sec: 60
     webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
+    headers:
+      - name: x-5stack-hook-secret
+        value_from_env: HASURA_GRAPHQL_ADMIN_SECRET

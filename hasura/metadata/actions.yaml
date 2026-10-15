@@ -4,6 +4,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: sendScrimRequest
@@ -12,6 +15,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: respondToScrimRequest
@@ -20,6 +26,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: counterScrimRequest
@@ -28,6 +37,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: cancelScrimRequest
@@ -36,6 +48,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: teamCalendarUrl
@@ -44,6 +59,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: createDraftGame
@@ -52,6 +70,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: match_organizer
       - role: tournament_organizer
@@ -62,6 +83,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: updateDraftGame
@@ -70,6 +94,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: joinDraftGame
@@ -78,6 +105,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: joinDraftGameAsParty
@@ -86,6 +116,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: previewDraftGame
@@ -94,6 +127,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: addDraftPlayer
@@ -102,6 +138,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: respondDraftInvite
@@ -110,6 +149,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: ResetTournamentMatch
@@ -117,6 +159,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: acceptInvite
@@ -124,6 +169,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: accept team invite
@@ -132,6 +180,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: match_organizer
   - name: denyNameChange
@@ -139,6 +190,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: match_organizer
   - name: attachDemo
@@ -146,6 +200,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
     comment: Dev-only — attach the demo player to a standing dev game-streamer pod (no Job boot)
@@ -154,6 +211,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Web push setup status for the application settings page; never returns the private key
@@ -161,6 +221,9 @@ actions:
     definition:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: guest
     comment: Which view-only sections (tournaments, events, news, highlights) have anything a guest can see
@@ -169,6 +232,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Launch a Vulkan shader pre-bake Job on a GPU node
@@ -177,6 +243,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Build and publish map assets for the current CS2 build on a chosen or automatically picked node (5stack.gg only)
@@ -185,6 +254,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: callForOrganizer
@@ -193,6 +265,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Cancel an in-progress or stuck Vulkan shader pre-bake Job on a GPU node
@@ -201,6 +276,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: Cancel an in-flight clip render and tear down the K8s job
@@ -209,6 +287,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
       - role: match_organizer
@@ -218,6 +299,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: cancelMatch
@@ -226,6 +310,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: checkIntoMatch
@@ -234,6 +321,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Delete terminal-state clip_render_jobs rows for a single match_map batch.
@@ -242,6 +332,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Delete all terminal-state clip_render_jobs rows platform-wide.
@@ -250,6 +343,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: createApiKey
@@ -257,6 +353,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: createClipFromPreset
@@ -264,6 +363,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
     comment: Build a multi-segment ClipSpec from a player+preset and dispatch render
@@ -272,6 +374,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
     comment: Spawn a clip-render pod that produces an mp4 from a demo and uploads it
@@ -280,6 +385,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
   - name: createServerDirectory
@@ -287,6 +395,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Create directory on game server
@@ -295,6 +406,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
   - name: deleteClip
@@ -302,6 +416,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: Delete a saved clip and its underlying S3 object
@@ -310,6 +427,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
   - name: deleteServerItem
@@ -317,6 +437,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Delete file or directory on game server
@@ -325,6 +448,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: Delete a tournament and clean up demo files
@@ -333,6 +459,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: forfeitMatch
@@ -340,11 +469,17 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
   - name: getActiveConnections
     definition:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Get list of active connections
@@ -353,6 +488,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Get currently executing queries
@@ -361,6 +499,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Get connection statistics
@@ -369,6 +510,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Get current database locks
@@ -377,6 +521,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Get database-wide statistics
@@ -385,6 +532,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: guest
   - name: getServerCommunityStats
@@ -392,6 +542,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: guest
   - name: getServerLeaderboard
@@ -399,6 +552,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: guest
   - name: getPlayerCommunityStats
@@ -406,6 +562,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: guest
   - name: getDedicatedServerPlayers
@@ -413,6 +572,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: moderator
   - name: getIndexIOStats
@@ -420,6 +582,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Get index I/O statistics
@@ -428,6 +593,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Which highlight presets have content for a player on a map's demo
@@ -436,6 +604,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Get index usage statistics
@@ -444,6 +615,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
     comment: Live pod GSI snapshot — slots, sides, alive/dead. Drives the stream-deck.
@@ -452,6 +626,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
   - name: getQueryDetail
@@ -459,6 +636,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Get detailed query analysis with EXPLAIN plan
@@ -467,6 +647,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Get enhanced query performance statistics
@@ -475,6 +658,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Get available database schemas
@@ -483,6 +669,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
   - name: getStorageStats
@@ -490,6 +679,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Get database storage statistics and reclaimable space
@@ -498,6 +690,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Get table I/O statistics
@@ -506,6 +701,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Get table access statistics
@@ -514,6 +712,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
   - name: getTimescaleStats
@@ -521,6 +722,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Get TimescaleDB statistics
@@ -529,6 +733,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: kickServerPlayer
@@ -536,6 +743,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: moderator
   - name: leaveLineup
@@ -543,6 +753,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: linkSteamMatchHistory
@@ -550,6 +763,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: listServerFiles
@@ -557,6 +773,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: List files in game server directory
@@ -565,6 +784,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Load dev fixture data (dev only)
@@ -573,6 +795,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: logout
@@ -581,6 +806,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: guest
     comment: Gets Current User
@@ -589,6 +817,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Move file or directory on game server
@@ -597,6 +828,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
       - role: match_organizer
@@ -606,6 +840,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: randomizeTeams
@@ -613,6 +850,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: readServerFile
@@ -620,6 +860,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Read file content from game server
@@ -628,6 +871,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: reconnectLive
@@ -635,6 +881,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
   - name: refreshAllPlayers
@@ -642,6 +891,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Reindex every player into the Typesense search index (admin only). Runs in the background; track via refreshAllPlayersStatus.
@@ -650,6 +902,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Request cancellation of the in-progress player reindex (admin only). Stops after the current player.
@@ -658,6 +913,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Return the progress of the player reindex run (admin only).
@@ -666,6 +924,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Wipe and rebuild all player ELO from finished matches in chronological order (admin only). Runs in the background; track via recomputePlayerEloStatus.
@@ -674,6 +935,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Request cancellation of the in-progress ELO recompute (admin only). Stops after the current match.
@@ -682,6 +946,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Return the progress of the ELO recompute run (admin only).
@@ -690,6 +957,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Rebuild a season's ELO + stats from the matches inside its date range (admin only). Runs in the background; track via backfillSeasonEloStatus.
@@ -698,6 +968,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Request cancellation of the in-progress season ELO backfill (admin only). Stops after the current match.
@@ -706,6 +979,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Return the progress of the season ELO backfill run (admin only).
@@ -714,6 +990,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Scan all players who have been on a lineup for Steam VAC/game bans
@@ -722,6 +1001,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: guest
       - role: user
@@ -730,6 +1012,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Test FACEIT Data + Downloads API connectivity for the current admin
@@ -738,6 +1023,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
   - name: registerName
@@ -745,6 +1033,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: removeFixtures
@@ -752,6 +1043,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Remove dev fixture data (dev only)
@@ -760,6 +1054,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Rename file or directory on game server
@@ -768,6 +1065,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Re-parse demo metadata for a match map (admin only)
@@ -776,6 +1076,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Build a multi-segment ClipSpec from a player+preset and queue it via the batch render path (no live demo session required)
@@ -784,6 +1087,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Re-parse all demos across every map for a match (admin only). Fires in the background and returns immediately.
@@ -792,6 +1098,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Re-parse every demo in the system (admin only). Runs one demo at a time in the background; this can take a very long time. Track via reparseAllDemosStatus.
@@ -800,6 +1109,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Request cancellation of the in-progress reparse-all-demos run (admin only). Stops after the current demo finishes.
@@ -808,6 +1120,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Return the progress of the reparse-all-demos run (admin only).
@@ -816,6 +1131,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Scan S3 for objects not referenced in the database (admin only). Runs in the background; results land in the logs and orphanedDemosScanResult.
@@ -824,6 +1142,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -838,6 +1159,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -852,6 +1176,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -866,6 +1193,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -880,6 +1210,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -894,6 +1227,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Return the latest S3 orphan-scan report (admin only).
@@ -902,6 +1238,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Delete orphaned S3 objects found by the last scan (admin only). Each key is re-verified against the database before removal.
@@ -910,6 +1249,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: requeueClipRender
@@ -917,6 +1259,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Reset a terminal-state clip_render_jobs row back to queued and re-enqueue the batch worker (admin only).
@@ -925,6 +1270,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
   - name: resumeClipRenderBatch
@@ -932,6 +1280,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
       - role: match_organizer
@@ -941,6 +1292,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Delete terminal clip_render_jobs rows for a match_map (all or only failed/cancelled) and re-create them from their saved specs.
@@ -949,6 +1303,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: sanctionServerPlayer
@@ -956,6 +1313,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: moderator
   - name: scheduleMatch
@@ -963,6 +1323,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: scheduleMatch
@@ -971,6 +1334,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
   - name: setHudMode
@@ -978,6 +1344,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
   - name: setMapWinner
@@ -985,6 +1354,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: match_organizer
       - role: tournament_organizer
@@ -995,6 +1367,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: match_organizer
       - role: tournament_organizer
@@ -1005,6 +1380,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
   - name: skipShaders
@@ -1012,6 +1390,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
   - name: specAutodirector
@@ -1019,6 +1400,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
   - name: specClick
@@ -1026,6 +1410,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
   - name: specHud
@@ -1033,6 +1420,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
   - name: specHudSides
@@ -1040,6 +1430,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
   - name: specJump
@@ -1047,6 +1440,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
   - name: specPlayer
@@ -1054,6 +1450,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
   - name: specScoreboard
@@ -1061,6 +1460,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
   - name: specSlot
@@ -1068,6 +1470,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
   - name: specXray
@@ -1075,6 +1480,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
   - name: startLive
@@ -1082,6 +1490,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: startMatch
@@ -1089,6 +1500,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: startMatch
@@ -1097,6 +1511,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
   - name: stopLive
@@ -1104,6 +1521,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: stopWatchDemo
@@ -1111,6 +1531,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: swapLineups
@@ -1118,6 +1541,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: switchLineup
@@ -1125,6 +1551,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: switchLiveMatch
@@ -1132,6 +1561,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: streamer
   - name: syncSteamFriends
@@ -1139,6 +1571,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: telemetryStats
@@ -1146,6 +1581,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
   - name: testDownload
@@ -1153,6 +1591,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
   - name: testUpload
@@ -1160,6 +1601,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
   - name: unlinkDiscord
@@ -1167,6 +1611,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: unlinkSteamMatchHistory
@@ -1174,6 +1621,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
   - name: unsanctionServerPlayer
@@ -1181,6 +1631,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: moderator
   - name: updateClip
@@ -1188,6 +1641,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: Owner-only patch for clip title / visibility / target_steam_id.
@@ -1196,6 +1652,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
   - name: updateServices
@@ -1203,6 +1662,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
   - name: syncPluginRegistry
@@ -1210,6 +1672,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Pull the game plugin registry into this panel's catalog
@@ -1218,6 +1683,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Fetch a plugin's README from its repository
@@ -1226,6 +1694,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Install a game plugin into a node's plugin store
@@ -1234,6 +1705,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Remove a game plugin from a node's plugin store
@@ -1242,6 +1716,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Track new releases of a game plugin, or pin it where it is
@@ -1250,6 +1727,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Re-read which plugins are actually on a node
@@ -1258,6 +1738,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Add a game plugin the registry does not carry, from a release URL
@@ -1266,6 +1749,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Resolve a game mode into the plugins and cfg a server would load
@@ -1274,6 +1760,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Validate CS2 gamedata for the current build on a chosen or automatically picked node (5stack.gg only)
@@ -1282,6 +1771,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: Spawn a per-user game-streamer pod to play back a finished match's demo
@@ -1290,6 +1782,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Write content to file on game server
@@ -1298,6 +1793,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: user
     comment: Assign the presence bot a user should add as a friend
@@ -1306,6 +1804,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Steam presence bot admin dashboard status
@@ -1314,6 +1815,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Add a friends-role presence bot account to the pool
@@ -1322,6 +1826,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Submit a Steam Guard code for a presence bot account
@@ -1330,6 +1837,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Remove a friends-role presence bot account
@@ -1338,6 +1848,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1352,6 +1865,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1366,6 +1882,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1380,6 +1899,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1394,6 +1916,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1408,6 +1933,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1421,6 +1949,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1434,6 +1965,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1447,6 +1981,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1460,6 +1997,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1473,6 +2013,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1486,6 +2029,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1500,6 +2046,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1514,6 +2063,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1528,6 +2080,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1542,6 +2097,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1556,6 +2114,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1570,6 +2131,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1584,6 +2148,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1598,6 +2165,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1612,6 +2182,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1626,6 +2199,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Re-mine one batch of demos after a miner change
@@ -1634,6 +2210,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Pull the published map callouts for every enabled map
@@ -1642,6 +2221,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Recover launch seeds from recorded trajectories, one batch per call
@@ -1650,6 +2232,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1664,6 +2249,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1678,6 +2266,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1692,6 +2283,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1706,6 +2300,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1720,6 +2317,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Re-fly a map's lineups against two collision meshes
@@ -1728,6 +2328,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1742,6 +2345,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1756,6 +2362,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1770,6 +2379,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1784,6 +2396,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1798,6 +2413,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1812,6 +2430,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: guest
       - role: administrator
@@ -1827,6 +2448,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1841,6 +2465,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Seed the utility library from an operator-supplied payload
@@ -1849,6 +2476,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Delete every lineup that came from one origin source
@@ -1857,6 +2487,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: moderator
@@ -1866,6 +2499,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: moderator
@@ -1875,6 +2511,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: moderator
       - role: administrator
@@ -1884,6 +2523,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Drop every finished row from the lineup preview queue
@@ -1892,6 +2534,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: moderator
@@ -1901,6 +2546,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: moderator
@@ -1910,6 +2558,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
       timeout: 120
     permissions:
       - role: administrator
@@ -1925,6 +2576,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1939,6 +2593,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1953,6 +2610,9 @@ actions:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1967,6 +2627,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1981,6 +2644,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -1995,6 +2661,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -2009,6 +2678,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -2023,6 +2695,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -2037,6 +2712,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -2051,6 +2729,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -2065,6 +2746,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -2079,6 +2763,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -2093,6 +2780,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -2107,6 +2797,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -2121,6 +2814,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -2135,6 +2831,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
       - role: tournament_organizer
@@ -2149,6 +2848,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Replace a dedicated server's map rotation and restart it
@@ -2157,6 +2859,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Replace a dedicated server's per-server plugin overrides and restart it
@@ -2165,6 +2870,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Add every map in a Steam workshop collection to the map catalog
@@ -2173,6 +2881,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Restrict who may connect to a community server
@@ -2181,6 +2892,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Save a community server's rotation, plugins, plugin configs and access, restarting it at most once
@@ -2189,6 +2903,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
       timeout: 180
     permissions:
       - role: administrator
@@ -2198,6 +2915,9 @@ actions:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
+      headers:
+        - name: x-5stack-hook-secret
+          value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
     permissions:
       - role: administrator
     comment: Cancel a dedicated server move that has not reached the new node yet
