@@ -1,0 +1,48 @@
+table:
+  name: chat_room_settings
+  schema: public
+insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      set:
+        steam_id: x-hasura-user-id
+      columns:
+        - thread
+        - muted
+        - muted_until
+        - notify
+    comment: A player only ever sets how they are told about a room for themselves
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - thread
+        - muted
+        - muted_until
+        - notify
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: Only your own rooms; nobody learns who muted what
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - muted
+        - muted_until
+        - notify
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+      check:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: Lets a room's setting be upserted (on_conflict needs an update permission)
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ""

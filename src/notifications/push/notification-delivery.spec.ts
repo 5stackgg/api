@@ -3,6 +3,7 @@ import { join } from "path";
 import {
   DELIVERY_POLICIES,
   deliveryPolicyForType,
+  roomSettingsThreadFor,
   threadKeyFor,
 } from "./notification-delivery";
 
@@ -180,6 +181,25 @@ describe("notification delivery policies", () => {
           data: { threadKey: "chat:direct:1:2" },
         }),
       ).toEqual("chat:direct:1:2");
+    });
+  });
+
+  describe("roomSettingsThreadFor", () => {
+    it("reads a side's team room by its match room, which carries it on screen", () => {
+      expect(roomSettingsThreadFor("chat:match_team:m-1:l-2")).toEqual(
+        "chat:match:m-1",
+      );
+    });
+
+    it("reads every other room by its own thread", () => {
+      for (const thread of [
+        "chat:match:m-1",
+        "chat:team:t-1",
+        "chat:direct:1:2",
+        "chat:organizers:organizers",
+      ]) {
+        expect(roomSettingsThreadFor(thread)).toEqual(thread);
+      }
     });
   });
 });

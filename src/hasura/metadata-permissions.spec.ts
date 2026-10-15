@@ -757,4 +757,85 @@ describe("hasura table metadata", () => {
       expect([...computed, ...tracked]).toEqual([]);
     });
   });
+
+  // How a player is told about a room is theirs alone: nobody reads, writes
+  // or even learns of another player's mute.
+  describe("chat_room_settings", () => {
+    const settings = () =>
+      tables.find(({ file }) => file === "public_chat_room_settings.yaml")
+        ?.metadata;
+
+    const own = { steam_id: { _eq: "X-Hasura-User-Id" } };
+
+    it("is tracked", () => {
+      expect(
+        readFileSync(join(dir, "tables.yaml"), "utf8").split("\n"),
+      ).toContain('- "!include public_chat_room_settings.yaml"');
+      expect(settings()).toBeDefined();
+    });
+
+    it("grants every operation to user alone, for every role to inherit", () => {
+      expect(
+        ["select", "insert", "update", "delete"].map((operation) =>
+          (settings()?.[`${operation}_permissions`] ?? []).map(
+            (entry: { role: string }) => entry.role,
+          ),
+        ),
+      ).toEqual([["user"], ["user"], ["user"], ["user"]]);
+    });
+
+    it("only ever shows, changes or removes a player's own rows", () => {
+      const [select] = settings()?.select_permissions ?? [];
+      const [update] = settings()?.update_permissions ?? [];
+      const [remove] = settings()?.delete_permissions ?? [];
+
+      expect(select?.permission.filter).toEqual(own);
+      expect(select?.permission.columns).not.toContain("steam_id");
+      expect(update?.permission.filter).toEqual(own);
+      expect(update?.permission.check).toEqual(own);
+      expect(remove?.permission.filter).toEqual(own);
+    });
+
+    it("presets the player from the session on every insert", () => {
+      const [insert] = settings()?.insert_permissions ?? [];
+
+      expect(insert?.permission.set).toEqual({
+        steam_id: "x-hasura-user-id",
+      });
+      expect(insert?.permission.columns).not.toContain("steam_id");
+    });
+
+    it("never lets an update move a row to another room", () => {
+      const [update] = settings()?.update_permissions ?? [];
+
+      expect([...(update?.permission.columns ?? [])].sort()).toEqual([
+        "muted",
+        "muted_until",
+        "notify",
+      ]);
+    });
+
+    it("relates to nothing, and nothing relates to it", () => {
+      const relationships = tables.flatMap(({ file, metadata }) =>
+        [
+          ...(metadata?.object_relationships ?? []),
+          ...(metadata?.array_relationships ?? []),
+        ]
+          .filter(
+            (relationship: Record<string, any>) =>
+              file === "public_chat_room_settings.yaml" ||
+              relationship.using?.foreign_key_constraint_on?.table?.name ===
+                "chat_room_settings" ||
+              relationship.using?.manual_configuration?.remote_table?.name ===
+                "chat_room_settings",
+          )
+          .map(
+            (relationship: { name: string }) => `${file}: ${relationship.name}`,
+          ),
+      );
+
+      expect(settings()).toBeDefined();
+      expect(relationships).toEqual([]);
+    });
+  });
 });

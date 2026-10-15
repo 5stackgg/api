@@ -28,6 +28,7 @@ import {
   focusThreadsFor,
   isChatThreadKey,
   presenceFocusKey,
+  roomSettingsThreadFor,
   threadKeyFor,
 } from "./notification-delivery";
 
@@ -782,8 +783,15 @@ export class PushNotificationsService {
           AND np.channel = 'push'
           AND np.key = $2
         WHERE p.steam_id = ANY($1::bigint[])
-          AND COALESCE(np.enabled, $3::boolean) = true`,
-      [steamIds, category?.key ?? "", category?.defaultEnabled ?? true],
+          AND COALESCE(np.enabled, $3::boolean) = true
+          AND public.chat_room_notifies(p.steam_id, $4, $5)`,
+      [
+        steamIds,
+        category?.key ?? "",
+        category?.defaultEnabled ?? true,
+        roomSettingsThreadFor(current.threadKey),
+        current.mention === true,
+      ],
     );
 
     if (rows.length === 0) {
@@ -845,10 +853,12 @@ export class PushNotificationsService {
   }
 
   // Which of these players take pushes of `type`: their own setting for its
-  // category, or the category's default.
+  // category, or the category's default. Given the room a tag is in, also
+  // their own setting for that room.
   public async takingPushes(
     steamIds: string[],
     type: e_notification_types_enum,
+    taggedIn?: string,
   ): Promise<string[]> {
     if (steamIds.length === 0) {
       return [];
@@ -863,8 +873,15 @@ export class PushNotificationsService {
           AND np.channel = 'push'
           AND np.key = $2
         WHERE p.steam_id = ANY($1::bigint[])
-          AND COALESCE(np.enabled, $3::boolean) = true`,
-      [steamIds, category?.key ?? "", category?.defaultEnabled ?? true],
+          AND COALESCE(np.enabled, $3::boolean) = true
+          AND ($4::text IS NULL
+               OR public.chat_room_notifies(p.steam_id, $4, true))`,
+      [
+        steamIds,
+        category?.key ?? "",
+        category?.defaultEnabled ?? true,
+        taggedIn === undefined ? null : roomSettingsThreadFor(taggedIn),
+      ],
     );
     const taking = new Set(rows.map(({ steam_id }) => String(steam_id)));
 
@@ -951,6 +968,8 @@ export class PushNotificationsService {
           quiet_seconds: number;
           last_read_at: Date | null;
           blocked: string[] | null;
+          chatter: boolean;
+          tags: boolean;
         }
       >
     >(
@@ -958,6 +977,8 @@ export class PushNotificationsService {
                 p.quiet_hours_start, p.quiet_hours_end, p.notification_timezone
               ) AS quiet_seconds,
               crs.last_read_at,
+              public.chat_room_notifies(p.steam_id, $7, false) AS chatter,
+              public.chat_room_notifies(p.steam_id, $7, true) AS tags,
               ARRAY(
                 SELECT pb.blocked_steam_id::text
                   FROM public.player_blocks pb
@@ -984,6 +1005,7 @@ export class PushNotificationsService {
         newest.blockExemptRoles,
         category?.key ?? "",
         category?.defaultEnabled ?? true,
+        roomSettingsThreadFor(thread),
       ],
     );
 
@@ -991,12 +1013,13 @@ export class PushNotificationsService {
       return;
     }
 
-    const { quiet_seconds, last_read_at, blocked } = rows[0];
+    const { quiet_seconds, last_read_at, blocked, chatter, tags } = rows[0];
     const readTo = last_read_at ? new Date(last_read_at).getTime() : null;
     const hidden = new Set(blocked ?? []);
 
     const unseen = kept.filter(
       (push) =>
+        (push.mention ? tags : chatter) &&
         !hidden.has(push.senderSteamId) &&
         (readTo === null || new Date(push.at).getTime() > readTo),
     );

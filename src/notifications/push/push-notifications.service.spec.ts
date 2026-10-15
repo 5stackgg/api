@@ -149,6 +149,8 @@ describe("PushNotificationsService", () => {
   let readTo: string | null;
   // Senders the recipient has blocked, among those a chat window holds.
   let blockedSenders: string[];
+  // What the recipient's own setting for the room lets through right now.
+  let room: { chatter: boolean; tags: boolean };
   // Push preferences by `${steamId}:${category}`; unset is the default.
   let prefs: Record<string, boolean>;
 
@@ -198,6 +200,7 @@ describe("PushNotificationsService", () => {
     overrides = {};
     readTo = null;
     blockedSenders = [];
+    room = { chatter: true, tags: true };
     prefs = {};
 
     postgres.query.mockImplementation(async (sql: string, bindings: any[]) => {
@@ -239,6 +242,8 @@ describe("PushNotificationsService", () => {
           quiet_seconds: quietSeconds,
           last_read_at: readTo ? new Date(readTo) : null,
           blocked: blockedSenders,
+          chatter: room.chatter,
+          tags: room.tags,
           subscription_id: sub.id,
           endpoint: sub.endpoint,
           p256dh: sub.p256dh,
@@ -552,7 +557,40 @@ describe("PushNotificationsService", () => {
       );
 
       // match_chat is off unless the player turned it on.
-      expect(bindings).toEqual([["76561100000000001"], "match_chat", false]);
+      expect(bindings).toEqual([
+        ["76561100000000001"],
+        "match_chat",
+        false,
+        ROOM,
+        false,
+      ]);
+    });
+
+    it("asks each player's own setting for the room, as a tag or as chatter", async () => {
+      await service.sendChatMessage(
+        ["76561100000000001"],
+        chatPush({ mention: true }),
+      );
+
+      const [sql, bindings] = postgres.query.mock.calls.find(
+        ([text]: [string]) => text.includes("now() AS at"),
+      );
+
+      expect(sql).toContain("public.chat_room_notifies(p.steam_id, $4, $5)");
+      expect(bindings.slice(3)).toEqual([ROOM, true]);
+    });
+
+    it("asks a side's team room by the match room that carries it", async () => {
+      await service.sendChatMessage(
+        ["76561100000000001"],
+        chatPush({ threadKey: "chat:match_team:m-1:l-1" }),
+      );
+
+      const [, bindings] = postgres.query.mock.calls.find(([text]: [string]) =>
+        text.includes("now() AS at"),
+      );
+
+      expect(bindings.slice(3)).toEqual([ROOM, false]);
     });
 
     it("does not push a message deleted before it went out", async () => {
@@ -694,7 +732,52 @@ describe("PushNotificationsService", () => {
         ["moderator", "administrator"],
         "chat",
         true,
+        ROOM,
       ]);
+    });
+
+    it("drops the chatter of a room the player muted meanwhile, keeping a tag", async () => {
+      room = { chatter: false, tags: true };
+
+      await closeWindow([
+        heldChat({ messageId: "m-a", message: "chatter" }),
+        heldChat({
+          messageId: "m-b",
+          message: "@kairo you're up",
+          mention: true,
+        }),
+        heldChat({ messageId: "m-c", message: "more chatter" }),
+      ]);
+
+      expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
+      expect(payloadOf(0)).toMatchObject({ body: "@kairo you're up" });
+    });
+
+    it("says nothing for a room the player set to nothing meanwhile, tags included", async () => {
+      room = { chatter: false, tags: false };
+
+      await closeWindow([
+        heldChat({ messageId: "m-a" }),
+        heldChat({ messageId: "m-b", mention: true }),
+      ]);
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
+
+    it("reads a side's team room by its match room when the window closes", async () => {
+      redis.multi.mockReturnValueOnce(
+        chainableMulti([
+          [null, [heldChat({ threadKey: "chat:match_team:m-1:l-1" })]],
+        ]),
+      );
+      await service.sendPending("76561100000000001", "chat:match_team:m-1:l-1");
+
+      const [, bindings] = postgres.query.mock.calls.find(([sql]: [string]) =>
+        sql.includes("chat_read_state crs"),
+      );
+
+      expect(bindings[1]).toEqual("chat:match_team:m-1:l-1");
+      expect(bindings[6]).toEqual(ROOM);
     });
 
     it("skips an entry it cannot read rather than the whole window", async () => {
@@ -1276,6 +1359,26 @@ describe("PushNotificationsService", () => {
     });
 
     describe("who takes a kind of push", () => {
+      it("asks the room's own setting only when told which room", async () => {
+        await service.takingPushes(["a"], "ChatMessage");
+        await service.takingPushes(
+          ["a"],
+          "ChatMessage",
+          "chat:match_team:m-1:l-1",
+        );
+
+        const asked = postgres.query.mock.calls.filter(
+          ([sql]: [string]) =>
+            sql.includes("notification_preferences") &&
+            !sql.includes("push_subscriptions"),
+        );
+
+        expect(asked[0][0]).toContain(
+          "chat_room_notifies(p.steam_id, $4, true)",
+        );
+        expect(asked.map(([, bindings]) => bindings[3])).toEqual([null, ROOM]);
+      });
+
       it("answers by each player's setting, or the category's default", async () => {
         prefs["a:chat"] = false;
 
