@@ -64,6 +64,7 @@ import { ScrimsModule } from "./scrims/scrims.module";
 import { LeaguesModule } from "./leagues/leagues.module";
 import { PluginsModule } from "./plugins/plugins.module";
 import { UtilityModule } from "./utility/utility.module";
+import { TwitchModule } from "./twitch/twitch.module";
 import { AdministratorOrLoopbackMiddleware } from "./auth/AdministratorOrLoopbackMiddleware";
 
 @Module({
@@ -170,6 +171,7 @@ import { AdministratorOrLoopbackMiddleware } from "./auth/AdministratorOrLoopbac
     LeaguesModule,
     PluginsModule,
     UtilityModule,
+    TwitchModule,
   ],
   providers: [loggerFactory()],
   controllers: [AppController, QuickConnectController],

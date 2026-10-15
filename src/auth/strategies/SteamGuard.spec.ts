@@ -1,21 +1,10 @@
 import { SteamGuard } from "./SteamGuard";
 
-// Reaching past `private` on purpose: this is the open-redirect guard, and the
-// cases below are the reason it exists rather than an implementation detail.
 const isSafeRedirect = (
   redirect: string,
   cookieDomain = ".5stack.gg",
   webDomain = "https://5stack.gg",
-) =>
-  (
-    SteamGuard as unknown as {
-      isSafeRedirect: (
-        redirect: string,
-        webDomain: string,
-        cookieDomain: string,
-      ) => boolean;
-    }
-  ).isSafeRedirect(redirect, webDomain, cookieDomain);
+) => SteamGuard.isSafeRedirect(redirect, webDomain, cookieDomain);
 
 describe("SteamGuard.isSafeRedirect", () => {
   const dev = process.env.DEV;

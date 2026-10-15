@@ -59,6 +59,11 @@ export class SystemService {
     SystemSettingName.AutoGenerateMatchClipsImported,
   ];
 
+  public static readonly TWITCH_SETTINGS = [
+    SystemSettingName.TwitchClientId,
+    SystemSettingName.TwitchClientSecret,
+  ];
+
   constructor(
     private readonly cache: CacheService,
     private readonly hasura: HasuraService,
@@ -196,6 +201,8 @@ export class SystemService {
 
       await this.syncImportedHighlightsSupport();
 
+      await this.syncTwitchSupport();
+
       this.featuresDetected = true;
     } catch (error) {
       this.logger.warn("Error detecting features", error);
@@ -222,6 +229,32 @@ export class SystemService {
         __args: {
           object: {
             name: SystemSettingName.SupportsImportedHighlights,
+            value: supported.toString(),
+          },
+          on_conflict: {
+            constraint: "settings_pkey",
+            update_columns: ["value"],
+          },
+        },
+        __typename: true,
+      },
+    });
+  }
+
+  public async syncTwitchSupport() {
+    const values = await Promise.all(
+      SystemService.TWITCH_SETTINGS.map((name) =>
+        this.getSetting<string>(name, ""),
+      ),
+    );
+
+    const supported = values.every((value) => value.trim() !== "");
+
+    await this.hasura.mutation({
+      insert_settings_one: {
+        __args: {
+          object: {
+            name: SystemSettingName.SupportsTwitch,
             value: supported.toString(),
           },
           on_conflict: {

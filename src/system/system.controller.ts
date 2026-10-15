@@ -395,6 +395,18 @@ export class SystemController {
       }
     }
 
+    for (const setting of SystemService.TWITCH_SETTINGS) {
+      if (
+        (data.new.name === setting || data.old.name === setting) &&
+        (data.op === "INSERT" ||
+          data.op === "DELETE" ||
+          data.new.value !== data.old.value)
+      ) {
+        await this.system.syncTwitchSupport();
+        break;
+      }
+    }
+
     await this.system.updateDefaultOptions();
   }
 }

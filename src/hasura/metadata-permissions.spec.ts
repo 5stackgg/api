@@ -173,7 +173,11 @@ describe("hasura table metadata", () => {
   // A secret setting is kept from administrators by its name alone, so a role
   // that could rename the row could move it out of the list and read it.
   describe("secret settings", () => {
-    const SECRETS = ["web_push_private_key", "giphy_api_key"];
+    const SECRETS = [
+      "web_push_private_key",
+      "giphy_api_key",
+      "twitch_client_secret",
+    ];
 
     const settings = () =>
       tables.find(({ file }) => file === "public_settings.yaml")?.metadata;

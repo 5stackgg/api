@@ -179,6 +179,7 @@ describe("SystemController settings event", () => {
   let controller: SystemController;
   let system: {
     syncImportedHighlightsSupport: jest.Mock;
+    syncTwitchSupport: jest.Mock;
     updateDefaultOptions: jest.Mock;
   };
 
@@ -192,6 +193,7 @@ describe("SystemController settings event", () => {
   beforeEach(() => {
     system = {
       syncImportedHighlightsSupport: jest.fn(),
+      syncTwitchSupport: jest.fn(),
       updateDefaultOptions: jest.fn(),
     };
 
@@ -242,5 +244,30 @@ describe("SystemController settings event", () => {
     await changed("public.news_enabled", "false", "true");
 
     expect(system.syncImportedHighlightsSupport).not.toHaveBeenCalled();
+  });
+
+  it.each(["twitch_client_id", "twitch_client_secret"])(
+    "re-derives Twitch support when %s changes",
+    async (name) => {
+      await changed(name, "", "set");
+
+      expect(system.syncTwitchSupport).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it("re-derives Twitch support when a key row is removed", async () => {
+    await controller.settings({
+      op: "DELETE",
+      old: { name: "twitch_client_secret", value: "secret" },
+      new: {},
+    });
+
+    expect(system.syncTwitchSupport).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not react to the Twitch flag it writes", async () => {
+    await changed("public.supports_twitch", "false", "true");
+
+    expect(system.syncTwitchSupport).not.toHaveBeenCalled();
   });
 });

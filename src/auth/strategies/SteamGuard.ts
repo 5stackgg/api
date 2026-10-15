@@ -88,7 +88,7 @@ export class SteamGuard extends AuthGuard("steam") {
   // cover: AUTH_COOKIE_DOMAIN is an override, and one set narrower than the
   // panel's own host would otherwise stop a deployment honouring redirects back
   // to itself.
-  private static isSafeRedirect(
+  public static isSafeRedirect(
     redirect: string,
     webDomain: string,
     cookieDomain: string,

@@ -36,7 +36,8 @@ type Modules =
   | "Utility"
   | "Voice"
   | "MapAssets"
-  | "ServerRoster";
+  | "ServerRoster"
+  | "Twitch";
 
 export type UseQueueOptions = {
   concurrency?: number;
