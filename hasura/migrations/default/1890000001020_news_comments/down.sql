@@ -2,6 +2,7 @@ DROP FUNCTION IF EXISTS public.news_comment_text(public.news_comments, json);
 DROP FUNCTION IF EXISTS public.news_comment_visible(public.news_comments, json);
 DROP FUNCTION IF EXISTS public.news_comment_viewer_voted(public.news_comments, json);
 DROP FUNCTION IF EXISTS public.news_comment_hidden_by_name(public.news_comments);
+DROP FUNCTION IF EXISTS public.news_comment_author(public.news_comments, json);
 
 DROP TABLE IF EXISTS public.news_comment_votes;
 DROP TABLE IF EXISTS public.news_comments;

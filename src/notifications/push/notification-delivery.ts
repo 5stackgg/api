@@ -42,7 +42,11 @@ const DELIVERY_POLICIES: Record<string, e_notification_types_enum[]> = {
 
   // Conversations. The only type where the recipient is routinely staring at
   // the thing being pushed to them.
-  "15s-unseen": ["ChatMessage", "MatchChatMessage"],
+  "15s-unseen": [
+    "ChatMessage",
+    "MatchChatMessage",
+    "NewsCommentReply" as e_notification_types_enum,
+  ],
 
   // A match alert describes a condition, and conditions flap -- pause, resume,
   // pause again. They are also retracted wholesale by resolveMatchAlerts, so a
@@ -88,7 +92,6 @@ const DELIVERY_POLICIES: Record<string, e_notification_types_enum[]> = {
     "LeagueRegistrationDecision",
     "LeagueRosterUndersized",
     "UtilityPracticeInvite",
-    "NewsCommentReply" as e_notification_types_enum,
     // A practice server is up for as long as somebody is on it and the reaper
     // stops it when nobody is: a late buzz sends a player to a session that has
     // already been torn down, so this one is worth nothing bundled.

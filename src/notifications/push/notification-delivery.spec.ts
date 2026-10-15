@@ -103,6 +103,12 @@ describe("notification delivery policies", () => {
     });
   });
 
+  it("bundles a burst of replies to news comments like a conversation", () => {
+    expect(deliveryPolicyForType("NewsCommentReply")).toEqual(
+      deliveryPolicyForType("ChatMessage"),
+    );
+  });
+
   it("delivers a banned-teammate notice the way the sanction notice it split from was", () => {
     expect(deliveryPolicyForType("TeammateBanned")).toEqual({
       bundleSeconds: 0,

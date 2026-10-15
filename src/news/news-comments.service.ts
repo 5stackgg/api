@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import Redis from "ioredis";
+import { PoolClient } from "pg";
 import { e_notification_types_enum, e_player_roles_enum } from "generated";
 import { PostgresService } from "src/postgres/postgres.service";
 import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
@@ -40,7 +41,6 @@ type NewsCommentPlayer = {
   role: e_player_roles_enum;
   banned: boolean;
   gagged: boolean;
-  muted: boolean;
 };
 
 export type NewsCommentOutput = { id: string; parent_id: string | null };
@@ -169,6 +169,9 @@ export class NewsCommentsService {
     if (this.isRemoved(comment)) {
       throw new BadRequestException(NewsCommentError.Removed);
     }
+    if (!(await this.article(comment.article_id))?.open) {
+      throw new BadRequestException(NewsCommentError.Closed);
+    }
     if (
       Date.now() >
       new Date(comment.created_at).getTime() +
@@ -212,34 +215,50 @@ export class NewsCommentsService {
       throw new ForbiddenException(NewsCommentError.NotYours);
     }
 
-    const deleted = await this.write<Array<{ id: string }>>(
-      `DELETE FROM public.news_comments c
-        WHERE c.id = $1
-          AND NOT EXISTS (
-              SELECT 1 FROM public.news_comments r WHERE r.parent_id = c.id
-          )
-        RETURNING c.id`,
-      [comment.id],
-    );
+    await this.writeInTransaction(async (client) => {
+      // Locked before the reply check, so a reply still being written either
+      // lands first and is seen here, or waits and then finds its parent gone.
+      await client.query(
+        `SELECT id FROM public.news_comments WHERE id = $1 FOR UPDATE`,
+        [comment.id],
+      );
 
-    if (deleted.length === 0) {
-      await this.write(
-        `UPDATE public.news_comments
-            SET deleted_at = now(), deleted_by_staff = $2
-          WHERE id = $1 AND deleted_at IS NULL`,
-        [comment.id, !own],
+      const {
+        rows: [{ answered }],
+      } = await client.query<{ answered: boolean }>(
+        `SELECT EXISTS (
+            SELECT 1 FROM public.news_comments WHERE parent_id = $1
+         ) AS answered`,
+        [comment.id],
       );
-    } else if (comment.parent_id) {
-      await this.write(
-        `DELETE FROM public.news_comments p
-          WHERE p.id = $1
-            AND p.deleted_at IS NOT NULL
-            AND NOT EXISTS (
-                SELECT 1 FROM public.news_comments r WHERE r.parent_id = p.id
-            )`,
-        [comment.parent_id],
-      );
-    }
+
+      if (answered) {
+        await client.query(
+          `UPDATE public.news_comments
+              SET deleted_at = now(), deleted_by_staff = $2
+            WHERE id = $1 AND deleted_at IS NULL`,
+          [comment.id, !own],
+        );
+      } else {
+        await client.query(`DELETE FROM public.news_comments WHERE id = $1`, [
+          comment.id,
+        ]);
+
+        if (comment.parent_id) {
+          await client.query(
+            `DELETE FROM public.news_comments p
+              WHERE p.id = $1
+                AND p.deleted_at IS NOT NULL
+                AND NOT EXISTS (
+                    SELECT 1 FROM public.news_comments r WHERE r.parent_id = p.id
+                )`,
+            [comment.parent_id],
+          );
+        }
+      }
+
+      await this.retractReplyNotifications(client, comment.id);
+    });
 
     if (!own) {
       this.logger.log(
@@ -345,14 +364,18 @@ export class NewsCommentsService {
           NewsCommentsService.HIDE_REASON_MAX_LENGTH,
         ) || null;
 
-      await this.write(
-        `UPDATE public.news_comments
-            SET hidden_at = COALESCE(hidden_at, now()),
-                hidden_by_steam_id = $2::bigint,
-                hidden_reason = $3
-          WHERE id = $1`,
-        [comment.id, moderator.steam_id, reason],
-      );
+      await this.writeInTransaction(async (client) => {
+        await client.query(
+          `UPDATE public.news_comments
+              SET hidden_at = COALESCE(hidden_at, now()),
+                  hidden_by_steam_id = $2::bigint,
+                  hidden_reason = $3
+            WHERE id = $1`,
+          [comment.id, moderator.steam_id, reason],
+        );
+
+        await this.retractReplyNotifications(client, comment.id);
+      });
     } else {
       await this.write(
         `UPDATE public.news_comments
@@ -403,8 +426,9 @@ export class NewsCommentsService {
           `${NotificationsService.escapeHtml(article.title)}</a>: ` +
           `“${NotificationsService.escapeHtml(snippet)}”`,
         role: "user",
-        entity_id: reply.id,
+        entity_id: article.id,
         steamIds: [recipient],
+        data: { messageId: reply.id, threadLabel: article.title },
       },
     );
   }
@@ -419,8 +443,7 @@ export class NewsCommentsService {
               p.name,
               p.role,
               public.is_banned(p) AS banned,
-              public.is_gagged(p) AS gagged,
-              public.is_muted(p) AS muted
+              public.is_gagged(p) AS gagged
          FROM public.players p
         WHERE p.steam_id = $1::bigint`,
       [String(user.steam_id)],
@@ -451,9 +474,6 @@ export class NewsCommentsService {
     }
     if (player.gagged) {
       throw new ForbiddenException(NewsCommentError.Gagged);
-    }
-    if (player.muted) {
-      throw new ForbiddenException(NewsCommentError.Muted);
     }
   }
 
@@ -522,8 +542,22 @@ export class NewsCommentsService {
     return row ?? null;
   }
 
-  // The triggers raise SQLSTATE 22023 with a NewsCommentError as the message,
-  // for a rule a concurrent write broke after the checks above passed.
+  // The bell row and any push still held for it. A push already on the device
+  // cannot be called back.
+  private async retractReplyNotifications(
+    client: PoolClient,
+    commentId: string,
+  ): Promise<void> {
+    await client.query(
+      `UPDATE public.notifications
+          SET deleted_at = now()
+        WHERE type = 'NewsCommentReply'
+          AND data ->> 'messageId' = $1
+          AND deleted_at IS NULL`,
+      [commentId],
+    );
+  }
+
   private async write<T = unknown>(
     sql: string,
     params: Parameters<PostgresService["query"]>[1],
@@ -531,10 +565,34 @@ export class NewsCommentsService {
     try {
       return await this.postgres.query<T>(sql, params);
     } catch (error) {
-      if ((error as { code?: string })?.code === "22023") {
-        throw new BadRequestException((error as Error).message);
-      }
-      throw error;
+      throw this.refusal(error);
     }
+  }
+
+  private async writeInTransaction(
+    work: (client: PoolClient) => Promise<void>,
+  ): Promise<void> {
+    try {
+      await this.postgres.transaction(work);
+    } catch (error) {
+      throw this.refusal(error);
+    }
+  }
+
+  // The triggers raise SQLSTATE 22023 with a NewsCommentError as the message,
+  // for a rule a concurrent write broke after the checks above passed; 23503 is
+  // the comment or post a write points at going in the meantime.
+  private refusal(error: unknown): unknown {
+    const code = (error as { code?: string })?.code;
+
+    if (code === "22023") {
+      return new BadRequestException((error as Error).message);
+    }
+
+    if (code === "23503") {
+      return new BadRequestException(NewsCommentError.NotFound);
+    }
+
+    return error;
   }
 }

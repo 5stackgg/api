@@ -6,7 +6,6 @@ export enum NewsCommentError {
   NotVerified = "news_comment_not_verified",
   Banned = "news_comment_banned",
   Gagged = "news_comment_gagged",
-  Muted = "news_comment_muted",
   NotFound = "news_comment_not_found",
   Closed = "news_comment_closed",
   Empty = "news_comment_empty",

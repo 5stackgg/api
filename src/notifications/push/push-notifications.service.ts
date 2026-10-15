@@ -1537,7 +1537,9 @@ export class PushNotificationsService {
     const names = [...new Set(notifications.map(({ title }) => title))];
     const noun = newest.type.endsWith("ChatMessage")
       ? "messages"
-      : "notifications";
+      : newest.type === "NewsCommentReply"
+        ? "replies"
+        : "notifications";
     const mentions = notifications.filter(({ data }) => data?.mention).length;
     const tagged = mentions > 0 ? `, ${mentions} mentioning you` : "";
 

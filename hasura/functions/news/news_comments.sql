@@ -64,9 +64,9 @@ AS $$
     END;
 $$;
 
--- A reader never sees what they blocked, a removed comment only while an
--- unhidden reply still hangs off it, or anything on a post that is not
--- published. Staff see every comment on a published post.
+-- A reader never sees what they blocked, nor the replies under it, a removed
+-- comment only while an unhidden reply still hangs off it, or anything on a
+-- post that is not published. Staff see every comment on a published post.
 CREATE OR REPLACE FUNCTION public.news_comment_visible(
     comment public.news_comments,
     hasura_session json
@@ -90,8 +90,13 @@ AS $$
             NOT EXISTS (
                 SELECT 1
                   FROM public.player_blocks pb
+             LEFT JOIN public.news_comments parent
+                    ON parent.id = comment.parent_id
                  WHERE pb.blocker_steam_id = public.news_comment_viewer(hasura_session)
-                   AND pb.blocked_steam_id = comment.author_steam_id
+                   AND pb.blocked_steam_id IN (
+                       comment.author_steam_id,
+                       parent.author_steam_id
+                   )
             )
             AND (
                 (comment.hidden_at IS NULL AND comment.deleted_at IS NULL)
@@ -104,6 +109,29 @@ AS $$
             )
         )
     );
+$$;
+
+-- The author as this viewer may see them: nobody for a deleted comment, and
+-- for a hidden one only staff.
+CREATE OR REPLACE FUNCTION public.news_comment_author(
+    comment public.news_comments,
+    hasura_session json
+)
+RETURNS SETOF public.players
+LANGUAGE sql
+STABLE
+AS $$
+    SELECT p.*
+      FROM public.players p
+     WHERE p.steam_id = comment.author_steam_id
+       AND comment.deleted_at IS NULL
+       AND (
+           comment.hidden_at IS NULL
+           OR COALESCE(hasura_session ->> 'x-hasura-role', '') IN (
+               'moderator', 'match_organizer', 'tournament_organizer',
+               'administrator', 'admin'
+           )
+       );
 $$;
 
 CREATE OR REPLACE FUNCTION public.news_comment_viewer_voted(

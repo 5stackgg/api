@@ -5,9 +5,6 @@ object_relationships:
   - name: article
     using:
       foreign_key_constraint_on: article_id
-  - name: author
-    using:
-      foreign_key_constraint_on: author_steam_id
 array_relationships:
   - name: replies
     using:
@@ -17,6 +14,13 @@ array_relationships:
           name: news_comments
           schema: public
 computed_fields:
+  - name: author
+    definition:
+      function:
+        name: news_comment_author
+        schema: public
+      session_argument: hasura_session
+    comment: The author as this viewer may see them, none once removed.
   - name: hidden_by_name
     definition:
       function:
@@ -49,7 +53,6 @@ select_permissions:
         - id
         - article_id
         - parent_id
-        - author_steam_id
         - vote_count
         - created_at
         - edited_at
@@ -70,7 +73,6 @@ select_permissions:
         - id
         - article_id
         - parent_id
-        - author_steam_id
         - vote_count
         - created_at
         - edited_at

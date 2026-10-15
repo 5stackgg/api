@@ -54,7 +54,7 @@ CREATE TRIGGER tbi_news_comments
     EXECUTE FUNCTION public.tbi_news_comments();
 
 -- Deleting, hiding and restoring stay allowed after the thread closes; only
--- the text is held to the 10-minute edit window.
+-- the text is held to the thread and to the 10-minute edit window.
 CREATE OR REPLACE FUNCTION public.tbu_news_comments()
     RETURNS TRIGGER
     LANGUAGE plpgsql
@@ -74,6 +74,10 @@ BEGIN
     IF NEW.body IS DISTINCT FROM OLD.body THEN
         IF OLD.deleted_at IS NOT NULL OR OLD.hidden_at IS NOT NULL THEN
             RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'news_comment_removed';
+        END IF;
+
+        IF NOT public.news_comments_open(OLD.article_id) THEN
+            RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'news_comment_closed';
         END IF;
 
         IF now() > OLD.created_at + interval '10 minutes' THEN

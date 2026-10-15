@@ -1,6 +1,9 @@
 import { readFileSync } from "fs";
 import { join, resolve } from "path";
 import { load } from "cheerio";
+import IORedis, { Redis } from "ioredis";
+import { GenericContainer, StartedTestContainer } from "testcontainers";
+import * as webPush from "web-push";
 import { PostgresService } from "../src/postgres/postgres.service";
 import { PlayerBlocksService } from "../src/player-blocks/player-blocks.service";
 import { NewsCommentsService } from "../src/news/news-comments.service";
@@ -8,8 +11,17 @@ import { NewsCommentError } from "../src/news/enums/NewsCommentError";
 import { User } from "../src/auth/types/User";
 import { stripHtml } from "../src/notifications/utilities/stripHtml";
 import { notificationUrl } from "../src/notifications/utilities/notificationUrl";
+import { NotificationsService } from "../src/notifications/notifications.service";
+import { NotificationPreferencesService } from "../src/notifications/preferences/notification-preferences.service";
+import { PushNotificationsService } from "../src/notifications/push/push-notifications.service";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
+
+jest.mock("web-push", () => ({
+  setVapidDetails: jest.fn(),
+  sendNotification: jest.fn().mockResolvedValue({}),
+  generateVAPIDKeys: jest.fn(),
+}));
 
 // Comments under a published news post: who may write, the 7-day window, one
 // level of replies, staff moderation, limits, what each reader is shown and
@@ -20,20 +32,64 @@ describe("news comments (SQL-driven)", () => {
   let postgres: PostgresService;
   let fx: Fixtures;
   let service: NewsCommentsService;
-  let counters: Map<string, number>;
-  let notifyPlayers: jest.Mock;
+  let container: StartedTestContainer;
+  let redis: Redis;
+  let push: PushNotificationsService;
+  let trailing: jest.Mock;
+  let notifyPlayers: jest.SpyInstance;
   let seq = 0;
 
   const logger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
 
   beforeAll(async () => {
+    container = await new GenericContainer("redis:8.8-alpine")
+      .withExposedPorts(6379)
+      .start();
+    redis = new IORedis({
+      host: container.getHost(),
+      port: container.getMappedPort(6379),
+    });
+
     db = await bootMigratedDb("NewsCommentsTest");
     postgres = db.postgres;
     fx = new Fixtures(postgres, 76561199965000000n);
   }, 600_000);
 
   afterAll(async () => {
+    redis?.disconnect();
+    await container?.stop();
     await db?.stop();
+  });
+
+  // notifyPlayers writes through Hasura; this lands the rows in the table the
+  // push gate then reads them back from.
+  const hasura = () => ({
+    query: jest.fn().mockResolvedValue({ settings_by_pk: null }),
+    mutation: jest.fn(async (mutation: any) => {
+      const insert = mutation?.insert_notifications;
+      const returning: Array<{ id: string }> = [];
+
+      for (const object of insert?.__args.objects ?? []) {
+        const [row] = await postgres.query<Array<{ id: string }>>(
+          `INSERT INTO notifications (type, title, message, role, steam_id, entity_id, in_app, data)
+           VALUES ($1, $2, $3, $4, $5::bigint, $6, $7, $8::jsonb)
+           RETURNING id::text AS id`,
+          [
+            object.type,
+            object.title,
+            object.message,
+            object.role,
+            object.steam_id,
+            object.entity_id ?? null,
+            object.in_app ?? true,
+            object.data ? JSON.stringify(object.data) : null,
+          ],
+        );
+        returning.push(row);
+      }
+
+      return { insert_notifications: { returning } };
+    }),
   });
 
   beforeEach(async () => {
@@ -41,23 +97,47 @@ describe("news comments (SQL-driven)", () => {
     await postgres.query("DELETE FROM news_articles");
     await postgres.query("DELETE FROM player_blocks");
     await postgres.query("DELETE FROM player_sanctions");
+    await postgres.query("DELETE FROM notifications");
+    await postgres.query("DELETE FROM push_subscriptions");
+    await redis.flushdb();
+    (webPush.sendNotification as jest.Mock).mockClear();
 
-    counters = new Map();
-    notifyPlayers = jest.fn().mockResolvedValue(1);
+    trailing = jest.fn(async () => ({}));
+    push = new PushNotificationsService(
+      logger as any,
+      postgres,
+      {
+        get: (key: string) =>
+          key === "app"
+            ? { webDomain: "https://5stack.test", apiDomain: "api.5stack.test" }
+            : {
+                publicKey: "public-key",
+                privateKey: "private-key",
+                subject: "https://5stack.test",
+              },
+      } as any,
+      { add: trailing } as any,
+      { getConnection: () => redis } as any,
+    );
+    await push.loadKeys();
 
-    const redis = {
-      eval: jest.fn(async (_script: string, _keys: number, key: string) => {
-        const count = (counters.get(key) ?? 0) + 1;
-        counters.set(key, count);
-        return count;
-      }),
-    };
+    const notifications = new NotificationsService(
+      hasura() as any,
+      postgres,
+      logger as any,
+      { get: () => ({ webDomain: "https://5stack.test" }) } as any,
+      new NotificationPreferencesService(postgres),
+      push,
+      { add: jest.fn() } as any,
+      { add: jest.fn() } as any,
+    );
+    notifyPlayers = jest.spyOn(notifications, "notifyPlayers");
 
     service = new NewsCommentsService(
       logger as any,
       postgres,
       { getConnection: () => redis } as any,
-      { notifyPlayers } as any,
+      notifications,
       new PlayerBlocksService(postgres),
     );
   });
@@ -165,6 +245,45 @@ describe("news comments (SQL-driven)", () => {
     );
   };
 
+  const subscribe = (steamId: string) =>
+    postgres.query(
+      `INSERT INTO push_subscriptions (steam_id, endpoint, p256dh, auth)
+       VALUES ($1::bigint, $2, 'key', 'auth')`,
+      [steamId, `https://fcm.googleapis.com/fcm/send/${steamId}`],
+    );
+
+  // What Hasura's event trigger on notifications does for each new row.
+  const pushNewest = async (steamId: string) => {
+    const [newest] = await postgres.query<Array<{ id: string; type: string }>>(
+      `SELECT id::text AS id, type::text AS type FROM notifications
+        WHERE steam_id = $1::bigint ORDER BY created_at DESC LIMIT 1`,
+      [steamId],
+    );
+    await push.sendForNotification(newest);
+  };
+
+  const pushes = () =>
+    (webPush.sendNotification as jest.Mock).mock.calls.map(([, raw]) =>
+      JSON.parse(raw),
+    );
+
+  const bell = async (steamId: string) =>
+    (
+      await postgres.query<Array<{ message: string }>>(
+        `SELECT message FROM notifications
+          WHERE steam_id = $1::bigint AND deleted_at IS NULL`,
+        [steamId],
+      )
+    ).map(({ message }) => message);
+
+  const titleOf = async (articleId: string) =>
+    (
+      await postgres.query<Array<{ title: string }>>(
+        "SELECT title FROM news_articles WHERE id = $1",
+        [articleId],
+      )
+    )[0].title;
+
   const sanction = (steamId: string, type: string, removeAt?: string) =>
     postgres.query(
       `INSERT INTO player_sanctions (player_steam_id, type, remove_sanction_date)
@@ -223,7 +342,6 @@ describe("news comments (SQL-driven)", () => {
       ["ban", NewsCommentError.Banned],
       ["gag", NewsCommentError.Gagged],
       ["silence", NewsCommentError.Gagged],
-      ["mute", NewsCommentError.Muted],
     ])(
       "keeps a player under a %s from commenting, editing and +1ing",
       async (type, code) => {
@@ -243,6 +361,25 @@ describe("news comments (SQL-driven)", () => {
         ).rejects.toEqual(refused(code));
       },
     );
+
+    it("lets a muted player comment, edit and +1, since a mute only covers voice", async () => {
+      const id = await article();
+      const muted = await player();
+      const own = await post(muted, id);
+      const other = await post(await player(), id);
+
+      await sanction(muted.steam_id, "mute");
+
+      await expect(post(muted, id, "still here")).resolves.toEqual(
+        expect.any(String),
+      );
+      await expect(
+        service.edit(muted, { id: own, body: "edited" }),
+      ).resolves.toEqual({ id: own, parent_id: null });
+      await expect(service.toggleVote(muted, { id: other })).resolves.toEqual(
+        expect.objectContaining({ voted: true }),
+      );
+    });
 
     it("lets an expired or lifted sanction go", async () => {
       const id = await article();
@@ -465,6 +602,72 @@ describe("news comments (SQL-driven)", () => {
           comment,
         ]),
       ).rejects.toThrow(NewsCommentError.EditWindow);
+    });
+
+    it("refuses an edit once the thread has closed, even inside the 10 minutes", async () => {
+      const id = await article();
+      const author = await player();
+      const comment = await post(author, id, "typo");
+
+      await close(id);
+
+      await expect(
+        service.edit(author, { id: comment, body: "fixed" }),
+      ).rejects.toEqual(refused(NewsCommentError.Closed));
+      await expect(
+        postgres.query(
+          "UPDATE news_comments SET body = 'fixed' WHERE id = $1",
+          [comment],
+        ),
+      ).rejects.toThrow(NewsCommentError.Closed);
+      expect((await row(comment)).body).toBe("typo");
+    });
+
+    it("keeps a reply that lands while its comment is being deleted", async () => {
+      const id = await article();
+      const author = await player();
+      const replier = await player();
+      const top = await post(author, id);
+
+      const pool = (postgres as unknown as { pool: any }).pool;
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        await client.query(
+          `INSERT INTO news_comments (article_id, parent_id, author_steam_id, body)
+           VALUES ($1, $2, $3, 'just in time')`,
+          [id, top, replier.steam_id],
+        );
+
+        const removal = service.remove(author, { id: top });
+
+        for (let waited = 0; waited < 100; waited++) {
+          const [{ waiting }] = await postgres.query<
+            Array<{ waiting: number }>
+          >(
+            `SELECT count(*)::int AS waiting FROM pg_stat_activity
+              WHERE datname = current_database() AND wait_event_type = 'Lock'`,
+          );
+          if (waiting > 0) {
+            break;
+          }
+          await new Promise((settle) => setTimeout(settle, 50));
+        }
+
+        await client.query("COMMIT");
+        await removal;
+      } finally {
+        client.release();
+      }
+
+      expect(await row(top)).toEqual(
+        expect.objectContaining({ deleted: true }),
+      );
+      const [{ replies }] = await postgres.query<Array<{ replies: number }>>(
+        "SELECT count(*)::int AS replies FROM news_comments WHERE parent_id = $1",
+        [top],
+      );
+      expect(replies).toBe(1);
     });
 
     it("deletes a comment with no replies outright, and leaves a placeholder over one with replies", async () => {
@@ -749,6 +952,41 @@ describe("news comments (SQL-driven)", () => {
   });
 
   describe("limits", () => {
+    it("gives every rate-limit window an expiry, and lets a player post again once it has passed", async () => {
+      const id = await article();
+      const author = await player();
+      const voter = await player();
+      const minute = `news-comments:post:minute:${author.steam_id}`;
+
+      const comment = await post(author, id, "one");
+      await service.edit(author, { id: comment, body: "one, edited" });
+      await service.toggleVote(voter, { id: comment });
+
+      const ttl = async (key: string) => await redis.pttl(key);
+      for (const [key, window] of [
+        [minute, 60_000],
+        [`news-comments:post:day:${author.steam_id}`, 24 * 60 * 60_000],
+        [`news-comments:edit:minute:${author.steam_id}`, 60_000],
+        [`news-comments:vote:minute:${voter.steam_id}`, 60_000],
+      ] as const) {
+        expect(await ttl(key)).toBeGreaterThan(window - 10_000);
+        expect(await ttl(key)).toBeLessThanOrEqual(window);
+      }
+
+      await post(author, id, "two");
+      await post(author, id, "three");
+      await expect(post(author, id, "four")).rejects.toEqual(
+        refused(NewsCommentError.RateLimited),
+      );
+
+      await redis.pexpire(minute, 1);
+      await new Promise((settle) => setTimeout(settle, 50));
+
+      await expect(post(author, id, "four")).resolves.toEqual(
+        expect.any(String),
+      );
+    });
+
     it("caps a comment at 2000 characters and refuses an empty one", async () => {
       const id = await article();
       const author = await player();
@@ -782,7 +1020,7 @@ describe("news comments (SQL-driven)", () => {
         refused(NewsCommentError.RateLimited),
       );
 
-      counters.set(
+      await redis.set(
         `news-comments:post:day:${busy.steam_id}`,
         NewsCommentsService.POST_LIMIT_PER_DAY,
       );
@@ -796,7 +1034,7 @@ describe("news comments (SQL-driven)", () => {
       const comment = await post(await player(), id);
       const voter = await player();
 
-      counters.set(
+      await redis.set(
         `news-comments:vote:minute:${voter.steam_id}`,
         NewsCommentsService.VOTE_LIMIT_PER_MINUTE,
       );
@@ -955,6 +1193,98 @@ describe("news comments (SQL-driven)", () => {
       expect(await voted("0")).toEqual({ liked: false, "not liked": false });
     });
 
+    it("never names the author of a removed comment to a reader, only to staff", async () => {
+      const id = await article();
+      const author = await player("verified_user", "marlowe");
+      const moderator = await player("moderator");
+      await insert(id, author.steam_id, "visible");
+      const hidden = await insert(id, author.steam_id, "hidden");
+      const deleted = await insert(id, author.steam_id, "deleted");
+      await insert(id, moderator.steam_id, "reply one", hidden);
+      await insert(id, moderator.steam_id, "reply two", deleted);
+      await service.setHidden(moderator, { id: hidden, hidden: true });
+      await service.remove(author, { id: deleted });
+
+      const authors = async (role: string) =>
+        Object.fromEntries(
+          (
+            await postgres.query<
+              Array<{ body: string; author: string | null }>
+            >(
+              `SELECT c.body,
+                      (SELECT a.name FROM news_comment_author(c, $1::json) a) AS author
+                 FROM news_comments c
+                WHERE c.parent_id IS NULL`,
+              [session(role, moderator.steam_id)],
+            )
+          ).map(({ body, author }) => [body, author]),
+        );
+
+      for (const role of ["guest", "user", "verified_user", "streamer"]) {
+        expect(await authors(role)).toEqual({
+          visible: "marlowe",
+          hidden: null,
+          deleted: null,
+        });
+      }
+      for (const role of ["moderator", "administrator"]) {
+        expect(await authors(role)).toEqual({
+          visible: "marlowe",
+          hidden: "marlowe",
+          deleted: null,
+        });
+      }
+    });
+
+    it("hides the replies under a comment the viewer blocked, so the count matches what is on the page", async () => {
+      const id = await article();
+      const viewer = await player();
+      const blocked = await player();
+      const other = await player();
+      const theirs = await insert(id, blocked.steam_id, "blocked top");
+      await insert(id, other.steam_id, "reply under it", theirs);
+      const fine = await insert(id, other.steam_id, "fine top");
+      await insert(id, blocked.steam_id, "blocked reply", fine);
+      await insert(id, viewer.steam_id, "own reply", fine);
+
+      await postgres.query(
+        "INSERT INTO player_blocks (blocker_steam_id, blocked_steam_id) VALUES ($1, $2)",
+        [viewer.steam_id, blocked.steam_id],
+      );
+
+      expect(
+        Object.keys(await shown("verified_user", viewer.steam_id)).sort(),
+      ).toEqual(["fine top", "own reply"]);
+
+      const [{ count }] = await postgres.query<Array<{ count: number }>>(
+        `SELECT count(*)::int AS count FROM news_comments c
+          WHERE c.article_id = $1 AND c.deleted_at IS NULL AND c.hidden_at IS NULL
+            AND news_comment_visible(c, $2::json)`,
+        [id, session("verified_user", viewer.steam_id)],
+      );
+      expect(count).toBe(2);
+      expect(
+        Object.keys(await shown("moderator", viewer.steam_id)),
+      ).toHaveLength(5);
+    });
+
+    it("serves a post's comments from a plain index on the post", async () => {
+      const indexes = await postgres.query<
+        Array<{ indexname: string; indexdef: string }>
+      >(
+        "SELECT indexname, indexdef FROM pg_indexes WHERE tablename = 'news_comments'",
+      );
+
+      expect(indexes.map(({ indexdef }) => indexdef)).toContainEqual(
+        expect.stringMatching(
+          /USING btree \(article_id, parent_id, created_at\)$/,
+        ),
+      );
+      expect(indexes.map(({ indexname }) => indexname)).not.toContain(
+        "news_comments_article_created_idx",
+      );
+    });
+
     it("names who hid a comment", async () => {
       const id = await article();
       const moderator = await player("moderator", "luke");
@@ -987,9 +1317,10 @@ describe("news comments (SQL-driven)", () => {
       expect(payload).toEqual(
         expect.objectContaining({
           role: "user",
-          entity_id: reply,
+          entity_id: id,
           steamIds: [author.steam_id],
           title: "New reply to your comment",
+          data: { messageId: reply, threadLabel: await titleOf(id) },
         }),
       );
       expect(payload.message).toContain("<b>&lt;b&gt;kairo&lt;/b&gt;</b>");
@@ -1088,6 +1419,84 @@ describe("news comments (SQL-driven)", () => {
       expect(notifyPlayers).not.toHaveBeenCalled();
     });
 
+    it("bundles a burst of replies on one post into one push and a summary", async () => {
+      const id = await article();
+      const author = await player();
+      await subscribe(author.steam_id);
+      const top = await post(author, id, "Lower bracket?");
+
+      for (const name of ["kairo", "ruu", "tjorn"]) {
+        await post(
+          await player("verified_user", name),
+          id,
+          `yes from ${name}`,
+          top,
+        );
+        await pushNewest(author.steam_id);
+      }
+
+      expect(pushes()).toHaveLength(1);
+      expect(pushes()[0]).toMatchObject({
+        title: `New reply to your comment · ${await titleOf(id)}`,
+        tag: `NewsCommentReply:${id}`,
+      });
+      expect(pushes()[0].body).toContain("yes from kairo");
+      expect(trailing).toHaveBeenCalled();
+
+      await push.sendPending(author.steam_id, `NewsCommentReply:${id}`);
+
+      expect(pushes()).toHaveLength(2);
+      expect(pushes()[1]).toMatchObject({
+        tag: `NewsCommentReply:${id}`,
+        body: "3 new replies",
+      });
+    });
+
+    it("takes a reply's notification back from the bell and from a held push once the reply is hidden or deleted", async () => {
+      const id = await article();
+      const author = await player();
+      const regretful = await player();
+      await subscribe(author.steam_id);
+      await postgres.query(
+        `UPDATE players
+            SET quiet_hours_start = (now() AT TIME ZONE 'UTC')::time - interval '1 hour',
+                quiet_hours_end = (now() AT TIME ZONE 'UTC')::time + interval '1 hour',
+                notification_timezone = 'UTC'
+          WHERE steam_id = $1::bigint`,
+        [author.steam_id],
+      );
+      const top = await post(author, id);
+      const rude = await post(await player(), id, "rude reply", top);
+      await pushNewest(author.steam_id);
+      const regretted = await post(regretful, id, "regretted reply", top);
+      await pushNewest(author.steam_id);
+      const kept = await post(await player(), id, "kept reply", top);
+
+      expect(pushes()).toEqual([]);
+      expect(await bell(author.steam_id)).toHaveLength(3);
+
+      await service.setHidden(await player("moderator"), {
+        id: rude,
+        hidden: true,
+      });
+      await service.remove(regretful, { id: regretted });
+
+      const left = await bell(author.steam_id);
+      expect(left).toHaveLength(1);
+      expect(left[0]).toContain(`#comment-${kept}`);
+
+      await postgres.query(
+        `UPDATE players SET quiet_hours_start = NULL, quiet_hours_end = NULL
+          WHERE steam_id = $1::bigint`,
+        [author.steam_id],
+      );
+      await push.sendPending(author.steam_id, `NewsCommentReply:${id}`);
+
+      expect(JSON.stringify(pushes())).not.toMatch(
+        /rude reply|regretted reply/,
+      );
+    });
+
     it("keeps the reply when the notification fails", async () => {
       const id = await article();
       const top = await post(await player(), id);
@@ -1105,6 +1514,9 @@ describe("news comments (SQL-driven)", () => {
       const dir = resolve(
         "hasura/migrations/default/1890000001020_news_comments",
       );
+      const index = resolve(
+        "hasura/migrations/default/1890000001030_news_comments_article_index",
+      );
       await article();
 
       const objects = async () =>
@@ -1119,6 +1531,8 @@ describe("news comments (SQL-driven)", () => {
                         'hasura/functions/news/news_comments',
                         'hasura/triggers/news_comments'
                       )) AS digests,
+                    (SELECT count(*)::int FROM pg_indexes
+                      WHERE indexname = 'news_comments_article_parent_created_idx') AS indexed,
                     (SELECT count(*)::int FROM news_articles) AS articles`,
           )
         )[0];
@@ -1129,11 +1543,15 @@ describe("news comments (SQL-driven)", () => {
         open: "news_comments_open(uuid)",
         triggers: 6,
         digests: 2,
+        indexed: 1,
         articles: 1,
       };
 
       expect(await objects()).toEqual(installed);
 
+      await postgres.query(
+        `BEGIN;${readFileSync(join(index, "down.sql"), "utf8")};COMMIT;`,
+      );
       await postgres.query(
         `BEGIN;${readFileSync(join(dir, "down.sql"), "utf8")};COMMIT;`,
       );
@@ -1143,11 +1561,15 @@ describe("news comments (SQL-driven)", () => {
         open: null,
         triggers: 0,
         digests: 0,
+        indexed: 0,
         articles: 1,
       });
 
       await postgres.query(
         `BEGIN;${readFileSync(join(dir, "up.sql"), "utf8")};COMMIT;`,
+      );
+      await postgres.query(
+        `BEGIN;${readFileSync(join(index, "up.sql"), "utf8")};COMMIT;`,
       );
       await db.hasura.apply(resolve("hasura/functions/news"));
       await db.hasura.apply(resolve("hasura/triggers/news_comments.sql"));

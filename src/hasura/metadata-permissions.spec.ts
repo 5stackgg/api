@@ -534,9 +534,6 @@ describe("hasura table metadata", () => {
     expect(problems).toEqual([]);
   });
 
-  // Who blocked you must never be reachable: not by reading the row, not by
-  // walking a relationship to it from a player, and not by rewriting a row
-  // into someone else's name.
   describe("news_comments", () => {
     const comments = () =>
       tables.find(({ file }) => file === "public_news_comments.yaml")?.metadata;
@@ -616,6 +613,32 @@ describe("hasura table metadata", () => {
       );
     });
 
+    // Hasura refuses a table-returning computed field in a permission: it
+    // follows the permission of the table it returns, players.
+    it("names the author of a removed comment to staff alone, through a computed field", () => {
+      for (const [, permission] of blocksByRole(
+        comments(),
+        "select_permissions",
+      )) {
+        expect(permission.columns).not.toContain("author_steam_id");
+        expect(permission.computed_fields).not.toContain("author");
+      }
+
+      expect(
+        (comments()?.object_relationships ?? []).map(
+          (relationship: { name: string }) => relationship.name,
+        ),
+      ).not.toContain("author");
+
+      const author = (comments()?.computed_fields ?? []).find(
+        (field: { name: string }) => field.name === "author",
+      );
+      expect(author?.definition).toEqual({
+        function: { name: "news_comment_author", schema: "public" },
+        session_argument: "hasura_session",
+      });
+    });
+
     it("has no relationship that would name who hid a comment", () => {
       const relationships = [
         ...(comments()?.object_relationships ?? []),
@@ -628,6 +651,9 @@ describe("hasura table metadata", () => {
     });
   });
 
+  // Who blocked you must never be reachable: not by reading the row, not by
+  // walking a relationship to it from a player, and not by rewriting a row
+  // into someone else's name.
   describe("player_blocks", () => {
     const blocks = () =>
       tables.find(({ file }) => file === "public_player_blocks.yaml")!.metadata;
