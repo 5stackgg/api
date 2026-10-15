@@ -149,6 +149,8 @@ describe("PushNotificationsService", () => {
   let readTo: string | null;
   // Senders the recipient has blocked, among those a chat window holds.
   let blockedSenders: string[];
+  // Push preferences by `${steamId}:${category}`; unset is the default.
+  let prefs: Record<string, boolean>;
 
   // Keys are resolved from settings (with env taking precedence), so they are
   // not known until loadKeys() runs.
@@ -196,6 +198,7 @@ describe("PushNotificationsService", () => {
     overrides = {};
     readTo = null;
     blockedSenders = [];
+    prefs = {};
 
     postgres.query.mockImplementation(async (sql: string, bindings: any[]) => {
       if (sql.includes("AS unread")) {
@@ -219,7 +222,19 @@ describe("PushNotificationsService", () => {
           })),
         );
       }
+      if (
+        sql.includes("notification_preferences") &&
+        !sql.includes("push_subscriptions")
+      ) {
+        const [steamIds, key, enabledByDefault] = bindings;
+        return (steamIds as string[])
+          .filter((steamId) => prefs[`${steamId}:${key}`] ?? enabledByDefault)
+          .map((steam_id) => ({ steam_id }));
+      }
       if (sql.includes("chat_read_state crs")) {
+        if (!(prefs[`${bindings[0]}:${bindings[4]}`] ?? bindings[5])) {
+          return [];
+        }
         return subscriptions.map((sub) => ({
           quiet_seconds: quietSeconds,
           last_read_at: readTo ? new Date(readTo) : null,
@@ -1098,6 +1113,38 @@ describe("PushNotificationsService", () => {
       });
     });
 
+    it("says nothing to a player reading the match when its team room tags them", async () => {
+      const team = "chat:match_team:m-1:l-1";
+      focus[TARGET] = [ROOM];
+
+      await service.sendChatMessage(
+        [TARGET],
+        mention({ threadKey: team, entityId: "match_team:m-1:l-1" }),
+      );
+      redis.multi.mockReturnValueOnce(
+        chainableMulti([
+          [null, [heldChat({ mention: true, threadKey: team })]],
+        ]),
+      );
+      await service.sendPending(TARGET, team);
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
+
+    it("still pushes a team room tag to a player reading another match", async () => {
+      focus[TARGET] = ["chat:match:m-2"];
+
+      await service.sendChatMessage(
+        [TARGET],
+        mention({
+          threadKey: "chat:match_team:m-1:l-1",
+          entityId: "match_team:m-1:l-1",
+        }),
+      );
+
+      expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
+    });
+
     it("still says nothing to a player reading the room", async () => {
       focus[TARGET] = [ROOM];
 
@@ -1159,6 +1206,49 @@ describe("PushNotificationsService", () => {
       ]);
     });
 
+    it("drops a held tag an edit took out when the room's own pushes are off", async () => {
+      overrides["notifications:chat-edited:m-b"] = "fixed";
+      overrides["notifications:chat-edited-mentions:m-b"] = JSON.stringify([]);
+
+      await closeWindow([
+        heldChat({
+          messageId: "m-b",
+          mention: true,
+          type: "ChatMessage",
+          plainType: "MatchChatMessage",
+        }),
+      ]);
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
+
+    it("leaves an untagged line out of a burst the player still takes", async () => {
+      overrides["notifications:chat-edited-mentions:m-b"] = JSON.stringify([]);
+
+      await closeWindow([
+        heldChat({
+          messageId: "m-a",
+          message: "@kairo ready?",
+          mention: true,
+          type: "ChatMessage",
+          plainType: "MatchChatMessage",
+        }),
+        heldChat({
+          messageId: "m-b",
+          mention: true,
+          type: "ChatMessage",
+          plainType: "MatchChatMessage",
+        }),
+      ]);
+
+      expect(payloads()).toEqual([
+        expect.objectContaining({
+          title: "Luke mentioned you · Ancients vs Ratz",
+          body: "@kairo ready?",
+        }),
+      ]);
+    });
+
     it("keeps the tag on a held push the edit left it in", async () => {
       overrides["notifications:chat-edited:m-b"] = "fixed";
       overrides["notifications:chat-edited-mentions:m-b"] = JSON.stringify([
@@ -1183,6 +1273,25 @@ describe("PushNotificationsService", () => {
         "EX",
         25 * 60 * 60,
       );
+    });
+
+    describe("who takes a kind of push", () => {
+      it("answers by each player's setting, or the category's default", async () => {
+        prefs["a:chat"] = false;
+
+        await expect(
+          service.takingPushes(["a", "b"], "ChatMessage"),
+        ).resolves.toEqual(["b"]);
+        await expect(
+          service.takingPushes(["a", "b"], "MatchChatMessage"),
+        ).resolves.toEqual([]);
+
+        prefs["b:match_chat"] = true;
+
+        await expect(
+          service.takingPushes(["a", "b"], "MatchChatMessage"),
+        ).resolves.toEqual(["b"]);
+      });
     });
 
     describe("who may be pushed a tag", () => {

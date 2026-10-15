@@ -149,6 +149,7 @@ describe("ChatService mentions", () => {
     claimMentionPushes: jest.fn(
       async (_sender: string, steamIds: string[]) => steamIds,
     ),
+    takingPushes: jest.fn(async (steamIds: string[]) => steamIds),
     editChatMessage: jest.fn(async () => {}),
     retractChatMessage: jest.fn(async () => {}),
   };
@@ -670,6 +671,39 @@ describe("ChatService mentions", () => {
           push: expect.objectContaining({ type: "ChatMessage", mention: true }),
         },
       ]);
+    });
+
+    it("keeps the line as an ordinary push for a player who turned chat pushes off", async () => {
+      roles[VEXX] = "match_organizer";
+      push.takingPushes.mockResolvedValueOnce([]);
+
+      await say("@kaspr swap", [KASPR], {
+        type: ChatLobbyType.Match,
+        id: "m-1",
+      });
+
+      expect(push.takingPushes).toHaveBeenCalledWith([KASPR], "ChatMessage");
+      expect(push.claimMentionPushes).not.toHaveBeenCalled();
+      expect(pushes()).toEqual([
+        {
+          steamIds: [KAIRO, KASPR],
+          push: expect.objectContaining({ type: "MatchChatMessage" }),
+        },
+      ]);
+    });
+
+    it("carries the room's own kind of push on a tag, for an edit to fall back to", async () => {
+      roles[VEXX] = "match_organizer";
+
+      await say("@kaspr swap", [KASPR], {
+        type: ChatLobbyType.Match,
+        id: "m-1",
+      });
+
+      expect(pushes().find(({ push }) => push.mention).push).toMatchObject({
+        type: "ChatMessage",
+        plainType: "MatchChatMessage",
+      });
     });
 
     it("tells the push gate who an edit still tags", async () => {

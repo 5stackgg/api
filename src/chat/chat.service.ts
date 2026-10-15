@@ -2673,6 +2673,7 @@ export class ChatService {
       await this.pushNotifications.sendChatMessage(tagged, {
         ...push,
         type: "ChatMessage",
+        plainType: push.type,
         mention: true,
       });
     }
@@ -2700,9 +2701,19 @@ export class ChatService {
       senderSteamId,
     ]);
 
+    // Only those a tag push would reach leave the room's ordinary push.
+    const reachable = await this.pushNotifications.takingPushes(
+      tagged.filter((steamId) => !blocking.has(steamId)),
+      "ChatMessage",
+    );
+
+    if (reachable.length === 0) {
+      return [];
+    }
+
     return await this.pushNotifications.claimMentionPushes(
       senderSteamId,
-      tagged.filter((steamId) => !blocking.has(steamId)),
+      reachable,
       text,
     );
   }

@@ -25,6 +25,7 @@ import {
   DEFAULT_DELIVERY_POLICY,
   DeliveryPolicy,
   deliveryPolicyForType,
+  focusThreadsFor,
   isChatThreadKey,
   presenceFocusKey,
   threadKeyFor,
@@ -91,6 +92,9 @@ export type ChatPush = {
   // The message tags the recipient. Only the wording changes: it is windowed,
   // bundled and held back exactly like any other message in the room.
   mention?: boolean;
+  // The room's own type, which a tag pushed as another falls back to once an
+  // edit takes the tag out.
+  plainType?: e_notification_types_enum;
 };
 
 // `at` is when it was queued by postgres's clock, the one the read cursor is
@@ -840,6 +844,33 @@ export class PushNotificationsService {
     }
   }
 
+  // Which of these players take pushes of `type`: their own setting for its
+  // category, or the category's default.
+  public async takingPushes(
+    steamIds: string[],
+    type: e_notification_types_enum,
+  ): Promise<string[]> {
+    if (steamIds.length === 0) {
+      return [];
+    }
+
+    const category = pushCategoryForType(type);
+    const rows = await this.postgres.query<Array<{ steam_id: string }>>(
+      `SELECT p.steam_id::text AS steam_id
+         FROM public.players p
+    LEFT JOIN public.notification_preferences np
+           ON np.steam_id = p.steam_id
+          AND np.channel = 'push'
+          AND np.key = $2
+        WHERE p.steam_id = ANY($1::bigint[])
+          AND COALESCE(np.enabled, $3::boolean) = true`,
+      [steamIds, category?.key ?? "", category?.defaultEnabled ?? true],
+    );
+    const taking = new Set(rows.map(({ steam_id }) => String(steam_id)));
+
+    return steamIds.filter((steamId) => taking.has(steamId));
+  }
+
   // Which of these players a message from `senderSteamId` may push as a
   // mention. Once per sender and player in MENTION_COOLDOWN_SECONDS, whatever
   // room it comes from, and never twice for the same text within the hour. The
@@ -887,11 +918,28 @@ export class PushNotificationsService {
       steamId,
     );
 
-    if (held.length === 0) {
+    // An untagged line falls back to its room's own type, whose push the
+    // player may have turned off while the window held it under another.
+    const types = [...new Set(held.map(({ type }) => type))];
+    const taken =
+      types.length > 1
+        ? (
+            await Promise.all(
+              types.map(async (type) =>
+                (await this.takingPushes([steamId], type)).length > 0
+                  ? [type]
+                  : [],
+              ),
+            )
+          ).flat()
+        : types;
+    const kept = held.filter(({ type }) => taken.includes(type));
+
+    if (kept.length === 0) {
       return;
     }
 
-    const newest = held.at(-1);
+    const newest = kept.at(-1);
     const policy =
       deliveryPolicyForType(newest.type) ?? DEFAULT_DELIVERY_POLICY;
     const category = pushCategoryForType(newest.type);
@@ -932,7 +980,7 @@ export class PushNotificationsService {
       [
         steamId,
         thread,
-        [...new Set(held.map(({ senderSteamId }) => senderSteamId))],
+        [...new Set(kept.map(({ senderSteamId }) => senderSteamId))],
         newest.blockExemptRoles,
         category?.key ?? "",
         category?.defaultEnabled ?? true,
@@ -947,7 +995,7 @@ export class PushNotificationsService {
     const readTo = last_read_at ? new Date(last_read_at).getTime() : null;
     const hidden = new Set(blocked ?? []);
 
-    const unseen = held.filter(
+    const unseen = kept.filter(
       (push) =>
         !hidden.has(push.senderSteamId) &&
         (readTo === null || new Date(push.at).getTime() > readTo),
@@ -1029,7 +1077,9 @@ export class PushNotificationsService {
         {
           ...push,
           ...(edited === null ? {} : { message: edited }),
-          ...(untagged ? { mention: false } : {}),
+          ...(untagged
+            ? { mention: false, type: push.plainType ?? push.type }
+            : {}),
         },
       ];
     });
@@ -1440,6 +1490,7 @@ export class PushNotificationsService {
 
     const results = await pipeline.exec();
     const focused = new Set<string>();
+    const covering = focusThreadsFor(thread);
 
     for (const [index, steamId] of steamIds.entries()) {
       const [error, values] = results?.at(index) ?? [];
@@ -1448,7 +1499,7 @@ export class PushNotificationsService {
         continue;
       }
 
-      if ((values as string[]).includes(thread)) {
+      if ((values as string[]).some((value) => covering.includes(value))) {
         focused.add(steamId);
       }
     }
