@@ -1143,69 +1143,79 @@ describe("PushNotificationsService", () => {
       expect(webPush.sendNotification).not.toHaveBeenCalled();
     });
 
+    it("drops the tag from a held push once an edit takes it out", async () => {
+      overrides["notifications:chat-edited:m-b"] = "fixed";
+      overrides["notifications:chat-edited-mentions:m-b"] = JSON.stringify([
+        "76561100000000002",
+      ]);
+
+      await closeWindow([heldChat({ messageId: "m-b", mention: true })]);
+
+      expect(payloads()).toEqual([
+        expect.objectContaining({
+          title: "Luke · Ancients vs Ratz",
+          body: "fixed",
+        }),
+      ]);
+    });
+
+    it("keeps the tag on a held push the edit left it in", async () => {
+      overrides["notifications:chat-edited:m-b"] = "fixed";
+      overrides["notifications:chat-edited-mentions:m-b"] = JSON.stringify([
+        TARGET,
+      ]);
+
+      await closeWindow([heldChat({ messageId: "m-b", mention: true })]);
+
+      expect(payloads()).toEqual([
+        expect.objectContaining({
+          title: "Luke mentioned you · Ancients vs Ratz",
+        }),
+      ]);
+    });
+
+    it("keeps who an edit still tags as long as the edit itself", async () => {
+      await service.editChatMessage("m-b", "fixed", ["a"]);
+
+      expect(redis.set).toHaveBeenCalledWith(
+        "notifications:chat-edited-mentions:m-b",
+        JSON.stringify(["a"]),
+        "EX",
+        25 * 60 * 60,
+      );
+    });
+
     describe("who may be pushed a tag", () => {
-      const keys = new Set<string>();
+      it("asks redis once for every player in the message", async () => {
+        redis.eval.mockResolvedValue([1, 0, 1]);
 
-      beforeEach(() => {
-        keys.clear();
-        redis.eval.mockImplementation(
-          async (
-            _script: string,
-            _count: number,
-            cooldown: string,
-            text: string,
-          ) => {
-            if (keys.has(text) || keys.has(cooldown)) {
-              return 0;
-            }
-            keys.add(cooldown);
-            keys.add(text);
-            return 1;
-          },
-        );
-      });
-
-      it("takes each player once per sender, whatever room it comes from", async () => {
         await expect(
-          service.claimMentionPushes(
-            "sender-1",
-            ["a", "b"],
-            "@a @b in one room",
-          ),
-        ).resolves.toEqual(["a", "b"]);
-        await expect(
-          service.claimMentionPushes("sender-1", ["a"], "@a in another room"),
-        ).resolves.toEqual([]);
-        await expect(
-          service.claimMentionPushes("sender-2", ["a"], "@a in another room"),
-        ).resolves.toEqual(["a"]);
-      });
+          service.claimMentionPushes("sender-1", ["a", "b", "c"], "@a @b @c"),
+        ).resolves.toEqual(["a", "c"]);
 
-      it("holds a player for the cooldown and the same text for an hour", async () => {
-        await service.claimMentionPushes("sender-1", ["a"], "@a hi");
-
+        expect(redis.eval).toHaveBeenCalledTimes(1);
         expect(redis.eval).toHaveBeenCalledWith(
           expect.stringContaining("NX"),
-          2,
+          6,
           "notifications:mention:sender-1:a",
           expect.stringMatching(
             /^notifications:mention-text:sender-1:a:[0-9a-f]{64}$/,
           ),
+          "notifications:mention:sender-1:b",
+          expect.stringMatching(/^notifications:mention-text:sender-1:b:/),
+          "notifications:mention:sender-1:c",
+          expect.stringMatching(/^notifications:mention-text:sender-1:c:/),
           PushNotificationsService.MENTION_COOLDOWN_SECONDS,
           60 * 60,
         );
       });
 
-      it("never takes the same text twice, even after the cooldown", async () => {
-        await service.claimMentionPushes("sender-1", ["a"], "@a hi");
-        keys.delete("notifications:mention:sender-1:a");
-
+      it("asks nothing for nobody", async () => {
         await expect(
-          service.claimMentionPushes("sender-1", ["a"], "@a hi"),
+          service.claimMentionPushes("sender-1", [], "hi"),
         ).resolves.toEqual([]);
-        await expect(
-          service.claimMentionPushes("sender-1", ["a"], "@a hello"),
-        ).resolves.toEqual(["a"]);
+
+        expect(redis.eval).not.toHaveBeenCalled();
       });
     });
   });

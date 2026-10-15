@@ -255,6 +255,9 @@ const chatRetractedKey = (messageId: string) =>
 const chatEditedKey = (messageId: string) =>
   `notifications:chat-edited:${messageId}`;
 
+const chatEditedMentionsKey = (messageId: string) =>
+  `notifications:chat-edited-mentions:${messageId}`;
+
 // Outlives the longest a chat push is ever held: a whole night of quiet hours.
 const CHAT_OVERRIDE_TTL_SECONDS = 25 * 60 * 60;
 
@@ -269,17 +272,21 @@ export class PushNotificationsService {
 
   private static readonly MENTION_TEXT_SECONDS = 60 * 60;
 
-  // The text key is checked before the cooldown is taken, so a resend of the
-  // same words after the cooldown still finds it.
+  // KEYS are (cooldown, text) pairs, one per player. The text key is checked
+  // before the cooldown is taken, so a resend of the same words after the
+  // cooldown still finds it.
   private static readonly CLAIM_MENTION_SCRIPT = `
-    if redis.call('EXISTS', KEYS[2]) == 1 then
-      return 0
+    local won = {}
+    for i = 1, #KEYS, 2 do
+      local claimed = 0
+      if redis.call('EXISTS', KEYS[i + 1]) == 0
+        and redis.call('SET', KEYS[i], '1', 'NX', 'EX', ARGV[1]) then
+        redis.call('SET', KEYS[i + 1], '1', 'EX', ARGV[2])
+        claimed = 1
+      end
+      won[#won + 1] = claimed
     end
-    if not redis.call('SET', KEYS[1], '1', 'NX', 'EX', ARGV[1]) then
-      return 0
-    end
-    redis.call('SET', KEYS[2], '1', 'EX', ARGV[2])
-    return 1
+    return won
   `;
 
   private readonly appConfig: AppConfig;
@@ -814,6 +821,7 @@ export class PushNotificationsService {
   public async editChatMessage(
     messageId: string,
     preview: string,
+    stillTagged?: string[],
   ): Promise<void> {
     await this.redis.set(
       chatEditedKey(messageId),
@@ -821,6 +829,15 @@ export class PushNotificationsService {
       "EX",
       CHAT_OVERRIDE_TTL_SECONDS,
     );
+
+    if (stillTagged) {
+      await this.redis.set(
+        chatEditedMentionsKey(messageId),
+        JSON.stringify(stillTagged),
+        "EX",
+        CHAT_OVERRIDE_TTL_SECONDS,
+      );
+    }
   }
 
   // Which of these players a message from `senderSteamId` may push as a
@@ -833,25 +850,23 @@ export class PushNotificationsService {
     steamIds: string[],
     text: string,
   ): Promise<string[]> {
-    const digest = createHash("sha256").update(text).digest("hex");
-    const claimed: string[] = [];
-
-    for (const steamId of steamIds) {
-      const won = await this.redis.eval(
-        PushNotificationsService.CLAIM_MENTION_SCRIPT,
-        2,
-        mentionCooldownKey(senderSteamId, steamId),
-        mentionTextKey(senderSteamId, steamId, digest),
-        PushNotificationsService.MENTION_COOLDOWN_SECONDS,
-        PushNotificationsService.MENTION_TEXT_SECONDS,
-      );
-
-      if (won === 1) {
-        claimed.push(steamId);
-      }
+    if (steamIds.length === 0) {
+      return [];
     }
 
-    return claimed;
+    const digest = createHash("sha256").update(text).digest("hex");
+    const won = (await this.redis.eval(
+      PushNotificationsService.CLAIM_MENTION_SCRIPT,
+      steamIds.length * 2,
+      ...steamIds.flatMap((steamId) => [
+        mentionCooldownKey(senderSteamId, steamId),
+        mentionTextKey(senderSteamId, steamId, digest),
+      ]),
+      PushNotificationsService.MENTION_COOLDOWN_SECONDS,
+      PushNotificationsService.MENTION_TEXT_SECONDS,
+    )) as number[] | null;
+
+    return steamIds.filter((_, index) => won?.[index] === 1);
   }
 
   // A chat window closing. Everything it held is checked again against what
@@ -869,6 +884,7 @@ export class PushNotificationsService {
           return [];
         }
       }),
+      steamId,
     );
 
     if (held.length === 0) {
@@ -978,9 +994,11 @@ export class PushNotificationsService {
     );
   }
 
-  // Drops what was deleted after it was queued, and shows the rest as edited.
+  // Drops what was deleted after it was queued, and shows the rest as edited:
+  // a tag an edit took out is no longer one for `recipient`.
   private async applyChatOverrides<T extends ChatPush>(
     pushes: T[],
+    recipient?: string,
   ): Promise<T[]> {
     if (pushes.length === 0) {
       return [];
@@ -990,17 +1008,30 @@ export class PushNotificationsService {
       ...pushes.flatMap(({ messageId }) => [
         chatRetractedKey(messageId),
         chatEditedKey(messageId),
+        chatEditedMentionsKey(messageId),
       ]),
     );
 
     return pushes.flatMap((push, index) => {
-      if (overrides[index * 2] !== null) {
+      if (overrides[index * 3] !== null) {
         return [];
       }
 
-      const edited = overrides[index * 2 + 1];
+      const edited = overrides[index * 3 + 1];
+      const stillTagged = overrides[index * 3 + 2];
+      const untagged =
+        push.mention &&
+        recipient !== undefined &&
+        stillTagged !== null &&
+        !(JSON.parse(stillTagged) as string[]).includes(recipient);
 
-      return [edited === null ? push : { ...push, message: edited }];
+      return [
+        {
+          ...push,
+          ...(edited === null ? {} : { message: edited }),
+          ...(untagged ? { mention: false } : {}),
+        },
+      ];
     });
   }
 

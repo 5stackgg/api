@@ -1099,10 +1099,38 @@ export class ChatService {
     );
   }
 
-  // Every group room. A conversation already reaches the one other person in
-  // it, and pushes them.
+  // Not a conversation, which already reaches the one other person in it,
+  // and not a Team room, which nothing opens yet.
+  private static readonly MENTION_ROOMS: ReadonlySet<ChatLobbyType> = new Set([
+    ChatLobbyType.Match,
+    ChatLobbyType.MatchTeam,
+    ChatLobbyType.MatchMaking,
+    ChatLobbyType.Tournament,
+    ChatLobbyType.Organizer,
+    ChatLobbyType.Draft,
+  ]);
+
   public static takesMentions(type: ChatLobbyType): boolean {
-    return type !== ChatLobbyType.Direct;
+    return ChatService.MENTION_ROOMS.has(type);
+  }
+
+  public static isRoomId(type: ChatLobbyType, id: string): boolean {
+    switch (type) {
+      case ChatLobbyType.MatchTeam: {
+        const parts = id.split(":");
+
+        return (
+          parts.length === 2 &&
+          parts.every((part) => ChatService.UUID.test(part))
+        );
+      }
+      case ChatLobbyType.Organizer:
+        return id === "organizers";
+      case ChatLobbyType.Direct:
+        return parseDirectRoomId(id) !== null;
+      default:
+        return ChatService.UUID.test(id);
+    }
   }
 
   // The steam ids the composer picked, less the sender's own, or why they
@@ -1137,32 +1165,44 @@ export class ChatService {
     };
   }
 
-  public static mentionIn(text: string, name: string): boolean {
-    if (!name) {
+  // Each @ belongs to the longest of the names that fits there, so "@Big Bob"
+  // tags Big Bob and not Big as well.
+  public static mentionedNames(text: string, names: string[]): Set<string> {
+    const longestFirst = [...new Set(names)]
+      .filter((name) => name.length > 0)
+      .sort((a, b) => b.length - a.length);
+    const found = new Set<string>();
+    let index = text.indexOf("@");
+
+    while (index !== -1) {
+      const name = longestFirst.find((candidate) =>
+        ChatService.mentionAt(text, index, candidate),
+      );
+
+      if (name) {
+        found.add(name);
+      }
+
+      index = text.indexOf("@", index + (name ? name.length + 1 : 1));
+    }
+
+    return found;
+  }
+
+  private static mentionAt(text: string, index: number, name: string) {
+    if (!text.startsWith(`@${name}`, index)) {
       return false;
     }
 
-    const tag = `@${name}`;
+    const end = index + name.length + 1;
+    const before =
+      Array.from(text.slice(Math.max(0, index - 2), index)).at(-1) ?? "";
+    const after = Array.from(text.slice(end, end + 2)).at(0) ?? "";
 
-    for (
-      let index = text.indexOf(tag);
-      index !== -1;
-      index = text.indexOf(tag, index + 1)
-    ) {
-      const end = index + tag.length;
-      const before =
-        Array.from(text.slice(Math.max(0, index - 2), index)).at(-1) ?? "";
-      const after = Array.from(text.slice(end, end + 2)).at(0) ?? "";
-
-      if (
-        !ChatService.MENTION_WORD.test(before) &&
-        !ChatService.MENTION_WORD.test(after)
-      ) {
-        return true;
-      }
-    }
-
-    return false;
+    return (
+      !ChatService.MENTION_WORD.test(before) &&
+      !ChatService.MENTION_WORD.test(after)
+    );
   }
 
   public static hasMedia(media?: ChatMessageMedia): boolean {
@@ -1326,10 +1366,20 @@ export class ChatService {
       HasuraService.PLAYER_ROLE_CACHE_KEY(player.steam_id),
     );
 
-    const mentions =
-      mentionIds.length > 0
-        ? await this.resolveMentions(type, id, text, mentionIds)
-        : [];
+    let members: string[] | undefined;
+    let mentions: ChatMention[] = [];
+
+    if (mentionIds.length > 0) {
+      try {
+        members = await this.getLobbyMemberSteamIds(type, id);
+        mentions = await this.resolveMentions(members, text, mentionIds);
+      } catch (error) {
+        this.logger.warn(
+          `unable to resolve the tags of a ${type}:${id} message, sending it without`,
+          error,
+        );
+      }
+    }
 
     const timestamp = this.nextMessageTimestamp();
     const message: ChatMessage = {
@@ -1493,6 +1543,7 @@ export class ChatService {
       ),
       message.id,
       mentions,
+      members,
     ).catch((error) => {
       this.logger.warn(`unable to notify ${type}:${id} of a message`, error);
     });
@@ -1527,13 +1578,11 @@ export class ChatService {
   // is kept, so the message never shows the sender who blocked them; the tag
   // comes off for that member alone (ownMentionsUnblocked), and pushes nothing.
   private async resolveMentions(
-    type: ChatLobbyType,
-    id: string,
+    members: string[],
     text: string,
     steamIds: string[],
   ): Promise<ChatMention[]> {
-    const members = new Set(await this.getLobbyMemberSteamIds(type, id));
-    const inRoom = steamIds.filter((steamId) => members.has(steamId));
+    const inRoom = steamIds.filter((steamId) => members.includes(steamId));
 
     if (inRoom.length === 0) {
       return [];
@@ -1554,12 +1603,12 @@ export class ChatService {
       ]),
     );
 
+    const tagged = ChatService.mentionedNames(text, [...names.values()]);
+
     return inRoom.flatMap((steamId) => {
       const name = names.get(steamId);
 
-      return name && ChatService.mentionIn(text, name)
-        ? [{ steam_id: steamId, name }]
-        : [];
+      return name && tagged.has(name) ? [{ steam_id: steamId, name }] : [];
     });
   }
 
@@ -1624,8 +1673,12 @@ export class ChatService {
       message: text,
       edited_at: editedAt,
     };
+    const tagged = ChatService.mentionedNames(
+      text,
+      (message.mentions ?? []).map(({ name }) => name),
+    );
     const kept = (message.mentions ?? []).filter(({ name }) =>
-      ChatService.mentionIn(text, name),
+      tagged.has(name),
     );
 
     if (kept.length > 0) {
@@ -2203,6 +2256,7 @@ export class ChatService {
         editedAt,
       );
 
+      const edited = ChatService.edited(message, text, editedAt);
       const swapped = await this.redis.eval(
         ChatService.EDIT_ROOM_MESSAGE_SCRIPT,
         2,
@@ -2210,7 +2264,7 @@ export class ChatService {
         `chat_edit_applied:${auditId}`,
         messageId,
         raw,
-        JSON.stringify(ChatService.edited(message, text, editedAt)),
+        JSON.stringify(edited),
         ChatService.EDIT_RECEIPT_TTL_MS,
       );
 
@@ -2222,6 +2276,7 @@ export class ChatService {
           String(user.steam_id),
           text,
           editedAt,
+          message.mentions ? ChatService.mentionsOf(edited) : undefined,
         );
 
         await this.archiveEdit(type, id, messageId, text, editedAt);
@@ -2388,6 +2443,7 @@ export class ChatService {
     author: string,
     text: string,
     editedAt: string,
+    stillTagged?: string[],
   ): Promise<ChatEditResult> {
     void this.to(
       type,
@@ -2404,7 +2460,11 @@ export class ChatService {
     });
 
     await this.pushNotifications
-      .editChatMessage(messageId, ChatService.notificationPreview(text))
+      .editChatMessage(
+        messageId,
+        ChatService.notificationPreview(text),
+        stillTagged,
+      )
       .catch((error) => {
         this.logger.warn(
           `unable to update notifications for ${type}:${id} message ${messageId}`,
@@ -2564,8 +2624,9 @@ export class ChatService {
     message: string,
     messageId: string,
     mentions: ChatMention[] = [],
+    roster?: string[],
   ) {
-    const members = await this.getLobbyMemberSteamIds(type, id);
+    const members = roster ?? (await this.getLobbyMemberSteamIds(type, id));
     const senderSteamId = String(sender.steam_id);
 
     const others = members.filter((steamId) => steamId !== senderSteamId);
@@ -2606,11 +2667,12 @@ export class ChatService {
       await this.pushNotifications.sendChatMessage(untagged, push);
     }
 
-    // In place of the push above, never as well as it, and through the same
-    // window: a burst of tags is one push and a summary, like any burst.
+    // In place of the push above, through the same window, and under chat even
+    // from a match room: match chat's own category is off by default.
     if (tagged.length > 0) {
       await this.pushNotifications.sendChatMessage(tagged, {
         ...push,
+        type: "ChatMessage",
         mention: true,
       });
     }
@@ -2964,8 +3026,6 @@ export class ChatService {
     return members;
   }
 
-  // Who the composer offers when @ is typed: the room's members, to someone
-  // the room would let in.
   public async mentionCandidates(
     type: ChatLobbyType,
     id: string,

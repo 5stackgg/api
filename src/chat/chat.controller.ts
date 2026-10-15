@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   ForbiddenException,
@@ -95,7 +96,6 @@ export class ChatController {
     };
   }
 
-  // Who the composer offers when @ is typed in a room.
   @Get("rooms/:type/:id/members")
   @UseGuards(SteamGuard)
   public async roomMembers(
@@ -105,6 +105,10 @@ export class ChatController {
   ): Promise<{ members: ChatMentionCandidate[] }> {
     if (!Object.values(ChatLobbyType).includes(type)) {
       throw new ForbiddenException();
+    }
+
+    if (!ChatService.isRoomId(type, id)) {
+      throw new BadRequestException();
     }
 
     const members = await this.chatService.mentionCandidates(

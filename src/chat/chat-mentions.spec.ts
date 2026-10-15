@@ -9,6 +9,8 @@ const KASPR = "76561198000000003";
 const ZED = "76561198000000004";
 const OKAMI = "76561198000000005";
 const MARLOWE = "76561198000000006";
+const BIG = "76561198000000007";
+const BIG_BOB = "76561198000000008";
 const FILLER = Array.from(
   { length: 12 },
   (_, index) => `7656119800000010${String(index).padStart(2, "0")}`,
@@ -21,10 +23,13 @@ const NAMES: Record<string, string> = {
   [ZED]: "zed",
   [OKAMI]: "okami",
   [MARLOWE]: "marlowe",
+  [BIG]: "Big",
+  [BIG_BOB]: "Big Bob",
   ...Object.fromEntries(FILLER.map((steamId, index) => [steamId, `p${index}`])),
 };
 
 describe("ChatService mentions", () => {
+  const logger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
   let hashes: Map<string, Map<string, string>>;
   let roles: Record<string, string>;
   let roster: string[];
@@ -337,7 +342,7 @@ describe("ChatService mentions", () => {
     blocks = [];
 
     service = new ChatService(
-      { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
+      logger as any,
       { connect: jest.fn() } as any,
       hasuraService as any,
       postgres as any,
@@ -404,6 +409,60 @@ describe("ChatService mentions", () => {
       await say("@kairos is a different person", [KAIRO]);
 
       expect(stored()[0]).not.toHaveProperty("mentions");
+    });
+
+    it("does not tag a member whose name only starts a longer tagged name", async () => {
+      roster = [VEXX, BIG, BIG_BOB];
+
+      await say("@Big Bob gg", [BIG, BIG_BOB]);
+
+      expect(stored()[0].mentions).toEqual([
+        { steam_id: BIG_BOB, name: "Big Bob" },
+      ]);
+    });
+
+    it("tags both when each name has an @ of its own", async () => {
+      roster = [VEXX, BIG, BIG_BOB];
+
+      await say("@Big Bob and @Big", [BIG, BIG_BOB]);
+
+      expect(stored()[0].mentions).toEqual([
+        { steam_id: BIG, name: "Big" },
+        { steam_id: BIG_BOB, name: "Big Bob" },
+      ]);
+    });
+
+    it("sends the line without tags when they cannot be looked up", async () => {
+      const answer = hasuraService.query.getMockImplementation();
+      hasuraService.query.mockImplementation(async (query, asUser) => {
+        if (query.players?.__args?.where?.steam_id) {
+          throw "connection reset";
+        }
+        return await answer(query, asUser);
+      });
+
+      try {
+        await expect(say("@kairo hi", [KAIRO])).resolves.toEqual({
+          accepted: true,
+          messageId: expect.any(String),
+        });
+      } finally {
+        hasuraService.query.mockImplementation(answer);
+      }
+
+      expect(stored()[0]).toMatchObject({ message: "@kairo hi" });
+      expect(stored()[0]).not.toHaveProperty("mentions");
+      expect(logger.warn).toHaveBeenCalled();
+    });
+
+    it("reads the room's roster once for a tagged line", async () => {
+      await say("@kairo hi", [KAIRO]);
+
+      expect(
+        hasuraService.query.mock.calls.filter(
+          ([query]: any[]) => query.tournaments_by_pk?.teams,
+        ),
+      ).toHaveLength(1);
     });
 
     it("never tags the sender", async () => {
@@ -593,6 +652,45 @@ describe("ChatService mentions", () => {
       expect(push.claimMentionPushes).toHaveBeenCalledTimes(1);
     });
 
+    it("pushes a tag in a match room under chat, which is on by default", async () => {
+      roles[VEXX] = "match_organizer";
+
+      await say("@kaspr swap", [KASPR], {
+        type: ChatLobbyType.Match,
+        id: "m-1",
+      });
+
+      expect(pushes()).toEqual([
+        {
+          steamIds: [KAIRO],
+          push: expect.objectContaining({ type: "MatchChatMessage" }),
+        },
+        {
+          steamIds: [KASPR],
+          push: expect.objectContaining({ type: "ChatMessage", mention: true }),
+        },
+      ]);
+    });
+
+    it("tells the push gate who an edit still tags", async () => {
+      roster = [VEXX, KAIRO, KASPR];
+      const sent = await say("@kairo @kaspr check-in", [KAIRO, KASPR]);
+
+      await service.editMessage(
+        ChatLobbyType.Tournament,
+        "t-1",
+        sent.accepted ? sent.messageId : "",
+        as(VEXX),
+        "@kaspr check-in",
+      );
+
+      expect(push.editChatMessage).toHaveBeenCalledWith(
+        sent.accepted ? sent.messageId : "",
+        "@kaspr check-in",
+        [KASPR],
+      );
+    });
+
     it("pushes nothing to a player who blocked the sender", async () => {
       roster = [VEXX, KAIRO, KASPR];
       blocks = [[KAIRO, VEXX]];
@@ -698,6 +796,23 @@ describe("ChatService mentions", () => {
       ]);
     });
 
+    it("drops a shorter name an edit leaves only inside a longer one", async () => {
+      roster = [VEXX, BIG, BIG_BOB];
+      const sent = await say("@Big Bob and @Big", [BIG, BIG_BOB]);
+
+      await service.editMessage(
+        ChatLobbyType.Tournament,
+        "t-1",
+        sent.accepted ? sent.messageId : "",
+        as(VEXX),
+        "@Big Bob only",
+      );
+
+      expect(stored()[0].mentions).toEqual([
+        { steam_id: BIG_BOB, name: "Big Bob" },
+      ]);
+    });
+
     it("keeps no empty list once every tag is gone", async () => {
       const sent = await say("@kairo check-in", [KAIRO]);
 
@@ -750,6 +865,34 @@ describe("ChatService mentions", () => {
       ).resolves.toBeNull();
     });
 
+    it("lists nobody in a team room, which nothing opens yet, and logs nothing", async () => {
+      await expect(
+        service.mentionCandidates(
+          ChatLobbyType.Team,
+          "6f1c1c1e-5b1a-4c55-9a51-111111111111",
+          as(VEXX),
+        ),
+      ).resolves.toBeNull();
+
+      expect(logger.warn).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      [ChatLobbyType.Tournament, "t-1", false],
+      [ChatLobbyType.Tournament, "6f1c1c1e-5b1a-4c55-9a51-111111111111", true],
+      [ChatLobbyType.Match, "x", false],
+      [
+        ChatLobbyType.MatchTeam,
+        "6f1c1c1e-5b1a-4c55-9a51-111111111111:6f1c1c1e-5b1a-4c55-9a51-222222222222",
+        true,
+      ],
+      [ChatLobbyType.MatchTeam, "6f1c1c1e-5b1a-4c55-9a51-111111111111", false],
+      [ChatLobbyType.Organizer, "organizers", true],
+      [ChatLobbyType.Organizer, "anything", false],
+    ])("knows a %s room id %s is well formed: %s", (type, id, valid) => {
+      expect(ChatService.isRoomId(type, id)).toBe(valid);
+    });
+
     it("lists nobody in a direct conversation", async () => {
       await expect(
         service.mentionCandidates(
@@ -761,7 +904,11 @@ describe("ChatService mentions", () => {
     });
   });
 
-  describe("finding a tag in the text", () => {
+  describe("finding tags in the text", () => {
+    const tagged = (text: string, names: string[]) => [
+      ...ChatService.mentionedNames(text, names),
+    ];
+
     it.each([
       ["@kairo hi", true],
       ["hi @kairo", true],
@@ -774,15 +921,27 @@ describe("ChatService mentions", () => {
       ["kairo", false],
       ["@Kairo", false],
     ])("%s", (text, found) => {
-      expect(ChatService.mentionIn(text, "kairo")).toBe(found);
+      expect(tagged(text, ["kairo"])).toEqual(found ? ["kairo"] : []);
     });
 
     it("finds a name with spaces in it", () => {
-      expect(ChatService.mentionIn("gg @Big Bob", "Big Bob")).toBe(true);
+      expect(tagged("gg @Big Bob", ["Big Bob"])).toEqual(["Big Bob"]);
+    });
+
+    it("gives an @ to the longest name that starts there", () => {
+      expect(tagged("gg @Big Bob", ["Big", "Big Bob"])).toEqual(["Big Bob"]);
+      expect(tagged("@Big Bob and @Big", ["Big Bob", "Big"]).sort()).toEqual([
+        "Big",
+        "Big Bob",
+      ]);
+      expect(tagged("@kairo @kai", ["kai", "kairo"]).sort()).toEqual([
+        "kai",
+        "kairo",
+      ]);
     });
 
     it("never finds an empty name", () => {
-      expect(ChatService.mentionIn("@ hi", "")).toBe(false);
+      expect(tagged("@ hi", [""])).toEqual([]);
     });
   });
 });

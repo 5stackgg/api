@@ -1,6 +1,9 @@
-import { ForbiddenException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import { ChatController } from "./chat.controller";
 import { ChatLobbyType } from "./enums/ChatLobbyTypes";
+
+const MATCH = "6f1c1c1e-5b1a-4c55-9a51-111111111111";
+const LINEUP = "6f1c1c1e-5b1a-4c55-9a51-222222222222";
 
 describe("ChatController room members", () => {
   const request = { user: { steam_id: "76561198000000001" } } as any;
@@ -25,12 +28,16 @@ describe("ChatController room members", () => {
     chat.mentionCandidates.mockResolvedValue(members);
 
     await expect(
-      controller.roomMembers(request, ChatLobbyType.MatchTeam, "m-1:l-1"),
+      controller.roomMembers(
+        request,
+        ChatLobbyType.MatchTeam,
+        `${MATCH}:${LINEUP}`,
+      ),
     ).resolves.toEqual({ members });
 
     expect(chat.mentionCandidates).toHaveBeenCalledWith(
       ChatLobbyType.MatchTeam,
-      "m-1:l-1",
+      `${MATCH}:${LINEUP}`,
       request.user,
     );
   });
@@ -39,8 +46,20 @@ describe("ChatController room members", () => {
     chat.mentionCandidates.mockResolvedValue(null);
 
     await expect(
-      controller.roomMembers(request, ChatLobbyType.Tournament, "t-1"),
+      controller.roomMembers(request, ChatLobbyType.Tournament, MATCH),
     ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it.each([
+    [ChatLobbyType.Tournament, "t-1"],
+    [ChatLobbyType.Match, "not-a-uuid"],
+    [ChatLobbyType.MatchTeam, MATCH],
+  ])("answers a malformed %s room id with a 400", async (type, id) => {
+    await expect(
+      controller.roomMembers(request, type, id),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(chat.mentionCandidates).not.toHaveBeenCalled();
   });
 
   it("refuses a lobby type it does not know", async () => {

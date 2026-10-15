@@ -103,8 +103,6 @@ export class ChatGateway {
       requestId?: string;
       attachments?: unknown;
       gif?: unknown;
-      // Steam ids picked from the composer's list. The service decides which
-      // of them the message tags.
       mentions?: unknown;
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
