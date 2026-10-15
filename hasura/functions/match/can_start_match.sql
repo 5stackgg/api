@@ -10,6 +10,10 @@ BEGIN
        return false;
     END IF;
 
+    IF match.status IN ('Forfeit', 'Surrendered') AND match.winning_lineup_id IS NOT NULL THEN
+        RETURN false;
+    END IF;
+
     IF NOT check_match_has_min_players(match) THEN
         RETURN false;
     END IF;

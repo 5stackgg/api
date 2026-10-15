@@ -931,6 +931,33 @@ describe("read-side views and aggregations (SQL-driven)", () => {
       expect(Number(bottom.value)).toBeCloseTo(33.33, 2);
     });
 
+    it.each(["Forfeit", "Surrendered"])(
+      "best_win_rate counts a win by %s",
+      async (status) => {
+        const [champ, rival] = await fx.players(2);
+        await ratedDuel(champ, rival);
+        const match = await fx.match({ type: "Duel" });
+        await fx.lineupPlayer(match.lineup_1_id, champ);
+        await fx.lineupPlayer(match.lineup_2_id, rival);
+        await postgres.query(
+          "UPDATE matches SET status = $2, winning_lineup_id = lineup_1_id WHERE id = $1",
+          [match.id, status],
+        );
+
+        const rows = await leaderboard("best_win_rate", 30, "Duel");
+        expect(
+          rows.map((row) => [
+            row.player_steam_id,
+            Number(row.secondary_value),
+            Number(row.matches_played),
+          ]),
+        ).toEqual([
+          [champ, 2, 2],
+          [rival, 0, 2],
+        ]);
+      },
+    );
+
     it("highest_hs_pct ranks headshot ratios from the kill feed", async () => {
       const { ctx } = await statMatch();
       const [surgeon, sprayer, victim] = await fx.players(3);

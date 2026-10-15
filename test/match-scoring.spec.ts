@@ -303,6 +303,21 @@ describe("match scoring from rounds (SQL-driven)", () => {
     expect(after.winning_lineup_id).toBeNull();
   });
 
+  it("a forfeit's winner stands when its map finishes afterwards", async () => {
+    const match = await createLiveMatch(1);
+    await recordScore(match.mapIds[0], 13, 7);
+
+    await postgres.query(
+      "UPDATE matches SET status = 'Forfeit', winning_lineup_id = lineup_2_id WHERE id = $1",
+      [match.id],
+    );
+    await finishMap(match.mapIds[0]);
+
+    const after = await matchRow(match.id);
+    expect(after.status).toBe("Forfeit");
+    expect(after.winning_lineup_id).toBe(match.lineup_2_id);
+  });
+
   it("a map going Live stamps started_at and arms the live-match timeout", async () => {
     const match = await createLiveMatch(1);
 

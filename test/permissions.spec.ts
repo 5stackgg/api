@@ -162,6 +162,54 @@ describe("permission functions (SQL-driven)", () => {
       ).toBe(true);
     });
 
+    it.each(["Forfeit", "Surrendered"])(
+      "a %s is started or scheduled again only while it has no winner",
+      async (status) => {
+        const organizer = await fx.player();
+        const { match } = await duelWithPlayers(organizer);
+        const asOrganizer = session(organizer, "match_organizer");
+
+        await postgres.query("UPDATE matches SET status = $2 WHERE id = $1", [
+          match.id,
+          status,
+        ]);
+        expect(
+          await boolFn("can_start_match", "matches", match.id, "id", asOrganizer),
+        ).toBe(true);
+        expect(
+          await boolFn(
+            "can_schedule_match",
+            "matches",
+            match.id,
+            "id",
+            asOrganizer,
+          ),
+        ).toBe(true);
+
+        await postgres.query(
+          "UPDATE matches SET winning_lineup_id = lineup_1_id WHERE id = $1",
+          [match.id],
+        );
+        const [decided] = await postgres.query<Array<{ status: string }>>(
+          "SELECT status FROM matches WHERE id = $1",
+          [match.id],
+        );
+        expect(decided.status).toBe(status);
+        expect(
+          await boolFn("can_start_match", "matches", match.id, "id", asOrganizer),
+        ).toBe(false);
+        expect(
+          await boolFn(
+            "can_schedule_match",
+            "matches",
+            match.id,
+            "id",
+            asOrganizer,
+          ),
+        ).toBe(false);
+      },
+    );
+
     it("only the organizer cancels, and never after the match decided", async () => {
       const organizer = await fx.player();
       const { match, p1 } = await duelWithPlayers(organizer);

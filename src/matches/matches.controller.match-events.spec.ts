@@ -530,8 +530,8 @@ describe("MatchesController — match_events on-demand servers", () => {
     });
 
     it("waits out tv_delay when an organizer ends the match mid-map", async () => {
-      // A forfeit with a winner is stored as Finished, so only the map still
-      // being played gives away that the TV feed is behind.
+      // A winner set by hand reads Finished, so only the map still being
+      // played gives away that the TV feed is behind.
       inPlayMaps = [{ id: "map-1" }];
 
       await finish();

@@ -182,7 +182,7 @@ BEGIN
           JOIN public.matches m ON m.id = ml.match_id
           WHERE mlp.steam_id = p.steam_id
             AND m.source = '5stack'
-            AND m.status = 'Finished'
+            AND m.status IN ('Finished', 'Forfeit', 'Surrendered')
         )
         AND p.faceit_elo IS NOT NULL
       ORDER BY p.faceit_elo DESC, p.name ASC;
@@ -207,7 +207,7 @@ BEGIN
           JOIN public.matches m ON m.id = ml.match_id
           WHERE mlp.steam_id = p.steam_id
             AND m.source = '5stack'
-            AND m.status = 'Finished'
+            AND m.status IN ('Finished', 'Forfeit', 'Surrendered')
         )
         -- The demo importer writes 0 for a player who has not placed this
         -- season; ranked as a number that sorts as the worst rating in the game.
@@ -380,7 +380,7 @@ BEGIN
         JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
         JOIN matches m ON m.id = ml.match_id
         JOIN match_options mo ON mo.id = m.match_options_id
-        WHERE m.status = 'Finished'
+        WHERE m.status IN ('Finished', 'Forfeit', 'Surrendered')
           AND m.source = '5stack'
       AND m.counts_toward_ranking = true
           AND mlp.steam_id IS NOT NULL
@@ -505,7 +505,7 @@ BEGIN
         JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
         JOIN matches m ON m.id = ml.match_id
         JOIN match_options mo ON mo.id = m.match_options_id
-        WHERE m.status = 'Finished'
+        WHERE m.status IN ('Finished', 'Forfeit', 'Surrendered')
           AND m.source = '5stack'
       AND m.counts_toward_ranking = true
           AND mlp.steam_id IS NOT NULL
@@ -616,7 +616,7 @@ BEGIN
         JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
         JOIN matches m ON m.id = ml.match_id
         JOIN match_options mo ON mo.id = m.match_options_id
-        WHERE m.status = 'Finished'
+        WHERE m.status IN ('Finished', 'Forfeit', 'Surrendered')
           AND m.source = '5stack'
       AND m.counts_toward_ranking = true
           AND mlp.steam_id IS NOT NULL
@@ -788,7 +788,7 @@ BEGIN
     JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
     JOIN matches m ON m.id = ml.match_id
     JOIN match_options mo ON mo.id = m.match_options_id
-    WHERE m.status = 'Finished'
+    WHERE m.status IN ('Finished', 'Forfeit', 'Surrendered')
       AND m.source = '5stack'
       AND m.counts_toward_ranking = true
       AND mlp.steam_id IS NOT NULL
