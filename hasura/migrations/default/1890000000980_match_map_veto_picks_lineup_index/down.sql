@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS public.idx_match_map_veto_picks_match_lineup_id;
