@@ -64,7 +64,7 @@ import { ScrimsModule } from "./scrims/scrims.module";
 import { LeaguesModule } from "./leagues/leagues.module";
 import { PluginsModule } from "./plugins/plugins.module";
 import { UtilityModule } from "./utility/utility.module";
-import { AdministratorSessionMiddleware } from "./auth/AdministratorSessionMiddleware";
+import { AdministratorOrLoopbackMiddleware } from "./auth/AdministratorOrLoopbackMiddleware";
 
 @Module({
   imports: [
@@ -115,7 +115,7 @@ import { AdministratorSessionMiddleware } from "./auth/AdministratorSessionMiddl
     BullBoardModule.forRoot({
       route: "/queues",
       adapter: ExpressAdapter,
-      middleware: AdministratorSessionMiddleware,
+      middleware: AdministratorOrLoopbackMiddleware,
     }),
     ConfigModule.forRoot({
       isGlobal: true,

@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
   UnsupportedMediaTypeException,
 } from "@nestjs/common";
-import { Request } from "express";
+import { Request, Response } from "express";
 import { ConfigService } from "@nestjs/config";
 import {
   createClient,
@@ -32,6 +32,7 @@ export class HasuraService
   public static readonly HOOK_SECRET_HEADER = "x-5stack-hook-secret";
   public static readonly HOOK_SECRET_PROBE_MS = 15_000;
   public static readonly HOOK_SECRET_GRACE_MS = 30_000;
+  public static readonly HOOK_SECRET_RETRY_AFTER_SECONDS = 10;
 
   private config: HasuraConfig;
   private appConfig: AppConfig;
@@ -105,7 +106,7 @@ export class HasuraService
     }
   }
 
-  public verifyHook(request: Request) {
+  public verifyHook(request: Request, eventResponse?: Response) {
     if (!request.is("application/json")) {
       throw new UnsupportedMediaTypeException();
     }
@@ -119,6 +120,13 @@ export class HasuraService
     if (typeof secret !== "string" || !this.checkSecret(secret)) {
       this.logger.warn(
         `refused ${request.method} ${request.originalUrl} from ${request.ip}: ${secret === undefined ? "missing" : "wrong"} hook secret`,
+      );
+      // Hasura retries an event answered with Retry-After even after its
+      // retries run out, and some triggers (season_backfill_events) have none,
+      // so a refusal at a rollout edge would otherwise drop the event for good.
+      eventResponse?.setHeader(
+        "Retry-After",
+        String(HasuraService.HOOK_SECRET_RETRY_AFTER_SECONDS),
       );
       throw new UnauthorizedException();
     }

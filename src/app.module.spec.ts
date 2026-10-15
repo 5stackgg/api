@@ -82,6 +82,7 @@ describe("module graph", () => {
 describe("bull board", () => {
   let app: INestApplication;
   let viewer: { steam_id: string; role: string } | undefined;
+  let peer: string | undefined;
 
   beforeAll(async () => {
     const imports: Array<{ module?: unknown }> =
@@ -95,11 +96,23 @@ describe("bull board", () => {
     }).compile();
 
     app = module.createNestApplication({ logger: false });
+    (app as any).set("trust proxy", 1);
     app.use((req: any, _res: unknown, next: () => void) => {
       req.user = viewer;
+      if (peer) {
+        Object.defineProperty(req.socket, "remoteAddress", {
+          value: peer,
+          configurable: true,
+        });
+      }
       next();
     });
     await app.init();
+  });
+
+  beforeEach(() => {
+    viewer = undefined;
+    peer = "10.42.0.7";
   });
 
   afterAll(async () => {
@@ -109,10 +122,8 @@ describe("bull board", () => {
   const get = (path: string) => request(app.getHttpServer()).get(path);
 
   it.each(["/queues", "/queues/api/queues"])(
-    "refuses %s to an anonymous request",
+    "refuses %s to an anonymous request from another pod",
     async (path) => {
-      viewer = undefined;
-
       expect((await get(path)).status).toBe(403);
     },
   );
@@ -127,5 +138,29 @@ describe("bull board", () => {
     viewer = { steam_id: "76561198000000001", role: "administrator" };
 
     expect((await get("/queues/api/queues")).status).toBe(200);
+  });
+
+  it("serves a kubectl port-forward, which arrives on the pod's loopback", async () => {
+    peer = undefined;
+
+    expect((await get("/queues/api/queues")).status).toBe(200);
+  });
+
+  it.each(["127.0.0.1", "::1", "::ffff:127.0.0.1"])(
+    "serves an anonymous request whose socket peer is %s",
+    async (address) => {
+      peer = address;
+
+      expect((await get("/queues/api/queues")).status).toBe(200);
+    },
+  );
+
+  it("refuses a request that only claims loopback in X-Forwarded-For", async () => {
+    const response = await get("/queues/api/queues").set(
+      "X-Forwarded-For",
+      "127.0.0.1",
+    );
+
+    expect(response.status).toBe(403);
   });
 });

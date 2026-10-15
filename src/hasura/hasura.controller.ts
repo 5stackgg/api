@@ -94,8 +94,11 @@ export class HasuraController {
   }
 
   @Post("events")
-  public async events(@Req() request: Request) {
-    this.hasuraService.verifyHook(request);
+  public async events(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    this.hasuraService.verifyHook(request, response);
 
     const { event, trigger } = request.body;
 

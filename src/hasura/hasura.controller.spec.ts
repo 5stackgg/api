@@ -120,6 +120,7 @@ describe("HasuraController hooks", () => {
       const response = await action().send(actionBody);
 
       expect(response.status).toBe(401);
+      expect(response.headers["retry-after"]).toBeUndefined();
       expect(handled).toEqual([]);
     });
 
@@ -149,28 +150,38 @@ describe("HasuraController hooks", () => {
       ]);
     });
 
-    it("refuses an event without the secret", async () => {
+    it("refuses an event without the secret, asking Hasura to retry it", async () => {
       const response = await event().send(eventBody);
 
       expect(response.status).toBe(401);
+      expect(response.headers["retry-after"]).toBe("10");
       expect(handled).toEqual([]);
     });
 
-    it("refuses an event with the wrong secret", async () => {
+    it("refuses an event with the wrong secret, asking Hasura to retry it", async () => {
       const response = await event().set(HEADER, "guess").send(eventBody);
 
       expect(response.status).toBe(401);
+      expect(response.headers["retry-after"]).toBe("10");
       expect(handled).toEqual([]);
     });
 
-    it("refuses an event that is not JSON", async () => {
+    it("refuses an event that is not JSON without asking for a retry", async () => {
       const response = await event()
         .set(HEADER, SECRET)
         .type("form")
         .send("trigger[name]=hook_spec_event&event[op]=INSERT");
 
       expect(response.status).toBe(415);
+      expect(response.headers["retry-after"]).toBeUndefined();
       expect(handled).toEqual([]);
+    });
+
+    it("never asks for a retry on an event it accepted", async () => {
+      const response = await event().set(HEADER, SECRET).send(eventBody);
+
+      expect(response.status).toBeLessThan(300);
+      expect(response.headers["retry-after"]).toBeUndefined();
     });
   });
 
