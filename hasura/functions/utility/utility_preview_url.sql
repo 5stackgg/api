@@ -4,15 +4,25 @@
 -- highlight (clip_download_url). Both serve a key under clips/ only on a link
 -- signed here (file_url_signature); the API also takes the session of someone
 -- who may see the lineup.
+--
+-- plpgsql for the same reason as file_url_signature: it runs for every file of
+-- every lineup on a page.
 DROP FUNCTION IF EXISTS public.utility_lineup_file_base_url(public.utility_lineups);
 CREATE OR REPLACE FUNCTION public.utility_lineup_file_base_url()
     RETURNS text
-    LANGUAGE sql STABLE
+    LANGUAGE plpgsql STABLE
     AS $$
-    SELECT COALESCE(
-        (SELECT value FROM settings WHERE name = 'cloudflare_worker_url'),
-        (SELECT value FROM settings WHERE name = 'demos_domain')
-    );
+    DECLARE
+        base_url text;
+    BEGIN
+        SELECT value INTO base_url FROM settings WHERE name = 'cloudflare_worker_url';
+
+        IF base_url IS NULL THEN
+            SELECT value INTO base_url FROM settings WHERE name = 'demos_domain';
+        END IF;
+
+        RETURN base_url;
+    END;
 $$;
 
 -- A lineup anyone may see gets the long-lived link a shared card needs.
