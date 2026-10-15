@@ -128,12 +128,13 @@ describe("ChatAttachmentsService", () => {
       ChatLobbyType.Organizer,
       ChatLobbyType.Draft,
       ChatLobbyType.Direct,
+      ChatLobbyType.Team,
     ])("allows %s", (type) => {
       expect(ChatAttachmentsService.allowsAttachments(type)).toBe(true);
     });
 
     // Both are relayed into the CS2 server, which can only show text.
-    it.each([ChatLobbyType.Match, ChatLobbyType.MatchTeam, ChatLobbyType.Team])(
+    it.each([ChatLobbyType.Match, ChatLobbyType.MatchTeam])(
       "keeps %s text-only",
       (type) => {
         expect(ChatAttachmentsService.allowsAttachments(type)).toBe(false);

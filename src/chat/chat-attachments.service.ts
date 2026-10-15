@@ -138,6 +138,7 @@ export class ChatAttachmentsService {
     ChatLobbyType.Organizer,
     ChatLobbyType.Draft,
     ChatLobbyType.Direct,
+    ChatLobbyType.Team,
   ]);
 
   private static readonly COLUMNS = `id::text AS id,

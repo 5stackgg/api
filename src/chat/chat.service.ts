@@ -67,6 +67,7 @@ export class ChatService {
     [ChatLobbyType.Draft, 60 * 60],
     [ChatLobbyType.Tournament, 60 * 60 * 24 * 7],
     [ChatLobbyType.Organizer, 60 * 60 * 24 * 90],
+    [ChatLobbyType.Team, 60 * 60 * 24 * 30],
   ]);
 
   private static readonly DEFAULT_TTL = 60 * 60;
@@ -476,6 +477,11 @@ export class ChatService {
       type: ChatLobbyType.Organizer,
       fallback: 60 * 60 * 24 * 90,
     },
+    {
+      setting: SystemSettingName.ChatTtlTeam,
+      type: ChatLobbyType.Team,
+      fallback: 60 * 60 * 24 * 30,
+    },
   ];
 
   // Each update carries the message's whole reaction state, and the per
@@ -797,6 +803,14 @@ export class ChatService {
         }
 
         break;
+      // No role bypass, unlike Draft and Organizer above: a team's room is
+      // private to the team, and site staff are deliberately kept out of it.
+      case ChatLobbyType.Team:
+        if (!(await this.teamChatMembers(id)).has(String(user.steam_id))) {
+          return false;
+        }
+
+        break;
       case ChatLobbyType.Direct: {
         const parties = parseDirectRoomId(id);
 
@@ -856,12 +870,22 @@ export class ChatService {
     );
   }
 
-  // A moderator has to see a group room whole to moderate it. A DM is not
-  // moderated, so a block closes it for them like for anyone.
+  // A moderator has to see a group room whole to moderate it. Staff moderate
+  // neither a DM nor a team's room, so a block closes those for them like for
+  // anyone.
   private static blockExemptRoles(
     type: ChatLobbyType,
   ): Array<e_player_roles_enum> {
-    return type === ChatLobbyType.Direct ? [] : rolesAtOrAbove("moderator");
+    return ChatService.isStaffModerated(type)
+      ? rolesAtOrAbove("moderator")
+      : [];
+  }
+
+  // Where staff moderate: what is deleted or edited there is kept as evidence
+  // for them (chat_message_deletions, chat_message_edits, a deleted message's
+  // files). A team's room is closed to staff, so nothing of it is kept for them.
+  private static isStaffModerated(type: ChatLobbyType): boolean {
+    return type !== ChatLobbyType.Direct && type !== ChatLobbyType.Team;
   }
 
   private static withoutBlocked(
@@ -1099,8 +1123,7 @@ export class ChatService {
     );
   }
 
-  // Not a conversation, which already reaches the one other person in it,
-  // and not a Team room, which nothing opens yet.
+  // Not a conversation, which already reaches the one other person in it.
   private static readonly MENTION_ROOMS: ReadonlySet<ChatLobbyType> = new Set([
     ChatLobbyType.Match,
     ChatLobbyType.MatchTeam,
@@ -1108,6 +1131,7 @@ export class ChatService {
     ChatLobbyType.Tournament,
     ChatLobbyType.Organizer,
     ChatLobbyType.Draft,
+    ChatLobbyType.Team,
   ]);
 
   public static takesMentions(type: ChatLobbyType): boolean {
@@ -1862,7 +1886,9 @@ export class ChatService {
     // message down without its evidence. A retry finds the row and carries on.
     // An author removing their own message is audited the same way, or posting
     // abuse and deleting it would leave nothing behind.
-    await this.recordDeletion(type, id, messageId, message, current);
+    if (ChatService.isStaffModerated(type)) {
+      await this.recordDeletion(type, id, messageId, message, current);
+    }
 
     await this.redis.hdel(messageKey, messageId);
 
@@ -1897,18 +1923,17 @@ export class ChatService {
     return { deleted: true };
   }
 
-  // A group room's files stay as evidence until they expire, hidden from the
-  // room; a direct message's go at once. Never allowed to fail the delete: a
-  // file left behind still expires, and the sweep takes it then.
+  // A staff-moderated room's files stay as evidence until they expire, hidden
+  // from the room; anywhere else they go at once. Never allowed to fail the
+  // delete: a file left behind still expires, and the sweep takes it then.
   private async removeAttachments(
     type: ChatLobbyType,
     id: string,
     messageId: string,
   ) {
-    const removal =
-      type === ChatLobbyType.Direct
-        ? this.attachments.expireMessage(type, id, messageId)
-        : this.attachments.markDeleted(type, id, messageId);
+    const removal = ChatService.isStaffModerated(type)
+      ? this.attachments.markDeleted(type, id, messageId)
+      : this.attachments.expireMessage(type, id, messageId);
 
     await removal.catch((error) => {
       this.logger.warn(
@@ -1924,6 +1949,22 @@ export class ChatService {
     id: string,
     user: User,
   ): Promise<ChatErrorCode | null> {
+    // A team's own admins and its owner moderate its room; a site role counts
+    // for nothing there.
+    if (type === ChatLobbyType.Team) {
+      const member = (await this.teamChatMembers(id)).get(
+        String(user.steam_id),
+      );
+
+      if (!member) {
+        return ChatErrorCode.NotAllowed;
+      }
+
+      return member.admin
+        ? null
+        : ChatService.selfServiceRefusal(message, user);
+    }
+
     if (!isRoleAbove(user.role, "moderator")) {
       const refusal = ChatService.selfServiceRefusal(message, user);
 
@@ -2247,21 +2288,16 @@ export class ChatService {
       // Written before the swap, the way a deletion is audited before its
       // HDEL, so no failure part way through can replace what was said
       // without keeping it. A swap that does not apply takes its row back out.
-      const auditId = await this.recordEdit(
-        type,
-        id,
-        messageId,
-        message,
-        text,
-        editedAt,
-      );
+      const auditId = ChatService.isStaffModerated(type)
+        ? await this.recordEdit(type, id, messageId, message, text, editedAt)
+        : null;
 
       const edited = ChatService.edited(message, text, editedAt);
       const swapped = await this.redis.eval(
         ChatService.EDIT_ROOM_MESSAGE_SCRIPT,
         2,
         messageKey,
-        `chat_edit_applied:${auditId}`,
+        `chat_edit_applied:${auditId ?? randomUUID()}`,
         messageId,
         raw,
         JSON.stringify(edited),
@@ -2284,7 +2320,9 @@ export class ChatService {
         return announced;
       }
 
-      await this.discardEdit(auditId);
+      if (auditId) {
+        await this.discardEdit(auditId);
+      }
     }
 
     this.logger.warn(
@@ -2824,6 +2862,16 @@ export class ChatService {
         return "Matchmaking Lobby";
       case ChatLobbyType.Organizer:
         return "Organizers";
+      case ChatLobbyType.Team: {
+        const { teams_by_pk } = await this.hasuraService.query({
+          teams_by_pk: {
+            __args: { id },
+            name: true,
+          },
+        });
+
+        return teams_by_pk?.name ?? "Team";
+      }
       default:
         return "Chat";
     }
@@ -3029,12 +3077,49 @@ export class ChatService {
 
         break;
       }
-      default:
-        // Nothing ever opens a Team room, so it has nobody to notify.
+      case ChatLobbyType.Team: {
+        for (const steamId of (await this.teamChatMembers(id)).keys()) {
+          add(steamId);
+        }
+
         break;
+      }
     }
 
     return members;
+  }
+
+  // A team's room is read by its roster (Starter, Substitute and Benched, an
+  // invite only once accepted) and its owner; `admin` is who may remove
+  // another member's message there. Read fresh every time, so a removal or a
+  // demotion takes effect on the next send, delete or delivery.
+  private async teamChatMembers(
+    id: string,
+  ): Promise<Map<string, { admin: boolean }>> {
+    if (!ChatService.UUID.test(id)) {
+      return new Map();
+    }
+
+    const rows = await this.postgres.query<
+      Array<{ steam_id: string; admin: boolean }>
+    >(
+      `SELECT tr.player_steam_id::text AS steam_id,
+              (tr.role = 'Admin' OR tr.player_steam_id = t.owner_steam_id)
+                AS admin
+         FROM public.teams t
+         JOIN public.team_roster tr ON tr.team_id = t.id
+        WHERE t.id = $1::uuid
+       UNION
+       SELECT t.owner_steam_id::text, true
+         FROM public.teams t
+        WHERE t.id = $1::uuid
+          AND t.owner_steam_id IS NOT NULL`,
+      [id],
+    );
+
+    return new Map(
+      rows.map(({ steam_id, admin }) => [String(steam_id), { admin }]),
+    );
   }
 
   public async mentionCandidates(
@@ -3790,11 +3875,12 @@ export class ChatService {
     );
   }
 
-  // Presence outlives membership (see canPostIn). A team room is the one
+  // Presence outlives membership (see canPostIn). A lineup's room is the one
   // whose lines the rest of the match must never see: a player moved to the
   // other lineup, or benched, would otherwise keep receiving them until their
-  // presence expired. The organizers' room is the role, which can be taken
-  // away from someone still sitting in it.
+  // presence expired. A team's room is private the same way to whoever left
+  // the roster. The organizers' room is the role, which can be taken away
+  // from someone still sitting in it.
   private async currentRoster(
     type: ChatLobbyType,
     id: string,
@@ -3828,7 +3914,7 @@ export class ChatService {
       );
     }
 
-    if (type !== ChatLobbyType.MatchTeam) {
+    if (type !== ChatLobbyType.MatchTeam && type !== ChatLobbyType.Team) {
       return null;
     }
 
