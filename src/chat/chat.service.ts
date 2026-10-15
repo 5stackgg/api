@@ -60,7 +60,7 @@ export class ChatService {
     [ChatLobbyType.MatchMaking, 60 * 60],
     [ChatLobbyType.Draft, 60 * 60],
     [ChatLobbyType.Tournament, 60 * 60 * 24 * 7],
-    [ChatLobbyType.Organizer, 60 * 60 * 24],
+    [ChatLobbyType.Organizer, 60 * 60 * 24 * 90],
   ]);
 
   private static readonly DEFAULT_TTL = 60 * 60;
@@ -455,7 +455,7 @@ export class ChatService {
     {
       setting: SystemSettingName.ChatTtlOrganizers,
       type: ChatLobbyType.Organizer,
-      fallback: 60 * 60 * 24,
+      fallback: 60 * 60 * 24 * 90,
     },
   ];
 
