@@ -14,6 +14,7 @@ import { HasuraService } from "../../hasura/hasura.service";
 import { PostgresService } from "../../postgres/postgres.service";
 import { User } from "../../auth/types/User";
 import { ClipsService } from "./clips.service";
+import { FileUrlSigningService } from "../../hasura/file-url-signing.service";
 
 // View counting mirrors the clip Worker (5stack-panel
 // cloudflare-workers/backblaze-proxy) rule for rule, viewer key included, so a
@@ -44,19 +45,23 @@ export class ClipDownloadController {
     private readonly hasura: HasuraService,
     private readonly postgres: PostgresService,
     private readonly clips: ClipsService,
+    private readonly signing: FileUrlSigningService,
     private readonly logger: Logger,
   ) {}
 
   // A lineup's preview clip, thumbnail, stills and recorded smoke on a panel
   // with no Cloudflare worker: the path is the object's key, as it is on the
-  // worker (utility_lineup_file_base_url). The session cookie spans the web
-  // domain's subdomains, so a <video> or <img> on the page arrives here as
+  // worker (utility_lineup_file_base_url). A link the computed fields signed is
+  // served as the worker serves it. Without one, the session cookie spans the
+  // web domain's subdomains, so a <video> or <img> on the page arrives here as
   // whoever is signed in, and a lineup is served to those who may see it.
   @Get("utility/*key")
   public async utilityLineupFile(
     @Param("key") path: string | Array<string>,
     @Query("name") name: string | undefined,
     @Query("dl") dl: string | undefined,
+    @Query("exp") exp: string | undefined,
+    @Query("sig") sig: string | undefined,
     @Req() request: Request,
     @Res() response: Response,
   ) {
@@ -64,6 +69,7 @@ export class ClipDownloadController {
     const file = await this.utilityLineupFileFor(
       key,
       request.user as User | undefined,
+      this.signing.verify(key, exp, sig),
     );
     if (!file) {
       response.setHeader("Cache-Control", "no-store");
@@ -83,17 +89,25 @@ export class ClipDownloadController {
     );
   }
 
+  // The demos domain carries no session, so the link itself is the grant: a
+  // clip is served only on one the computed field signed (clip_download_url).
   @Get(":clipId")
   public async download(
     @Param("clipId") clipId: string,
     @Query("name") name: string | undefined,
     @Query("dl") dl: string | undefined,
+    @Query("exp") exp: string | undefined,
+    @Query("sig") sig: string | undefined,
     @Req() request: Request,
     @Res() response: Response,
   ) {
     const clip = await this.getClip(clipId);
     if (!clip?.file) {
       response.status(404).json({ error: "not found" });
+      return;
+    }
+    if (!this.signing.verify(clip.file, exp, sig)) {
+      this.refuse(response);
       return;
     }
     await this.stream(
@@ -115,12 +129,18 @@ export class ClipDownloadController {
   @Get(":clipId/thumbnail")
   public async thumbnail(
     @Param("clipId") clipId: string,
+    @Query("exp") exp: string | undefined,
+    @Query("sig") sig: string | undefined,
     @Req() request: Request,
     @Res() response: Response,
   ) {
     const clip = await this.getClip(clipId);
     if (!clip?.thumbnail_url) {
       response.status(404).json({ error: "not found" });
+      return;
+    }
+    if (!this.signing.verify(clip.thumbnail_url, exp, sig)) {
+      this.refuse(response);
       return;
     }
     await this.stream(
@@ -131,6 +151,11 @@ export class ClipDownloadController {
       request,
       response,
     );
+  }
+
+  private refuse(response: Response) {
+    response.setHeader("Cache-Control", "no-store");
+    response.status(403).json({ error: "forbidden" });
   }
 
   private shouldTrackView(request: Request, key: string): boolean {
@@ -210,11 +235,13 @@ export class ClipDownloadController {
     return match_clips_by_pk;
   }
 
-  // Only a file that a lineup the viewer may see points at today, so the path
-  // being a key opens neither the rest of the bucket nor a private lineup.
+  // Only a file that a lineup points at today, and only on a signed link or
+  // to a viewer who may see that lineup, so the path being a key opens neither
+  // the rest of the bucket nor a private lineup.
   private async utilityLineupFileFor(
     key: string,
     viewer: User | undefined,
+    signed: boolean,
   ): Promise<{ extension: string; public: boolean } | null> {
     const match = UTILITY_LINEUP_FILE.exec(key);
     if (!match) {
@@ -222,20 +249,21 @@ export class ClipDownloadController {
     }
     // The role Hasura would give them now. The session still holds the one
     // they signed in with, which a demoted moderator would keep for weeks.
-    const session = viewer
-      ? await this.hasura.getHasuraHeaders(viewer.steam_id)
-      : {};
+    const session =
+      viewer && !signed
+        ? await this.hasura.getHasuraHeaders(viewer.steam_id)
+        : {};
     const [lineup] = await this.postgres.query<Array<{ public: boolean }>>(
       `SELECT public.can_view_utility_lineup(l, '{}'::json) IS TRUE AS public
          FROM public.utility_lineups l
         WHERE l.id = $1::uuid
-          AND public.can_view_utility_lineup(l, $3::json)
+          AND ($4::boolean OR public.can_view_utility_lineup(l, $3::json))
           AND ($2 IN (l.preview_file, l.preview_thumbnail, l.smoke_voxels_file)
                OR EXISTS (
                  SELECT 1
                    FROM jsonb_each_text(COALESCE(l.preview_stills, '{}'::jsonb)) still
                   WHERE still.value = $2))`,
-      [match[1], key, JSON.stringify(session)],
+      [match[1], key, JSON.stringify(session), signed],
     );
     return lineup
       ? { extension: match[2].toLowerCase(), public: lineup.public }
