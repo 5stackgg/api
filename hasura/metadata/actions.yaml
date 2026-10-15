@@ -1403,6 +1403,34 @@ actions:
       - role: verified_user
       - role: user
     comment: Map a tournament placement to an award
+  - name: setTournamentMvp
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Pick the tournament MVP in place of the automatic pick (its organizers and administrators; checked by the API)
+  - name: tournamentMvpCandidates
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: The winning team's players who played, ranked the way the automatic MVP pick ranks them
   - name: utilityPracticeWhereAmI
     definition:
       kind: synchronous
@@ -2225,6 +2253,7 @@ custom_types:
     - name: UtilitySmokePreviewOutput
     - name: AwardRecipient
     - name: TournamentAward
+    - name: TournamentMvpCandidate
     - name: SteamPresenceBotAssignment
     - name: SteamPresencePool
     - name: SteamPresenceBot

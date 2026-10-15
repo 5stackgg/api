@@ -1,0 +1,42 @@
+table:
+  name: tournament_mvp_picks
+  schema: public
+object_relationships:
+  - name: automatic_player
+    using:
+      foreign_key_constraint_on: automatic_steam_id
+  - name: picked_by
+    using:
+      foreign_key_constraint_on: picked_by_steam_id
+  - name: player
+    using:
+      foreign_key_constraint_on: player_steam_id
+  - name: replaced_player
+    using:
+      foreign_key_constraint_on: replaced_steam_id
+  - name: tournament
+    using:
+      foreign_key_constraint_on: tournament_id
+  - name: tournament_team
+    using:
+      foreign_key_constraint_on: tournament_team_id
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - id
+        - tournament_id
+        - player_steam_id
+        - tournament_team_id
+        - picked_by_steam_id
+        - note
+        - player_impact
+        - automatic_steam_id
+        - automatic_impact
+        - replaced_steam_id
+        - created_at
+      filter:
+        tournament:
+          can_pick_mvp:
+            _eq: true
+    comment: ""

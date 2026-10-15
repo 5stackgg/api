@@ -129,6 +129,47 @@ export class AwardsController {
     return await this.awards.setTournamentAward(data);
   }
 
+  @HasuraAction()
+  public async tournamentMvpCandidates(data: {
+    tournament_id: string;
+    user?: User;
+  }) {
+    const user = this.requireUser(data.user);
+    await this.awards.requireOrganizer(data.tournament_id, user);
+    return await this.awards.listTournamentMvpCandidates(data.tournament_id);
+  }
+
+  // The MVP counts on the awards leaderboard, so as with grantAward an
+  // organizer's own name takes an administrator.
+  @HasuraAction()
+  public async setTournamentMvp(data: {
+    tournament_id: string;
+    player_steam_id: string;
+    note?: string | null;
+    user?: User;
+  }) {
+    const user = this.requireUser(data.user);
+    await this.awards.requireOrganizer(data.tournament_id, user);
+
+    if (
+      user.role !== "administrator" &&
+      String(data.player_steam_id) === String(user.steam_id)
+    ) {
+      throw new ForbiddenException(
+        "Tournament organizers cannot pick themselves as MVP",
+      );
+    }
+
+    await this.awards.setTournamentMvp({
+      tournament_id: data.tournament_id,
+      player_steam_id: String(data.player_steam_id),
+      picked_by_steam_id: user.steam_id,
+      note: data.note,
+    });
+
+    return { success: true };
+  }
+
   @Post("awards/:awardId")
   @UseGuards(SteamGuard, RoleSettingGuard(SystemSettingName.CreateAwardsRole))
   @UseInterceptors(

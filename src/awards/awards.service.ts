@@ -50,6 +50,22 @@ export interface GrantAwardInput {
   awarded_by_steam_id: string;
 }
 
+export interface TournamentMvpCandidate {
+  player_steam_id: string;
+  name: string;
+  avatar_url: string | null;
+  tournament_team_id: string;
+  rank: number;
+  avg_impact: number;
+  total_impact: number;
+  matches: number;
+  kills: number;
+  deaths: number;
+  kdr: number;
+  adr: number;
+  headshot_percentage: number;
+}
+
 interface TournamentAwardRow {
   id: string;
   tournament_id: string;
@@ -396,6 +412,74 @@ export class AwardsService {
     );
 
     return config;
+  }
+
+  public async listTournamentMvpCandidates(
+    tournamentId: string,
+  ): Promise<TournamentMvpCandidate[]> {
+    return await this.postgres.query<TournamentMvpCandidate[]>(
+      `SELECT c.player_steam_id::text AS player_steam_id,
+              p.name,
+              p.avatar_url,
+              c.tournament_team_id,
+              c.rank,
+              c.avg_impact,
+              c.total_impact,
+              c.matches,
+              COALESCE(stats.kills, 0) AS kills,
+              COALESCE(stats.deaths, 0) AS deaths,
+              COALESCE(stats.kdr, 0) AS kdr,
+              COALESCE(stats.adr, 0) AS adr,
+              COALESCE(stats.headshot_percentage, 0) AS headshot_percentage
+         FROM public.tournament_mvp_candidates($1) c
+         JOIN public.players p ON p.steam_id = c.player_steam_id
+         LEFT JOIN public.v_tournament_player_stats stats
+           ON stats.tournament_id = $1
+          AND stats.player_steam_id = c.player_steam_id
+        ORDER BY c.rank`,
+      [tournamentId],
+    );
+  }
+
+  public async setTournamentMvp(input: {
+    tournament_id: string;
+    player_steam_id: string;
+    picked_by_steam_id: string;
+    note?: string | null;
+  }): Promise<void> {
+    let recipientId: string | null = null;
+
+    try {
+      const [picked] = await this.postgres.query<
+        Array<{ recipient_id: string | null }>
+      >(`SELECT public.set_tournament_mvp($1, $2, $3, $4) AS recipient_id`, [
+        input.tournament_id,
+        input.player_steam_id,
+        input.picked_by_steam_id,
+        input.note ?? null,
+      ]);
+      recipientId = picked?.recipient_id ?? null;
+    } catch (error) {
+      if ((error as { code?: string })?.code === "22000") {
+        throw new BadRequestException((error as Error).message);
+      }
+      throw error;
+    }
+
+    if (!recipientId) {
+      return;
+    }
+
+    const [grant] = await this.postgres.query<Array<{ award_id: string }>>(
+      `SELECT award_id FROM public.award_recipients WHERE id = $1`,
+      [recipientId],
+    );
+
+    await this.notifyAwarded(
+      [input.player_steam_id],
+      grant.award_id,
+      recipientId,
+    );
   }
 
   public async uploadAwardImage(

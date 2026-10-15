@@ -51,6 +51,18 @@ matches_agg AS (
       ON mlp.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
     WHERE mlp.steam_id IS NOT NULL
     GROUP BY tm.tournament_id, mlp.steam_id
+),
+-- Damage and rounds from the per-map stats, the same source as
+-- get_tournament_leaderboard, so the two boards agree on ADR.
+adr_agg AS (
+    SELECT
+        tm.tournament_id,
+        pmms.steam_id,
+        SUM(pmms.damage)::float AS damage,
+        SUM(pmms.rounds_played)::int AS rounds_played
+    FROM t_matches tm
+    JOIN player_match_map_stats pmms ON pmms.match_id = tm.match_id
+    GROUP BY tm.tournament_id, pmms.steam_id
 )
 SELECT
     m.tournament_id,
@@ -67,12 +79,18 @@ SELECT
     CASE WHEN COALESCE(kd.kills, 0) = 0
          THEN 0::float
          ELSE ROUND(COALESCE(kd.headshots, 0)::numeric / kd.kills::numeric * 100, 1)::float
-    END AS headshot_percentage
+    END AS headshot_percentage,
+    CASE WHEN COALESCE(d.rounds_played, 0) = 0
+         THEN 0::float
+         ELSE ROUND((d.damage / d.rounds_played)::numeric, 1)::float
+    END AS adr
 FROM matches_agg m
 LEFT JOIN kd_agg kd
   ON kd.tournament_id = m.tournament_id AND kd.steam_id = m.steam_id
 LEFT JOIN assists_agg a
-  ON a.tournament_id = m.tournament_id AND a.steam_id = m.steam_id;
+  ON a.tournament_id = m.tournament_id AND a.steam_id = m.steam_id
+LEFT JOIN adr_agg d
+  ON d.tournament_id = m.tournament_id AND d.steam_id = m.steam_id;
 
 -- Per-player league season stats: the per-tournament player stats above scoped
 -- to the season's division tournaments, with team attribution from the league

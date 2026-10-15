@@ -1884,6 +1884,20 @@ type Mutation {
   ): TournamentAward
 }
 
+type Mutation {
+  setTournamentMvp(
+    tournament_id: uuid!
+    player_steam_id: String!
+    note: String
+  ): SuccessOutput
+}
+
+type Query {
+  tournamentMvpCandidates(
+    tournament_id: uuid!
+  ): [TournamentMvpCandidate!]!
+}
+
 type Award {
   id: uuid!
   tournament_id: uuid
@@ -1924,6 +1938,22 @@ type TournamentAward {
   custom_name: String
   silhouette: Int
   image_url: String
+}
+
+type TournamentMvpCandidate {
+  player_steam_id: String!
+  name: String!
+  avatar_url: String
+  tournament_team_id: uuid!
+  rank: Int!
+  avg_impact: Float!
+  total_impact: Float!
+  matches: Int!
+  kills: Int!
+  deaths: Int!
+  kdr: Float!
+  adr: Float!
+  headshot_percentage: Float!
 }
 
 type SyncPluginRegistryOutput {
