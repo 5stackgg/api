@@ -131,10 +131,10 @@ describe("registerBodyParsers", () => {
     expect(await rawPost(path, JSON.stringify(jsonOf(10)))).toBe(400);
   });
 
-  it("refuses a climbing path even with a body over every limit", async () => {
+  it("refuses a climbing path before the general parser can answer 413", async () => {
     const status = await rawPost(
-      "/hasura/%2e%2e/utility/x",
-      JSON.stringify(jsonOf(5 * MB)),
+      "/matches/%2e%2e/x",
+      JSON.stringify(jsonOf(2 * MB)),
     );
 
     expect(status).toBe(400);
