@@ -160,18 +160,27 @@ describe("chat room mute (SQL-driven)", () => {
   const setRoom = (
     steamId: string,
     thread: string,
-    room: { muted?: boolean; mutedFor?: string | null; notify?: string },
+    room: { muted?: boolean; muteMinutes?: number | null; notify?: string },
   ) =>
     postgres.query(
-      `INSERT INTO chat_room_settings (steam_id, thread, muted, muted_until, notify)
-            VALUES ($1::bigint, $2, $3, now() + $4::interval, $5)`,
+      `INSERT INTO chat_room_settings (steam_id, thread, muted, mute_minutes, notify)
+            VALUES ($1::bigint, $2, $3, $4, $5)`,
       [
         steamId,
         thread,
         room.muted ?? false,
-        room.mutedFor ?? null,
+        room.muteMinutes ?? null,
         room.notify ?? "all",
       ],
+    );
+
+  // Time passing: the end moves into the past without the player touching it.
+  const runOut = (steamId: string, thread: string) =>
+    postgres.query(
+      `UPDATE chat_room_settings
+          SET muted_until = now() - interval '1 second'
+        WHERE steam_id = $1::bigint AND thread = $2`,
+      [steamId, thread],
     );
 
   const tournamentRoom = () =>
@@ -268,7 +277,7 @@ describe("chat room mute (SQL-driven)", () => {
       const author = await fx.player("Author");
       const steamId = await reader();
       const room = tournamentRoom();
-      await setRoom(steamId, room, { muted: true, mutedFor: "1 hour" });
+      await setRoom(steamId, room, { muted: true, muteMinutes: 60 });
 
       await push.sendChatMessage([steamId], line(room, author));
 
@@ -279,7 +288,8 @@ describe("chat room mute (SQL-driven)", () => {
       const author = await fx.player("Author");
       const steamId = await reader();
       const room = tournamentRoom();
-      await setRoom(steamId, room, { muted: true, mutedFor: "-1 second" });
+      await setRoom(steamId, room, { muted: true, muteMinutes: 15 });
+      await runOut(steamId, room);
 
       await push.sendChatMessage([steamId], line(room, author));
 
@@ -326,7 +336,7 @@ describe("chat room mute (SQL-driven)", () => {
         ChatLobbyType.Direct,
         [friend, steamId].sort().join(":"),
       );
-      await setRoom(steamId, room, { muted: true, mutedFor: "8 hours" });
+      await setRoom(steamId, room, { muted: true, muteMinutes: 480 });
 
       await push.sendChatMessage([steamId], line(room, friend));
 
@@ -367,7 +377,7 @@ describe("chat room mute (SQL-driven)", () => {
       await push.sendChatMessage([steamId], line(room, author));
       expect(pushed()).toHaveLength(1);
 
-      await setRoom(steamId, room, { muted: true, mutedFor: "15 minutes" });
+      await setRoom(steamId, room, { muted: true, muteMinutes: 15 });
       await closeWindow(steamId, room);
 
       expect(pushed()).toHaveLength(1);
@@ -407,7 +417,13 @@ describe("chat room mute (SQL-driven)", () => {
   });
 
   describe("tags in a team's room", () => {
-    let team: { id: string; owner: string; starter: string; muted: string };
+    let team: {
+      id: string;
+      owner: string;
+      starter: string;
+      muted: string;
+      control: string;
+    };
 
     beforeEach(async () => {
       const { id, owner } = await fx.team();
@@ -416,9 +432,10 @@ describe("chat room mute (SQL-driven)", () => {
         owner,
         starter: await fx.player("Starter"),
         muted: await subscribe(await fx.player("Muted")),
+        control: await subscribe(await fx.player("Control")),
       };
 
-      for (const steamId of [team.starter, team.muted]) {
+      for (const steamId of [team.starter, team.muted, team.control]) {
         await runAsUser(postgres, team.owner, "admin", (query) =>
           query(
             `INSERT INTO team_roster (team_id, player_steam_id, status)
@@ -431,7 +448,18 @@ describe("chat room mute (SQL-driven)", () => {
 
     const room = () => chatThreadKey(ChatLobbyType.Team, team.id);
 
+    // Resolves once the message's pushes have all been decided, so a test can
+    // tell "not pushed" from "not pushed yet".
     const say = async (text: string, mentions?: string[]) => {
+      let notified: Promise<unknown> = Promise.resolve();
+      const notify = (chat as any).notifyLobbyMembers;
+      jest
+        .spyOn(chat as any, "notifyLobbyMembers")
+        .mockImplementationOnce(function (this: unknown, ...args: unknown[]) {
+          notified = notify.apply(this, args);
+          return notified;
+        });
+
       const [player] = await postgres.query<Array<Record<string, string>>>(
         `SELECT steam_id::text AS steam_id, name, role::text AS role
            FROM players WHERE steam_id = $1::bigint`,
@@ -447,7 +475,7 @@ describe("chat room mute (SQL-driven)", () => {
         ChatLobbyType.Team,
         team.id,
       );
-      return chat.sendMessageToChat(
+      const result = await chat.sendMessageToChat(
         ChatLobbyType.Team,
         team.id,
         player as any,
@@ -457,35 +485,35 @@ describe("chat room mute (SQL-driven)", () => {
         undefined,
         mentions,
       );
+
+      expect(result).toMatchObject({ accepted: true });
+      await notified;
+
+      return result;
     };
 
-    const until = async (check: () => boolean) => {
-      for (let attempt = 0; attempt < 100 && !check(); attempt++) {
-        await new Promise((resolve) => setTimeout(resolve, 20));
-      }
-    };
-
-    const settle = () => new Promise((resolve) => setTimeout(resolve, 300));
+    const pushedTo = () => payloads().map(({ endpoint }) => endpoint);
 
     it("says nothing about a teammate's chatter in a room the player muted", async () => {
       await setRoom(team.muted, room(), { muted: true });
 
-      await expect(say("scrim at 8")).resolves.toMatchObject({
-        accepted: true,
-      });
-      await settle();
+      await say("scrim at 8");
 
-      expect(pushed()).toHaveLength(0);
+      expect(pushedTo()).toEqual([endpointOf(team.control)]);
     });
 
     it("lets a teammate's tag break through the mute", async () => {
       await setRoom(team.muted, room(), { muted: true });
 
       await say("@Muted scrim at 8", [team.muted]);
-      await until(() => pushed().length > 0);
 
       expect(payloads()).toEqual([
         expect.objectContaining({
+          endpoint: endpointOf(team.control),
+          title: expect.not.stringMatching(/mentioned you/),
+        }),
+        expect.objectContaining({
+          endpoint: endpointOf(team.muted),
           title: expect.stringMatching(/^Starter mentioned you/),
           body: "@Muted scrim at 8",
         }),
@@ -495,15 +523,141 @@ describe("chat room mute (SQL-driven)", () => {
     it("keeps the sender's cooldown free for a tag a room set to nothing swallowed", async () => {
       await setRoom(team.muted, room(), { notify: "nothing" });
 
-      await say("@Muted scrim at 8", [team.muted]);
-      await settle();
+      await say("@Muted @Control scrim at 8", [team.muted, team.control]);
 
-      expect(pushed()).toHaveLength(0);
+      expect(payloads()).toEqual([
+        expect.objectContaining({
+          endpoint: endpointOf(team.control),
+          title: expect.stringMatching(/^Starter mentioned you/),
+        }),
+      ]);
+      expect(
+        await redis.exists(
+          `notifications:mention:${team.starter}:${team.control}`,
+        ),
+      ).toBe(1);
       expect(
         await redis.exists(
           `notifications:mention:${team.starter}:${team.muted}`,
         ),
       ).toBe(0);
+    });
+  });
+
+  describe("when a mute ends", () => {
+    const endOf = async (steamId: string) => {
+      const [row] = await postgres.query<
+        Array<{
+          muted: boolean;
+          mute_minutes: number | null;
+          muted_until: Date | null;
+          seconds_left: number | null;
+        }>
+      >(
+        `SELECT muted, mute_minutes, muted_until,
+                extract(epoch FROM muted_until - now())::float AS seconds_left
+           FROM chat_room_settings
+          WHERE steam_id = $1::bigint`,
+        [steamId],
+      );
+      return row;
+    };
+
+    // The shape Hasura sends for an upsert: only the columns it was told to
+    // update are set again.
+    const upsert = (
+      steamId: string,
+      thread: string,
+      values: Record<string, unknown>,
+    ) => {
+      const columns = Object.keys(values);
+      return runAsUser(postgres, steamId, "user", (query) =>
+        query(
+          `INSERT INTO chat_room_settings (steam_id, thread, ${columns.join(", ")})
+                VALUES ($1::bigint, $2, ${columns.map((_, index) => `$${index + 3}`).join(", ")})
+           ON CONFLICT (steam_id, thread) DO UPDATE
+                SET ${columns.map((column) => `${column} = EXCLUDED.${column}`).join(", ")}`,
+          [steamId, thread, ...Object.values(values)],
+        ),
+      );
+    };
+
+    it("ends a timed mute by the database's clock, whatever the client's", async () => {
+      const steamId = await fx.player();
+
+      await upsert(steamId, tournamentRoom(), {
+        muted: true,
+        mute_minutes: 60,
+      });
+
+      const row = await endOf(steamId);
+      expect(row.seconds_left).toBeGreaterThan(3590);
+      expect(row.seconds_left).toBeLessThanOrEqual(3600);
+    });
+
+    it("never keeps an end time it was handed", async () => {
+      const steamId = await fx.player();
+
+      await upsert(steamId, tournamentRoom(), {
+        muted: true,
+        muted_until: new Date(Date.now() + 5 * 60_000).toISOString(),
+      });
+
+      expect(await endOf(steamId)).toMatchObject({
+        muted: true,
+        muted_until: null,
+      });
+    });
+
+    it("leaves a mute's end alone when only the level changes", async () => {
+      const steamId = await fx.player();
+      const room = tournamentRoom();
+      await upsert(steamId, room, { muted: true, mute_minutes: 60 });
+      const before = (await endOf(steamId)).muted_until;
+
+      await postgres.query("SELECT pg_sleep(0.05)");
+      await upsert(steamId, room, { notify: "mentions" });
+
+      expect((await endOf(steamId)).muted_until).toEqual(before);
+    });
+
+    it("starts the clock again for a mute picked after the last one ran out", async () => {
+      const steamId = await fx.player();
+      const room = tournamentRoom();
+      await upsert(steamId, room, { muted: true, mute_minutes: 60 });
+      await runOut(steamId, room);
+
+      await upsert(steamId, room, { muted: true, mute_minutes: 60 });
+
+      expect((await endOf(steamId)).seconds_left).toBeGreaterThan(3590);
+    });
+
+    it("gives a mute until unmuted no end, even over a timed one", async () => {
+      const steamId = await fx.player();
+      const room = tournamentRoom();
+      await upsert(steamId, room, { muted: true, mute_minutes: 60 });
+
+      await upsert(steamId, room, { muted: true, mute_minutes: null });
+
+      expect(await endOf(steamId)).toMatchObject({
+        muted: true,
+        mute_minutes: null,
+        muted_until: null,
+      });
+    });
+
+    it("forgets the end and the length on unmute", async () => {
+      const steamId = await fx.player();
+      const room = tournamentRoom();
+      await upsert(steamId, room, { muted: true, mute_minutes: 480 });
+
+      await upsert(steamId, room, { muted: false, mute_minutes: null });
+
+      expect(await endOf(steamId)).toMatchObject({
+        muted: false,
+        mute_minutes: null,
+        muted_until: null,
+      });
     });
   });
 
@@ -553,13 +707,29 @@ describe("chat room mute (SQL-driven)", () => {
 
     it("refuses an end to a mute that is not on", async () => {
       const steamId = await fx.player();
+      const room = tournamentRoom();
+      await setRoom(steamId, room, { muted: false });
 
       await expect(
-        setRoom(steamId, tournamentRoom(), {
-          muted: false,
-          mutedFor: "1 hour",
-        }),
+        postgres.query(
+          `UPDATE chat_room_settings SET muted_until = now()
+            WHERE steam_id = $1::bigint`,
+          [steamId],
+        ),
       ).rejects.toThrow(/chat_room_settings_muted_until/);
+    });
+
+    it("refuses a mute shorter than a minute or longer than a day", async () => {
+      const steamId = await fx.player();
+
+      for (const minutes of [0, -15, 1441]) {
+        await expect(
+          setRoom(steamId, tournamentRoom(), {
+            muted: true,
+            muteMinutes: minutes,
+          }),
+        ).rejects.toThrow(/chat_room_settings_mute_minutes/);
+      }
     });
 
     it("goes with the player", async () => {
