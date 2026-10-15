@@ -438,6 +438,77 @@ select_permissions:
               _neq: practice
       allow_aggregations: true
     comment: ""
+  - role: moderator
+    permission:
+      columns:
+        - cancels_at
+        - counts_toward_ranking
+        - created_at
+        - ended_at
+        - effective_at
+        - id
+        - label
+        - lineup_1_id
+        - lineup_2_id
+        - match_options_id
+        - organizer_steam_id
+        - region
+        - scheduled_at
+        - server_error
+        - server_id
+        - source
+        - started_at
+        - status
+        - veto_pick_expires_at
+        - winning_lineup_id
+      computed_fields:
+        - can_assign_server
+        - can_cancel
+        - can_check_in
+        - can_reassign_winner
+        - can_schedule
+        - can_start
+        - can_stream_live
+        - can_stream_tv
+        - connection_link
+        - connection_string
+        - current_match_map_id
+        - invite_code
+        - is_captain
+        - is_coach
+        - is_friend_in_match_lineup
+        - is_in_lineup
+        - is_match_server_available
+        - is_organizer
+        - is_server_online
+        - is_tournament_match
+        - lineup_counts
+        - map_veto_picking_lineup_id
+        - map_veto_type
+        - max_players_per_lineup
+        - min_players_per_lineup
+        - region_veto_picking_lineup_id
+        - requested_organizer
+        - server_plugin_runtime
+        - server_region
+        - server_type
+        - tv_connection_string
+      filter:
+        _and:
+          - _or:
+              - status:
+                  _nin:
+                    - PickingPlayers
+              - is_organizer:
+                  _eq: true
+              - is_in_lineup:
+                  _eq: true
+              - is_friend_in_match_lineup:
+                  _eq: true
+          - source:
+              _neq: practice
+      allow_aggregations: true
+    comment: ""
   - role: user
     permission:
       columns:
