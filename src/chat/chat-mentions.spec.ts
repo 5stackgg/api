@@ -688,7 +688,11 @@ describe("ChatService mentions", () => {
         id: "m-1",
       });
 
-      expect(push.takingPushes).toHaveBeenCalledWith([KASPR], "ChatMessage");
+      expect(push.takingPushes).toHaveBeenCalledWith(
+        [KASPR],
+        "ChatMessage",
+        "chat:match:m-1",
+      );
       expect(push.claimMentionPushes).not.toHaveBeenCalled();
       expect(pushes()).toEqual([
         {

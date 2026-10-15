@@ -200,6 +200,15 @@ export function focusThreadsFor(thread: string): string[] {
   return team ? [thread, chatThreadKey("match", team[1])] : [thread];
 }
 
+// The thread a player's mute and "notify me about" for `thread` are kept
+// under. A side's team room has no menu of its own: it is shown inside its
+// match room, whose setting covers it. web/utilities/chatThread.ts agrees.
+export function roomSettingsThreadFor(thread: string): string {
+  const team = /^chat:match_team:([^:]+):/.exec(thread);
+
+  return team ? chatThreadKey("match", team[1]) : thread;
+}
+
 // Where a client's focus reports land. Read by the delivery gate and written by
 // the socket gateway, which is why it lives here with the key it holds rather
 // than on either side of that exchange -- the two modules would otherwise have

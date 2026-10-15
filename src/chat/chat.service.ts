@@ -2684,6 +2684,7 @@ export class ChatService {
       targets,
       senderSteamId,
       message,
+      chatThreadKey(type, id),
     );
 
     const push: ChatPush = {
@@ -2720,12 +2721,15 @@ export class ChatService {
   // The tagged members this message still reaches who have not blocked its
   // sender, whatever their role (a moderator's block leaves a group room's
   // lines alone, never a tag aimed at them), and whom the sender has not
-  // just tagged. The rest are pushed the room's ordinary message.
+  // just tagged. The rest are pushed the room's ordinary message. A member
+  // who set the room to nothing is left out before the claim, so a tag it
+  // swallowed never holds back the sender's next one elsewhere.
   private async mentionRecipients(
     mentions: ChatMention[],
     targets: string[],
     senderSteamId: string,
     text: string,
+    thread: string,
   ): Promise<string[]> {
     const tagged = ChatService.mentionsOf({ mentions }).filter((steamId) =>
       targets.includes(steamId),
@@ -2743,6 +2747,7 @@ export class ChatService {
     const reachable = await this.pushNotifications.takingPushes(
       tagged.filter((steamId) => !blocking.has(steamId)),
       "ChatMessage",
+      thread,
     );
 
     if (reachable.length === 0) {
