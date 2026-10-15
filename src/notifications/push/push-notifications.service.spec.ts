@@ -959,6 +959,124 @@ describe("PushNotificationsService", () => {
     });
   });
 
+  describe("mentions", () => {
+    const payloadOf = (call: number) =>
+      JSON.parse((webPush.sendNotification as jest.Mock).mock.calls[call][1]);
+
+    const payloads = () =>
+      (webPush.sendNotification as jest.Mock).mock.calls.map(([, raw]) =>
+        JSON.parse(raw),
+      );
+
+    const mention = (overrides: Record<string, any> = {}) =>
+      chatPush({
+        title: "Luke mentioned you",
+        message: "@kairo you're up next",
+        mention: true,
+        ...overrides,
+      });
+
+    const closeWindow = async (entries: string[]) => {
+      redis.multi.mockReturnValueOnce(chainableMulti([[null, entries]]));
+      await service.sendPending("76561100000000001", ROOM);
+    };
+
+    const windowClaims = () =>
+      redis.set.mock.calls.filter(([key]: [string]) =>
+        key.startsWith("notifications:push-window:"),
+      );
+
+    it("pushes at once under a tag of its own, outside the room's window", async () => {
+      await service.sendChatMessage(["76561100000000001"], mention());
+
+      expect(payloadOf(0)).toMatchObject({
+        title: "Luke mentioned you · Ancients vs Ratz",
+        body: "@kairo you're up next",
+        tag: `${ROOM}:mention`,
+        threadKey: ROOM,
+        renotify: true,
+      });
+      // A summary closing the room's window never replaces it, and a message
+      // after it is not held behind it.
+      expect(windowClaims()).toEqual([]);
+      expect(redis.rpush).not.toHaveBeenCalled();
+      expect(pushDeliveryQueue.add).not.toHaveBeenCalled();
+    });
+
+    it("still says nothing to a player reading the room", async () => {
+      focus["76561100000000001"] = [ROOM];
+
+      await service.sendChatMessage(["76561100000000001"], mention());
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
+
+    it("waits out quiet hours like any other message", async () => {
+      quietSeconds = 3600;
+
+      await service.sendChatMessage(["76561100000000001"], mention());
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+      expect(pushDeliveryQueue.add).toHaveBeenCalledWith(
+        SendPushDelivery.name,
+        { steamId: "76561100000000001", thread: ROOM },
+        expect.objectContaining({ delay: 3600 * 1000 }),
+      );
+    });
+
+    it("comes out of a held window apart from the summary of the rest", async () => {
+      await closeWindow([
+        heldChat({ messageId: "m-a" }),
+        heldChat({
+          messageId: "m-b",
+          title: "Ratz mentioned you",
+          message: "@kairo ready?",
+          mention: true,
+        }),
+        heldChat({ messageId: "m-c" }),
+      ]);
+
+      expect(payloads()).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            title: "Ratz mentioned you · Ancients vs Ratz",
+            body: "@kairo ready?",
+            tag: `${ROOM}:mention`,
+          }),
+          expect.objectContaining({
+            title: "Luke · Ancients vs Ratz",
+            body: "2 new messages",
+            tag: ROOM,
+          }),
+        ]),
+      );
+      expect(payloads()).toHaveLength(2);
+    });
+
+    it("sends only the mention when the rest is already on the device", async () => {
+      await closeWindow([
+        heldChat({ messageId: "m-a", pushed: true }),
+        heldChat({
+          messageId: "m-b",
+          mention: true,
+          title: "Ratz mentioned you",
+        }),
+      ]);
+
+      expect(payloads()).toEqual([
+        expect.objectContaining({ tag: `${ROOM}:mention` }),
+      ]);
+    });
+
+    it("drops a held mention the player has read since", async () => {
+      readTo = "2026-10-02T12:00:30.000Z";
+
+      await closeWindow([heldChat({ messageId: "m-b", mention: true })]);
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
+  });
+
   describe("rich payload", () => {
     const payloadOf = (call: number) =>
       JSON.parse((webPush.sendNotification as jest.Mock).mock.calls[call][1]);

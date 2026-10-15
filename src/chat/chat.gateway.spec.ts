@@ -97,7 +97,62 @@ describe("ChatGateway lobby:chat", () => {
         false,
         "web",
         undefined,
+        undefined,
       );
+    });
+
+    it("passes on the players the composer tagged", async () => {
+      await gateway.lobby(
+        {
+          id: "t-1",
+          type: ChatLobbyType.Tournament,
+          message: "@kairo hi",
+          mentions: ["76561198000000002"],
+        },
+        client(),
+      );
+
+      expect(chat.sendMessageToChat).toHaveBeenCalledWith(
+        ChatLobbyType.Tournament,
+        "t-1",
+        expect.objectContaining({ steam_id: "1" }),
+        "@kairo hi",
+        false,
+        "web",
+        undefined,
+        ["76561198000000002"],
+      );
+    });
+
+    it("tells the sender how many players one message may tag", async () => {
+      chat.sendMessageToChat.mockResolvedValueOnce({
+        accepted: false,
+        code: ChatErrorCode.TooManyMentions,
+      });
+      const socket = client();
+
+      await gateway.lobby(
+        {
+          id: "t-1",
+          type: ChatLobbyType.Tournament,
+          message: "@a @b",
+          mentions: [],
+          requestId: "r-9",
+        },
+        socket,
+      );
+
+      expect(sent(socket)).toEqual([
+        {
+          event: "chat:error",
+          data: {
+            code: "too_many_mentions",
+            action: "send",
+            max: ChatService.MAX_MENTIONS,
+            requestId: "r-9",
+          },
+        },
+      ]);
     });
 
     it("sends attachments that came without any text", async () => {
@@ -119,6 +174,7 @@ describe("ChatGateway lobby:chat", () => {
         false,
         "web",
         { attachments: ["a-1", "a-2"], gif: undefined },
+        undefined,
       );
     });
 
@@ -138,6 +194,7 @@ describe("ChatGateway lobby:chat", () => {
         false,
         "web",
         { attachments: undefined, gif },
+        undefined,
       );
     });
 
@@ -234,6 +291,7 @@ describe("ChatGateway lobby:chat", () => {
         message,
         false,
         "web",
+        undefined,
         undefined,
       );
     });

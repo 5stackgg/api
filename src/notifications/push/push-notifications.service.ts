@@ -46,6 +46,7 @@ export type NotificationData = {
   image?: string | null;
   senderSteamId?: string;
   messageId?: string;
+  mention?: boolean;
 };
 
 // The bell's buttons, as written by NotificationsService.send / notifyPlayers.
@@ -86,6 +87,10 @@ export type ChatPush = {
   // Recipients whose block on the sender does not hide the message from them
   // (ChatService.blockExemptRoles).
   blockExemptRoles: e_player_roles_enum[];
+  // The message tags the recipient. It goes out at once under a device tag of
+  // its own, never held behind the room's window or folded into its summary,
+  // and is still held back while they read the room or sleep.
+  mention?: boolean;
 };
 
 // `at` is when it was queued by postgres's clock, the one the read cursor is
@@ -875,9 +880,12 @@ export class PushNotificationsService {
         (readTo === null || new Date(push.at).getTime() > readTo),
     );
 
+    const mentions = unseen.filter(({ mention }) => mention);
+    const chatter = unseen.filter(({ mention }) => !mention);
+
     // Only what the device already shows: everything after it was deleted or
     // read, and saying it again would buzz for nothing new.
-    if (unseen.every(({ pushed }) => pushed)) {
+    if (mentions.length === 0 && chatter.every(({ pushed }) => pushed)) {
       return;
     }
 
@@ -904,16 +912,30 @@ export class PushNotificationsService {
       return;
     }
 
-    await this.deliver(
-      steamId,
-      rows.map(({ subscription_id, endpoint, p256dh, auth }) => ({
+    const subscriptions = rows.map(
+      ({ subscription_id, endpoint, p256dh, auth }) => ({
         id: subscription_id,
         endpoint,
         p256dh,
         auth,
-      })),
-      unseen.map((push) => PushNotificationsService.chatRow(push)),
+      }),
     );
+
+    // The newest tag stands for the rest: they share one device tag, so each
+    // would only replace the one before it.
+    if (mentions.length > 0) {
+      await this.deliver(steamId, subscriptions, [
+        PushNotificationsService.chatRow(mentions.at(-1)),
+      ]);
+    }
+
+    if (!chatter.every(({ pushed }) => pushed)) {
+      await this.deliver(
+        steamId,
+        subscriptions,
+        chatter.map((push) => PushNotificationsService.chatRow(push)),
+      );
+    }
   }
 
   // Drops what was deleted after it was queued, and shows the rest as edited.
@@ -956,6 +978,7 @@ export class PushNotificationsService {
         icon: push.icon,
         senderSteamId: push.senderSteamId,
         messageId: push.messageId,
+        ...(push.mention ? { mention: true } : {}),
       },
     };
   }
@@ -1170,7 +1193,10 @@ export class PushNotificationsService {
         continue;
       }
 
-      if (policy.bundleSeconds === 0) {
+      if (
+        policy.bundleSeconds === 0 ||
+        delivery.notifications.every(({ data }) => data?.mention)
+      ) {
         await this.deliver(
           delivery.steamId,
           delivery.subscriptions,
@@ -1695,8 +1721,9 @@ export class PushNotificationsService {
       icon: this.assetUrl(newest.data?.icon),
       image: this.assetUrl(newest.data?.image),
       // Lets a device collapse repeats of the same conversation or match
-      // rather than stacking a separate notification for each.
-      tag: thread,
+      // rather than stacking a separate notification for each. A tag keeps a
+      // notification of its own, which the room's summary cannot replace.
+      tag: newest.data?.mention ? `${thread}:mention` : thread,
       // A replacement under an existing tag is silent by default, which would
       // make the summary that closes a burst arrive unannounced. Requires
       // `tag`, which is always set above.

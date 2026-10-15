@@ -103,6 +103,9 @@ export class ChatGateway {
       requestId?: string;
       attachments?: unknown;
       gif?: unknown;
+      // Steam ids picked from the composer's list. The service decides which
+      // of them the message tags.
+      mentions?: unknown;
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
@@ -144,6 +147,7 @@ export class ChatGateway {
       false,
       "web",
       media,
+      data.mentions,
     );
 
     // Only a message the room accepted may reach the game server: the relay
@@ -351,6 +355,9 @@ export class ChatGateway {
           action,
           ...(code === ChatErrorCode.TooLong
             ? { max: ChatService.MAX_MESSAGE_LENGTH }
+            : {}),
+          ...(code === ChatErrorCode.TooManyMentions
+            ? { max: ChatService.MAX_MENTIONS }
             : {}),
           ...(requestId ? { requestId } : {}),
         },

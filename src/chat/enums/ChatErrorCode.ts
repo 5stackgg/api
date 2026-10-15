@@ -18,4 +18,7 @@ export enum ChatErrorCode {
   AlreadySent = "already_sent",
   // A message request is out and the other side has not replied to it yet.
   AwaitingReply = "awaiting_reply",
+  // More players tagged than ChatService.MAX_MENTIONS. Refused whole rather
+  // than sent with some of them dropped.
+  TooManyMentions = "too_many_mentions",
 }

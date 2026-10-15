@@ -15,7 +15,10 @@ import {
 } from "generated/schema";
 import { isRoleAbove, rolesAtOrAbove } from "src/utilities/isRoleAbove";
 import { NotificationsService } from "src/notifications/notifications.service";
-import { PushNotificationsService } from "src/notifications/push/push-notifications.service";
+import {
+  ChatPush,
+  PushNotificationsService,
+} from "src/notifications/push/push-notifications.service";
 import { PostgresService } from "src/postgres/postgres.service";
 import { PlayerBlocksService } from "src/player-blocks/player-blocks.service";
 import { chatThreadKey } from "src/notifications/push/notification-delivery";
@@ -32,6 +35,9 @@ import { MatchChatArchiveEntry } from "./types/MatchChatArchiveEntry";
 import { MatchChatLog } from "./types/MatchChatLog";
 import { ChatAttachment } from "./types/ChatAttachment";
 import { ChatGif } from "./types/ChatGif";
+import { ChatMention } from "./types/ChatMention";
+import { ChatMentionCandidate } from "./types/ChatMentionCandidate";
+import { ChatRoomMember } from "./types/ChatRoomMember";
 import {
   ChatAttachmentClaim,
   ChatAttachmentRow,
@@ -71,6 +77,15 @@ export class ChatService {
 
   // Measured in UTF-16 code units, the same unit a textarea's maxlength counts.
   public static readonly MAX_MESSAGE_LENGTH = 2000;
+
+  // Tags one message may carry. A message asking for more is refused whole:
+  // dropping the rest would leave the sender believing they had been tagged.
+  public static readonly MAX_MENTIONS = 10;
+
+  // A tag is "@name" where the @ does not follow a letter or digit and the
+  // name does not run on into one. web/utilities/chatMentions.ts finds and
+  // draws tags by the same rule.
+  private static readonly MENTION_WORD = /[\p{L}\p{N}_]/u;
 
   // What a relayed line is cut to in game. The game shows far less than a full
   // website message, and 2000 characters of multibyte text can outgrow an rcon
@@ -835,7 +850,10 @@ export class ChatService {
       this.playerBlocks.blockedBy(viewer, ChatService.blockExemptRoles(type)),
     ]);
 
-    return ChatService.withoutBlocked(messages, blocked);
+    return await this.ownMentionsUnblocked(
+      ChatService.withoutBlocked(messages, blocked),
+      viewer,
+    );
   }
 
   // A moderator has to see a group room whole to moderate it. A DM is not
@@ -1081,6 +1099,70 @@ export class ChatService {
     );
   }
 
+  // Every group room. A conversation already reaches the one other person in
+  // it, and pushes them.
+  public static takesMentions(type: ChatLobbyType): boolean {
+    return type !== ChatLobbyType.Direct;
+  }
+
+  // The steam ids the composer picked, less the sender's own, or why they
+  // cannot be taken. Whether each is tagged is settled later, against the room.
+  public static mentionRequest(
+    raw: unknown,
+    senderSteamId: string,
+  ): { steamIds: string[] } | { error: ChatErrorCode } {
+    if (raw === undefined || raw === null) {
+      return { steamIds: [] };
+    }
+
+    if (
+      !Array.isArray(raw) ||
+      raw.some(
+        (steamId) => typeof steamId !== "string" || !/^\d{1,20}$/.test(steamId),
+      )
+    ) {
+      return { error: ChatErrorCode.Invalid };
+    }
+
+    const steamIds = [...new Set(raw as string[])].filter(
+      (steamId) => steamId !== senderSteamId,
+    );
+
+    if (steamIds.length > ChatService.MAX_MENTIONS) {
+      return { error: ChatErrorCode.TooManyMentions };
+    }
+
+    return { steamIds };
+  }
+
+  public static mentionIn(text: string, name: string): boolean {
+    if (!name) {
+      return false;
+    }
+
+    const tag = `@${name}`;
+
+    for (
+      let index = text.indexOf(tag);
+      index !== -1;
+      index = text.indexOf(tag, index + 1)
+    ) {
+      const end = index + tag.length;
+      const before =
+        Array.from(text.slice(Math.max(0, index - 2), index)).at(-1) ?? "";
+      const after = Array.from(text.slice(end, end + 2)).at(0) ?? "";
+
+      if (
+        !ChatService.MENTION_WORD.test(before) &&
+        !ChatService.MENTION_WORD.test(after)
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   public static hasMedia(media?: ChatMessageMedia): boolean {
     return (
       (Array.isArray(media?.attachments) && media.attachments.length > 0) ||
@@ -1155,10 +1237,12 @@ export class ChatService {
     skipCheck = false,
     source: ChatMessageSource = "web",
     _media?: ChatMessageMedia,
+    _mentions?: unknown,
   ): Promise<ChatSendResult> {
     let text = _message;
     let attachmentIds: string[] = [];
     let gif: ChatGif | null = null;
+    let mentionIds: string[] = [];
 
     if (source === "web") {
       const media = ChatService.messageMedia(_media);
@@ -1169,6 +1253,17 @@ export class ChatService {
 
       attachmentIds = media.attachmentIds;
       gif = media.gif;
+
+      const requested = ChatService.mentionRequest(
+        _mentions,
+        String(player.steam_id),
+      );
+
+      if ("error" in requested) {
+        return { accepted: false, code: requested.error };
+      }
+
+      mentionIds = requested.steamIds;
 
       const parsed = ChatService.messageText(
         _message,
@@ -1195,6 +1290,10 @@ export class ChatService {
     const hasMedia = attachmentIds.length > 0 || gif !== null;
 
     if (hasMedia && !ChatAttachmentsService.allowsAttachments(type)) {
+      return { accepted: false, code: ChatErrorCode.NotAllowed };
+    }
+
+    if (mentionIds.length > 0 && !ChatService.takesMentions(type)) {
       return { accepted: false, code: ChatErrorCode.NotAllowed };
     }
 
@@ -1225,6 +1324,11 @@ export class ChatService {
       HasuraService.PLAYER_ROLE_CACHE_KEY(player.steam_id),
     );
 
+    const mentions =
+      mentionIds.length > 0
+        ? await this.resolveMentions(type, id, text, mentionIds)
+        : [];
+
     const timestamp = this.nextMessageTimestamp();
     const message: ChatMessage = {
       // Both the history snapshot sent on join and the live broadcast carry the
@@ -1241,6 +1345,7 @@ export class ChatService {
         profile_url: player.profile_url,
       },
       ...(gif ? { gif } : {}),
+      ...(mentions.length > 0 ? { mentions } : {}),
     };
 
     const claim = {
@@ -1385,6 +1490,7 @@ export class ChatService {
         !!message.gif,
       ),
       message.id,
+      mentions,
     ).catch((error) => {
       this.logger.warn(`unable to notify ${type}:${id} of a message`, error);
     });
@@ -1412,6 +1518,121 @@ export class ChatService {
     }
 
     return await this.canAccessLobby(type, id, user);
+  }
+
+  // Who of those the sender picked the message tags: members of the room whose
+  // name it carries. Anyone else stays text. A member who blocked the sender
+  // is kept, so the message never shows the sender who blocked them; the tag
+  // comes off for that member alone (ownMentionsUnblocked), and pushes nothing.
+  private async resolveMentions(
+    type: ChatLobbyType,
+    id: string,
+    text: string,
+    steamIds: string[],
+  ): Promise<ChatMention[]> {
+    const members = new Set(await this.getLobbyMemberSteamIds(type, id));
+    const inRoom = steamIds.filter((steamId) => members.has(steamId));
+
+    if (inRoom.length === 0) {
+      return [];
+    }
+
+    const { players } = await this.hasuraService.query({
+      players: {
+        __args: { where: { steam_id: { _in: inRoom } } },
+        steam_id: true,
+        name: true,
+      },
+    });
+
+    const names = new Map(
+      (players ?? []).map(({ steam_id, name }) => [
+        String(steam_id),
+        ChatService.wellFormed(name ?? ""),
+      ]),
+    );
+
+    return inRoom.flatMap((steamId) => {
+      const name = names.get(steamId);
+
+      return name && ChatService.mentionIn(text, name)
+        ? [{ steam_id: steamId, name }]
+        : [];
+    });
+  }
+
+  private static mentionsOf(message: { mentions?: ChatMention[] }): string[] {
+    return (message.mentions ?? []).map(({ steam_id }) => steam_id);
+  }
+
+  private static withoutMentionOf<T extends { mentions?: ChatMention[] }>(
+    message: T,
+    steamId: string,
+  ): T {
+    const copy = { ...message };
+    const mentions = (message.mentions ?? []).filter(
+      (mention) => mention.steam_id !== steamId,
+    );
+
+    if (mentions.length > 0) {
+      copy.mentions = mentions;
+    } else {
+      delete copy.mentions;
+    }
+
+    return copy;
+  }
+
+  // A tag from someone the viewer blocked is not shown to them, whatever their
+  // role. Only a role that keeps group rooms whole is sent such a line at all.
+  private async ownMentionsUnblocked(
+    messages: ChatMessage[],
+    viewer: string,
+  ): Promise<ChatMessage[]> {
+    if (
+      !messages.some((message) =>
+        ChatService.mentionsOf(message).includes(viewer),
+      )
+    ) {
+      return messages;
+    }
+
+    const blocked = await this.playerBlocks.blockedBy(viewer);
+
+    if (blocked.size === 0) {
+      return messages;
+    }
+
+    return messages.map((message) =>
+      blocked.has(ChatService.authorSteamId(message))
+        ? ChatService.withoutMentionOf(message, viewer)
+        : message,
+    );
+  }
+
+  // An edit keeps the tags whose names it left in the text and adds none: the
+  // players it tagged have been told already, and nobody new is.
+  private static edited(
+    message: ChatMessage,
+    text: string,
+    editedAt: string,
+  ): ChatMessage {
+    const edited: ChatMessage = {
+      ...message,
+      message: text,
+      edited_at: editedAt,
+    };
+    const kept = (message.mentions ?? []).filter(({ name }) =>
+      ChatService.mentionIn(text, name),
+    );
+
+    if (kept.length > 0) {
+      edited.mentions = kept;
+    } else {
+      delete edited.mentions;
+    }
+
+    return edited;
   }
 
   private async isGagged(steamId: string): Promise<boolean> {
@@ -1987,7 +2208,7 @@ export class ChatService {
         `chat_edit_applied:${auditId}`,
         messageId,
         raw,
-        JSON.stringify({ ...message, message: text, edited_at: editedAt }),
+        JSON.stringify(ChatService.edited(message, text, editedAt)),
         ChatService.EDIT_RECEIPT_TTL_MS,
       );
 
@@ -2340,6 +2561,7 @@ export class ChatService {
     senderName: string,
     message: string,
     messageId: string,
+    mentions: ChatMention[] = [],
   ) {
     const members = await this.getLobbyMemberSteamIds(type, id);
     const senderSteamId = String(sender.steam_id);
@@ -2356,7 +2578,13 @@ export class ChatService {
       return;
     }
 
-    await this.pushNotifications.sendChatMessage(targets, {
+    const tagged = await this.mentionRecipients(
+      mentions,
+      targets,
+      senderSteamId,
+    );
+
+    const push: ChatPush = {
       messageId,
       type: ChatService.notificationTypeFor(type),
       title: senderName,
@@ -2367,7 +2595,45 @@ export class ChatService {
       icon: sender.avatar_url,
       senderSteamId,
       blockExemptRoles: ChatService.blockExemptRoles(type),
-    });
+    };
+
+    const untagged = targets.filter((steamId) => !tagged.includes(steamId));
+
+    if (untagged.length > 0) {
+      await this.pushNotifications.sendChatMessage(untagged, push);
+    }
+
+    // In place of the push above, never as well as it.
+    if (tagged.length > 0) {
+      await this.pushNotifications.sendChatMessage(tagged, {
+        ...push,
+        title: `${senderName} mentioned you`,
+        mention: true,
+      });
+    }
+  }
+
+  // The tagged members this message still reaches who have not blocked its
+  // sender, whatever their role: a moderator's block leaves a group room's
+  // lines alone, never a tag aimed at them.
+  private async mentionRecipients(
+    mentions: ChatMention[],
+    targets: string[],
+    senderSteamId: string,
+  ): Promise<string[]> {
+    const tagged = ChatService.mentionsOf({ mentions }).filter((steamId) =>
+      targets.includes(steamId),
+    );
+
+    if (tagged.length === 0) {
+      return [];
+    }
+
+    const blocking = await this.playerBlocks.blockedAmong(tagged, [
+      senderSteamId,
+    ]);
+
+    return tagged.filter((steamId) => !blocking.has(steamId));
   }
 
   private static notificationPreview(message: string) {
@@ -2490,11 +2756,27 @@ export class ChatService {
     type: ChatLobbyType,
     id: string,
   ): Promise<string[]> {
-    const steamIds = new Set<string>();
-    const add = (value: unknown) => {
-      if (value !== null && value !== undefined) {
-        steamIds.add(String(value));
+    return [...(await this.lobbyMembers(type, id)).keys()];
+  }
+
+  // The same roster, with what the room knows each member as: their team, or
+  // that they run it.
+  private async lobbyMembers(
+    type: ChatLobbyType,
+    id: string,
+  ): Promise<Map<string, ChatRoomMember>> {
+    const members = new Map<string, ChatRoomMember>();
+    const add = (value: unknown, member: Partial<ChatRoomMember> = {}) => {
+      if (value === null || value === undefined) {
+        return;
       }
+
+      const known = members.get(String(value));
+
+      members.set(String(value), {
+        team: known?.team ?? member.team ?? null,
+        organizer: (known?.organizer ?? false) || (member.organizer ?? false),
+      });
     };
 
     switch (type) {
@@ -2504,10 +2786,12 @@ export class ChatService {
             __args: { id },
             organizer_steam_id: true,
             lineup_1: {
+              name: true,
               coach_steam_id: true,
               lineup_players: { steam_id: true },
             },
             lineup_2: {
+              name: true,
               coach_steam_id: true,
               lineup_players: { steam_id: true },
             },
@@ -2518,12 +2802,14 @@ export class ChatService {
           break;
         }
 
-        add(matches_by_pk.organizer_steam_id);
+        add(matches_by_pk.organizer_steam_id, { organizer: true });
 
         for (const lineup of [matches_by_pk.lineup_1, matches_by_pk.lineup_2]) {
-          add(lineup?.coach_steam_id);
+          const team = { team: lineup?.name ?? null };
+
+          add(lineup?.coach_steam_id, team);
           for (const lineupPlayer of lineup?.lineup_players ?? []) {
-            add(lineupPlayer.steam_id);
+            add(lineupPlayer.steam_id, team);
           }
         }
 
@@ -2578,6 +2864,7 @@ export class ChatService {
             organizer_steam_id: true,
             organizers: { steam_id: true },
             teams: {
+              name: true,
               owner_steam_id: true,
               roster: { player_steam_id: true },
             },
@@ -2594,16 +2881,16 @@ export class ChatService {
           },
         });
 
-        add(tournaments_by_pk?.organizer_steam_id);
+        add(tournaments_by_pk?.organizer_steam_id, { organizer: true });
 
         for (const organizer of tournaments_by_pk?.organizers ?? []) {
-          add(organizer.steam_id);
+          add(organizer.steam_id, { organizer: true });
         }
 
         for (const team of tournaments_by_pk?.teams ?? []) {
-          add(team.owner_steam_id);
+          add(team.owner_steam_id, { team: team.name ?? null });
           for (const roster of team.roster ?? []) {
-            add(roster.player_steam_id);
+            add(roster.player_steam_id, { team: team.name ?? null });
           }
         }
 
@@ -2665,7 +2952,58 @@ export class ChatService {
         break;
     }
 
-    return [...steamIds];
+    return members;
+  }
+
+  // Who the composer offers when @ is typed: the room's members, to someone
+  // the room would let in.
+  public async mentionCandidates(
+    type: ChatLobbyType,
+    id: string,
+    user: User,
+  ): Promise<ChatMentionCandidate[] | null> {
+    if (!ChatService.takesMentions(type)) {
+      return null;
+    }
+
+    const current = await this.getCurrentUser(String(user.steam_id));
+
+    if (!current || !(await this.canAccessLobby(type, id, current))) {
+      return null;
+    }
+
+    const members = await this.lobbyMembers(type, id);
+    members.delete(String(current.steam_id));
+
+    if (members.size === 0) {
+      return [];
+    }
+
+    const { players } = await this.hasuraService.query({
+      players: {
+        __args: { where: { steam_id: { _in: [...members.keys()] } } },
+        steam_id: true,
+        name: true,
+        avatar_url: true,
+      },
+    });
+
+    return (players ?? [])
+      .filter(({ name }) => !!name)
+      .map((player) => {
+        const member = members.get(String(player.steam_id));
+
+        return {
+          steam_id: String(player.steam_id),
+          name: ChatService.wellFormed(player.name),
+          avatar_url: player.avatar_url ?? null,
+          team: member?.team ?? null,
+          organizer: member?.organizer ?? false,
+        };
+      })
+      .sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+      );
   }
 
   // Cached for the same reason threadLabel is: left uncached this is a
@@ -3298,6 +3636,17 @@ export class ChatService {
       ChatService.blockExemptRoles(type),
     );
 
+    const tagged =
+      event === "chat" && author !== undefined
+        ? ChatService.mentionsOf(data).filter((steamId) =>
+            users.some((user) => String(user.steamId) === steamId),
+          )
+        : [];
+    const untagged =
+      tagged.length > 0
+        ? await this.playerBlocks.blockedAmong(tagged, [author])
+        : new Map<string, Set<string>>();
+
     for (const { steamId } of users) {
       if (roster && !roster.has(String(steamId))) {
         continue;
@@ -3317,7 +3666,13 @@ export class ChatService {
         continue;
       }
 
-      await this.publishTo(steamId, eventName, data);
+      await this.publishTo(
+        steamId,
+        eventName,
+        untagged.has(String(steamId))
+          ? ChatService.withoutMentionOf(data, String(steamId))
+          : data,
+      );
     }
   }
 
@@ -3336,7 +3691,10 @@ export class ChatService {
     for (const { steamId } of users) {
       await this.publishTo(steamId, `lobby:${type}:${id}:messages`, {
         id,
-        messages: ChatService.withoutBlocked(messages, blocked.get(steamId)),
+        messages: await this.ownMentionsUnblocked(
+          ChatService.withoutBlocked(messages, blocked.get(steamId)),
+          String(steamId),
+        ),
       });
     }
   }

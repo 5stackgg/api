@@ -17,6 +17,7 @@ import { lobbies_set_input } from "generated/schema";
 import { HasuraEventData } from "src/hasura/types/HasuraEventData";
 import { ChatLobbyType } from "./enums/ChatLobbyTypes";
 import { MatchChatLog } from "./types/MatchChatLog";
+import { ChatMentionCandidate } from "./types/ChatMentionCandidate";
 
 @Controller("chat")
 export class ChatController {
@@ -92,6 +93,31 @@ export class ChatController {
     return {
       threads: await this.chatService.getReadState(request.user),
     };
+  }
+
+  // Who the composer offers when @ is typed in a room.
+  @Get("rooms/:type/:id/members")
+  @UseGuards(SteamGuard)
+  public async roomMembers(
+    @Req() request: Request,
+    @Param("type") type: ChatLobbyType,
+    @Param("id") id: string,
+  ): Promise<{ members: ChatMentionCandidate[] }> {
+    if (!Object.values(ChatLobbyType).includes(type)) {
+      throw new ForbiddenException();
+    }
+
+    const members = await this.chatService.mentionCandidates(
+      type,
+      id,
+      request.user,
+    );
+
+    if (!members) {
+      throw new ForbiddenException();
+    }
+
+    return { members };
   }
 
   @Get("matches/:matchId/log")
