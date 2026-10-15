@@ -1,10 +1,13 @@
 import { readFileSync } from "fs";
 import { join, resolve } from "path";
+import { load } from "cheerio";
 import { PostgresService } from "../src/postgres/postgres.service";
 import { PlayerBlocksService } from "../src/player-blocks/player-blocks.service";
 import { NewsCommentsService } from "../src/news/news-comments.service";
 import { NewsCommentError } from "../src/news/enums/NewsCommentError";
 import { User } from "../src/auth/types/User";
+import { stripHtml } from "../src/notifications/utilities/stripHtml";
+import { notificationUrl } from "../src/notifications/utilities/notificationUrl";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 
@@ -58,6 +61,10 @@ describe("news comments (SQL-driven)", () => {
       new PlayerBlocksService(postgres),
     );
   });
+
+  const HOSTILE =
+    '<script>alert(1)</script><img src=x onerror="alert(2)"> ' +
+    '<a href="javascript:alert(3)">x</a> javascript:alert(4)';
 
   const refused = (code: NewsCommentError) =>
     expect.objectContaining({ message: code });
@@ -195,9 +202,9 @@ describe("news comments (SQL-driven)", () => {
       await expect(post(plain, id)).rejects.toEqual(
         refused(NewsCommentError.NotVerified),
       );
-      await expect(
-        service.toggleVote(plain, { id: comment }),
-      ).rejects.toEqual(refused(NewsCommentError.NotVerified));
+      await expect(service.toggleVote(plain, { id: comment })).rejects.toEqual(
+        refused(NewsCommentError.NotVerified),
+      );
       await expect(
         service.toggleVote(undefined, { id: comment }),
       ).rejects.toEqual(refused(NewsCommentError.SignIn));
@@ -328,12 +335,12 @@ describe("news comments (SQL-driven)", () => {
 
       await close(id);
 
-      await expect(
-        service.toggleVote(voter, { id: comment }),
-      ).rejects.toEqual(refused(NewsCommentError.Closed));
-      await expect(
-        service.toggleVote(late, { id: comment }),
-      ).rejects.toEqual(refused(NewsCommentError.Closed));
+      await expect(service.toggleVote(voter, { id: comment })).rejects.toEqual(
+        refused(NewsCommentError.Closed),
+      );
+      await expect(service.toggleVote(late, { id: comment })).rejects.toEqual(
+        refused(NewsCommentError.Closed),
+      );
       await expect(
         postgres.query(
           "DELETE FROM news_comment_votes WHERE comment_id = $1 AND steam_id = $2",
@@ -396,9 +403,9 @@ describe("news comments (SQL-driven)", () => {
 
       expect(answer.parent_id).toBe(top);
       expect((await row(answer.id)).parent_id).toBe(top);
-      expect((await row(await insert(id, a.steam_id, "x", reply))).parent_id).toBe(
-        top,
-      );
+      expect(
+        (await row(await insert(id, a.steam_id, "x", reply))).parent_id,
+      ).toBe(top);
     });
 
     it("refuses a reply across posts or under a removed comment", async () => {
@@ -567,9 +574,9 @@ describe("news comments (SQL-driven)", () => {
         voted: false,
       });
 
-      await expect(
-        service.toggleVote(author, { id: comment }),
-      ).rejects.toEqual(refused(NewsCommentError.OwnVote));
+      await expect(service.toggleVote(author, { id: comment })).rejects.toEqual(
+        refused(NewsCommentError.OwnVote),
+      );
       await expect(service.toggleVote(v1, { id: hidden })).rejects.toEqual(
         refused(NewsCommentError.Removed),
       );
@@ -695,6 +702,52 @@ describe("news comments (SQL-driven)", () => {
     });
   });
 
+  describe("untrusted text", () => {
+    it("stores what was typed as plain text, without control characters or bidi overrides", async () => {
+      const id = await article();
+      const author = await player();
+
+      const comment = await post(
+        author,
+        id,
+        `  ${HOSTILE}\u0000\u0007\u202E\u2066 \r\nline two\t`,
+      );
+
+      expect((await row(comment)).body).toBe(`${HOSTILE} \nline two`);
+      await expect(post(author, id, "\u0000\u202E\u0007 ")).rejects.toEqual(
+        refused(NewsCommentError.Empty),
+      );
+      expect(
+        (await row(await insert(id, author.steam_id, "a\u0007b\u202Ec"))).body,
+      ).toBe("abc");
+    });
+
+    it("hands readers the same plain text back, markup and all, for the page to show as text", async () => {
+      const id = await article();
+      const comment = await post(await player(), id, HOSTILE);
+
+      const [shown] = await postgres.query<Array<{ text: string }>>(
+        `SELECT news_comment_text(c, '{"x-hasura-role":"guest"}'::json) AS text
+           FROM news_comments c WHERE id = $1`,
+        [comment],
+      );
+      expect(shown.text).toBe(HOSTILE);
+    });
+
+    it("keeps control characters out of a hide reason", async () => {
+      const id = await article();
+      const comment = await post(await player(), id);
+
+      await service.setHidden(await player("moderator"), {
+        id: comment,
+        hidden: true,
+        reason: "\u202Emaps\u0007 spam",
+      });
+
+      expect((await row(comment)).hidden_reason).toBe("maps spam");
+    });
+  });
+
   describe("limits", () => {
     it("caps a comment at 2000 characters and refuses an empty one", async () => {
       const id = await article();
@@ -777,8 +830,16 @@ describe("news comments (SQL-driven)", () => {
       const moderator = await player("moderator");
       await insert(id, author.steam_id, "visible");
       const hidden = await insert(id, author.steam_id, "hidden alone");
-      const hiddenAnswered = await insert(id, author.steam_id, "hidden answered");
-      const deletedAnswered = await insert(id, author.steam_id, "deleted answered");
+      const hiddenAnswered = await insert(
+        id,
+        author.steam_id,
+        "hidden answered",
+      );
+      const deletedAnswered = await insert(
+        id,
+        author.steam_id,
+        "deleted answered",
+      );
       await insert(id, replier.steam_id, "reply one", hiddenAnswered);
       await insert(id, replier.steam_id, "reply two", deletedAnswered);
       await service.setHidden(moderator, { id: hidden, hidden: true });
@@ -838,18 +899,18 @@ describe("news comments (SQL-driven)", () => {
         [blocker.steam_id, blocked.steam_id, moderator.steam_id],
       );
 
-      expect(Object.keys(await shown("verified_user", blocker.steam_id))).toEqual(
-        expect.not.arrayContaining(["blocked top"]),
-      );
-      expect(Object.keys(await shown("verified_user", blocker.steam_id))).toEqual(
-        expect.arrayContaining(["blocker top"]),
-      );
-      expect(Object.keys(await shown("verified_user", blocked.steam_id)).sort()).toEqual(
-        ["blocked top", "blocker reply", "blocker top"],
-      );
-      expect(Object.keys(await shown("moderator", moderator.steam_id)).sort()).toEqual(
-        ["blocked top", "blocker reply", "blocker top"],
-      );
+      expect(
+        Object.keys(await shown("verified_user", blocker.steam_id)),
+      ).toEqual(expect.not.arrayContaining(["blocked top"]));
+      expect(
+        Object.keys(await shown("verified_user", blocker.steam_id)),
+      ).toEqual(expect.arrayContaining(["blocker top"]));
+      expect(
+        Object.keys(await shown("verified_user", blocked.steam_id)).sort(),
+      ).toEqual(["blocked top", "blocker reply", "blocker top"]);
+      expect(
+        Object.keys(await shown("moderator", moderator.steam_id)).sort(),
+      ).toEqual(["blocked top", "blocker reply", "blocker top"]);
       expect(Object.keys(await shown("guest")).sort()).toEqual([
         "blocked top",
         "blocker reply",
@@ -928,16 +989,58 @@ describe("news comments (SQL-driven)", () => {
           role: "user",
           entity_id: reply,
           steamIds: [author.steam_id],
-          title: "<b>kairo</b> replied to your comment",
+          title: "New reply to your comment",
         }),
       );
+      expect(payload.message).toContain("<b>&lt;b&gt;kairo&lt;/b&gt;</b>");
       expect(payload.message).toContain(
         `href="/news/${slug.slug}#comment-${reply}"`,
       );
       expect(payload.message).toContain("Post &lt;");
-      expect(payload.message).toContain("agreed &lt;script&gt;x&lt;/script&gt;");
+      expect(payload.message).toContain(
+        "agreed &lt;script&gt;x&lt;/script&gt;",
+      );
       expect(payload.message).not.toContain("<script>");
       expect(payload.message).not.toContain("<b>kairo");
+    });
+
+    it("keeps a hostile comment and a hostile name inert all the way to the bell, the push and its link", async () => {
+      const id = await article();
+      const [{ slug }] = await postgres.query<Array<{ slug: string }>>(
+        "SELECT slug FROM news_articles WHERE id = $1",
+        [id],
+      );
+      const author = await player();
+      const replier = await player(
+        "verified_user",
+        '<img src=x onerror="alert(1)">',
+      );
+      const top = await post(author, id);
+      const reply = await post(replier, id, HOSTILE, top);
+
+      const [, payload] = notifyPlayers.mock.calls[0];
+      const $ = load(payload.message);
+
+      expect(payload.title).toBe("New reply to your comment");
+      expect($("script, img, iframe, [onerror], [onclick]")).toHaveLength(0);
+      expect(
+        $("a")
+          .map((_, a) => $(a).attr("href"))
+          .get(),
+      ).toEqual([`/news/${slug}#comment-${reply}`]);
+      expect($.root().text()).toContain(HOSTILE);
+      expect($.root().text()).toContain('<img src=x onerror="alert(1)">');
+      expect(stripHtml(payload.message, 1000)).toContain(HOSTILE);
+      expect(
+        notificationUrl(
+          {
+            type: "NewsCommentReply",
+            message: payload.message,
+            entity_id: reply,
+          },
+          "https://5stack.test",
+        ),
+      ).toBe(`/news/${slug}#comment-${reply}`);
     });
 
     it("notifies the author of the reply you answered, not the thread's starter", async () => {
@@ -999,7 +1102,9 @@ describe("news comments (SQL-driven)", () => {
   // Last: it drops the tables.
   describe("rollback", () => {
     it("down.sql removes the feature without touching news posts, and a re-deploy restores it", async () => {
-      const dir = resolve("hasura/migrations/default/1890000001020_news_comments");
+      const dir = resolve(
+        "hasura/migrations/default/1890000001020_news_comments",
+      );
       await article();
 
       const objects = async () =>

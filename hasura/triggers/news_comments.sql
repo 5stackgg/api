@@ -33,7 +33,7 @@ BEGIN
         NEW.parent_id := parent.id;
     END IF;
 
-    NEW.body := btrim(NEW.body);
+    NEW.body := public.news_comment_plain_text(NEW.body);
     NEW.vote_count := 0;
     NEW.created_at := now();
     NEW.edited_at := NULL;
@@ -80,7 +80,7 @@ BEGIN
             RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'news_comment_edit_window';
         END IF;
 
-        NEW.body := btrim(NEW.body);
+        NEW.body := public.news_comment_plain_text(NEW.body);
         NEW.edited_at := now();
     END IF;
 

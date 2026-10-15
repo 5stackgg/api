@@ -65,6 +65,11 @@ export class NewsCommentsService {
   private static readonly DAY_MS = 24 * 60 * 60_000;
   private static readonly SNIPPET_LENGTH = 140;
 
+  // C0 and C1 controls (newline and tab aside) and the bidi overrides and
+  // isolates that can make a comment read differently from what it says.
+  private static readonly CONTROL_CHARACTERS =
+    /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u202A-\u202E\u2066-\u2069]/g;
+
   private static readonly RATE_SCRIPT = `
     local count = redis.call('INCR', KEYS[1])
     if count == 1 then
@@ -166,7 +171,8 @@ export class NewsCommentsService {
     }
     if (
       Date.now() >
-      new Date(comment.created_at).getTime() + NewsCommentsService.EDIT_WINDOW_MS
+      new Date(comment.created_at).getTime() +
+        NewsCommentsService.EDIT_WINDOW_MS
     ) {
       throw new BadRequestException(NewsCommentError.EditWindow);
     }
@@ -334,9 +340,10 @@ export class NewsCommentsService {
 
     if (input.hidden) {
       const reason =
-        (input.reason ?? "")
-          .trim()
-          .slice(0, NewsCommentsService.HIDE_REASON_MAX_LENGTH) || null;
+        this.plainText(input.reason).slice(
+          0,
+          NewsCommentsService.HIDE_REASON_MAX_LENGTH,
+        ) || null;
 
       await this.write(
         `UPDATE public.news_comments
@@ -389,9 +396,10 @@ export class NewsCommentsService {
     await this.notifications.notifyPlayers(
       "NewsCommentReply" as e_notification_types_enum,
       {
-        title: `${replier.name} replied to your comment`,
+        title: "New reply to your comment",
         message:
-          `On <a href="${NotificationsService.escapeHtml(link)}">` +
+          `<b>${NotificationsService.escapeHtml(replier.name)}</b> replied on ` +
+          `<a href="${NotificationsService.escapeHtml(link)}">` +
           `${NotificationsService.escapeHtml(article.title)}</a>: ` +
           `“${NotificationsService.escapeHtml(snippet)}”`,
         role: "user",
@@ -450,9 +458,7 @@ export class NewsCommentsService {
   }
 
   private cleanBody(body: string | null | undefined): string {
-    const text = String(body ?? "")
-      .replace(/\r\n?/g, "\n")
-      .trim();
+    const text = this.plainText(body);
 
     if (!text) {
       throw new BadRequestException(NewsCommentError.Empty);
@@ -462,6 +468,13 @@ export class NewsCommentsService {
     }
 
     return text;
+  }
+
+  private plainText(value: string | null | undefined): string {
+    return String(value ?? "")
+      .replace(/\r\n?/g, "\n")
+      .replace(NewsCommentsService.CONTROL_CHARACTERS, "")
+      .trim();
   }
 
   private isRemoved(comment: NewsCommentRow): boolean {

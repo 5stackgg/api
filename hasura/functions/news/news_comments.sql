@@ -17,6 +17,23 @@ AS $$
     );
 $$;
 
+-- The same characters NewsCommentsService strips: C0 and C1 controls (newline
+-- and tab aside) and the bidi overrides and isolates.
+CREATE OR REPLACE FUNCTION public.news_comment_plain_text(body text)
+RETURNS text
+LANGUAGE sql
+IMMUTABLE
+AS $$
+    SELECT btrim(
+        regexp_replace(
+            body,
+            '[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]',
+            '',
+            'g'
+        )
+    );
+$$;
+
 CREATE OR REPLACE FUNCTION public.news_comment_viewer(hasura_session json)
 RETURNS bigint
 LANGUAGE sql

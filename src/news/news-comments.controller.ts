@@ -22,8 +22,15 @@ export class NewsCommentsController {
   }
 
   @HasuraAction()
-  public async editNewsComment(data: { id: string; body: string; user?: User }) {
-    return await this.comments.edit(data.user, { id: data.id, body: data.body });
+  public async editNewsComment(data: {
+    id: string;
+    body: string;
+    user?: User;
+  }) {
+    return await this.comments.edit(data.user, {
+      id: data.id,
+      body: data.body,
+    });
   }
 
   @HasuraAction()

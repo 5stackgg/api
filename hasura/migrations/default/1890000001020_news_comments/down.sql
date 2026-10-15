@@ -14,6 +14,7 @@ DROP FUNCTION IF EXISTS public.tai_news_comment_votes();
 DROP FUNCTION IF EXISTS public.tad_news_comment_votes();
 DROP FUNCTION IF EXISTS public.news_comments_open(uuid);
 DROP FUNCTION IF EXISTS public.news_comment_viewer(json);
+DROP FUNCTION IF EXISTS public.news_comment_plain_text(text);
 
 DELETE FROM public.notifications WHERE type = 'NewsCommentReply';
 

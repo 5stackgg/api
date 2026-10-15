@@ -5,16 +5,16 @@ import { NewsCommentsController } from "./news-comments.controller";
 
 const METADATA = join(__dirname, "../../hasura/metadata");
 
-const actions = (
-  yaml.load(readFileSync(join(METADATA, "actions.yaml"), "utf8")) as {
-    actions: Array<{
-      name: string;
-      definition: { kind: string; handler: string };
-      permissions?: Array<{ role: string }>;
-    }>;
-    custom_types: { objects: Array<{ name: string }> };
-  }
-);
+const actions = yaml.load(
+  readFileSync(join(METADATA, "actions.yaml"), "utf8"),
+) as {
+  actions: Array<{
+    name: string;
+    definition: { kind: string; handler: string };
+    permissions?: Array<{ role: string }>;
+  }>;
+  custom_types: { objects: Array<{ name: string }> };
+};
 
 const graphql = readFileSync(join(METADATA, "actions.graphql"), "utf8");
 
@@ -42,7 +42,11 @@ const roles = (name: string) =>
   (action(name)?.permissions ?? []).map((entry) => entry.role).sort();
 
 describe("news comment actions", () => {
-  const user = { steam_id: "76561198000000001", name: "kappa", role: "verified_user" } as any;
+  const user = {
+    steam_id: "76561198000000001",
+    name: "kappa",
+    role: "verified_user",
+  } as any;
 
   let service: Record<string, jest.Mock>;
   let controller: NewsCommentsController;

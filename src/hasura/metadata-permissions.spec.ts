@@ -539,8 +539,7 @@ describe("hasura table metadata", () => {
   // into someone else's name.
   describe("news_comments", () => {
     const comments = () =>
-      tables.find(({ file }) => file === "public_news_comments.yaml")
-        ?.metadata;
+      tables.find(({ file }) => file === "public_news_comments.yaml")?.metadata;
 
     const STAFF_ONLY = ["hidden_by_steam_id", "hidden_reason"];
 
