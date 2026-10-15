@@ -1311,25 +1311,43 @@ export class DraftGameService {
         );
       }
 
-      if (settings.options && draftGame.match_options_id) {
+      if (settings.options) {
         const optionSet = this.matchOptionScalars(user, settings.options);
         // The match is spawned straight off match_options, so the type has to
         // follow the draft or the lobby and the match disagree on format.
-        if (settings.type) {
-          optionSet.type = settings.type;
-        }
+        optionSet.type = settings.type || draftGame.type;
         if (mapPoolId) {
           optionSet.map_pool_id = mapPoolId;
         }
-        await this.hasura.mutation({
-          update_match_options_by_pk: {
-            __args: {
-              pk_columns: { id: draftGame.match_options_id },
-              _set: optionSet,
+
+        if (draftGame.match_options_id) {
+          await this.hasura.mutation({
+            update_match_options_by_pk: {
+              __args: {
+                pk_columns: { id: draftGame.match_options_id },
+                _set: optionSet,
+              },
+              __typename: true,
             },
-            __typename: true,
-          },
-        });
+          });
+        } else {
+          // A quick-hosted room has no options row until its first edit.
+          const { insert_match_options_one } = await this.hasura.mutation({
+            insert_match_options_one: {
+              __args: { object: optionSet },
+              id: true,
+            },
+          });
+          await this.hasura.mutation({
+            update_draft_games_by_pk: {
+              __args: {
+                pk_columns: { id: draftGameId },
+                _set: { match_options_id: insert_match_options_one.id },
+              },
+              __typename: true,
+            },
+          });
+        }
       }
     });
   }
