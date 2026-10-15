@@ -62,10 +62,6 @@ export class AuthController {
       request.user.name,
     );
 
-    user.role = await this.cache.get(
-      HasuraService.PLAYER_ROLE_CACHE_KEY(request.user.steam_id),
-    );
-
     const lastSignInKey = HasuraService.PLAYER_LAST_SIGN_IN_CACHE_KEY(
       request.user.steam_id,
     );

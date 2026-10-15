@@ -12,6 +12,9 @@ export class SteamSerializer extends PassportSerializer {
   @Inject()
   private readonly cache: CacheService;
 
+  @Inject()
+  private readonly hasura: HasuraService;
+
   serializeUser(user: User, done: CallableFunction) {
     void this.cache
       .forget(HasuraService.PLAYER_NAME_CACHE_KEY(user.steam_id))
@@ -28,12 +31,23 @@ export class SteamSerializer extends PassportSerializer {
     done(null, user);
   }
 
+  // `done(null, false)` drops the user from the session, so a failed lookup
+  // fails the request instead of signing them out.
   async deserializeUser(user: User, done: CallableFunction) {
+    let role: User["role"] | undefined;
     try {
-      return done(null, user);
+      role = await this.hasura.getPlayerRole(user.steam_id);
     } catch (error) {
-      this.logger.warn("unable to get user", error);
+      this.logger.warn("unable to get player role", error);
+      return done(error);
     }
-    return done(undefined, false);
+
+    if (!role) {
+      return done(null, false);
+    }
+
+    user.role = role;
+
+    return done(null, user);
   }
 }

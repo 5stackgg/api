@@ -679,7 +679,7 @@ describe("teams, rosters and lineup membership (SQL-driven)", () => {
 
     it("rejects players with an active ban and admits them once it is lifted or expired", async () => {
       const match = await createMatch();
-      const admin = await seedPlayer();
+      const admin = await fx.player(undefined, "administrator");
       const banned = await seedPlayer();
 
       const [sanction] = await postgres.query<Array<{ id: string }>>(
@@ -735,7 +735,7 @@ describe("teams, rosters and lineup membership (SQL-driven)", () => {
     });
 
     it("soft-deleting a manual ban leaves the VAC flag alone", async () => {
-      const admin = await seedPlayer();
+      const admin = await fx.player(undefined, "administrator");
       const player = await seedPlayer();
       await postgres.query(
         "UPDATE players SET vac_banned = true WHERE steam_id = $1",

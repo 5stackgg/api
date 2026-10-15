@@ -1,4 +1,9 @@
-import { Injectable, Logger } from "@nestjs/common";
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from "@nestjs/common";
 import { Readable } from "stream";
 import * as crypto from "crypto";
 import { PostgresService } from "src/postgres/postgres.service";
@@ -53,6 +58,26 @@ export class EventsService {
       [eventId, this.sessionJson(user)],
     );
     return row ? row.can_upload : null;
+  }
+
+  public async assertCanUpload(eventId: string, user?: User): Promise<User> {
+    if (!user) {
+      throw new ForbiddenException("authentication required");
+    }
+    if (!/^[0-9a-fA-F-]{36}$/.test(eventId)) {
+      throw new NotFoundException("event not found");
+    }
+
+    const canUpload = await this.canUpload(eventId, user);
+    if (canUpload === null) {
+      throw new NotFoundException("event not found");
+    }
+    if (!canUpload) {
+      throw new ForbiddenException(
+        "you do not have permission to upload media to this event",
+      );
+    }
+    return user;
   }
 
   public async isOrganizer(eventId: string, user: User): Promise<boolean> {

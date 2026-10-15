@@ -75,7 +75,7 @@ describe("warning sanctions (SQL-driven)", () => {
 
   it("enforces nothing on a player whose only sanction is a warning", async () => {
     const steamId = await fx.player();
-    const moderator = await fx.player();
+    const moderator = await fx.player(undefined, "moderator");
     await postgres.query(
       `INSERT INTO player_sanctions
          (player_steam_id, type, reason, sanctioned_by_steam_id)
@@ -237,6 +237,7 @@ describe("warning sanctions (SQL-driven)", () => {
 
   it("removes one warning by id and leaves the rest of the record", async () => {
     const steamId = await fx.player();
+    const moderator = await fx.player(undefined, "moderator");
     const first = await sanction(steamId, "warning");
     const second = await sanction(steamId, "warning");
 
@@ -244,6 +245,7 @@ describe("warning sanctions (SQL-driven)", () => {
       steamId,
       type: "warning",
       sanctionId: first.id,
+      liftedBySteamId: moderator,
     });
 
     expect(result.id).toBe(first.id);
@@ -259,6 +261,7 @@ describe("warning sanctions (SQL-driven)", () => {
   it("will not remove somebody else's sanction by id", async () => {
     const steamId = await fx.player();
     const other = await fx.player();
+    const moderator = await fx.player(undefined, "moderator");
     const theirs = await sanction(other, "warning");
 
     await expect(
@@ -266,6 +269,7 @@ describe("warning sanctions (SQL-driven)", () => {
         steamId,
         type: "warning",
         sanctionId: theirs.id,
+        liftedBySteamId: moderator,
       }),
     ).rejects.toThrow("sanction not found");
 

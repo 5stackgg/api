@@ -3,7 +3,7 @@ import { SanctionsService } from "./sanctions.service";
 describe("SanctionsService", () => {
   let service: SanctionsService;
   let hasura: { query: jest.Mock; mutation: jest.Mock };
-  let postgres: { query: jest.Mock };
+  let postgres: { query: jest.Mock; transaction: jest.Mock };
   let rcon: { send: jest.Mock };
   let rconService: { connect: jest.Mock; disconnect: jest.Mock };
   let dedicatedServers: {
@@ -13,6 +13,11 @@ describe("SanctionsService", () => {
 
   const steamId = "76561198000000001";
   const moderator = "76561198000000009";
+
+  const liftUpdates = () =>
+    postgres.query.mock.calls.filter(([sql]) =>
+      sql.includes("UPDATE public.player_sanctions"),
+    );
 
   const insertedSanction = () =>
     hasura.mutation.mock.calls
@@ -28,7 +33,21 @@ describe("SanctionsService", () => {
           : {},
       ),
     };
-    postgres = { query: jest.fn().mockResolvedValue([]) };
+    postgres = {
+      query: jest.fn(async (sql: string) =>
+        sql.includes("can_sanction_player")
+          ? [{ allowed: true, role: "moderator" }]
+          : [],
+      ),
+      transaction: jest.fn(
+        async (fn: (client: unknown) => Promise<unknown>) =>
+          await fn({
+            query: async (sql: string, params?: Array<unknown>) => ({
+              rows: await postgres.query(sql, params),
+            }),
+          }),
+      ),
+    };
     rcon = { send: jest.fn().mockResolvedValue("") };
     rconService = {
       connect: jest.fn().mockResolvedValue(rcon),
@@ -48,6 +67,116 @@ describe("SanctionsService", () => {
       rconService as any,
       dedicatedServers as any,
     );
+  });
+
+  describe("role hierarchy", () => {
+    const refuseHierarchy = () =>
+      postgres.query.mockImplementation(async (sql: string) =>
+        sql.includes("can_sanction_player") ? [{ allowed: false }] : [],
+      );
+
+    it("asks about the sanctioner and the target", async () => {
+      await service.sanctionServerPlayer({
+        steamId,
+        type: "ban",
+        sanctionedBySteamId: moderator,
+      });
+
+      const [, params] = postgres.query.mock.calls.find(([sql]) =>
+        sql.includes("can_sanction_player"),
+      );
+      expect(params).toEqual([moderator, steamId]);
+    });
+
+    it.each(["ban", "mute", "gag", "silence", "warning"] as const)(
+      "refuses a %s on a player the sanctioner does not outrank, before touching the server",
+      async (type) => {
+        refuseHierarchy();
+
+        await expect(
+          service.sanctionServerPlayer({
+            serverId: "server-1",
+            steamId,
+            type,
+            reason: "toxic",
+            sanctionedBySteamId: moderator,
+          }),
+        ).rejects.toThrow("equal to or above your own");
+
+        expect(insertedSanction()).toBeUndefined();
+        expect(hasura.mutation).not.toHaveBeenCalled();
+        expect(dedicatedServers.getServerPlayerList).not.toHaveBeenCalled();
+        expect(rconService.connect).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each([
+      ["by id", "sanction-7"],
+      ["by type", undefined],
+    ])(
+      "refuses lifting a sanction %s on a player the moderator does not outrank, before touching the row or the server",
+      async (_how, sanctionId) => {
+        refuseHierarchy();
+
+        await expect(
+          service.unsanctionServerPlayer({
+            serverId: "server-1",
+            steamId,
+            type: "ban",
+            sanctionId,
+            liftedBySteamId: moderator,
+          }),
+        ).rejects.toThrow("equal to or above your own");
+
+        expect(liftUpdates()).toEqual([]);
+        expect(postgres.transaction).not.toHaveBeenCalled();
+        expect(rconService.connect).not.toHaveBeenCalled();
+      },
+    );
+
+    it("lifts inside the moderator's session, so the trigger checks them too", async () => {
+      postgres.query.mockImplementation(async (sql: string) => {
+        if (sql.includes("can_sanction_player")) {
+          return [{ allowed: true, role: "moderator" }];
+        }
+        return [{ id: "sanction-7" }];
+      });
+
+      await service.unsanctionServerPlayer({
+        steamId,
+        type: "ban",
+        sanctionId: "sanction-7",
+        liftedBySteamId: moderator,
+      });
+
+      const [, params] = postgres.query.mock.calls.find(([sql]) =>
+        sql.includes("can_sanction_player"),
+      );
+      expect(params).toEqual([moderator, steamId]);
+      expect(postgres.transaction).toHaveBeenCalledWith(
+        expect.any(Function),
+        JSON.stringify({
+          "x-hasura-role": "moderator",
+          "x-hasura-user-id": moderator,
+        }),
+      );
+      expect(liftUpdates()).toHaveLength(1);
+    });
+
+    it("refuses a kick of a player the moderator does not outrank", async () => {
+      refuseHierarchy();
+
+      await expect(
+        service.kickServerPlayer({
+          serverId: "server-1",
+          steamId,
+          kickedBySteamId: moderator,
+        }),
+      ).rejects.toThrow("equal to or above your own");
+
+      expect(dedicatedServers.resolveServerUserId).not.toHaveBeenCalled();
+      expect(rconService.connect).not.toHaveBeenCalled();
+    });
   });
 
   describe("warnings", () => {
@@ -363,6 +492,7 @@ describe("SanctionsService", () => {
         serverId: "server-1",
         steamId,
         type: "mute",
+        liftedBySteamId: moderator,
       });
 
       expect(result).toMatchObject({
@@ -399,6 +529,7 @@ describe("SanctionsService", () => {
         serverId: "server-1",
         steamId,
         type: "gag",
+        liftedBySteamId: moderator,
       });
 
       expect(rcon.send).toHaveBeenCalledWith("player_management_refresh");
@@ -427,17 +558,25 @@ describe("SanctionsService", () => {
   });
 
   describe("unsanctionServerPlayer", () => {
+    const removes = (rows: Array<{ id: string }>) =>
+      postgres.query.mockImplementation(async (sql: string) =>
+        sql.includes("can_sanction_player")
+          ? [{ allowed: true, role: "moderator" }]
+          : rows,
+      );
+
     it("removes only the named row when given a sanction id", async () => {
-      postgres.query.mockResolvedValueOnce([{ id: "sanction-7" }]);
+      removes([{ id: "sanction-7" }]);
 
       const result = await service.unsanctionServerPlayer({
         steamId,
         type: "warning",
         sanctionId: "sanction-7",
+        liftedBySteamId: moderator,
       });
 
-      expect(postgres.query).toHaveBeenCalledTimes(1);
-      const [sql, params] = postgres.query.mock.calls[0];
+      expect(liftUpdates()).toHaveLength(1);
+      const [sql, params] = liftUpdates()[0];
       expect(sql).toContain("WHERE id = $1::uuid");
       expect(sql).toContain("AND player_steam_id = $2::bigint");
       expect(sql).toContain("AND deleted_at IS NULL");
@@ -450,7 +589,7 @@ describe("SanctionsService", () => {
     });
 
     it("says so when the named row is not there to remove", async () => {
-      postgres.query.mockResolvedValueOnce([]);
+      removes([]);
 
       await expect(
         service.unsanctionServerPlayer({
@@ -458,6 +597,7 @@ describe("SanctionsService", () => {
           steamId,
           type: "ban",
           sanctionId: "sanction-7",
+          liftedBySteamId: moderator,
         }),
       ).rejects.toThrow("sanction not found");
 
@@ -466,20 +606,25 @@ describe("SanctionsService", () => {
 
     it("refuses to clear warnings by type alone", async () => {
       await expect(
-        service.unsanctionServerPlayer({ steamId, type: "warning" }),
+        service.unsanctionServerPlayer({
+          steamId,
+          type: "warning",
+          liftedBySteamId: moderator,
+        }),
       ).rejects.toThrow("a warning is removed by its sanction id");
 
       expect(postgres.query).not.toHaveBeenCalled();
     });
 
     it("never syncs the server when a warning is removed", async () => {
-      postgres.query.mockResolvedValueOnce([{ id: "sanction-7" }]);
+      removes([{ id: "sanction-7" }]);
 
       await service.unsanctionServerPlayer({
         serverId: "server-1",
         steamId,
         type: "warning",
         sanctionId: "sanction-7",
+        liftedBySteamId: moderator,
       });
 
       expect(rconService.connect).not.toHaveBeenCalled();
@@ -490,9 +635,10 @@ describe("SanctionsService", () => {
         serverId: "server-1",
         steamId,
         type: "mute",
+        liftedBySteamId: moderator,
       });
 
-      const [sql, params] = postgres.query.mock.calls[0];
+      const [sql, params] = liftUpdates()[0];
       expect(sql).not.toContain("WHERE id =");
       expect(params).toEqual([steamId, "mute"]);
       expect(rcon.send).toHaveBeenCalledWith("get_match");

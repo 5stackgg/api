@@ -9,6 +9,7 @@ import {
   Req,
   Res,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
   ParseFilePipe,
   MaxFileSizeValidator,
@@ -28,7 +29,10 @@ import { signUploadToken } from "../steam-match-history/uploadToken";
 import { User } from "../auth/types/User";
 import { e_player_roles_enum } from "generated";
 import { NewsService } from "./news.service";
+import { SteamGuard } from "../auth/strategies/SteamGuard";
+import { RoleSettingGuard } from "../system/role-setting.guard";
 
+const IMAGE_MAX_SIZE = 10 * 1024 * 1024;
 const VIDEO_MAX_SIZE = 512 * 1024 * 1024;
 // Anything at or under this posts straight through the API like news images.
 // Only bigger files need the multipart bypass — Cloudflare caps proxied
@@ -98,13 +102,16 @@ export class NewsController {
   }
 
   @Post("upload")
-  @UseInterceptors(FileInterceptor("file"))
+  @UseGuards(SteamGuard, RoleSettingGuard(SystemSettingName.PostNewsRole))
+  @UseInterceptors(
+    FileInterceptor("file", { limits: { fileSize: IMAGE_MAX_SIZE } }),
+  )
   public async upload(
     @Req() request: Request,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }),
+          new MaxFileSizeValidator({ maxSize: IMAGE_MAX_SIZE }),
           new FileTypeValidator({ fileType: /image\/(png|jpeg|webp|gif)/ }),
         ],
       }),
@@ -112,12 +119,15 @@ export class NewsController {
     file: Express.Multer.File,
   ) {
     await this.assertCanPost(request.user as User | undefined);
-    const filename = await this.news.uploadImage(file.buffer, file.mimetype);
+    const filename = await this.news.uploadImage(file.buffer);
     return { success: true, filename };
   }
 
   @Post("upload/video")
-  @UseInterceptors(FileInterceptor("file"))
+  @UseGuards(SteamGuard, RoleSettingGuard(SystemSettingName.PostNewsRole))
+  @UseInterceptors(
+    FileInterceptor("file", { limits: { fileSize: DIRECT_MAX_SIZE } }),
+  )
   public async uploadVideo(
     @Req() request: Request,
     @UploadedFile(
@@ -287,6 +297,8 @@ export class NewsController {
     }
 
     res.setHeader("Content-Type", result.contentType);
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Content-Security-Policy", "sandbox");
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
     if (result.etag) {
       res.setHeader("ETag", result.etag);

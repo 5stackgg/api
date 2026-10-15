@@ -42,6 +42,7 @@ function makeService() {
   };
   const logger = { warn: jest.fn(), error: jest.fn(), log: jest.fn() };
   const demoSessionWatcher = { clientClosed: jest.fn() };
+  const hasura = { getPlayerRole: jest.fn().mockResolvedValue("user") };
 
   const service = new SocketsService(
     logger as any,
@@ -51,9 +52,18 @@ function makeService() {
     lobbies as any,
     { emit: jest.fn() } as any,
     demoSessionWatcher as any,
+    hasura as any,
   );
 
-  return { service, redis, matchmaking, lobbies, logger, demoSessionWatcher };
+  return {
+    service,
+    redis,
+    matchmaking,
+    lobbies,
+    logger,
+    demoSessionWatcher,
+    hasura,
+  };
 }
 
 function socket(readyState = 1) {
@@ -440,6 +450,34 @@ describe("SocketsService presence", () => {
       "broadcast-message",
       expect.stringContaining("players-online"),
     );
+  });
+
+  it("takes a demoted player's old role off their open socket on its next ping", async () => {
+    const { service, hasura } = makeService();
+    const client = socket();
+    signIn({ ...USER, role: "administrator" });
+    await service.setupSocket(client, {} as any);
+    await settle();
+
+    hasura.getPlayerRole.mockResolvedValue("user");
+    await service.heartbeat(USER.steam_id, client.id);
+
+    expect(client.user.role).toBe("user");
+  });
+
+  it("closes the socket of a player who no longer exists on its next ping", async () => {
+    const { service, hasura, matchmaking } = makeService();
+    const client = socket();
+    signIn({ ...USER });
+    await service.setupSocket(client, {} as any);
+    await settle();
+    matchmaking.cancelOffline.mockClear();
+
+    hasura.getPlayerRole.mockResolvedValue(undefined);
+    await service.heartbeat(USER.steam_id, client.id);
+
+    expect(client.close).toHaveBeenCalled();
+    expect(matchmaking.cancelOffline).not.toHaveBeenCalled();
   });
 
   it("leaves the offline job alone on the ping of a player who is online", async () => {

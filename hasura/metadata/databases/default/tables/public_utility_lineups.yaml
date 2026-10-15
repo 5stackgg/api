@@ -629,6 +629,9 @@ event_triggers:
       num_retries: 6
       timeout_sec: 60
     webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
+    headers:
+      - name: x-5stack-hook-secret
+        value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
   # The search index deliberately ignores the geometry columns; a practice
   # server standing somebody on a throw cannot. Separate trigger rather than
   # more columns on that one, so re-indexing and re-serving stay independent.
@@ -667,6 +670,9 @@ event_triggers:
       num_retries: 6
       timeout_sec: 60
     webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
+    headers:
+      - name: x-5stack-hook-secret
+        value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
   - name: utility_lineups_events
     definition:
       delete:
@@ -692,3 +698,6 @@ event_triggers:
       num_retries: 6
       timeout_sec: 60
     webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
+    headers:
+      - name: x-5stack-hook-secret
+        value_from_env: HASURA_GRAPHQL_ADMIN_SECRET

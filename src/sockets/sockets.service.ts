@@ -21,6 +21,7 @@ import {
 import { ClientProxy } from "@nestjs/microservices";
 import { DemoSessionWatcherService } from "src/matches/game-streamer/demo-session-watcher.service";
 import { presenceFocusKey } from "src/notifications/push/notification-delivery";
+import { HasuraService } from "src/hasura/hasura.service";
 
 @Injectable()
 export class SocketsService implements OnModuleInit, OnApplicationShutdown {
@@ -60,6 +61,7 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
     @Inject("GAME_SERVER_NODE_CLIENT_SERVICE")
     private readonly gameServerNodeClient: ClientProxy,
     private readonly demoSessionWatcher: DemoSessionWatcherService,
+    private readonly hasura: HasuraService,
   ) {
     this.redis = this.redisManager.getConnection();
     this.appConfig = this.config.get<AppConfig>("app");
@@ -401,6 +403,10 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
     const client = this.clients.get(clientId);
     if (client) {
       client.lastSeenAt = Date.now();
+
+      if (!(await this.refreshRole(client))) {
+        return;
+      }
     }
 
     if (!(await this.updateClient(steamId, clientId))) {
@@ -409,6 +415,30 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
 
     await this.matchmaking.cancelOffline(steamId);
     await this.sendPeopleOnline();
+  }
+
+  // The socket keeps the user it was opened with, and the handlers on it check
+  // that role, so a demotion has to reach an open tab too.
+  private async refreshRole(client: FiveStackWebSocketClient) {
+    let role: FiveStackWebSocketClient["user"]["role"] | undefined;
+    try {
+      role = await this.hasura.getPlayerRole(client.user.steam_id);
+    } catch (error) {
+      this.logger.warn(
+        `unable to refresh the role of ${client.user.steam_id}`,
+        error,
+      );
+      return true;
+    }
+
+    if (!role) {
+      client.close();
+      return false;
+    }
+
+    client.user.role = role;
+
+    return true;
   }
 
   // Resolves true when the player had no presence left.

@@ -16,6 +16,7 @@ import {
   Req,
   Res,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
@@ -26,10 +27,13 @@ import { HasuraEventData } from "../hasura/types/HasuraEventData";
 import { S3Service } from "../s3/s3.service";
 import { User } from "../auth/types/User";
 import { EventsService } from "./events.service";
+import { SteamGuard } from "../auth/strategies/SteamGuard";
+import { EventMediaUploadGuard } from "./event-media-upload.guard";
 
 const IMAGE_MAX_SIZE = 10 * 1024 * 1024;
 const VIDEO_MAX_SIZE = 512 * 1024 * 1024;
 const AUDIO_MAX_SIZE = 50 * 1024 * 1024;
+const THUMBNAIL_MAX_SIZE = 3 * 1024 * 1024;
 // Anything at or under this posts through the API exactly like avatars and
 // news images. Only bigger files (long mp4s) need the multipart bypass —
 // Cloudflare caps proxied request bodies at ~100MB and times slow ones out.
@@ -74,7 +78,10 @@ export class EventsController {
   ) {}
 
   @Post(":eventId/upload")
-  @UseInterceptors(FileInterceptor("file"))
+  @UseGuards(SteamGuard, EventMediaUploadGuard)
+  @UseInterceptors(
+    FileInterceptor("file", { limits: { fileSize: DIRECT_MAX_SIZE } }),
+  )
   public async uploadMedia(
     @Param("eventId") eventId: string,
     @Req() request: Request,
@@ -90,7 +97,7 @@ export class EventsController {
     )
     file: Express.Multer.File,
   ) {
-    const user = await this.assertCanUpload(
+    const user = await this.eventsService.assertCanUpload(
       eventId,
       request.user as User | undefined,
     );
@@ -137,7 +144,7 @@ export class EventsController {
     @Req() request: Request,
     @Body() body: { url?: string; title?: string },
   ): Promise<{ success: boolean; id: string }> {
-    const user = await this.assertCanUpload(
+    const user = await this.eventsService.assertCanUpload(
       eventId,
       request.user as User | undefined,
     );
@@ -160,7 +167,10 @@ export class EventsController {
   // Poster frame for a video item, captured client-side by the uploader at
   // upload time so viewers never download the mp4 for a gallery tile.
   @Post(":eventId/:mediaId/thumbnail")
-  @UseInterceptors(FileInterceptor("file"))
+  @UseGuards(SteamGuard, EventMediaUploadGuard)
+  @UseInterceptors(
+    FileInterceptor("file", { limits: { fileSize: THUMBNAIL_MAX_SIZE } }),
+  )
   public async uploadThumbnail(
     @Param("eventId") eventId: string,
     @Param("mediaId") mediaId: string,
@@ -168,14 +178,14 @@ export class EventsController {
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 3 * 1024 * 1024 }),
+          new MaxFileSizeValidator({ maxSize: THUMBNAIL_MAX_SIZE }),
           new FileTypeValidator({ fileType: /image\/(png|jpeg|webp)/ }),
         ],
       }),
     )
     file: Express.Multer.File,
   ) {
-    const user = await this.assertCanUpload(
+    const user = await this.eventsService.assertCanUpload(
       eventId,
       request.user as User | undefined,
     );
@@ -217,7 +227,7 @@ export class EventsController {
     chunkSize: number;
     parts: Array<{ partNumber: number; url: string }>;
   }> {
-    const user = await this.assertCanUpload(
+    const user = await this.eventsService.assertCanUpload(
       eventId,
       request.user as User | undefined,
     );
@@ -287,7 +297,7 @@ export class EventsController {
     @Req() request: Request,
     @Body() body: { uploadId?: string; key?: string; fileName?: string },
   ): Promise<{ success: boolean; id: string; filename: string }> {
-    const user = await this.assertCanUpload(
+    const user = await this.eventsService.assertCanUpload(
       eventId,
       request.user as User | undefined,
     );
@@ -347,7 +357,10 @@ export class EventsController {
     @Req() request: Request,
     @Body() body: { uploadId?: string; key?: string },
   ): Promise<{ success: boolean }> {
-    await this.assertCanUpload(eventId, request.user as User | undefined);
+    await this.eventsService.assertCanUpload(
+      eventId,
+      request.user as User | undefined,
+    );
     const { key } = this.assertEventKey(eventId, body.key);
     if (!body.uploadId) {
       throw new BadRequestException("uploadId required");
@@ -448,26 +461,6 @@ export class EventsController {
     if (data.op === "DELETE" && data.old?.id) {
       await this.eventsService.removeEventMedia(data.old.id);
     }
-  }
-
-  private async assertCanUpload(eventId: string, user?: User): Promise<User> {
-    if (!user) {
-      throw new ForbiddenException("authentication required");
-    }
-    if (!/^[0-9a-fA-F-]{36}$/.test(eventId)) {
-      throw new NotFoundException("event not found");
-    }
-
-    const canUpload = await this.eventsService.canUpload(eventId, user);
-    if (canUpload === null) {
-      throw new NotFoundException("event not found");
-    }
-    if (!canUpload) {
-      throw new ForbiddenException(
-        "you do not have permission to upload media to this event",
-      );
-    }
-    return user;
   }
 
   // Provider detection/embedding is done client-side, so only enforce that the

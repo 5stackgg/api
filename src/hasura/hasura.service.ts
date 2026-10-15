@@ -1,7 +1,16 @@
-import { Injectable, Logger } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  OnApplicationBootstrap,
+  OnApplicationShutdown,
+  UnauthorizedException,
+  UnsupportedMediaTypeException,
+} from "@nestjs/common";
+import { Request, Response } from "express";
 import { ConfigService } from "@nestjs/config";
 import {
   createClient,
+  type e_player_roles_enum,
   FieldsSelection,
   type mutation_root,
   type mutation_rootGenqlSelection,
@@ -18,9 +27,20 @@ import { AppConfig } from "../configs/types/AppConfig";
 import { timingSafeStringEqual } from "../utilities/timingSafeStringEqual";
 
 @Injectable()
-export class HasuraService {
+export class HasuraService
+  implements OnApplicationBootstrap, OnApplicationShutdown
+{
+  public static readonly HOOK_SECRET_HEADER = "x-5stack-hook-secret";
+  public static readonly HOOK_SECRET_PROBE_MS = 15_000;
+  public static readonly HOOK_SECRET_GRACE_MS = 30_000;
+  public static readonly HOOK_SECRET_RETRY_AFTER_SECONDS = 10;
+  public static readonly HOOK_SECRET_LOG_INTERVAL_MS = 60_000;
+
   private config: HasuraConfig;
   private appConfig: AppConfig;
+  private hookSecretOptionalUntil = 0;
+  private hookRefusalLoggedAt = new Map<string, number>();
+  private hookSecretProbe?: NodeJS.Timeout;
 
   constructor(
     protected readonly logger: Logger,
@@ -46,6 +66,93 @@ export class HasuraService {
 
   public checkSecret(secret: string) {
     return timingSafeStringEqual(secret, this.config.secret);
+  }
+
+  public async onApplicationBootstrap() {
+    await this.refreshHookSecretMode();
+    this.hookSecretProbe = setInterval(
+      () => void this.refreshHookSecretMode(),
+      HasuraService.HOOK_SECRET_PROBE_MS,
+    );
+    this.hookSecretProbe.unref();
+  }
+
+  public onApplicationShutdown() {
+    clearInterval(this.hookSecretProbe);
+  }
+
+  // Hasura's metadata is applied by the hasura pod, not by this one, so the
+  // secret is only required once the live metadata sends it: either side can
+  // restart first. The grace lets another Hasura replica reload the metadata.
+  public async refreshHookSecretMode() {
+    let enforced = true;
+
+    try {
+      const [metadata] = await this.postgresService.query<
+        Array<{ enforced: boolean | null }>
+      >(
+        "select strpos(metadata::text, $1) > 0 as enforced from hdb_catalog.hdb_metadata",
+        [HasuraService.HOOK_SECRET_HEADER],
+      );
+      enforced = metadata?.enforced !== false;
+    } catch (error) {
+      this.logger.warn(
+        `unable to read hasura metadata, requiring the hook secret: ${error?.message ?? error}`,
+      );
+    }
+
+    if (!enforced) {
+      this.hookSecretOptionalUntil = Infinity;
+    } else if (this.hookSecretOptionalUntil === Infinity) {
+      this.hookSecretOptionalUntil =
+        Date.now() + HasuraService.HOOK_SECRET_GRACE_MS;
+    }
+  }
+
+  public verifyHook(request: Request, eventResponse?: Response) {
+    if (!request.is("application/json")) {
+      throw new UnsupportedMediaTypeException();
+    }
+
+    const secret = request.headers[HasuraService.HOOK_SECRET_HEADER];
+
+    if (secret === undefined && Date.now() < this.hookSecretOptionalUntil) {
+      return;
+    }
+
+    if (typeof secret !== "string" || !this.checkSecret(secret)) {
+      const reason = secret === undefined ? "missing" : "wrong";
+      this.logHookRefusal(request, reason);
+      // Hasura retries an event answered with Retry-After even after its
+      // retries run out, and some triggers (season_backfill_events) have none,
+      // so a missing header at a rollout edge would otherwise drop the event
+      // for good. A wrong secret is a misconfiguration and is left to fail.
+      if (reason === "missing") {
+        eventResponse?.setHeader(
+          "Retry-After",
+          String(HasuraService.HOOK_SECRET_RETRY_AFTER_SECONDS),
+        );
+      }
+      throw new UnauthorizedException();
+    }
+  }
+
+  private logHookRefusal(request: Request, reason: "missing" | "wrong") {
+    const key = `${reason} ${request.path}`;
+    const now = Date.now();
+    const loggedAt = this.hookRefusalLoggedAt.get(key);
+
+    if (
+      loggedAt !== undefined &&
+      now - loggedAt < HasuraService.HOOK_SECRET_LOG_INTERVAL_MS
+    ) {
+      return;
+    }
+
+    this.hookRefusalLoggedAt.set(key, now);
+    this.logger.warn(
+      `refused ${request.method} ${request.originalUrl} from ${request.ip}: ${reason} hook secret`,
+    );
   }
 
   public async query<R extends query_rootGenqlSelection>(
@@ -87,8 +194,10 @@ export class HasuraService {
     });
   }
 
-  public async getHasuraHeaders(steamId: string) {
-    const playerRole = await this.cache.remember(
+  public async getPlayerRole(
+    steamId: string,
+  ): Promise<e_player_roles_enum | undefined> {
+    return await this.cache.remember(
       HasuraService.PLAYER_ROLE_CACHE_KEY(steamId),
       async () => {
         const { players_by_pk } = await this.query({
@@ -102,11 +211,13 @@ export class HasuraService {
 
         return players_by_pk?.role;
       },
-      60 * 60 * 1000,
+      60 * 60,
     );
+  }
 
+  public async getHasuraHeaders(steamId: string) {
     return {
-      "x-hasura-role": playerRole,
+      "x-hasura-role": await this.getPlayerRole(steamId),
       "x-hasura-user-id": steamId,
     };
   }

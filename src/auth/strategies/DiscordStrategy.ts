@@ -24,6 +24,7 @@ export class DiscordStrategy extends PassportStrategy(Strategy) {
         config.get<AppConfig>("app").webDomain
       }/auth/discord/callback`,
       scope: ["identify"],
+      state: true,
     });
   }
 
