@@ -13,6 +13,7 @@ import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "./configs/types/AppConfig";
 import { HasuraService } from "./hasura/hasura.service";
 import { logLevels } from "./utilities/LoggerFactory";
+import { registerBodyParsers } from "./body-parsers";
 
 /**
  * Increase the max listeners, based on load we may need to increase this
@@ -44,12 +45,7 @@ async function bootstrap() {
   });
   app.disable("x-powered-by");
 
-  app.useBodyParser("json", { limit: "50mb" });
-  app.useBodyParser("urlencoded", { limit: "50mb", extended: true });
-  // WHIP/WHEP offers. Parsing them here rather than draining the stream inside
-  // the handler is what makes a request that arrives under some other content
-  // type a 400 instead of a socket waiting on an `end` that already fired.
-  app.useBodyParser("text", { type: "application/sdp", limit: "256kb" });
+  registerBodyParsers(app);
 
   if (process.env.RUN_MIGRATIONS || process.env.DEV) {
     const hasura = app.get(HasuraService);

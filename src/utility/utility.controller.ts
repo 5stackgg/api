@@ -58,7 +58,7 @@ export class UtilityController {
     await this.assertLibraryEnabled();
 
     // Measured before anything is parsed: a multi-megabyte path array is a
-    // denial of service, not a lineup, and express has already accepted 50mb.
+    // denial of service, not a lineup, and express has already accepted 4mb.
     // The recorded smoke is left out -- its log is capped on its own, and a
     // smoke too big to keep is dropped, not the lineup with it.
     const size = Buffer.byteLength(
