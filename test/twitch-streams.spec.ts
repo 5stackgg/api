@@ -206,8 +206,8 @@ describe("twitch streams", () => {
       const match = await liveMatch();
       await goLive(match.streamer, { login: "seated" });
       await postgres.query(
-        "UPDATE players SET custom_avatar_url = 'avatars/seated.png' WHERE steam_id = $1",
-        [match.streamer],
+        "UPDATE players SET custom_avatar_url = $2 WHERE steam_id = $1",
+        [match.streamer, `avatars/players/${match.streamer}-a1b2c3.png`],
       );
 
       expect(await accounts.liveSteamIds(outsider)).toEqual([match.streamer]);
@@ -226,7 +226,7 @@ describe("twitch streams", () => {
         {
           steam_id: match.streamer,
           name: expect.any(String),
-          avatar_url: "https://api.5stack.gg/avatars/seated.png",
+          avatar_url: `https://api.5stack.gg/avatars/players/${match.streamer}-a1b2c3.png`,
           match_lineup_id: match.lineup_1_id,
           login: "seated",
           display_name: "SEATED",

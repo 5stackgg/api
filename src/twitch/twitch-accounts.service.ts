@@ -78,21 +78,26 @@ export class TwitchAccountsService {
   public async startLink(steamId: string, redirect?: unknown): Promise<string> {
     const target = this.safeRedirect(redirect);
 
-    const credentials = await this.twitch.credentials();
-    if (!credentials) {
-      return this.linkResult(target, "not_configured");
+    try {
+      const credentials = await this.twitch.credentials();
+      if (!credentials) {
+        return this.linkResult(target, "not_configured");
+      }
+
+      const state = randomBytes(32).toString("base64url");
+
+      await this.redis.set(
+        TwitchAccountsService.stateKey(state),
+        JSON.stringify({ steam_id: steamId, redirect: target }),
+        "EX",
+        TwitchAccountsService.STATE_TTL_SECONDS,
+      );
+
+      return this.twitch.authorizeUrl(credentials, this.redirectUri(), state);
+    } catch (error) {
+      this.logger.error("[twitch] unable to start linking an account", error);
+      return this.linkResult(target, "twitch_unavailable");
     }
-
-    const state = randomBytes(32).toString("base64url");
-
-    await this.redis.set(
-      TwitchAccountsService.stateKey(state),
-      JSON.stringify({ steam_id: steamId, redirect: target }),
-      "EX",
-      TwitchAccountsService.STATE_TTL_SECONDS,
-    );
-
-    return this.twitch.authorizeUrl(credentials, this.redirectUri(), state);
   }
 
   public async completeLink(

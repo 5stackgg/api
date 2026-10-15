@@ -384,6 +384,27 @@ describe("TwitchAccountsService", () => {
     });
 
     it.each([
+      [
+        "the settings cannot be read",
+        () => twitch.credentials.mockRejectedValueOnce(new Error("db down")),
+      ],
+      [
+        "redis cannot hold the state",
+        () => redis.set.mockRejectedValueOnce(new Error("redis down")),
+      ],
+    ])("returns to the panel with an error when %s", async (_reason, fail) => {
+      fail();
+
+      const url = await service.startLink(PLAYER, "/settings/account");
+
+      expect(url).toBe(
+        "https://5stack.gg/settings/account?twitch_error=twitch_unavailable",
+      );
+      expect(twitch.authorizeUrl).not.toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalled();
+    });
+
+    it.each([
       "https://evil.example/steal",
       "//evil.example/steal",
       "javascript:alert(1)",
@@ -651,7 +672,10 @@ describe("TwitchAccountsService", () => {
 
     it("resolve an uploaded avatar the way the other player reads do", async () => {
       postgres.query.mockResolvedValueOnce([
-        { steam_id: PLAYER, avatar_url: "avatars/76561198000000001.png" },
+        {
+          steam_id: PLAYER,
+          avatar_url: "avatars/players/76561198000000001-a1b2c3.png",
+        },
         {
           steam_id: OTHER,
           avatar_url: "https://avatars.steamstatic.com/x.jpg",
@@ -664,7 +688,7 @@ describe("TwitchAccountsService", () => {
           ({ avatar_url }) => avatar_url,
         ),
       ).toEqual([
-        "https://api.5stack.gg/avatars/76561198000000001.png",
+        "https://api.5stack.gg/avatars/players/76561198000000001-a1b2c3.png",
         "https://avatars.steamstatic.com/x.jpg",
         null,
       ]);
