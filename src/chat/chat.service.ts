@@ -773,7 +773,7 @@ export class ChatService {
         break;
       }
       case ChatLobbyType.Organizer:
-        if (!isRoleAbove(user.role, "match_organizer")) {
+        if (!(await this.isOrganizerNow(user.steam_id))) {
           return false;
         }
 
@@ -3281,7 +3281,7 @@ export class ChatService {
   ): Promise<void> {
     const users = await this.getAllUsersInLobby(type, id);
     const eventName = `lobby:${type}:${id}:${event}`;
-    const roster = await this.teamRoomRoster(type, id);
+    const roster = await this.currentRoster(type, id, users);
 
     const hiding = await this.playerBlocks.blockedAmong(
       users.map(({ steamId }) => steamId),
@@ -3347,19 +3347,40 @@ export class ChatService {
     );
   }
 
-  // Presence outlives membership (see canPostIn), and a team room is the one
+  // Presence outlives membership (see canPostIn). A team room is the one
   // whose lines the rest of the match must never see: a player moved to the
   // other lineup, or benched, would otherwise keep receiving them until their
-  // presence expired.
-  private async teamRoomRoster(
+  // presence expired. The organizers' room is the role, which can be taken
+  // away from someone still sitting in it.
+  private async currentRoster(
     type: ChatLobbyType,
     id: string,
+    present: Array<{ steamId: string }>,
   ): Promise<Set<string> | null> {
+    if (type === ChatLobbyType.Organizer) {
+      const organizers = await Promise.all(
+        present.map(async ({ steamId }) =>
+          (await this.isOrganizerNow(steamId)) ? String(steamId) : null,
+        ),
+      );
+
+      return new Set(organizers.filter((steamId) => steamId !== null));
+    }
+
     if (type !== ChatLobbyType.MatchTeam) {
       return null;
     }
 
     return new Set(await this.getLobbyMemberSteamIds(type, id));
+  }
+
+  // A socket keeps the role it signed in with. The cached role is cleared on
+  // every role change (player_events), so it is current without a query.
+  private async isOrganizerNow(steamId: string): Promise<boolean> {
+    return isRoleAbove(
+      await this.hasuraService.getPlayerRole(String(steamId)),
+      "match_organizer",
+    );
   }
 
   public async removeFromLobby(
