@@ -24,6 +24,7 @@ const PATH_BY_TYPE: Record<string, (entityId: string) => string> = {
   TournamentCreated: (id) => `/tournaments/${id}`,
   TournamentReminder: (id) => `/tournaments/${id.split(":")[0]}`,
   NewsPublished: () => `/news`,
+  NewsCommentReply: () => `/news`,
   ScrimRequestReceived: () => `/scrims`,
   ScrimRequestCountered: () => `/scrims`,
   ScrimRequestAccepted: () => `/scrims`,

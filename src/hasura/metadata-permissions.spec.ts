@@ -537,6 +537,98 @@ describe("hasura table metadata", () => {
   // Who blocked you must never be reachable: not by reading the row, not by
   // walking a relationship to it from a player, and not by rewriting a row
   // into someone else's name.
+  describe("news_comments", () => {
+    const comments = () =>
+      tables.find(({ file }) => file === "public_news_comments.yaml")
+        ?.metadata;
+
+    const STAFF_ONLY = ["hidden_by_steam_id", "hidden_reason"];
+
+    it("is tracked", () => {
+      expect(
+        readFileSync(join(dir, "tables.yaml"), "utf8").split("\n"),
+      ).toContain('- "!include public_news_comments.yaml"');
+      expect(comments()).toBeDefined();
+    });
+
+    it("is written only through the API's actions", () => {
+      for (const section of [
+        "insert_permissions",
+        "update_permissions",
+        "delete_permissions",
+      ]) {
+        expect(comments()?.[section] ?? []).toEqual([]);
+      }
+      expect(
+        tables.find(({ file }) => file === "public_news_comment_votes.yaml"),
+      ).toBeUndefined();
+    });
+
+    it("defines select for guests, for every reader to inherit, and for moderators, for staff to inherit", () => {
+      expect(
+        (comments()?.select_permissions ?? []).map(
+          (entry: { role: string }) => entry.role,
+        ),
+      ).toEqual(["guest", "moderator"]);
+    });
+
+    it("filters every role through the computed field that applies the post, removal and block rules", () => {
+      for (const [role, permission] of blocksByRole(
+        comments(),
+        "select_permissions",
+      )) {
+        expect({ role, filter: permission.filter }).toEqual({
+          role,
+          filter: { visible: { _eq: true } },
+        });
+      }
+
+      const visible = (comments()?.computed_fields ?? []).find(
+        (field: { name: string }) => field.name === "visible",
+      );
+      expect(visible?.definition).toEqual({
+        function: { name: "news_comment_visible", schema: "public" },
+        session_argument: "hasura_session",
+      });
+    });
+
+    it("never hands a reader the stored text, only the text they may see", () => {
+      for (const [, permission] of blocksByRole(
+        comments(),
+        "select_permissions",
+      )) {
+        expect(permission.columns).not.toContain("body");
+        expect(permission.computed_fields).toContain("text");
+      }
+    });
+
+    it("keeps who hid a comment, and why, to staff", () => {
+      const select = blocksByRole(comments(), "select_permissions");
+
+      for (const column of STAFF_ONLY) {
+        expect(select.get("guest")?.columns).not.toContain(column);
+        expect(select.get("moderator")?.columns).toContain(column);
+      }
+      expect(select.get("guest")?.computed_fields).not.toContain(
+        "hidden_by_name",
+      );
+      expect(select.get("moderator")?.computed_fields).toContain(
+        "hidden_by_name",
+      );
+    });
+
+    it("has no relationship that would name who hid a comment", () => {
+      const relationships = [
+        ...(comments()?.object_relationships ?? []),
+        ...(comments()?.array_relationships ?? []),
+      ].map((relationship: Record<string, any>) => relationship.using);
+
+      expect(relationships).not.toContainEqual({
+        foreign_key_constraint_on: "hidden_by_steam_id",
+      });
+    });
+  });
+
   describe("player_blocks", () => {
     const blocks = () =>
       tables.find(({ file }) => file === "public_player_blocks.yaml")!.metadata;

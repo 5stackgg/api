@@ -72,6 +72,7 @@ export const PUSH_CATEGORIES: Record<string, e_notification_types_enum[]> = {
   ],
   teammate_bans: ["TeammateBanned"],
   news: ["NewsPublished"],
+  news_replies: ["NewsCommentReply" as e_notification_types_enum],
   staff_moderation: ["MatchSupport", "MatchAbandoned", "NameChangeRequest"],
   staff_infrastructure: [
     "GameUpdate",
@@ -105,6 +106,7 @@ export const PUSH_KEYS: PreferenceKey[] = [
   { key: "account", defaultEnabled: true },
   { key: "teammate_bans", defaultEnabled: true },
   { key: "news", defaultEnabled: true },
+  { key: "news_replies", defaultEnabled: true },
   { key: "staff_moderation", defaultEnabled: true, adminOnly: true },
   // Infrastructure chatter is constant and rarely actionable on a phone.
   { key: "staff_infrastructure", defaultEnabled: false, adminOnly: true },
@@ -155,6 +157,7 @@ export const IN_APP_KEYS: PreferenceKey[] = [
   { key: "AwardGranted", defaultEnabled: true },
   { key: "TeammateBanned", defaultEnabled: true },
   { key: "NewsPublished", defaultEnabled: true },
+  { key: "NewsCommentReply", defaultEnabled: true },
 ];
 
 // A player's own account and safety notices always reach the bell.
