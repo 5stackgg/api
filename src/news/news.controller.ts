@@ -119,7 +119,7 @@ export class NewsController {
     file: Express.Multer.File,
   ) {
     await this.assertCanPost(request.user as User | undefined);
-    const filename = await this.news.uploadImage(file.buffer, file.mimetype);
+    const filename = await this.news.uploadImage(file.buffer);
     return { success: true, filename };
   }
 
@@ -297,6 +297,8 @@ export class NewsController {
     }
 
     res.setHeader("Content-Type", result.contentType);
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Content-Security-Policy", "sandbox");
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
     if (result.etag) {
       res.setHeader("ETag", result.etag);

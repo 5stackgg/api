@@ -4,6 +4,7 @@ import { Injectable, Logger, BadRequestException } from "@nestjs/common";
 import { PostgresService } from "src/postgres/postgres.service";
 import { S3Service } from "src/s3/s3.service";
 import { NotificationsService } from "src/notifications/notifications.service";
+import { ChatAttachmentsService } from "src/chat/chat-attachments.service";
 
 export interface NewsPostRow {
   id: string;
@@ -273,10 +274,19 @@ export class NewsService {
     return key;
   }
 
-  public async uploadImage(buffer: Buffer, mimetype: string): Promise<string> {
-    const ext = EXTENSION_BY_MIMETYPE[mimetype] || "png";
+  // Typed by its bytes, never the part's Content-Type: the magic-byte check
+  // passes a GIF labelled text/html, which this domain would then serve as one.
+  public async uploadImage(buffer: Buffer): Promise<string> {
+    const contentType = ChatAttachmentsService.sniff(buffer.subarray(0, 12));
+    const ext = contentType?.startsWith("image/")
+      ? EXTENSION_BY_MIMETYPE[contentType]
+      : undefined;
+    if (!ext) {
+      throw new BadRequestException("expected a png, jpeg, webp or gif image");
+    }
+
     const filename = this.generateFilename(ext);
-    await this.s3.put(this.mediaKey(filename), buffer, mimetype);
+    await this.s3.put(this.mediaKey(filename), buffer, contentType);
     this.logger.log(`Uploaded news image ${filename}`);
     return filename;
   }
@@ -313,10 +323,11 @@ export class NewsService {
       this.s3.stat(key),
     ]);
 
+    // From the name rather than the stored type, which before uploads were
+    // typed by their bytes was whatever the uploader claimed.
     return {
       stream,
-      contentType:
-        stat.metaData?.["content-type"] || this.guessContentType(filename),
+      contentType: this.guessContentType(filename),
       etag: stat.etag,
     };
   }
