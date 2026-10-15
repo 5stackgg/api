@@ -378,7 +378,9 @@ describe("chat edits and self deletes (SQL-driven)", () => {
       matchId,
     );
 
-    expect(await chat["getMessages"](ChatLobbyType.Match, matchId)).toEqual([
+    expect(
+      (await chat["getMessages"](ChatLobbyType.Match, matchId)).messages,
+    ).toEqual([
       expect.objectContaining({
         id,
         message: "fixed",
@@ -439,7 +441,10 @@ describe("chat edits and self deletes (SQL-driven)", () => {
         }
       });
 
-      const history = await chat["getMessages"](ChatLobbyType.Match, matchId);
+      const { messages: history } = await chat["getMessages"](
+        ChatLobbyType.Match,
+        matchId,
+      );
 
       expect(history.map(({ message }) => message)).toEqual(texts);
     });
@@ -455,7 +460,10 @@ describe("chat edits and self deletes (SQL-driven)", () => {
         }
       });
 
-      const history = await chat["getMessages"](ChatLobbyType.Match, matchId);
+      const { messages: history } = await chat["getMessages"](
+        ChatLobbyType.Match,
+        matchId,
+      );
 
       expect(history.map(({ id }) => id)).toEqual([...ids].sort());
     });
@@ -997,7 +1005,10 @@ describe("chat edits and self deletes (SQL-driven)", () => {
         await react(matchId, id, user, reaction);
       }
 
-      const history = await chat["getMessages"](ChatLobbyType.Match, matchId);
+      const { messages: history } = await chat["getMessages"](
+        ChatLobbyType.Match,
+        matchId,
+      );
 
       expect(Object.keys(history[0].reactions)).toEqual([
         "thumbsup",
@@ -1093,7 +1104,10 @@ describe("chat edits and self deletes (SQL-driven)", () => {
 
       await react(matchId, reacted, user, "wow");
 
-      const history = await chat["getMessages"](ChatLobbyType.Match, matchId);
+      const { messages: history } = await chat["getMessages"](
+        ChatLobbyType.Match,
+        matchId,
+      );
 
       expect(
         Object.fromEntries(history.map(({ id, reactions }) => [id, reactions])),
@@ -1128,7 +1142,9 @@ describe("chat edits and self deletes (SQL-driven)", () => {
         await expiresAt(matchId, id),
       );
       expect(await redis.exists(reactionsKey(draftId, "draft"))).toBe(0);
-      expect(await chat["getMessages"](ChatLobbyType.Match, matchId)).toEqual([
+      expect(
+      (await chat["getMessages"](ChatLobbyType.Match, matchId)).messages,
+    ).toEqual([
         expect.objectContaining({
           id,
           reactions: { sad: [organizer.steam_id] },

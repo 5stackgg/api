@@ -4,6 +4,7 @@ import { ChatLobbyType } from "./enums/ChatLobbyTypes";
 import { directRoomId } from "./utilities/directRoomId";
 import { HasuraService } from "../hasura/hasura.service";
 import { rolesAtOrAbove } from "../utilities/isRoleAbove";
+import { fakeRoomPage, isRoomPageScript } from "./testing/fakeRoomPage";
 
 const ME = "76561198000000001";
 const FRIEND = "76561198000000002";
@@ -23,6 +24,7 @@ describe("ChatService direct messages", () => {
     keys: jest.fn().mockResolvedValue([]),
     expire: jest.fn(),
     zadd: jest.fn(),
+    zrem: jest.fn().mockResolvedValue(1),
     zrevrange: jest.fn().mockResolvedValue([]),
     publish: jest.fn(),
     sadd: jest.fn().mockResolvedValue(1),
@@ -1372,7 +1374,7 @@ describe("ChatService direct messages", () => {
           },
         ]);
 
-        const [message] = await service["getDirectMessages"](room);
+        const [message] = (await service["getDirectMessages"](room)).messages;
 
         expect(message).toMatchObject({
           id: "dm-1",
@@ -2689,6 +2691,10 @@ describe("ChatService direct messages", () => {
       });
       redis.eval.mockImplementation(
         async (script: string, _keys: number, ...args: any[]) => {
+          if (isRoomPageScript(script)) {
+            return fakeRoomPage(hashes[args[0]], hashes[args[2]], args[4]);
+          }
+
           if (script.includes("INCR")) {
             const [key] = args;
             rates[key] = (rates[key] ?? 0) + 1;
@@ -3028,7 +3034,10 @@ describe("ChatService direct messages", () => {
       });
       await react("fire");
 
-      const history = await service["getMessages"](ChatLobbyType.Match, "m-1");
+      const { messages: history } = await service["getMessages"](
+        ChatLobbyType.Match,
+        "m-1",
+      );
 
       expect(
         history.map(({ id, reactions }: any) => ({ id, reactions })),
@@ -3053,7 +3062,7 @@ describe("ChatService direct messages", () => {
 
     // The move itself is a Lua script, exercised against real redis in
     // test/chat-redis-actions.spec.ts; this is what the service does around it.
-    it("hands the move all four keys, then re-sends history with the reactions it carried", async () => {
+    it("hands the move all six keys, then re-sends history with the reactions it carried", async () => {
       hashes[REACTIONS] = { [MESSAGE_ID]: JSON.stringify({ fire: [ME] }) };
       redis.eval.mockResolvedValueOnce([MESSAGE_ID, hashes[ROOM][MESSAGE_ID]]);
 
@@ -3070,11 +3079,13 @@ describe("ChatService direct messages", () => {
       );
 
       expect(move.slice(1)).toEqual([
-        4,
+        6,
         "chat_draft_d-1",
         ROOM,
         "chat_reactions_draft_d-1",
         REACTIONS,
+        "chat_index_draft_d-1",
+        "chat_index_match_m-1",
         3600,
       ]);
       expect(broadcasts("lobby:match:m-1:messages")).toEqual([
@@ -3087,6 +3098,8 @@ describe("ChatService direct messages", () => {
                 reactions: { fire: [ME] },
               }),
             ],
+            more: false,
+            cursor: expect.stringContaining(`|${MESSAGE_ID}`),
           },
         }),
       ]);
@@ -3240,7 +3253,7 @@ describe("ChatService direct messages", () => {
           },
         ]);
 
-        const history = await service["getDirectMessages"](room);
+        const { messages: history } = await service["getDirectMessages"](room);
 
         expect(
           history.map(({ id, reactions }: any) => ({ id, reactions })),
@@ -3411,6 +3424,15 @@ describe("ChatService direct messages", () => {
         delete hashes[key]?.[field];
         return 1;
       });
+      redis.eval.mockImplementation(
+        async (script: string, _keys: number, ...args: any[]) => {
+          if (isRoomPageScript(script)) {
+            return fakeRoomPage(hashes[args[0]], hashes[args[2]], args[4]);
+          }
+
+          return script.includes("INCR") ? 1 : [1, 1];
+        },
+      );
     });
 
     describe.each([

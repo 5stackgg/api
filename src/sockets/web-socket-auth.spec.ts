@@ -151,6 +151,11 @@ const handlers: Array<
       g.chat.react({ ...lobby, messageId: "m-1", reaction: "heart" }, c),
   ],
   [
+    "lobby:history",
+    (g, c) =>
+      g.chat.history({ ...lobby, before: "2026-10-15T12:00:00.000Z|m-1" }, c),
+  ],
+  [
     "rcon",
     (g, c) =>
       g.rcon.rconEvent({ uuid: "u", command: "status", serverId: "s" }, c),

@@ -93,6 +93,7 @@ describe("chat attachments (SQL-driven)", () => {
     eval: jest.fn(async (script: string) =>
       script.includes("INCR") ? 1 : [1, 1],
     ),
+    zrem: jest.fn().mockResolvedValue(1),
   };
 
   beforeAll(async () => {
@@ -565,7 +566,8 @@ describe("chat attachments (SQL-driven)", () => {
       const sent = await sendDirect(room, me, [id]);
       expect(sent.accepted).toBe(true);
 
-      const [message] = await chat["getMessages"](ChatLobbyType.Direct, room);
+      const [message] = (await chat["getMessages"](ChatLobbyType.Direct, room))
+        .messages;
 
       expect(message.message).toBe("");
       expect(message.attachments).toEqual([
@@ -596,7 +598,8 @@ describe("chat attachments (SQL-driven)", () => {
 
       await postgres.query(`DELETE FROM settings WHERE name = 'giphy_api_key'`);
 
-      const [message] = await chat["getMessages"](ChatLobbyType.Direct, room);
+      const [message] = (await chat["getMessages"](ChatLobbyType.Direct, room))
+        .messages;
 
       expect(message.gif).toEqual({ id: "abc123", width: 480, height: 270 });
     });

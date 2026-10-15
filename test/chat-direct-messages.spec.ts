@@ -220,7 +220,7 @@ describe("direct messages (SQL-driven)", () => {
     await say(room, friend, "second");
     await say(room, me, "third");
 
-    const messages = await chat["getDirectMessages"](room);
+    const { messages } = await chat["getDirectMessages"](room);
 
     expect(messages.map(({ message }) => message)).toEqual([
       "first",
@@ -507,7 +507,7 @@ describe("direct messages (SQL-driven)", () => {
         "fixed",
       );
 
-      const [first, second] = await chat["getDirectMessages"](room);
+      const [first, second] = (await chat["getDirectMessages"](room)).messages;
 
       expect(first).toMatchObject({
         id: edited,
@@ -743,7 +743,8 @@ describe("direct messages (SQL-driven)", () => {
 
       expect(results.every((result) => result.toggled)).toBe(true);
 
-      const [message] = await chat["getMessages"](ChatLobbyType.Direct, room);
+      const [message] = (await chat["getMessages"](ChatLobbyType.Direct, room))
+        .messages;
 
       expect(Object.keys(message.reactions)).toEqual([
         ...ChatService.REACTIONS,
@@ -764,7 +765,10 @@ describe("direct messages (SQL-driven)", () => {
 
       await react(room, reacted, me, "fire");
 
-      const history = await chat["getMessages"](ChatLobbyType.Direct, room);
+      const { messages: history } = await chat["getMessages"](
+        ChatLobbyType.Direct,
+        room,
+      );
 
       expect(history.map(({ id, reactions }) => ({ id, reactions }))).toEqual([
         { id: reacted, reactions: { fire: [me] } },

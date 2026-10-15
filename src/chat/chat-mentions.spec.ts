@@ -2,6 +2,7 @@ import { ChatService } from "./chat.service";
 import { ChatErrorCode } from "./enums/ChatErrorCode";
 import { ChatLobbyType } from "./enums/ChatLobbyTypes";
 import { directRoomId } from "./utilities/directRoomId";
+import { fakeRoomPage, isRoomPageScript } from "./testing/fakeRoomPage";
 
 const VEXX = "76561198000000001";
 const KAIRO = "76561198000000002";
@@ -64,7 +65,15 @@ describe("ChatService mentions", () => {
     expire: jest.fn(async () => 1),
     publish: jest.fn(async () => 1),
     sendCommand: jest.fn(async () => [1]),
-    eval: jest.fn(async (script: string, _keys: number, ...args: string[]) => {
+    eval: jest.fn(async (script: string, _keys: number, ...args: any[]) => {
+      if (isRoomPageScript(script)) {
+        return fakeRoomPage(
+          Object.fromEntries(hash(args[0])),
+          Object.fromEntries(hash(args[2])),
+          args[4],
+        );
+      }
+
       if (script.includes("INCR")) {
         return 1;
       }

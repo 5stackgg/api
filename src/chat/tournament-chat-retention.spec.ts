@@ -32,6 +32,7 @@ describe("tournament chat retention", () => {
         get: jest.fn().mockResolvedValue(null),
         hset: jest.fn(),
         sendCommand: jest.fn(),
+        eval: jest.fn().mockResolvedValue(0),
         smembers: jest.fn().mockResolvedValue([]),
         publish: jest.fn(),
       };

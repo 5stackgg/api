@@ -26,6 +26,7 @@ import { SystemSettingName } from "src/system/enums/SystemSettingName";
 import { directRoomId, parseDirectRoomId } from "./utilities/directRoomId";
 import { ChatErrorCode } from "./enums/ChatErrorCode";
 import { ChatMessage, ChatMessageSource } from "./types/ChatMessage";
+import { ChatHistoryPage } from "./types/ChatHistoryPage";
 import { ChatSendResult } from "./types/ChatSendResult";
 import { ChatDeleteResult } from "./types/ChatDeleteResult";
 import { ChatEditResult } from "./types/ChatEditResult";
@@ -72,9 +73,23 @@ export class ChatService {
 
   private static readonly DEFAULT_TTL = 60 * 60;
 
-  // How much history a join hands over, in any room; nothing pages back past
-  // it. A redis room keeps no order, so it is still read whole to find them.
+  // How much history a join hands over, in any room.
   private static readonly HISTORY_LIMIT = 200;
+
+  // How much further back each "load older" reaches.
+  private static readonly OLDER_PAGE_LIMIT = 50;
+
+  // How many index entries one store looks at for a message that is gone.
+  private static readonly INDEX_PRUNE_BATCH = 100;
+
+  // What a page hands back as `cursor`, and so all a client may send back.
+  // A room's is its index member; a conversation's is created_at (to the
+  // microsecond, as postgres keeps it) and seq.
+  private static readonly ROOM_CURSOR =
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\|[^|]{1,64}$/;
+
+  private static readonly DIRECT_CURSOR =
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z\|\d{1,19}$/;
 
   // Measured in UTF-16 code units, the same unit a textarea's maxlength counts.
   public static readonly MAX_MESSAGE_LENGTH = 2000;
@@ -136,7 +151,12 @@ export class ChatService {
   //
   // A room TTL of 0 drops a moved message at once, and its reactions must not
   // then be left behind with no expiry at all.
+  //
+  // The new room's index takes the moved messages only if it has one: one
+  // that does not yet is built whole from the room on its next read.
   private static readonly MOVE_ROOM_MESSAGES_SCRIPT = `
+    local indexed = redis.call('EXISTS', KEYS[6]) == 1
+    local latest = 0
     local messages = redis.call('HGETALL', KEYS[1])
     for i = 1, #messages, 2 do
       redis.call('HSET', KEYS[2], messages[i], messages[i + 1])
@@ -149,9 +169,114 @@ export class ChatService {
           redis.call('HPEXPIREAT', KEYS[4], expiresAt, 'FIELDS', 1, messages[i])
         end
       end
+      if indexed and expiresAt ~= -2 then
+        local ok, message = pcall(cjson.decode, messages[i + 1])
+        if ok and type(message) == 'table' and type(message.timestamp) == 'string' then
+          redis.call('ZADD', KEYS[6], 0, message.timestamp .. '|' .. messages[i])
+          latest = math.max(latest, expiresAt)
+        end
+      end
     end
-    redis.call('DEL', KEYS[1], KEYS[3])
+    local indexExpiresAt = redis.call('PEXPIRETIME', KEYS[6])
+    if indexExpiresAt > 0 and latest > indexExpiresAt then
+      redis.call('PEXPIREAT', KEYS[6], latest)
+    end
+    redis.call('DEL', KEYS[1], KEYS[3], KEYS[5])
     return messages
+  `;
+
+  // A room's index: one member per message, `${timestamp}|${id}`, all at
+  // score 0, so lexical order is sent order -- the timestamps are fixed width
+  // ISO strings, and two pods can stamp the same millisecond, which the id
+  // then settles the same way for every reader. The room's hash stays what
+  // holds a message; the index only orders it, and a member whose message is
+  // gone is dropped wherever it is come across.
+  //
+  // Only an index that exists takes a new message. A room without one -- new,
+  // stored before indexes, or whose index was dropped -- is indexed whole on
+  // its next read, so a message is never the first member of an index that
+  // is missing the rest of the room.
+  //
+  // ARGV[3] is the oldest a message of this room can be by its TTL; anything
+  // older is looked up and dropped if it has gone. A message carried over by
+  // a room move can outlive that, so its age alone never drops it.
+  private static readonly INDEX_ROOM_MESSAGE_SCRIPT = `
+    if redis.call('EXISTS', KEYS[2]) == 0 or redis.call('HEXISTS', KEYS[1], ARGV[2]) == 0 then
+      return 0
+    end
+    redis.call('ZADD', KEYS[2], 0, ARGV[1])
+    local expiresAt = redis.call('HPEXPIRETIME', KEYS[1], 'FIELDS', 1, ARGV[2])[1]
+    local indexExpiresAt = redis.call('PEXPIRETIME', KEYS[2])
+    if indexExpiresAt > 0 and expiresAt > indexExpiresAt then
+      redis.call('PEXPIREAT', KEYS[2], expiresAt)
+    end
+    local stale = redis.call('ZRANGE', KEYS[2], '-', ARGV[3], 'BYLEX', 'LIMIT', 0, ARGV[4])
+    for _, member in ipairs(stale) do
+      local id = string.match(member, '|(.*)$')
+      if not id or redis.call('HEXISTS', KEYS[1], id) == 0 then
+        redis.call('ZREM', KEYS[2], member)
+      end
+    end
+    return 1
+  `;
+
+  // Newest first from ARGV[1] (the index's '+', or an exclusive member), up to
+  // ARGV[2] messages, each as id, message and reactions ('' for none). The
+  // first two replies are whether anything older is left, and the member of
+  // the oldest message returned -- the cursor for the page after.
+  //
+  // A room with no index is indexed here first, whole, in this one step: a
+  // message stored meanwhile is either in the hash this reads or finds the
+  // index there and adds itself. So is one holding more messages than its
+  // index: a pod from before indexes, mid-deploy, stores without indexing.
+  // The index lives as long as the room's longest-lived message.
+  private static readonly ROOM_PAGE_SCRIPT = `
+    if redis.call('EXISTS', KEYS[2]) == 0 or redis.call('HLEN', KEYS[1]) > redis.call('ZCARD', KEYS[2]) then
+      local fields = redis.call('HGETALL', KEYS[1])
+      local latest = 0
+      for i = 1, #fields, 2 do
+        local ok, message = pcall(cjson.decode, fields[i + 1])
+        if ok and type(message) == 'table' and type(message.timestamp) == 'string' then
+          redis.call('ZADD', KEYS[2], 0, message.timestamp .. '|' .. fields[i])
+          local expiresAt = redis.call('HPEXPIRETIME', KEYS[1], 'FIELDS', 1, fields[i])[1]
+          if expiresAt < 0 or latest < 0 then
+            latest = -1
+          elseif expiresAt > latest then
+            latest = expiresAt
+          end
+        end
+      end
+      if latest > 0 then
+        redis.call('PEXPIREAT', KEYS[2], latest)
+      end
+    end
+    local limit = tonumber(ARGV[2])
+    local reply = {0, ''}
+    local found = 0
+    local bound = ARGV[1]
+    while true do
+      local members = redis.call('ZRANGE', KEYS[2], bound, '-', 'BYLEX', 'REV', 'LIMIT', 0, limit + 1 - found)
+      if #members == 0 then
+        return reply
+      end
+      for _, member in ipairs(members) do
+        local id = string.match(member, '|(.*)$')
+        local value = id and redis.call('HGET', KEYS[1], id)
+        if not value then
+          redis.call('ZREM', KEYS[2], member)
+        elseif found == limit then
+          reply[1] = 1
+          return reply
+        else
+          found = found + 1
+          reply[2] = member
+          table.insert(reply, id)
+          table.insert(reply, value)
+          table.insert(reply, redis.call('HGET', KEYS[3], id) or '')
+        end
+      end
+      bound = '(' .. members[#members]
+    end
   `;
 
   // The web maps each id to its glyph; laugh is 😂.
@@ -517,23 +642,6 @@ export class ChatService {
     return new Date(this.lastMessageAt);
   }
 
-  // Two pods can still stamp the same millisecond; the id settles those the
-  // same way for every reader.
-  private static inSentOrder(a: ChatMessage, b: ChatMessage): number {
-    const elapsed =
-      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
-
-    if (elapsed !== 0) {
-      return elapsed;
-    }
-
-    if (a.id === b.id) {
-      return 0;
-    }
-
-    return a.id < b.id ? -1 : 1;
-  }
-
   private ttlFor(type: ChatLobbyType): number {
     return this.ttls.get(type) ?? ChatService.DEFAULT_TTL;
   }
@@ -593,9 +701,50 @@ export class ChatService {
         event: `lobby:${type}:${id}:messages`,
         data: {
           id,
-          messages: await this.historyFor(type, id, String(user.steam_id)),
+          ...(await this.historyFor(type, id, String(user.steam_id))),
         },
       }),
+    );
+  }
+
+  // The page before `before`, a cursor an earlier page handed out, judged
+  // exactly as a join is: who may read the room, and what of it this reader
+  // is shown.
+  public async olderMessages(
+    client: FiveStackWebSocketClient,
+    type: ChatLobbyType,
+    id: string,
+    before: unknown,
+  ): Promise<ChatHistoryPage | { code: ChatErrorCode }> {
+    if (!ChatService.isHistoryCursor(type, before)) {
+      return { code: ChatErrorCode.Invalid };
+    }
+
+    const user = await this.refreshClientUser(client);
+
+    if (!user || !(await this.canAccessLobby(type, id, user))) {
+      return { code: ChatErrorCode.NotAllowed };
+    }
+
+    return await this.historyFor(
+      type,
+      id,
+      String(user.steam_id),
+      before,
+      ChatService.OLDER_PAGE_LIMIT,
+    );
+  }
+
+  private static isHistoryCursor(
+    type: ChatLobbyType,
+    cursor: unknown,
+  ): cursor is string {
+    return (
+      typeof cursor === "string" &&
+      (type === ChatLobbyType.Direct
+        ? ChatService.DIRECT_CURSOR
+        : ChatService.ROOM_CURSOR
+      ).test(cursor)
     );
   }
 
@@ -854,20 +1003,28 @@ export class ChatService {
 
   // Hiding is one-directional: what the viewer blocked is left out, what
   // blocked the viewer is not, so nothing here tells anyone they were blocked.
+  //
+  // The page is cut before anything is hidden, so its cursor and `more` hold
+  // even when every line on it was hidden.
   private async historyFor(
     type: ChatLobbyType,
     id: string,
     viewer: string,
-  ): Promise<ChatMessage[]> {
-    const [messages, blocked] = await Promise.all([
-      this.getMessages(type, id),
+    before: string | null = null,
+    limit = ChatService.HISTORY_LIMIT,
+  ): Promise<ChatHistoryPage> {
+    const [page, blocked] = await Promise.all([
+      this.getMessages(type, id, before, limit),
       this.playerBlocks.blockedBy(viewer, ChatService.blockExemptRoles(type)),
     ]);
 
-    return await this.ownMentionsUnblocked(
-      ChatService.withoutBlocked(messages, blocked),
-      viewer,
-    );
+    return {
+      ...page,
+      messages: await this.ownMentionsUnblocked(
+        ChatService.withoutBlocked(page.messages, blocked),
+        viewer,
+      ),
+    };
   }
 
   // A moderator has to see a group room whole to moderate it. Staff moderate
@@ -941,37 +1098,109 @@ export class ChatService {
 
   // A room's history, from whichever store holds it. DMs are durable and live
   // in postgres; every other room is redis behind its own TTL.
-  private async getMessages(type: ChatLobbyType, id: string) {
+  private async getMessages(
+    type: ChatLobbyType,
+    id: string,
+    before: string | null = null,
+    limit = ChatService.HISTORY_LIMIT,
+  ): Promise<ChatHistoryPage> {
     if (type === ChatLobbyType.Direct) {
-      return await this.getDirectMessages(id);
+      return await this.getDirectMessages(id, before, limit);
     }
 
-    return await this.getRoomMessages(type, id);
+    return await this.getRoomMessages(type, id, before, limit);
   }
 
-  // Both hashes are asked for at once, so this is still one round trip. A
-  // reaction landing between the two reads is harmless: the room is sent the
-  // message's whole reaction state every time one changes.
+  // One script, so the page and its reactions are read in one step.
   private async getRoomMessages(
     type: ChatLobbyType,
     id: string,
-  ): Promise<ChatMessage[]> {
-    const [messages, reactions] = await Promise.all([
-      this.redis.hgetall(`chat_${type}_${id}`),
-      this.redis.hgetall(ChatService.reactionsKey(type, id)),
-    ]);
+    before: string | null = null,
+    limit = ChatService.HISTORY_LIMIT,
+  ): Promise<ChatHistoryPage> {
+    const [more, cursor, ...rows] = (await this.redis.eval(
+      ChatService.ROOM_PAGE_SCRIPT,
+      3,
+      `chat_${type}_${id}`,
+      ChatService.indexKey(type, id),
+      ChatService.reactionsKey(type, id),
+      before === null ? "+" : `(${before}`,
+      limit,
+    )) as [number, string, ...string[]];
 
-    return Object.entries(messages)
-      .map(
-        ([messageId, value]): ChatMessage => ({
-          ...(JSON.parse(value) as ChatMessage),
-          reactions: ChatService.orderedReactions(
-            reactions[messageId] ? JSON.parse(reactions[messageId]) : null,
-          ),
-        }),
-      )
-      .sort(ChatService.inSentOrder)
-      .slice(-ChatService.HISTORY_LIMIT);
+    const messages: ChatMessage[] = [];
+
+    for (let index = rows.length - 3; index >= 0; index -= 3) {
+      const reactions = rows[index + 2];
+
+      messages.push({
+        ...(JSON.parse(rows[index + 1]) as ChatMessage),
+        reactions: ChatService.orderedReactions(
+          reactions ? JSON.parse(reactions) : null,
+        ),
+      });
+    }
+
+    return { messages, more: more === 1, cursor: cursor || null };
+  }
+
+  private static indexKey(type: ChatLobbyType, id: string) {
+    return `chat_index_${type}_${id}`;
+  }
+
+  private static indexMember(message: Pick<ChatMessage, "id" | "timestamp">) {
+    return `${message.timestamp}|${message.id}`;
+  }
+
+  // Never allowed to fail a send: the message is already in its room, and an
+  // index that may have missed it is dropped, to be built again from the room
+  // on its next read.
+  private async indexRoomMessage(
+    type: ChatLobbyType,
+    id: string,
+    message: ChatMessage,
+  ) {
+    const index = ChatService.indexKey(type, id);
+
+    try {
+      await this.redis.eval(
+        ChatService.INDEX_ROOM_MESSAGE_SCRIPT,
+        2,
+        `chat_${type}_${id}`,
+        index,
+        ChatService.indexMember(message),
+        message.id,
+        `(${new Date(Date.now() - this.ttlFor(type) * 1000).toISOString()}`,
+        ChatService.INDEX_PRUNE_BATCH,
+      );
+    } catch (error) {
+      this.logger.warn(
+        `unable to index ${type}:${id} message ${message.id}`,
+        error,
+      );
+      await this.redis.del(index).catch((dropError) => {
+        this.logger.warn(
+          `unable to drop the index of ${type}:${id}`,
+          dropError,
+        );
+      });
+    }
+  }
+
+  // A member left behind is dropped by the next read that reaches it.
+  private async unindexRoomMessage(
+    type: ChatLobbyType,
+    id: string,
+    message: ChatMessage,
+  ) {
+    await this.redis
+      .zrem(ChatService.indexKey(type, id), ChatService.indexMember(message))
+      .catch((error) => {
+        this.logger.warn(
+          `unable to unindex ${type}:${id} message ${message.id}`,
+          error,
+        );
+      });
   }
 
   // The stores keep reactions in whatever order they like (a Lua table's,
@@ -1478,6 +1707,8 @@ export class ChatService {
             messageField,
           ]),
         );
+
+        await this.indexRoomMessage(type, id, message);
       };
 
       if (attachmentIds.length > 0) {
@@ -1513,6 +1744,7 @@ export class ChatService {
                 `unable to take back ${type}:${id} message ${message.id}`,
               );
             });
+            await this.unindexRoomMessage(type, id, message);
           }
 
           throw error;
@@ -1891,6 +2123,8 @@ export class ChatService {
     }
 
     await this.redis.hdel(messageKey, messageId);
+
+    await this.unindexRoomMessage(type, id, message);
 
     // Never allowed to stop the delete being announced: left behind, the
     // reactions still expire with the message, and nothing reads reactions
@@ -3545,7 +3779,14 @@ export class ChatService {
     );
   }
 
-  private async getDirectMessages(roomId: string) {
+  // One more than the page is read, to know whether anything is left past it.
+  private async getDirectMessages(
+    roomId: string,
+    before: string | null = null,
+    limit = ChatService.HISTORY_LIMIT,
+  ): Promise<ChatHistoryPage> {
+    const [beforeAt, beforeSeq] = before?.split("|") ?? [];
+
     const rows = await this.postgres.query<
       Array<{
         id: string;
@@ -3560,43 +3801,54 @@ export class ChatService {
         role: e_player_roles_enum;
         avatar_url: string | null;
         profile_url: string | null;
+        cursor: string;
       }>
     >(
       `SELECT dm.id::text AS id, dm.message, dm.created_at, dm.edited_at,
               dm.attachments, dm.gif, reactions.reactions,
               p.steam_id::text AS steam_id, p.name, p.role::text AS role,
-              p.avatar_url, p.profile_url
+              p.avatar_url, p.profile_url,
+              to_char(dm.created_at AT TIME ZONE 'UTC',
+                      'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') || '|' || dm.seq
+                AS cursor
          FROM public.direct_messages dm
          JOIN public.players p ON p.steam_id = dm.from_steam_id
          ${ChatService.DIRECT_MESSAGE_REACTIONS}
         WHERE dm.room_id = $1
+          ${before ? "AND (dm.created_at, dm.seq) < ($3::timestamptz, $4::bigint)" : ""}
         ORDER BY dm.created_at DESC, dm.seq DESC
         LIMIT $2`,
-      [roomId, ChatService.HISTORY_LIMIT],
+      before ? [roomId, limit + 1, beforeAt, beforeSeq] : [roomId, limit + 1],
     );
 
-    return rows.reverse().map(
-      (row): ChatMessage => ({
-        id: row.id,
-        message: row.message,
-        timestamp: new Date(row.created_at).toISOString(),
-        // Nothing relays from the game into a DM.
-        source: "web",
-        ...(row.edited_at
-          ? { edited_at: new Date(row.edited_at).toISOString() }
-          : {}),
-        reactions: ChatService.orderedReactions(row.reactions),
-        ...(row.attachments ? { attachments: row.attachments } : {}),
-        ...(row.gif ? { gif: row.gif } : {}),
-        from: {
-          role: row.role,
-          name: row.name,
-          steam_id: row.steam_id,
-          avatar_url: row.avatar_url,
-          profile_url: row.profile_url,
-        },
-      }),
-    );
+    const page = rows.slice(0, limit);
+
+    return {
+      more: rows.length > limit,
+      cursor: page[page.length - 1]?.cursor ?? null,
+      messages: page.reverse().map(
+        (row): ChatMessage => ({
+          id: row.id,
+          message: row.message,
+          timestamp: new Date(row.created_at).toISOString(),
+          // Nothing relays from the game into a DM.
+          source: "web",
+          ...(row.edited_at
+            ? { edited_at: new Date(row.edited_at).toISOString() }
+            : {}),
+          reactions: ChatService.orderedReactions(row.reactions),
+          ...(row.attachments ? { attachments: row.attachments } : {}),
+          ...(row.gif ? { gif: row.gif } : {}),
+          from: {
+            role: row.role,
+            name: row.name,
+            steam_id: row.steam_id,
+            avatar_url: row.avatar_url,
+            profile_url: row.profile_url,
+          },
+        }),
+      ),
+    };
   }
 
   // Server-side read state, so unread counts survive a reload instead of
@@ -3849,20 +4101,21 @@ export class ChatService {
   private async resendHistory(
     type: ChatLobbyType,
     id: string,
-    messages: ChatMessage[],
+    page: ChatHistoryPage,
   ) {
     const users = await this.getAllUsersInLobby(type, id);
     const blocked = await this.playerBlocks.blockedAmong(
       users.map(({ steamId }) => steamId),
-      ChatService.peopleIn(messages),
+      ChatService.peopleIn(page.messages),
       ChatService.blockExemptRoles(type),
     );
 
     for (const { steamId } of users) {
       await this.publishTo(steamId, `lobby:${type}:${id}:messages`, {
         id,
+        ...page,
         messages: await this.ownMentionsUnblocked(
-          ChatService.withoutBlocked(messages, blocked.get(steamId)),
+          ChatService.withoutBlocked(page.messages, blocked.get(steamId)),
           String(steamId),
         ),
       });
@@ -4542,11 +4795,13 @@ export class ChatService {
   ) {
     const moved = (await this.redis.eval(
       ChatService.MOVE_ROOM_MESSAGES_SCRIPT,
-      4,
+      6,
       `chat_${fromType}_${fromId}`,
       `chat_${toType}_${toId}`,
       ChatService.reactionsKey(fromType, fromId),
       ChatService.reactionsKey(toType, toId),
+      ChatService.indexKey(fromType, fromId),
+      ChatService.indexKey(toType, toId),
       this.ttlFor(toType),
     )) as string[];
 
@@ -4575,9 +4830,9 @@ export class ChatService {
       return;
     }
 
-    const messages = await this.getRoomMessages(toType, toId);
+    const page = await this.getRoomMessages(toType, toId);
 
-    void this.resendHistory(toType, toId, messages).catch((error) => {
+    void this.resendHistory(toType, toId, page).catch((error) => {
       this.logger.warn(`unable to re-send history to ${toType}:${toId}`, error);
     });
 
