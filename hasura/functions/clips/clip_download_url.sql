@@ -9,6 +9,7 @@ CREATE OR REPLACE FUNCTION public.clip_download_url(match_clips public.match_cli
         basename text;
         download_name text;
         version text;
+        signature text;
     BEGIN
         IF match_clips.file IS NULL THEN
             RETURN NULL;
@@ -38,12 +39,14 @@ CREATE OR REPLACE FUNCTION public.clip_download_url(match_clips public.match_cli
             '0'
         );
 
+        signature := public.file_url_signature(match_clips.file, match_clips.visibility = 'public');
+
         SELECT value INTO worker_url
         FROM settings
         WHERE name = 'cloudflare_worker_url';
 
         IF worker_url IS NOT NULL THEN
-            RETURN CONCAT(worker_url, '/', match_clips.file, '?name=', download_name, '&v=', version);
+            RETURN CONCAT(worker_url, '/', match_clips.file, '?name=', download_name, '&v=', version, '&' || signature);
         END IF;
 
         SELECT value INTO demos_domain
@@ -54,6 +57,6 @@ CREATE OR REPLACE FUNCTION public.clip_download_url(match_clips public.match_cli
             RETURN NULL;
         END IF;
 
-        RETURN CONCAT(demos_domain, '/clips/', match_clips.id, '?name=', download_name, '&v=', version);
+        RETURN CONCAT(demos_domain, '/clips/', match_clips.id, '?name=', download_name, '&v=', version, '&' || signature);
     END;
 $$;
