@@ -1,3 +1,8 @@
+import { INestApplication, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { Test } from "@nestjs/testing";
+import request from "supertest";
+import { HasuraService } from "../hasura/hasura.service";
 import { GameServerNodeController } from "./game-server-node.controller";
 
 describe("GameServerNodeController ping disk alerts", () => {
@@ -200,63 +205,77 @@ describe("GameServerNodeController server ping hibernation", () => {
   });
 });
 
+// Asked over HTTP, because the status a refusal turns into is the thing under
+// test: a refusal must look the same whether the node is unknown or the token
+// is wrong.
 describe("GameServerNodeController setup script", () => {
   const NODE_TOKEN = "tskey-node-setup-1234";
   let hasura: { query: jest.Mock };
-  let controller: GameServerNodeController;
+  let app: INestApplication;
 
-  const fetchScript = (query: Record<string, unknown>) => {
-    const response = {
-      setHeader: jest.fn(),
-      write: jest.fn(),
-      end: jest.fn(),
-    };
-    const result = controller.script(
-      { params: { gameServerNodeId: "node-1.sh" }, query } as any,
-      response as any,
-    );
-    return { response, result };
-  };
+  const fetchScript = (query: Record<string, unknown>) =>
+    request(app.getHttpServer())
+      .get("/game-server-node/script/node-1.sh")
+      .query(query);
 
-  beforeEach(() => {
+  beforeEach(async () => {
     hasura = {
       query: jest.fn().mockResolvedValue({
         game_server_nodes_by_pk: { token: NODE_TOKEN },
         settings: [],
       }),
     };
-    const queue = { add: jest.fn(), remove: jest.fn() };
 
-    controller = new GameServerNodeController(
-      { warn: jest.fn(), log: jest.fn() } as any,
-      {} as any,
-      { get: jest.fn().mockReturnValue({}) } as any,
-      hasura as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      queue as any,
-      queue as any,
-      {} as any,
-      queue as any,
-      queue as any,
-      {} as any,
-      {} as any,
-    );
+    const module = await Test.createTestingModule({
+      controllers: [GameServerNodeController],
+    })
+      .useMocker((token) => {
+        if (token === HasuraService) {
+          return hasura;
+        }
+        if (token === ConfigService) {
+          return { get: jest.fn().mockReturnValue({}) };
+        }
+        if (token === Logger) {
+          return { warn: jest.fn(), log: jest.fn(), error: jest.fn() };
+        }
+        return {};
+      })
+      .compile();
+
+    app = module.createNestApplication({ logger: false });
+    await app.init();
+  });
+
+  afterEach(async () => {
+    await app.close();
   });
 
   it("serves the script to the setup link's token", async () => {
-    const { response, result } = fetchScript({ token: NODE_TOKEN });
+    const response = await fetchScript({ token: NODE_TOKEN });
 
-    await result;
+    expect(response.status).toBe(200);
+    expect(response.text).toContain(NODE_TOKEN);
+  });
 
-    expect(response.write).toHaveBeenCalledWith(
-      expect.stringContaining(NODE_TOKEN),
-    );
-    expect(response.end).toHaveBeenCalled();
+  const notFound = async (query: Record<string, unknown>) => {
+    const response = await fetchScript(query);
+
+    expect(response.status).toBe(404);
+    expect(response.text).not.toContain(NODE_TOKEN);
+    return response.body;
+  };
+
+  const unknownNode = () => {
+    hasura.query.mockResolvedValue({
+      game_server_nodes_by_pk: null,
+      settings: [],
+    });
+    return notFound({ token: NODE_TOKEN });
+  };
+
+  it("answers a node that does not exist with a 404", async () => {
+    await unknownNode();
   });
 
   it.each([
@@ -269,22 +288,19 @@ describe("GameServerNodeController setup script", () => {
       "a token as long in characters but not bytes",
       { token: "é".repeat(NODE_TOKEN.length) },
     ],
-  ])("refuses %s like a node that does not exist", async (_, query) => {
-    const { response, result } = fetchScript(query);
+  ])("answers %s like a node that does not exist", async (_, query) => {
+    const refused = await notFound(query);
 
-    await expect(result).rejects.toThrow("Game server not found");
-    expect(response.write).not.toHaveBeenCalled();
+    expect(await unknownNode()).toEqual(refused);
   });
 
-  it("refuses a node without a token", async () => {
+  it("answers for a node without a token like a node that does not exist", async () => {
     hasura.query.mockResolvedValue({
       game_server_nodes_by_pk: { token: null },
       settings: [],
     });
+    const refused = await notFound({ token: NODE_TOKEN });
 
-    const { response, result } = fetchScript({ token: NODE_TOKEN });
-
-    await expect(result).rejects.toThrow("Game server not found");
-    expect(response.write).not.toHaveBeenCalled();
+    expect(await unknownNode()).toEqual(refused);
   });
 });
