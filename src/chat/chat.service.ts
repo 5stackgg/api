@@ -3659,7 +3659,8 @@ export class ChatService {
   // writing in a team room) gets all chat only. So does a moderator who plays
   // against either side: on either team's roster, or on any team in the same
   // tournament, a team room is a future opponent's strategy. Blocks are not
-  // applied: reviewing a match means seeing every line of it.
+  // applied: reviewing a match means seeing every line of it. A utility
+  // practice session is a matches row too, but not a match to review.
   public async matchChatLog(
     matchId: string,
     user: User | undefined,
@@ -3723,7 +3724,8 @@ export class ChatService {
                    )
               ) AS competing
          FROM public.matches m
-        WHERE m.id = $1::uuid`,
+        WHERE m.id = $1::uuid
+          AND m.source IS DISTINCT FROM 'practice'`,
       [matchId, viewer],
     );
 
