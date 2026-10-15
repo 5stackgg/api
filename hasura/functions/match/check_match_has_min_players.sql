@@ -1,5 +1,5 @@
     CREATE OR REPLACE FUNCTION public.check_match_has_min_players(match matches) RETURNS BOOLEAN
-    LANGUAGE plpgsql
+    LANGUAGE plpgsql STABLE
     AS $$
 DECLARE
     min_players INTEGER;
