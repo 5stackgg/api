@@ -16,7 +16,7 @@ insert_permissions:
     permission:
       check:
         tournament:
-          is_organizer:
+          can_manage_organizers:
             _eq: true
       columns:
         - steam_id
@@ -36,6 +36,6 @@ delete_permissions:
     permission:
       filter:
         tournament:
-          is_organizer:
+          can_manage_organizers:
             _eq: true
     comment: ""

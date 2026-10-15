@@ -537,6 +537,33 @@ describe("hasura table metadata", () => {
   // Who blocked you must never be reachable: not by reading the row, not by
   // walking a relationship to it from a player, and not by rewriting a row
   // into someone else's name.
+  // is_organizer passes every site-wide tournament organizer for every
+  // tournament, so gating these on it let one make themselves a co-organizer of
+  // any tournament.
+  describe("tournament organizers", () => {
+    const managedByItsOrganizers = stableShape({
+      tournament: { can_manage_organizers: { _eq: true } },
+    });
+
+    it.each([
+      "public_tournament_organizers.yaml",
+      "public_tournament_organizer_teams.yaml",
+    ])("lets only a tournament's own organizers change %s", (file) => {
+      const metadata = tables.find((table) => table.file === file)?.metadata;
+      const inserts = blocksByRole(metadata!, "insert_permissions");
+      const deletes = blocksByRole(metadata!, "delete_permissions");
+
+      expect([...inserts.keys()]).toEqual(["user"]);
+      expect([...deletes.keys()]).toEqual(["user"]);
+      expect(stableShape(inserts.get("user")?.check)).toEqual(
+        managedByItsOrganizers,
+      );
+      expect(stableShape(deletes.get("user")?.filter)).toEqual(
+        managedByItsOrganizers,
+      );
+    });
+  });
+
   describe("player_blocks", () => {
     const blocks = () =>
       tables.find(({ file }) => file === "public_player_blocks.yaml")!.metadata;
