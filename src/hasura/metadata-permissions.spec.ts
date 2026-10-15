@@ -273,6 +273,51 @@ describe("hasura table metadata", () => {
         ],
       });
     });
+
+    // is_organizer stops at match_organizer, so a moderator only reached a
+    // canceled match by being tied to it, while its chat log is theirs to read.
+    describe("canceled matches", () => {
+      const selectBlocks = () =>
+        blocksByRole(
+          tables.find(({ file }) => file === "public_matches.yaml")?.metadata,
+          "select_permissions",
+        );
+
+      const hiddenStatuses = (filter: Record<string, any>) =>
+        filter?._and?.[0]?._or?.[0]?.status?._nin;
+
+      it("keeps a canceled match from anyone below moderator who was not part of it", () => {
+        expect(hiddenStatuses(selectBlocks().get("user")?.filter)).toEqual([
+          "PickingPlayers",
+          "Canceled",
+        ]);
+      });
+
+      it("shows a moderator canceled matches, but still not a lobby picking players or a practice session", () => {
+        expect(selectBlocks().get("moderator")?.filter).toEqual({
+          _and: [
+            {
+              _or: [
+                { status: { _nin: ["PickingPlayers"] } },
+                { is_organizer: { _eq: true } },
+                { is_in_lineup: { _eq: true } },
+                { is_friend_in_match_lineup: { _eq: true } },
+              ],
+            },
+            { source: { _neq: "practice" } },
+          ],
+        });
+      });
+
+      it("gives a moderator the same columns and computed fields as a user", () => {
+        const user = selectBlocks().get("user");
+        const moderator = selectBlocks().get("moderator");
+
+        expect(stableShape({ ...moderator, filter: user?.filter })).toEqual(
+          stableShape(user),
+        );
+      });
+    });
   });
 
   describe("chat message deletions", () => {
