@@ -2692,7 +2692,7 @@ describe("ChatService direct messages", () => {
       redis.eval.mockImplementation(
         async (script: string, _keys: number, ...args: any[]) => {
           if (isRoomPageScript(script)) {
-            return fakeRoomPage(hashes[args[0]], hashes[args[2]], args[4]);
+            return fakeRoomPage(hashes[args[0]], hashes[args[2]], args[6]);
           }
 
           if (script.includes("INCR")) {
@@ -3427,7 +3427,7 @@ describe("ChatService direct messages", () => {
       redis.eval.mockImplementation(
         async (script: string, _keys: number, ...args: any[]) => {
           if (isRoomPageScript(script)) {
-            return fakeRoomPage(hashes[args[0]], hashes[args[2]], args[4]);
+            return fakeRoomPage(hashes[args[0]], hashes[args[2]], args[6]);
           }
 
           return script.includes("INCR") ? 1 : [1, 1];

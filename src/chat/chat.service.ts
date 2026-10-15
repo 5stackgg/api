@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
 import { User } from "../auth/types/User";
 import Redis from "ioredis";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
@@ -52,7 +52,7 @@ export interface ChatMessageMedia {
 }
 
 @Injectable()
-export class ChatService {
+export class ChatService implements OnApplicationBootstrap {
   private redis: Redis;
 
   // How long a room's messages survive in redis, per lobby type. Match chatter
@@ -82,6 +82,26 @@ export class ChatService {
   // How many index entries one store looks at for a message that is gone.
   private static readonly INDEX_PRUNE_BATCH = 100;
 
+  // Bumped whenever what an index holds changes shape: every index built
+  // before it is rebuilt on its next read.
+  private static readonly INDEX_VERSION = "1";
+
+  // How long an index is read without being rebuilt from its room. A pod that
+  // stores without indexing -- one from before indexes, or a bug -- leaves a
+  // message out of the index for at most this long.
+  private static readonly INDEX_CHECK_MS = 10 * 60 * 1000;
+
+  // Set by every pod as it starts, for as long as pods from the last release
+  // may still be storing: until it lapses, every read rebuilds its index.
+  private static readonly INDEX_STARTING_KEY = "chat_index:starting";
+
+  private static readonly INDEX_STARTING_MS = 10 * 60 * 1000;
+
+  // Paging back, per socket: a few a second, and a short burst.
+  private static readonly HISTORY_RATE_LIMIT = 6;
+
+  private static readonly HISTORY_RATE_WINDOW_MS = 2_000;
+
   // What a page hands back as `cursor`, and so all a client may send back.
   // A room's is its index member; a conversation's is created_at (to the
   // microsecond, as postgres keeps it) and seq.
@@ -90,6 +110,9 @@ export class ChatService {
 
   private static readonly DIRECT_CURSOR =
     /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z\|\d{1,19}$/;
+
+  // Postgres's bigint, which seq is.
+  private static readonly MAX_DIRECT_SEQ = 9223372036854775807n;
 
   // Measured in UTF-16 code units, the same unit a textarea's maxlength counts.
   public static readonly MAX_MESSAGE_LENGTH = 2000;
@@ -225,13 +248,19 @@ export class ChatService {
   // first two replies are whether anything older is left, and the member of
   // the oldest message returned -- the cursor for the page after.
   //
-  // A room with no index is indexed here first, whole, in this one step: a
-  // message stored meanwhile is either in the hash this reads or finds the
-  // index there and adds itself. So is one holding more messages than its
-  // index: a pod from before indexes, mid-deploy, stores without indexing.
+  // The index is rebuilt here first, whole, in this one step, when there is
+  // none, when its check (KEYS[4]) has lapsed or names another version, and
+  // while a pod is starting (KEYS[5]). Nothing is counted to decide: a member
+  // left for a message that has gone, or a field that has expired but not
+  // been reclaimed, would throw any count off. A message stored meanwhile is
+  // either in the hash this reads or finds the index there and adds itself.
   // The index lives as long as the room's longest-lived message.
   private static readonly ROOM_PAGE_SCRIPT = `
-    if redis.call('EXISTS', KEYS[2]) == 0 or redis.call('HLEN', KEYS[1]) > redis.call('ZCARD', KEYS[2]) then
+    if redis.call('EXISTS', KEYS[2]) == 0
+      or redis.call('GET', KEYS[4]) ~= ARGV[3]
+      or redis.call('EXISTS', KEYS[5]) == 1 then
+      redis.call('DEL', KEYS[2])
+      redis.call('SET', KEYS[4], ARGV[3], 'PX', ARGV[4])
       local fields = redis.call('HGETALL', KEYS[1])
       local latest = 0
       for i = 1, #fields, 2 do
@@ -632,6 +661,15 @@ export class ChatService {
     this.redis = this.redisManager.getConnection();
   }
 
+  public async onApplicationBootstrap() {
+    await this.redis.set(
+      ChatService.INDEX_STARTING_KEY,
+      "1",
+      "PX",
+      ChatService.INDEX_STARTING_MS,
+    );
+  }
+
   public updateChatMessageTTL(type: ChatLobbyType, expiresIn: number) {
     this.ttls.set(type, expiresIn);
   }
@@ -716,6 +754,16 @@ export class ChatService {
     id: string,
     before: unknown,
   ): Promise<ChatHistoryPage | { code: ChatErrorCode }> {
+    if (
+      !(await this.withinRate(
+        `chat:history-rate:${client.id}`,
+        ChatService.HISTORY_RATE_LIMIT,
+        ChatService.HISTORY_RATE_WINDOW_MS,
+      ))
+    ) {
+      return { code: ChatErrorCode.RateLimited };
+    }
+
     if (!ChatService.isHistoryCursor(type, before)) {
       return { code: ChatErrorCode.Invalid };
     }
@@ -735,16 +783,36 @@ export class ChatService {
     );
   }
 
+  // Read whole, and not only by its shape: a conversation's goes to postgres,
+  // which refuses a 13th month or a seq past bigint outright.
   private static isHistoryCursor(
     type: ChatLobbyType,
     cursor: unknown,
   ): cursor is string {
+    const direct = type === ChatLobbyType.Direct;
+
+    if (
+      typeof cursor !== "string" ||
+      !(direct ? ChatService.DIRECT_CURSOR : ChatService.ROOM_CURSOR).test(
+        cursor,
+      )
+    ) {
+      return false;
+    }
+
+    const toTheMillisecond = `${cursor.slice(0, 23)}Z`;
+    const at = new Date(toTheMillisecond);
+
+    if (
+      Number.isNaN(at.getTime()) ||
+      at.getUTCFullYear() < 1970 ||
+      at.toISOString() !== toTheMillisecond
+    ) {
+      return false;
+    }
+
     return (
-      typeof cursor === "string" &&
-      (type === ChatLobbyType.Direct
-        ? ChatService.DIRECT_CURSOR
-        : ChatService.ROOM_CURSOR
-      ).test(cursor)
+      !direct || BigInt(cursor.split("|")[1]) <= ChatService.MAX_DIRECT_SEQ
     );
   }
 
@@ -1120,12 +1188,16 @@ export class ChatService {
   ): Promise<ChatHistoryPage> {
     const [more, cursor, ...rows] = (await this.redis.eval(
       ChatService.ROOM_PAGE_SCRIPT,
-      3,
+      5,
       `chat_${type}_${id}`,
       ChatService.indexKey(type, id),
       ChatService.reactionsKey(type, id),
+      `chat_index_checked_${type}_${id}`,
+      ChatService.INDEX_STARTING_KEY,
       before === null ? "+" : `(${before}`,
       limit,
+      ChatService.INDEX_VERSION,
+      ChatService.INDEX_CHECK_MS,
     )) as [number, string, ...string[]];
 
     const messages: ChatMessage[] = [];

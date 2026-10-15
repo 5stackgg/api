@@ -205,8 +205,9 @@ describe("chat history paging (SQL-driven)", () => {
     before: unknown,
     type = ChatLobbyType.Team,
     id = team.id,
+    socket = client(steamId),
   ) => {
-    const socket = client(steamId);
+    socket.send.mockClear();
     await gateway.history(
       { type, id, before: before as string, requestId: "request-1" },
       socket as any,
@@ -324,15 +325,83 @@ describe("chat history paging (SQL-driven)", () => {
       expect(await indexed()).toEqual([...seeded, late]);
     });
 
-    it("takes in a message stored around it, as a pod from before indexes does mid-deploy", async () => {
+    // A pod from before indexes stores without indexing: mid-deploy, or for
+    // as long as a rollback runs. A member left over for a message that has
+    // gone keeps the index's count whole, so counting can't tell.
+    const storedAroundTheIndex = async () => {
       const [first] = await seed(1);
       await join(team.starter);
       expect(await indexed()).toEqual([first]);
 
+      await redis.zadd(
+        indexKey(),
+        0,
+        `${new Date(Date.now() - 1000).toISOString()}|${randomUUID()}`,
+      );
       const [unindexed] = await seed(1, { startAt: Date.now() });
+      expect(await redis.hlen(roomKey())).toBe(await redis.zcard(indexKey()));
 
-      expect(ids(await join(team.starter))).toEqual([first, unindexed]);
-      expect(await indexed()).toEqual([first, unindexed]);
+      return [first, unindexed];
+    };
+
+    // Only a rebuild asks after each field's expiry; a read of a checked
+    // index never does. (Joining reads the room's presence hash whole, so
+    // HGETALL is no measure.)
+    const rebuilds = async () =>
+      Number(
+        /cmdstat_hpexpiretime:calls=(\d+)/.exec(
+          await redis.info("commandstats"),
+        )?.[1] ?? 0,
+      );
+
+    it("rebuilds every index it reads for a while after a pod starts, so a pod from before indexes hides nothing", async () => {
+      const room = await storedAroundTheIndex();
+
+      await chat.onApplicationBootstrap();
+
+      expect(ids(await join(team.starter))).toEqual(room);
+      expect(await indexed()).toEqual(room);
+    });
+
+    it("rebuilds an index once its check runs out, or a different version built it", async () => {
+      const room = await storedAroundTheIndex();
+
+      await redis.del(`chat_index_checked_team_${team.id}`);
+      expect(ids(await join(team.starter))).toEqual(room);
+
+      const [later] = await seed(1, { startAt: Date.now() + 1000 });
+      await redis.set(`chat_index_checked_team_${team.id}`, "0");
+      expect(ids(await join(team.starter))).toEqual([...room, later]);
+    });
+
+    it("reads a checked index without going back to the room", async () => {
+      await seed(3);
+      chat.updateChatMessageTTL(ChatLobbyType.Team, 1);
+      await say(team.starter, "short lived");
+      await join(team.starter);
+
+      await new Promise((resolve) => setTimeout(resolve, 2100));
+      const before = await rebuilds();
+      await join(team.starter);
+      await join(team.starter);
+
+      expect(await rebuilds()).toBe(before);
+      expect(await indexed()).toHaveLength(3);
+    });
+
+    it("stops rebuilding on every read once the window after a start closes", async () => {
+      await seed(3);
+      await chat.onApplicationBootstrap();
+      await join(team.starter);
+      await join(team.starter);
+      expect(await redis.exists("chat_index:starting")).toBe(1);
+
+      await redis.del("chat_index:starting");
+      await join(team.starter);
+      const before = await rebuilds();
+      await join(team.starter);
+
+      expect(await rebuilds()).toBe(before);
     });
 
     it("drops a deleted message", async () => {
@@ -608,11 +677,47 @@ describe("chat history paging (SQL-driven)", () => {
         "+",
         "-",
         `(${new Date().toISOString()}|x`,
+        "2026-13-01T12:00:00.000Z|x",
+        "2026-02-30T12:00:00.000Z|x",
       ]) {
         expect((await older(team.starter, before)).error).toEqual(
           expect.objectContaining({ code: ChatErrorCode.Invalid }),
         );
       }
+    });
+
+    it("answers a few pages a second to one socket, then refuses quietly", async () => {
+      await seed(210);
+      const cursor = (await join(team.starter))?.cursor;
+      const socket = client(team.starter);
+
+      for (let call = 0; call < 6; call++) {
+        expect(
+          (
+            await older(
+              team.starter,
+              cursor,
+              ChatLobbyType.Team,
+              team.id,
+              socket,
+            )
+          ).page?.messages,
+        ).toHaveLength(10);
+      }
+
+      expect(
+        await older(team.starter, cursor, ChatLobbyType.Team, team.id, socket),
+      ).toEqual({
+        page: undefined,
+        error: {
+          code: ChatErrorCode.RateLimited,
+          action: "history",
+          requestId: "request-1",
+        },
+      });
+      expect((await older(team.starter, cursor)).page?.messages).toHaveLength(
+        10,
+      );
     });
 
     it("takes a blocked player's tag off an older line a moderator still sees", async () => {
@@ -697,6 +802,32 @@ describe("chat history paging (SQL-driven)", () => {
       expect(sameInstant.page?.cursor).toMatch(
         /^2026-10-01T12:00:00\.123456Z\|\d+$/,
       );
+    });
+
+    it("refuses a conversation's cursor postgres could not read, rather than failing", async () => {
+      const me = await fx.player("Me");
+      const friend = await fx.player("Friend");
+      const room = directRoomId(me, friend);
+      await befriend(room);
+
+      for (const before of [
+        "2026-13-01T12:00:00.123456Z|1",
+        "2026-02-30T12:00:00.123456Z|1",
+        "2026-10-01T24:00:00.000000Z|1",
+        "0000-01-01T12:00:00.123456Z|1",
+        "2026-10-01T12:00:00.123456Z|9999999999999999999",
+      ]) {
+        const { page, error } = await older(
+          me,
+          before,
+          ChatLobbyType.Direct,
+          room,
+        );
+        expect(page).toBeUndefined();
+        expect(error).toEqual(
+          expect.objectContaining({ code: ChatErrorCode.Invalid }),
+        );
+      }
     });
 
     it("refuses a conversation's page to anyone outside it", async () => {

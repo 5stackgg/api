@@ -70,7 +70,7 @@ describe("ChatService mentions", () => {
         return fakeRoomPage(
           Object.fromEntries(hash(args[0])),
           Object.fromEntries(hash(args[2])),
-          args[4],
+          args[6],
         );
       }
 
