@@ -1,6 +1,8 @@
 import { Body, Controller, HttpCode, Post } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { NestExpressApplication } from "@nestjs/platform-express";
+import http from "http";
+import { AddressInfo } from "net";
 import request from "supertest";
 import { registerBodyParsers } from "./body-parsers";
 
@@ -26,7 +28,7 @@ describe("registerBodyParsers", () => {
       { logger: false },
     );
     registerBodyParsers(app);
-    await app.init();
+    await app.listen(0, "127.0.0.1");
   });
 
   afterAll(async () => {
@@ -34,6 +36,28 @@ describe("registerBodyParsers", () => {
   });
 
   const post = (path: string) => request(app.getHttpServer()).post(path);
+
+  const rawPost = (path: string, body: string) =>
+    new Promise<number>((resolve, reject) => {
+      const { port } = app.getHttpServer().address() as AddressInfo;
+      const sent = http.request(
+        {
+          port,
+          path,
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "content-length": Buffer.byteLength(body),
+          },
+        },
+        (response) => {
+          response.resume();
+          response.on("end", () => resolve(response.statusCode!));
+        },
+      );
+      sent.on("error", reject);
+      sent.end(body);
+    });
 
   it("refuses a JSON body over 1mb on an ordinary route, before any handler", async () => {
     const response = await post("/matches/anything").send(jsonOf(2 * MB));
@@ -76,16 +100,58 @@ describe("registerBodyParsers", () => {
     expect(response.status).toBe(200);
   });
 
-  it("caps /utility well short of the old limit", async () => {
-    const response = await post("/utility/ingest").send(jsonOf(8 * MB));
+  it("caps /utility at 2mb", async () => {
+    const response = await post("/utility/ingest").send(jsonOf(3 * MB));
 
     expect(response.status).toBe(413);
   });
 
-  it("only widens the named path, not one that merely starts with it", async () => {
-    const response = await post("/utility-lineups/import").send(
-      jsonOf(2 * MB),
+  it("still refuses a 2mb body on an ordinary route", async () => {
+    const status = await rawPost(
+      "/matches/anything",
+      JSON.stringify(jsonOf(2 * MB)),
     );
+
+    expect(status).toBe(413);
+  });
+
+  // nginx picks the ingress location by the normalised path but forwards the
+  // raw one, which express matches as a case-insensitive prefix.
+  it.each([
+    "/hasura/%2e%2e/x",
+    "/hasura/../x",
+    "/HASURA/%2E%2E/x",
+    "/hasura/.%2e/utility/x",
+    "/hasura/./x",
+    "/hasura/..",
+    "/x/%2f..",
+    "/hasura%2f..%2futility/x",
+    "/hasura/%5C../utility",
+  ])("refuses %s before any parser reads it", async (path) => {
+    expect(await rawPost(path, JSON.stringify(jsonOf(10)))).toBe(400);
+  });
+
+  it("refuses a climbing path even with a body over every limit", async () => {
+    const status = await rawPost(
+      "/hasura/%2e%2e/utility/x",
+      JSON.stringify(jsonOf(5 * MB)),
+    );
+
+    expect(status).toBe(400);
+  });
+
+  it.each([
+    "/matches/anything?next=../a%2Fb",
+    "/utility/lineup-1/trajectory",
+    "/clips/utility/lineup-1/take.mp4",
+    "/demos/match-1/pre-signed",
+    "/match-relay/match-1/s123t456/7/delta?final=0",
+  ])("leaves %s alone", async (path) => {
+    expect(await rawPost(path, JSON.stringify(jsonOf(10)))).toBe(200);
+  });
+
+  it("only widens the named path, not one that merely starts with it", async () => {
+    const response = await post("/utility-lineups/import").send(jsonOf(2 * MB));
 
     expect(response.status).toBe(413);
   });
