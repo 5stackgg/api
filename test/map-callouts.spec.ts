@@ -128,4 +128,29 @@ describe("map callouts (SQL-driven)", () => {
       { name: "Window", boxes: [{ min: [0, 0, 0], max: [100, 100, 100] }] },
     ]);
   });
+
+  it("syncs the published callouts of community maps too", async () => {
+    const callouts_ = service();
+    const synced: Array<string> = [];
+    jest.spyOn(callouts_, "sync").mockImplementation(async (map: string) => {
+      synced.push(map);
+      return 0;
+    });
+    const cdn = process.env.MAP_MESH_CDN;
+    process.env.MAP_MESH_CDN = "https://mirror.test/maps/1";
+
+    try {
+      await callouts_.syncAll();
+    } finally {
+      if (cdn === undefined) {
+        delete process.env.MAP_MESH_CDN;
+      } else {
+        process.env.MAP_MESH_CDN = cdn;
+      }
+    }
+
+    expect(synced).toEqual(
+      expect.arrayContaining(["de_debris", "de_mirage", "de_poseidon"]),
+    );
+  });
 });

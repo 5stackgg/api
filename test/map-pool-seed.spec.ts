@@ -413,21 +413,86 @@ describe("seed map pools on boot (SQL-driven)", () => {
     expect(await activeIn("Rush")).toEqual(["rush_001"]);
   });
 
-  // A community map outside the active pools can leave the client, so it has to
-  // load from the Workshop.
-  it("gives inactive community maps their workshop ids", async () => {
+  // A community map can leave the client, so it keeps the id to load from the
+  // Workshop; the game server still plays the client's copy while it ships.
+  it("gives community maps their workshop ids", async () => {
     const community = await postgres.query<
       Array<{ name: string; workshop_map_id: string | null }>
     >(
       `SELECT DISTINCT name, workshop_map_id FROM maps
-        WHERE name IN ('cs_shelter', 'de_boulder', 'de_fachwerk')
+        WHERE name IN ('cs_shelter', 'de_boulder', 'de_debris', 'de_eldorado', 'de_fachwerk', 'de_poseidon')
         ORDER BY name`,
     );
     expect(community).toEqual([
       { name: "cs_shelter", workshop_map_id: "3737179295" },
       { name: "de_boulder", workshop_map_id: "3663186989" },
+      { name: "de_debris", workshop_map_id: "3539217452" },
+      { name: "de_eldorado", workshop_map_id: "3408790618" },
       { name: "de_fachwerk", workshop_map_id: "3442040035" },
+      { name: "de_poseidon", workshop_map_id: "3522144043" },
     ]);
+  });
+
+  // The map pickers file every map without a workshop id under Valve's own.
+  it("leaves only Valve's maps without a workshop id", async () => {
+    const rows = await postgres.query<Array<{ name: string }>>(
+      `SELECT DISTINCT name FROM maps
+        WHERE workshop_map_id IS NULL AND deleted_at IS NULL
+        ORDER BY name`,
+    );
+    expect(rows.map((row) => row.name)).toEqual([
+      "cs_italy",
+      "cs_office",
+      "de_ancient",
+      "de_ancient_night",
+      "de_anubis",
+      "de_cache",
+      "de_dust2",
+      "de_inferno",
+      "de_mirage",
+      "de_nuke",
+      "de_overpass",
+      "de_train",
+      "de_vertigo",
+      "rush_001",
+    ]);
+  });
+
+  it("switches off a retired mode and gives every mode row its map's details", async () => {
+    await postgres.query(
+      `INSERT INTO maps (name, type, active_pool, enabled)
+       VALUES ('de_debris', 'Competitive', false, true),
+              ('de_eldorado', 'Competitive', true, true),
+              ('de_brewery', 'Competitive', false, true),
+              ('de_sync_probe', 'Competitive', false, true)`,
+    );
+
+    try {
+      await reseed();
+
+      const rows = await postgres.query<
+        Array<{
+          name: string;
+          enabled: boolean;
+          workshop_map_id: string | null;
+        }>
+      >(
+        `SELECT name, enabled, workshop_map_id FROM maps
+          WHERE type = 'Competitive'
+            AND name IN ('de_brewery', 'de_debris', 'de_eldorado', 'de_sync_probe')
+          ORDER BY name`,
+      );
+      expect(rows).toEqual([
+        { name: "de_brewery", enabled: true, workshop_map_id: "3070290240" },
+        { name: "de_debris", enabled: false, workshop_map_id: "3539217452" },
+        { name: "de_eldorado", enabled: false, workshop_map_id: "3408790618" },
+        { name: "de_sync_probe", enabled: true, workshop_map_id: null },
+      ]);
+    } finally {
+      await postgres.query(
+        "DELETE FROM maps WHERE type = 'Competitive' AND name IN ('de_brewery', 'de_debris', 'de_eldorado')",
+      );
+    }
   });
 
   it("offers Italy and Shelter as Competitive maps outside Active Duty", async () => {

@@ -134,8 +134,8 @@ WITH map_data AS (
         ('de_stronghold', '3076973469', '/img/maps/screenshots/de_stronghold.webp', '/img/maps/icons/de_stronghold.svg', null),
         ('de_warden', '3256988376', '/img/maps/screenshots/de_warden.webp', '/img/maps/icons/de_warden.svg', null),
         ('de_boulder', '3663186989', '/img/maps/screenshots/de_boulder.webp', '/img/maps/icons/de_boulder.svg', null),
-        ('de_debris', null, '/img/maps/screenshots/de_debris.webp', '/img/maps/icons/de_debris.svg', null),
-        ('de_eldorado', null, '/img/maps/screenshots/de_eldorado.webp', '/img/maps/icons/de_eldorado.svg', null),
+        ('de_debris', '3539217452', '/img/maps/screenshots/de_debris.webp', '/img/maps/icons/de_debris.svg', null),
+        ('de_eldorado', '3408790618', '/img/maps/screenshots/de_eldorado.webp', '/img/maps/icons/de_eldorado.svg', null),
         ('de_fachwerk', '3442040035', '/img/maps/screenshots/de_fachwerk.webp', '/img/maps/icons/de_fachwerk.svg', null),
         ('cs_shelter', '3737179295', '/img/maps/screenshots/cs_shelter.webp', '/img/maps/icons/cs_shelter.svg', null),
         ('rush_001', null, '/img/maps/screenshots/rush_001.webp', '/img/maps/icons/rush_001.svg', null)
@@ -217,6 +217,12 @@ map_type_config AS (
 
     ) AS data(name, type, active_pool)
 ),
+retired_map_types AS (
+    SELECT * FROM (VALUES
+        ('de_debris', 'Competitive'),
+        ('de_eldorado', 'Competitive')
+    ) AS data(name, type)
+),
 all_maps AS (
     SELECT 
         md.name,
@@ -228,7 +234,8 @@ all_maps AS (
         md.label
     FROM map_data md
     JOIN map_type_config mtc ON md.name = mtc.name
-)
+),
+seeded AS (
 insert into maps (
     "name", 
     "type", 
@@ -252,7 +259,21 @@ on conflict("name", "type") do update set
     "workshop_map_id" = EXCLUDED."workshop_map_id", 
     "poster" = EXCLUDED."poster", 
     "patch" = EXCLUDED."patch", 
-    "label" = EXCLUDED."label";
+    "label" = EXCLUDED."label"
+)
+-- A map's details belong to the map, not one mode, so the mode rows the seed does not list (an
+-- admin's, or one it retired) carry them too; only a retired mode is switched off.
+UPDATE maps m
+SET workshop_map_id = md.workshop_map_id,
+    poster = md.poster,
+    patch = md.patch,
+    label = md.label,
+    enabled = m.enabled AND NOT EXISTS (
+        SELECT 1 FROM retired_map_types r WHERE r.name = m.name AND r.type = m.type
+    )
+FROM map_data md
+WHERE m.name = md.name
+  AND NOT EXISTS (SELECT 1 FROM map_type_config mtc WHERE mtc.name = m.name AND mtc.type = m.type);
 
 DO $$
 BEGIN

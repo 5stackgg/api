@@ -264,8 +264,7 @@ export class UtilityCalloutsService {
     const maps = await this.postgres.query<Array<{ name: string }>>(
       `SELECT DISTINCT name
          FROM public.maps
-        WHERE deleted_at IS NULL
-          AND workshop_map_id IS NULL`,
+        WHERE deleted_at IS NULL`,
     );
 
     let synced = 0;
