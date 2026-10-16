@@ -55,13 +55,21 @@ describe("extension FACEIT lookup", () => {
     const second = await imported(`${ROOM}.2`);
 
     const result = await service.lookupFaceit([
-      { id: ROOM, maps: 3 },
+      { id: ROOM, maps: 2 },
       { id: OTHER_ROOM },
     ]);
 
     expect(result[ROOM].state).toBe("imported");
     expect(result[ROOM].match_ids.sort()).toEqual([first, second].sort());
     expect(result[OTHER_ROOM]).toEqual({ state: "none", match_ids: [] });
+  });
+
+  it("still offers the rest of a series that is only partly in", async () => {
+    const first = await imported(ROOM);
+
+    await expect(
+      service.lookupFaceit([{ id: ROOM, maps: 3 }]),
+    ).resolves.toEqual({ [ROOM]: { state: "none", match_ids: [first] } });
   });
 
   it("does not count a Valve match that happens to share the id", async () => {

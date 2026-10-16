@@ -32,6 +32,7 @@ export type FaceitRoom = { id: string; maps?: number };
 @Injectable()
 export class ExtensionService {
   public static readonly HOURLY_IMPORT_LIMIT = 30;
+  public static readonly HOURLY_FACEIT_LOOKUP_LIMIT = 120;
   public static readonly MAX_MAPS = 5;
 
   private static readonly FACEIT_MATCH_ID =
@@ -47,12 +48,15 @@ export class ExtensionService {
   private static readonly B2_BUCKET_HOST =
     /^([a-z0-9-]+)\.s3\.[a-z0-9-]+\.backblazeb2\.com$/;
 
+  // A series with only some maps in 5Stack reads as "none", so the extension
+  // still offers it; the maps already imported come back "imported" again
+  // without being fetched.
   private static readonly STATE_PRIORITY: Array<ImportLookup["state"]> = [
     "failed",
     "importing",
     "queued",
-    "imported",
     "none",
+    "imported",
   ];
 
   constructor(
@@ -123,10 +127,10 @@ export class ExtensionService {
   ): Promise<Record<string, FaceitLookup>> {
     const externalIds = new Map<string, Array<string>>();
     for (const room of rooms) {
-      const maps = Math.min(
-        Math.max(Math.trunc(room.maps ?? 1), 1),
-        ExtensionService.MAX_MAPS,
-      );
+      const requested = Math.trunc(Number(room.maps ?? 1));
+      const maps = Number.isFinite(requested)
+        ? Math.min(Math.max(requested, 1), ExtensionService.MAX_MAPS)
+        : 1;
       externalIds.set(
         room.id,
         Array.from({ length: maps }, (_, i) =>
@@ -172,9 +176,25 @@ export class ExtensionService {
 
   public async queueFaceitDemo(
     steamId: string,
-    demo: { matchId: string; map: number; url: string },
+    demo: { matchId: string; url: string },
   ): Promise<ImportLookup> {
-    const externalId = ExtensionService.externalIdFor(demo.matchId, demo.map);
+    const match = await this.faceitDemos(steamId, demo.matchId);
+    const index = (match?.demoUrls ?? []).findIndex((resourceUrl) => {
+      try {
+        ExtensionService.assertSignedLinkFor(demo.url, resourceUrl);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+    if (index === -1) {
+      throw new BadRequestException("not one of this match's FACEIT demos");
+    }
+    const url = ExtensionService.assertSignedLinkFor(
+      demo.url,
+      match.demoUrls[index],
+    );
+    const externalId = ExtensionService.externalIdFor(demo.matchId, index + 1);
 
     const [existing] = await this.postgres.query<Array<{ id: string }>>(
       `SELECT id FROM public.matches
@@ -186,24 +206,26 @@ export class ExtensionService {
       return { state: "imported", match_id: existing.id };
     }
 
-    const match = await this.faceit.getMatchDemos(demo.matchId);
-    const resourceUrl = match?.demoUrls[demo.map - 1];
-    if (!resourceUrl) {
-      throw new BadRequestException("FACEIT has no demo for this map");
-    }
-    const url = ExtensionService.assertSignedLinkFor(demo.url, resourceUrl);
-
     const current = await this.jobLookup(externalId);
     if (current?.state === "queued" || current?.state === "importing") {
       return current;
     }
 
-    await this.consumeImports(steamId, 1);
+    await this.consume(
+      `extension:imports:${steamId}`,
+      1,
+      ExtensionService.HOURLY_IMPORT_LIMIT,
+      `import limit reached: ${ExtensionService.HOURLY_IMPORT_LIMIT} demos an hour`,
+    );
 
     // A failed or finished attempt keeps its job id, and the queue would
-    // ignore a new job under it.
+    // ignore a new job under it. One that another request has just picked up
+    // is locked and stays.
     const [fetchJob, parseJob] = await this.jobs(externalId);
-    await Promise.all([fetchJob?.remove(), parseJob?.remove()]);
+    await Promise.all([
+      fetchJob?.remove().catch((): undefined => undefined),
+      parseJob?.remove().catch((): undefined => undefined),
+    ]);
 
     await this.fetchQueue.add(
       FetchFaceitDemo.name,
@@ -223,6 +245,30 @@ export class ExtensionService {
     return { state: "queued" };
   }
 
+  // Each call spends the operator's FACEIT API quota, so it is metered per
+  // player before it is made, and a series' maps share one answer.
+  private async faceitDemos(
+    steamId: string,
+    matchId: string,
+  ): Promise<{ demoUrls: Array<string>; finishedAt: string | null } | null> {
+    const key = `extension:faceit-demos:${matchId}`;
+    const cached = await this.cache.get(key);
+    if (cached) {
+      return cached;
+    }
+    await this.consume(
+      `extension:faceit-lookups:${steamId}`,
+      1,
+      ExtensionService.HOURLY_FACEIT_LOOKUP_LIMIT,
+      "too many FACEIT lookups, try again later",
+    );
+    const match = await this.faceit.getMatchDemos(matchId);
+    if (match && match.demoUrls.length > 0) {
+      await this.cache.put(key, match, 5 * 60);
+    }
+    return match;
+  }
+
   public async lookupValve(
     shareCodes: Array<string>,
   ): Promise<Record<string, ImportLookup>> {
@@ -240,7 +286,12 @@ export class ExtensionService {
         (before[code].state === "none" || before[code].state === "failed"),
     );
     if (toImport.length > 0) {
-      await this.consumeImports(steamId, toImport.length);
+      await this.consume(
+        `extension:imports:${steamId}`,
+        toImport.length,
+        ExtensionService.HOURLY_IMPORT_LIMIT,
+        `import limit reached: ${ExtensionService.HOURLY_IMPORT_LIMIT} demos an hour`,
+      );
     }
 
     const errors = new Map<string, string>();
@@ -264,18 +315,14 @@ export class ExtensionService {
     return after;
   }
 
-  private async consumeImports(steamId: string, amount: number) {
-    const allowed = await this.cache.consume(
-      `extension:imports:${steamId}`,
-      amount,
-      ExtensionService.HOURLY_IMPORT_LIMIT,
-      60 * 60 * 1000,
-    );
-    if (!allowed) {
-      throw new HttpException(
-        `import limit reached: ${ExtensionService.HOURLY_IMPORT_LIMIT} demos an hour`,
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
+  private async consume(
+    key: string,
+    amount: number,
+    limit: number,
+    message: string,
+  ) {
+    if (!(await this.cache.consume(key, amount, limit, 60 * 60 * 1000))) {
+      throw new HttpException(message, HttpStatus.TOO_MANY_REQUESTS);
     }
   }
 
@@ -295,19 +342,30 @@ export class ExtensionService {
 
   private async jobLookup(externalId: string): Promise<ImportLookup | null> {
     const [fetchJob, parseJob] = await this.jobs(externalId);
-    const job = parseJob ?? fetchJob;
-    if (!job) {
-      return null;
+    if (parseJob) {
+      const state = await parseJob.getState();
+      if (state === "completed") {
+        const matchId = (parseJob.data as { match_id?: string }).match_id;
+        return matchId ? { state: "imported", match_id: matchId } : null;
+      }
+      return ExtensionService.pendingLookup(state, parseJob.failedReason);
     }
-    const state = await job.getState();
+    if (fetchJob) {
+      const state = await fetchJob.getState();
+      if (state === "completed") {
+        return null;
+      }
+      return ExtensionService.pendingLookup(state, fetchJob.failedReason);
+    }
+    return null;
+  }
+
+  private static pendingLookup(state: string, reason?: string): ImportLookup {
     if (state === "failed") {
-      return { state: "failed", reason: job.failedReason };
+      return { state: "failed", reason };
     }
     if (state === "active") {
       return { state: "importing" };
-    }
-    if (state === "completed" && job === parseJob) {
-      return null;
     }
     return { state: "queued" };
   }

@@ -67,7 +67,7 @@ export class ExtensionController {
   @Post("faceit")
   public async importFaceit(
     @Req() request: Request,
-    @Body() body: { match_id?: string; map?: number; url?: string },
+    @Body() body: { match_id?: string; url?: string },
   ) {
     const user = this.user(request);
     if (!(await this.extension.imports()).faceit) {
@@ -78,17 +78,12 @@ export class ExtensionController {
     if (!ExtensionService.isFaceitMatchId(matchId)) {
       throw new BadRequestException("invalid FACEIT match id");
     }
-    const map = body.map ?? 1;
-    if (!Number.isInteger(map) || map < 1 || map > ExtensionService.MAX_MAPS) {
-      throw new BadRequestException("invalid map number");
-    }
     if (typeof body.url !== "string") {
       throw new BadRequestException("invalid demo url");
     }
 
     return this.extension.queueFaceitDemo(user.steam_id, {
       matchId,
-      map,
       url: body.url,
     });
   }

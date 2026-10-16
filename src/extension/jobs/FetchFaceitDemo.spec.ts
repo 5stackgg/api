@@ -114,6 +114,52 @@ describe("FetchFaceitDemo", () => {
     await expect(run(job)).rejects.toThrow("link expired");
   });
 
+  it("reads the demo's magic across a first chunk shorter than it", async () => {
+    const { job, stored } = make();
+    const zstd = zstdCompressSync(DEMO);
+    global.fetch = jest.fn(
+      async () =>
+        new Response(
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue(new Uint8Array(zstd.subarray(0, 3)));
+              controller.enqueue(new Uint8Array(zstd.subarray(3)));
+              controller.close();
+            },
+          }),
+        ),
+    ) as never;
+
+    await run(job);
+
+    expect([...stored.values()][0].equals(DEMO)).toBe(true);
+  });
+
+  it("removes what it stored and queues nothing when storing fails", async () => {
+    const { job, s3, processUploadQueue } = make();
+    s3.put.mockRejectedValueOnce(new Error("bucket unavailable"));
+    serve(zstdCompressSync(DEMO));
+
+    await expect(run(job)).rejects.toThrow("bucket unavailable");
+    expect(s3.remove).toHaveBeenCalledWith(
+      expect.stringMatching(/^demo-uploads\/76561198000000001\//),
+    );
+    expect(processUploadQueue.add).not.toHaveBeenCalled();
+  });
+
+  it("queues the parse behind admin uploads", async () => {
+    const { job, processUploadQueue } = make();
+    serve(zstdCompressSync(DEMO));
+
+    await run(job);
+
+    expect(processUploadQueue.add).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.objectContaining({ priority: 10 }),
+    );
+  });
+
   it("refuses bytes that are not a demo", async () => {
     const { job, s3 } = make();
     serve(Buffer.from("<html>not a demo</html>"));

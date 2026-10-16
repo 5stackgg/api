@@ -301,6 +301,7 @@ export class FaceitService {
           Authorization: `Bearer ${this.apiKey}`,
           Accept: "application/json",
         },
+        signal: AbortSignal.timeout(15_000),
       });
       if (!response.ok) {
         this.logger.error(

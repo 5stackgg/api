@@ -16,6 +16,7 @@ export type ProcessUploadedDemoPayload = {
   external_id?: string;
   source?: "faceit";
   match_start_time?: string | null;
+  match_id?: string;
 };
 
 @UseQueue("SteamMatchHistory", SteamMatchHistoryQueues.ProcessUploadedDemo, {
@@ -52,15 +53,6 @@ export class ProcessUploadedDemo extends WorkerHost {
         throw new Error("demo failed to parse");
       }
 
-      // Anyone can send a FACEIT link, so the demo has to prove it was
-      // recorded on a FACEIT server before it is filed as one.
-      if (
-        source === "faceit" &&
-        !MatchImportService.isFaceitServer(parsed.server_name)
-      ) {
-        throw new UnrecoverableError("not a FACEIT demo");
-      }
-
       const dedupeKey =
         external_id ??
         MatchImportService.extractFaceitMatchId(file_name) ??
@@ -85,10 +77,16 @@ export class ProcessUploadedDemo extends WorkerHost {
         `process-uploaded-demo done steam_id=${steam_id} match_id=${result.matchId ?? "<none>"}${result.skipped ? ` skipped=${result.skipped}` : ""}`,
       );
 
-      // The queue drops a job's return value, so a skip is reported as the
-      // failure reason, where the extension's status lookup reads it.
-      if (!result.matchId) {
-        throw new UnrecoverableError(result.skipped ?? "demo was not imported");
+      // The queue drops a job's return value, so the extension's status lookup
+      // reads the outcome off the job: a skip as its failure reason, and the
+      // match, which a duplicate demo resolves to under another external id.
+      if (external_id) {
+        if (!result.matchId) {
+          throw new UnrecoverableError(
+            result.skipped ?? "demo was not imported",
+          );
+        }
+        await job.updateData({ ...job.data, match_id: result.matchId });
       }
 
       await this.s3.remove(key);

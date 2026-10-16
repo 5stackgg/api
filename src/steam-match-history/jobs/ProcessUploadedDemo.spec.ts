@@ -27,12 +27,19 @@ describe("ProcessUploadedDemo", () => {
     return { job, matchImport, s3 };
   }
 
+  const updateData = jest.fn(async (): Promise<void> => undefined);
+
   const run = (job: ProcessUploadedDemo, data: Record<string, unknown>) =>
     job.process({
       data: { key: "demo-uploads/7656/a.dem", steam_id: "7656", ...data },
       attemptsMade: 0,
       opts: { attempts: 3 },
+      updateData,
     } as never);
+
+  beforeEach(() => {
+    updateData.mockClear();
+  });
 
   it("files an extension import under its own external id as a FACEIT match", async () => {
     const { job, matchImport, s3 } = make();
@@ -55,18 +62,9 @@ describe("ProcessUploadedDemo", () => {
       }),
     );
     expect(s3.remove).toHaveBeenCalledTimes(1);
-  });
-
-  it("refuses a FACEIT import whose demo was not recorded on FACEIT", async () => {
-    const { job, matchImport, s3 } = make({
-      serverName: "my community server",
-    });
-
-    await expect(
-      run(job, { file_name: "x.dem", external_id: ROOM, source: "faceit" }),
-    ).rejects.toThrow(new UnrecoverableError("not a FACEIT demo"));
-    expect(matchImport.importExternalDemo).not.toHaveBeenCalled();
-    expect(s3.remove).toHaveBeenCalledWith("demo-uploads/7656/a.dem");
+    expect(updateData).toHaveBeenCalledWith(
+      expect.objectContaining({ match_id: "match-1" }),
+    );
   });
 
   it("reports a skipped demo as the job's failure, not a success", async () => {
@@ -78,6 +76,17 @@ describe("ProcessUploadedDemo", () => {
       run(job, { file_name: "x.dem", external_id: ROOM, source: "faceit" }),
     ).rejects.toThrow(new UnrecoverableError("faceit wingman not supported"));
     expect(s3.remove).toHaveBeenCalledTimes(1);
+  });
+
+  it("still completes an admin upload that was skipped", async () => {
+    const { job, s3 } = make({
+      serverName: "Valve CS2 server",
+      imported: { matchId: null, skipped: "no players in demo" },
+    });
+
+    await expect(run(job, { file_name: "x.dem" })).resolves.toBeUndefined();
+    expect(s3.remove).toHaveBeenCalledTimes(1);
+    expect(updateData).not.toHaveBeenCalled();
   });
 
   it("keeps an admin upload's filename dedupe and valve source", async () => {

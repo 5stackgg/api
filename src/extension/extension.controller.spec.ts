@@ -52,29 +52,12 @@ describe("ExtensionController", () => {
   it("queues a FACEIT demo for the signed-in player", async () => {
     const { controller, extension } = make();
 
-    await controller.importFaceit(as(USER), {
-      match_id: ROOM,
-      map: 2,
-      url: SIGNED,
-    });
+    await controller.importFaceit(as(USER), { match_id: ROOM, url: SIGNED });
 
     expect(extension.queueFaceitDemo).toHaveBeenCalledWith(USER.steam_id, {
       matchId: ROOM,
-      map: 2,
       url: SIGNED,
     });
-  });
-
-  it("refuses a map number outside a series", async () => {
-    const { controller } = make();
-
-    await expect(
-      controller.importFaceit(as(USER), {
-        match_id: ROOM,
-        map: 6,
-        url: SIGNED,
-      }),
-    ).rejects.toThrow("invalid map number");
   });
 
   it("caps how many share codes one request may send", async () => {

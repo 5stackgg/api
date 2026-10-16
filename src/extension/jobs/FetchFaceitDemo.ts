@@ -1,5 +1,4 @@
 import { randomUUID } from "crypto";
-import { once } from "events";
 import { pipeline, PassThrough, Readable } from "stream";
 import { ReadableStream } from "stream/web";
 import { createGunzip, createZstdDecompress } from "zlib";
@@ -29,10 +28,10 @@ const ZSTD_MAGIC = Buffer.from([0x28, 0xb5, 0x2f, 0xfd]);
 const GZIP_MAGIC = Buffer.from([0x1f, 0x8b]);
 const CS2_DEMO_MAGIC = Buffer.from("PBDEMS2\0");
 
-// FACEIT signs a demo link for five minutes, so nothing may sit in front of
-// the download: parsing runs behind ProcessUploadedDemo's rate limit, and the
-// link would expire waiting there.
-@UseQueue("Extension", ExtensionQueues.FetchFaceitDemo, { concurrency: 4 })
+// FACEIT signs a demo link for five minutes and the download has to start
+// inside them, so fetching is its own wide queue: parsing runs behind
+// ProcessUploadedDemo's rate limit, and the link would expire waiting there.
+@UseQueue("Extension", ExtensionQueues.FetchFaceitDemo, { concurrency: 12 })
 export class FetchFaceitDemo extends WorkerHost {
   constructor(
     private readonly logger: Logger,
@@ -63,6 +62,7 @@ export class FetchFaceitDemo extends WorkerHost {
       );
     }
     if (Number(response.headers.get("content-length")) > MAX_DEMO_SIZE) {
+      await response.body.cancel();
       throw new UnrecoverableError("demo exceeds 2GB limit");
     }
 
@@ -75,31 +75,35 @@ export class FetchFaceitDemo extends WorkerHost {
     const key = `demo-uploads/${steam_id}/${randomUUID()}.dem`;
     try {
       await this.s3.put(key, demo);
+
+      this.logger.log(
+        `fetch-faceit-demo stored external_id=${external_id} steam_id=${steam_id} key=${key}`,
+      );
+
+      // Behind admin uploads: a job with a priority waits for those without.
+      await this.processUploadQueue.add(
+        ProcessUploadedDemo.name,
+        {
+          key,
+          file_name: `${external_id}.dem`,
+          steam_id,
+          external_id,
+          source: "faceit",
+          match_start_time,
+        } satisfies ProcessUploadedDemoPayload,
+        {
+          jobId: `${job.id}.parse`,
+          priority: 10,
+          attempts: 3,
+          backoff: { type: "exponential", delay: 30_000 },
+        },
+      );
     } catch (error) {
+      demo.destroy();
+      body.destroy();
       await this.s3.remove(key);
       throw error;
     }
-
-    this.logger.log(
-      `fetch-faceit-demo stored external_id=${external_id} steam_id=${steam_id} key=${key}`,
-    );
-
-    await this.processUploadQueue.add(
-      ProcessUploadedDemo.name,
-      {
-        key,
-        file_name: `${external_id}.dem`,
-        steam_id,
-        external_id,
-        source: "faceit",
-        match_start_time,
-      } satisfies ProcessUploadedDemoPayload,
-      {
-        jobId: `${job.id}.parse`,
-        attempts: 3,
-        backoff: { type: "exponential", delay: 30_000 },
-      },
-    );
   }
 
   public static linkExpiresAt(url: string): number | null {
@@ -118,14 +122,46 @@ export class FetchFaceitDemo extends WorkerHost {
   }
 
   private static async peek(stream: Readable): Promise<Buffer> {
-    await once(stream, "readable");
-    const head = (stream.read(CS2_DEMO_MAGIC.length) ??
-      stream.read()) as Buffer | null;
-    if (!head) {
+    const chunks: Array<Buffer> = [];
+    let length = 0;
+    while (length < CS2_DEMO_MAGIC.length && !stream.readableEnded) {
+      const chunk = stream.read() as Buffer | null;
+      if (chunk) {
+        chunks.push(chunk);
+        length += chunk.length;
+        continue;
+      }
+      await FetchFaceitDemo.readableOrEnd(stream);
+    }
+    const head = Buffer.concat(chunks);
+    if (head.length === 0) {
       throw new UnrecoverableError("FACEIT sent an empty demo");
     }
     stream.unshift(head);
     return head;
+  }
+
+  // A leftover 'readable' listener would stop the stream flowing into the
+  // pipeline afterwards, so every listener added here is taken off again.
+  private static readableOrEnd(stream: Readable): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const done = () => {
+        cleanup();
+        resolve();
+      };
+      const fail = (error: Error) => {
+        cleanup();
+        reject(error);
+      };
+      const cleanup = () => {
+        stream.off("readable", done);
+        stream.off("end", done);
+        stream.off("error", fail);
+      };
+      stream.on("readable", done);
+      stream.on("end", done);
+      stream.on("error", fail);
+    });
   }
 
   private static decompress(stream: Readable, head: Buffer): Readable {

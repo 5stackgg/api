@@ -72,6 +72,7 @@ describe("ExtensionService imports", () => {
   type FakeJob = {
     state: string;
     failedReason?: string;
+    data?: Record<string, unknown>;
     remove: jest.Mock;
   };
 
@@ -79,7 +80,8 @@ describe("ExtensionService imports", () => {
     matches = [] as Array<{ id: string; external_id: string }>,
     fetchJobs = {} as Record<string, FakeJob>,
     parseJobs = {} as Record<string, FakeJob>,
-    allowed = true,
+    importsAllowed = true,
+    lookupsAllowed = true,
   } = {}) {
     const query = jest.fn(async (_sql: string, [ids]: [unknown]) =>
       matches.filter((match) =>
@@ -89,7 +91,7 @@ describe("ExtensionService imports", () => {
       ),
     );
     const asJob = (job?: FakeJob) =>
-      job && { ...job, getState: async () => job.state };
+      job && { data: {}, ...job, getState: async () => job.state };
     const fetchQueue = {
       getJob: jest.fn(async (id: string) => asJob(fetchJobs[id])),
       add: jest.fn(async (): Promise<void> => undefined),
@@ -97,7 +99,16 @@ describe("ExtensionService imports", () => {
     const parseQueue = {
       getJob: jest.fn(async (id: string) => asJob(parseJobs[id])),
     };
-    const cache = { consume: jest.fn(async () => allowed) };
+    const stored = new Map<string, unknown>();
+    const cache = {
+      consume: jest.fn(async (key: string) =>
+        key.startsWith("extension:imports:") ? importsAllowed : lookupsAllowed,
+      ),
+      get: jest.fn(async (key: string) => stored.get(key)),
+      put: jest.fn(async (key: string, value: unknown) => {
+        stored.set(key, value);
+      }),
+    };
     const faceit = {
       getMatchDemos: jest.fn(async () => ({
         demoUrls: [RESOURCE, RESOURCE_2],
@@ -116,15 +127,17 @@ describe("ExtensionService imports", () => {
     return { service, fetchQueue, cache, faceit };
   }
 
-  const job = (state: string, failedReason?: string): FakeJob => ({
+  const job = (
+    state: string,
+    extra: Partial<Omit<FakeJob, "state" | "remove">> = {},
+  ): FakeJob => ({
     state,
-    failedReason,
+    ...extra,
     remove: jest.fn(async (): Promise<void> => undefined),
   });
 
   const demo = (map = 1) => ({
     matchId: ROOM,
-    map,
     url: map === 1 ? SIGNED : SIGNED_2,
   });
 
@@ -143,14 +156,23 @@ describe("ExtensionService imports", () => {
     });
   });
 
+  it("still offers a series with only some maps in 5Stack", async () => {
+    const { service } = make({
+      matches: [{ id: "match-1", external_id: ROOM }],
+    });
+
+    await expect(
+      service.lookupFaceit([{ id: ROOM, maps: 2 }]),
+    ).resolves.toEqual({ [ROOM]: { state: "none", match_ids: ["match-1"] } });
+  });
+
   it("surfaces the failed map's reason even when another map imported", async () => {
     const { service } = make({
       matches: [{ id: "match-1", external_id: ROOM }],
       parseJobs: {
-        [`ext.faceit.${ROOM}.2.parse`]: job(
-          "failed",
-          "faceit wingman not supported",
-        ),
+        [`ext.faceit.${ROOM}.2.parse`]: job("failed", {
+          failedReason: "faceit wingman not supported",
+        }),
       },
     });
 
@@ -165,7 +187,31 @@ describe("ExtensionService imports", () => {
     });
   });
 
-  it("queues a demo that is not in 5Stack yet", async () => {
+  it("links a demo that matched a match already in 5Stack under another id", async () => {
+    const { service } = make({
+      parseJobs: {
+        [`ext.faceit.${ROOM}.parse`]: job("completed", {
+          data: { match_id: "match-from-upload" },
+        }),
+      },
+    });
+
+    await expect(service.lookupFaceit([{ id: ROOM }])).resolves.toEqual({
+      [ROOM]: { state: "imported", match_ids: ["match-from-upload"] },
+    });
+  });
+
+  it("does not leave a finished download looking queued once its parse job is gone", async () => {
+    const { service } = make({
+      fetchJobs: { [`ext.faceit.${ROOM}`]: job("completed") },
+    });
+
+    await expect(service.lookupFaceit([{ id: ROOM }])).resolves.toEqual({
+      [ROOM]: { state: "none", match_ids: [] },
+    });
+  });
+
+  it("files a demo under the map FACEIT lists it as", async () => {
     const { service, fetchQueue } = make();
 
     await expect(service.queueFaceitDemo("7656", demo(2))).resolves.toEqual({
@@ -183,8 +229,40 @@ describe("ExtensionService imports", () => {
     );
   });
 
+  it("asks FACEIT about a series once for all of its maps", async () => {
+    const { service, faceit } = make();
+
+    await service.queueFaceitDemo("7656", demo(1));
+    await service.queueFaceitDemo("7656", demo(2));
+
+    expect(faceit.getMatchDemos).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses a link to a demo FACEIT does not list for the match", async () => {
+    const { service, fetchQueue } = make();
+
+    await expect(
+      service.queueFaceitDemo("7656", {
+        matchId: ROOM,
+        url: SIGNED.replace(`${ROOM}-1-1`, `${ROOM}-3-1`),
+      }),
+    ).rejects.toThrow("not one of this match's FACEIT demos");
+    expect(fetchQueue.add).not.toHaveBeenCalled();
+  });
+
+  it("meters FACEIT lookups before spending the operator's quota", async () => {
+    const { service, faceit } = make({ lookupsAllowed: false });
+
+    const error = await service
+      .queueFaceitDemo("7656", demo())
+      .catch((e: HttpException) => e);
+
+    expect((error as HttpException).getStatus()).toBe(429);
+    expect(faceit.getMatchDemos).not.toHaveBeenCalled();
+  });
+
   it("re-queues an expired link under the same job id", async () => {
-    const expired = job("failed", "link expired");
+    const expired = job("failed", { failedReason: "link expired" });
     const { service, fetchQueue } = make({
       fetchJobs: { [`ext.faceit.${ROOM}`]: expired },
     });
@@ -192,6 +270,18 @@ describe("ExtensionService imports", () => {
     await service.queueFaceitDemo("7656", demo());
 
     expect(expired.remove).toHaveBeenCalled();
+    expect(fetchQueue.add).toHaveBeenCalled();
+  });
+
+  it("queues anyway when a stale job is locked by a worker", async () => {
+    const locked = job("failed");
+    locked.remove.mockRejectedValue(new Error("locked by another worker"));
+    const { service, fetchQueue } = make({
+      fetchJobs: { [`ext.faceit.${ROOM}`]: locked },
+    });
+
+    await service.queueFaceitDemo("7656", demo());
+
     expect(fetchQueue.add).toHaveBeenCalled();
   });
 
@@ -203,21 +293,17 @@ describe("ExtensionService imports", () => {
     await expect(service.queueFaceitDemo("7656", demo())).resolves.toEqual({
       state: "importing",
     });
-    expect(cache.consume).not.toHaveBeenCalled();
-    expect(fetchQueue.add).not.toHaveBeenCalled();
-  });
-
-  it("refuses a map FACEIT has no demo for", async () => {
-    const { service, fetchQueue } = make();
-
-    await expect(
-      service.queueFaceitDemo("7656", { ...demo(), map: 3 }),
-    ).rejects.toThrow("FACEIT has no demo for this map");
+    expect(cache.consume).not.toHaveBeenCalledWith(
+      "extension:imports:7656",
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+    );
     expect(fetchQueue.add).not.toHaveBeenCalled();
   });
 
   it("refuses an import over the hourly limit", async () => {
-    const { service, fetchQueue } = make({ allowed: false });
+    const { service, fetchQueue } = make({ importsAllowed: false });
 
     const error = await service
       .queueFaceitDemo("7656", demo())
