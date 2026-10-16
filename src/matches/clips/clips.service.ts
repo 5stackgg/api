@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { randomBytes } from "node:crypto";
 import { Readable } from "node:stream";
+import sharp from "sharp";
 import { e_player_roles_enum } from "generated/schema";
 import { HasuraService } from "../../hasura/hasura.service";
 import { PostgresService } from "../../postgres/postgres.service";
@@ -55,6 +56,42 @@ export class ClipsService {
   }
   public static GetClipThumbnailS3Key(userSteamId: string, jobId: string) {
     return `clips/${userSteamId}/${jobId}.jpg`;
+  }
+
+  // The streamer captures thumbnails at its full 1920x1080, but every place
+  // that shows one draws it tile-sized. 960 wide is still sharp on a 2x tile
+  // at about a quarter of the bytes.
+  public static readonly THUMBNAIL_WIDTH = 960;
+  private static readonly MAX_THUMBNAIL_BYTES = 20 * 1024 * 1024;
+
+  public static async shrinkThumbnail(image: Readable | Buffer) {
+    const input = Buffer.isBuffer(image)
+      ? image
+      : await ClipsService.readThumbnail(image);
+
+    return sharp(input, { limitInputPixels: 40_000_000 })
+      .resize(ClipsService.THUMBNAIL_WIDTH, ClipsService.THUMBNAIL_WIDTH, {
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .jpeg({ quality: 80, mozjpeg: true })
+      .toBuffer();
+  }
+
+  // Read before handing it to sharp: piped into sharp, an upload that aborts
+  // mid-body surfaces as an 'error' nothing listens for and takes the whole
+  // process down. Iterating rejects instead, into the caller's catch.
+  private static async readThumbnail(image: Readable) {
+    const chunks: Buffer[] = [];
+    let size = 0;
+    for await (const chunk of image) {
+      size += (chunk as Buffer).length;
+      if (size > ClipsService.MAX_THUMBNAIL_BYTES) {
+        throw new Error("thumbnail upload is too large");
+      }
+      chunks.push(chunk as Buffer);
+    }
+    return Buffer.concat(chunks);
   }
 
   public static clipFirstTick(spec: unknown): number {
@@ -1768,7 +1805,11 @@ export class ClipsService {
       jobId,
     );
 
-    await this.s3.put(key, fileStream, "image/jpeg");
+    await this.s3.put(
+      key,
+      await ClipsService.shrinkThumbnail(fileStream),
+      "image/jpeg",
+    );
 
     return { key };
   }

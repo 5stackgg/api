@@ -14,6 +14,7 @@ import {
   Res,
   ForbiddenException,
   NotFoundException,
+  BadRequestException,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { Request, Response } from "express";
@@ -23,6 +24,13 @@ import { SteamGuard } from "../auth/strategies/SteamGuard";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_BANNER_BYTES = 10 * 1024 * 1024;
+
+// Every distinct URL is its own Cloudflare cache entry and its own resize on a
+// miss, so a resize is only served when the raw query string is exactly
+// `w=<one of these>`. Checked on the raw string, not the parsed query: `w=64&`,
+// `w=6%34` and `%77=64` all parse to the same {w:"64"} while being different
+// URLs, each one an uncached resize.
+export const AVATAR_WIDTHS = [32, 64, 128, 256, 512, 1024, 1920];
 
 @Controller("avatars")
 export class AvatarsController {
@@ -261,37 +269,48 @@ export class AvatarsController {
   }
 
   @Get("teams/:filename")
-  async serveTeam(@Param("filename") filename: string, @Res() res: Response) {
-    return this.serve("teams", filename, res);
+  async serveTeam(
+    @Param("filename") filename: string,
+    @Req() request: Request,
+    @Res() res: Response,
+  ) {
+    return this.serve("teams", filename, request, res);
   }
 
   @Get("players/:filename")
-  async servePlayer(@Param("filename") filename: string, @Res() res: Response) {
-    return this.serve("players", filename, res);
+  async servePlayer(
+    @Param("filename") filename: string,
+    @Req() request: Request,
+    @Res() res: Response,
+  ) {
+    return this.serve("players", filename, request, res);
   }
 
   @Get("roster-players/:filename")
   async serveRosterPlayer(
     @Param("filename") filename: string,
+    @Req() request: Request,
     @Res() res: Response,
   ) {
-    return this.serve("roster-players", filename, res);
+    return this.serve("roster-players", filename, request, res);
   }
 
   @Get("roster-teams/:filename")
   async serveRosterTeam(
     @Param("filename") filename: string,
+    @Req() request: Request,
     @Res() res: Response,
   ) {
-    return this.serve("roster-teams", filename, res);
+    return this.serve("roster-teams", filename, request, res);
   }
 
   @Get("tournaments/:filename")
   async serveTournament(
     @Param("filename") filename: string,
+    @Req() request: Request,
     @Res() res: Response,
   ) {
-    return this.serve("tournaments", filename, res);
+    return this.serve("tournaments", filename, request, res);
   }
 
   private async serve(
@@ -302,8 +321,39 @@ export class AvatarsController {
       | "roster-teams"
       | "tournaments",
     filename: string,
+    request: Request,
     res: Response,
   ) {
+    const url = request.originalUrl;
+    const width = url.includes("?")
+      ? /^w=([1-9]\d*)$/.exec(url.slice(url.indexOf("?") + 1))
+      : null;
+    if (width || request.query.w !== undefined) {
+      const size = width ? Number(width[1]) : 0;
+      if (!AVATAR_WIDTHS.includes(size)) {
+        throw new BadRequestException(
+          `only ?w=<${AVATAR_WIDTHS.join("|")}> is accepted`,
+        );
+      }
+
+      const resized = await this.avatarsService.getResized(
+        kind,
+        filename,
+        size,
+      );
+      if (!resized) {
+        throw new NotFoundException("Avatar not found");
+      }
+
+      res.setHeader("Content-Type", "image/webp");
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      if (resized.etag) {
+        res.setHeader("ETag", resized.etag);
+      }
+      res.end(resized.image);
+      return;
+    }
+
     const result = await this.avatarsService.getStream(kind, filename);
     if (!result) {
       throw new NotFoundException("Avatar not found");

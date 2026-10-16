@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { Readable } from "stream";
+import sharp from "sharp";
 import { ForbiddenException, Injectable, Logger } from "@nestjs/common";
 import { S3Service } from "../s3/s3.service";
 import { HasuraService } from "../hasura/hasura.service";
@@ -571,11 +572,49 @@ export class AvatarsService {
       this.s3.stat(key),
     ]);
 
+    const storedType = stat.metaData?.["content-type"];
+
     return {
       stream,
-      contentType:
-        stat.metaData?.["content-type"] || this.guessContentType(filename),
+      contentType: storedType?.startsWith("image/")
+        ? storedType
+        : this.guessContentType(filename),
       etag: stat.etag,
+    };
+  }
+
+  async getResized(
+    kind: AvatarKind,
+    filename: string,
+    width: number,
+  ): Promise<{ image: Buffer; etag?: string } | null> {
+    const key = `avatars/${kind}/${filename}`;
+
+    if (!(await this.s3.has(key))) {
+      return null;
+    }
+
+    const [stream, stat] = await Promise.all([
+      this.s3.get(key),
+      this.s3.stat(key),
+    ]);
+
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk as Buffer);
+    }
+
+    const image = await sharp(Buffer.concat(chunks), {
+      limitInputPixels: 40_000_000,
+    })
+      .rotate()
+      .resize(width, width, { fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toBuffer();
+
+    return {
+      image,
+      etag: stat.etag ? `${stat.etag}-w${width}` : undefined,
     };
   }
 

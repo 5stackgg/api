@@ -22,6 +22,10 @@ import {
   BatchHighlightsRenderJobEvents,
 } from "./jobs/BatchHighlightsRenderJob";
 import { ReconcileQueuedHighlights } from "./jobs/ReconcileQueuedHighlights";
+import {
+  SHRINK_CLIP_THUMBNAILS_RUN,
+  ShrinkClipThumbnails,
+} from "./jobs/ShrinkClipThumbnails";
 
 @Module({
   imports: [
@@ -55,6 +59,7 @@ import { ReconcileQueuedHighlights } from "./jobs/ReconcileQueuedHighlights";
     BatchHighlightsRenderJobEvents,
     CleanClips,
     ReconcileQueuedHighlights,
+    ShrinkClipThumbnails,
     ...getQueuesProcessors("Clips"),
     loggerFactory(),
   ],
@@ -87,6 +92,12 @@ export class ClipsModule {
           pattern: "*/5 * * * *",
         },
       },
+    );
+
+    void clipsQueue.add(
+      ShrinkClipThumbnails.name,
+      {},
+      { jobId: SHRINK_CLIP_THUMBNAILS_RUN },
     );
 
     void clipsService.reconcileQueuedHighlights().catch(() => {});
