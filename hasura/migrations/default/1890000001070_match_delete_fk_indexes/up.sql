@@ -39,6 +39,15 @@ CREATE INDEX IF NOT EXISTS utility_lineups_source_match_map_id_idx
 CREATE INDEX IF NOT EXISTS utility_demo_throws_match_map_id_idx
     ON public.utility_demo_throws (match_map_id);
 
+CREATE INDEX IF NOT EXISTS tournament_brackets_match_options_id_idx
+    ON public.tournament_brackets (match_options_id);
+CREATE INDEX IF NOT EXISTS tournament_stages_match_options_id_idx
+    ON public.tournament_stages (match_options_id);
+CREATE INDEX IF NOT EXISTS league_seasons_match_options_id_idx
+    ON public.league_seasons (match_options_id);
+CREATE INDEX IF NOT EXISTS team_scrim_requests_match_options_id_idx
+    ON public.team_scrim_requests (match_options_id);
+
 CREATE INDEX IF NOT EXISTS match_region_veto_picks_match_lineup_id_idx
     ON public.match_region_veto_picks (match_lineup_id);
 CREATE INDEX IF NOT EXISTS clip_render_jobs_clip_id_idx

@@ -15,6 +15,8 @@ describe("foreign keys on a match's delete path", () => {
   // one of them. Deleting a parent row checks each such key with
   // "WHERE <fk columns> = $1" on the child, so the child needs an index that
   // starts with those columns or the check reads the whole table.
+  // match_options is a root of its own: tad_matches deletes the match's options
+  // row once nothing else uses it, which no foreign key cascade shows.
   const deletePath = async () =>
     db.postgres.query<
       Array<{
@@ -29,7 +31,7 @@ describe("foreign keys on a match's delete path", () => {
           FROM pg_constraint
          WHERE contype = 'f' AND connamespace = 'public'::regnamespace
       ), reached(relid) AS (
-        SELECT 'public.matches'::regclass::oid
+        VALUES ('public.matches'::regclass::oid), ('public.match_options'::regclass::oid)
         UNION
         SELECT fks.conrelid
           FROM fks
