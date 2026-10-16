@@ -1,19 +1,31 @@
+-- Starts from the few active matches, never from the player's history. The
+-- LIMIT keeps the lineup lookup a per-match index probe (a plain join or
+-- EXISTS lets the cached generic plan walk every lineup the player has ever
+-- been in), and the CTE keeps match_series_decided to the player's own matches.
 CREATE OR REPLACE FUNCTION public.is_in_another_match(player public.players)
 RETURNS boolean
 LANGUAGE sql
 STABLE
 AS $$
+    WITH mine AS MATERIALIZED (
+        SELECT m.id, m.status, m.scheduled_at
+        FROM matches m
+        CROSS JOIN LATERAL (
+            SELECT 1
+            FROM match_lineup_players mlp
+            WHERE mlp.steam_id = player.steam_id
+              AND mlp.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
+            LIMIT 1
+        ) member
+        WHERE m.status IN ('Veto', 'WaitingForCheckIn', 'WaitingForServer', 'Live', 'Scheduled')
+          AND m.source <> 'practice'
+    )
     SELECT EXISTS (
         SELECT 1
-        FROM get_player_matches(player) AS pm
-        -- A utility practice server is a Live match row seating its host, and
-        -- the host can leave it whenever they like.
-        WHERE pm.source <> 'practice'
-        AND (
+        FROM mine pm
+        WHERE (
             pm.status IN ('Veto', 'WaitingForCheckIn', 'WaitingForServer')
             OR (pm.status = 'Live' AND NOT match_series_decided(pm.id))
-            -- A scheduled match only ties the player up once it's within an hour
-            -- of kickoff; before that they're free to play other matches.
             OR (
                 pm.status = 'Scheduled'
                 AND pm.scheduled_at IS NOT NULL
