@@ -1,3 +1,7 @@
+-- Every match page filters on match_id. A filter only passes below a window
+-- function, a DISTINCT ON or a GROUP BY on one of its keys, so match_id is in
+-- each of them even though match_map_id already implies it; without it every
+-- page read computed the view for every match on the panel.
 CREATE OR REPLACE VIEW public.v_match_player_buy_types AS
 WITH round_lineup AS (
   SELECT
@@ -42,7 +46,7 @@ round_start AS (
     (rl.match_type IS DISTINCT FROM 'Rush' AND rl.round > rl.mr * 2
       AND (rl.round - rl.mr * 2 - 1) % 3 = 0) AS ot_half_start
   FROM round_lineup rl
-  WINDOW w AS (PARTITION BY rl.match_map_id, rl.match_lineup_id ORDER BY rl.round)
+  WINDOW w AS (PARTITION BY rl.match_id, rl.match_map_id, rl.match_lineup_id ORDER BY rl.round)
 ),
 typed AS (
   SELECT
@@ -86,19 +90,19 @@ player_rounds AS (
   WHERE mr.matchup IS NOT NULL AND mlp.steam_id IS NOT NULL
 ),
 kills_per_round AS (
-  SELECT match_map_id, round, attacker_steam_id AS steam_id, COUNT(*)::int AS kills
+  SELECT match_id, match_map_id, round, attacker_steam_id AS steam_id, COUNT(*)::int AS kills
   FROM public.player_kills
   WHERE attacker_steam_id IS NOT NULL
     AND attacker_team <> attacked_team
     AND attacker_steam_id <> attacked_steam_id
-  GROUP BY match_map_id, round, attacker_steam_id
+  GROUP BY match_id, match_map_id, round, attacker_steam_id
 ),
 deaths_per_round AS (
-  SELECT match_map_id, round, attacked_steam_id AS steam_id, COUNT(*)::int AS deaths
+  SELECT match_id, match_map_id, round, attacked_steam_id AS steam_id, COUNT(*)::int AS deaths
   FROM public.player_kills
   WHERE attacker_team <> attacked_team
     AND attacker_steam_id <> attacked_steam_id
-  GROUP BY match_map_id, round, attacked_steam_id
+  GROUP BY match_id, match_map_id, round, attacked_steam_id
 )
 SELECT
   pr.match_id,
@@ -112,7 +116,7 @@ SELECT
   COALESCE(SUM(d.deaths), 0)::int AS deaths
 FROM player_rounds pr
 LEFT JOIN kills_per_round k
-  ON k.match_map_id = pr.match_map_id AND k.round = pr.round AND k.steam_id = pr.steam_id
+  ON k.match_id = pr.match_id AND k.match_map_id = pr.match_map_id AND k.round = pr.round AND k.steam_id = pr.steam_id
 LEFT JOIN deaths_per_round d
-  ON d.match_map_id = pr.match_map_id AND d.round = pr.round AND d.steam_id = pr.steam_id
+  ON d.match_id = pr.match_id AND d.match_map_id = pr.match_map_id AND d.round = pr.round AND d.steam_id = pr.steam_id
 GROUP BY pr.match_id, pr.match_map_id, pr.match_lineup_id, pr.steam_id, pr.side, pr.matchup;

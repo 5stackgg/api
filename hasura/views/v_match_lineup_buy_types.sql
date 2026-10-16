@@ -1,3 +1,7 @@
+-- Every match page filters on match_id. A filter only passes below a window
+-- function, a DISTINCT ON or a GROUP BY on one of its keys, so match_id is in
+-- each of them even though match_map_id already implies it; without it every
+-- page read computed the view for every match on the panel.
 CREATE OR REPLACE VIEW public.v_match_lineup_buy_types AS
 WITH round_lineup AS (
   SELECT
@@ -46,7 +50,7 @@ round_start AS (
     (rl.match_type IS DISTINCT FROM 'Rush' AND rl.round > rl.mr * 2
       AND (rl.round - rl.mr * 2 - 1) % 3 = 0) AS ot_half_start
   FROM round_lineup rl
-  WINDOW w AS (PARTITION BY rl.match_map_id, rl.match_lineup_id ORDER BY rl.round)
+  WINDOW w AS (PARTITION BY rl.match_id, rl.match_map_id, rl.match_lineup_id ORDER BY rl.round)
 ),
 typed AS (
   SELECT
