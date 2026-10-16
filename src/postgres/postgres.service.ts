@@ -48,6 +48,21 @@ export class PostgresService {
     return result as unknown as T;
   }
 
+  // For running SQL nobody vetted: the transaction is read-only and never
+  // commits, and the connection is destroyed rather than pooled, so a session
+  // side effect (advisory lock, temp table, SET) can't outlive the call.
+  public async throwawayReadOnly<T>(
+    fn: (client: PoolClient) => Promise<T>,
+  ): Promise<T> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN READ ONLY");
+      return await fn(client);
+    } finally {
+      client.release(true);
+    }
+  }
+
   public async transaction<T>(
     fn: (client: PoolClient) => Promise<T>,
     hasuraSession?: string,
