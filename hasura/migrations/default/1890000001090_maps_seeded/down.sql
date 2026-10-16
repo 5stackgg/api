@@ -1,0 +1,1 @@
+ALTER TABLE public.maps DROP COLUMN IF EXISTS seeded;

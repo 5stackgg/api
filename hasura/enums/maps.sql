@@ -243,7 +243,8 @@ insert into maps (
     "workshop_map_id", 
     "poster", 
     "patch", 
-    "label"
+    "label",
+    "seeded"
 )
 SELECT 
     name,
@@ -252,14 +253,22 @@ SELECT
     workshop_map_id,
     poster,
     patch,
-    label
+    label,
+    true
 FROM all_maps
 on conflict("name", "type") do update set 
     "active_pool" = EXCLUDED."active_pool", 
     "workshop_map_id" = EXCLUDED."workshop_map_id", 
     "poster" = EXCLUDED."poster", 
     "patch" = EXCLUDED."patch", 
-    "label" = EXCLUDED."label"
+    "label" = EXCLUDED."label",
+    "seeded" = true
+),
+unseeded AS (
+UPDATE maps
+SET seeded = false
+WHERE seeded
+  AND name NOT IN (SELECT name FROM map_data)
 )
 -- A map's details belong to the map, not one mode, so the mode rows the seed does not list (an
 -- admin's, or one it retired) carry them too; only a retired mode is switched off.
@@ -268,6 +277,7 @@ SET workshop_map_id = md.workshop_map_id,
     poster = md.poster,
     patch = md.patch,
     label = md.label,
+    seeded = true,
     enabled = m.enabled AND NOT EXISTS (
         SELECT 1 FROM retired_map_types r WHERE r.name = m.name AND r.type = m.type
     )

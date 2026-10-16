@@ -980,18 +980,27 @@ export class MapAssetsService {
     });
   }
 
-  // Only maps with a row are built and published. Every instance seeds the
-  // same maps, so this instance's table speaks for all of them. A row with a
+  // Every instance seeds the same maps and reads the assets built here, so a
+  // seeded map is always built, whatever this instance's modes enable. Any
+  // other map is built only while some mode enables it: one disabled in every
+  // mode, like a prophunt overlay that only a public server's rotation loads,
+  // is never played as a match and so never rendered. A row with a
   // workshop_map_id is built from the node's workshop downloads when the
-  // install does not carry it; one the node never downloaded keeps whatever
-  // is already published.
+  // install does not carry it; one the node never downloaded keeps whatever is
+  // already published.
   private async knownMaps(): Promise<{
     names: Array<string>;
     workshop: Array<MapAssetsWorkshopMap>;
   }> {
     const rows = await this.postgres.query<
       Array<{ name: string; workshop_map_id: string | null }>
-    >(`SELECT DISTINCT name, workshop_map_id FROM public.maps ORDER BY name`);
+    >(
+      `SELECT name, workshop_map_id
+         FROM public.maps
+        WHERE seeded
+           OR (enabled AND deleted_at IS NULL)
+        ORDER BY name, enabled DESC`,
+    );
 
     const names = [...new Set(rows.map(({ name }) => name))];
     const workshop = new Map<string, string>();
