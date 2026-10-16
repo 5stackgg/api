@@ -30,6 +30,7 @@ create or replace function update_map_pools()
 returns boolean as $$
 declare
     _update_map_pools boolean;
+    _replaced uuid[];
 begin
     -- Serialised, or a concurrent change never compares against the pool another transaction just swapped in.
     PERFORM pg_advisory_xact_lock(hashtext('update_map_pools'));
@@ -38,28 +39,34 @@ begin
 
     IF _update_map_pools THEN
         -- Replaced rather than edited, so the matches and tournaments already on a pool keep its maps.
-        UPDATE map_pools p
-        SET enabled = false
-        WHERE p.seed = true
-          AND p.enabled = true
-          AND p.type IN ('Competitive', 'Wingman', 'Duel', 'Rush')
-          AND EXISTS (SELECT 1 FROM _map_pool mp WHERE mp.map_pool_id = p.id)
-          AND EXISTS (
-              SELECT 1 FROM maps m
-              WHERE m.type = p.type AND m.active_pool AND m.enabled AND m.deleted_at IS NULL
-          )
-          AND (SELECT array_agg(mp.map_id ORDER BY mp.map_id) FROM _map_pool mp WHERE mp.map_pool_id = p.id)
-              IS DISTINCT FROM
-              (
-                  SELECT array_agg(m.id ORDER BY m.id) FROM maps m
+        WITH replaced AS (
+            UPDATE map_pools p
+            SET enabled = false
+            WHERE p.seed = true
+              AND p.enabled = true
+              AND p.type IN ('Competitive', 'Wingman', 'Duel', 'Rush')
+              AND EXISTS (SELECT 1 FROM _map_pool mp WHERE mp.map_pool_id = p.id)
+              AND EXISTS (
+                  SELECT 1 FROM maps m
                   WHERE m.type = p.type AND m.active_pool AND m.enabled AND m.deleted_at IS NULL
-              );
+              )
+              AND (SELECT array_agg(mp.map_id ORDER BY mp.map_id) FROM _map_pool mp WHERE mp.map_pool_id = p.id)
+                  IS DISTINCT FROM
+                  (
+                      SELECT array_agg(m.id ORDER BY m.id) FROM maps m
+                      WHERE m.type = p.type AND m.active_pool AND m.enabled AND m.deleted_at IS NULL
+                  )
+            RETURNING p.id
+        )
+        SELECT array_agg(id) INTO _replaced FROM replaced;
     END IF;
 
+    -- A pool replaced just now is kept one sync longer, for whatever read it as live a moment ago.
     -- draft_games' foreign key nulls on delete instead of refusing, so it has to be checked here.
     DELETE FROM map_pools p
     WHERE p.seed = true
       AND p.enabled = false
+      AND p.id <> ALL (COALESCE(_replaced, '{}'))
       AND NOT EXISTS (SELECT 1 FROM match_options mo WHERE mo.map_pool_id = p.id)
       AND NOT EXISTS (SELECT 1 FROM draft_games dg WHERE dg.map_pool_id = p.id);
 

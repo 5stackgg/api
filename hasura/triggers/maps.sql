@@ -3,6 +3,8 @@ CREATE OR REPLACE FUNCTION public.tau_maps_soft_delete() RETURNS TRIGGER
     AS $$
 BEGIN
     IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
+        -- Taken before the pool rows, the order update_map_pools() takes them in, or the two can deadlock.
+        PERFORM pg_advisory_xact_lock(hashtext('update_map_pools'));
         DELETE FROM _map_pool WHERE map_id = NEW.id;
     END IF;
 

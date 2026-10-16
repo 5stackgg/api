@@ -205,15 +205,22 @@ describe("seed map pools on boot (SQL-driven)", () => {
     expect(await mapNamesIn(poolId)).toEqual(before);
   });
 
-  it("drops a replaced pool nothing plays from", async () => {
+  it("drops a replaced pool nothing plays from on the next sync, not the one that replaced it", async () => {
     const poolId = await livePool();
 
     await postgres.query(
       "UPDATE maps SET active_pool = true WHERE name = 'de_overpass'",
     );
+    const replacement = await livePool();
+    expect(replacement).not.toBe(poolId);
+    expect(await poolExists(poolId)).toBe(true);
 
-    expect(await livePool()).not.toBe(poolId);
+    await postgres.query(
+      "UPDATE maps SET active_pool = false WHERE name = 'de_cache'",
+    );
+
     expect(await poolExists(poolId)).toBe(false);
+    expect(await poolExists(replacement)).toBe(true);
   });
 
   it("keeps a replaced pool a draft game is set to play from", async () => {
@@ -227,6 +234,9 @@ describe("seed map pools on boot (SQL-driven)", () => {
     try {
       await postgres.query(
         "UPDATE maps SET active_pool = true WHERE name = 'de_overpass'",
+      );
+      await postgres.query(
+        "UPDATE maps SET active_pool = false WHERE name = 'de_cache'",
       );
 
       expect(await livePool()).not.toBe(poolId);
@@ -249,15 +259,22 @@ describe("seed map pools on boot (SQL-driven)", () => {
     ).pool;
     const first = await pool.connect();
     const second = await pool.connect();
+    const {
+      rows: [{ pid: secondPid }],
+    } = await second.query("SELECT pg_backend_pid() AS pid");
     let flipped: Promise<unknown> | undefined;
+    let firstOpen = false;
+    let secondOpen = false;
 
     try {
       await first.query("BEGIN");
+      firstOpen = true;
       await first.query(
         "UPDATE maps SET active_pool = true WHERE name = 'de_overpass'",
       );
 
       await second.query("BEGIN");
+      secondOpen = true;
       flipped = second.query(
         "UPDATE maps SET active_pool = false WHERE name = 'de_cache'",
       );
@@ -265,7 +282,8 @@ describe("seed map pools on boot (SQL-driven)", () => {
       for (let attempt = 0; ; attempt++) {
         const [row] = await postgres.query<Array<{ waiting: number }>>(
           `SELECT count(*)::int AS waiting FROM pg_stat_activity
-           WHERE datname = current_database() AND wait_event_type = 'Lock'`,
+           WHERE pid = $1 AND wait_event_type = 'Lock'`,
+          [Number(secondPid)],
         );
         if (row.waiting > 0) {
           break;
@@ -277,10 +295,18 @@ describe("seed map pools on boot (SQL-driven)", () => {
       }
 
       await first.query("COMMIT");
+      firstOpen = false;
       await flipped;
       await second.query("COMMIT");
+      secondOpen = false;
     } finally {
+      if (firstOpen) {
+        await first.query("ROLLBACK");
+      }
       await flipped?.catch((): void => undefined);
+      if (secondOpen) {
+        await second.query("ROLLBACK");
+      }
       first.release();
       second.release();
     }
