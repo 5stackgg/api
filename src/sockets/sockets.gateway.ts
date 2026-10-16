@@ -22,9 +22,6 @@ export class SocketsGateway implements OnGatewayConnection {
   ): Promise<void> {
     // Sent here rather than returned: WsAdapter only replies once the handler
     // resolves, which would hold the pong behind the redis writes below.
-    //
-    // sentAt goes back as it came so the web can tell which of its pings this
-    // answers when timing its clock against serverNow.
     if (client.readyState === client.OPEN) {
       client.send(
         JSON.stringify({
