@@ -63,6 +63,13 @@ describe("seed map pools on boot (SQL-driven)", () => {
     await reseed();
   });
 
+  afterEach(async () => {
+    await postgres.query("DELETE FROM maps WHERE name = 'de_sync_probe'");
+    await postgres.query(
+      "UPDATE maps SET enabled = true WHERE enabled = false",
+    );
+  });
+
   it("leaves an operator's pool alone when update_map_pools is off", async () => {
     await setUpdateMapPools("false");
     const poolId = await customiseLivePool();
@@ -103,7 +110,7 @@ describe("seed map pools on boot (SQL-driven)", () => {
   const activeDuty = async () => {
     const rows = await postgres.query<Array<{ name: string }>>(
       `SELECT name FROM maps
-        WHERE type = 'Competitive' AND active_pool = true AND deleted_at IS NULL
+        WHERE type = 'Competitive' AND active_pool AND enabled AND deleted_at IS NULL
         ORDER BY name`,
     );
     return rows.map((row) => row.name);
@@ -133,13 +140,100 @@ describe("seed map pools on boot (SQL-driven)", () => {
     expect(await mapNamesIn(poolId)).toEqual(before);
   });
 
+  const livePool = async () => {
+    const pools = await enabledSeedPoolIds();
+    expect(pools).toHaveLength(1);
+    return pools[0];
+  };
+
   it("puts missing active-duty maps back when update_map_pools is turned on", async () => {
     await setUpdateMapPools("false");
-    const poolId = await customiseLivePool();
+    await customiseLivePool();
 
     await setUpdateMapPools("true");
 
-    expect(await mapNamesIn(poolId)).toEqual(await activeDuty());
+    expect(await mapNamesIn(await livePool())).toEqual(await activeDuty());
+  });
+
+  it("drops maps that left active duty when update_map_pools is turned on", async () => {
+    await setUpdateMapPools("false");
+    await postgres.query(
+      `INSERT INTO _map_pool (map_pool_id, map_id)
+       SELECT $1, id FROM maps WHERE name = 'de_train' AND type = 'Competitive'`,
+      [await livePool()],
+    );
+
+    await setUpdateMapPools("true");
+
+    expect(await mapNamesIn(await livePool())).toEqual(await activeDuty());
+    expect(await mapNamesIn(await livePool())).not.toContain("de_train");
+  });
+
+  it("follows Active Duty flipped in the panel, leaving the old pool to the matches already on it", async () => {
+    const poolId = await livePool();
+    const before = await mapNamesIn(poolId);
+
+    await postgres.query(
+      "UPDATE maps SET active_pool = true WHERE name = 'de_overpass'",
+    );
+    await postgres.query(
+      "UPDATE maps SET active_pool = false WHERE name = 'de_cache'",
+    );
+
+    const live = await livePool();
+    expect(live).not.toBe(poolId);
+    expect(await mapNamesIn(live)).toEqual(await activeDuty());
+    expect(await mapNamesIn(live)).toContain("de_overpass");
+    expect(await mapNamesIn(live)).not.toContain("de_cache");
+    expect(await mapNamesIn(poolId)).toEqual(before);
+  });
+
+  it("adds a map created with Active Duty on", async () => {
+    await postgres.query(
+      `INSERT INTO maps (name, type, active_pool, enabled)
+       VALUES ('de_sync_probe', 'Competitive', true, true)`,
+    );
+
+    expect(await mapNamesIn(await livePool())).toContain("de_sync_probe");
+    expect(await mapNamesIn(await livePool())).toEqual(await activeDuty());
+  });
+
+  it("drops an active-duty map whose mode is turned off", async () => {
+    await postgres.query(
+      "UPDATE maps SET enabled = false WHERE name = 'de_nuke' AND type = 'Competitive'",
+    );
+
+    expect(await mapNamesIn(await livePool())).not.toContain("de_nuke");
+    expect(await mapNamesIn(await livePool())).toEqual(await activeDuty());
+  });
+
+  it("leaves the pool alone when Active Duty is flipped with update_map_pools off", async () => {
+    await setUpdateMapPools("false");
+    const poolId = await livePool();
+    const before = await mapNamesIn(poolId);
+
+    await postgres.query(
+      "UPDATE maps SET active_pool = true WHERE name = 'de_overpass'",
+    );
+
+    expect(await livePool()).toBe(poolId);
+    expect(await mapNamesIn(poolId)).toEqual(before);
+  });
+
+  it("keeps a mode's pool when none of its maps are active duty", async () => {
+    const [rushPool] = await postgres.query<Array<{ id: string }>>(
+      "SELECT id FROM map_pools WHERE type = 'Rush' AND seed AND enabled",
+    );
+
+    await postgres.query(
+      "UPDATE maps SET active_pool = false WHERE type = 'Rush'",
+    );
+
+    const rushPools = await postgres.query<Array<{ id: string }>>(
+      "SELECT id FROM map_pools WHERE type = 'Rush' AND seed AND enabled",
+    );
+    expect(rushPools.map((row) => row.id)).toEqual([rushPool.id]);
+    expect(await mapNamesIn(rushPool.id)).toEqual(["rush_001"]);
   });
 
   it("treats a missing update_map_pools setting as on", async () => {

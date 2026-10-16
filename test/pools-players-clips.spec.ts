@@ -67,7 +67,7 @@ describe("map pools, player guards, and clip counters (SQL-driven)", () => {
       ).rejects.toThrow(/Not enough maps in the pool/i);
     });
 
-    it("the update_map_pools settings hook restores seeded pools from the active roster", async () => {
+    it("the update_map_pools settings hook replaces a seeded pool missing an active map with a full one", async () => {
       const seededPool = await fx.seededPool("Competitive");
       const [{ c: before }] = await postgres.query<Array<{ c: string }>>(
         "SELECT count(*) AS c FROM _map_pool WHERE map_pool_id = $1",
@@ -89,9 +89,11 @@ describe("map pools, player guards, and clip counters (SQL-driven)", () => {
         "UPDATE settings SET value = 'true' WHERE name = 'update_map_pools'",
       );
 
+      const replacement = await fx.seededPool("Competitive");
+      expect(replacement).not.toBe(seededPool);
       const [{ c: after }] = await postgres.query<Array<{ c: string }>>(
         "SELECT count(*) AS c FROM _map_pool WHERE map_pool_id = $1",
-        [seededPool],
+        [replacement],
       );
       expect(Number(after)).toBe(Number(before));
     });
