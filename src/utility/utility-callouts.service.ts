@@ -188,8 +188,12 @@ export class UtilityCalloutsService {
 
   // A failed refresh keeps serving the last manifest that loaded; only a
   // process that has never read latest.json falls back to the pinned build.
-  // latest.json may name a manifest revision (<build>/manifest.r2.json), so its
-  // key is followed as given.
+  // latest.json may name a manifest revision (<build>/manifest.r2.json), and
+  // the edge holds it for a minute, so the sync queued as a retry finishes
+  // still reads the revision before; any newer revision of its build wins.
+  // A probe that fails keeps the revision latest.json names: in a process that
+  // has never loaded a manifest, failing the refresh would resolve every map
+  // to the pinned build.
   private async latestManifest(
     refresh = false,
   ): Promise<MapAssetsManifest | null> {
@@ -207,19 +211,34 @@ export class UtilityCalloutsService {
         throw new Error("latest.json names no manifest");
       }
 
-      let manifest = this.manifests.get(pointer.manifest);
-      if (!manifest) {
-        manifest = await MapAssetsService.fetchIndex<MapAssetsManifest>(
-          pointer.manifest,
-        );
-        if (!manifest?.maps) {
-          throw new Error(`${pointer.manifest} is not published`);
+      let key = pointer.manifest;
+      let manifest = this.manifests.get(key);
+      const revision = MapAssetsService.manifestRevision(key, pointer.build);
+      if (revision) {
+        const newer = await MapAssetsService.newestManifest(
+          pointer.build,
+          revision + 1,
+        ).catch((error): null => {
+          this.logger.warn(
+            `unable to look past ${key}: ${(error as Error)?.message}`,
+          );
+          return null;
+        });
+        if (newer) {
+          key = newer.key;
+          manifest = newer.manifest;
         }
-        if (manifest.version !== MapAssetsService.INDEX_VERSION) {
-          throw new Error(`${pointer.manifest} is version ${manifest.version}`);
-        }
-        this.manifests.set(pointer.manifest, manifest);
       }
+      if (!manifest) {
+        manifest = await MapAssetsService.fetchIndex<MapAssetsManifest>(key);
+      }
+      if (!manifest?.maps) {
+        throw new Error(`${key} is not published`);
+      }
+      if (manifest.version !== MapAssetsService.INDEX_VERSION) {
+        throw new Error(`${key} is version ${manifest.version}`);
+      }
+      this.manifests.set(key, manifest);
 
       this.latest = {
         manifest,

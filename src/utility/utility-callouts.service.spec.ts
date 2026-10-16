@@ -260,9 +260,69 @@ describe("UtilityCalloutsService.calloutsUrl", () => {
     expect(fetched("25537370/manifest.json")).toBe(0);
   });
 
+  it("reads a revision newer than the one latest.json still names", async () => {
+    files["25537370/manifest.r2.json"] = {
+      body: {
+        ...manifest,
+        maps: {
+          de_anubis: { callouts: "25537370/r2/de_anubis.callouts.json" },
+        },
+      },
+      status: 200,
+    };
+
+    await expect(service.calloutsUrl("de_anubis")).resolves.toBe(
+      "https://demo-dl.5stack.gg/maps/25537370/r2/de_anubis.callouts.json",
+    );
+    expect(fetched("25537370/manifest.r3.json")).toBe(1);
+  });
+
+  it("moves on to a revision published after the one it has loaded", async () => {
+    const now = jest.spyOn(Date, "now").mockReturnValue(1_000_000);
+    await service.calloutsUrl("de_nuke");
+
+    files["25537370/manifest.r2.json"] = {
+      body: {
+        ...manifest,
+        maps: {
+          de_anubis: { callouts: "25537370/r2/de_anubis.callouts.json" },
+        },
+      },
+      status: 200,
+    };
+    now.mockReturnValue(1_000_000 + 11 * 60 * 1000);
+
+    await expect(service.calloutsUrl("de_anubis")).resolves.toBe(
+      "https://demo-dl.5stack.gg/maps/25537370/r2/de_anubis.callouts.json",
+    );
+  });
+
+  it("keeps the revision latest.json names when a newer one cannot be read", async () => {
+    files["25537370/manifest.r2.json"] = { status: 503 };
+
+    await expect(service.calloutsUrl("de_nuke")).resolves.toBe(
+      "https://demo-dl.5stack.gg/maps/25537370/de_nuke.callouts.json",
+    );
+  });
+
+  it("looks for no newer revision of a manifest from another build", async () => {
+    files["latest.json"] = {
+      body: { ...pointer, manifest: "25400000/manifest.json" },
+      status: 200,
+    };
+    files["25400000/manifest.json"] = { body: manifest, status: 200 };
+
+    await expect(service.calloutsUrl("de_nuke")).resolves.toBe(
+      "https://demo-dl.5stack.gg/maps/25537370/de_nuke.callouts.json",
+    );
+    expect(fetched("25400000/manifest.r2.json")).toBe(0);
+    expect(fetched("25537370/manifest.r2.json")).toBe(0);
+  });
+
   it.each([
     ["latest.json", { ...pointer, version: 2 }],
     ["25537370/manifest.json", { ...manifest, version: 2 }],
+    ["25537370/manifest.r2.json", { ...manifest, version: 2 }],
   ])("treats an unknown %s version like an outage", async (key, body) => {
     files[key] = { body, status: 200 };
 
