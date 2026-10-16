@@ -110,6 +110,7 @@ WITH map_data AS (
         ('de_dust2_night', '3296013569', '/img/maps/screenshots/de_dust2_night.webp', '/img/maps/icons/de_dust2.svg', null),
         ('de_train', null, '/img/maps/screenshots/de_train.webp', '/img/maps/icons/de_train.svg', null),
         ('cs_office', null, '/img/maps/screenshots/cs_office.webp', '/img/maps/icons/cs_office.svg', null),
+        ('cs_italy', null, null, null, null),
         ('de_cache', null, '/img/maps/screenshots/de_cache.webp', '/img/maps/icons/de_cache.svg', null),
         -- Workshop maps
         ('de_thera', '3121217565', '/img/maps/screenshots/de_thera.webp', '/img/maps/icons/de_thera.svg', null),
@@ -128,14 +129,14 @@ WITH map_data AS (
         ('de_palacio', '3249860053', '/img/maps/screenshots/de_palacio.webp', '/img/maps/icons/de_palacio.svg', null),
         ('de_rooftop', '3536622725', '/img/maps/screenshots/de_rooftop.webp', '/img/maps/icons/de_rooftop.svg', null),
         ('de_transit', '3542662073', '/img/maps/screenshots/de_transit.webp', '/img/maps/icons/de_transit.svg', null),
-        ('de_poseidon', '3522144043', '/img/maps/screenshots/de_poseidon.webp', '/img/maps/icons/de_poseidon.svg', null),
+        ('de_poseidon', null, '/img/maps/screenshots/de_poseidon.webp', '/img/maps/icons/de_poseidon.svg', null),
         ('de_sanctum', '3643331442', '/img/maps/screenshots/de_sanctum.webp', '/img/maps/icons/de_sanctum.svg', null),
         ('de_stronghold', '3076973469', '/img/maps/screenshots/de_stronghold.webp', '/img/maps/icons/de_stronghold.svg', null),
         ('de_warden', '3256988376', '/img/maps/screenshots/de_warden.webp', '/img/maps/icons/de_warden.svg', null),
-        ('de_boulder', null, '/img/maps/screenshots/de_boulder.webp', '/img/maps/icons/de_boulder.svg', null), 
+        ('de_boulder', '3663186989', '/img/maps/screenshots/de_boulder.webp', '/img/maps/icons/de_boulder.svg', null),
         ('de_debris', null, '/img/maps/screenshots/de_debris.webp', '/img/maps/icons/de_debris.svg', null),
         ('de_eldorado', null, '/img/maps/screenshots/de_eldorado.webp', '/img/maps/icons/de_eldorado.svg', null),
-        ('de_fachwerk', null, '/img/maps/screenshots/de_fachwerk.webp', '/img/maps/icons/de_fachwerk.svg', null),
+        ('de_fachwerk', '3442040035', '/img/maps/screenshots/de_fachwerk.webp', '/img/maps/icons/de_fachwerk.svg', null),
         ('rush_001', null, '/img/maps/screenshots/rush_001.webp', '/img/maps/icons/rush_001.svg', null)
 
     ) AS data(name, workshop_map_id, poster, patch, label)
@@ -158,6 +159,7 @@ map_type_config AS (
         ('de_dust2_night', 'Competitive', false),
         ('de_train', 'Competitive', false),
         ('cs_office', 'Competitive', false),
+        ('cs_italy', 'Competitive', false),
         ('de_cache', 'Competitive', true),
         ('de_thera', 'Competitive', false),
         ('de_mills', 'Competitive', false),
