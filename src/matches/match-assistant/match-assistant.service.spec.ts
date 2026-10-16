@@ -806,4 +806,57 @@ describe("MatchAssistantService", () => {
       expect(options.camera_allow_teammates).toBe(false);
     });
   });
+
+  describe("map pool on matchmaking-created matches", () => {
+    // Hasura returns rows unordered; a rotated-out seed pool can come first.
+    const pools = [
+      { id: "retired-seed", type: "Competitive", seed: true, enabled: false },
+      { id: "custom", type: "Custom", seed: false, enabled: true },
+      { id: "non-seed", type: "Competitive", seed: false, enabled: true },
+      { id: "live-seed", type: "Competitive", seed: true, enabled: true },
+    ];
+
+    const poolsMatching = (where: Record<string, { _eq: unknown }>) => {
+      return pools.filter((pool) => {
+        return Object.entries(where).every(([column, condition]) => {
+          return pool[column as keyof typeof pool] === condition._eq;
+        });
+      });
+    };
+
+    it("vetoes from the enabled seed pool, not a retired one", async () => {
+      hasura.query.mockImplementation(async (request: any) => {
+        if (request.settings) {
+          return { settings: [] };
+        }
+        return {
+          map_pools: poolsMatching(request.map_pools.__args.where),
+        };
+      });
+      hasura.mutation.mockResolvedValue({
+        insert_matches_one: {
+          id: "match-1",
+          lineup_1_id: "l1",
+          lineup_2_id: "l2",
+        },
+      });
+
+      await service.createMatchBasedOnType(
+        "Competitive" as any,
+        "Competitive" as any,
+        {
+          mr: 12,
+          best_of: 1,
+          knife: true,
+          overtime: true,
+        },
+      );
+
+      const options =
+        hasura.mutation.mock.calls[0][0].insert_matches_one.__args.object
+          .options.data;
+
+      expect(options.map_pool_id).toBe("live-seed");
+    });
+  });
 });
