@@ -376,4 +376,40 @@ describe("seed map pools on boot (SQL-driven)", () => {
     const [replacement] = await enabledSeedPoolIds();
     expect(replacement).not.toBe(poolId);
   });
+
+  const activeIn = async (type: string) => {
+    const rows = await postgres.query<Array<{ name: string }>>(
+      `SELECT name FROM maps
+        WHERE type = $1 AND active_pool AND deleted_at IS NULL
+        ORDER BY name`,
+      [type],
+    );
+    return rows.map((row) => row.name);
+  };
+
+  // Valve's pools as of the July 8, 2026 update; change these with the next rotation.
+  it("seeds Valve's current Active Duty and Wingman pools", async () => {
+    const wingman = [
+      "de_debris",
+      "de_eldorado",
+      "de_inferno",
+      "de_nuke",
+      "de_overpass",
+      "de_poseidon",
+      "de_vertigo",
+    ];
+
+    expect(await activeIn("Competitive")).toEqual([
+      "de_ancient",
+      "de_anubis",
+      "de_cache",
+      "de_dust2",
+      "de_inferno",
+      "de_mirage",
+      "de_nuke",
+    ]);
+    expect(await activeIn("Wingman")).toEqual(wingman);
+    expect(await activeIn("Duel")).toEqual(wingman);
+    expect(await activeIn("Rush")).toEqual(["rush_001"]);
+  });
 });
