@@ -71,7 +71,7 @@ export class DedicatedServerMigrationService {
   ) {}
 
   public static jobId(migrationId: string): string {
-    return `migrate:${migrationId}`;
+    return `migrate.${migrationId}`;
   }
 
   public static isNodeUp(node: ServerMigrationNode | undefined): boolean {
