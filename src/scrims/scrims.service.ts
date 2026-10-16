@@ -245,7 +245,13 @@ export class ScrimsService {
   ): Promise<match_options_insert_input> {
     const { map_pools } = await this.hasura.query({
       map_pools: {
-        __args: { where: { type: { _eq: "Competitive" } } },
+        __args: {
+          where: {
+            type: { _eq: "Competitive" },
+            seed: { _eq: true },
+            enabled: { _eq: true },
+          },
+        },
         id: true,
       },
     });

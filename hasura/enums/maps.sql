@@ -214,7 +214,8 @@ pools_to_disable AS (
 -- Disable mismatched pools
 UPDATE map_pools
 SET enabled = false
-WHERE id IN (SELECT id FROM pools_to_disable);
+WHERE id IN (SELECT id FROM pools_to_disable)
+  AND COALESCE(NULLIF((SELECT value FROM settings WHERE name = 'update_map_pools'), ''), 'true') = 'true';
 
 -- Create new seed pools
 WITH new_rows AS (
