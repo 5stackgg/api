@@ -53,7 +53,8 @@ describe("friends list live state", () => {
     ).map(({ id }) => id);
 
   // What the friends subscription asked of player_lineup before: rows whose
-  // lineup's match is Live.
+  // lineup's match is Live and visible, and the matches permissions hide
+  // practice sessions from every role.
   const liveLineupThroughTheMatch = async (steam: string) =>
     (
       await postgres.query<Array<{ id: string }>>(
@@ -61,7 +62,7 @@ describe("friends list live state", () => {
            FROM match_lineup_players mlp
            JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
            JOIN matches m ON m.id = ml.match_id
-          WHERE mlp.steam_id = $1 AND m.status = 'Live'
+          WHERE mlp.steam_id = $1 AND m.status = 'Live' AND m.source <> 'practice'
           ORDER BY mlp.id`,
         [steam],
       )
@@ -147,6 +148,18 @@ describe("friends list live state", () => {
       expect(await liveLineup(idle)).toEqual([]);
     });
 
+    it("keeps a practice session out, as the matches permissions do", async () => {
+      const match = await matchIn("Live");
+      const player = await fx.lineupPlayer(match.lineup_1_id);
+      await postgres.query(
+        "UPDATE matches SET source = 'practice' WHERE id = $1",
+        [match.id],
+      );
+
+      expect(await liveLineup(player)).toEqual([]);
+      expect(await liveLineupThroughTheMatch(player)).toEqual([]);
+    });
+
     it("drops the row once the match leaves Live", async () => {
       const match = await matchIn("Live");
       const player = await fx.lineupPlayer(match.lineup_1_id);
@@ -189,22 +202,117 @@ describe("friends list live state", () => {
       return steam;
     };
 
-    it("does not grow with the number of matches a player has played", async () => {
-      for (const status of ["Live", "Live", "Veto", "WaitingForServer"]) {
+    const FUNCTIONS = [
+      "SELECT is_in_another_match(p) FROM players p WHERE steam_id = $1",
+      "SELECT (SELECT count(*) FROM get_player_live_lineup(p)) FROM players p WHERE steam_id = $1",
+    ];
+
+    const activeMatches = async () => {
+      for (const status of [
+        "Live",
+        "Live",
+        "Live",
+        "Veto",
+        "WaitingForServer",
+        "Live",
+        "Veto",
+        "Live",
+      ]) {
         const match = await matchIn(status);
         await fx.lineupPlayer(match.lineup_1_id);
       }
+    };
+
+    const extraBuffers = async (veteran: string, newcomer: string) => {
+      const extra: Record<string, number> = {};
+      for (const sql of FUNCTIONS) {
+        extra[sql] =
+          (await buffersFor(sql, veteran)) - (await buffersFor(sql, newcomer));
+      }
+      return extra;
+    };
+
+    it("does not grow with the number of matches a player has played", async () => {
+      await activeMatches();
       const veteran = await withHistory(150);
       const newcomer = await withHistory(1);
 
-      for (const sql of [
-        "SELECT is_in_another_match(p) FROM players p WHERE steam_id = $1",
-        "SELECT (SELECT count(*) FROM get_player_live_lineup(p)) FROM players p WHERE steam_id = $1",
-      ]) {
-        const veteranBuffers = await buffersFor(sql, veteran);
-        const newcomerBuffers = await buffersFor(sql, newcomer);
-        expect(veteranBuffers - newcomerBuffers).toBeLessThanOrEqual(10);
+      for (const extra of Object.values(
+        await extraBuffers(veteran, newcomer),
+      )) {
+        expect(extra).toBeLessThanOrEqual(10);
       }
+    }, 120_000);
+
+    // An import-heavy panel: most players appear in one lineup, so the planner
+    // rates a lookup on steam_id alone as just as selective as the unique key.
+    it("does not grow with history spread among one-off players", async () => {
+      await activeMatches();
+      const veteran = await fx.player();
+      const newcomer = await withHistory(1);
+      await postgres.transaction(async (client) => {
+        await client.query("SET LOCAL session_replication_role = replica");
+        await client.query(
+          `INSERT INTO players (steam_id, name, role)
+           SELECT 76561199390000000 + g, 'one-off ' || g, 'user' FROM generate_series(1, 6000) g`,
+        );
+        await client.query(
+          `CREATE TEMP TABLE one_off_lineups AS
+           SELECT g, gen_random_uuid() AS id FROM generate_series(1, 6150) g`,
+        );
+        await client.query(
+          "INSERT INTO match_lineups (id) SELECT id FROM one_off_lineups ORDER BY g",
+        );
+        await client.query(
+          `INSERT INTO match_lineup_players (match_lineup_id, steam_id)
+           SELECT id, CASE WHEN g % 41 = 0 THEN $1::bigint ELSE 76561199390000000 + g - g / 41 END
+             FROM one_off_lineups ORDER BY g`,
+          [veteran],
+        );
+      });
+      await postgres.query("VACUUM ANALYZE match_lineup_players");
+
+      for (const extra of Object.values(
+        await extraBuffers(veteran, newcomer),
+      )) {
+        expect(extra).toBeLessThanOrEqual(10);
+      }
+    }, 120_000);
+
+    it("does not grow with the panel's finished or far-off scheduled matches", async () => {
+      await activeMatches();
+      const player = await withHistory(1);
+      const before = await Promise.all(
+        FUNCTIONS.map((sql) => buffersFor(sql, player)),
+      );
+
+      const added: Array<string> = [];
+      for (let i = 0; i < 400; i++) {
+        added.push((await fx.bareMatch(new Date().toISOString())).matchId);
+      }
+      // Only the statuses matter here, not the transitions that lead to them.
+      await postgres.transaction(async (client) => {
+        await client.query("SET LOCAL session_replication_role = replica");
+        await client.query(
+          `UPDATE matches SET status = 'Scheduled', scheduled_at = now() + interval '7 days'
+            WHERE id = ANY($1::uuid[])`,
+          [added.slice(0, 200)],
+        );
+        await client.query(
+          "UPDATE matches SET status = 'Finished' WHERE id = ANY($1::uuid[])",
+          [added.slice(200)],
+        );
+      });
+      await postgres.query("VACUUM ANALYZE matches");
+
+      const after = await Promise.all(
+        FUNCTIONS.map((sql) => buffersFor(sql, player)),
+      );
+      const growth = FUNCTIONS.map((sql, i) => ({
+        sql,
+        buffers: after[i] - before[i],
+      }));
+      expect(growth.filter(({ buffers }) => buffers > 10)).toEqual([]);
     }, 120_000);
   });
 });

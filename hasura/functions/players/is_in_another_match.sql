@@ -1,7 +1,10 @@
--- Starts from the few active matches, never from the player's history. The
--- LIMIT keeps the lineup lookup a per-match index probe (a plain join or
--- EXISTS lets the cached generic plan walk every lineup the player has ever
--- been in), and the CTE keeps match_series_decided to the player's own matches.
+-- Starts from the few active matches, never from the player's history.
+-- idx_matches_active_schedule answers the active statuses and the Scheduled
+-- cut-off as two index ranges, so matches scheduled further out are never read.
+-- Each lineup is probed on both columns of its unique key: with steam_id alone
+-- the cached generic plan can pick the steam_id index and re-read the player's
+-- whole history once per active match. The CTE keeps match_series_decided to
+-- the player's own matches.
 CREATE OR REPLACE FUNCTION public.is_in_another_match(player public.players)
 RETURNS boolean
 LANGUAGE sql
@@ -13,12 +16,20 @@ AS $$
         CROSS JOIN LATERAL (
             SELECT 1
             FROM match_lineup_players mlp
-            WHERE mlp.steam_id = player.steam_id
-              AND mlp.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
+            WHERE mlp.match_lineup_id = m.lineup_1_id
+              AND mlp.steam_id = player.steam_id
+            UNION ALL
+            SELECT 1
+            FROM match_lineup_players mlp
+            WHERE mlp.match_lineup_id = m.lineup_2_id
+              AND mlp.steam_id = player.steam_id
             LIMIT 1
         ) member
-        WHERE m.status IN ('Veto', 'WaitingForCheckIn', 'WaitingForServer', 'Live', 'Scheduled')
-          AND m.source <> 'practice'
+        WHERE m.source <> 'practice'
+          AND (
+              m.status IN ('Veto', 'WaitingForCheckIn', 'WaitingForServer', 'Live')
+              OR (m.status = 'Scheduled' AND m.scheduled_at <= NOW() + INTERVAL '1 hour')
+          )
     )
     SELECT EXISTS (
         SELECT 1

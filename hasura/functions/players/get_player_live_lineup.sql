@@ -1,7 +1,8 @@
--- Starts from the few Live matches, never from the player's history. The
--- LIMIT keeps the lineup lookup a per-match index probe: written as a plain
--- join, the cached generic plan assumes an average player and walks every
--- lineup the player has ever been in.
+-- Starts from the few Live matches, never from the player's history. Each
+-- lineup is probed on both columns of its unique key: with steam_id alone the
+-- cached generic plan can pick the steam_id index and re-read the player's
+-- whole history once per Live match. Practice sessions are Live matches that
+-- the matches permissions hide, so they are left out here too.
 CREATE OR REPLACE FUNCTION public.get_player_live_lineup(player public.players)
 RETURNS SETOF public.match_lineup_players
 LANGUAGE sql
@@ -12,9 +13,15 @@ AS $$
     CROSS JOIN LATERAL (
         SELECT *
         FROM match_lineup_players mlp
-        WHERE mlp.steam_id = player.steam_id
-          AND mlp.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
+        WHERE mlp.match_lineup_id = m.lineup_1_id
+          AND mlp.steam_id = player.steam_id
+        UNION ALL
+        SELECT *
+        FROM match_lineup_players mlp
+        WHERE mlp.match_lineup_id = m.lineup_2_id
+          AND mlp.steam_id = player.steam_id
         LIMIT 1
     ) mlp
-    WHERE m.status = 'Live';
+    WHERE m.status = 'Live'
+      AND m.source <> 'practice';
 $$;
