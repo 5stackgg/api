@@ -3,6 +3,7 @@ import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { User } from "../auth/types/User";
 import { DraftGameService } from "./draft-game.service";
 import { DraftService } from "./draft.service";
+import { DraftMatchService } from "./draft-match.service";
 
 type DraftGameEvent = {
   op: "INSERT" | "UPDATE" | "DELETE" | "MANUAL";
@@ -15,6 +16,7 @@ export class DraftGamesController {
   constructor(
     private readonly draftGameService: DraftGameService,
     private readonly draftService: DraftService,
+    private readonly draftMatchService: DraftMatchService,
   ) {}
 
   @HasuraEvent()
@@ -125,6 +127,22 @@ export class DraftGamesController {
       data.draftGameId,
       data.steamId,
       data.lineup,
+    );
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async replaceDraftNoShow(data: {
+    user: User;
+    draftGameId: string;
+    steamId: string;
+    replacementSteamId?: string;
+  }) {
+    await this.draftMatchService.replaceNoShow(
+      data.user,
+      data.draftGameId,
+      data.steamId,
+      data.replacementSteamId,
     );
     return { success: true };
   }

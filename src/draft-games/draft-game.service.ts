@@ -91,7 +91,7 @@ export class DraftGameService {
     ) as Promise<T>;
   }
 
-  private isOrganizerOrHost(
+  public isOrganizerOrHost(
     user: User,
     draftGame: Pick<DraftGame, "host_steam_id">,
   ): boolean {
