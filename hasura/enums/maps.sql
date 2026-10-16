@@ -228,7 +228,8 @@ all_maps AS (
         md.label
     FROM map_data md
     JOIN map_type_config mtc ON md.name = mtc.name
-)
+),
+seeded AS (
 insert into maps (
     "name", 
     "type", 
@@ -252,7 +253,15 @@ on conflict("name", "type") do update set
     "workshop_map_id" = EXCLUDED."workshop_map_id", 
     "poster" = EXCLUDED."poster", 
     "patch" = EXCLUDED."patch", 
-    "label" = EXCLUDED."label";
+    "label" = EXCLUDED."label"
+)
+-- A mode the seed stops listing for one of its maps is retired, not left selectable.
+UPDATE maps m
+SET enabled = false
+WHERE m.name IN (SELECT name FROM map_data)
+  AND NOT EXISTS (SELECT 1 FROM map_type_config mtc WHERE mtc.name = m.name AND mtc.type = m.type)
+  AND m.enabled
+  AND NOT m.active_pool;
 
 DO $$
 BEGIN

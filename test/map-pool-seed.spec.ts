@@ -458,27 +458,22 @@ describe("seed map pools on boot (SQL-driven)", () => {
     ]);
   });
 
-  it("turns off the Competitive rows an older seed gave Debris and El Dorado", async () => {
-    const migration = readFileSync(
-      join(
-        __dirname,
-        "../hasura/migrations/default/1890000001100_debris_eldorado_wingman_only/up.sql",
-      ),
-      "utf8",
-    );
+  it("retires a mode the seed no longer lists for one of its maps", async () => {
     await postgres.query(
       `INSERT INTO maps (name, type, active_pool, enabled)
-       VALUES ('de_debris', 'Competitive', false, true), ('de_eldorado', 'Competitive', false, true)`,
+       VALUES ('de_debris', 'Competitive', false, true),
+              ('de_eldorado', 'Competitive', false, true),
+              ('de_sync_probe', 'Competitive', false, true)`,
     );
 
     try {
-      await postgres.query(migration);
+      await reseed();
 
       const rows = await postgres.query<
         Array<{ name: string; type: string; enabled: boolean }>
       >(
         `SELECT name, type, enabled FROM maps
-          WHERE name IN ('de_debris', 'de_eldorado')
+          WHERE name IN ('de_debris', 'de_eldorado', 'de_sync_probe')
           ORDER BY name, type`,
       );
       expect(rows).toEqual([
@@ -488,6 +483,7 @@ describe("seed map pools on boot (SQL-driven)", () => {
         { name: "de_eldorado", type: "Competitive", enabled: false },
         { name: "de_eldorado", type: "Duel", enabled: true },
         { name: "de_eldorado", type: "Wingman", enabled: true },
+        { name: "de_sync_probe", type: "Competitive", enabled: true },
       ]);
     } finally {
       await postgres.query(
