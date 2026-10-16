@@ -215,11 +215,18 @@ describe("map asset builds (SQL-driven)", () => {
     loggingService.getJobStatus
       .mockResolvedValueOnce(undefined)
       .mockResolvedValueOnce({ succeeded: 1 });
+    // A retry published r2 over the first run's manifest.json, while the edge
+    // still holds the latest.json that named the first one.
     serve({
       "latest.json": {
         version: 1,
         build: "25537370",
-        manifest: "25537370/manifest.r2.json",
+        manifest: "25537370/manifest.json",
+      },
+      "25537370/manifest.json": {
+        version: 1,
+        build: "25537370",
+        maps: { de_mirage: { tri: "25537370/de_mirage.tri.gz" } },
       },
       "25537370/manifest.r2.json": { version: 1, build: "25537370", maps },
     });
