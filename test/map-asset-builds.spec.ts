@@ -1,3 +1,5 @@
+import { readFileSync } from "fs";
+import { join } from "path";
 import { Logger } from "@nestjs/common";
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { MapAssetsService } from "./../src/map-assets/map-assets.service";
@@ -204,6 +206,89 @@ describe("map asset builds (SQL-driven)", () => {
     await expect(manual()).rejects.toThrow("already queued");
     expect((await row("25537370")).status).toBe("Building");
     expect(queue.add).not.toHaveBeenCalled();
+  });
+
+  it("builds every seeded map, and any other only while some mode enables it", async () => {
+    await postgres.query(
+      `INSERT INTO maps (name, type, enabled, active_pool, workshop_map_id, deleted_at, seeded)
+       VALUES ('de_assets_playable', 'Competitive', true, false, NULL, NULL, false),
+              ('de_assets_one_mode', 'Competitive', false, false, '9101', NULL, true),
+              ('de_assets_one_mode', 'Duel', true, false, '9100', NULL, true),
+              ('9200', 'Competitive', false, false, '9200', NULL, false),
+              ('de_assets_deleted', 'Competitive', true, false, '9300', now(), false)`,
+    );
+    await postgres.query(
+      `UPDATE maps SET enabled = false WHERE name = 'cs_office'`,
+    );
+    const mapAssets = service();
+
+    try {
+      await (mapAssets as any).startJob("node-a", "25537370", false);
+    } finally {
+      await postgres.query(
+        `DELETE FROM maps WHERE name IN ('de_assets_playable', 'de_assets_one_mode', '9200', 'de_assets_deleted')`,
+      );
+      await postgres.query(
+        `UPDATE maps SET enabled = true WHERE name = 'cs_office'`,
+      );
+    }
+
+    const [[{ body }]] = (mapAssets as any).batchApi.createNamespacedJob.mock
+      .calls;
+    const args: Array<string> = body.spec.template.spec.containers[0].args;
+    const only = args[args.indexOf("--only-maps") + 1].split(",");
+    const workshop = args[args.indexOf("--workshop-maps") + 1].split(",");
+    expect(only).toEqual(
+      expect.arrayContaining([
+        "cs_office",
+        "de_assets_playable",
+        "de_assets_one_mode",
+      ]),
+    );
+    expect(only).not.toContain("9200");
+    expect(only).not.toContain("de_assets_deleted");
+    expect(workshop).toContain("de_assets_one_mode=9100");
+    expect(workshop).not.toContain("de_assets_one_mode=9101");
+    expect(workshop).not.toContain("9200=9200");
+    expect(workshop).not.toContain("de_assets_deleted=9300");
+  });
+
+  it("marks every mode of the maps the seed ships, and only those", async () => {
+    // As the migration leaves every existing row on upgrade.
+    await postgres.query(`UPDATE maps SET seeded = false`);
+    await postgres.query(
+      `INSERT INTO maps (name, type, active_pool, seeded)
+       VALUES ('de_mirage', 'Duel', false, false),
+              ('de_assets_retired', 'Competitive', false, true),
+              ('de_assets_custom', 'Competitive', false, false)`,
+    );
+
+    try {
+      await postgres.query(
+        readFileSync(join(__dirname, "../hasura/enums/maps.sql"), "utf8"),
+      );
+      const seeded = await postgres.query<
+        Array<{ name: string; type: string; seeded: boolean }>
+      >(
+        `SELECT name, type, seeded FROM maps
+          WHERE (name = 'de_mirage' AND type IN ('Competitive', 'Duel'))
+             OR name IN ('cs_office', 'de_assets_retired', 'de_assets_custom')
+          ORDER BY name, type`,
+      );
+      expect(seeded).toEqual([
+        { name: "cs_office", type: "Competitive", seeded: true },
+        { name: "de_assets_custom", type: "Competitive", seeded: false },
+        { name: "de_assets_retired", type: "Competitive", seeded: false },
+        { name: "de_mirage", type: "Competitive", seeded: true },
+        { name: "de_mirage", type: "Duel", seeded: true },
+      ]);
+    } finally {
+      await postgres.query(
+        `DELETE FROM maps
+          WHERE (name = 'de_mirage' AND type = 'Duel')
+             OR name IN ('de_assets_retired', 'de_assets_custom')`,
+      );
+    }
   });
 
   it("records a published build and the manifest revision it came from", async () => {
