@@ -271,6 +271,9 @@ describe("friends list live state", () => {
         );
       });
       await postgres.query("VACUUM ANALYZE match_lineup_players");
+      // Equally cheap indexes are tried newest first, so rebuild them all
+      // rather than let the fixture's build order pick the winner.
+      await postgres.query("REINDEX TABLE CONCURRENTLY match_lineup_players");
 
       for (const extra of Object.values(
         await extraBuffers(veteran, newcomer),
@@ -278,6 +281,23 @@ describe("friends list live state", () => {
         expect(extra).toBeLessThanOrEqual(10);
       }
     }, 120_000);
+
+    // The planner prices a steam_id-only index the same as the unique key for
+    // a (match_lineup_id, steam_id) probe; whenever it wins that tie the probe
+    // reads the player's whole history.
+    it("keeps no index on match_lineup_players.steam_id alone", async () => {
+      const indexes = await postgres.query<Array<{ indexname: string }>>(
+        `SELECT i.relname AS indexname
+           FROM pg_index x
+           JOIN pg_class i ON i.oid = x.indexrelid
+          WHERE x.indrelid = 'public.match_lineup_players'::regclass
+            AND x.indnkeyatts = 1
+            AND x.indkey[0] = (SELECT attnum FROM pg_attribute
+                                WHERE attrelid = 'public.match_lineup_players'::regclass
+                                  AND attname = 'steam_id')`,
+      );
+      expect(indexes).toEqual([]);
+    });
 
     it("does not grow with the panel's finished or far-off scheduled matches", async () => {
       await activeMatches();

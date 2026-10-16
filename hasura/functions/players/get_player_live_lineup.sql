@@ -1,8 +1,9 @@
 -- Starts from the few Live matches, never from the player's history. Each
--- lineup is probed on both columns of its unique key: with steam_id alone the
--- cached generic plan can pick the steam_id index and re-read the player's
--- whole history once per Live match. Practice sessions are Live matches that
--- the matches permissions hide, so they are left out here too.
+-- lineup is probed on both columns of its unique key, so any index the planner
+-- picks reads a single entry; an index on steam_id alone would read the
+-- player's whole history instead, which is why match_lineup_players has none.
+-- Practice sessions are Live matches the matches permissions hide, so they are
+-- left out here too.
 CREATE OR REPLACE FUNCTION public.get_player_live_lineup(player public.players)
 RETURNS SETOF public.match_lineup_players
 LANGUAGE sql
