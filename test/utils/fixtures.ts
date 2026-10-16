@@ -123,7 +123,7 @@ export class Fixtures {
   // pool is its single map, so a Bo1 materializes it straight away.
   async seededPool(type: string): Promise<string> {
     const [pool] = await this.postgres.query<Array<{ id: string }>>(
-      "SELECT id FROM map_pools WHERE type = $1 AND seed = true",
+      "SELECT id FROM map_pools WHERE type = $1 AND seed = true AND enabled = true",
       [type],
     );
     return pool.id;

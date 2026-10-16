@@ -111,14 +111,13 @@ describe("maps soft delete (SQL-driven)", () => {
   it("restoring an active-duty map puts it back in the seed pool", async () => {
     const mapId = await createMap(true);
     await postgres.query("SELECT update_map_pools()");
-    const seed = await seedPoolId();
-    expect(await poolIdsOf(mapId)).toContain(seed);
+    expect(await poolIdsOf(mapId)).toContain(await seedPoolId());
 
     await softDelete(mapId);
     expect(await poolIdsOf(mapId)).toEqual([]);
 
     await restore(mapId);
-    expect(await poolIdsOf(mapId)).toContain(seed);
+    expect(await poolIdsOf(mapId)).toContain(await seedPoolId());
   });
 
   it("restoring keeps the same row so match history still resolves", async () => {

@@ -18,6 +18,80 @@ insert into e_game_cfg_types ("value", "description") values
     ('Global', 'Applies to every match, on top of the type configuration')
 on conflict(value) do update set "description" = EXCLUDED."description";
 
+insert into e_map_pool_types ("value", "description") values
+    ('Competitive', '5 vs 5'),
+    ('Wingman', '2 vs 2'),
+    ('Duel', '1 vs 1'),
+    ('Rush', '3 vs 3'),
+    ('Custom', 'Custom')
+on conflict(value) do update set "description" = EXCLUDED."description";
+
+create or replace function update_map_pools()
+returns boolean as $$
+declare
+    _update_map_pools boolean;
+    _replaced uuid[];
+begin
+    -- Serialised, or a concurrent change never compares against the pool another transaction just swapped in.
+    PERFORM pg_advisory_xact_lock(hashtext('update_map_pools'));
+
+    _update_map_pools := COALESCE(NULLIF((SELECT value FROM settings WHERE name = 'update_map_pools'), ''), 'true') = 'true';
+
+    IF _update_map_pools THEN
+        -- Replaced rather than edited, so the matches and tournaments already on a pool keep its maps.
+        WITH replaced AS (
+            UPDATE map_pools p
+            SET enabled = false
+            WHERE p.seed = true
+              AND p.enabled = true
+              AND p.type IN ('Competitive', 'Wingman', 'Duel', 'Rush')
+              AND EXISTS (SELECT 1 FROM _map_pool mp WHERE mp.map_pool_id = p.id)
+              AND EXISTS (
+                  SELECT 1 FROM maps m
+                  WHERE m.type = p.type AND m.active_pool AND m.enabled AND m.deleted_at IS NULL
+              )
+              AND (SELECT array_agg(mp.map_id ORDER BY mp.map_id) FROM _map_pool mp WHERE mp.map_pool_id = p.id)
+                  IS DISTINCT FROM
+                  (
+                      SELECT array_agg(m.id ORDER BY m.id) FROM maps m
+                      WHERE m.type = p.type AND m.active_pool AND m.enabled AND m.deleted_at IS NULL
+                  )
+            RETURNING p.id
+        )
+        SELECT array_agg(id) INTO _replaced FROM replaced;
+    END IF;
+
+    -- A pool replaced just now is kept one sync longer, for whatever read it as live a moment ago.
+    -- draft_games' foreign key nulls on delete instead of refusing, so it has to be checked here.
+    DELETE FROM map_pools p
+    WHERE p.seed = true
+      AND p.enabled = false
+      AND p.id <> ALL (COALESCE(_replaced, '{}'))
+      AND NOT EXISTS (SELECT 1 FROM match_options mo WHERE mo.map_pool_id = p.id)
+      AND NOT EXISTS (SELECT 1 FROM draft_games dg WHERE dg.map_pool_id = p.id);
+
+    INSERT INTO map_pools ("type", "enabled", "seed")
+    SELECT t.type, true, true
+    FROM (VALUES ('Competitive'), ('Wingman'), ('Duel'), ('Rush')) AS t(type)
+    WHERE NOT EXISTS (
+        SELECT 1 FROM map_pools p
+        WHERE p.type = t.type AND p.seed = true AND p.enabled = true
+    );
+
+    -- An empty enabled seed pool is new, not emptied by an operator, so it is filled even with updates off.
+    INSERT INTO _map_pool (map_id, map_pool_id)
+    SELECT m.id, p.id
+    FROM map_pools p
+    JOIN maps m ON m.type = p.type AND m.active_pool AND m.enabled AND m.deleted_at IS NULL
+    WHERE p.seed = true
+      AND p.enabled = true
+      AND NOT EXISTS (SELECT 1 FROM _map_pool mp WHERE mp.map_pool_id = p.id)
+    ON CONFLICT DO NOTHING;
+
+    RETURN _update_map_pools;
+end;
+$$ language plpgsql;
+
 WITH map_data AS (
     SELECT * FROM (VALUES
         -- Valve maps
@@ -175,120 +249,6 @@ on conflict("name", "type") do update set
     "poster" = EXCLUDED."poster", 
     "patch" = EXCLUDED."patch", 
     "label" = EXCLUDED."label";
-
-insert into e_map_pool_types ("value", "description") values
-    ('Competitive', '5 vs 5'),
-    ('Wingman', '2 vs 2'),
-    ('Duel', '1 vs 1'),
-    ('Rush', '3 vs 3'),
-    ('Custom', 'Custom')
-on conflict(value) do update set "description" = EXCLUDED."description";
-
--- create seed map pools with conflict detection
-WITH expected_maps AS (
-  SELECT
-    type,
-    array_agg(name ORDER BY name) as expected_map_names
-  FROM maps
-  WHERE active_pool = true AND deleted_at IS NULL
-  GROUP BY type
-),
-existing_pools AS (
-  SELECT
-    mp.id,
-    mp.type,
-    array_agg(m.name ORDER BY m.name) as current_map_names
-  FROM map_pools mp
-  LEFT JOIN _map_pool mp_rel ON mp.id = mp_rel.map_pool_id
-  LEFT JOIN maps m ON mp_rel.map_id = m.id
-  WHERE mp.seed = true AND mp.type IN ('Competitive', 'Wingman', 'Duel', 'Rush') AND mp.enabled = true
-  GROUP BY mp.id, mp.type
-),
-pools_to_disable AS (
-  SELECT
-    ep.id
-  FROM existing_pools ep
-  JOIN expected_maps em ON ep.type = em.type
-  WHERE ep.current_map_names != em.expected_map_names
-)
--- Disable mismatched pools
-UPDATE map_pools
-SET enabled = false
-WHERE id IN (SELECT id FROM pools_to_disable)
-  AND COALESCE(NULLIF((SELECT value FROM settings WHERE name = 'update_map_pools'), ''), 'true') = 'true';
-
--- Create new seed pools
-WITH new_rows AS (
-  SELECT *
-  FROM (VALUES
-      ('Competitive', true, true),
-      ('Wingman', true, true),
-      ('Duel', true, true),
-      ('Rush', true, true)
-  ) AS data(type, enabled, seed)
-)
-INSERT INTO map_pools ("type", "enabled", "seed")
-SELECT type, enabled, seed
-FROM new_rows
-WHERE NOT EXISTS (
-  SELECT 1
-  FROM map_pools
-  WHERE map_pools.type = new_rows.type
-    AND map_pools.seed = true and
-    map_pools.enabled = true
-);
-
-create or replace function update_map_pools()
-returns boolean as $$
-declare
-    update_map_pools text;
-begin
-    SELECT value INTO update_map_pools FROM settings WHERE name = 'update_map_pools';
-
-    IF NOT FOUND OR update_map_pools = '' THEN
-        update_map_pools := 'true';
-    END IF;
-
-    if(select COUNT(*) from _map_pool) = 0 then 
-        update_map_pools = 'true';
-    end if;
-
-    if(update_map_pools = 'true') then
-        WITH pool_ids AS (
-            SELECT id, type
-            FROM map_pools
-            WHERE type IN ('Competitive', 'Wingman', 'Duel', 'Rush') and seed = true and enabled = true
-            ORDER BY type
-        )
-        INSERT INTO _map_pool (map_id, map_pool_id)
-        SELECT m.id, p.id
-        FROM maps m
-        JOIN pool_ids p ON (
-            (p.type = 'Competitive' AND m.type = 'Competitive' AND m.active_pool = 'true') OR
-            (p.type = 'Wingman' AND m.type = 'Wingman' AND m.active_pool = 'true') OR
-            (p.type = 'Duel' AND m.type = 'Duel' AND m.active_pool = 'true') OR
-            (p.type = 'Rush' AND m.type = 'Rush' AND m.active_pool = 'true')
-        )
-        WHERE m.deleted_at IS NULL
-        ON CONFLICT DO NOTHING;
-        
-        return true;
-    end if;
-
-    -- An enabled seed pool with no maps at all was just created for a new match
-    -- type, not emptied by an operator, so it is filled even with updates off.
-    INSERT INTO _map_pool (map_id, map_pool_id)
-    SELECT m.id, p.id
-    FROM map_pools p
-    JOIN maps m ON m.type = p.type AND m.active_pool = 'true' AND m.deleted_at IS NULL
-    WHERE p.seed = true
-      AND p.enabled = true
-      AND NOT EXISTS (SELECT 1 FROM _map_pool mp WHERE mp.map_pool_id = p.id)
-    ON CONFLICT DO NOTHING;
-    
-    return false;
-end;
-$$ language plpgsql;
 
 DO $$
 BEGIN
