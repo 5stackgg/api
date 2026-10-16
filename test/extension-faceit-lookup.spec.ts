@@ -27,7 +27,6 @@ describe("extension FACEIT lookup", () => {
       {} as never,
       {} as never,
       {} as never,
-      {} as never,
       noJobs as never,
       noJobs as never,
     );

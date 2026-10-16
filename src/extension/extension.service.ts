@@ -10,7 +10,6 @@ import { Job, Queue } from "bullmq";
 import { CacheService } from "../cache/cache.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { FaceitService } from "../faceit/faceit.service";
-import { FaceitMatchImportService } from "../faceit/faceit-match-import.service";
 import {
   ImportLookup,
   SteamMatchHistoryService,
@@ -65,7 +64,6 @@ export class ExtensionService {
     private readonly cache: CacheService,
     private readonly steamMatchHistory: SteamMatchHistoryService,
     private readonly faceit: FaceitService,
-    private readonly faceitImport: FaceitMatchImportService,
     @InjectQueue(ExtensionQueues.FetchFaceitDemo)
     private readonly fetchQueue: Queue,
     @InjectQueue(SteamMatchHistoryQueues.ProcessUploadedDemo)
@@ -114,13 +112,15 @@ export class ExtensionService {
     return url.toString();
   }
 
+  // FACEIT's poller has its own switch because it needs the Downloads API;
+  // the extension does not, so only the match imports switch and the Data
+  // API key that checks its links apply.
   public async imports(): Promise<{ faceit: boolean; valve: boolean }> {
-    const [allowed, faceit, valve] = await Promise.all([
+    const [allowed, valve] = await Promise.all([
       this.steamMatchHistory.isImportingAllowed(),
-      this.faceitImport.isFaceitImportEnabled(),
       this.steamMatchHistory.canImportShareCodes(),
     ]);
-    return { faceit: allowed && faceit && this.faceit.isEnabled(), valve };
+    return { faceit: allowed && this.faceit.isEnabled(), valve };
   }
 
   public async lookupFaceit(

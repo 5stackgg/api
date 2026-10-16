@@ -120,7 +120,6 @@ describe("ExtensionService imports", () => {
       cache as never,
       {} as never,
       faceit as never,
-      {} as never,
       fetchQueue as never,
       parseQueue as never,
     );
@@ -357,5 +356,38 @@ describe("ExtensionService imports", () => {
 
     expect((error as HttpException).getStatus()).toBe(429);
     expect(fetchQueue.add).not.toHaveBeenCalled();
+  });
+});
+
+describe("ExtensionService.imports", () => {
+  function make({ allowed = true, apiKey = true, gc = true } = {}) {
+    return new ExtensionService(
+      {} as never,
+      {} as never,
+      {
+        isImportingAllowed: async () => allowed,
+        canImportShareCodes: async () => allowed && gc,
+      } as never,
+      { isEnabled: () => apiKey } as never,
+      {} as never,
+      {} as never,
+    );
+  }
+
+  it("follows the match imports switch, not the FACEIT poller's", async () => {
+    await expect(make().imports()).resolves.toEqual({
+      faceit: true,
+      valve: true,
+    });
+    await expect(make({ allowed: false }).imports()).resolves.toEqual({
+      faceit: false,
+      valve: false,
+    });
+  });
+
+  it("needs the FACEIT Data API key that checks the links", async () => {
+    await expect(make({ apiKey: false }).imports()).resolves.toMatchObject({
+      faceit: false,
+    });
   });
 });
