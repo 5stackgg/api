@@ -325,6 +325,45 @@ describe("match stats views", () => {
     );
   });
 
+  // The profile and role-filtered leaderboards read roles by player, which no
+  // match filter narrows: there each logical scan of player_kills reads them
+  // all, so first_kills must not be expanded once per use.
+  it("scans player_kills once per use when roles are read by player", async () => {
+    const { match, mapId, a1 } = await playedMatch();
+    await postgres.query(
+      `INSERT INTO player_match_map_stats
+         (steam_id, match_map_id, match_id, kills, deaths, rounds_played)
+       VALUES ($1, $2, $3, 2, 1, 4)`,
+      [a1, mapId, match.id],
+    );
+    const chunks = (
+      await postgres.query<Array<{ name: string }>>(
+        `SELECT chunk_name AS name FROM timescaledb_information.chunks
+          WHERE hypertable_name = 'player_kills'`,
+      )
+    ).map(({ name }) => name);
+    const killTables = new Set(["player_kills", ...chunks]);
+
+    const [{ "QUERY PLAN": plan }] = await postgres.query<
+      Array<{ "QUERY PLAN": Array<{ Plan: Record<string, any> }> }>
+    >(
+      "EXPLAIN (FORMAT JSON) SELECT * FROM v_player_match_map_roles WHERE steam_id = $1",
+      [a1],
+    );
+    const scans = new Set<string>();
+    const walk = (node: Record<string, any>) => {
+      if (killTables.has(node["Relation Name"])) {
+        scans.add(node.Alias);
+      }
+      for (const child of node.Plans ?? []) {
+        walk(child);
+      }
+    };
+    walk(plan[0].Plan);
+
+    expect(scans.size).toBe(2);
+  });
+
   // Measured at two panel sizes with fresh statistics both times, so the
   // comparison is the same plan reading more data, not two different plans.
   // Doubling a small panel still costs a read filtered to one match a few

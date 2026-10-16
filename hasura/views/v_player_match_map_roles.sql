@@ -1,8 +1,7 @@
 -- Every match page filters on match_id. A filter only passes below a window
--- function, a DISTINCT ON or a GROUP BY on one of its keys, and never into a
--- CTE used twice unless it is NOT MATERIALIZED, so match_id is a key of each
--- even though match_map_id already implies it; without it every page read
--- computed the view for every match on the panel.
+-- function, a DISTINCT ON or a GROUP BY on one of its keys, so match_id is a
+-- key of each even though match_map_id already implies it; without it every
+-- page read computed the view for every match on the panel.
 DROP VIEW IF EXISTS public.v_player_match_map_roles;
 CREATE VIEW public.v_player_match_map_roles AS
 WITH kills_agg AS (
@@ -19,7 +18,7 @@ WITH kills_agg AS (
       AND pk.attacker_steam_id <> pk.attacked_steam_id
     GROUP BY pk.match_id, pk.match_map_id, pk.attacker_steam_id
 ),
-first_kills AS NOT MATERIALIZED (
+first_kills AS (
     SELECT DISTINCT ON (pk.match_id, pk.match_map_id, pk.round)
         pk.match_id,
         pk.match_map_id,
@@ -29,21 +28,23 @@ first_kills AS NOT MATERIALIZED (
     WHERE pk.attacker_steam_id <> pk.attacked_steam_id
     ORDER BY pk.match_id, pk.match_map_id, pk.round, pk."time" ASC
 ),
+-- One pass over first_kills: a CTE read twice is materialized past the match
+-- filter, and forcing it inline makes reads without that filter (the profile,
+-- role-filtered leaderboards) scan every kill twice.
 opening AS (
     SELECT
-        match_id,
-        match_map_id,
-        steam_id,
+        fk.match_id,
+        fk.match_map_id,
+        v.steam_id,
         COUNT(*)::int AS opening_attempts,
-        COUNT(*) FILTER (WHERE is_kill)::int AS open_kills,
-        COUNT(*) FILTER (WHERE NOT is_kill)::int AS open_deaths
-    FROM (
-        SELECT match_id, match_map_id, attacker_steam_id AS steam_id, true AS is_kill FROM first_kills
-        UNION ALL
-        SELECT match_id, match_map_id, attacked_steam_id AS steam_id, false AS is_kill FROM first_kills
-    ) o
-    WHERE steam_id IS NOT NULL
-    GROUP BY match_id, match_map_id, steam_id
+        COUNT(*) FILTER (WHERE v.is_kill)::int AS open_kills,
+        COUNT(*) FILTER (WHERE NOT v.is_kill)::int AS open_deaths
+    FROM first_kills fk
+    CROSS JOIN LATERAL (
+        VALUES (fk.attacker_steam_id, true), (fk.attacked_steam_id, false)
+    ) AS v(steam_id, is_kill)
+    WHERE v.steam_id IS NOT NULL
+    GROUP BY fk.match_id, fk.match_map_id, v.steam_id
 ),
 base AS (
     SELECT
