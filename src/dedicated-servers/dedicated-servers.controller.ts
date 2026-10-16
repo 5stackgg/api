@@ -52,7 +52,7 @@ export class DedicatedServersController {
         CleanupDedicatedServerFiles.name,
         { serverId, gameServerNodeId: data.old.game_server_node_id },
         {
-          jobId: `cleanup-server-files:${serverId}`,
+          jobId: DedicatedServersService.cleanupFilesJobId(serverId),
           attempts: 5,
           backoff: { type: "exponential", delay: 60 * 1000 },
           removeOnComplete: true,

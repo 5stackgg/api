@@ -560,7 +560,7 @@ describe("DedicatedServerMigrationService", () => {
       expect(queue.add).toHaveBeenCalledWith(
         "MigrateDedicatedServer",
         { migrationId: "migration-1" },
-        expect.objectContaining({ jobId: "migrate:migration-1" }),
+        expect.objectContaining({ jobId: "migrate.migration-1" }),
       );
     });
 
@@ -622,7 +622,7 @@ describe("DedicatedServerMigrationService", () => {
       await service.requestCancel("server-1");
 
       expect(migration.status).toBe("Canceled");
-      expect(queue.remove).toHaveBeenCalledWith("migrate:migration-1");
+      expect(queue.remove).toHaveBeenCalledWith("migrate.migration-1");
     });
 
     it("refuses once the server is switching nodes", async () => {

@@ -98,6 +98,10 @@ export class DedicatedServersService {
     this.apps = kc.makeApiClient(AppsV1Api);
   }
 
+  public static cleanupFilesJobId(serverId: string): string {
+    return `cleanup-server-files.${serverId}`;
+  }
+
   // Exactly one 5stack plugin per server: the match plugin on Ranked, the
   // utility plugin on Practice, and on a community server, which has no match
   // plugin to carry sanctions, the player management plugin. It is CS2 only.
