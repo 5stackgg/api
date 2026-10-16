@@ -507,12 +507,18 @@ describe("MapAssetsService", () => {
       });
     };
 
-    it("reads the manifest revision latest.json names for this build", async () => {
+    it("records the newest revision, though the edge still serves latest.json naming the one before", async () => {
       finished({ succeeded: 1 });
       files["latest.json"] = {
         version: 1,
         build: "25537370",
-        manifest: "25537370/manifest.r2.json",
+        manifest: "25537370/manifest.json",
+      };
+      files["25537370/manifest.json"] = {
+        version: 1,
+        build: "25537370",
+        maps,
+        failed: ["de_dogtown"],
       };
       files["25537370/manifest.r2.json"] = {
         version: 1,
@@ -661,13 +667,34 @@ describe("MapAssetsService", () => {
       expect(finalUpdate().params[7]).toBe("25400000");
     });
 
-    it("reads the build's first manifest when latest.json names another build", async () => {
+    it("records the newest revision of a build latest.json no longer names", async () => {
       finished({ succeeded: 1 });
       files["latest.json"] = {
         version: 1,
         build: "25600000",
         manifest: "25600000/manifest.json",
       };
+      files["25537370/manifest.json"] = {
+        version: 1,
+        build: "25537370",
+        maps,
+        failed: ["de_dogtown"],
+      };
+      files["25537370/manifest.r2.json"] = {
+        version: 1,
+        build: "25537370",
+        maps,
+      };
+
+      const outcome = await service.build("node-1", "25537370");
+
+      expect(outcome.manifest).toBe("25537370/manifest.r2.json");
+      expect(outcome.maps).toEqual(maps);
+      expect(outcome.failed).toEqual([]);
+    });
+
+    it("records the build's first manifest when it has no other revision", async () => {
+      finished({ succeeded: 1 });
       files["25537370/manifest.json"] = { version: 1, build: "25537370", maps };
 
       const outcome = await service.build("node-1", "25537370");

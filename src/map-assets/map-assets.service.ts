@@ -1022,26 +1022,34 @@ export class MapAssetsService {
     );
   }
 
-  // A rebuild of a Partial build publishes a new manifest revision
-  // (<build>/manifest.rN.json) and repoints latest.json at it, so latest.json
-  // is the authority whenever it names this build.
+  // A retry or a forced rebuild publishes the build's next manifest revision
+  // (<build>/manifest.rN.json), so the newest one that exists is what the run
+  // published. latest.json cannot say: the edge holds it for a minute, so a
+  // job that has just moved it still reads as the revision before, and it
+  // never names a build that is no longer the newest.
   private async publishedManifest(
     buildId: string,
   ): Promise<
     Pick<MapAssetBuildOutcome, "manifest" | "maps" | "failed" | "failed_view">
   > {
     try {
-      const pointer =
-        await MapAssetsService.fetchIndex<MapAssetsPointer>("latest.json");
-      const key =
-        pointer?.build === buildId &&
-        MapAssetsService.isSafeKey(pointer.manifest)
-          ? pointer.manifest
-          : `${buildId}/manifest.json`;
-      const manifest =
-        await MapAssetsService.fetchIndex<MapAssetsManifest>(key);
+      let key: string | null = null;
+      let manifest: MapAssetsManifest | null = null;
+      for (let revision = 1; ; revision++) {
+        const next =
+          revision === 1
+            ? `${buildId}/manifest.json`
+            : `${buildId}/manifest.r${revision}.json`;
+        const found =
+          await MapAssetsService.fetchIndex<MapAssetsManifest>(next);
+        if (!found) {
+          break;
+        }
+        key = next;
+        manifest = found;
+      }
 
-      if (manifest) {
+      if (key && manifest) {
         return {
           manifest: key,
           maps: manifest.maps ?? null,
@@ -1051,7 +1059,7 @@ export class MapAssetsService {
       }
 
       this.logger.warn(
-        `[map-assets] build ${buildId} finished but ${key} is not published`,
+        `[map-assets] build ${buildId} finished but ${buildId}/manifest.json is not published`,
       );
     } catch (error) {
       this.logger.warn(
