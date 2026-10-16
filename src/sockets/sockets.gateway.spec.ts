@@ -22,14 +22,16 @@ describe("SocketsGateway ping", () => {
     gateway = new SocketsGateway(sockets as any);
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it("answers an anonymous client without touching its presence", async () => {
     const anonymous = client();
 
     await gateway.handleMessage(anonymous);
 
-    expect(anonymous.send).toHaveBeenCalledWith(
-      JSON.stringify({ event: "pong" }),
-    );
+    expect(JSON.parse(anonymous.send.mock.calls[0][0]).event).toBe("pong");
     expect(sockets.heartbeat).not.toHaveBeenCalled();
   });
 
@@ -38,9 +40,7 @@ describe("SocketsGateway ping", () => {
 
     await gateway.handleMessage(signedIn);
 
-    expect(signedIn.send).toHaveBeenCalledWith(
-      JSON.stringify({ event: "pong" }),
-    );
+    expect(JSON.parse(signedIn.send.mock.calls[0][0]).event).toBe("pong");
     expect(sockets.heartbeat).toHaveBeenCalledWith(
       "76561198000000001",
       "client-1",
@@ -57,6 +57,29 @@ describe("SocketsGateway ping", () => {
     await gateway.handleMessage(signedIn);
 
     expect(sentBeforeUpdate).toBe(true);
+  });
+
+  it("tells the web the api's time and when its ping left", async () => {
+    jest.spyOn(Date, "now").mockReturnValue(1_800_000_000_000);
+    const anonymous = client();
+
+    await gateway.handleMessage(anonymous, { sentAt: 1_799_999_999_950 });
+
+    expect(JSON.parse(anonymous.send.mock.calls[0][0])).toEqual({
+      event: "pong",
+      data: { serverNow: 1_800_000_000_000, sentAt: 1_799_999_999_950 },
+    });
+  });
+
+  it("echoes no ping time it cannot read as one", async () => {
+    const anonymous = client();
+
+    await gateway.handleMessage(anonymous, { sentAt: "soon" } as any);
+    await gateway.handleMessage(anonymous);
+
+    for (const [sent] of anonymous.send.mock.calls) {
+      expect(JSON.parse(sent).data).not.toHaveProperty("sentAt");
+    }
   });
 
   it("sends nothing to a socket that is no longer open", async () => {

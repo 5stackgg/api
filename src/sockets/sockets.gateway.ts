@@ -16,11 +16,25 @@ export class SocketsGateway implements OnGatewayConnection {
   constructor(private readonly sockets: SocketsService) {}
 
   @SubscribeMessage("ping")
-  public async handleMessage(client: FiveStackWebSocketClient): Promise<void> {
+  public async handleMessage(
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+    @MessageBody() data?: { sentAt?: number },
+  ): Promise<void> {
     // Sent here rather than returned: WsAdapter only replies once the handler
     // resolves, which would hold the pong behind the redis writes below.
+    //
+    // sentAt goes back as it came so the web can tell which of its pings this
+    // answers when timing its clock against serverNow.
     if (client.readyState === client.OPEN) {
-      client.send(JSON.stringify({ event: "pong" }));
+      client.send(
+        JSON.stringify({
+          event: "pong",
+          data: {
+            serverNow: Date.now(),
+            sentAt: Number.isFinite(data?.sentAt) ? data.sentAt : undefined,
+          },
+        }),
+      );
     }
 
     await client.authentication;
