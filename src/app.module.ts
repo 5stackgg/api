@@ -55,6 +55,7 @@ import { AwardsModule } from "./awards/awards.module";
 import { FixturesModule } from "./fixtures/fixtures.module";
 import { TournamentsModule } from "./tournaments/tournaments.module";
 import { FaceitModule } from "./faceit/faceit.module";
+import { ExtensionModule } from "./extension/extension.module";
 import { SteamMatchHistoryModule } from "./steam-match-history/steam-match-history.module";
 import { SteamPresenceModule } from "./steam-presence/steam-presence.module";
 import { NewsModule } from "./news/news.module";
@@ -162,6 +163,7 @@ import { AdministratorOrLoopbackMiddleware } from "./auth/AdministratorOrLoopbac
     FixturesModule,
     TournamentsModule,
     FaceitModule,
+    ExtensionModule,
     SteamMatchHistoryModule,
     SteamPresenceModule,
     NewsModule,

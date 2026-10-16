@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { Job } from "bullmq";
+import { Job, UnrecoverableError } from "bullmq";
 import { Logger } from "@nestjs/common";
 import { WorkerHost } from "@nestjs/bullmq";
 import { UseQueue } from "src/utilities/QueueProcessors";
@@ -13,6 +13,9 @@ export type ProcessUploadedDemoPayload = {
   key: string;
   file_name: string;
   steam_id: string;
+  external_id?: string;
+  source?: "faceit";
+  match_start_time?: string | null;
 };
 
 @UseQueue("SteamMatchHistory", SteamMatchHistoryQueues.ProcessUploadedDemo, {
@@ -30,7 +33,8 @@ export class ProcessUploadedDemo extends WorkerHost {
   }
 
   async process(job: Job<ProcessUploadedDemoPayload>): Promise<void> {
-    const { key, file_name, steam_id } = job.data;
+    const { key, file_name, steam_id, external_id, source, match_start_time } =
+      job.data;
     const lastAttempt = (job.attemptsMade ?? 0) >= (job.opts.attempts ?? 1) - 1;
 
     try {
@@ -48,7 +52,17 @@ export class ProcessUploadedDemo extends WorkerHost {
         throw new Error("demo failed to parse");
       }
 
+      // Anyone can send a FACEIT link, so the demo has to prove it was
+      // recorded on a FACEIT server before it is filed as one.
+      if (
+        source === "faceit" &&
+        !MatchImportService.isFaceitServer(parsed.server_name)
+      ) {
+        throw new UnrecoverableError("not a FACEIT demo");
+      }
+
       const dedupeKey =
+        external_id ??
         MatchImportService.extractFaceitMatchId(file_name) ??
         file_name
           .replace(/^.*\//, "")
@@ -57,10 +71,10 @@ export class ProcessUploadedDemo extends WorkerHost {
 
       const result = await this.matchImport.importExternalDemo(
         parsed,
-        "valve",
+        source ?? "valve",
         dedupeKey,
         {
-          matchStartTime: null,
+          matchStartTime: match_start_time ?? null,
           externalId: dedupeKey,
           sourceObjectKey: key,
           matchMapId,
@@ -71,9 +85,15 @@ export class ProcessUploadedDemo extends WorkerHost {
         `process-uploaded-demo done steam_id=${steam_id} match_id=${result.matchId ?? "<none>"}${result.skipped ? ` skipped=${result.skipped}` : ""}`,
       );
 
+      // The queue drops a job's return value, so a skip is reported as the
+      // failure reason, where the extension's status lookup reads it.
+      if (!result.matchId) {
+        throw new UnrecoverableError(result.skipped ?? "demo was not imported");
+      }
+
       await this.s3.remove(key);
     } catch (error) {
-      if (lastAttempt) {
+      if (lastAttempt || error instanceof UnrecoverableError) {
         await this.s3.remove(key);
         this.logger.warn(
           `process-uploaded-demo failed steam_id=${steam_id} key=${key}: ${(error as Error)?.message ?? error}`,

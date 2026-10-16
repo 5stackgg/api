@@ -48,7 +48,7 @@ import { ImportFaceitMatch } from "./jobs/ImportFaceitMatch";
     ImportFaceitMatch,
     ...getQueuesProcessors("Faceit"),
   ],
-  exports: [FaceitService],
+  exports: [FaceitService, FaceitMatchImportService],
 })
 export class FaceitModule {
   constructor(

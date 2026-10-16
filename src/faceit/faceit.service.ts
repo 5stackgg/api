@@ -274,6 +274,24 @@ export class FaceitService {
     };
   }
 
+  public async getMatchDemos(
+    matchId: string,
+  ): Promise<{ demoUrls: Array<string>; finishedAt: string | null } | null> {
+    const data = await this.get<{
+      demo_url?: Array<string>;
+      finished_at?: number;
+    }>(`/matches/${encodeURIComponent(matchId)}`);
+    if (!data) {
+      return null;
+    }
+    return {
+      demoUrls: data.demo_url ?? [],
+      finishedAt: data.finished_at
+        ? new Date(data.finished_at * 1000).toISOString()
+        : null,
+    };
+  }
+
   private async get<T>(path: string): Promise<T | null> {
     const url = `${FaceitService.BASE_URL}${path}`;
     this.logger.debug(`faceit GET ${url}`);

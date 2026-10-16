@@ -30,6 +30,7 @@ type Modules =
   | "DedicatedServers"
   | "SteamMatchHistory"
   | "Faceit"
+  | "Extension"
   | "S3Scan"
   | "Scrims"
   | "Chat"

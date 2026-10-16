@@ -99,6 +99,38 @@ export class CacheService {
     return 0
   `;
 
+  // A refused request hands its amount back, so being over the limit never
+  // pushes the window's count further out of reach.
+  private static readonly CONSUME_SCRIPT = `
+    local count = redis.call('INCRBY', KEYS[1], ARGV[1])
+    if count == tonumber(ARGV[1]) then
+      redis.call('PEXPIRE', KEYS[1], ARGV[3])
+    end
+    if count > tonumber(ARGV[2]) then
+      redis.call('DECRBY', KEYS[1], ARGV[1])
+      return 0
+    end
+    return 1
+  `;
+
+  public async consume(
+    key: string,
+    amount: number,
+    limit: number,
+    windowMs: number,
+  ): Promise<boolean> {
+    return (
+      (await this.connection.eval(
+        CacheService.CONSUME_SCRIPT,
+        1,
+        key,
+        amount,
+        limit,
+        windowMs,
+      )) === 1
+    );
+  }
+
   public async acquireLock(
     key: string,
     seconds: number,

@@ -219,4 +219,46 @@ describe("import a Valve match from a pasted share code", () => {
       service.importShareCode(player, SHARE_CODE),
     ).resolves.toMatchObject({ ok: false });
   });
+
+  // The extension sends a page's worth of codes at once and has its own
+  // hourly cap, so the per-paste throttle would refuse all but the first.
+  it("skips the per-paste throttle for a batch from the extension", async () => {
+    const player = await fx.player();
+    const { service } = build();
+
+    await expect(service.importShareCode(player, SHARE_CODE)).resolves.toEqual({
+      ok: true,
+    });
+    await expect(
+      service.importShareCode(player, SHARE_CODE, { cooldown: false }),
+    ).resolves.toEqual({ ok: true });
+  });
+
+  it("looks up where each share code's import stands", async () => {
+    const player = await fx.player();
+    const { service } = build();
+    const OTHER = "CSGO-bB99d-EEBtm-RzCYc-GjD8g-ofYCA";
+
+    await expect(
+      service.lookupShareCodes([SHARE_CODE, OTHER, "not a code"]),
+    ).resolves.toEqual({
+      [SHARE_CODE]: { state: "none" },
+      [OTHER]: { state: "none" },
+      "not a code": { state: "none", reason: "invalid share code" },
+    });
+
+    await seedPending("Failed", player);
+    await expect(service.lookupShareCodes([SHARE_CODE])).resolves.toEqual({
+      [SHARE_CODE]: { state: "failed", reason: "gc timed out" },
+    });
+
+    const ctx = await fx.bareMatch();
+    await postgres.query(
+      `UPDATE matches SET source = 'valve', external_id = $2 WHERE id = $1`,
+      [ctx.matchId, VALVE_MATCH_ID],
+    );
+    await expect(service.lookupShareCodes([SHARE_CODE])).resolves.toEqual({
+      [SHARE_CODE]: { state: "imported", match_id: ctx.matchId },
+    });
+  });
 });
