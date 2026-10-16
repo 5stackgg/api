@@ -212,11 +212,11 @@ export class PostgresController {
     // Try to get EXPLAIN plan for pev2 (https://github.com/dalibo/pev2)
     let explainPlan: string | null = null;
     try {
-      // ANALYZE executes the statement. A read-only transaction on one pinned
-      // connection is what keeps a DML entry from writing: separate pool
-      // queries for BEGIN and ROLLBACK can each land on a different connection.
-      explainPlan = await this.postgres.transaction(async (client) => {
-        await client.query("SET TRANSACTION READ ONLY");
+      // ANALYZE executes the statement, so it must not be able to keep
+      // anything. Separate pool queries for BEGIN and ROLLBACK can each land on
+      // a different connection, and READ ONLY alone still lets CREATE TABLE AS
+      // through under EXPLAIN.
+      explainPlan = await this.postgres.throwawayReadOnly(async (client) => {
         const { rows } = await client.query(
           `EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON) ${statRow.query}`,
         );
