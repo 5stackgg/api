@@ -221,6 +221,12 @@ describe("map asset builds (SQL-driven)", () => {
         build: "25537370",
         manifest: "25537370/manifest.r2.json",
       },
+      "25537370/manifest.json": {
+        version: 1,
+        build: "25537370",
+        maps,
+        failed: ["de_dogtown"],
+      },
       "25537370/manifest.r2.json": { version: 1, build: "25537370", maps },
     });
 
