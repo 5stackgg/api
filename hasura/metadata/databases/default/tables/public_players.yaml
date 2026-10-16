@@ -356,6 +356,11 @@ computed_fields:
       function:
         name: is_muted
         schema: public
+  - name: live_lineup
+    definition:
+      function:
+        name: get_player_live_lineup
+        schema: public
   - name: losses
     definition:
       function:

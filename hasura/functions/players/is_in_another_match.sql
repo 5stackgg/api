@@ -1,19 +1,42 @@
+-- Starts from the few active matches, never from the player's history.
+-- idx_matches_active_schedule answers the active statuses and the Scheduled
+-- cut-off as two index ranges, so matches scheduled further out are never read.
+-- Each lineup is probed on both columns of its unique key, so any index the
+-- planner picks reads a single entry; an index on steam_id alone would read the
+-- player's whole history instead, which is why match_lineup_players has none.
+-- The CTE keeps match_series_decided to the player's own matches.
 CREATE OR REPLACE FUNCTION public.is_in_another_match(player public.players)
 RETURNS boolean
 LANGUAGE sql
 STABLE
 AS $$
+    WITH mine AS MATERIALIZED (
+        SELECT m.id, m.status, m.scheduled_at
+        FROM matches m
+        CROSS JOIN LATERAL (
+            SELECT 1
+            FROM match_lineup_players mlp
+            WHERE mlp.match_lineup_id = m.lineup_1_id
+              AND mlp.steam_id = player.steam_id
+            UNION ALL
+            SELECT 1
+            FROM match_lineup_players mlp
+            WHERE mlp.match_lineup_id = m.lineup_2_id
+              AND mlp.steam_id = player.steam_id
+            LIMIT 1
+        ) member
+        WHERE m.source <> 'practice'
+          AND (
+              m.status IN ('Veto', 'WaitingForCheckIn', 'WaitingForServer', 'Live')
+              OR (m.status = 'Scheduled' AND m.scheduled_at <= NOW() + INTERVAL '1 hour')
+          )
+    )
     SELECT EXISTS (
         SELECT 1
-        FROM get_player_matches(player) AS pm
-        -- A utility practice server is a Live match row seating its host, and
-        -- the host can leave it whenever they like.
-        WHERE pm.source <> 'practice'
-        AND (
+        FROM mine pm
+        WHERE (
             pm.status IN ('Veto', 'WaitingForCheckIn', 'WaitingForServer')
             OR (pm.status = 'Live' AND NOT match_series_decided(pm.id))
-            -- A scheduled match only ties the player up once it's within an hour
-            -- of kickoff; before that they're free to play other matches.
             OR (
                 pm.status = 'Scheduled'
                 AND pm.scheduled_at IS NOT NULL
