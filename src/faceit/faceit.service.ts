@@ -274,12 +274,15 @@ export class FaceitService {
     };
   }
 
-  public async getMatchDemos(
-    matchId: string,
-  ): Promise<{ demoUrls: Array<string>; finishedAt: string | null } | null> {
+  public async getMatchDemos(matchId: string): Promise<{
+    demoUrls: Array<string>;
+    finishedAt: string | null;
+    players: Array<string>;
+  } | null> {
     const data = await this.get<{
       demo_url?: Array<string>;
       finished_at?: number;
+      teams?: Record<string, { roster?: Array<{ game_player_id?: string }> }>;
     }>(`/matches/${encodeURIComponent(matchId)}`);
     if (!data) {
       return null;
@@ -289,6 +292,10 @@ export class FaceitService {
       finishedAt: data.finished_at
         ? new Date(data.finished_at * 1000).toISOString()
         : null,
+      players: Object.values(data.teams ?? {})
+        .flatMap((team) => team.roster ?? [])
+        .map((player) => player.game_player_id)
+        .filter((steamId): steamId is string => !!steamId),
     };
   }
 

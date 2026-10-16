@@ -3,6 +3,7 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  ForbiddenException,
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bullmq";
@@ -123,6 +124,21 @@ export class ExtensionService {
     return { faceit: allowed && this.faceit.isEnabled(), valve };
   }
 
+  public async faceitAccount(
+    steamId: string,
+  ): Promise<{ player_id: string; nickname: string | null } | null> {
+    const [player] = await this.postgres.query<
+      Array<{ faceit_player_id: string | null; faceit_nickname: string | null }>
+    >(
+      `SELECT faceit_player_id, faceit_nickname FROM public.players
+        WHERE steam_id = $1::bigint`,
+      [steamId],
+    );
+    return player?.faceit_player_id
+      ? { player_id: player.faceit_player_id, nickname: player.faceit_nickname }
+      : null;
+  }
+
   public async lookupFaceit(
     rooms: Array<FaceitRoom>,
   ): Promise<Record<string, FaceitLookup>> {
@@ -176,14 +192,19 @@ export class ExtensionService {
   }
 
   public async queueFaceitDemo(
-    steamId: string,
+    user: { steam_id: string; role: string },
     demo: { matchId: string; url: string },
   ): Promise<ImportLookup> {
+    const steamId = user.steam_id;
     const match = await this.faceitDemos(steamId, demo.matchId);
     if (!match) {
       throw new ServiceUnavailableException(
         "FACEIT did not answer, try again shortly",
       );
+    }
+    // Imports are for a player's own matches; administrators may import any.
+    if (user.role !== "administrator" && !match.players.includes(steamId)) {
+      throw new ForbiddenException("only players in this match can import it");
     }
     const index = match.demoUrls.findIndex((resourceUrl) => {
       try {
@@ -259,8 +280,12 @@ export class ExtensionService {
   private async faceitDemos(
     steamId: string,
     matchId: string,
-  ): Promise<{ demoUrls: Array<string>; finishedAt: string | null } | null> {
-    const key = `extension:faceit-demos:${matchId}`;
+  ): Promise<{
+    demoUrls: Array<string>;
+    finishedAt: string | null;
+    players: Array<string>;
+  } | null> {
+    const key = `extension:faceit-demos:v2:${matchId}`;
     const cached = await this.cache.get(key);
     if (cached) {
       return cached;

@@ -21,6 +21,9 @@ export type ResolvedMatch = {
   demoUrl: string | null;
   mapName: string | null;
   matchStartTime: string | null;
+  // Steam account ids (steam64 minus the individual offset) of everyone in
+  // the match, from the GC's reservation. Empty when the GC left it out.
+  accountIds: Array<number>;
 };
 
 export class SteamGcConnectionError extends Error {}
@@ -261,8 +264,14 @@ export class SteamGcService
     const match = matches.at(0) as {
       matchtime?: number;
       watchablematchinfo?: { game_mapgroup?: string; game_map?: string };
-      roundstats_legacy?: { map?: string };
-      roundstatsall?: Array<{ map?: string }>;
+      roundstats_legacy?: {
+        map?: string;
+        reservation?: { account_ids?: Array<number> };
+      };
+      roundstatsall?: Array<{
+        map?: string;
+        reservation?: { account_ids?: Array<number> };
+      }>;
     };
 
     let demoUrl: string | null = null;
@@ -295,10 +304,18 @@ export class SteamGcService
     // game_mapgroup is "mg_de_dust2"-style; strip the "mg_" prefix.
     const mapName = rawMap?.replace(/^mg_/, "") ?? null;
 
+    const accountIds = [
+      ...(match.roundstats_legacy?.reservation?.account_ids ?? []),
+      ...(match.roundstatsall ?? []).flatMap(
+        (round) => round?.reservation?.account_ids ?? [],
+      ),
+    ].filter((id) => Number.isInteger(id) && id > 0);
+
     return {
       demoUrl,
       mapName,
       matchStartTime,
+      accountIds: [...new Set(accountIds)],
     };
   }
 }

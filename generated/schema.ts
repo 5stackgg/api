@@ -425,6 +425,19 @@ export interface NetworkStats {
     __typename: 'NetworkStats'
 }
 
+export interface NewsCommentOutput {
+    id: Scalars['uuid']
+    parent_id: (Scalars['uuid'] | null)
+    __typename: 'NewsCommentOutput'
+}
+
+export interface NewsCommentVoteOutput {
+    comment_id: Scalars['uuid']
+    vote_count: Scalars['Int']
+    voted: Scalars['Boolean']
+    __typename: 'NewsCommentVoteOutput'
+}
+
 export interface NewsPost {
     author_steam_id: (Scalars['String'] | null)
     content_markdown: Scalars['String']
@@ -1119,6 +1132,23 @@ export interface TournamentMatchResetImpact {
     __typename: 'TournamentMatchResetImpact'
 }
 
+export interface TournamentMvpCandidate {
+    adr: Scalars['Float']
+    avatar_url: (Scalars['String'] | null)
+    avg_impact: Scalars['Float']
+    deaths: Scalars['Int']
+    headshot_percentage: Scalars['Float']
+    kdr: Scalars['Float']
+    kills: Scalars['Int']
+    matches: Scalars['Int']
+    name: Scalars['String']
+    player_steam_id: Scalars['String']
+    rank: Scalars['Int']
+    total_impact: Scalars['Float']
+    tournament_team_id: Scalars['uuid']
+    __typename: 'TournamentMvpCandidate'
+}
+
 export interface UtilityBlockingOutput {
     degraded: (Scalars['Boolean'] | null)
     message: (Scalars['String'] | null)
@@ -1139,6 +1169,19 @@ export interface UtilityCalibrationOutput {
     ready: Scalars['Boolean']
     status: Scalars['String']
     __typename: 'UtilityCalibrationOutput'
+}
+
+export interface UtilityDiscoveryOutput {
+    discovery_id: (Scalars['uuid'] | null)
+    message: (Scalars['String'] | null)
+    predicted: Scalars['Int']
+    status: Scalars['String']
+    __typename: 'UtilityDiscoveryOutput'
+}
+
+export interface UtilityDiscoverySaveOutput {
+    lineup_id: Scalars['uuid']
+    __typename: 'UtilityDiscoverySaveOutput'
 }
 
 export interface UtilityDriftScanOutput {
@@ -1315,9 +1358,39 @@ export interface UtilityRemineOutput {
     __typename: 'UtilityRemineOutput'
 }
 
+export interface UtilityRenderBulkOutput {
+    queued: Scalars['Int']
+    skipped: Scalars['Int']
+    __typename: 'UtilityRenderBulkOutput'
+}
+
 export interface UtilityRenderClearOutput {
     cleared: Scalars['Int']
     __typename: 'UtilityRenderClearOutput'
+}
+
+export interface UtilityRenderCoverageOutput {
+    current: Scalars['Int']
+    lineups: UtilityRenderGap[]
+    missing: Scalars['Int']
+    outdated: Scalars['Int']
+    pipeline_version: (Scalars['Int'] | null)
+    queued: Scalars['Int']
+    total: Scalars['Int']
+    unrenderable: Scalars['Int']
+    version: Scalars['Int']
+    __typename: 'UtilityRenderCoverageOutput'
+}
+
+export interface UtilityRenderGap {
+    id: Scalars['uuid']
+    map_name: Scalars['String']
+    name: (Scalars['String'] | null)
+    preview_version: (Scalars['Int'] | null)
+    reason: (Scalars['String'] | null)
+    state: Scalars['String']
+    utility_type: Scalars['String']
+    __typename: 'UtilityRenderGap'
 }
 
 export interface UtilityRenderQueueOutput {
@@ -1344,6 +1417,21 @@ export interface UtilitySightlineResult {
     transmittance: Scalars['Float']
     world_blocked: Scalars['Boolean']
     __typename: 'UtilitySightlineResult'
+}
+
+export interface UtilitySmokePreviewOutput {
+    den: (Scalars['String'] | null)
+    dx: (Scalars['Int'] | null)
+    dy: (Scalars['Int'] | null)
+    dz: (Scalars['Int'] | null)
+    ox: (Scalars['Float'] | null)
+    oy: (Scalars['Float'] | null)
+    oz: (Scalars['Float'] | null)
+    vs: (Scalars['Float'] | null)
+    x: Scalars['Float']
+    y: Scalars['Float']
+    z: Scalars['Float']
+    __typename: 'UtilitySmokePreviewOutput'
 }
 
 export interface UtilitySolveOutput {
@@ -2765,6 +2853,151 @@ export interface chat_read_state_var_samp_fields {
 export interface chat_read_state_variance_fields {
     steam_id: (Scalars['Float'] | null)
     __typename: 'chat_read_state_variance_fields'
+}
+
+
+/** columns and relationships of "chat_room_settings" */
+export interface chat_room_settings {
+    mute_minutes: (Scalars['Int'] | null)
+    muted: Scalars['Boolean']
+    muted_until: (Scalars['timestamptz'] | null)
+    notify: Scalars['String']
+    steam_id: Scalars['bigint']
+    thread: Scalars['String']
+    __typename: 'chat_room_settings'
+}
+
+
+/** aggregated selection of "chat_room_settings" */
+export interface chat_room_settings_aggregate {
+    aggregate: (chat_room_settings_aggregate_fields | null)
+    nodes: chat_room_settings[]
+    __typename: 'chat_room_settings_aggregate'
+}
+
+
+/** aggregate fields of "chat_room_settings" */
+export interface chat_room_settings_aggregate_fields {
+    avg: (chat_room_settings_avg_fields | null)
+    count: Scalars['Int']
+    max: (chat_room_settings_max_fields | null)
+    min: (chat_room_settings_min_fields | null)
+    stddev: (chat_room_settings_stddev_fields | null)
+    stddev_pop: (chat_room_settings_stddev_pop_fields | null)
+    stddev_samp: (chat_room_settings_stddev_samp_fields | null)
+    sum: (chat_room_settings_sum_fields | null)
+    var_pop: (chat_room_settings_var_pop_fields | null)
+    var_samp: (chat_room_settings_var_samp_fields | null)
+    variance: (chat_room_settings_variance_fields | null)
+    __typename: 'chat_room_settings_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface chat_room_settings_avg_fields {
+    mute_minutes: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_room_settings_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "chat_room_settings" */
+export type chat_room_settings_constraint = 'chat_room_settings_pkey'
+
+
+/** aggregate max on columns */
+export interface chat_room_settings_max_fields {
+    mute_minutes: (Scalars['Int'] | null)
+    muted_until: (Scalars['timestamptz'] | null)
+    notify: (Scalars['String'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    thread: (Scalars['String'] | null)
+    __typename: 'chat_room_settings_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface chat_room_settings_min_fields {
+    mute_minutes: (Scalars['Int'] | null)
+    muted_until: (Scalars['timestamptz'] | null)
+    notify: (Scalars['String'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    thread: (Scalars['String'] | null)
+    __typename: 'chat_room_settings_min_fields'
+}
+
+
+/** response of any mutation on the table "chat_room_settings" */
+export interface chat_room_settings_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: chat_room_settings[]
+    __typename: 'chat_room_settings_mutation_response'
+}
+
+
+/** select columns of table "chat_room_settings" */
+export type chat_room_settings_select_column = 'mute_minutes' | 'muted' | 'muted_until' | 'notify' | 'steam_id' | 'thread'
+
+
+/** aggregate stddev on columns */
+export interface chat_room_settings_stddev_fields {
+    mute_minutes: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_room_settings_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface chat_room_settings_stddev_pop_fields {
+    mute_minutes: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_room_settings_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface chat_room_settings_stddev_samp_fields {
+    mute_minutes: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_room_settings_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface chat_room_settings_sum_fields {
+    mute_minutes: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'chat_room_settings_sum_fields'
+}
+
+
+/** update columns of table "chat_room_settings" */
+export type chat_room_settings_update_column = 'mute_minutes' | 'muted' | 'muted_until' | 'notify' | 'steam_id' | 'thread'
+
+
+/** aggregate var_pop on columns */
+export interface chat_room_settings_var_pop_fields {
+    mute_minutes: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_room_settings_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface chat_room_settings_var_samp_fields {
+    mute_minutes: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_room_settings_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface chat_room_settings_variance_fields {
+    mute_minutes: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_room_settings_variance_fields'
 }
 
 
@@ -6245,7 +6478,7 @@ export interface e_notification_types_aggregate_fields {
 /** unique or primary key constraints on table "e_notification_types" */
 export type e_notification_types_constraint = 'e_notification_types_pkey'
 
-export type e_notification_types_enum = 'AdminCall' | 'AwardGranted' | 'ChatMessage' | 'ClipReady' | 'DedicatedServerRconStatus' | 'DedicatedServerStatus' | 'DraftInvite' | 'EloRecompute' | 'EventReminder' | 'FormTeamSuggestion' | 'GameNodeStatus' | 'GameUpdate' | 'LeagueMatchUnscheduled' | 'LeagueProposalAccepted' | 'LeagueProposalDeclined' | 'LeagueProposalReceived' | 'LeagueRegistrationDecision' | 'LeagueRosterUndersized' | 'MatchAbandoned' | 'MatchChatMessage' | 'MatchFound' | 'MatchImported' | 'MatchStatsReady' | 'MatchStatusChange' | 'MatchSupport' | 'NadeDriftScanFinished' | 'NadePracticeInvite' | 'NadePracticeReady' | 'NameChangeApproved' | 'NameChangeDenied' | 'NameChangeRequest' | 'NewsPublished' | 'PlayerReindex' | 'PlayerSanctioned' | 'PlayerWarning' | 'ScrimAlertMatch' | 'ScrimMatchCanceled' | 'ScrimMatchScheduled' | 'ScrimRequestAccepted' | 'ScrimRequestCountered' | 'ScrimRequestDeclined' | 'ScrimRequestExpired' | 'ScrimRequestReceived' | 'ScrimTimeChanged' | 'SeasonEnded' | 'StorageScan' | 'TeamInvite' | 'TeammateBanned' | 'TournamentCheckInClosing' | 'TournamentCheckInMissed' | 'TournamentCheckInOpen' | 'TournamentCreated' | 'TournamentInvite' | 'TournamentPartySignup' | 'TournamentReminder' | 'TournamentTeamInvite' | 'UtilityDriftScanFinished' | 'UtilityPracticeInvite' | 'UtilityPracticeReady'
+export type e_notification_types_enum = 'AdminCall' | 'AwardGranted' | 'ChatMessage' | 'ClipReady' | 'DedicatedServerRconStatus' | 'DedicatedServerStatus' | 'DraftInvite' | 'EloRecompute' | 'EventReminder' | 'FormTeamSuggestion' | 'GameNodeStatus' | 'GameUpdate' | 'LeagueMatchUnscheduled' | 'LeagueProposalAccepted' | 'LeagueProposalDeclined' | 'LeagueProposalReceived' | 'LeagueRegistrationDecision' | 'LeagueRosterUndersized' | 'MatchAbandoned' | 'MatchChatMessage' | 'MatchFound' | 'MatchImported' | 'MatchStatsReady' | 'MatchStatusChange' | 'MatchSupport' | 'NadeDriftScanFinished' | 'NadePracticeInvite' | 'NadePracticeReady' | 'NameChangeApproved' | 'NameChangeDenied' | 'NameChangeRequest' | 'NewsCommentReply' | 'NewsPublished' | 'PlayerReindex' | 'PlayerSanctioned' | 'PlayerWarning' | 'ScrimAlertMatch' | 'ScrimMatchCanceled' | 'ScrimMatchScheduled' | 'ScrimRequestAccepted' | 'ScrimRequestCountered' | 'ScrimRequestDeclined' | 'ScrimRequestExpired' | 'ScrimRequestReceived' | 'ScrimTimeChanged' | 'SeasonEnded' | 'StorageScan' | 'TeamInvite' | 'TeammateBanned' | 'TournamentCheckInClosing' | 'TournamentCheckInMissed' | 'TournamentCheckInOpen' | 'TournamentCreated' | 'TournamentInvite' | 'TournamentPartySignup' | 'TournamentReminder' | 'TournamentTeamInvite' | 'UtilityDriftScanFinished' | 'UtilityPracticeInvite' | 'UtilityPracticeReady'
 
 
 /** aggregate max on columns */
@@ -7888,7 +8121,7 @@ export interface e_utility_sources_aggregate_fields {
 /** unique or primary key constraints on table "e_utility_sources" */
 export type e_utility_sources_constraint = 'e_utility_sources_pkey'
 
-export type e_utility_sources_enum = 'demo' | 'editor' | 'fork' | 'import' | 'plugin'
+export type e_utility_sources_enum = 'demo' | 'discovery' | 'editor' | 'fork' | 'import' | 'plugin'
 
 
 /** aggregate max on columns */
@@ -13381,6 +13614,7 @@ export interface maps {
     name: Scalars['String']
     patch: (Scalars['String'] | null)
     poster: (Scalars['String'] | null)
+    seeded: Scalars['Boolean']
     type: e_match_types_enum
     workshop_map_id: (Scalars['String'] | null)
     __typename: 'maps'
@@ -13445,19 +13679,19 @@ export interface maps_mutation_response {
 
 
 /** select columns of table "maps" */
-export type maps_select_column = 'active_pool' | 'deleted_at' | 'enabled' | 'id' | 'label' | 'name' | 'patch' | 'poster' | 'type' | 'workshop_map_id'
+export type maps_select_column = 'active_pool' | 'deleted_at' | 'enabled' | 'id' | 'label' | 'name' | 'patch' | 'poster' | 'seeded' | 'type' | 'workshop_map_id'
 
 
 /** select "maps_aggregate_bool_exp_bool_and_arguments_columns" columns of table "maps" */
-export type maps_select_column_maps_aggregate_bool_exp_bool_and_arguments_columns = 'active_pool' | 'enabled'
+export type maps_select_column_maps_aggregate_bool_exp_bool_and_arguments_columns = 'active_pool' | 'enabled' | 'seeded'
 
 
 /** select "maps_aggregate_bool_exp_bool_or_arguments_columns" columns of table "maps" */
-export type maps_select_column_maps_aggregate_bool_exp_bool_or_arguments_columns = 'active_pool' | 'enabled'
+export type maps_select_column_maps_aggregate_bool_exp_bool_or_arguments_columns = 'active_pool' | 'enabled' | 'seeded'
 
 
 /** update columns of table "maps" */
-export type maps_update_column = 'active_pool' | 'deleted_at' | 'enabled' | 'id' | 'label' | 'name' | 'patch' | 'poster' | 'type' | 'workshop_map_id'
+export type maps_update_column = 'active_pool' | 'deleted_at' | 'enabled' | 'id' | 'label' | 'name' | 'patch' | 'poster' | 'seeded' | 'type' | 'workshop_map_id'
 
 
 /** columns and relationships of "match_clips" */
@@ -16179,6 +16413,8 @@ export interface mutation_root {
     addDraftPlayer: (SuccessOutput | null)
     /** Add a friends-role presence bot account to the pool */
     addSteamPresenceBotAccount: (SuccessOutput | null)
+    /** Organizer adds a player to a tournament's free agent pool */
+    addTournamentFreeAgent: (SuccessOutput | null)
     approveNameChange: (SuccessOutput | null)
     /** execute VOLATILE function "approve_league_season_movements" which returns "league_team_movements" */
     approve_league_season_movements: league_team_movements[]
@@ -16218,6 +16454,8 @@ export interface mutation_root {
     cancelReparseAllDemos: (SuccessOutput | null)
     /** cancelScrimRequest */
     cancelScrimRequest: (SuccessOutput | null)
+    /** Stop a lineup discovery that has not finished */
+    cancelUtilityDiscovery: (SuccessOutput | null)
     /** Cancel an in-flight lineup preview render */
     cancelUtilityLineupRender: (SuccessOutput | null)
     changeUtilityPracticeMap: (UtilityPracticeMapChangeOutput | null)
@@ -16257,6 +16495,8 @@ export interface mutation_root {
     /** Delete a saved clip and its underlying S3 object */
     deleteClip: (SuccessOutput | null)
     deleteMatch: (SuccessOutput | null)
+    /** Delete your own news comment, or any of them as a moderator and above. */
+    deleteNewsComment: (SuccessOutput | null)
     /** Delete a news post. Caller role is verified against public.post_news_role. */
     deleteNewsPost: (SuccessOutput | null)
     /** Delete orphaned S3 objects found by the last scan (admin only). Each key is re-verified against the database before removal. */
@@ -16305,6 +16545,10 @@ export interface mutation_root {
     delete_chat_read_state: (chat_read_state_mutation_response | null)
     /** delete single row from the table: "chat_read_state" */
     delete_chat_read_state_by_pk: (chat_read_state | null)
+    /** delete data from the table: "chat_room_settings" */
+    delete_chat_room_settings: (chat_room_settings_mutation_response | null)
+    /** delete single row from the table: "chat_room_settings" */
+    delete_chat_room_settings_by_pk: (chat_room_settings | null)
     /** delete data from the table: "clip_render_jobs" */
     delete_clip_render_jobs: (clip_render_jobs_mutation_response | null)
     /** delete single row from the table: "clip_render_jobs" */
@@ -16781,6 +17025,10 @@ export interface mutation_root {
     delete_news_articles: (news_articles_mutation_response | null)
     /** delete single row from the table: "news_articles" */
     delete_news_articles_by_pk: (news_articles | null)
+    /** delete data from the table: "news_comments" */
+    delete_news_comments: (news_comments_mutation_response | null)
+    /** delete single row from the table: "news_comments" */
+    delete_news_comments_by_pk: (news_comments | null)
     /** delete data from the table: "notification_preferences" */
     delete_notification_preferences: (notification_preferences_mutation_response | null)
     /** delete single row from the table: "notification_preferences" */
@@ -16875,6 +17123,10 @@ export interface mutation_root {
     delete_player_steam_match_auth: (player_steam_match_auth_mutation_response | null)
     /** delete single row from the table: "player_steam_match_auth" */
     delete_player_steam_match_auth_by_pk: (player_steam_match_auth | null)
+    /** delete data from the table: "player_twitch_accounts" */
+    delete_player_twitch_accounts: (player_twitch_accounts_mutation_response | null)
+    /** delete single row from the table: "player_twitch_accounts" */
+    delete_player_twitch_accounts_by_pk: (player_twitch_accounts | null)
     /** delete data from the table: "player_unused_utility" */
     delete_player_unused_utility: (player_unused_utility_mutation_response | null)
     /** delete single row from the table: "player_unused_utility" */
@@ -17023,6 +17275,10 @@ export interface mutation_root {
     delete_tournament_invites_by_pk: (tournament_invites | null)
     /** delete data from the table: "tournament_leaderboard_entries" */
     delete_tournament_leaderboard_entries: (tournament_leaderboard_entries_mutation_response | null)
+    /** delete data from the table: "tournament_mvp_picks" */
+    delete_tournament_mvp_picks: (tournament_mvp_picks_mutation_response | null)
+    /** delete single row from the table: "tournament_mvp_picks" */
+    delete_tournament_mvp_picks_by_pk: (tournament_mvp_picks | null)
     /** delete data from the table: "tournament_no_shows" */
     delete_tournament_no_shows: (tournament_no_shows_mutation_response | null)
     /** delete single row from the table: "tournament_no_shows" */
@@ -17081,6 +17337,14 @@ export interface mutation_root {
     delete_utility_demo_throws: (utility_demo_throws_mutation_response | null)
     /** delete single row from the table: "utility_demo_throws" */
     delete_utility_demo_throws_by_pk: (utility_demo_throws | null)
+    /** delete data from the table: "utility_discoveries" */
+    delete_utility_discoveries: (utility_discoveries_mutation_response | null)
+    /** delete single row from the table: "utility_discoveries" */
+    delete_utility_discoveries_by_pk: (utility_discoveries | null)
+    /** delete data from the table: "utility_discovery_results" */
+    delete_utility_discovery_results: (utility_discovery_results_mutation_response | null)
+    /** delete single row from the table: "utility_discovery_results" */
+    delete_utility_discovery_results_by_pk: (utility_discovery_results | null)
     /** delete data from the table: "utility_drift_results" */
     delete_utility_drift_results: (utility_drift_results_mutation_response | null)
     /** delete single row from the table: "utility_drift_results" */
@@ -17147,8 +17411,12 @@ export interface mutation_root {
     delete_v_team_stage_results_by_pk: (v_team_stage_results | null)
     denyInvite: (SuccessOutput | null)
     denyNameChange: (SuccessOutput | null)
+    /** Find throws that land a smoke on a spot from an area, and queue them to be thrown for real */
+    discoverUtilityLineups: (UtilityDiscoveryOutput | null)
     /** Organizer regenerates the free agent teams and re-seeds */
     draftTournamentTeams: (TournamentDraftOutput | null)
+    /** Edit your own news comment within 10 minutes of posting it. */
+    editNewsComment: (NewsCommentOutput | null)
     /** Organizer pushes the check-in deadline out and reopens registration */
     extendTournamentCheckIn: (SuccessOutput | null)
     forfeitMatch: (SuccessOutput | null)
@@ -17202,6 +17470,10 @@ export interface mutation_root {
     insert_chat_read_state: (chat_read_state_mutation_response | null)
     /** insert a single row into the table: "chat_read_state" */
     insert_chat_read_state_one: (chat_read_state | null)
+    /** insert data into the table: "chat_room_settings" */
+    insert_chat_room_settings: (chat_room_settings_mutation_response | null)
+    /** insert a single row into the table: "chat_room_settings" */
+    insert_chat_room_settings_one: (chat_room_settings | null)
     /** insert data into the table: "clip_render_jobs" */
     insert_clip_render_jobs: (clip_render_jobs_mutation_response | null)
     /** insert a single row into the table: "clip_render_jobs" */
@@ -17682,6 +17954,10 @@ export interface mutation_root {
     insert_news_articles: (news_articles_mutation_response | null)
     /** insert a single row into the table: "news_articles" */
     insert_news_articles_one: (news_articles | null)
+    /** insert data into the table: "news_comments" */
+    insert_news_comments: (news_comments_mutation_response | null)
+    /** insert a single row into the table: "news_comments" */
+    insert_news_comments_one: (news_comments | null)
     /** insert data into the table: "notification_preferences" */
     insert_notification_preferences: (notification_preferences_mutation_response | null)
     /** insert a single row into the table: "notification_preferences" */
@@ -17778,6 +18054,10 @@ export interface mutation_root {
     insert_player_steam_match_auth: (player_steam_match_auth_mutation_response | null)
     /** insert a single row into the table: "player_steam_match_auth" */
     insert_player_steam_match_auth_one: (player_steam_match_auth | null)
+    /** insert data into the table: "player_twitch_accounts" */
+    insert_player_twitch_accounts: (player_twitch_accounts_mutation_response | null)
+    /** insert a single row into the table: "player_twitch_accounts" */
+    insert_player_twitch_accounts_one: (player_twitch_accounts | null)
     /** insert data into the table: "player_unused_utility" */
     insert_player_unused_utility: (player_unused_utility_mutation_response | null)
     /** insert a single row into the table: "player_unused_utility" */
@@ -17930,6 +18210,10 @@ export interface mutation_root {
     insert_tournament_leaderboard_entries: (tournament_leaderboard_entries_mutation_response | null)
     /** insert a single row into the table: "tournament_leaderboard_entries" */
     insert_tournament_leaderboard_entries_one: (tournament_leaderboard_entries | null)
+    /** insert data into the table: "tournament_mvp_picks" */
+    insert_tournament_mvp_picks: (tournament_mvp_picks_mutation_response | null)
+    /** insert a single row into the table: "tournament_mvp_picks" */
+    insert_tournament_mvp_picks_one: (tournament_mvp_picks | null)
     /** insert data into the table: "tournament_no_shows" */
     insert_tournament_no_shows: (tournament_no_shows_mutation_response | null)
     /** insert a single row into the table: "tournament_no_shows" */
@@ -17990,6 +18274,14 @@ export interface mutation_root {
     insert_utility_demo_throws: (utility_demo_throws_mutation_response | null)
     /** insert a single row into the table: "utility_demo_throws" */
     insert_utility_demo_throws_one: (utility_demo_throws | null)
+    /** insert data into the table: "utility_discoveries" */
+    insert_utility_discoveries: (utility_discoveries_mutation_response | null)
+    /** insert a single row into the table: "utility_discoveries" */
+    insert_utility_discoveries_one: (utility_discoveries | null)
+    /** insert data into the table: "utility_discovery_results" */
+    insert_utility_discovery_results: (utility_discovery_results_mutation_response | null)
+    /** insert a single row into the table: "utility_discovery_results" */
+    insert_utility_discovery_results_one: (utility_discovery_results | null)
     /** insert data into the table: "utility_drift_results" */
     insert_utility_drift_results: (utility_drift_results_mutation_response | null)
     /** insert a single row into the table: "utility_drift_results" */
@@ -18070,7 +18362,7 @@ export interface mutation_root {
     joinDraftGame: (SuccessOutput | null)
     /** joinDraftGameAsParty */
     joinDraftGameAsParty: (SuccessOutput | null)
-    /** Register for a tournament that drafts teams, alone or with your lobby */
+    /** Register as a free agent for a tournament that drafts teams */
     joinTournamentAsFreeAgent: (SuccessOutput | null)
     /** Join a utility practice session */
     joinUtilityPractice: (UtilityPracticeSessionOutput | null)
@@ -18098,6 +18390,8 @@ export interface mutation_root {
     /** Flag in-flight clip_render_jobs paused; pod halts after current highlight. */
     pauseClipRenderBatch: (SuccessOutput | null)
     pollSteamMatchHistory: (SteamMatchHistoryPollOutput | null)
+    /** Comment on, or reply to a comment on, a published news post. Verified players and above, unsanctioned, for 7 days after it is published. */
+    postNewsComment: (NewsCommentOutput | null)
     /** previewDraftGame */
     previewDraftGame: (DraftGamePreviewOutput | null)
     /** Resolve a game mode into the plugins and cfg a server would load */
@@ -18119,6 +18413,8 @@ export interface mutation_root {
     /** Re-read which plugins are actually on a node */
     reconcileNodePlugins: (ReconcileNodePluginsOutput | null)
     reconnectLive: (SuccessOutput | null)
+    /** Organizer recreates the match of a bracket slot whose match was deleted */
+    recreateTournamentBracketMatch: (SuccessOutput | null)
     /** Spend a tournament invite link for an unlock on an invite only tournament */
     redeemTournamentInviteCode: (SuccessOutput | null)
     /** Reindex every player into the Typesense search index (admin only). Runs in the background; track via refreshAllPlayersStatus. */
@@ -18134,12 +18430,16 @@ export interface mutation_root {
     removeFixtures: (SuccessOutput | null)
     /** Remove a friends-role presence bot account */
     removeSteamPresenceBotAccount: (SuccessOutput | null)
+    /** Organizer removes a registered or waitlisted player from a tournament's free agent pool */
+    removeTournamentFreeAgent: (SuccessOutput | null)
     /** execute VOLATILE function "remove_league_team_from_season" which returns "league_team_seasons" */
     remove_league_team_from_season: league_team_seasons[]
     /** Rename file or directory on game server */
     renameServerItem: (SuccessOutput | null)
     /** Re-film a public lineup's preview clip */
     renderUtilityLineupPreview: (UtilityRenderQueueOutput | null)
+    /** Queue a preview render for every public lineup that is missing one or has an outdated one */
+    renderUtilityLineupPreviews: (UtilityRenderBulkOutput | null)
     /** execute VOLATILE function "reorder_league_divisions" which returns "league_divisions" */
     reorder_league_divisions: league_divisions[]
     /** Re-solve a lineup a drift scan says the map moved */
@@ -18176,6 +18476,8 @@ export interface mutation_root {
     saveAward: (Award | null)
     /** Create or update a first-party news post. Caller role is verified against public.post_news_role. */
     saveNewsPost: (NewsPost | null)
+    /** Turn a verified discovery result into a private lineup */
+    saveUtilityDiscoveryResult: (UtilityDiscoverySaveOutput | null)
     /** Mine a lineup out of a parsed demo */
     saveUtilityLineupFromDemo: (UtilityLineupOutput | null)
     /** Save a lineup recorded in a practice session */
@@ -18201,6 +18503,8 @@ export interface mutation_root {
     setMapWinner: (SuccessOutput | null)
     /** setMatchWinner */
     setMatchWinner: (SuccessOutput | null)
+    /** Hide or restore a news comment. Moderators and above. */
+    setNewsCommentHidden: (NewsCommentOutput | null)
     /** Publish or unpublish a news post. Caller role is verified against public.post_news_role. */
     setNewsPostStatus: (NewsPost | null)
     /** Restrict who may connect to a community server */
@@ -18213,6 +18517,8 @@ export interface mutation_root {
     setServerSettings: (SuccessOutput | null)
     /** Map a tournament placement to an award */
     setTournamentAward: (TournamentAward | null)
+    /** Pick the tournament MVP in place of the automatic pick (its organizers and administrators; checked by the API) */
+    setTournamentMvp: (SuccessOutput | null)
     setUtilityPracticeAccess: (SuccessOutput | null)
     setupGameServer: (SetupGameServeOutput | null)
     skipShaders: (SuccessOutput | null)
@@ -18253,6 +18559,8 @@ export interface mutation_root {
     /** Test FACEIT Data + Downloads API connectivity for the current admin */
     testFaceitIntegration: (FaceitTestOutput | null)
     testUpload: (TestUploadResponse | null)
+    /** Add or take back a +1 on someone else's news comment while the post takes comments. */
+    toggleNewsCommentVote: (NewsCommentVoteOutput | null)
     /** Remove a game plugin from a node's plugin store */
     uninstallGamePlugin: (SuccessOutput | null)
     unlinkDiscord: (SuccessOutput | null)
@@ -18318,6 +18626,12 @@ export interface mutation_root {
     update_chat_read_state_by_pk: (chat_read_state | null)
     /** update multiples rows of table: "chat_read_state" */
     update_chat_read_state_many: ((chat_read_state_mutation_response | null)[] | null)
+    /** update data of the table: "chat_room_settings" */
+    update_chat_room_settings: (chat_room_settings_mutation_response | null)
+    /** update single row of the table: "chat_room_settings" */
+    update_chat_room_settings_by_pk: (chat_room_settings | null)
+    /** update multiples rows of table: "chat_room_settings" */
+    update_chat_room_settings_many: ((chat_room_settings_mutation_response | null)[] | null)
     /** update data of the table: "clip_render_jobs" */
     update_clip_render_jobs: (clip_render_jobs_mutation_response | null)
     /** update single row of the table: "clip_render_jobs" */
@@ -19034,6 +19348,12 @@ export interface mutation_root {
     update_news_articles_by_pk: (news_articles | null)
     /** update multiples rows of table: "news_articles" */
     update_news_articles_many: ((news_articles_mutation_response | null)[] | null)
+    /** update data of the table: "news_comments" */
+    update_news_comments: (news_comments_mutation_response | null)
+    /** update single row of the table: "news_comments" */
+    update_news_comments_by_pk: (news_comments | null)
+    /** update multiples rows of table: "news_comments" */
+    update_news_comments_many: ((news_comments_mutation_response | null)[] | null)
     /** update data of the table: "notification_preferences" */
     update_notification_preferences: (notification_preferences_mutation_response | null)
     /** update single row of the table: "notification_preferences" */
@@ -19176,6 +19496,12 @@ export interface mutation_root {
     update_player_steam_match_auth_by_pk: (player_steam_match_auth | null)
     /** update multiples rows of table: "player_steam_match_auth" */
     update_player_steam_match_auth_many: ((player_steam_match_auth_mutation_response | null)[] | null)
+    /** update data of the table: "player_twitch_accounts" */
+    update_player_twitch_accounts: (player_twitch_accounts_mutation_response | null)
+    /** update single row of the table: "player_twitch_accounts" */
+    update_player_twitch_accounts_by_pk: (player_twitch_accounts | null)
+    /** update multiples rows of table: "player_twitch_accounts" */
+    update_player_twitch_accounts_many: ((player_twitch_accounts_mutation_response | null)[] | null)
     /** update data of the table: "player_unused_utility" */
     update_player_unused_utility: (player_unused_utility_mutation_response | null)
     /** update single row of the table: "player_unused_utility" */
@@ -19400,6 +19726,12 @@ export interface mutation_root {
     update_tournament_leaderboard_entries: (tournament_leaderboard_entries_mutation_response | null)
     /** update multiples rows of table: "tournament_leaderboard_entries" */
     update_tournament_leaderboard_entries_many: ((tournament_leaderboard_entries_mutation_response | null)[] | null)
+    /** update data of the table: "tournament_mvp_picks" */
+    update_tournament_mvp_picks: (tournament_mvp_picks_mutation_response | null)
+    /** update single row of the table: "tournament_mvp_picks" */
+    update_tournament_mvp_picks_by_pk: (tournament_mvp_picks | null)
+    /** update multiples rows of table: "tournament_mvp_picks" */
+    update_tournament_mvp_picks_many: ((tournament_mvp_picks_mutation_response | null)[] | null)
     /** update data of the table: "tournament_no_shows" */
     update_tournament_no_shows: (tournament_no_shows_mutation_response | null)
     /** update single row of the table: "tournament_no_shows" */
@@ -19488,6 +19820,18 @@ export interface mutation_root {
     update_utility_demo_throws_by_pk: (utility_demo_throws | null)
     /** update multiples rows of table: "utility_demo_throws" */
     update_utility_demo_throws_many: ((utility_demo_throws_mutation_response | null)[] | null)
+    /** update data of the table: "utility_discoveries" */
+    update_utility_discoveries: (utility_discoveries_mutation_response | null)
+    /** update single row of the table: "utility_discoveries" */
+    update_utility_discoveries_by_pk: (utility_discoveries | null)
+    /** update multiples rows of table: "utility_discoveries" */
+    update_utility_discoveries_many: ((utility_discoveries_mutation_response | null)[] | null)
+    /** update data of the table: "utility_discovery_results" */
+    update_utility_discovery_results: (utility_discovery_results_mutation_response | null)
+    /** update single row of the table: "utility_discovery_results" */
+    update_utility_discovery_results_by_pk: (utility_discovery_results | null)
+    /** update multiples rows of table: "utility_discovery_results" */
+    update_utility_discovery_results_many: ((utility_discovery_results_mutation_response | null)[] | null)
     /** update data of the table: "utility_drift_results" */
     update_utility_drift_results: (utility_drift_results_mutation_response | null)
     /** update single row of the table: "utility_drift_results" */
@@ -19600,6 +19944,7 @@ export interface mutation_root {
 
 /** columns and relationships of "v_my_friends" */
 export interface my_friends {
+    allow_message_requests: (Scalars['Boolean'] | null)
     avatar_url: (Scalars['String'] | null)
     country: (Scalars['String'] | null)
     created_at: (Scalars['timestamptz'] | null)
@@ -19766,15 +20111,15 @@ export interface my_friends_mutation_response {
 
 
 /** select columns of table "v_my_friends" */
-export type my_friends_select_column = 'avatar_url' | 'country' | 'created_at' | 'custom_avatar_url' | 'days_since_last_ban' | 'discord_id' | 'elo' | 'faceit_elo' | 'faceit_nickname' | 'faceit_player_id' | 'faceit_skill_level' | 'faceit_updated_at' | 'faceit_url' | 'friend_steam_id' | 'game_ban_count' | 'invited_by_steam_id' | 'language' | 'last_presence_state' | 'last_read_news_at' | 'last_sign_in_at' | 'name' | 'name_registered' | 'notification_timezone' | 'premier_rank' | 'premier_rank_updated_at' | 'presence_updated_at' | 'profile_url' | 'quiet_hours_end' | 'quiet_hours_start' | 'role' | 'roster_image_url' | 'show_match_ready_modal' | 'status' | 'steam_bans_checked_at' | 'steam_id' | 'vac_ban_count' | 'vac_banned'
+export type my_friends_select_column = 'allow_message_requests' | 'avatar_url' | 'country' | 'created_at' | 'custom_avatar_url' | 'days_since_last_ban' | 'discord_id' | 'elo' | 'faceit_elo' | 'faceit_nickname' | 'faceit_player_id' | 'faceit_skill_level' | 'faceit_updated_at' | 'faceit_url' | 'friend_steam_id' | 'game_ban_count' | 'invited_by_steam_id' | 'language' | 'last_presence_state' | 'last_read_news_at' | 'last_sign_in_at' | 'name' | 'name_registered' | 'notification_timezone' | 'premier_rank' | 'premier_rank_updated_at' | 'presence_updated_at' | 'profile_url' | 'quiet_hours_end' | 'quiet_hours_start' | 'role' | 'roster_image_url' | 'show_match_ready_modal' | 'status' | 'steam_bans_checked_at' | 'steam_id' | 'vac_ban_count' | 'vac_banned'
 
 
 /** select "my_friends_aggregate_bool_exp_bool_and_arguments_columns" columns of table "v_my_friends" */
-export type my_friends_select_column_my_friends_aggregate_bool_exp_bool_and_arguments_columns = 'name_registered' | 'show_match_ready_modal' | 'vac_banned'
+export type my_friends_select_column_my_friends_aggregate_bool_exp_bool_and_arguments_columns = 'allow_message_requests' | 'name_registered' | 'show_match_ready_modal' | 'vac_banned'
 
 
 /** select "my_friends_aggregate_bool_exp_bool_or_arguments_columns" columns of table "v_my_friends" */
-export type my_friends_select_column_my_friends_aggregate_bool_exp_bool_or_arguments_columns = 'name_registered' | 'show_match_ready_modal' | 'vac_banned'
+export type my_friends_select_column_my_friends_aggregate_bool_exp_bool_or_arguments_columns = 'allow_message_requests' | 'name_registered' | 'show_match_ready_modal' | 'vac_banned'
 
 
 /** aggregate stddev on columns */
@@ -20046,6 +20391,212 @@ export interface news_articles_variance_fields {
     author_steam_id: (Scalars['Float'] | null)
     view_count: (Scalars['Float'] | null)
     __typename: 'news_articles_variance_fields'
+}
+
+
+/** columns and relationships of "news_comments" */
+export interface news_comments {
+    /** An object relationship */
+    article: news_articles
+    article_id: Scalars['uuid']
+    /** The author as this viewer may see them, none once removed. */
+    author: (players[] | null)
+    author_steam_id: Scalars['bigint']
+    body: Scalars['String']
+    created_at: Scalars['timestamptz']
+    deleted_at: (Scalars['timestamptz'] | null)
+    deleted_by_staff: Scalars['Boolean']
+    edited_at: (Scalars['timestamptz'] | null)
+    hidden_at: (Scalars['timestamptz'] | null)
+    /** Who hid the comment. Staff only. */
+    hidden_by_name: (Scalars['String'] | null)
+    hidden_by_steam_id: (Scalars['bigint'] | null)
+    hidden_reason: (Scalars['String'] | null)
+    id: Scalars['uuid']
+    parent_id: (Scalars['uuid'] | null)
+    /** An array relationship */
+    replies: news_comments[]
+    /** An aggregate relationship */
+    replies_aggregate: news_comments_aggregate
+    /** The comment as this viewer may read it, blank once removed. */
+    text: (Scalars['String'] | null)
+    /** A computed field, executes function "news_comment_viewer_voted" */
+    viewer_voted: (Scalars['Boolean'] | null)
+    /** A computed field, executes function "news_comment_visible" */
+    visible: (Scalars['Boolean'] | null)
+    vote_count: Scalars['Int']
+    __typename: 'news_comments'
+}
+
+
+/** aggregated selection of "news_comments" */
+export interface news_comments_aggregate {
+    aggregate: (news_comments_aggregate_fields | null)
+    nodes: news_comments[]
+    __typename: 'news_comments_aggregate'
+}
+
+
+/** aggregate fields of "news_comments" */
+export interface news_comments_aggregate_fields {
+    avg: (news_comments_avg_fields | null)
+    count: Scalars['Int']
+    max: (news_comments_max_fields | null)
+    min: (news_comments_min_fields | null)
+    stddev: (news_comments_stddev_fields | null)
+    stddev_pop: (news_comments_stddev_pop_fields | null)
+    stddev_samp: (news_comments_stddev_samp_fields | null)
+    sum: (news_comments_sum_fields | null)
+    var_pop: (news_comments_var_pop_fields | null)
+    var_samp: (news_comments_var_samp_fields | null)
+    variance: (news_comments_variance_fields | null)
+    __typename: 'news_comments_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface news_comments_avg_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    hidden_by_steam_id: (Scalars['Float'] | null)
+    vote_count: (Scalars['Float'] | null)
+    __typename: 'news_comments_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "news_comments" */
+export type news_comments_constraint = 'news_comments_pkey'
+
+
+/** aggregate max on columns */
+export interface news_comments_max_fields {
+    article_id: (Scalars['uuid'] | null)
+    author_steam_id: (Scalars['bigint'] | null)
+    body: (Scalars['String'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    deleted_at: (Scalars['timestamptz'] | null)
+    edited_at: (Scalars['timestamptz'] | null)
+    hidden_at: (Scalars['timestamptz'] | null)
+    /** Who hid the comment. Staff only. */
+    hidden_by_name: (Scalars['String'] | null)
+    hidden_by_steam_id: (Scalars['bigint'] | null)
+    hidden_reason: (Scalars['String'] | null)
+    id: (Scalars['uuid'] | null)
+    parent_id: (Scalars['uuid'] | null)
+    /** The comment as this viewer may read it, blank once removed. */
+    text: (Scalars['String'] | null)
+    vote_count: (Scalars['Int'] | null)
+    __typename: 'news_comments_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface news_comments_min_fields {
+    article_id: (Scalars['uuid'] | null)
+    author_steam_id: (Scalars['bigint'] | null)
+    body: (Scalars['String'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    deleted_at: (Scalars['timestamptz'] | null)
+    edited_at: (Scalars['timestamptz'] | null)
+    hidden_at: (Scalars['timestamptz'] | null)
+    /** Who hid the comment. Staff only. */
+    hidden_by_name: (Scalars['String'] | null)
+    hidden_by_steam_id: (Scalars['bigint'] | null)
+    hidden_reason: (Scalars['String'] | null)
+    id: (Scalars['uuid'] | null)
+    parent_id: (Scalars['uuid'] | null)
+    /** The comment as this viewer may read it, blank once removed. */
+    text: (Scalars['String'] | null)
+    vote_count: (Scalars['Int'] | null)
+    __typename: 'news_comments_min_fields'
+}
+
+
+/** response of any mutation on the table "news_comments" */
+export interface news_comments_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: news_comments[]
+    __typename: 'news_comments_mutation_response'
+}
+
+
+/** select columns of table "news_comments" */
+export type news_comments_select_column = 'article_id' | 'author_steam_id' | 'body' | 'created_at' | 'deleted_at' | 'deleted_by_staff' | 'edited_at' | 'hidden_at' | 'hidden_by_steam_id' | 'hidden_reason' | 'id' | 'parent_id' | 'vote_count'
+
+
+/** select "news_comments_aggregate_bool_exp_bool_and_arguments_columns" columns of table "news_comments" */
+export type news_comments_select_column_news_comments_aggregate_bool_exp_bool_and_arguments_columns = 'deleted_by_staff'
+
+
+/** select "news_comments_aggregate_bool_exp_bool_or_arguments_columns" columns of table "news_comments" */
+export type news_comments_select_column_news_comments_aggregate_bool_exp_bool_or_arguments_columns = 'deleted_by_staff'
+
+
+/** aggregate stddev on columns */
+export interface news_comments_stddev_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    hidden_by_steam_id: (Scalars['Float'] | null)
+    vote_count: (Scalars['Float'] | null)
+    __typename: 'news_comments_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface news_comments_stddev_pop_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    hidden_by_steam_id: (Scalars['Float'] | null)
+    vote_count: (Scalars['Float'] | null)
+    __typename: 'news_comments_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface news_comments_stddev_samp_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    hidden_by_steam_id: (Scalars['Float'] | null)
+    vote_count: (Scalars['Float'] | null)
+    __typename: 'news_comments_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface news_comments_sum_fields {
+    author_steam_id: (Scalars['bigint'] | null)
+    hidden_by_steam_id: (Scalars['bigint'] | null)
+    vote_count: (Scalars['Int'] | null)
+    __typename: 'news_comments_sum_fields'
+}
+
+
+/** update columns of table "news_comments" */
+export type news_comments_update_column = 'article_id' | 'author_steam_id' | 'body' | 'created_at' | 'deleted_at' | 'deleted_by_staff' | 'edited_at' | 'hidden_at' | 'hidden_by_steam_id' | 'hidden_reason' | 'id' | 'parent_id' | 'vote_count'
+
+
+/** aggregate var_pop on columns */
+export interface news_comments_var_pop_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    hidden_by_steam_id: (Scalars['Float'] | null)
+    vote_count: (Scalars['Float'] | null)
+    __typename: 'news_comments_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface news_comments_var_samp_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    hidden_by_steam_id: (Scalars['Float'] | null)
+    vote_count: (Scalars['Float'] | null)
+    __typename: 'news_comments_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface news_comments_variance_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    hidden_by_steam_id: (Scalars['Float'] | null)
+    vote_count: (Scalars['Float'] | null)
+    __typename: 'news_comments_variance_fields'
 }
 
 
@@ -27169,6 +27720,171 @@ export interface player_steam_match_auth_variance_fields {
 }
 
 
+/** columns and relationships of "player_twitch_accounts" */
+export interface player_twitch_accounts {
+    checked_at: (Scalars['timestamptz'] | null)
+    created_at: Scalars['timestamptz']
+    display_name: (Scalars['String'] | null)
+    game_name: (Scalars['String'] | null)
+    is_live: Scalars['Boolean']
+    login: Scalars['String']
+    /** An object relationship */
+    player: players
+    started_at: (Scalars['timestamptz'] | null)
+    steam_id: Scalars['bigint']
+    stream_title: (Scalars['String'] | null)
+    thumbnail_url: (Scalars['String'] | null)
+    twitch_user_id: Scalars['String']
+    viewer_count: (Scalars['Int'] | null)
+    __typename: 'player_twitch_accounts'
+}
+
+
+/** aggregated selection of "player_twitch_accounts" */
+export interface player_twitch_accounts_aggregate {
+    aggregate: (player_twitch_accounts_aggregate_fields | null)
+    nodes: player_twitch_accounts[]
+    __typename: 'player_twitch_accounts_aggregate'
+}
+
+
+/** aggregate fields of "player_twitch_accounts" */
+export interface player_twitch_accounts_aggregate_fields {
+    avg: (player_twitch_accounts_avg_fields | null)
+    count: Scalars['Int']
+    max: (player_twitch_accounts_max_fields | null)
+    min: (player_twitch_accounts_min_fields | null)
+    stddev: (player_twitch_accounts_stddev_fields | null)
+    stddev_pop: (player_twitch_accounts_stddev_pop_fields | null)
+    stddev_samp: (player_twitch_accounts_stddev_samp_fields | null)
+    sum: (player_twitch_accounts_sum_fields | null)
+    var_pop: (player_twitch_accounts_var_pop_fields | null)
+    var_samp: (player_twitch_accounts_var_samp_fields | null)
+    variance: (player_twitch_accounts_variance_fields | null)
+    __typename: 'player_twitch_accounts_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface player_twitch_accounts_avg_fields {
+    steam_id: (Scalars['Float'] | null)
+    viewer_count: (Scalars['Float'] | null)
+    __typename: 'player_twitch_accounts_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "player_twitch_accounts" */
+export type player_twitch_accounts_constraint = 'player_twitch_accounts_pkey' | 'player_twitch_accounts_twitch_user_id_key'
+
+
+/** aggregate max on columns */
+export interface player_twitch_accounts_max_fields {
+    checked_at: (Scalars['timestamptz'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    display_name: (Scalars['String'] | null)
+    game_name: (Scalars['String'] | null)
+    login: (Scalars['String'] | null)
+    started_at: (Scalars['timestamptz'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    stream_title: (Scalars['String'] | null)
+    thumbnail_url: (Scalars['String'] | null)
+    twitch_user_id: (Scalars['String'] | null)
+    viewer_count: (Scalars['Int'] | null)
+    __typename: 'player_twitch_accounts_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface player_twitch_accounts_min_fields {
+    checked_at: (Scalars['timestamptz'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    display_name: (Scalars['String'] | null)
+    game_name: (Scalars['String'] | null)
+    login: (Scalars['String'] | null)
+    started_at: (Scalars['timestamptz'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    stream_title: (Scalars['String'] | null)
+    thumbnail_url: (Scalars['String'] | null)
+    twitch_user_id: (Scalars['String'] | null)
+    viewer_count: (Scalars['Int'] | null)
+    __typename: 'player_twitch_accounts_min_fields'
+}
+
+
+/** response of any mutation on the table "player_twitch_accounts" */
+export interface player_twitch_accounts_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: player_twitch_accounts[]
+    __typename: 'player_twitch_accounts_mutation_response'
+}
+
+
+/** select columns of table "player_twitch_accounts" */
+export type player_twitch_accounts_select_column = 'checked_at' | 'created_at' | 'display_name' | 'game_name' | 'is_live' | 'login' | 'started_at' | 'steam_id' | 'stream_title' | 'thumbnail_url' | 'twitch_user_id' | 'viewer_count'
+
+
+/** aggregate stddev on columns */
+export interface player_twitch_accounts_stddev_fields {
+    steam_id: (Scalars['Float'] | null)
+    viewer_count: (Scalars['Float'] | null)
+    __typename: 'player_twitch_accounts_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_twitch_accounts_stddev_pop_fields {
+    steam_id: (Scalars['Float'] | null)
+    viewer_count: (Scalars['Float'] | null)
+    __typename: 'player_twitch_accounts_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_twitch_accounts_stddev_samp_fields {
+    steam_id: (Scalars['Float'] | null)
+    viewer_count: (Scalars['Float'] | null)
+    __typename: 'player_twitch_accounts_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface player_twitch_accounts_sum_fields {
+    steam_id: (Scalars['bigint'] | null)
+    viewer_count: (Scalars['Int'] | null)
+    __typename: 'player_twitch_accounts_sum_fields'
+}
+
+
+/** update columns of table "player_twitch_accounts" */
+export type player_twitch_accounts_update_column = 'checked_at' | 'created_at' | 'display_name' | 'game_name' | 'is_live' | 'login' | 'started_at' | 'steam_id' | 'stream_title' | 'thumbnail_url' | 'twitch_user_id' | 'viewer_count'
+
+
+/** aggregate var_pop on columns */
+export interface player_twitch_accounts_var_pop_fields {
+    steam_id: (Scalars['Float'] | null)
+    viewer_count: (Scalars['Float'] | null)
+    __typename: 'player_twitch_accounts_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface player_twitch_accounts_var_samp_fields {
+    steam_id: (Scalars['Float'] | null)
+    viewer_count: (Scalars['Float'] | null)
+    __typename: 'player_twitch_accounts_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface player_twitch_accounts_variance_fields {
+    steam_id: (Scalars['Float'] | null)
+    viewer_count: (Scalars['Float'] | null)
+    __typename: 'player_twitch_accounts_variance_fields'
+}
+
+
 /** columns and relationships of "player_unused_utility" */
 export interface player_unused_utility {
     deleted_at: (Scalars['timestamptz'] | null)
@@ -27778,6 +28494,8 @@ export interface players {
     language: (Scalars['String'] | null)
     last_read_news_at: (Scalars['timestamptz'] | null)
     last_sign_in_at: (Scalars['timestamptz'] | null)
+    /** A computed field, executes function "get_player_live_lineup" */
+    live_lineup: (match_lineup_players[] | null)
     /** An array relationship */
     lobby_players: lobby_players[]
     /** An aggregate relationship */
@@ -28696,6 +29414,12 @@ export interface query_root {
     chat_read_state_aggregate: chat_read_state_aggregate
     /** fetch data from the table: "chat_read_state" using primary key columns */
     chat_read_state_by_pk: (chat_read_state | null)
+    /** fetch data from the table: "chat_room_settings" */
+    chat_room_settings: chat_room_settings[]
+    /** fetch aggregated fields from the table: "chat_room_settings" */
+    chat_room_settings_aggregate: chat_room_settings_aggregate
+    /** fetch data from the table: "chat_room_settings" using primary key columns */
+    chat_room_settings_by_pk: (chat_room_settings | null)
     /** Ask whether a lineup's smoke makes an angle one-way */
     checkUtilityOneWay: (UtilityOneWayOutput | null)
     /** Ask whether a lineup's smoke blocks a set of sightlines */
@@ -29484,6 +30208,12 @@ export interface query_root {
     news_articles_aggregate: news_articles_aggregate
     /** fetch data from the table: "news_articles" using primary key columns */
     news_articles_by_pk: (news_articles | null)
+    /** fetch data from the table: "news_comments" */
+    news_comments: news_comments[]
+    /** fetch aggregated fields from the table: "news_comments" */
+    news_comments_aggregate: news_comments_aggregate
+    /** fetch data from the table: "news_comments" using primary key columns */
+    news_comments_by_pk: (news_comments | null)
     /** fetch data from the table: "notification_preferences" */
     notification_preferences: notification_preferences[]
     /** fetch aggregated fields from the table: "notification_preferences" */
@@ -29646,6 +30376,12 @@ export interface query_root {
     player_steam_match_auth_aggregate: player_steam_match_auth_aggregate
     /** fetch data from the table: "player_steam_match_auth" using primary key columns */
     player_steam_match_auth_by_pk: (player_steam_match_auth | null)
+    /** fetch data from the table: "player_twitch_accounts" */
+    player_twitch_accounts: player_twitch_accounts[]
+    /** fetch aggregated fields from the table: "player_twitch_accounts" */
+    player_twitch_accounts_aggregate: player_twitch_accounts_aggregate
+    /** fetch data from the table: "player_twitch_accounts" using primary key columns */
+    player_twitch_accounts_by_pk: (player_twitch_accounts | null)
     /** fetch data from the table: "player_unused_utility" */
     player_unused_utility: player_unused_utility[]
     /** fetch aggregated fields from the table: "player_unused_utility" */
@@ -29674,6 +30410,8 @@ export interface query_root {
     plugin_versions_aggregate: plugin_versions_aggregate
     /** fetch data from the table: "plugin_versions" using primary key columns */
     plugin_versions_by_pk: (plugin_versions | null)
+    /** The shape a smoke takes when it pops at a point on a map */
+    previewUtilitySmoke: (UtilitySmokePreviewOutput | null)
     /** fetch data from the table: "push_subscriptions" */
     push_subscriptions: push_subscriptions[]
     /** fetch aggregated fields from the table: "push_subscriptions" */
@@ -29841,6 +30579,8 @@ export interface query_root {
     /** fetch data from the table: "teams" using primary key columns */
     teams_by_pk: (teams | null)
     telemetryStats: TelemetryStats
+    /** The winning team's players who played, ranked the way the automatic MVP pick ranks them */
+    tournamentMvpCandidates: TournamentMvpCandidate[]
     /** fetch data from the table: "tournament_awards" */
     tournament_awards: tournament_awards[]
     /** fetch aggregated fields from the table: "tournament_awards" */
@@ -29887,6 +30627,12 @@ export interface query_root {
     tournament_leaderboard_entries: tournament_leaderboard_entries[]
     /** fetch aggregated fields from the table: "tournament_leaderboard_entries" */
     tournament_leaderboard_entries_aggregate: tournament_leaderboard_entries_aggregate
+    /** fetch data from the table: "tournament_mvp_picks" */
+    tournament_mvp_picks: tournament_mvp_picks[]
+    /** fetch aggregated fields from the table: "tournament_mvp_picks" */
+    tournament_mvp_picks_aggregate: tournament_mvp_picks_aggregate
+    /** fetch data from the table: "tournament_mvp_picks" using primary key columns */
+    tournament_mvp_picks_by_pk: (tournament_mvp_picks | null)
     /** fetch data from the table: "tournament_no_shows" */
     tournament_no_shows: tournament_no_shows[]
     /** fetch aggregated fields from the table: "tournament_no_shows" */
@@ -29953,6 +30699,8 @@ export interface query_root {
     tournaments_by_pk: (tournaments | null)
     /** Which way everybody misses one lineup, from their practice throws */
     utilityLineupMissPattern: (UtilityMissPatternOutput | null)
+    /** Which public lineups have no preview, or one filmed by an older render version */
+    utilityLineupRenderCoverage: (UtilityRenderCoverageOutput | null)
     /** Report a player's mined utility throws for a match */
     utilityMatchUtilityReport: (UtilityUtilityReportOutput | null)
     /** Rank what to practise next on a map from the mined meta */
@@ -29988,6 +30736,18 @@ export interface query_root {
     utility_demo_throws_aggregate: utility_demo_throws_aggregate
     /** fetch data from the table: "utility_demo_throws" using primary key columns */
     utility_demo_throws_by_pk: (utility_demo_throws | null)
+    /** fetch data from the table: "utility_discoveries" */
+    utility_discoveries: utility_discoveries[]
+    /** fetch aggregated fields from the table: "utility_discoveries" */
+    utility_discoveries_aggregate: utility_discoveries_aggregate
+    /** fetch data from the table: "utility_discoveries" using primary key columns */
+    utility_discoveries_by_pk: (utility_discoveries | null)
+    /** fetch data from the table: "utility_discovery_results" */
+    utility_discovery_results: utility_discovery_results[]
+    /** fetch aggregated fields from the table: "utility_discovery_results" */
+    utility_discovery_results_aggregate: utility_discovery_results_aggregate
+    /** fetch data from the table: "utility_discovery_results" using primary key columns */
+    utility_discovery_results_by_pk: (utility_discovery_results | null)
     /** fetch data from the table: "utility_drift_results" */
     utility_drift_results: utility_drift_results[]
     /** fetch aggregated fields from the table: "utility_drift_results" */
@@ -32372,6 +33132,14 @@ export interface subscription_root {
     chat_read_state_by_pk: (chat_read_state | null)
     /** fetch data from the table in a streaming manner: "chat_read_state" */
     chat_read_state_stream: chat_read_state[]
+    /** fetch data from the table: "chat_room_settings" */
+    chat_room_settings: chat_room_settings[]
+    /** fetch aggregated fields from the table: "chat_room_settings" */
+    chat_room_settings_aggregate: chat_room_settings_aggregate
+    /** fetch data from the table: "chat_room_settings" using primary key columns */
+    chat_room_settings_by_pk: (chat_room_settings | null)
+    /** fetch data from the table in a streaming manner: "chat_room_settings" */
+    chat_room_settings_stream: chat_room_settings[]
     /** An array relationship */
     clip_render_jobs: clip_render_jobs[]
     /** An aggregate relationship */
@@ -33348,6 +34116,14 @@ export interface subscription_root {
     news_articles_by_pk: (news_articles | null)
     /** fetch data from the table in a streaming manner: "news_articles" */
     news_articles_stream: news_articles[]
+    /** fetch data from the table: "news_comments" */
+    news_comments: news_comments[]
+    /** fetch aggregated fields from the table: "news_comments" */
+    news_comments_aggregate: news_comments_aggregate
+    /** fetch data from the table: "news_comments" using primary key columns */
+    news_comments_by_pk: (news_comments | null)
+    /** fetch data from the table in a streaming manner: "news_comments" */
+    news_comments_stream: news_comments[]
     /** fetch data from the table: "notification_preferences" */
     notification_preferences: notification_preferences[]
     /** fetch aggregated fields from the table: "notification_preferences" */
@@ -33568,6 +34344,14 @@ export interface subscription_root {
     player_steam_match_auth_by_pk: (player_steam_match_auth | null)
     /** fetch data from the table in a streaming manner: "player_steam_match_auth" */
     player_steam_match_auth_stream: player_steam_match_auth[]
+    /** fetch data from the table: "player_twitch_accounts" */
+    player_twitch_accounts: player_twitch_accounts[]
+    /** fetch aggregated fields from the table: "player_twitch_accounts" */
+    player_twitch_accounts_aggregate: player_twitch_accounts_aggregate
+    /** fetch data from the table: "player_twitch_accounts" using primary key columns */
+    player_twitch_accounts_by_pk: (player_twitch_accounts | null)
+    /** fetch data from the table in a streaming manner: "player_twitch_accounts" */
+    player_twitch_accounts_stream: player_twitch_accounts[]
     /** fetch data from the table: "player_unused_utility" */
     player_unused_utility: player_unused_utility[]
     /** fetch aggregated fields from the table: "player_unused_utility" */
@@ -33880,6 +34664,14 @@ export interface subscription_root {
     tournament_leaderboard_entries_aggregate: tournament_leaderboard_entries_aggregate
     /** fetch data from the table in a streaming manner: "tournament_leaderboard_entries" */
     tournament_leaderboard_entries_stream: tournament_leaderboard_entries[]
+    /** fetch data from the table: "tournament_mvp_picks" */
+    tournament_mvp_picks: tournament_mvp_picks[]
+    /** fetch aggregated fields from the table: "tournament_mvp_picks" */
+    tournament_mvp_picks_aggregate: tournament_mvp_picks_aggregate
+    /** fetch data from the table: "tournament_mvp_picks" using primary key columns */
+    tournament_mvp_picks_by_pk: (tournament_mvp_picks | null)
+    /** fetch data from the table in a streaming manner: "tournament_mvp_picks" */
+    tournament_mvp_picks_stream: tournament_mvp_picks[]
     /** fetch data from the table: "tournament_no_shows" */
     tournament_no_shows: tournament_no_shows[]
     /** fetch aggregated fields from the table: "tournament_no_shows" */
@@ -33998,6 +34790,22 @@ export interface subscription_root {
     utility_demo_throws_by_pk: (utility_demo_throws | null)
     /** fetch data from the table in a streaming manner: "utility_demo_throws" */
     utility_demo_throws_stream: utility_demo_throws[]
+    /** fetch data from the table: "utility_discoveries" */
+    utility_discoveries: utility_discoveries[]
+    /** fetch aggregated fields from the table: "utility_discoveries" */
+    utility_discoveries_aggregate: utility_discoveries_aggregate
+    /** fetch data from the table: "utility_discoveries" using primary key columns */
+    utility_discoveries_by_pk: (utility_discoveries | null)
+    /** fetch data from the table in a streaming manner: "utility_discoveries" */
+    utility_discoveries_stream: utility_discoveries[]
+    /** fetch data from the table: "utility_discovery_results" */
+    utility_discovery_results: utility_discovery_results[]
+    /** fetch aggregated fields from the table: "utility_discovery_results" */
+    utility_discovery_results_aggregate: utility_discovery_results_aggregate
+    /** fetch data from the table: "utility_discovery_results" using primary key columns */
+    utility_discovery_results_by_pk: (utility_discovery_results | null)
+    /** fetch data from the table in a streaming manner: "utility_discovery_results" */
+    utility_discovery_results_stream: utility_discovery_results[]
     /** fetch data from the table: "utility_drift_results" */
     utility_drift_results: utility_drift_results[]
     /** fetch aggregated fields from the table: "utility_drift_results" */
@@ -36312,7 +37120,6 @@ export interface tournament_free_agents {
     /** An object relationship */
     e_tournament_free_agent_status: e_tournament_free_agent_statuses
     id: Scalars['uuid']
-    party_id: (Scalars['uuid'] | null)
     /** An object relationship */
     player: players
     player_steam_id: Scalars['bigint']
@@ -36369,7 +37176,6 @@ export interface tournament_free_agents_max_fields {
     /** Registration priority: decides who makes the cut */
     created_at: (Scalars['timestamptz'] | null)
     id: (Scalars['uuid'] | null)
-    party_id: (Scalars['uuid'] | null)
     player_steam_id: (Scalars['bigint'] | null)
     tournament_id: (Scalars['uuid'] | null)
     tournament_team_id: (Scalars['uuid'] | null)
@@ -36383,7 +37189,6 @@ export interface tournament_free_agents_min_fields {
     /** Registration priority: decides who makes the cut */
     created_at: (Scalars['timestamptz'] | null)
     id: (Scalars['uuid'] | null)
-    party_id: (Scalars['uuid'] | null)
     player_steam_id: (Scalars['bigint'] | null)
     tournament_id: (Scalars['uuid'] | null)
     tournament_team_id: (Scalars['uuid'] | null)
@@ -36402,7 +37207,7 @@ export interface tournament_free_agents_mutation_response {
 
 
 /** select columns of table "tournament_free_agents" */
-export type tournament_free_agents_select_column = 'checked_in_at' | 'created_at' | 'id' | 'party_id' | 'player_steam_id' | 'status' | 'tournament_id' | 'tournament_team_id'
+export type tournament_free_agents_select_column = 'checked_in_at' | 'created_at' | 'id' | 'player_steam_id' | 'status' | 'tournament_id' | 'tournament_team_id'
 
 
 /** aggregate stddev on columns */
@@ -36434,7 +37239,7 @@ export interface tournament_free_agents_sum_fields {
 
 
 /** update columns of table "tournament_free_agents" */
-export type tournament_free_agents_update_column = 'checked_in_at' | 'created_at' | 'id' | 'party_id' | 'player_steam_id' | 'status' | 'tournament_id' | 'tournament_team_id'
+export type tournament_free_agents_update_column = 'checked_in_at' | 'created_at' | 'id' | 'player_steam_id' | 'status' | 'tournament_id' | 'tournament_team_id'
 
 
 /** aggregate var_pop on columns */
@@ -37144,6 +37949,253 @@ export interface tournament_leaderboard_entries_variance_fields {
     rating: (Scalars['Float'] | null)
     rounds_played: (Scalars['Float'] | null)
     __typename: 'tournament_leaderboard_entries_variance_fields'
+}
+
+
+/** columns and relationships of "tournament_mvp_picks" */
+export interface tournament_mvp_picks {
+    automatic_impact: (Scalars['float8'] | null)
+    /** An object relationship */
+    automatic_player: (players | null)
+    automatic_steam_id: (Scalars['bigint'] | null)
+    created_at: Scalars['timestamptz']
+    id: Scalars['uuid']
+    kept_automatic: Scalars['Boolean']
+    note: (Scalars['String'] | null)
+    /** An object relationship */
+    picked_by: (players | null)
+    picked_by_steam_id: (Scalars['bigint'] | null)
+    /** An object relationship */
+    player: players
+    player_impact: (Scalars['float8'] | null)
+    player_steam_id: Scalars['bigint']
+    /** An object relationship */
+    replaced_player: (players | null)
+    replaced_steam_id: (Scalars['bigint'] | null)
+    /** An object relationship */
+    tournament: tournaments
+    tournament_id: Scalars['uuid']
+    /** An object relationship */
+    tournament_team: (tournament_teams | null)
+    tournament_team_id: (Scalars['uuid'] | null)
+    __typename: 'tournament_mvp_picks'
+}
+
+
+/** aggregated selection of "tournament_mvp_picks" */
+export interface tournament_mvp_picks_aggregate {
+    aggregate: (tournament_mvp_picks_aggregate_fields | null)
+    nodes: tournament_mvp_picks[]
+    __typename: 'tournament_mvp_picks_aggregate'
+}
+
+
+/** aggregate fields of "tournament_mvp_picks" */
+export interface tournament_mvp_picks_aggregate_fields {
+    avg: (tournament_mvp_picks_avg_fields | null)
+    count: Scalars['Int']
+    max: (tournament_mvp_picks_max_fields | null)
+    min: (tournament_mvp_picks_min_fields | null)
+    stddev: (tournament_mvp_picks_stddev_fields | null)
+    stddev_pop: (tournament_mvp_picks_stddev_pop_fields | null)
+    stddev_samp: (tournament_mvp_picks_stddev_samp_fields | null)
+    sum: (tournament_mvp_picks_sum_fields | null)
+    var_pop: (tournament_mvp_picks_var_pop_fields | null)
+    var_samp: (tournament_mvp_picks_var_samp_fields | null)
+    variance: (tournament_mvp_picks_variance_fields | null)
+    __typename: 'tournament_mvp_picks_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface tournament_mvp_picks_avg_fields {
+    automatic_impact: (Scalars['Float'] | null)
+    automatic_steam_id: (Scalars['Float'] | null)
+    picked_by_steam_id: (Scalars['Float'] | null)
+    player_impact: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    replaced_steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_mvp_picks_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "tournament_mvp_picks" */
+export type tournament_mvp_picks_constraint = 'tournament_mvp_picks_pkey'
+
+
+/** aggregate max on columns */
+export interface tournament_mvp_picks_max_fields {
+    automatic_impact: (Scalars['float8'] | null)
+    automatic_steam_id: (Scalars['bigint'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    note: (Scalars['String'] | null)
+    picked_by_steam_id: (Scalars['bigint'] | null)
+    player_impact: (Scalars['float8'] | null)
+    player_steam_id: (Scalars['bigint'] | null)
+    replaced_steam_id: (Scalars['bigint'] | null)
+    tournament_id: (Scalars['uuid'] | null)
+    tournament_team_id: (Scalars['uuid'] | null)
+    __typename: 'tournament_mvp_picks_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface tournament_mvp_picks_min_fields {
+    automatic_impact: (Scalars['float8'] | null)
+    automatic_steam_id: (Scalars['bigint'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    note: (Scalars['String'] | null)
+    picked_by_steam_id: (Scalars['bigint'] | null)
+    player_impact: (Scalars['float8'] | null)
+    player_steam_id: (Scalars['bigint'] | null)
+    replaced_steam_id: (Scalars['bigint'] | null)
+    tournament_id: (Scalars['uuid'] | null)
+    tournament_team_id: (Scalars['uuid'] | null)
+    __typename: 'tournament_mvp_picks_min_fields'
+}
+
+
+/** response of any mutation on the table "tournament_mvp_picks" */
+export interface tournament_mvp_picks_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: tournament_mvp_picks[]
+    __typename: 'tournament_mvp_picks_mutation_response'
+}
+
+
+/** select columns of table "tournament_mvp_picks" */
+export type tournament_mvp_picks_select_column = 'automatic_impact' | 'automatic_steam_id' | 'created_at' | 'id' | 'kept_automatic' | 'note' | 'picked_by_steam_id' | 'player_impact' | 'player_steam_id' | 'replaced_steam_id' | 'tournament_id' | 'tournament_team_id'
+
+
+/** select "tournament_mvp_picks_aggregate_bool_exp_avg_arguments_columns" columns of table "tournament_mvp_picks" */
+export type tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_avg_arguments_columns = 'automatic_impact' | 'player_impact'
+
+
+/** select "tournament_mvp_picks_aggregate_bool_exp_bool_and_arguments_columns" columns of table "tournament_mvp_picks" */
+export type tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_bool_and_arguments_columns = 'kept_automatic'
+
+
+/** select "tournament_mvp_picks_aggregate_bool_exp_bool_or_arguments_columns" columns of table "tournament_mvp_picks" */
+export type tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_bool_or_arguments_columns = 'kept_automatic'
+
+
+/** select "tournament_mvp_picks_aggregate_bool_exp_corr_arguments_columns" columns of table "tournament_mvp_picks" */
+export type tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_corr_arguments_columns = 'automatic_impact' | 'player_impact'
+
+
+/** select "tournament_mvp_picks_aggregate_bool_exp_covar_samp_arguments_columns" columns of table "tournament_mvp_picks" */
+export type tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_covar_samp_arguments_columns = 'automatic_impact' | 'player_impact'
+
+
+/** select "tournament_mvp_picks_aggregate_bool_exp_max_arguments_columns" columns of table "tournament_mvp_picks" */
+export type tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_max_arguments_columns = 'automatic_impact' | 'player_impact'
+
+
+/** select "tournament_mvp_picks_aggregate_bool_exp_min_arguments_columns" columns of table "tournament_mvp_picks" */
+export type tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_min_arguments_columns = 'automatic_impact' | 'player_impact'
+
+
+/** select "tournament_mvp_picks_aggregate_bool_exp_stddev_samp_arguments_columns" columns of table "tournament_mvp_picks" */
+export type tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_stddev_samp_arguments_columns = 'automatic_impact' | 'player_impact'
+
+
+/** select "tournament_mvp_picks_aggregate_bool_exp_sum_arguments_columns" columns of table "tournament_mvp_picks" */
+export type tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_sum_arguments_columns = 'automatic_impact' | 'player_impact'
+
+
+/** select "tournament_mvp_picks_aggregate_bool_exp_var_samp_arguments_columns" columns of table "tournament_mvp_picks" */
+export type tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_var_samp_arguments_columns = 'automatic_impact' | 'player_impact'
+
+
+/** aggregate stddev on columns */
+export interface tournament_mvp_picks_stddev_fields {
+    automatic_impact: (Scalars['Float'] | null)
+    automatic_steam_id: (Scalars['Float'] | null)
+    picked_by_steam_id: (Scalars['Float'] | null)
+    player_impact: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    replaced_steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_mvp_picks_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface tournament_mvp_picks_stddev_pop_fields {
+    automatic_impact: (Scalars['Float'] | null)
+    automatic_steam_id: (Scalars['Float'] | null)
+    picked_by_steam_id: (Scalars['Float'] | null)
+    player_impact: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    replaced_steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_mvp_picks_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface tournament_mvp_picks_stddev_samp_fields {
+    automatic_impact: (Scalars['Float'] | null)
+    automatic_steam_id: (Scalars['Float'] | null)
+    picked_by_steam_id: (Scalars['Float'] | null)
+    player_impact: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    replaced_steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_mvp_picks_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface tournament_mvp_picks_sum_fields {
+    automatic_impact: (Scalars['float8'] | null)
+    automatic_steam_id: (Scalars['bigint'] | null)
+    picked_by_steam_id: (Scalars['bigint'] | null)
+    player_impact: (Scalars['float8'] | null)
+    player_steam_id: (Scalars['bigint'] | null)
+    replaced_steam_id: (Scalars['bigint'] | null)
+    __typename: 'tournament_mvp_picks_sum_fields'
+}
+
+
+/** update columns of table "tournament_mvp_picks" */
+export type tournament_mvp_picks_update_column = 'automatic_impact' | 'automatic_steam_id' | 'created_at' | 'id' | 'kept_automatic' | 'note' | 'picked_by_steam_id' | 'player_impact' | 'player_steam_id' | 'replaced_steam_id' | 'tournament_id' | 'tournament_team_id'
+
+
+/** aggregate var_pop on columns */
+export interface tournament_mvp_picks_var_pop_fields {
+    automatic_impact: (Scalars['Float'] | null)
+    automatic_steam_id: (Scalars['Float'] | null)
+    picked_by_steam_id: (Scalars['Float'] | null)
+    player_impact: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    replaced_steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_mvp_picks_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface tournament_mvp_picks_var_samp_fields {
+    automatic_impact: (Scalars['Float'] | null)
+    automatic_steam_id: (Scalars['Float'] | null)
+    picked_by_steam_id: (Scalars['Float'] | null)
+    player_impact: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    replaced_steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_mvp_picks_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface tournament_mvp_picks_variance_fields {
+    automatic_impact: (Scalars['Float'] | null)
+    automatic_steam_id: (Scalars['Float'] | null)
+    picked_by_steam_id: (Scalars['Float'] | null)
+    player_impact: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    replaced_steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_mvp_picks_variance_fields'
 }
 
 
@@ -38312,6 +39364,7 @@ export interface tournament_team_invites_variance_fields {
 /** columns and relationships of "tournament_team_roster" */
 export interface tournament_team_roster {
     checked_in_at: (Scalars['timestamptz'] | null)
+    created_at: Scalars['timestamptz']
     /** An object relationship */
     e_team_role: e_team_roles
     /** An object relationship */
@@ -38369,6 +39422,7 @@ export type tournament_team_roster_constraint = 'tournament_roster_pkey' | 'tour
 /** aggregate max on columns */
 export interface tournament_team_roster_max_fields {
     checked_in_at: (Scalars['timestamptz'] | null)
+    created_at: (Scalars['timestamptz'] | null)
     player_steam_id: (Scalars['bigint'] | null)
     tournament_id: (Scalars['uuid'] | null)
     tournament_team_id: (Scalars['uuid'] | null)
@@ -38379,6 +39433,7 @@ export interface tournament_team_roster_max_fields {
 /** aggregate min on columns */
 export interface tournament_team_roster_min_fields {
     checked_in_at: (Scalars['timestamptz'] | null)
+    created_at: (Scalars['timestamptz'] | null)
     player_steam_id: (Scalars['bigint'] | null)
     tournament_id: (Scalars['uuid'] | null)
     tournament_team_id: (Scalars['uuid'] | null)
@@ -38397,7 +39452,7 @@ export interface tournament_team_roster_mutation_response {
 
 
 /** select columns of table "tournament_team_roster" */
-export type tournament_team_roster_select_column = 'checked_in_at' | 'player_steam_id' | 'role' | 'tournament_id' | 'tournament_team_id'
+export type tournament_team_roster_select_column = 'checked_in_at' | 'created_at' | 'player_steam_id' | 'role' | 'tournament_id' | 'tournament_team_id'
 
 
 /** aggregate stddev on columns */
@@ -38429,7 +39484,7 @@ export interface tournament_team_roster_sum_fields {
 
 
 /** update columns of table "tournament_team_roster" */
-export type tournament_team_roster_update_column = 'checked_in_at' | 'player_steam_id' | 'role' | 'tournament_id' | 'tournament_team_id'
+export type tournament_team_roster_update_column = 'checked_in_at' | 'created_at' | 'player_steam_id' | 'role' | 'tournament_id' | 'tournament_team_id'
 
 
 /** aggregate var_pop on columns */
@@ -38684,6 +39739,8 @@ export interface tournaments {
     can_open_registration: (Scalars['Boolean'] | null)
     /** A computed field, executes function "can_pause_tournament" */
     can_pause: (Scalars['Boolean'] | null)
+    /** A computed field, executes function "can_pick_tournament_mvp" */
+    can_pick_mvp: (Scalars['Boolean'] | null)
     /** A computed field, executes function "can_resume_tournament" */
     can_resume: (Scalars['Boolean'] | null)
     /** A computed field, executes function "can_review_tournament_check_in" */
@@ -38767,9 +39824,14 @@ export interface tournaments {
     min_role: (e_player_roles_enum | null)
     /** A computed field, executes function "tournament_missed_check_in_count" */
     missed_check_in_count: (Scalars['Int'] | null)
+    /** An array relationship */
+    mvp_picks: tournament_mvp_picks[]
+    /** An aggregate relationship */
+    mvp_picks_aggregate: tournament_mvp_picks_aggregate
     name: Scalars['String']
     /** An object relationship */
     options: match_options
+    organizer_picks_mvp: Scalars['Boolean']
     organizer_steam_id: Scalars['bigint']
     /** An array relationship */
     organizer_teams: tournament_organizer_teams[]
@@ -38783,6 +39845,8 @@ export interface tournaments {
     player_stats: v_tournament_player_stats[]
     /** An aggregate relationship */
     player_stats_aggregate: v_tournament_player_stats_aggregate
+    /** A computed field, executes function "tournament_podium" */
+    podium: (Scalars['jsonb'] | null)
     /** An array relationship */
     prizes: tournament_prizes[]
     /** An aggregate relationship */
@@ -38960,7 +40024,7 @@ export interface tournaments_mutation_response {
 
 
 /** select columns of table "tournaments" */
-export type tournaments_select_column = 'auto_start' | 'awards_enabled' | 'banner' | 'check_in_closed_for' | 'check_in_closes_before_minutes' | 'check_in_closing_notified_for' | 'check_in_ends_at' | 'check_in_opens_before_minutes' | 'check_in_required' | 'check_in_setting' | 'created_at' | 'description' | 'discord_guild_id' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_voice_enabled' | 'discord_webhook' | 'finished_at' | 'homepage' | 'id' | 'invite_only' | 'is_league' | 'latitude' | 'location' | 'logo' | 'longitude' | 'match_options_id' | 'max_elo' | 'min_elo' | 'min_role' | 'name' | 'organizer_steam_id' | 'registration_type' | 'scheduling_mode' | 'start' | 'status' | 'substitutes_enabled'
+export type tournaments_select_column = 'auto_start' | 'awards_enabled' | 'banner' | 'check_in_closed_for' | 'check_in_closes_before_minutes' | 'check_in_closing_notified_for' | 'check_in_ends_at' | 'check_in_opens_before_minutes' | 'check_in_required' | 'check_in_setting' | 'created_at' | 'description' | 'discord_guild_id' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_voice_enabled' | 'discord_webhook' | 'finished_at' | 'homepage' | 'id' | 'invite_only' | 'is_league' | 'latitude' | 'location' | 'logo' | 'longitude' | 'match_options_id' | 'max_elo' | 'min_elo' | 'min_role' | 'name' | 'organizer_picks_mvp' | 'organizer_steam_id' | 'registration_type' | 'scheduling_mode' | 'start' | 'status' | 'substitutes_enabled'
 
 
 /** select "tournaments_aggregate_bool_exp_avg_arguments_columns" columns of table "tournaments" */
@@ -38968,11 +40032,11 @@ export type tournaments_select_column_tournaments_aggregate_bool_exp_avg_argumen
 
 
 /** select "tournaments_aggregate_bool_exp_bool_and_arguments_columns" columns of table "tournaments" */
-export type tournaments_select_column_tournaments_aggregate_bool_exp_bool_and_arguments_columns = 'auto_start' | 'awards_enabled' | 'check_in_required' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_voice_enabled' | 'invite_only' | 'is_league' | 'substitutes_enabled'
+export type tournaments_select_column_tournaments_aggregate_bool_exp_bool_and_arguments_columns = 'auto_start' | 'awards_enabled' | 'check_in_required' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_voice_enabled' | 'invite_only' | 'is_league' | 'organizer_picks_mvp' | 'substitutes_enabled'
 
 
 /** select "tournaments_aggregate_bool_exp_bool_or_arguments_columns" columns of table "tournaments" */
-export type tournaments_select_column_tournaments_aggregate_bool_exp_bool_or_arguments_columns = 'auto_start' | 'awards_enabled' | 'check_in_required' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_voice_enabled' | 'invite_only' | 'is_league' | 'substitutes_enabled'
+export type tournaments_select_column_tournaments_aggregate_bool_exp_bool_or_arguments_columns = 'auto_start' | 'awards_enabled' | 'check_in_required' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_voice_enabled' | 'invite_only' | 'is_league' | 'organizer_picks_mvp' | 'substitutes_enabled'
 
 
 /** select "tournaments_aggregate_bool_exp_corr_arguments_columns" columns of table "tournaments" */
@@ -39088,7 +40152,7 @@ export interface tournaments_sum_fields {
 
 
 /** update columns of table "tournaments" */
-export type tournaments_update_column = 'auto_start' | 'awards_enabled' | 'banner' | 'check_in_closed_for' | 'check_in_closes_before_minutes' | 'check_in_closing_notified_for' | 'check_in_ends_at' | 'check_in_opens_before_minutes' | 'check_in_required' | 'check_in_setting' | 'created_at' | 'description' | 'discord_guild_id' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_voice_enabled' | 'discord_webhook' | 'finished_at' | 'homepage' | 'id' | 'invite_only' | 'is_league' | 'latitude' | 'location' | 'logo' | 'longitude' | 'match_options_id' | 'max_elo' | 'min_elo' | 'min_role' | 'name' | 'organizer_steam_id' | 'registration_type' | 'scheduling_mode' | 'start' | 'status' | 'substitutes_enabled'
+export type tournaments_update_column = 'auto_start' | 'awards_enabled' | 'banner' | 'check_in_closed_for' | 'check_in_closes_before_minutes' | 'check_in_closing_notified_for' | 'check_in_ends_at' | 'check_in_opens_before_minutes' | 'check_in_required' | 'check_in_setting' | 'created_at' | 'description' | 'discord_guild_id' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_voice_enabled' | 'discord_webhook' | 'finished_at' | 'homepage' | 'id' | 'invite_only' | 'is_league' | 'latitude' | 'location' | 'logo' | 'longitude' | 'match_options_id' | 'max_elo' | 'min_elo' | 'min_role' | 'name' | 'organizer_picks_mvp' | 'organizer_steam_id' | 'registration_type' | 'scheduling_mode' | 'start' | 'status' | 'substitutes_enabled'
 
 
 /** aggregate var_pop on columns */
@@ -39878,6 +40942,747 @@ export interface utility_demo_throws_variance_fields {
     view_pitch: (Scalars['Float'] | null)
     view_yaw: (Scalars['Float'] | null)
     __typename: 'utility_demo_throws_variance_fields'
+}
+
+
+/** columns and relationships of "utility_discoveries" */
+export interface utility_discoveries {
+    area: Scalars['jsonb']
+    created_at: Scalars['timestamptz']
+    error: (Scalars['String'] | null)
+    finished_at: (Scalars['timestamptz'] | null)
+    grenades: Scalars['Int']
+    id: Scalars['uuid']
+    map_name: Scalars['String']
+    mesh_revision: (Scalars['String'] | null)
+    missed: Scalars['Int']
+    predicted: Scalars['Int']
+    radius: Scalars['Float']
+    /** An object relationship */
+    requested_by: players
+    requested_by_steam_id: Scalars['bigint']
+    /** An array relationship */
+    results: utility_discovery_results[]
+    /** An aggregate relationship */
+    results_aggregate: utility_discovery_results_aggregate
+    started_at: (Scalars['timestamptz'] | null)
+    status: Scalars['String']
+    strengths: Scalars['String'][]
+    target_x: Scalars['float8']
+    target_y: Scalars['float8']
+    target_z: Scalars['float8']
+    techniques: Scalars['jsonb']
+    utility_practice_session_id: (Scalars['uuid'] | null)
+    utility_type: Scalars['String']
+    verified: Scalars['Int']
+    __typename: 'utility_discoveries'
+}
+
+
+/** aggregated selection of "utility_discoveries" */
+export interface utility_discoveries_aggregate {
+    aggregate: (utility_discoveries_aggregate_fields | null)
+    nodes: utility_discoveries[]
+    __typename: 'utility_discoveries_aggregate'
+}
+
+
+/** aggregate fields of "utility_discoveries" */
+export interface utility_discoveries_aggregate_fields {
+    avg: (utility_discoveries_avg_fields | null)
+    count: Scalars['Int']
+    max: (utility_discoveries_max_fields | null)
+    min: (utility_discoveries_min_fields | null)
+    stddev: (utility_discoveries_stddev_fields | null)
+    stddev_pop: (utility_discoveries_stddev_pop_fields | null)
+    stddev_samp: (utility_discoveries_stddev_samp_fields | null)
+    sum: (utility_discoveries_sum_fields | null)
+    var_pop: (utility_discoveries_var_pop_fields | null)
+    var_samp: (utility_discoveries_var_samp_fields | null)
+    variance: (utility_discoveries_variance_fields | null)
+    __typename: 'utility_discoveries_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface utility_discoveries_avg_fields {
+    grenades: (Scalars['Float'] | null)
+    missed: (Scalars['Float'] | null)
+    predicted: (Scalars['Float'] | null)
+    radius: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    target_x: (Scalars['Float'] | null)
+    target_y: (Scalars['Float'] | null)
+    target_z: (Scalars['Float'] | null)
+    verified: (Scalars['Float'] | null)
+    __typename: 'utility_discoveries_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "utility_discoveries" */
+export type utility_discoveries_constraint = 'utility_discoveries_one_active_idx' | 'utility_discoveries_pkey'
+
+
+/** aggregate max on columns */
+export interface utility_discoveries_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    error: (Scalars['String'] | null)
+    finished_at: (Scalars['timestamptz'] | null)
+    grenades: (Scalars['Int'] | null)
+    id: (Scalars['uuid'] | null)
+    map_name: (Scalars['String'] | null)
+    mesh_revision: (Scalars['String'] | null)
+    missed: (Scalars['Int'] | null)
+    predicted: (Scalars['Int'] | null)
+    radius: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['bigint'] | null)
+    started_at: (Scalars['timestamptz'] | null)
+    status: (Scalars['String'] | null)
+    strengths: (Scalars['String'][] | null)
+    target_x: (Scalars['float8'] | null)
+    target_y: (Scalars['float8'] | null)
+    target_z: (Scalars['float8'] | null)
+    utility_practice_session_id: (Scalars['uuid'] | null)
+    utility_type: (Scalars['String'] | null)
+    verified: (Scalars['Int'] | null)
+    __typename: 'utility_discoveries_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface utility_discoveries_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    error: (Scalars['String'] | null)
+    finished_at: (Scalars['timestamptz'] | null)
+    grenades: (Scalars['Int'] | null)
+    id: (Scalars['uuid'] | null)
+    map_name: (Scalars['String'] | null)
+    mesh_revision: (Scalars['String'] | null)
+    missed: (Scalars['Int'] | null)
+    predicted: (Scalars['Int'] | null)
+    radius: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['bigint'] | null)
+    started_at: (Scalars['timestamptz'] | null)
+    status: (Scalars['String'] | null)
+    strengths: (Scalars['String'][] | null)
+    target_x: (Scalars['float8'] | null)
+    target_y: (Scalars['float8'] | null)
+    target_z: (Scalars['float8'] | null)
+    utility_practice_session_id: (Scalars['uuid'] | null)
+    utility_type: (Scalars['String'] | null)
+    verified: (Scalars['Int'] | null)
+    __typename: 'utility_discoveries_min_fields'
+}
+
+
+/** response of any mutation on the table "utility_discoveries" */
+export interface utility_discoveries_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: utility_discoveries[]
+    __typename: 'utility_discoveries_mutation_response'
+}
+
+
+/** select columns of table "utility_discoveries" */
+export type utility_discoveries_select_column = 'area' | 'created_at' | 'error' | 'finished_at' | 'grenades' | 'id' | 'map_name' | 'mesh_revision' | 'missed' | 'predicted' | 'radius' | 'requested_by_steam_id' | 'started_at' | 'status' | 'strengths' | 'target_x' | 'target_y' | 'target_z' | 'techniques' | 'utility_practice_session_id' | 'utility_type' | 'verified'
+
+
+/** aggregate stddev on columns */
+export interface utility_discoveries_stddev_fields {
+    grenades: (Scalars['Float'] | null)
+    missed: (Scalars['Float'] | null)
+    predicted: (Scalars['Float'] | null)
+    radius: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    target_x: (Scalars['Float'] | null)
+    target_y: (Scalars['Float'] | null)
+    target_z: (Scalars['Float'] | null)
+    verified: (Scalars['Float'] | null)
+    __typename: 'utility_discoveries_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface utility_discoveries_stddev_pop_fields {
+    grenades: (Scalars['Float'] | null)
+    missed: (Scalars['Float'] | null)
+    predicted: (Scalars['Float'] | null)
+    radius: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    target_x: (Scalars['Float'] | null)
+    target_y: (Scalars['Float'] | null)
+    target_z: (Scalars['Float'] | null)
+    verified: (Scalars['Float'] | null)
+    __typename: 'utility_discoveries_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface utility_discoveries_stddev_samp_fields {
+    grenades: (Scalars['Float'] | null)
+    missed: (Scalars['Float'] | null)
+    predicted: (Scalars['Float'] | null)
+    radius: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    target_x: (Scalars['Float'] | null)
+    target_y: (Scalars['Float'] | null)
+    target_z: (Scalars['Float'] | null)
+    verified: (Scalars['Float'] | null)
+    __typename: 'utility_discoveries_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface utility_discoveries_sum_fields {
+    grenades: (Scalars['Int'] | null)
+    missed: (Scalars['Int'] | null)
+    predicted: (Scalars['Int'] | null)
+    radius: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['bigint'] | null)
+    target_x: (Scalars['float8'] | null)
+    target_y: (Scalars['float8'] | null)
+    target_z: (Scalars['float8'] | null)
+    verified: (Scalars['Int'] | null)
+    __typename: 'utility_discoveries_sum_fields'
+}
+
+
+/** update columns of table "utility_discoveries" */
+export type utility_discoveries_update_column = 'area' | 'created_at' | 'error' | 'finished_at' | 'grenades' | 'id' | 'map_name' | 'mesh_revision' | 'missed' | 'predicted' | 'radius' | 'requested_by_steam_id' | 'started_at' | 'status' | 'strengths' | 'target_x' | 'target_y' | 'target_z' | 'techniques' | 'utility_practice_session_id' | 'utility_type' | 'verified'
+
+
+/** aggregate var_pop on columns */
+export interface utility_discoveries_var_pop_fields {
+    grenades: (Scalars['Float'] | null)
+    missed: (Scalars['Float'] | null)
+    predicted: (Scalars['Float'] | null)
+    radius: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    target_x: (Scalars['Float'] | null)
+    target_y: (Scalars['Float'] | null)
+    target_z: (Scalars['Float'] | null)
+    verified: (Scalars['Float'] | null)
+    __typename: 'utility_discoveries_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface utility_discoveries_var_samp_fields {
+    grenades: (Scalars['Float'] | null)
+    missed: (Scalars['Float'] | null)
+    predicted: (Scalars['Float'] | null)
+    radius: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    target_x: (Scalars['Float'] | null)
+    target_y: (Scalars['Float'] | null)
+    target_z: (Scalars['Float'] | null)
+    verified: (Scalars['Float'] | null)
+    __typename: 'utility_discoveries_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface utility_discoveries_variance_fields {
+    grenades: (Scalars['Float'] | null)
+    missed: (Scalars['Float'] | null)
+    predicted: (Scalars['Float'] | null)
+    radius: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    target_x: (Scalars['Float'] | null)
+    target_y: (Scalars['Float'] | null)
+    target_z: (Scalars['Float'] | null)
+    verified: (Scalars['Float'] | null)
+    __typename: 'utility_discoveries_variance_fields'
+}
+
+
+/** columns and relationships of "utility_discovery_results" */
+export interface utility_discovery_results {
+    bounces: (Scalars['Int'] | null)
+    created_at: Scalars['timestamptz']
+    /** An object relationship */
+    discovery: utility_discoveries
+    discovery_id: Scalars['uuid']
+    distance: (Scalars['Float'] | null)
+    eye_z: Scalars['float8']
+    flight_time_ms: (Scalars['Int'] | null)
+    forgiveness: (Scalars['Float'] | null)
+    grenades: (Scalars['Int'] | null)
+    id: Scalars['uuid']
+    initial_pos_x: Scalars['float8']
+    initial_pos_y: Scalars['float8']
+    initial_pos_z: Scalars['float8']
+    initial_vel_x: Scalars['float8']
+    initial_vel_y: Scalars['float8']
+    initial_vel_z: Scalars['float8']
+    is_new: (Scalars['Boolean'] | null)
+    jump_throw: Scalars['Boolean']
+    land_x: (Scalars['float8'] | null)
+    land_y: (Scalars['float8'] | null)
+    land_z: (Scalars['float8'] | null)
+    /** An object relationship */
+    lineup: (utility_lineups | null)
+    measured: Scalars['Boolean']
+    move_direction: (Scalars['String'] | null)
+    move_gait: (Scalars['String'] | null)
+    path: (Scalars['jsonb'] | null)
+    pitch: Scalars['float8']
+    predicted_bounces: Scalars['Int']
+    predicted_distance: Scalars['Float']
+    predicted_land_x: Scalars['float8']
+    predicted_land_y: Scalars['float8']
+    predicted_land_z: Scalars['float8']
+    predicted_spread: Scalars['Float']
+    rank: Scalars['Int']
+    stand_x: Scalars['float8']
+    stand_y: Scalars['float8']
+    stand_z: Scalars['float8']
+    status: Scalars['String']
+    strength: Scalars['String']
+    technique: Scalars['String']
+    utility_lineup_id: (Scalars['uuid'] | null)
+    verified_at: (Scalars['timestamptz'] | null)
+    yaw: Scalars['float8']
+    __typename: 'utility_discovery_results'
+}
+
+
+/** aggregated selection of "utility_discovery_results" */
+export interface utility_discovery_results_aggregate {
+    aggregate: (utility_discovery_results_aggregate_fields | null)
+    nodes: utility_discovery_results[]
+    __typename: 'utility_discovery_results_aggregate'
+}
+
+
+/** aggregate fields of "utility_discovery_results" */
+export interface utility_discovery_results_aggregate_fields {
+    avg: (utility_discovery_results_avg_fields | null)
+    count: Scalars['Int']
+    max: (utility_discovery_results_max_fields | null)
+    min: (utility_discovery_results_min_fields | null)
+    stddev: (utility_discovery_results_stddev_fields | null)
+    stddev_pop: (utility_discovery_results_stddev_pop_fields | null)
+    stddev_samp: (utility_discovery_results_stddev_samp_fields | null)
+    sum: (utility_discovery_results_sum_fields | null)
+    var_pop: (utility_discovery_results_var_pop_fields | null)
+    var_samp: (utility_discovery_results_var_samp_fields | null)
+    variance: (utility_discovery_results_variance_fields | null)
+    __typename: 'utility_discovery_results_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface utility_discovery_results_avg_fields {
+    bounces: (Scalars['Float'] | null)
+    distance: (Scalars['Float'] | null)
+    eye_z: (Scalars['Float'] | null)
+    flight_time_ms: (Scalars['Float'] | null)
+    forgiveness: (Scalars['Float'] | null)
+    grenades: (Scalars['Float'] | null)
+    initial_pos_x: (Scalars['Float'] | null)
+    initial_pos_y: (Scalars['Float'] | null)
+    initial_pos_z: (Scalars['Float'] | null)
+    initial_vel_x: (Scalars['Float'] | null)
+    initial_vel_y: (Scalars['Float'] | null)
+    initial_vel_z: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    pitch: (Scalars['Float'] | null)
+    predicted_bounces: (Scalars['Float'] | null)
+    predicted_distance: (Scalars['Float'] | null)
+    predicted_land_x: (Scalars['Float'] | null)
+    predicted_land_y: (Scalars['Float'] | null)
+    predicted_land_z: (Scalars['Float'] | null)
+    predicted_spread: (Scalars['Float'] | null)
+    rank: (Scalars['Float'] | null)
+    stand_x: (Scalars['Float'] | null)
+    stand_y: (Scalars['Float'] | null)
+    stand_z: (Scalars['Float'] | null)
+    yaw: (Scalars['Float'] | null)
+    __typename: 'utility_discovery_results_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "utility_discovery_results" */
+export type utility_discovery_results_constraint = 'utility_discovery_results_pkey'
+
+
+/** aggregate max on columns */
+export interface utility_discovery_results_max_fields {
+    bounces: (Scalars['Int'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    discovery_id: (Scalars['uuid'] | null)
+    distance: (Scalars['Float'] | null)
+    eye_z: (Scalars['float8'] | null)
+    flight_time_ms: (Scalars['Int'] | null)
+    forgiveness: (Scalars['Float'] | null)
+    grenades: (Scalars['Int'] | null)
+    id: (Scalars['uuid'] | null)
+    initial_pos_x: (Scalars['float8'] | null)
+    initial_pos_y: (Scalars['float8'] | null)
+    initial_pos_z: (Scalars['float8'] | null)
+    initial_vel_x: (Scalars['float8'] | null)
+    initial_vel_y: (Scalars['float8'] | null)
+    initial_vel_z: (Scalars['float8'] | null)
+    land_x: (Scalars['float8'] | null)
+    land_y: (Scalars['float8'] | null)
+    land_z: (Scalars['float8'] | null)
+    move_direction: (Scalars['String'] | null)
+    move_gait: (Scalars['String'] | null)
+    pitch: (Scalars['float8'] | null)
+    predicted_bounces: (Scalars['Int'] | null)
+    predicted_distance: (Scalars['Float'] | null)
+    predicted_land_x: (Scalars['float8'] | null)
+    predicted_land_y: (Scalars['float8'] | null)
+    predicted_land_z: (Scalars['float8'] | null)
+    predicted_spread: (Scalars['Float'] | null)
+    rank: (Scalars['Int'] | null)
+    stand_x: (Scalars['float8'] | null)
+    stand_y: (Scalars['float8'] | null)
+    stand_z: (Scalars['float8'] | null)
+    status: (Scalars['String'] | null)
+    strength: (Scalars['String'] | null)
+    technique: (Scalars['String'] | null)
+    utility_lineup_id: (Scalars['uuid'] | null)
+    verified_at: (Scalars['timestamptz'] | null)
+    yaw: (Scalars['float8'] | null)
+    __typename: 'utility_discovery_results_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface utility_discovery_results_min_fields {
+    bounces: (Scalars['Int'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    discovery_id: (Scalars['uuid'] | null)
+    distance: (Scalars['Float'] | null)
+    eye_z: (Scalars['float8'] | null)
+    flight_time_ms: (Scalars['Int'] | null)
+    forgiveness: (Scalars['Float'] | null)
+    grenades: (Scalars['Int'] | null)
+    id: (Scalars['uuid'] | null)
+    initial_pos_x: (Scalars['float8'] | null)
+    initial_pos_y: (Scalars['float8'] | null)
+    initial_pos_z: (Scalars['float8'] | null)
+    initial_vel_x: (Scalars['float8'] | null)
+    initial_vel_y: (Scalars['float8'] | null)
+    initial_vel_z: (Scalars['float8'] | null)
+    land_x: (Scalars['float8'] | null)
+    land_y: (Scalars['float8'] | null)
+    land_z: (Scalars['float8'] | null)
+    move_direction: (Scalars['String'] | null)
+    move_gait: (Scalars['String'] | null)
+    pitch: (Scalars['float8'] | null)
+    predicted_bounces: (Scalars['Int'] | null)
+    predicted_distance: (Scalars['Float'] | null)
+    predicted_land_x: (Scalars['float8'] | null)
+    predicted_land_y: (Scalars['float8'] | null)
+    predicted_land_z: (Scalars['float8'] | null)
+    predicted_spread: (Scalars['Float'] | null)
+    rank: (Scalars['Int'] | null)
+    stand_x: (Scalars['float8'] | null)
+    stand_y: (Scalars['float8'] | null)
+    stand_z: (Scalars['float8'] | null)
+    status: (Scalars['String'] | null)
+    strength: (Scalars['String'] | null)
+    technique: (Scalars['String'] | null)
+    utility_lineup_id: (Scalars['uuid'] | null)
+    verified_at: (Scalars['timestamptz'] | null)
+    yaw: (Scalars['float8'] | null)
+    __typename: 'utility_discovery_results_min_fields'
+}
+
+
+/** response of any mutation on the table "utility_discovery_results" */
+export interface utility_discovery_results_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: utility_discovery_results[]
+    __typename: 'utility_discovery_results_mutation_response'
+}
+
+
+/** select columns of table "utility_discovery_results" */
+export type utility_discovery_results_select_column = 'bounces' | 'created_at' | 'discovery_id' | 'distance' | 'eye_z' | 'flight_time_ms' | 'forgiveness' | 'grenades' | 'id' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'is_new' | 'jump_throw' | 'land_x' | 'land_y' | 'land_z' | 'measured' | 'move_direction' | 'move_gait' | 'path' | 'pitch' | 'predicted_bounces' | 'predicted_distance' | 'predicted_land_x' | 'predicted_land_y' | 'predicted_land_z' | 'predicted_spread' | 'rank' | 'stand_x' | 'stand_y' | 'stand_z' | 'status' | 'strength' | 'technique' | 'utility_lineup_id' | 'verified_at' | 'yaw'
+
+
+/** select "utility_discovery_results_aggregate_bool_exp_avg_arguments_columns" columns of table "utility_discovery_results" */
+export type utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_avg_arguments_columns = 'eye_z' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'land_x' | 'land_y' | 'land_z' | 'pitch' | 'predicted_land_x' | 'predicted_land_y' | 'predicted_land_z' | 'stand_x' | 'stand_y' | 'stand_z' | 'yaw'
+
+
+/** select "utility_discovery_results_aggregate_bool_exp_bool_and_arguments_columns" columns of table "utility_discovery_results" */
+export type utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_bool_and_arguments_columns = 'is_new' | 'jump_throw' | 'measured'
+
+
+/** select "utility_discovery_results_aggregate_bool_exp_bool_or_arguments_columns" columns of table "utility_discovery_results" */
+export type utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_bool_or_arguments_columns = 'is_new' | 'jump_throw' | 'measured'
+
+
+/** select "utility_discovery_results_aggregate_bool_exp_corr_arguments_columns" columns of table "utility_discovery_results" */
+export type utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_corr_arguments_columns = 'eye_z' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'land_x' | 'land_y' | 'land_z' | 'pitch' | 'predicted_land_x' | 'predicted_land_y' | 'predicted_land_z' | 'stand_x' | 'stand_y' | 'stand_z' | 'yaw'
+
+
+/** select "utility_discovery_results_aggregate_bool_exp_covar_samp_arguments_columns" columns of table "utility_discovery_results" */
+export type utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_covar_samp_arguments_columns = 'eye_z' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'land_x' | 'land_y' | 'land_z' | 'pitch' | 'predicted_land_x' | 'predicted_land_y' | 'predicted_land_z' | 'stand_x' | 'stand_y' | 'stand_z' | 'yaw'
+
+
+/** select "utility_discovery_results_aggregate_bool_exp_max_arguments_columns" columns of table "utility_discovery_results" */
+export type utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_max_arguments_columns = 'eye_z' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'land_x' | 'land_y' | 'land_z' | 'pitch' | 'predicted_land_x' | 'predicted_land_y' | 'predicted_land_z' | 'stand_x' | 'stand_y' | 'stand_z' | 'yaw'
+
+
+/** select "utility_discovery_results_aggregate_bool_exp_min_arguments_columns" columns of table "utility_discovery_results" */
+export type utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_min_arguments_columns = 'eye_z' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'land_x' | 'land_y' | 'land_z' | 'pitch' | 'predicted_land_x' | 'predicted_land_y' | 'predicted_land_z' | 'stand_x' | 'stand_y' | 'stand_z' | 'yaw'
+
+
+/** select "utility_discovery_results_aggregate_bool_exp_stddev_samp_arguments_columns" columns of table "utility_discovery_results" */
+export type utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_stddev_samp_arguments_columns = 'eye_z' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'land_x' | 'land_y' | 'land_z' | 'pitch' | 'predicted_land_x' | 'predicted_land_y' | 'predicted_land_z' | 'stand_x' | 'stand_y' | 'stand_z' | 'yaw'
+
+
+/** select "utility_discovery_results_aggregate_bool_exp_sum_arguments_columns" columns of table "utility_discovery_results" */
+export type utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_sum_arguments_columns = 'eye_z' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'land_x' | 'land_y' | 'land_z' | 'pitch' | 'predicted_land_x' | 'predicted_land_y' | 'predicted_land_z' | 'stand_x' | 'stand_y' | 'stand_z' | 'yaw'
+
+
+/** select "utility_discovery_results_aggregate_bool_exp_var_samp_arguments_columns" columns of table "utility_discovery_results" */
+export type utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_var_samp_arguments_columns = 'eye_z' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'land_x' | 'land_y' | 'land_z' | 'pitch' | 'predicted_land_x' | 'predicted_land_y' | 'predicted_land_z' | 'stand_x' | 'stand_y' | 'stand_z' | 'yaw'
+
+
+/** aggregate stddev on columns */
+export interface utility_discovery_results_stddev_fields {
+    bounces: (Scalars['Float'] | null)
+    distance: (Scalars['Float'] | null)
+    eye_z: (Scalars['Float'] | null)
+    flight_time_ms: (Scalars['Float'] | null)
+    forgiveness: (Scalars['Float'] | null)
+    grenades: (Scalars['Float'] | null)
+    initial_pos_x: (Scalars['Float'] | null)
+    initial_pos_y: (Scalars['Float'] | null)
+    initial_pos_z: (Scalars['Float'] | null)
+    initial_vel_x: (Scalars['Float'] | null)
+    initial_vel_y: (Scalars['Float'] | null)
+    initial_vel_z: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    pitch: (Scalars['Float'] | null)
+    predicted_bounces: (Scalars['Float'] | null)
+    predicted_distance: (Scalars['Float'] | null)
+    predicted_land_x: (Scalars['Float'] | null)
+    predicted_land_y: (Scalars['Float'] | null)
+    predicted_land_z: (Scalars['Float'] | null)
+    predicted_spread: (Scalars['Float'] | null)
+    rank: (Scalars['Float'] | null)
+    stand_x: (Scalars['Float'] | null)
+    stand_y: (Scalars['Float'] | null)
+    stand_z: (Scalars['Float'] | null)
+    yaw: (Scalars['Float'] | null)
+    __typename: 'utility_discovery_results_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface utility_discovery_results_stddev_pop_fields {
+    bounces: (Scalars['Float'] | null)
+    distance: (Scalars['Float'] | null)
+    eye_z: (Scalars['Float'] | null)
+    flight_time_ms: (Scalars['Float'] | null)
+    forgiveness: (Scalars['Float'] | null)
+    grenades: (Scalars['Float'] | null)
+    initial_pos_x: (Scalars['Float'] | null)
+    initial_pos_y: (Scalars['Float'] | null)
+    initial_pos_z: (Scalars['Float'] | null)
+    initial_vel_x: (Scalars['Float'] | null)
+    initial_vel_y: (Scalars['Float'] | null)
+    initial_vel_z: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    pitch: (Scalars['Float'] | null)
+    predicted_bounces: (Scalars['Float'] | null)
+    predicted_distance: (Scalars['Float'] | null)
+    predicted_land_x: (Scalars['Float'] | null)
+    predicted_land_y: (Scalars['Float'] | null)
+    predicted_land_z: (Scalars['Float'] | null)
+    predicted_spread: (Scalars['Float'] | null)
+    rank: (Scalars['Float'] | null)
+    stand_x: (Scalars['Float'] | null)
+    stand_y: (Scalars['Float'] | null)
+    stand_z: (Scalars['Float'] | null)
+    yaw: (Scalars['Float'] | null)
+    __typename: 'utility_discovery_results_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface utility_discovery_results_stddev_samp_fields {
+    bounces: (Scalars['Float'] | null)
+    distance: (Scalars['Float'] | null)
+    eye_z: (Scalars['Float'] | null)
+    flight_time_ms: (Scalars['Float'] | null)
+    forgiveness: (Scalars['Float'] | null)
+    grenades: (Scalars['Float'] | null)
+    initial_pos_x: (Scalars['Float'] | null)
+    initial_pos_y: (Scalars['Float'] | null)
+    initial_pos_z: (Scalars['Float'] | null)
+    initial_vel_x: (Scalars['Float'] | null)
+    initial_vel_y: (Scalars['Float'] | null)
+    initial_vel_z: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    pitch: (Scalars['Float'] | null)
+    predicted_bounces: (Scalars['Float'] | null)
+    predicted_distance: (Scalars['Float'] | null)
+    predicted_land_x: (Scalars['Float'] | null)
+    predicted_land_y: (Scalars['Float'] | null)
+    predicted_land_z: (Scalars['Float'] | null)
+    predicted_spread: (Scalars['Float'] | null)
+    rank: (Scalars['Float'] | null)
+    stand_x: (Scalars['Float'] | null)
+    stand_y: (Scalars['Float'] | null)
+    stand_z: (Scalars['Float'] | null)
+    yaw: (Scalars['Float'] | null)
+    __typename: 'utility_discovery_results_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface utility_discovery_results_sum_fields {
+    bounces: (Scalars['Int'] | null)
+    distance: (Scalars['Float'] | null)
+    eye_z: (Scalars['float8'] | null)
+    flight_time_ms: (Scalars['Int'] | null)
+    forgiveness: (Scalars['Float'] | null)
+    grenades: (Scalars['Int'] | null)
+    initial_pos_x: (Scalars['float8'] | null)
+    initial_pos_y: (Scalars['float8'] | null)
+    initial_pos_z: (Scalars['float8'] | null)
+    initial_vel_x: (Scalars['float8'] | null)
+    initial_vel_y: (Scalars['float8'] | null)
+    initial_vel_z: (Scalars['float8'] | null)
+    land_x: (Scalars['float8'] | null)
+    land_y: (Scalars['float8'] | null)
+    land_z: (Scalars['float8'] | null)
+    pitch: (Scalars['float8'] | null)
+    predicted_bounces: (Scalars['Int'] | null)
+    predicted_distance: (Scalars['Float'] | null)
+    predicted_land_x: (Scalars['float8'] | null)
+    predicted_land_y: (Scalars['float8'] | null)
+    predicted_land_z: (Scalars['float8'] | null)
+    predicted_spread: (Scalars['Float'] | null)
+    rank: (Scalars['Int'] | null)
+    stand_x: (Scalars['float8'] | null)
+    stand_y: (Scalars['float8'] | null)
+    stand_z: (Scalars['float8'] | null)
+    yaw: (Scalars['float8'] | null)
+    __typename: 'utility_discovery_results_sum_fields'
+}
+
+
+/** update columns of table "utility_discovery_results" */
+export type utility_discovery_results_update_column = 'bounces' | 'created_at' | 'discovery_id' | 'distance' | 'eye_z' | 'flight_time_ms' | 'forgiveness' | 'grenades' | 'id' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'is_new' | 'jump_throw' | 'land_x' | 'land_y' | 'land_z' | 'measured' | 'move_direction' | 'move_gait' | 'path' | 'pitch' | 'predicted_bounces' | 'predicted_distance' | 'predicted_land_x' | 'predicted_land_y' | 'predicted_land_z' | 'predicted_spread' | 'rank' | 'stand_x' | 'stand_y' | 'stand_z' | 'status' | 'strength' | 'technique' | 'utility_lineup_id' | 'verified_at' | 'yaw'
+
+
+/** aggregate var_pop on columns */
+export interface utility_discovery_results_var_pop_fields {
+    bounces: (Scalars['Float'] | null)
+    distance: (Scalars['Float'] | null)
+    eye_z: (Scalars['Float'] | null)
+    flight_time_ms: (Scalars['Float'] | null)
+    forgiveness: (Scalars['Float'] | null)
+    grenades: (Scalars['Float'] | null)
+    initial_pos_x: (Scalars['Float'] | null)
+    initial_pos_y: (Scalars['Float'] | null)
+    initial_pos_z: (Scalars['Float'] | null)
+    initial_vel_x: (Scalars['Float'] | null)
+    initial_vel_y: (Scalars['Float'] | null)
+    initial_vel_z: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    pitch: (Scalars['Float'] | null)
+    predicted_bounces: (Scalars['Float'] | null)
+    predicted_distance: (Scalars['Float'] | null)
+    predicted_land_x: (Scalars['Float'] | null)
+    predicted_land_y: (Scalars['Float'] | null)
+    predicted_land_z: (Scalars['Float'] | null)
+    predicted_spread: (Scalars['Float'] | null)
+    rank: (Scalars['Float'] | null)
+    stand_x: (Scalars['Float'] | null)
+    stand_y: (Scalars['Float'] | null)
+    stand_z: (Scalars['Float'] | null)
+    yaw: (Scalars['Float'] | null)
+    __typename: 'utility_discovery_results_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface utility_discovery_results_var_samp_fields {
+    bounces: (Scalars['Float'] | null)
+    distance: (Scalars['Float'] | null)
+    eye_z: (Scalars['Float'] | null)
+    flight_time_ms: (Scalars['Float'] | null)
+    forgiveness: (Scalars['Float'] | null)
+    grenades: (Scalars['Float'] | null)
+    initial_pos_x: (Scalars['Float'] | null)
+    initial_pos_y: (Scalars['Float'] | null)
+    initial_pos_z: (Scalars['Float'] | null)
+    initial_vel_x: (Scalars['Float'] | null)
+    initial_vel_y: (Scalars['Float'] | null)
+    initial_vel_z: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    pitch: (Scalars['Float'] | null)
+    predicted_bounces: (Scalars['Float'] | null)
+    predicted_distance: (Scalars['Float'] | null)
+    predicted_land_x: (Scalars['Float'] | null)
+    predicted_land_y: (Scalars['Float'] | null)
+    predicted_land_z: (Scalars['Float'] | null)
+    predicted_spread: (Scalars['Float'] | null)
+    rank: (Scalars['Float'] | null)
+    stand_x: (Scalars['Float'] | null)
+    stand_y: (Scalars['Float'] | null)
+    stand_z: (Scalars['Float'] | null)
+    yaw: (Scalars['Float'] | null)
+    __typename: 'utility_discovery_results_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface utility_discovery_results_variance_fields {
+    bounces: (Scalars['Float'] | null)
+    distance: (Scalars['Float'] | null)
+    eye_z: (Scalars['Float'] | null)
+    flight_time_ms: (Scalars['Float'] | null)
+    forgiveness: (Scalars['Float'] | null)
+    grenades: (Scalars['Float'] | null)
+    initial_pos_x: (Scalars['Float'] | null)
+    initial_pos_y: (Scalars['Float'] | null)
+    initial_pos_z: (Scalars['Float'] | null)
+    initial_vel_x: (Scalars['Float'] | null)
+    initial_vel_y: (Scalars['Float'] | null)
+    initial_vel_z: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    pitch: (Scalars['Float'] | null)
+    predicted_bounces: (Scalars['Float'] | null)
+    predicted_distance: (Scalars['Float'] | null)
+    predicted_land_x: (Scalars['Float'] | null)
+    predicted_land_y: (Scalars['Float'] | null)
+    predicted_land_z: (Scalars['Float'] | null)
+    predicted_spread: (Scalars['Float'] | null)
+    rank: (Scalars['Float'] | null)
+    stand_x: (Scalars['Float'] | null)
+    stand_y: (Scalars['Float'] | null)
+    stand_z: (Scalars['Float'] | null)
+    yaw: (Scalars['Float'] | null)
+    __typename: 'utility_discovery_results_variance_fields'
 }
 
 
@@ -40728,6 +42533,7 @@ export interface utility_lineup_renders {
     /** An object relationship */
     practice_session: (utility_practice_sessions | null)
     progress: (Scalars['numeric'] | null)
+    render_version: (Scalars['Int'] | null)
     /** An object relationship */
     requested_by: (players | null)
     requested_by_steam_id: (Scalars['bigint'] | null)
@@ -40772,6 +42578,7 @@ export interface utility_lineup_renders_aggregate_fields {
 export interface utility_lineup_renders_avg_fields {
     duration_ms: (Scalars['Float'] | null)
     progress: (Scalars['Float'] | null)
+    render_version: (Scalars['Float'] | null)
     requested_by_steam_id: (Scalars['Float'] | null)
     sort_index: (Scalars['Float'] | null)
     __typename: 'utility_lineup_renders_avg_fields'
@@ -40793,6 +42600,7 @@ export interface utility_lineup_renders_max_fields {
     last_status_at: (Scalars['timestamptz'] | null)
     map_name: (Scalars['String'] | null)
     progress: (Scalars['numeric'] | null)
+    render_version: (Scalars['Int'] | null)
     requested_by_steam_id: (Scalars['bigint'] | null)
     session_token: (Scalars['String'] | null)
     skip_reason: (Scalars['String'] | null)
@@ -40815,6 +42623,7 @@ export interface utility_lineup_renders_min_fields {
     last_status_at: (Scalars['timestamptz'] | null)
     map_name: (Scalars['String'] | null)
     progress: (Scalars['numeric'] | null)
+    render_version: (Scalars['Int'] | null)
     requested_by_steam_id: (Scalars['bigint'] | null)
     session_token: (Scalars['String'] | null)
     skip_reason: (Scalars['String'] | null)
@@ -40837,7 +42646,7 @@ export interface utility_lineup_renders_mutation_response {
 
 
 /** select columns of table "utility_lineup_renders" */
-export type utility_lineup_renders_select_column = 'created_at' | 'duration_ms' | 'error_message' | 'game_server_node_id' | 'id' | 'k8s_job_name' | 'last_status_at' | 'map_name' | 'paused' | 'progress' | 'requested_by_steam_id' | 'session_token' | 'skip_reason' | 'sort_index' | 'spec' | 'status' | 'status_history' | 'utility_lineup_id' | 'utility_practice_session_id'
+export type utility_lineup_renders_select_column = 'created_at' | 'duration_ms' | 'error_message' | 'game_server_node_id' | 'id' | 'k8s_job_name' | 'last_status_at' | 'map_name' | 'paused' | 'progress' | 'render_version' | 'requested_by_steam_id' | 'session_token' | 'skip_reason' | 'sort_index' | 'spec' | 'status' | 'status_history' | 'utility_lineup_id' | 'utility_practice_session_id'
 
 
 /** select "utility_lineup_renders_aggregate_bool_exp_bool_and_arguments_columns" columns of table "utility_lineup_renders" */
@@ -40852,6 +42661,7 @@ export type utility_lineup_renders_select_column_utility_lineup_renders_aggregat
 export interface utility_lineup_renders_stddev_fields {
     duration_ms: (Scalars['Float'] | null)
     progress: (Scalars['Float'] | null)
+    render_version: (Scalars['Float'] | null)
     requested_by_steam_id: (Scalars['Float'] | null)
     sort_index: (Scalars['Float'] | null)
     __typename: 'utility_lineup_renders_stddev_fields'
@@ -40862,6 +42672,7 @@ export interface utility_lineup_renders_stddev_fields {
 export interface utility_lineup_renders_stddev_pop_fields {
     duration_ms: (Scalars['Float'] | null)
     progress: (Scalars['Float'] | null)
+    render_version: (Scalars['Float'] | null)
     requested_by_steam_id: (Scalars['Float'] | null)
     sort_index: (Scalars['Float'] | null)
     __typename: 'utility_lineup_renders_stddev_pop_fields'
@@ -40872,6 +42683,7 @@ export interface utility_lineup_renders_stddev_pop_fields {
 export interface utility_lineup_renders_stddev_samp_fields {
     duration_ms: (Scalars['Float'] | null)
     progress: (Scalars['Float'] | null)
+    render_version: (Scalars['Float'] | null)
     requested_by_steam_id: (Scalars['Float'] | null)
     sort_index: (Scalars['Float'] | null)
     __typename: 'utility_lineup_renders_stddev_samp_fields'
@@ -40882,6 +42694,7 @@ export interface utility_lineup_renders_stddev_samp_fields {
 export interface utility_lineup_renders_sum_fields {
     duration_ms: (Scalars['Int'] | null)
     progress: (Scalars['numeric'] | null)
+    render_version: (Scalars['Int'] | null)
     requested_by_steam_id: (Scalars['bigint'] | null)
     sort_index: (Scalars['Int'] | null)
     __typename: 'utility_lineup_renders_sum_fields'
@@ -40889,13 +42702,14 @@ export interface utility_lineup_renders_sum_fields {
 
 
 /** update columns of table "utility_lineup_renders" */
-export type utility_lineup_renders_update_column = 'created_at' | 'duration_ms' | 'error_message' | 'game_server_node_id' | 'id' | 'k8s_job_name' | 'last_status_at' | 'map_name' | 'paused' | 'progress' | 'requested_by_steam_id' | 'session_token' | 'skip_reason' | 'sort_index' | 'spec' | 'status' | 'status_history' | 'utility_lineup_id' | 'utility_practice_session_id'
+export type utility_lineup_renders_update_column = 'created_at' | 'duration_ms' | 'error_message' | 'game_server_node_id' | 'id' | 'k8s_job_name' | 'last_status_at' | 'map_name' | 'paused' | 'progress' | 'render_version' | 'requested_by_steam_id' | 'session_token' | 'skip_reason' | 'sort_index' | 'spec' | 'status' | 'status_history' | 'utility_lineup_id' | 'utility_practice_session_id'
 
 
 /** aggregate var_pop on columns */
 export interface utility_lineup_renders_var_pop_fields {
     duration_ms: (Scalars['Float'] | null)
     progress: (Scalars['Float'] | null)
+    render_version: (Scalars['Float'] | null)
     requested_by_steam_id: (Scalars['Float'] | null)
     sort_index: (Scalars['Float'] | null)
     __typename: 'utility_lineup_renders_var_pop_fields'
@@ -40906,6 +42720,7 @@ export interface utility_lineup_renders_var_pop_fields {
 export interface utility_lineup_renders_var_samp_fields {
     duration_ms: (Scalars['Float'] | null)
     progress: (Scalars['Float'] | null)
+    render_version: (Scalars['Float'] | null)
     requested_by_steam_id: (Scalars['Float'] | null)
     sort_index: (Scalars['Float'] | null)
     __typename: 'utility_lineup_renders_var_samp_fields'
@@ -40916,6 +42731,7 @@ export interface utility_lineup_renders_var_samp_fields {
 export interface utility_lineup_renders_variance_fields {
     duration_ms: (Scalars['Float'] | null)
     progress: (Scalars['Float'] | null)
+    render_version: (Scalars['Float'] | null)
     requested_by_steam_id: (Scalars['Float'] | null)
     sort_index: (Scalars['Float'] | null)
     __typename: 'utility_lineup_renders_variance_fields'
@@ -41340,6 +43156,7 @@ export interface utility_lineups {
     preview_thumbnail_url: (Scalars['String'] | null)
     /** A computed field, executes function "utility_lineup_preview_url" */
     preview_url: (Scalars['String'] | null)
+    preview_version: (Scalars['Int'] | null)
     /** An array relationship */
     progress: utility_lineup_progress[]
     /** An aggregate relationship */
@@ -41357,6 +43174,10 @@ export interface utility_lineups {
     /** An aggregate relationship */
     repairs_aggregate: utility_lineup_repairs_aggregate
     side: e_sides_enum
+    smoke_voxels_at: (Scalars['timestamptz'] | null)
+    smoke_voxels_file: (Scalars['String'] | null)
+    /** A computed field, executes function "utility_lineup_smoke_voxels_url" */
+    smoke_voxels_url: (Scalars['String'] | null)
     source_grenade_id: (Scalars['Int'] | null)
     /** An object relationship */
     source_match: (matches | null)
@@ -41443,6 +43264,7 @@ export interface utility_lineups_avg_fields {
     practice_players: (Scalars['Float'] | null)
     practice_successes: (Scalars['Float'] | null)
     preview_duration_ms: (Scalars['Float'] | null)
+    preview_version: (Scalars['Float'] | null)
     public_reviewed_by: (Scalars['Float'] | null)
     source_grenade_id: (Scalars['Float'] | null)
     trajectory_size: (Scalars['Float'] | null)
@@ -41504,10 +43326,15 @@ export interface utility_lineups_max_fields {
     preview_thumbnail_url: (Scalars['String'] | null)
     /** A computed field, executes function "utility_lineup_preview_url" */
     preview_url: (Scalars['String'] | null)
+    preview_version: (Scalars['Int'] | null)
     public_requested_at: (Scalars['timestamptz'] | null)
     public_review_note: (Scalars['String'] | null)
     public_reviewed_at: (Scalars['timestamptz'] | null)
     public_reviewed_by: (Scalars['bigint'] | null)
+    smoke_voxels_at: (Scalars['timestamptz'] | null)
+    smoke_voxels_file: (Scalars['String'] | null)
+    /** A computed field, executes function "utility_lineup_smoke_voxels_url" */
+    smoke_voxels_url: (Scalars['String'] | null)
     source_grenade_id: (Scalars['Int'] | null)
     source_match_id: (Scalars['uuid'] | null)
     source_match_map_id: (Scalars['uuid'] | null)
@@ -41573,10 +43400,15 @@ export interface utility_lineups_min_fields {
     preview_thumbnail_url: (Scalars['String'] | null)
     /** A computed field, executes function "utility_lineup_preview_url" */
     preview_url: (Scalars['String'] | null)
+    preview_version: (Scalars['Int'] | null)
     public_requested_at: (Scalars['timestamptz'] | null)
     public_review_note: (Scalars['String'] | null)
     public_reviewed_at: (Scalars['timestamptz'] | null)
     public_reviewed_by: (Scalars['bigint'] | null)
+    smoke_voxels_at: (Scalars['timestamptz'] | null)
+    smoke_voxels_file: (Scalars['String'] | null)
+    /** A computed field, executes function "utility_lineup_smoke_voxels_url" */
+    smoke_voxels_url: (Scalars['String'] | null)
     source_grenade_id: (Scalars['Int'] | null)
     source_match_id: (Scalars['uuid'] | null)
     source_match_map_id: (Scalars['uuid'] | null)
@@ -41608,7 +43440,7 @@ export interface utility_lineups_mutation_response {
 
 
 /** select columns of table "utility_lineups" */
-export type utility_lineups_select_column = 'aim_tolerance' | 'approach' | 'archived_at' | 'author_steam_id' | 'confidence' | 'created_at' | 'description' | 'downvotes' | 'external_id' | 'eye_z' | 'favorites' | 'flight_time_ms' | 'forked_from_utility_lineup_id' | 'id' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'jump_throw_bind' | 'land_x' | 'land_y' | 'land_z' | 'lineup_bucket' | 'map_name' | 'name' | 'origin_source' | 'origin_x' | 'origin_y' | 'origin_z' | 'practice_attempts' | 'practice_players' | 'practice_successes' | 'preview_duration_ms' | 'preview_file' | 'preview_rendered_at' | 'preview_stills' | 'preview_thumbnail' | 'public_requested_at' | 'public_review_note' | 'public_reviewed_at' | 'public_reviewed_by' | 'side' | 'source_grenade_id' | 'source_match_id' | 'source_match_map_id' | 'source_url' | 'tags' | 'team_id' | 'technique' | 'throw_strength' | 'trajectory_file' | 'trajectory_preview' | 'trajectory_size' | 'updated_at' | 'upvotes' | 'utility_type' | 'verified_at' | 'view_pitch' | 'view_pitch_delta' | 'view_yaw' | 'view_yaw_delta' | 'visibility' | 'workshop_map_id'
+export type utility_lineups_select_column = 'aim_tolerance' | 'approach' | 'archived_at' | 'author_steam_id' | 'confidence' | 'created_at' | 'description' | 'downvotes' | 'external_id' | 'eye_z' | 'favorites' | 'flight_time_ms' | 'forked_from_utility_lineup_id' | 'id' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'jump_throw_bind' | 'land_x' | 'land_y' | 'land_z' | 'lineup_bucket' | 'map_name' | 'name' | 'origin_source' | 'origin_x' | 'origin_y' | 'origin_z' | 'practice_attempts' | 'practice_players' | 'practice_successes' | 'preview_duration_ms' | 'preview_file' | 'preview_rendered_at' | 'preview_stills' | 'preview_thumbnail' | 'preview_version' | 'public_requested_at' | 'public_review_note' | 'public_reviewed_at' | 'public_reviewed_by' | 'side' | 'smoke_voxels_at' | 'smoke_voxels_file' | 'source_grenade_id' | 'source_match_id' | 'source_match_map_id' | 'source_url' | 'tags' | 'team_id' | 'technique' | 'throw_strength' | 'trajectory_file' | 'trajectory_preview' | 'trajectory_size' | 'updated_at' | 'upvotes' | 'utility_type' | 'verified_at' | 'view_pitch' | 'view_pitch_delta' | 'view_yaw' | 'view_yaw_delta' | 'visibility' | 'workshop_map_id'
 
 
 /** select "utility_lineups_aggregate_bool_exp_avg_arguments_columns" columns of table "utility_lineups" */
@@ -41677,6 +43509,7 @@ export interface utility_lineups_stddev_fields {
     practice_players: (Scalars['Float'] | null)
     practice_successes: (Scalars['Float'] | null)
     preview_duration_ms: (Scalars['Float'] | null)
+    preview_version: (Scalars['Float'] | null)
     public_reviewed_by: (Scalars['Float'] | null)
     source_grenade_id: (Scalars['Float'] | null)
     trajectory_size: (Scalars['Float'] | null)
@@ -41715,6 +43548,7 @@ export interface utility_lineups_stddev_pop_fields {
     practice_players: (Scalars['Float'] | null)
     practice_successes: (Scalars['Float'] | null)
     preview_duration_ms: (Scalars['Float'] | null)
+    preview_version: (Scalars['Float'] | null)
     public_reviewed_by: (Scalars['Float'] | null)
     source_grenade_id: (Scalars['Float'] | null)
     trajectory_size: (Scalars['Float'] | null)
@@ -41753,6 +43587,7 @@ export interface utility_lineups_stddev_samp_fields {
     practice_players: (Scalars['Float'] | null)
     practice_successes: (Scalars['Float'] | null)
     preview_duration_ms: (Scalars['Float'] | null)
+    preview_version: (Scalars['Float'] | null)
     public_reviewed_by: (Scalars['Float'] | null)
     source_grenade_id: (Scalars['Float'] | null)
     trajectory_size: (Scalars['Float'] | null)
@@ -41791,6 +43626,7 @@ export interface utility_lineups_sum_fields {
     practice_players: (Scalars['Int'] | null)
     practice_successes: (Scalars['Int'] | null)
     preview_duration_ms: (Scalars['Int'] | null)
+    preview_version: (Scalars['Int'] | null)
     public_reviewed_by: (Scalars['bigint'] | null)
     source_grenade_id: (Scalars['Int'] | null)
     trajectory_size: (Scalars['Int'] | null)
@@ -41804,7 +43640,7 @@ export interface utility_lineups_sum_fields {
 
 
 /** update columns of table "utility_lineups" */
-export type utility_lineups_update_column = 'aim_tolerance' | 'approach' | 'archived_at' | 'author_steam_id' | 'confidence' | 'created_at' | 'description' | 'downvotes' | 'external_id' | 'eye_z' | 'favorites' | 'flight_time_ms' | 'forked_from_utility_lineup_id' | 'id' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'jump_throw_bind' | 'land_x' | 'land_y' | 'land_z' | 'map_name' | 'name' | 'origin_source' | 'origin_x' | 'origin_y' | 'origin_z' | 'practice_attempts' | 'practice_players' | 'practice_successes' | 'preview_duration_ms' | 'preview_file' | 'preview_rendered_at' | 'preview_stills' | 'preview_thumbnail' | 'public_requested_at' | 'public_review_note' | 'public_reviewed_at' | 'public_reviewed_by' | 'side' | 'source_grenade_id' | 'source_match_id' | 'source_match_map_id' | 'source_url' | 'tags' | 'team_id' | 'technique' | 'throw_strength' | 'trajectory_file' | 'trajectory_preview' | 'trajectory_size' | 'updated_at' | 'upvotes' | 'utility_type' | 'verified_at' | 'view_pitch' | 'view_pitch_delta' | 'view_yaw' | 'view_yaw_delta' | 'visibility' | 'workshop_map_id'
+export type utility_lineups_update_column = 'aim_tolerance' | 'approach' | 'archived_at' | 'author_steam_id' | 'confidence' | 'created_at' | 'description' | 'downvotes' | 'external_id' | 'eye_z' | 'favorites' | 'flight_time_ms' | 'forked_from_utility_lineup_id' | 'id' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'jump_throw_bind' | 'land_x' | 'land_y' | 'land_z' | 'map_name' | 'name' | 'origin_source' | 'origin_x' | 'origin_y' | 'origin_z' | 'practice_attempts' | 'practice_players' | 'practice_successes' | 'preview_duration_ms' | 'preview_file' | 'preview_rendered_at' | 'preview_stills' | 'preview_thumbnail' | 'preview_version' | 'public_requested_at' | 'public_review_note' | 'public_reviewed_at' | 'public_reviewed_by' | 'side' | 'smoke_voxels_at' | 'smoke_voxels_file' | 'source_grenade_id' | 'source_match_id' | 'source_match_map_id' | 'source_url' | 'tags' | 'team_id' | 'technique' | 'throw_strength' | 'trajectory_file' | 'trajectory_preview' | 'trajectory_size' | 'updated_at' | 'upvotes' | 'utility_type' | 'verified_at' | 'view_pitch' | 'view_pitch_delta' | 'view_yaw' | 'view_yaw_delta' | 'visibility' | 'workshop_map_id'
 
 
 /** aggregate var_pop on columns */
@@ -41833,6 +43669,7 @@ export interface utility_lineups_var_pop_fields {
     practice_players: (Scalars['Float'] | null)
     practice_successes: (Scalars['Float'] | null)
     preview_duration_ms: (Scalars['Float'] | null)
+    preview_version: (Scalars['Float'] | null)
     public_reviewed_by: (Scalars['Float'] | null)
     source_grenade_id: (Scalars['Float'] | null)
     trajectory_size: (Scalars['Float'] | null)
@@ -41871,6 +43708,7 @@ export interface utility_lineups_var_samp_fields {
     practice_players: (Scalars['Float'] | null)
     practice_successes: (Scalars['Float'] | null)
     preview_duration_ms: (Scalars['Float'] | null)
+    preview_version: (Scalars['Float'] | null)
     public_reviewed_by: (Scalars['Float'] | null)
     source_grenade_id: (Scalars['Float'] | null)
     trajectory_size: (Scalars['Float'] | null)
@@ -41909,6 +43747,7 @@ export interface utility_lineups_variance_fields {
     practice_players: (Scalars['Float'] | null)
     practice_successes: (Scalars['Float'] | null)
     preview_duration_ms: (Scalars['Float'] | null)
+    preview_version: (Scalars['Float'] | null)
     public_reviewed_by: (Scalars['Float'] | null)
     source_grenade_id: (Scalars['Float'] | null)
     trajectory_size: (Scalars['Float'] | null)
@@ -42690,6 +44529,7 @@ export interface utility_practice_sessions {
     invites: utility_practice_invites[]
     /** An aggregate relationship */
     invites_aggregate: utility_practice_invites_aggregate
+    is_discovery: Scalars['Boolean']
     /** A computed field, executes function "is_utility_practice_member" */
     is_member: (Scalars['Boolean'] | null)
     is_open: Scalars['Boolean']
@@ -42705,6 +44545,8 @@ export interface utility_practice_sessions {
     playbook: (utility_playbooks | null)
     playbook_id: (Scalars['uuid'] | null)
     region: (Scalars['String'] | null)
+    render_job_name: (Scalars['String'] | null)
+    render_seen_at: (Scalars['timestamptz'] | null)
     status: e_utility_practice_statuses_enum
     /** An object relationship */
     team: (teams | null)
@@ -42771,6 +44613,8 @@ export interface utility_practice_sessions_max_fields {
     match_id: (Scalars['uuid'] | null)
     playbook_id: (Scalars['uuid'] | null)
     region: (Scalars['String'] | null)
+    render_job_name: (Scalars['String'] | null)
+    render_seen_at: (Scalars['timestamptz'] | null)
     team_id: (Scalars['uuid'] | null)
     updated_at: (Scalars['timestamptz'] | null)
     __typename: 'utility_practice_sessions_max_fields'
@@ -42798,6 +44642,8 @@ export interface utility_practice_sessions_min_fields {
     match_id: (Scalars['uuid'] | null)
     playbook_id: (Scalars['uuid'] | null)
     region: (Scalars['String'] | null)
+    render_job_name: (Scalars['String'] | null)
+    render_seen_at: (Scalars['timestamptz'] | null)
     team_id: (Scalars['uuid'] | null)
     updated_at: (Scalars['timestamptz'] | null)
     __typename: 'utility_practice_sessions_min_fields'
@@ -42815,15 +44661,15 @@ export interface utility_practice_sessions_mutation_response {
 
 
 /** select columns of table "utility_practice_sessions" */
-export type utility_practice_sessions_select_column = 'access' | 'collection_id' | 'created_at' | 'empty_since' | 'expires_at' | 'failure_reason' | 'first_joined_at' | 'host_steam_id' | 'id' | 'invite_code' | 'is_open' | 'is_render' | 'last_occupied_at' | 'map_changing_at' | 'map_name' | 'match_id' | 'notify_when_ready' | 'playbook_id' | 'region' | 'status' | 'team_id' | 'updated_at'
+export type utility_practice_sessions_select_column = 'access' | 'collection_id' | 'created_at' | 'empty_since' | 'expires_at' | 'failure_reason' | 'first_joined_at' | 'host_steam_id' | 'id' | 'invite_code' | 'is_discovery' | 'is_open' | 'is_render' | 'last_occupied_at' | 'map_changing_at' | 'map_name' | 'match_id' | 'notify_when_ready' | 'playbook_id' | 'region' | 'render_job_name' | 'render_seen_at' | 'status' | 'team_id' | 'updated_at'
 
 
 /** select "utility_practice_sessions_aggregate_bool_exp_bool_and_arguments_columns" columns of table "utility_practice_sessions" */
-export type utility_practice_sessions_select_column_utility_practice_sessions_aggregate_bool_exp_bool_and_arguments_columns = 'is_open' | 'is_render' | 'notify_when_ready'
+export type utility_practice_sessions_select_column_utility_practice_sessions_aggregate_bool_exp_bool_and_arguments_columns = 'is_discovery' | 'is_open' | 'is_render' | 'notify_when_ready'
 
 
 /** select "utility_practice_sessions_aggregate_bool_exp_bool_or_arguments_columns" columns of table "utility_practice_sessions" */
-export type utility_practice_sessions_select_column_utility_practice_sessions_aggregate_bool_exp_bool_or_arguments_columns = 'is_open' | 'is_render' | 'notify_when_ready'
+export type utility_practice_sessions_select_column_utility_practice_sessions_aggregate_bool_exp_bool_or_arguments_columns = 'is_discovery' | 'is_open' | 'is_render' | 'notify_when_ready'
 
 
 /** aggregate stddev on columns */
@@ -42855,7 +44701,7 @@ export interface utility_practice_sessions_sum_fields {
 
 
 /** update columns of table "utility_practice_sessions" */
-export type utility_practice_sessions_update_column = 'access' | 'collection_id' | 'created_at' | 'empty_since' | 'expires_at' | 'failure_reason' | 'first_joined_at' | 'host_steam_id' | 'id' | 'invite_code' | 'is_open' | 'is_render' | 'last_occupied_at' | 'map_changing_at' | 'map_name' | 'match_id' | 'notify_when_ready' | 'playbook_id' | 'region' | 'status' | 'team_id' | 'updated_at'
+export type utility_practice_sessions_update_column = 'access' | 'collection_id' | 'created_at' | 'empty_since' | 'expires_at' | 'failure_reason' | 'first_joined_at' | 'host_steam_id' | 'id' | 'invite_code' | 'is_discovery' | 'is_open' | 'is_render' | 'last_occupied_at' | 'map_changing_at' | 'map_name' | 'match_id' | 'notify_when_ready' | 'playbook_id' | 'region' | 'render_job_name' | 'render_seen_at' | 'status' | 'team_id' | 'updated_at'
 
 
 /** aggregate var_pop on columns */
@@ -48931,6 +50777,7 @@ export interface v_team_tournament_results_variance_fields {
 
 /** columns and relationships of "v_tournament_player_stats" */
 export interface v_tournament_player_stats {
+    adr: (Scalars['float8'] | null)
     assists: (Scalars['Int'] | null)
     deaths: (Scalars['Int'] | null)
     headshot_percentage: (Scalars['float8'] | null)
@@ -48975,6 +50822,7 @@ export interface v_tournament_player_stats_aggregate_fields {
 
 /** aggregate avg on columns */
 export interface v_tournament_player_stats_avg_fields {
+    adr: (Scalars['Float'] | null)
     assists: (Scalars['Float'] | null)
     deaths: (Scalars['Float'] | null)
     headshot_percentage: (Scalars['Float'] | null)
@@ -48989,6 +50837,7 @@ export interface v_tournament_player_stats_avg_fields {
 
 /** aggregate max on columns */
 export interface v_tournament_player_stats_max_fields {
+    adr: (Scalars['float8'] | null)
     assists: (Scalars['Int'] | null)
     deaths: (Scalars['Int'] | null)
     headshot_percentage: (Scalars['float8'] | null)
@@ -49004,6 +50853,7 @@ export interface v_tournament_player_stats_max_fields {
 
 /** aggregate min on columns */
 export interface v_tournament_player_stats_min_fields {
+    adr: (Scalars['float8'] | null)
     assists: (Scalars['Int'] | null)
     deaths: (Scalars['Int'] | null)
     headshot_percentage: (Scalars['float8'] | null)
@@ -49018,43 +50868,44 @@ export interface v_tournament_player_stats_min_fields {
 
 
 /** select columns of table "v_tournament_player_stats" */
-export type v_tournament_player_stats_select_column = 'assists' | 'deaths' | 'headshot_percentage' | 'headshots' | 'kdr' | 'kills' | 'matches_played' | 'player_steam_id' | 'tournament_id'
+export type v_tournament_player_stats_select_column = 'adr' | 'assists' | 'deaths' | 'headshot_percentage' | 'headshots' | 'kdr' | 'kills' | 'matches_played' | 'player_steam_id' | 'tournament_id'
 
 
 /** select "v_tournament_player_stats_aggregate_bool_exp_avg_arguments_columns" columns of table "v_tournament_player_stats" */
-export type v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_avg_arguments_columns = 'headshot_percentage' | 'kdr'
+export type v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_avg_arguments_columns = 'adr' | 'headshot_percentage' | 'kdr'
 
 
 /** select "v_tournament_player_stats_aggregate_bool_exp_corr_arguments_columns" columns of table "v_tournament_player_stats" */
-export type v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_corr_arguments_columns = 'headshot_percentage' | 'kdr'
+export type v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_corr_arguments_columns = 'adr' | 'headshot_percentage' | 'kdr'
 
 
 /** select "v_tournament_player_stats_aggregate_bool_exp_covar_samp_arguments_columns" columns of table "v_tournament_player_stats" */
-export type v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_covar_samp_arguments_columns = 'headshot_percentage' | 'kdr'
+export type v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_covar_samp_arguments_columns = 'adr' | 'headshot_percentage' | 'kdr'
 
 
 /** select "v_tournament_player_stats_aggregate_bool_exp_max_arguments_columns" columns of table "v_tournament_player_stats" */
-export type v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_max_arguments_columns = 'headshot_percentage' | 'kdr'
+export type v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_max_arguments_columns = 'adr' | 'headshot_percentage' | 'kdr'
 
 
 /** select "v_tournament_player_stats_aggregate_bool_exp_min_arguments_columns" columns of table "v_tournament_player_stats" */
-export type v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_min_arguments_columns = 'headshot_percentage' | 'kdr'
+export type v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_min_arguments_columns = 'adr' | 'headshot_percentage' | 'kdr'
 
 
 /** select "v_tournament_player_stats_aggregate_bool_exp_stddev_samp_arguments_columns" columns of table "v_tournament_player_stats" */
-export type v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_stddev_samp_arguments_columns = 'headshot_percentage' | 'kdr'
+export type v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_stddev_samp_arguments_columns = 'adr' | 'headshot_percentage' | 'kdr'
 
 
 /** select "v_tournament_player_stats_aggregate_bool_exp_sum_arguments_columns" columns of table "v_tournament_player_stats" */
-export type v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_sum_arguments_columns = 'headshot_percentage' | 'kdr'
+export type v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_sum_arguments_columns = 'adr' | 'headshot_percentage' | 'kdr'
 
 
 /** select "v_tournament_player_stats_aggregate_bool_exp_var_samp_arguments_columns" columns of table "v_tournament_player_stats" */
-export type v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_var_samp_arguments_columns = 'headshot_percentage' | 'kdr'
+export type v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_var_samp_arguments_columns = 'adr' | 'headshot_percentage' | 'kdr'
 
 
 /** aggregate stddev on columns */
 export interface v_tournament_player_stats_stddev_fields {
+    adr: (Scalars['Float'] | null)
     assists: (Scalars['Float'] | null)
     deaths: (Scalars['Float'] | null)
     headshot_percentage: (Scalars['Float'] | null)
@@ -49069,6 +50920,7 @@ export interface v_tournament_player_stats_stddev_fields {
 
 /** aggregate stddev_pop on columns */
 export interface v_tournament_player_stats_stddev_pop_fields {
+    adr: (Scalars['Float'] | null)
     assists: (Scalars['Float'] | null)
     deaths: (Scalars['Float'] | null)
     headshot_percentage: (Scalars['Float'] | null)
@@ -49083,6 +50935,7 @@ export interface v_tournament_player_stats_stddev_pop_fields {
 
 /** aggregate stddev_samp on columns */
 export interface v_tournament_player_stats_stddev_samp_fields {
+    adr: (Scalars['Float'] | null)
     assists: (Scalars['Float'] | null)
     deaths: (Scalars['Float'] | null)
     headshot_percentage: (Scalars['Float'] | null)
@@ -49097,6 +50950,7 @@ export interface v_tournament_player_stats_stddev_samp_fields {
 
 /** aggregate sum on columns */
 export interface v_tournament_player_stats_sum_fields {
+    adr: (Scalars['float8'] | null)
     assists: (Scalars['Int'] | null)
     deaths: (Scalars['Int'] | null)
     headshot_percentage: (Scalars['float8'] | null)
@@ -49111,6 +50965,7 @@ export interface v_tournament_player_stats_sum_fields {
 
 /** aggregate var_pop on columns */
 export interface v_tournament_player_stats_var_pop_fields {
+    adr: (Scalars['Float'] | null)
     assists: (Scalars['Float'] | null)
     deaths: (Scalars['Float'] | null)
     headshot_percentage: (Scalars['Float'] | null)
@@ -49125,6 +50980,7 @@ export interface v_tournament_player_stats_var_pop_fields {
 
 /** aggregate var_samp on columns */
 export interface v_tournament_player_stats_var_samp_fields {
+    adr: (Scalars['Float'] | null)
     assists: (Scalars['Float'] | null)
     deaths: (Scalars['Float'] | null)
     headshot_percentage: (Scalars['Float'] | null)
@@ -49139,6 +50995,7 @@ export interface v_tournament_player_stats_var_samp_fields {
 
 /** aggregate variance on columns */
 export interface v_tournament_player_stats_variance_fields {
+    adr: (Scalars['Float'] | null)
     assists: (Scalars['Float'] | null)
     deaths: (Scalars['Float'] | null)
     headshot_percentage: (Scalars['Float'] | null)
@@ -49618,6 +51475,21 @@ export interface MemoryStatGenqlSelection{
 export interface NetworkStatsGenqlSelection{
     nics?: NicStatGenqlSelection
     time?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NewsCommentOutputGenqlSelection{
+    id?: boolean | number
+    parent_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NewsCommentVoteOutputGenqlSelection{
+    comment_id?: boolean | number
+    vote_count?: boolean | number
+    voted?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -50428,6 +52300,24 @@ export interface TournamentMatchResetImpactGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface TournamentMvpCandidateGenqlSelection{
+    adr?: boolean | number
+    avatar_url?: boolean | number
+    avg_impact?: boolean | number
+    deaths?: boolean | number
+    headshot_percentage?: boolean | number
+    kdr?: boolean | number
+    kills?: boolean | number
+    matches?: boolean | number
+    name?: boolean | number
+    player_steam_id?: boolean | number
+    rank?: boolean | number
+    total_impact?: boolean | number
+    tournament_team_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface UtilityBlockingOutputGenqlSelection{
     degraded?: boolean | number
     message?: boolean | number
@@ -50452,6 +52342,25 @@ export interface UtilityCalibrationOutputGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+export interface UtilityDiscoveryAreaInput {max_x: Scalars['Float'],max_y: Scalars['Float'],max_z: Scalars['Float'],min_x: Scalars['Float'],min_y: Scalars['Float'],min_z: Scalars['Float'],radius?: (Scalars['Float'] | null)}
+
+export interface UtilityDiscoveryOutputGenqlSelection{
+    discovery_id?: boolean | number
+    message?: boolean | number
+    predicted?: boolean | number
+    status?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface UtilityDiscoverySaveOutputGenqlSelection{
+    lineup_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface UtilityDiscoveryTechniqueInput {direction?: (Scalars['String'] | null),gait?: (Scalars['String'] | null),jump_throw: Scalars['Boolean']}
 
 export interface UtilityDriftScanOutputGenqlSelection{
     lineups?: boolean | number
@@ -50651,8 +52560,41 @@ export interface UtilityRemineOutputGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface UtilityRenderBulkOutputGenqlSelection{
+    queued?: boolean | number
+    skipped?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface UtilityRenderClearOutputGenqlSelection{
     cleared?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface UtilityRenderCoverageOutputGenqlSelection{
+    current?: boolean | number
+    lineups?: UtilityRenderGapGenqlSelection
+    missing?: boolean | number
+    outdated?: boolean | number
+    pipeline_version?: boolean | number
+    queued?: boolean | number
+    total?: boolean | number
+    unrenderable?: boolean | number
+    version?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface UtilityRenderGapGenqlSelection{
+    id?: boolean | number
+    map_name?: boolean | number
+    name?: boolean | number
+    preview_version?: boolean | number
+    reason?: boolean | number
+    state?: boolean | number
+    utility_type?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -50686,6 +52628,22 @@ export interface UtilitySightlineResultGenqlSelection{
     index?: boolean | number
     transmittance?: boolean | number
     world_blocked?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface UtilitySmokePreviewOutputGenqlSelection{
+    den?: boolean | number
+    dx?: boolean | number
+    dy?: boolean | number
+    dz?: boolean | number
+    ox?: boolean | number
+    oy?: boolean | number
+    oz?: boolean | number
+    vs?: boolean | number
+    x?: boolean | number
+    y?: boolean | number
+    z?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -52788,6 +54746,201 @@ export interface chat_read_state_var_samp_fieldsGenqlSelection{
 
 /** aggregate variance on columns */
 export interface chat_read_state_variance_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** columns and relationships of "chat_room_settings" */
+export interface chat_room_settingsGenqlSelection{
+    mute_minutes?: boolean | number
+    muted?: boolean | number
+    muted_until?: boolean | number
+    notify?: boolean | number
+    steam_id?: boolean | number
+    thread?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "chat_room_settings" */
+export interface chat_room_settings_aggregateGenqlSelection{
+    aggregate?: chat_room_settings_aggregate_fieldsGenqlSelection
+    nodes?: chat_room_settingsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "chat_room_settings" */
+export interface chat_room_settings_aggregate_fieldsGenqlSelection{
+    avg?: chat_room_settings_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (chat_room_settings_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: chat_room_settings_max_fieldsGenqlSelection
+    min?: chat_room_settings_min_fieldsGenqlSelection
+    stddev?: chat_room_settings_stddev_fieldsGenqlSelection
+    stddev_pop?: chat_room_settings_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: chat_room_settings_stddev_samp_fieldsGenqlSelection
+    sum?: chat_room_settings_sum_fieldsGenqlSelection
+    var_pop?: chat_room_settings_var_pop_fieldsGenqlSelection
+    var_samp?: chat_room_settings_var_samp_fieldsGenqlSelection
+    variance?: chat_room_settings_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface chat_room_settings_avg_fieldsGenqlSelection{
+    mute_minutes?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "chat_room_settings". All fields are combined with a logical 'AND'. */
+export interface chat_room_settings_bool_exp {_and?: (chat_room_settings_bool_exp[] | null),_not?: (chat_room_settings_bool_exp | null),_or?: (chat_room_settings_bool_exp[] | null),mute_minutes?: (Int_comparison_exp | null),muted?: (Boolean_comparison_exp | null),muted_until?: (timestamptz_comparison_exp | null),notify?: (String_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),thread?: (String_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "chat_room_settings" */
+export interface chat_room_settings_inc_input {mute_minutes?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "chat_room_settings" */
+export interface chat_room_settings_insert_input {mute_minutes?: (Scalars['Int'] | null),muted?: (Scalars['Boolean'] | null),muted_until?: (Scalars['timestamptz'] | null),notify?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null),thread?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface chat_room_settings_max_fieldsGenqlSelection{
+    mute_minutes?: boolean | number
+    muted_until?: boolean | number
+    notify?: boolean | number
+    steam_id?: boolean | number
+    thread?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface chat_room_settings_min_fieldsGenqlSelection{
+    mute_minutes?: boolean | number
+    muted_until?: boolean | number
+    notify?: boolean | number
+    steam_id?: boolean | number
+    thread?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "chat_room_settings" */
+export interface chat_room_settings_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: chat_room_settingsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "chat_room_settings" */
+export interface chat_room_settings_on_conflict {constraint: chat_room_settings_constraint,update_columns?: chat_room_settings_update_column[],where?: (chat_room_settings_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "chat_room_settings". */
+export interface chat_room_settings_order_by {mute_minutes?: (order_by | null),muted?: (order_by | null),muted_until?: (order_by | null),notify?: (order_by | null),steam_id?: (order_by | null),thread?: (order_by | null)}
+
+
+/** primary key columns input for table: chat_room_settings */
+export interface chat_room_settings_pk_columns_input {steam_id: Scalars['bigint'],thread: Scalars['String']}
+
+
+/** input type for updating data in table "chat_room_settings" */
+export interface chat_room_settings_set_input {mute_minutes?: (Scalars['Int'] | null),muted?: (Scalars['Boolean'] | null),muted_until?: (Scalars['timestamptz'] | null),notify?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null),thread?: (Scalars['String'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface chat_room_settings_stddev_fieldsGenqlSelection{
+    mute_minutes?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface chat_room_settings_stddev_pop_fieldsGenqlSelection{
+    mute_minutes?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface chat_room_settings_stddev_samp_fieldsGenqlSelection{
+    mute_minutes?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "chat_room_settings" */
+export interface chat_room_settings_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: chat_room_settings_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface chat_room_settings_stream_cursor_value_input {mute_minutes?: (Scalars['Int'] | null),muted?: (Scalars['Boolean'] | null),muted_until?: (Scalars['timestamptz'] | null),notify?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null),thread?: (Scalars['String'] | null)}
+
+
+/** aggregate sum on columns */
+export interface chat_room_settings_sum_fieldsGenqlSelection{
+    mute_minutes?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface chat_room_settings_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (chat_room_settings_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (chat_room_settings_set_input | null),
+/** filter the rows which have to be updated */
+where: chat_room_settings_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface chat_room_settings_var_pop_fieldsGenqlSelection{
+    mute_minutes?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface chat_room_settings_var_samp_fieldsGenqlSelection{
+    mute_minutes?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface chat_room_settings_variance_fieldsGenqlSelection{
+    mute_minutes?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -70683,6 +72836,7 @@ export interface mapsGenqlSelection{
     name?: boolean | number
     patch?: boolean | number
     poster?: boolean | number
+    seeded?: boolean | number
     type?: boolean | number
     workshop_map_id?: boolean | number
     __typename?: boolean | number
@@ -70728,11 +72882,11 @@ on_conflict?: (maps_on_conflict | null)}
 
 
 /** Boolean expression to filter rows from the table "maps". All fields are combined with a logical 'AND'. */
-export interface maps_bool_exp {_and?: (maps_bool_exp[] | null),_not?: (maps_bool_exp | null),_or?: (maps_bool_exp[] | null),active_pool?: (Boolean_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),e_match_type?: (e_match_types_bool_exp | null),enabled?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),label?: (String_comparison_exp | null),match_maps?: (match_maps_bool_exp | null),match_maps_aggregate?: (match_maps_aggregate_bool_exp | null),match_veto_picks?: (match_map_veto_picks_bool_exp | null),match_veto_picks_aggregate?: (match_map_veto_picks_aggregate_bool_exp | null),name?: (String_comparison_exp | null),patch?: (String_comparison_exp | null),poster?: (String_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null),workshop_map_id?: (String_comparison_exp | null)}
+export interface maps_bool_exp {_and?: (maps_bool_exp[] | null),_not?: (maps_bool_exp | null),_or?: (maps_bool_exp[] | null),active_pool?: (Boolean_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),e_match_type?: (e_match_types_bool_exp | null),enabled?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),label?: (String_comparison_exp | null),match_maps?: (match_maps_bool_exp | null),match_maps_aggregate?: (match_maps_aggregate_bool_exp | null),match_veto_picks?: (match_map_veto_picks_bool_exp | null),match_veto_picks_aggregate?: (match_map_veto_picks_aggregate_bool_exp | null),name?: (String_comparison_exp | null),patch?: (String_comparison_exp | null),poster?: (String_comparison_exp | null),seeded?: (Boolean_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null),workshop_map_id?: (String_comparison_exp | null)}
 
 
 /** input type for inserting data into table "maps" */
-export interface maps_insert_input {active_pool?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),e_match_type?: (e_match_types_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),match_maps?: (match_maps_arr_rel_insert_input | null),match_veto_picks?: (match_map_veto_picks_arr_rel_insert_input | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),type?: (e_match_types_enum | null),workshop_map_id?: (Scalars['String'] | null)}
+export interface maps_insert_input {active_pool?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),e_match_type?: (e_match_types_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),match_maps?: (match_maps_arr_rel_insert_input | null),match_veto_picks?: (match_map_veto_picks_arr_rel_insert_input | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),seeded?: (Scalars['Boolean'] | null),type?: (e_match_types_enum | null),workshop_map_id?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -70793,7 +72947,7 @@ export interface maps_on_conflict {constraint: maps_constraint,update_columns?: 
 
 
 /** Ordering options when selecting data from "maps". */
-export interface maps_order_by {active_pool?: (order_by | null),deleted_at?: (order_by | null),e_match_type?: (e_match_types_order_by | null),enabled?: (order_by | null),id?: (order_by | null),label?: (order_by | null),match_maps_aggregate?: (match_maps_aggregate_order_by | null),match_veto_picks_aggregate?: (match_map_veto_picks_aggregate_order_by | null),name?: (order_by | null),patch?: (order_by | null),poster?: (order_by | null),type?: (order_by | null),workshop_map_id?: (order_by | null)}
+export interface maps_order_by {active_pool?: (order_by | null),deleted_at?: (order_by | null),e_match_type?: (e_match_types_order_by | null),enabled?: (order_by | null),id?: (order_by | null),label?: (order_by | null),match_maps_aggregate?: (match_maps_aggregate_order_by | null),match_veto_picks_aggregate?: (match_map_veto_picks_aggregate_order_by | null),name?: (order_by | null),patch?: (order_by | null),poster?: (order_by | null),seeded?: (order_by | null),type?: (order_by | null),workshop_map_id?: (order_by | null)}
 
 
 /** primary key columns input for table: maps */
@@ -70801,7 +72955,7 @@ export interface maps_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "maps" */
-export interface maps_set_input {active_pool?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),enabled?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),type?: (e_match_types_enum | null),workshop_map_id?: (Scalars['String'] | null)}
+export interface maps_set_input {active_pool?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),enabled?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),seeded?: (Scalars['Boolean'] | null),type?: (e_match_types_enum | null),workshop_map_id?: (Scalars['String'] | null)}
 
 
 /** Streaming cursor of the table "maps" */
@@ -70813,7 +72967,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface maps_stream_cursor_value_input {active_pool?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),enabled?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),type?: (e_match_types_enum | null),workshop_map_id?: (Scalars['String'] | null)}
+export interface maps_stream_cursor_value_input {active_pool?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),enabled?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),seeded?: (Scalars['Boolean'] | null),type?: (e_match_types_enum | null),workshop_map_id?: (Scalars['String'] | null)}
 
 export interface maps_updates {
 /** sets the columns of the filtered rows to the given values */
@@ -75651,6 +77805,8 @@ export interface mutation_rootGenqlSelection{
     addDraftPlayer?: (SuccessOutputGenqlSelection & { __args: {draftGameId: Scalars['uuid'], lineup?: (Scalars['Int'] | null), steamId: Scalars['String']} })
     /** Add a friends-role presence bot account to the pool */
     addSteamPresenceBotAccount?: (SuccessOutputGenqlSelection & { __args: {bot_secret: Scalars['String'], friend_capacity?: (Scalars['Int'] | null), username: Scalars['String']} })
+    /** Organizer adds a player to a tournament's free agent pool */
+    addTournamentFreeAgent?: (SuccessOutputGenqlSelection & { __args: {steam_id: Scalars['bigint'], tournament_id: Scalars['uuid']} })
     approveNameChange?: (SuccessOutputGenqlSelection & { __args: {name: Scalars['String'], steam_id: Scalars['bigint']} })
     /** execute VOLATILE function "approve_league_season_movements" which returns "league_team_movements" */
     approve_league_season_movements?: (league_team_movementsGenqlSelection & { __args: {
@@ -75702,6 +77858,8 @@ export interface mutation_rootGenqlSelection{
     cancelReparseAllDemos?: SuccessOutputGenqlSelection
     /** cancelScrimRequest */
     cancelScrimRequest?: (SuccessOutputGenqlSelection & { __args: {request_id: Scalars['uuid']} })
+    /** Stop a lineup discovery that has not finished */
+    cancelUtilityDiscovery?: (SuccessOutputGenqlSelection & { __args: {discovery_id: Scalars['uuid']} })
     /** Cancel an in-flight lineup preview render */
     cancelUtilityLineupRender?: (SuccessOutputGenqlSelection & { __args: {render_id: Scalars['uuid']} })
     changeUtilityPracticeMap?: (UtilityPracticeMapChangeOutputGenqlSelection & { __args: {lineup_id?: (Scalars['uuid'] | null), lineup_ids?: (Scalars['uuid'][] | null), map_name: Scalars['String'], scratch?: (UtilityScratchLineupInput | null), session_id: Scalars['uuid']} })
@@ -75753,6 +77911,8 @@ export interface mutation_rootGenqlSelection{
     /** Delete a saved clip and its underlying S3 object */
     deleteClip?: (SuccessOutputGenqlSelection & { __args: {clip_id: Scalars['uuid']} })
     deleteMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
+    /** Delete your own news comment, or any of them as a moderator and above. */
+    deleteNewsComment?: (SuccessOutputGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** Delete a news post. Caller role is verified against public.post_news_role. */
     deleteNewsPost?: (SuccessOutputGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** Delete orphaned S3 objects found by the last scan (admin only). Each key is re-verified against the database before removal. */
@@ -75819,6 +77979,12 @@ export interface mutation_rootGenqlSelection{
     where: chat_read_state_bool_exp} })
     /** delete single row from the table: "chat_read_state" */
     delete_chat_read_state_by_pk?: (chat_read_stateGenqlSelection & { __args: {steam_id: Scalars['bigint'], thread: Scalars['String']} })
+    /** delete data from the table: "chat_room_settings" */
+    delete_chat_room_settings?: (chat_room_settings_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: chat_room_settings_bool_exp} })
+    /** delete single row from the table: "chat_room_settings" */
+    delete_chat_room_settings_by_pk?: (chat_room_settingsGenqlSelection & { __args: {steam_id: Scalars['bigint'], thread: Scalars['String']} })
     /** delete data from the table: "clip_render_jobs" */
     delete_clip_render_jobs?: (clip_render_jobs_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -76535,6 +78701,12 @@ export interface mutation_rootGenqlSelection{
     where: news_articles_bool_exp} })
     /** delete single row from the table: "news_articles" */
     delete_news_articles_by_pk?: (news_articlesGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "news_comments" */
+    delete_news_comments?: (news_comments_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: news_comments_bool_exp} })
+    /** delete single row from the table: "news_comments" */
+    delete_news_comments_by_pk?: (news_commentsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "notification_preferences" */
     delete_notification_preferences?: (notification_preferences_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -76677,6 +78849,12 @@ export interface mutation_rootGenqlSelection{
     where: player_steam_match_auth_bool_exp} })
     /** delete single row from the table: "player_steam_match_auth" */
     delete_player_steam_match_auth_by_pk?: (player_steam_match_authGenqlSelection & { __args: {steam_id: Scalars['bigint']} })
+    /** delete data from the table: "player_twitch_accounts" */
+    delete_player_twitch_accounts?: (player_twitch_accounts_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: player_twitch_accounts_bool_exp} })
+    /** delete single row from the table: "player_twitch_accounts" */
+    delete_player_twitch_accounts_by_pk?: (player_twitch_accountsGenqlSelection & { __args: {steam_id: Scalars['bigint']} })
     /** delete data from the table: "player_unused_utility" */
     delete_player_unused_utility?: (player_unused_utility_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -76901,6 +79079,12 @@ export interface mutation_rootGenqlSelection{
     delete_tournament_leaderboard_entries?: (tournament_leaderboard_entries_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
     where: tournament_leaderboard_entries_bool_exp} })
+    /** delete data from the table: "tournament_mvp_picks" */
+    delete_tournament_mvp_picks?: (tournament_mvp_picks_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: tournament_mvp_picks_bool_exp} })
+    /** delete single row from the table: "tournament_mvp_picks" */
+    delete_tournament_mvp_picks_by_pk?: (tournament_mvp_picksGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "tournament_no_shows" */
     delete_tournament_no_shows?: (tournament_no_shows_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -76989,6 +79173,18 @@ export interface mutation_rootGenqlSelection{
     where: utility_demo_throws_bool_exp} })
     /** delete single row from the table: "utility_demo_throws" */
     delete_utility_demo_throws_by_pk?: (utility_demo_throwsGenqlSelection & { __args: {grenade_id: Scalars['Int'], match_map_demo_id: Scalars['uuid']} })
+    /** delete data from the table: "utility_discoveries" */
+    delete_utility_discoveries?: (utility_discoveries_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: utility_discoveries_bool_exp} })
+    /** delete single row from the table: "utility_discoveries" */
+    delete_utility_discoveries_by_pk?: (utility_discoveriesGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "utility_discovery_results" */
+    delete_utility_discovery_results?: (utility_discovery_results_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: utility_discovery_results_bool_exp} })
+    /** delete single row from the table: "utility_discovery_results" */
+    delete_utility_discovery_results_by_pk?: (utility_discovery_resultsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "utility_drift_results" */
     delete_utility_drift_results?: (utility_drift_results_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -77091,8 +79287,12 @@ export interface mutation_rootGenqlSelection{
     delete_v_team_stage_results_by_pk?: (v_team_stage_resultsGenqlSelection & { __args: {tournament_stage_id: Scalars['uuid'], tournament_team_id: Scalars['uuid']} })
     denyInvite?: (SuccessOutputGenqlSelection & { __args: {invite_id: Scalars['uuid'], type: Scalars['String']} })
     denyNameChange?: (SuccessOutputGenqlSelection & { __args: {name: Scalars['String'], steam_id: Scalars['bigint']} })
+    /** Find throws that land a smoke on a spot from an area, and queue them to be thrown for real */
+    discoverUtilityLineups?: (UtilityDiscoveryOutputGenqlSelection & { __args: {area: UtilityDiscoveryAreaInput, map_name: Scalars['String'], radius: Scalars['Float'], strengths?: (Scalars['String'][] | null), target_x: Scalars['Float'], target_y: Scalars['Float'], target_z: Scalars['Float'], techniques: UtilityDiscoveryTechniqueInput[]} })
     /** Organizer regenerates the free agent teams and re-seeds */
     draftTournamentTeams?: (TournamentDraftOutputGenqlSelection & { __args: {tournament_id: Scalars['uuid']} })
+    /** Edit your own news comment within 10 minutes of posting it. */
+    editNewsComment?: (NewsCommentOutputGenqlSelection & { __args: {body: Scalars['String'], id: Scalars['uuid']} })
     /** Organizer pushes the check-in deadline out and reopens registration */
     extendTournamentCheckIn?: (SuccessOutputGenqlSelection & { __args: {minutes: Scalars['Int'], tournament_id: Scalars['uuid']} })
     forfeitMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], winning_lineup_id: Scalars['uuid']} })
@@ -77218,6 +79418,18 @@ export interface mutation_rootGenqlSelection{
     object: chat_read_state_insert_input, 
     /** upsert condition */
     on_conflict?: (chat_read_state_on_conflict | null)} })
+    /** insert data into the table: "chat_room_settings" */
+    insert_chat_room_settings?: (chat_room_settings_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: chat_room_settings_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (chat_room_settings_on_conflict | null)} })
+    /** insert a single row into the table: "chat_room_settings" */
+    insert_chat_room_settings_one?: (chat_room_settingsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: chat_room_settings_insert_input, 
+    /** upsert condition */
+    on_conflict?: (chat_room_settings_on_conflict | null)} })
     /** insert data into the table: "clip_render_jobs" */
     insert_clip_render_jobs?: (clip_render_jobs_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -78650,6 +80862,18 @@ export interface mutation_rootGenqlSelection{
     object: news_articles_insert_input, 
     /** upsert condition */
     on_conflict?: (news_articles_on_conflict | null)} })
+    /** insert data into the table: "news_comments" */
+    insert_news_comments?: (news_comments_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: news_comments_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (news_comments_on_conflict | null)} })
+    /** insert a single row into the table: "news_comments" */
+    insert_news_comments_one?: (news_commentsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: news_comments_insert_input, 
+    /** upsert condition */
+    on_conflict?: (news_comments_on_conflict | null)} })
     /** insert data into the table: "notification_preferences" */
     insert_notification_preferences?: (notification_preferences_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -78934,6 +81158,18 @@ export interface mutation_rootGenqlSelection{
     object: player_steam_match_auth_insert_input, 
     /** upsert condition */
     on_conflict?: (player_steam_match_auth_on_conflict | null)} })
+    /** insert data into the table: "player_twitch_accounts" */
+    insert_player_twitch_accounts?: (player_twitch_accounts_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: player_twitch_accounts_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (player_twitch_accounts_on_conflict | null)} })
+    /** insert a single row into the table: "player_twitch_accounts" */
+    insert_player_twitch_accounts_one?: (player_twitch_accountsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: player_twitch_accounts_insert_input, 
+    /** upsert condition */
+    on_conflict?: (player_twitch_accounts_on_conflict | null)} })
     /** insert data into the table: "player_unused_utility" */
     insert_player_unused_utility?: (player_unused_utility_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -79382,6 +81618,18 @@ export interface mutation_rootGenqlSelection{
     insert_tournament_leaderboard_entries_one?: (tournament_leaderboard_entriesGenqlSelection & { __args: {
     /** the row to be inserted */
     object: tournament_leaderboard_entries_insert_input} })
+    /** insert data into the table: "tournament_mvp_picks" */
+    insert_tournament_mvp_picks?: (tournament_mvp_picks_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: tournament_mvp_picks_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (tournament_mvp_picks_on_conflict | null)} })
+    /** insert a single row into the table: "tournament_mvp_picks" */
+    insert_tournament_mvp_picks_one?: (tournament_mvp_picksGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: tournament_mvp_picks_insert_input, 
+    /** upsert condition */
+    on_conflict?: (tournament_mvp_picks_on_conflict | null)} })
     /** insert data into the table: "tournament_no_shows" */
     insert_tournament_no_shows?: (tournament_no_shows_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -79562,6 +81810,30 @@ export interface mutation_rootGenqlSelection{
     object: utility_demo_throws_insert_input, 
     /** upsert condition */
     on_conflict?: (utility_demo_throws_on_conflict | null)} })
+    /** insert data into the table: "utility_discoveries" */
+    insert_utility_discoveries?: (utility_discoveries_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: utility_discoveries_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (utility_discoveries_on_conflict | null)} })
+    /** insert a single row into the table: "utility_discoveries" */
+    insert_utility_discoveries_one?: (utility_discoveriesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: utility_discoveries_insert_input, 
+    /** upsert condition */
+    on_conflict?: (utility_discoveries_on_conflict | null)} })
+    /** insert data into the table: "utility_discovery_results" */
+    insert_utility_discovery_results?: (utility_discovery_results_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: utility_discovery_results_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (utility_discovery_results_on_conflict | null)} })
+    /** insert a single row into the table: "utility_discovery_results" */
+    insert_utility_discovery_results_one?: (utility_discovery_resultsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: utility_discovery_results_insert_input, 
+    /** upsert condition */
+    on_conflict?: (utility_discovery_results_on_conflict | null)} })
     /** insert data into the table: "utility_drift_results" */
     insert_utility_drift_results?: (utility_drift_results_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -79770,8 +82042,8 @@ export interface mutation_rootGenqlSelection{
     joinDraftGame?: (SuccessOutputGenqlSelection & { __args: {draftGameId: Scalars['uuid'], inviteCode?: (Scalars['String'] | null)} })
     /** joinDraftGameAsParty */
     joinDraftGameAsParty?: (SuccessOutputGenqlSelection & { __args: {draftGameId: Scalars['uuid'], inviteCode?: (Scalars['String'] | null)} })
-    /** Register for a tournament that drafts teams, alone or with your lobby */
-    joinTournamentAsFreeAgent?: (SuccessOutputGenqlSelection & { __args: {tournament_id: Scalars['uuid'], with_party?: (Scalars['Boolean'] | null)} })
+    /** Register as a free agent for a tournament that drafts teams */
+    joinTournamentAsFreeAgent?: (SuccessOutputGenqlSelection & { __args: {tournament_id: Scalars['uuid']} })
     /** Join a utility practice session */
     joinUtilityPractice?: (UtilityPracticeSessionOutputGenqlSelection & { __args?: {invite_code?: (Scalars['String'] | null), session_id?: (Scalars['uuid'] | null)} })
     kickServerPlayer?: (KickResultGenqlSelection & { __args: {reason?: (Scalars['String'] | null), serverId: Scalars['String'], steam_id: Scalars['String']} })
@@ -79810,6 +82082,8 @@ export interface mutation_rootGenqlSelection{
     /** Flag in-flight clip_render_jobs paused; pod halts after current highlight. */
     pauseClipRenderBatch?: (SuccessOutputGenqlSelection & { __args: {match_map_id: Scalars['uuid']} })
     pollSteamMatchHistory?: SteamMatchHistoryPollOutputGenqlSelection
+    /** Comment on, or reply to a comment on, a published news post. Verified players and above, unsanctioned, for 7 days after it is published. */
+    postNewsComment?: (NewsCommentOutputGenqlSelection & { __args: {article_id: Scalars['uuid'], body: Scalars['String'], parent_id?: (Scalars['uuid'] | null)} })
     /** previewDraftGame */
     previewDraftGame?: (DraftGamePreviewOutputGenqlSelection & { __args: {draftGameId: Scalars['uuid'], inviteCode?: (Scalars['String'] | null)} })
     /** Resolve a game mode into the plugins and cfg a server would load */
@@ -79843,6 +82117,8 @@ export interface mutation_rootGenqlSelection{
     /** Re-read which plugins are actually on a node */
     reconcileNodePlugins?: (ReconcileNodePluginsOutputGenqlSelection & { __args: {nodeId: Scalars['String']} })
     reconnectLive?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
+    /** Organizer recreates the match of a bracket slot whose match was deleted */
+    recreateTournamentBracketMatch?: (SuccessOutputGenqlSelection & { __args: {tournament_bracket_id: Scalars['uuid']} })
     /** Spend a tournament invite link for an unlock on an invite only tournament */
     redeemTournamentInviteCode?: (SuccessOutputGenqlSelection & { __args: {code: Scalars['String'], tournament_id: Scalars['uuid']} })
     /** Reindex every player into the Typesense search index (admin only). Runs in the background; track via refreshAllPlayersStatus. */
@@ -79858,6 +82134,8 @@ export interface mutation_rootGenqlSelection{
     removeFixtures?: SuccessOutputGenqlSelection
     /** Remove a friends-role presence bot account */
     removeSteamPresenceBotAccount?: (SuccessOutputGenqlSelection & { __args: {account_id: Scalars['String']} })
+    /** Organizer removes a registered or waitlisted player from a tournament's free agent pool */
+    removeTournamentFreeAgent?: (SuccessOutputGenqlSelection & { __args: {steam_id: Scalars['bigint'], tournament_id: Scalars['uuid']} })
     /** execute VOLATILE function "remove_league_team_from_season" which returns "league_team_seasons" */
     remove_league_team_from_season?: (league_team_seasonsGenqlSelection & { __args: {
     /** input parameters for function "remove_league_team_from_season" */
@@ -79876,6 +82154,8 @@ export interface mutation_rootGenqlSelection{
     renameServerItem?: (SuccessOutputGenqlSelection & { __args: {new_path: Scalars['String'], node_id: Scalars['String'], old_path: Scalars['String'], server_id?: (Scalars['String'] | null)} })
     /** Re-film a public lineup's preview clip */
     renderUtilityLineupPreview?: (UtilityRenderQueueOutputGenqlSelection & { __args: {utility_lineup_id: Scalars['uuid']} })
+    /** Queue a preview render for every public lineup that is missing one or has an outdated one */
+    renderUtilityLineupPreviews?: (UtilityRenderBulkOutputGenqlSelection & { __args: {map_name?: (Scalars['String'] | null), scope: Scalars['String']} })
     /** execute VOLATILE function "reorder_league_divisions" which returns "league_divisions" */
     reorder_league_divisions?: (league_divisionsGenqlSelection & { __args: {
     /** input parameters for function "reorder_league_divisions" */
@@ -79936,6 +82216,8 @@ export interface mutation_rootGenqlSelection{
     saveAward?: (AwardGenqlSelection & { __args: {allow_multiple?: (Scalars['Boolean'] | null), description?: (Scalars['String'] | null), event_id?: (Scalars['uuid'] | null), id?: (Scalars['uuid'] | null), league_season_id?: (Scalars['uuid'] | null), name: Scalars['String'], season_id?: (Scalars['uuid'] | null), silhouette?: (Scalars['Int'] | null), tier: Scalars['String'], tournament_id?: (Scalars['uuid'] | null)} })
     /** Create or update a first-party news post. Caller role is verified against public.post_news_role. */
     saveNewsPost?: (NewsPostGenqlSelection & { __args: {content_markdown: Scalars['String'], cover_image_url?: (Scalars['String'] | null), id?: (Scalars['uuid'] | null), teaser?: (Scalars['String'] | null), title: Scalars['String']} })
+    /** Turn a verified discovery result into a private lineup */
+    saveUtilityDiscoveryResult?: (UtilityDiscoverySaveOutputGenqlSelection & { __args: {name: Scalars['String'], result_id: Scalars['uuid'], side: Scalars['String']} })
     /** Mine a lineup out of a parsed demo */
     saveUtilityLineupFromDemo?: (UtilityLineupOutputGenqlSelection & { __args: {collection_id?: (Scalars['uuid'] | null), description?: (Scalars['String'] | null), grenade_id: Scalars['Int'], match_id: Scalars['uuid'], match_map_id: Scalars['uuid'], name: Scalars['String'], tags?: (Scalars['String'][] | null), team_id?: (Scalars['uuid'] | null), visibility?: (Scalars['String'] | null)} })
     /** Save a lineup recorded in a practice session */
@@ -79961,6 +82243,8 @@ export interface mutation_rootGenqlSelection{
     setMapWinner?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], match_map_id: Scalars['uuid'], winning_lineup_id: Scalars['uuid']} })
     /** setMatchWinner */
     setMatchWinner?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], winning_lineup_id: Scalars['uuid']} })
+    /** Hide or restore a news comment. Moderators and above. */
+    setNewsCommentHidden?: (NewsCommentOutputGenqlSelection & { __args: {hidden: Scalars['Boolean'], id: Scalars['uuid'], reason?: (Scalars['String'] | null)} })
     /** Publish or unpublish a news post. Caller role is verified against public.post_news_role. */
     setNewsPostStatus?: (NewsPostGenqlSelection & { __args: {id: Scalars['uuid'], status: Scalars['String']} })
     /** Restrict who may connect to a community server */
@@ -79973,6 +82257,8 @@ export interface mutation_rootGenqlSelection{
     setServerSettings?: (SuccessOutputGenqlSelection & { __args: {access?: (ServerAccessInput | null), map_rotation?: (ServerMapRotationInput | null), plugin_configs?: (ServerPluginConfigInput[] | null), plugins?: (ServerPluginInput[] | null), server_id: Scalars['uuid']} })
     /** Map a tournament placement to an award */
     setTournamentAward?: (TournamentAwardGenqlSelection & { __args: {award_id?: (Scalars['uuid'] | null), custom_name?: (Scalars['String'] | null), placement: Scalars['Int'], silhouette?: (Scalars['Int'] | null), tournament_id: Scalars['uuid']} })
+    /** Pick the tournament MVP in place of the automatic pick (its organizers and administrators; checked by the API) */
+    setTournamentMvp?: (SuccessOutputGenqlSelection & { __args: {note?: (Scalars['String'] | null), player_steam_id: Scalars['String'], tournament_id: Scalars['uuid']} })
     setUtilityPracticeAccess?: (SuccessOutputGenqlSelection & { __args: {access: Scalars['String'], session_id: Scalars['uuid']} })
     setupGameServer?: SetupGameServeOutputGenqlSelection
     skipShaders?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
@@ -80013,6 +82299,8 @@ export interface mutation_rootGenqlSelection{
     /** Test FACEIT Data + Downloads API connectivity for the current admin */
     testFaceitIntegration?: FaceitTestOutputGenqlSelection
     testUpload?: TestUploadResponseGenqlSelection
+    /** Add or take back a +1 on someone else's news comment while the post takes comments. */
+    toggleNewsCommentVote?: (NewsCommentVoteOutputGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** Remove a game plugin from a node's plugin store */
     uninstallGamePlugin?: (SuccessOutputGenqlSelection & { __args: {force?: (Scalars['Boolean'] | null), slug: Scalars['String']} })
     unlinkDiscord?: SuccessOutputGenqlSelection
@@ -80222,6 +82510,24 @@ export interface mutation_rootGenqlSelection{
     update_chat_read_state_many?: (chat_read_state_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: chat_read_state_updates[]} })
+    /** update data of the table: "chat_room_settings" */
+    update_chat_room_settings?: (chat_room_settings_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (chat_room_settings_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (chat_room_settings_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: chat_room_settings_bool_exp} })
+    /** update single row of the table: "chat_room_settings" */
+    update_chat_room_settings_by_pk?: (chat_room_settingsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (chat_room_settings_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (chat_room_settings_set_input | null), pk_columns: chat_room_settings_pk_columns_input} })
+    /** update multiples rows of table: "chat_room_settings" */
+    update_chat_room_settings_many?: (chat_room_settings_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: chat_room_settings_updates[]} })
     /** update data of the table: "clip_render_jobs" */
     update_clip_render_jobs?: (clip_render_jobs_mutation_responseGenqlSelection & { __args: {
     /** append existing jsonb value of filtered columns with new jsonb value */
@@ -82376,6 +84682,24 @@ export interface mutation_rootGenqlSelection{
     update_news_articles_many?: (news_articles_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: news_articles_updates[]} })
+    /** update data of the table: "news_comments" */
+    update_news_comments?: (news_comments_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (news_comments_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (news_comments_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: news_comments_bool_exp} })
+    /** update single row of the table: "news_comments" */
+    update_news_comments_by_pk?: (news_commentsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (news_comments_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (news_comments_set_input | null), pk_columns: news_comments_pk_columns_input} })
+    /** update multiples rows of table: "news_comments" */
+    update_news_comments_many?: (news_comments_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: news_comments_updates[]} })
     /** update data of the table: "notification_preferences" */
     update_notification_preferences?: (notification_preferences_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -82862,6 +85186,24 @@ export interface mutation_rootGenqlSelection{
     update_player_steam_match_auth_many?: (player_steam_match_auth_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: player_steam_match_auth_updates[]} })
+    /** update data of the table: "player_twitch_accounts" */
+    update_player_twitch_accounts?: (player_twitch_accounts_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (player_twitch_accounts_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (player_twitch_accounts_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: player_twitch_accounts_bool_exp} })
+    /** update single row of the table: "player_twitch_accounts" */
+    update_player_twitch_accounts_by_pk?: (player_twitch_accountsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (player_twitch_accounts_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (player_twitch_accounts_set_input | null), pk_columns: player_twitch_accounts_pk_columns_input} })
+    /** update multiples rows of table: "player_twitch_accounts" */
+    update_player_twitch_accounts_many?: (player_twitch_accounts_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: player_twitch_accounts_updates[]} })
     /** update data of the table: "player_unused_utility" */
     update_player_unused_utility?: (player_unused_utility_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -83556,6 +85898,24 @@ export interface mutation_rootGenqlSelection{
     update_tournament_leaderboard_entries_many?: (tournament_leaderboard_entries_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: tournament_leaderboard_entries_updates[]} })
+    /** update data of the table: "tournament_mvp_picks" */
+    update_tournament_mvp_picks?: (tournament_mvp_picks_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (tournament_mvp_picks_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (tournament_mvp_picks_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: tournament_mvp_picks_bool_exp} })
+    /** update single row of the table: "tournament_mvp_picks" */
+    update_tournament_mvp_picks_by_pk?: (tournament_mvp_picksGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (tournament_mvp_picks_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (tournament_mvp_picks_set_input | null), pk_columns: tournament_mvp_picks_pk_columns_input} })
+    /** update multiples rows of table: "tournament_mvp_picks" */
+    update_tournament_mvp_picks_many?: (tournament_mvp_picks_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: tournament_mvp_picks_updates[]} })
     /** update data of the table: "tournament_no_shows" */
     update_tournament_no_shows?: (tournament_no_shows_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -83836,6 +86196,82 @@ export interface mutation_rootGenqlSelection{
     update_utility_demo_throws_many?: (utility_demo_throws_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: utility_demo_throws_updates[]} })
+    /** update data of the table: "utility_discoveries" */
+    update_utility_discoveries?: (utility_discoveries_mutation_responseGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (utility_discoveries_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (utility_discoveries_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (utility_discoveries_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (utility_discoveries_delete_key_input | null), 
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (utility_discoveries_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (utility_discoveries_prepend_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (utility_discoveries_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: utility_discoveries_bool_exp} })
+    /** update single row of the table: "utility_discoveries" */
+    update_utility_discoveries_by_pk?: (utility_discoveriesGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (utility_discoveries_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (utility_discoveries_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (utility_discoveries_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (utility_discoveries_delete_key_input | null), 
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (utility_discoveries_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (utility_discoveries_prepend_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (utility_discoveries_set_input | null), pk_columns: utility_discoveries_pk_columns_input} })
+    /** update multiples rows of table: "utility_discoveries" */
+    update_utility_discoveries_many?: (utility_discoveries_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: utility_discoveries_updates[]} })
+    /** update data of the table: "utility_discovery_results" */
+    update_utility_discovery_results?: (utility_discovery_results_mutation_responseGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (utility_discovery_results_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (utility_discovery_results_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (utility_discovery_results_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (utility_discovery_results_delete_key_input | null), 
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (utility_discovery_results_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (utility_discovery_results_prepend_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (utility_discovery_results_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: utility_discovery_results_bool_exp} })
+    /** update single row of the table: "utility_discovery_results" */
+    update_utility_discovery_results_by_pk?: (utility_discovery_resultsGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (utility_discovery_results_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (utility_discovery_results_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (utility_discovery_results_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (utility_discovery_results_delete_key_input | null), 
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (utility_discovery_results_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (utility_discovery_results_prepend_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (utility_discovery_results_set_input | null), pk_columns: utility_discovery_results_pk_columns_input} })
+    /** update multiples rows of table: "utility_discovery_results" */
+    update_utility_discovery_results_many?: (utility_discovery_results_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: utility_discovery_results_updates[]} })
     /** update data of the table: "utility_drift_results" */
     update_utility_drift_results?: (utility_drift_results_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -84207,6 +86643,7 @@ export interface mutation_rootGenqlSelection{
 
 /** columns and relationships of "v_my_friends" */
 export interface my_friendsGenqlSelection{
+    allow_message_requests?: boolean | number
     avatar_url?: boolean | number
     country?: boolean | number
     created_at?: boolean | number
@@ -84323,7 +86760,7 @@ export interface my_friends_avg_order_by {days_since_last_ban?: (order_by | null
 
 
 /** Boolean expression to filter rows from the table "v_my_friends". All fields are combined with a logical 'AND'. */
-export interface my_friends_bool_exp {_and?: (my_friends_bool_exp[] | null),_not?: (my_friends_bool_exp | null),_or?: (my_friends_bool_exp[] | null),avatar_url?: (String_comparison_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),custom_avatar_url?: (String_comparison_exp | null),days_since_last_ban?: (Int_comparison_exp | null),discord_id?: (String_comparison_exp | null),elo?: (jsonb_comparison_exp | null),faceit_elo?: (Int_comparison_exp | null),faceit_nickname?: (String_comparison_exp | null),faceit_player_id?: (String_comparison_exp | null),faceit_skill_level?: (Int_comparison_exp | null),faceit_updated_at?: (timestamptz_comparison_exp | null),faceit_url?: (String_comparison_exp | null),friend_steam_id?: (bigint_comparison_exp | null),game_ban_count?: (Int_comparison_exp | null),invited_by_steam_id?: (bigint_comparison_exp | null),language?: (String_comparison_exp | null),last_presence_state?: (jsonb_comparison_exp | null),last_read_news_at?: (timestamptz_comparison_exp | null),last_sign_in_at?: (timestamptz_comparison_exp | null),name?: (String_comparison_exp | null),name_registered?: (Boolean_comparison_exp | null),notification_timezone?: (String_comparison_exp | null),player?: (players_bool_exp | null),premier_rank?: (Int_comparison_exp | null),premier_rank_updated_at?: (timestamptz_comparison_exp | null),presence_updated_at?: (timestamptz_comparison_exp | null),profile_url?: (String_comparison_exp | null),quiet_hours_end?: (time_comparison_exp | null),quiet_hours_start?: (time_comparison_exp | null),role?: (String_comparison_exp | null),roster_image_url?: (String_comparison_exp | null),show_match_ready_modal?: (Boolean_comparison_exp | null),status?: (String_comparison_exp | null),steam_bans_checked_at?: (timestamptz_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),vac_ban_count?: (Int_comparison_exp | null),vac_banned?: (Boolean_comparison_exp | null)}
+export interface my_friends_bool_exp {_and?: (my_friends_bool_exp[] | null),_not?: (my_friends_bool_exp | null),_or?: (my_friends_bool_exp[] | null),allow_message_requests?: (Boolean_comparison_exp | null),avatar_url?: (String_comparison_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),custom_avatar_url?: (String_comparison_exp | null),days_since_last_ban?: (Int_comparison_exp | null),discord_id?: (String_comparison_exp | null),elo?: (jsonb_comparison_exp | null),faceit_elo?: (Int_comparison_exp | null),faceit_nickname?: (String_comparison_exp | null),faceit_player_id?: (String_comparison_exp | null),faceit_skill_level?: (Int_comparison_exp | null),faceit_updated_at?: (timestamptz_comparison_exp | null),faceit_url?: (String_comparison_exp | null),friend_steam_id?: (bigint_comparison_exp | null),game_ban_count?: (Int_comparison_exp | null),invited_by_steam_id?: (bigint_comparison_exp | null),language?: (String_comparison_exp | null),last_presence_state?: (jsonb_comparison_exp | null),last_read_news_at?: (timestamptz_comparison_exp | null),last_sign_in_at?: (timestamptz_comparison_exp | null),name?: (String_comparison_exp | null),name_registered?: (Boolean_comparison_exp | null),notification_timezone?: (String_comparison_exp | null),player?: (players_bool_exp | null),premier_rank?: (Int_comparison_exp | null),premier_rank_updated_at?: (timestamptz_comparison_exp | null),presence_updated_at?: (timestamptz_comparison_exp | null),profile_url?: (String_comparison_exp | null),quiet_hours_end?: (time_comparison_exp | null),quiet_hours_start?: (time_comparison_exp | null),role?: (String_comparison_exp | null),roster_image_url?: (String_comparison_exp | null),show_match_ready_modal?: (Boolean_comparison_exp | null),status?: (String_comparison_exp | null),steam_bans_checked_at?: (timestamptz_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),vac_ban_count?: (Int_comparison_exp | null),vac_banned?: (Boolean_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -84343,7 +86780,7 @@ export interface my_friends_inc_input {days_since_last_ban?: (Scalars['Int'] | n
 
 
 /** input type for inserting data into table "v_my_friends" */
-export interface my_friends_insert_input {avatar_url?: (Scalars['String'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),custom_avatar_url?: (Scalars['String'] | null),days_since_last_ban?: (Scalars['Int'] | null),discord_id?: (Scalars['String'] | null),elo?: (Scalars['jsonb'] | null),faceit_elo?: (Scalars['Int'] | null),faceit_nickname?: (Scalars['String'] | null),faceit_player_id?: (Scalars['String'] | null),faceit_skill_level?: (Scalars['Int'] | null),faceit_updated_at?: (Scalars['timestamptz'] | null),faceit_url?: (Scalars['String'] | null),friend_steam_id?: (Scalars['bigint'] | null),game_ban_count?: (Scalars['Int'] | null),invited_by_steam_id?: (Scalars['bigint'] | null),language?: (Scalars['String'] | null),last_presence_state?: (Scalars['jsonb'] | null),last_read_news_at?: (Scalars['timestamptz'] | null),last_sign_in_at?: (Scalars['timestamptz'] | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),notification_timezone?: (Scalars['String'] | null),player?: (players_obj_rel_insert_input | null),premier_rank?: (Scalars['Int'] | null),premier_rank_updated_at?: (Scalars['timestamptz'] | null),presence_updated_at?: (Scalars['timestamptz'] | null),profile_url?: (Scalars['String'] | null),quiet_hours_end?: (Scalars['time'] | null),quiet_hours_start?: (Scalars['time'] | null),role?: (Scalars['String'] | null),roster_image_url?: (Scalars['String'] | null),show_match_ready_modal?: (Scalars['Boolean'] | null),status?: (Scalars['String'] | null),steam_bans_checked_at?: (Scalars['timestamptz'] | null),steam_id?: (Scalars['bigint'] | null),vac_ban_count?: (Scalars['Int'] | null),vac_banned?: (Scalars['Boolean'] | null)}
+export interface my_friends_insert_input {allow_message_requests?: (Scalars['Boolean'] | null),avatar_url?: (Scalars['String'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),custom_avatar_url?: (Scalars['String'] | null),days_since_last_ban?: (Scalars['Int'] | null),discord_id?: (Scalars['String'] | null),elo?: (Scalars['jsonb'] | null),faceit_elo?: (Scalars['Int'] | null),faceit_nickname?: (Scalars['String'] | null),faceit_player_id?: (Scalars['String'] | null),faceit_skill_level?: (Scalars['Int'] | null),faceit_updated_at?: (Scalars['timestamptz'] | null),faceit_url?: (Scalars['String'] | null),friend_steam_id?: (Scalars['bigint'] | null),game_ban_count?: (Scalars['Int'] | null),invited_by_steam_id?: (Scalars['bigint'] | null),language?: (Scalars['String'] | null),last_presence_state?: (Scalars['jsonb'] | null),last_read_news_at?: (Scalars['timestamptz'] | null),last_sign_in_at?: (Scalars['timestamptz'] | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),notification_timezone?: (Scalars['String'] | null),player?: (players_obj_rel_insert_input | null),premier_rank?: (Scalars['Int'] | null),premier_rank_updated_at?: (Scalars['timestamptz'] | null),presence_updated_at?: (Scalars['timestamptz'] | null),profile_url?: (Scalars['String'] | null),quiet_hours_end?: (Scalars['time'] | null),quiet_hours_start?: (Scalars['time'] | null),role?: (Scalars['String'] | null),roster_image_url?: (Scalars['String'] | null),show_match_ready_modal?: (Scalars['Boolean'] | null),status?: (Scalars['String'] | null),steam_bans_checked_at?: (Scalars['timestamptz'] | null),steam_id?: (Scalars['bigint'] | null),vac_ban_count?: (Scalars['Int'] | null),vac_banned?: (Scalars['Boolean'] | null)}
 
 
 /** aggregate max on columns */
@@ -84440,7 +86877,7 @@ export interface my_friends_mutation_responseGenqlSelection{
 
 
 /** Ordering options when selecting data from "v_my_friends". */
-export interface my_friends_order_by {avatar_url?: (order_by | null),country?: (order_by | null),created_at?: (order_by | null),custom_avatar_url?: (order_by | null),days_since_last_ban?: (order_by | null),discord_id?: (order_by | null),elo?: (order_by | null),faceit_elo?: (order_by | null),faceit_nickname?: (order_by | null),faceit_player_id?: (order_by | null),faceit_skill_level?: (order_by | null),faceit_updated_at?: (order_by | null),faceit_url?: (order_by | null),friend_steam_id?: (order_by | null),game_ban_count?: (order_by | null),invited_by_steam_id?: (order_by | null),language?: (order_by | null),last_presence_state?: (order_by | null),last_read_news_at?: (order_by | null),last_sign_in_at?: (order_by | null),name?: (order_by | null),name_registered?: (order_by | null),notification_timezone?: (order_by | null),player?: (players_order_by | null),premier_rank?: (order_by | null),premier_rank_updated_at?: (order_by | null),presence_updated_at?: (order_by | null),profile_url?: (order_by | null),quiet_hours_end?: (order_by | null),quiet_hours_start?: (order_by | null),role?: (order_by | null),roster_image_url?: (order_by | null),show_match_ready_modal?: (order_by | null),status?: (order_by | null),steam_bans_checked_at?: (order_by | null),steam_id?: (order_by | null),vac_ban_count?: (order_by | null),vac_banned?: (order_by | null)}
+export interface my_friends_order_by {allow_message_requests?: (order_by | null),avatar_url?: (order_by | null),country?: (order_by | null),created_at?: (order_by | null),custom_avatar_url?: (order_by | null),days_since_last_ban?: (order_by | null),discord_id?: (order_by | null),elo?: (order_by | null),faceit_elo?: (order_by | null),faceit_nickname?: (order_by | null),faceit_player_id?: (order_by | null),faceit_skill_level?: (order_by | null),faceit_updated_at?: (order_by | null),faceit_url?: (order_by | null),friend_steam_id?: (order_by | null),game_ban_count?: (order_by | null),invited_by_steam_id?: (order_by | null),language?: (order_by | null),last_presence_state?: (order_by | null),last_read_news_at?: (order_by | null),last_sign_in_at?: (order_by | null),name?: (order_by | null),name_registered?: (order_by | null),notification_timezone?: (order_by | null),player?: (players_order_by | null),premier_rank?: (order_by | null),premier_rank_updated_at?: (order_by | null),presence_updated_at?: (order_by | null),profile_url?: (order_by | null),quiet_hours_end?: (order_by | null),quiet_hours_start?: (order_by | null),role?: (order_by | null),roster_image_url?: (order_by | null),show_match_ready_modal?: (order_by | null),status?: (order_by | null),steam_bans_checked_at?: (order_by | null),steam_id?: (order_by | null),vac_ban_count?: (order_by | null),vac_banned?: (order_by | null)}
 
 
 /** prepend existing jsonb value of filtered columns with new jsonb value */
@@ -84448,7 +86885,7 @@ export interface my_friends_prepend_input {elo?: (Scalars['jsonb'] | null),last_
 
 
 /** input type for updating data in table "v_my_friends" */
-export interface my_friends_set_input {avatar_url?: (Scalars['String'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),custom_avatar_url?: (Scalars['String'] | null),days_since_last_ban?: (Scalars['Int'] | null),discord_id?: (Scalars['String'] | null),elo?: (Scalars['jsonb'] | null),faceit_elo?: (Scalars['Int'] | null),faceit_nickname?: (Scalars['String'] | null),faceit_player_id?: (Scalars['String'] | null),faceit_skill_level?: (Scalars['Int'] | null),faceit_updated_at?: (Scalars['timestamptz'] | null),faceit_url?: (Scalars['String'] | null),friend_steam_id?: (Scalars['bigint'] | null),game_ban_count?: (Scalars['Int'] | null),invited_by_steam_id?: (Scalars['bigint'] | null),language?: (Scalars['String'] | null),last_presence_state?: (Scalars['jsonb'] | null),last_read_news_at?: (Scalars['timestamptz'] | null),last_sign_in_at?: (Scalars['timestamptz'] | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),notification_timezone?: (Scalars['String'] | null),premier_rank?: (Scalars['Int'] | null),premier_rank_updated_at?: (Scalars['timestamptz'] | null),presence_updated_at?: (Scalars['timestamptz'] | null),profile_url?: (Scalars['String'] | null),quiet_hours_end?: (Scalars['time'] | null),quiet_hours_start?: (Scalars['time'] | null),role?: (Scalars['String'] | null),roster_image_url?: (Scalars['String'] | null),show_match_ready_modal?: (Scalars['Boolean'] | null),status?: (Scalars['String'] | null),steam_bans_checked_at?: (Scalars['timestamptz'] | null),steam_id?: (Scalars['bigint'] | null),vac_ban_count?: (Scalars['Int'] | null),vac_banned?: (Scalars['Boolean'] | null)}
+export interface my_friends_set_input {allow_message_requests?: (Scalars['Boolean'] | null),avatar_url?: (Scalars['String'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),custom_avatar_url?: (Scalars['String'] | null),days_since_last_ban?: (Scalars['Int'] | null),discord_id?: (Scalars['String'] | null),elo?: (Scalars['jsonb'] | null),faceit_elo?: (Scalars['Int'] | null),faceit_nickname?: (Scalars['String'] | null),faceit_player_id?: (Scalars['String'] | null),faceit_skill_level?: (Scalars['Int'] | null),faceit_updated_at?: (Scalars['timestamptz'] | null),faceit_url?: (Scalars['String'] | null),friend_steam_id?: (Scalars['bigint'] | null),game_ban_count?: (Scalars['Int'] | null),invited_by_steam_id?: (Scalars['bigint'] | null),language?: (Scalars['String'] | null),last_presence_state?: (Scalars['jsonb'] | null),last_read_news_at?: (Scalars['timestamptz'] | null),last_sign_in_at?: (Scalars['timestamptz'] | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),notification_timezone?: (Scalars['String'] | null),premier_rank?: (Scalars['Int'] | null),premier_rank_updated_at?: (Scalars['timestamptz'] | null),presence_updated_at?: (Scalars['timestamptz'] | null),profile_url?: (Scalars['String'] | null),quiet_hours_end?: (Scalars['time'] | null),quiet_hours_start?: (Scalars['time'] | null),role?: (Scalars['String'] | null),roster_image_url?: (Scalars['String'] | null),show_match_ready_modal?: (Scalars['Boolean'] | null),status?: (Scalars['String'] | null),steam_bans_checked_at?: (Scalars['timestamptz'] | null),steam_id?: (Scalars['bigint'] | null),vac_ban_count?: (Scalars['Int'] | null),vac_banned?: (Scalars['Boolean'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -84520,7 +86957,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface my_friends_stream_cursor_value_input {avatar_url?: (Scalars['String'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),custom_avatar_url?: (Scalars['String'] | null),days_since_last_ban?: (Scalars['Int'] | null),discord_id?: (Scalars['String'] | null),elo?: (Scalars['jsonb'] | null),faceit_elo?: (Scalars['Int'] | null),faceit_nickname?: (Scalars['String'] | null),faceit_player_id?: (Scalars['String'] | null),faceit_skill_level?: (Scalars['Int'] | null),faceit_updated_at?: (Scalars['timestamptz'] | null),faceit_url?: (Scalars['String'] | null),friend_steam_id?: (Scalars['bigint'] | null),game_ban_count?: (Scalars['Int'] | null),invited_by_steam_id?: (Scalars['bigint'] | null),language?: (Scalars['String'] | null),last_presence_state?: (Scalars['jsonb'] | null),last_read_news_at?: (Scalars['timestamptz'] | null),last_sign_in_at?: (Scalars['timestamptz'] | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),notification_timezone?: (Scalars['String'] | null),premier_rank?: (Scalars['Int'] | null),premier_rank_updated_at?: (Scalars['timestamptz'] | null),presence_updated_at?: (Scalars['timestamptz'] | null),profile_url?: (Scalars['String'] | null),quiet_hours_end?: (Scalars['time'] | null),quiet_hours_start?: (Scalars['time'] | null),role?: (Scalars['String'] | null),roster_image_url?: (Scalars['String'] | null),show_match_ready_modal?: (Scalars['Boolean'] | null),status?: (Scalars['String'] | null),steam_bans_checked_at?: (Scalars['timestamptz'] | null),steam_id?: (Scalars['bigint'] | null),vac_ban_count?: (Scalars['Int'] | null),vac_banned?: (Scalars['Boolean'] | null)}
+export interface my_friends_stream_cursor_value_input {allow_message_requests?: (Scalars['Boolean'] | null),avatar_url?: (Scalars['String'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),custom_avatar_url?: (Scalars['String'] | null),days_since_last_ban?: (Scalars['Int'] | null),discord_id?: (Scalars['String'] | null),elo?: (Scalars['jsonb'] | null),faceit_elo?: (Scalars['Int'] | null),faceit_nickname?: (Scalars['String'] | null),faceit_player_id?: (Scalars['String'] | null),faceit_skill_level?: (Scalars['Int'] | null),faceit_updated_at?: (Scalars['timestamptz'] | null),faceit_url?: (Scalars['String'] | null),friend_steam_id?: (Scalars['bigint'] | null),game_ban_count?: (Scalars['Int'] | null),invited_by_steam_id?: (Scalars['bigint'] | null),language?: (Scalars['String'] | null),last_presence_state?: (Scalars['jsonb'] | null),last_read_news_at?: (Scalars['timestamptz'] | null),last_sign_in_at?: (Scalars['timestamptz'] | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),notification_timezone?: (Scalars['String'] | null),premier_rank?: (Scalars['Int'] | null),premier_rank_updated_at?: (Scalars['timestamptz'] | null),presence_updated_at?: (Scalars['timestamptz'] | null),profile_url?: (Scalars['String'] | null),quiet_hours_end?: (Scalars['time'] | null),quiet_hours_start?: (Scalars['time'] | null),role?: (Scalars['String'] | null),roster_image_url?: (Scalars['String'] | null),show_match_ready_modal?: (Scalars['Boolean'] | null),status?: (Scalars['String'] | null),steam_bans_checked_at?: (Scalars['timestamptz'] | null),steam_id?: (Scalars['bigint'] | null),vac_ban_count?: (Scalars['Int'] | null),vac_banned?: (Scalars['Boolean'] | null)}
 
 
 /** aggregate sum on columns */
@@ -84739,6 +87176,12 @@ export interface news_articles_mutation_responseGenqlSelection{
 }
 
 
+/** input type for inserting object relation for remote table "news_articles" */
+export interface news_articles_obj_rel_insert_input {data: news_articles_insert_input,
+/** upsert condition */
+on_conflict?: (news_articles_on_conflict | null)}
+
+
 /** on_conflict condition type for table "news_articles" */
 export interface news_articles_on_conflict {constraint: news_articles_constraint,update_columns?: news_articles_update_column[],where?: (news_articles_bool_exp | null)}
 
@@ -84836,6 +87279,342 @@ export interface news_articles_variance_fieldsGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** columns and relationships of "news_comments" */
+export interface news_commentsGenqlSelection{
+    /** An object relationship */
+    article?: news_articlesGenqlSelection
+    article_id?: boolean | number
+    /** The author as this viewer may see them, none once removed. */
+    author?: (playersGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (players_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (players_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (players_bool_exp | null)} })
+    author_steam_id?: boolean | number
+    body?: boolean | number
+    created_at?: boolean | number
+    deleted_at?: boolean | number
+    deleted_by_staff?: boolean | number
+    edited_at?: boolean | number
+    hidden_at?: boolean | number
+    /** Who hid the comment. Staff only. */
+    hidden_by_name?: boolean | number
+    hidden_by_steam_id?: boolean | number
+    hidden_reason?: boolean | number
+    id?: boolean | number
+    parent_id?: boolean | number
+    /** An array relationship */
+    replies?: (news_commentsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (news_comments_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (news_comments_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (news_comments_bool_exp | null)} })
+    /** An aggregate relationship */
+    replies_aggregate?: (news_comments_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (news_comments_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (news_comments_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (news_comments_bool_exp | null)} })
+    /** The comment as this viewer may read it, blank once removed. */
+    text?: boolean | number
+    /** A computed field, executes function "news_comment_viewer_voted" */
+    viewer_voted?: boolean | number
+    /** A computed field, executes function "news_comment_visible" */
+    visible?: boolean | number
+    vote_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "news_comments" */
+export interface news_comments_aggregateGenqlSelection{
+    aggregate?: news_comments_aggregate_fieldsGenqlSelection
+    nodes?: news_commentsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface news_comments_aggregate_bool_exp {bool_and?: (news_comments_aggregate_bool_exp_bool_and | null),bool_or?: (news_comments_aggregate_bool_exp_bool_or | null),count?: (news_comments_aggregate_bool_exp_count | null)}
+
+export interface news_comments_aggregate_bool_exp_bool_and {arguments: news_comments_select_column_news_comments_aggregate_bool_exp_bool_and_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (news_comments_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface news_comments_aggregate_bool_exp_bool_or {arguments: news_comments_select_column_news_comments_aggregate_bool_exp_bool_or_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (news_comments_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface news_comments_aggregate_bool_exp_count {arguments?: (news_comments_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (news_comments_bool_exp | null),predicate: Int_comparison_exp}
+
+
+/** aggregate fields of "news_comments" */
+export interface news_comments_aggregate_fieldsGenqlSelection{
+    avg?: news_comments_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (news_comments_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: news_comments_max_fieldsGenqlSelection
+    min?: news_comments_min_fieldsGenqlSelection
+    stddev?: news_comments_stddev_fieldsGenqlSelection
+    stddev_pop?: news_comments_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: news_comments_stddev_samp_fieldsGenqlSelection
+    sum?: news_comments_sum_fieldsGenqlSelection
+    var_pop?: news_comments_var_pop_fieldsGenqlSelection
+    var_samp?: news_comments_var_samp_fieldsGenqlSelection
+    variance?: news_comments_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "news_comments" */
+export interface news_comments_aggregate_order_by {avg?: (news_comments_avg_order_by | null),count?: (order_by | null),max?: (news_comments_max_order_by | null),min?: (news_comments_min_order_by | null),stddev?: (news_comments_stddev_order_by | null),stddev_pop?: (news_comments_stddev_pop_order_by | null),stddev_samp?: (news_comments_stddev_samp_order_by | null),sum?: (news_comments_sum_order_by | null),var_pop?: (news_comments_var_pop_order_by | null),var_samp?: (news_comments_var_samp_order_by | null),variance?: (news_comments_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "news_comments" */
+export interface news_comments_arr_rel_insert_input {data: news_comments_insert_input[],
+/** upsert condition */
+on_conflict?: (news_comments_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface news_comments_avg_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    hidden_by_steam_id?: boolean | number
+    vote_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "news_comments" */
+export interface news_comments_avg_order_by {author_steam_id?: (order_by | null),hidden_by_steam_id?: (order_by | null),vote_count?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "news_comments". All fields are combined with a logical 'AND'. */
+export interface news_comments_bool_exp {_and?: (news_comments_bool_exp[] | null),_not?: (news_comments_bool_exp | null),_or?: (news_comments_bool_exp[] | null),article?: (news_articles_bool_exp | null),article_id?: (uuid_comparison_exp | null),author?: (players_bool_exp | null),author_steam_id?: (bigint_comparison_exp | null),body?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),deleted_by_staff?: (Boolean_comparison_exp | null),edited_at?: (timestamptz_comparison_exp | null),hidden_at?: (timestamptz_comparison_exp | null),hidden_by_name?: (String_comparison_exp | null),hidden_by_steam_id?: (bigint_comparison_exp | null),hidden_reason?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),parent_id?: (uuid_comparison_exp | null),replies?: (news_comments_bool_exp | null),replies_aggregate?: (news_comments_aggregate_bool_exp | null),text?: (String_comparison_exp | null),viewer_voted?: (Boolean_comparison_exp | null),visible?: (Boolean_comparison_exp | null),vote_count?: (Int_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "news_comments" */
+export interface news_comments_inc_input {author_steam_id?: (Scalars['bigint'] | null),hidden_by_steam_id?: (Scalars['bigint'] | null),vote_count?: (Scalars['Int'] | null)}
+
+
+/** input type for inserting data into table "news_comments" */
+export interface news_comments_insert_input {article?: (news_articles_obj_rel_insert_input | null),article_id?: (Scalars['uuid'] | null),author_steam_id?: (Scalars['bigint'] | null),body?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),deleted_at?: (Scalars['timestamptz'] | null),deleted_by_staff?: (Scalars['Boolean'] | null),edited_at?: (Scalars['timestamptz'] | null),hidden_at?: (Scalars['timestamptz'] | null),hidden_by_steam_id?: (Scalars['bigint'] | null),hidden_reason?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),parent_id?: (Scalars['uuid'] | null),replies?: (news_comments_arr_rel_insert_input | null),vote_count?: (Scalars['Int'] | null)}
+
+
+/** aggregate max on columns */
+export interface news_comments_max_fieldsGenqlSelection{
+    article_id?: boolean | number
+    author_steam_id?: boolean | number
+    body?: boolean | number
+    created_at?: boolean | number
+    deleted_at?: boolean | number
+    edited_at?: boolean | number
+    hidden_at?: boolean | number
+    /** Who hid the comment. Staff only. */
+    hidden_by_name?: boolean | number
+    hidden_by_steam_id?: boolean | number
+    hidden_reason?: boolean | number
+    id?: boolean | number
+    parent_id?: boolean | number
+    /** The comment as this viewer may read it, blank once removed. */
+    text?: boolean | number
+    vote_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "news_comments" */
+export interface news_comments_max_order_by {article_id?: (order_by | null),author_steam_id?: (order_by | null),body?: (order_by | null),created_at?: (order_by | null),deleted_at?: (order_by | null),edited_at?: (order_by | null),hidden_at?: (order_by | null),hidden_by_steam_id?: (order_by | null),hidden_reason?: (order_by | null),id?: (order_by | null),parent_id?: (order_by | null),vote_count?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface news_comments_min_fieldsGenqlSelection{
+    article_id?: boolean | number
+    author_steam_id?: boolean | number
+    body?: boolean | number
+    created_at?: boolean | number
+    deleted_at?: boolean | number
+    edited_at?: boolean | number
+    hidden_at?: boolean | number
+    /** Who hid the comment. Staff only. */
+    hidden_by_name?: boolean | number
+    hidden_by_steam_id?: boolean | number
+    hidden_reason?: boolean | number
+    id?: boolean | number
+    parent_id?: boolean | number
+    /** The comment as this viewer may read it, blank once removed. */
+    text?: boolean | number
+    vote_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "news_comments" */
+export interface news_comments_min_order_by {article_id?: (order_by | null),author_steam_id?: (order_by | null),body?: (order_by | null),created_at?: (order_by | null),deleted_at?: (order_by | null),edited_at?: (order_by | null),hidden_at?: (order_by | null),hidden_by_steam_id?: (order_by | null),hidden_reason?: (order_by | null),id?: (order_by | null),parent_id?: (order_by | null),vote_count?: (order_by | null)}
+
+
+/** response of any mutation on the table "news_comments" */
+export interface news_comments_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: news_commentsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "news_comments" */
+export interface news_comments_on_conflict {constraint: news_comments_constraint,update_columns?: news_comments_update_column[],where?: (news_comments_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "news_comments". */
+export interface news_comments_order_by {article?: (news_articles_order_by | null),article_id?: (order_by | null),author_aggregate?: (players_aggregate_order_by | null),author_steam_id?: (order_by | null),body?: (order_by | null),created_at?: (order_by | null),deleted_at?: (order_by | null),deleted_by_staff?: (order_by | null),edited_at?: (order_by | null),hidden_at?: (order_by | null),hidden_by_name?: (order_by | null),hidden_by_steam_id?: (order_by | null),hidden_reason?: (order_by | null),id?: (order_by | null),parent_id?: (order_by | null),replies_aggregate?: (news_comments_aggregate_order_by | null),text?: (order_by | null),viewer_voted?: (order_by | null),visible?: (order_by | null),vote_count?: (order_by | null)}
+
+
+/** primary key columns input for table: news_comments */
+export interface news_comments_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "news_comments" */
+export interface news_comments_set_input {article_id?: (Scalars['uuid'] | null),author_steam_id?: (Scalars['bigint'] | null),body?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),deleted_at?: (Scalars['timestamptz'] | null),deleted_by_staff?: (Scalars['Boolean'] | null),edited_at?: (Scalars['timestamptz'] | null),hidden_at?: (Scalars['timestamptz'] | null),hidden_by_steam_id?: (Scalars['bigint'] | null),hidden_reason?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),parent_id?: (Scalars['uuid'] | null),vote_count?: (Scalars['Int'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface news_comments_stddev_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    hidden_by_steam_id?: boolean | number
+    vote_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "news_comments" */
+export interface news_comments_stddev_order_by {author_steam_id?: (order_by | null),hidden_by_steam_id?: (order_by | null),vote_count?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface news_comments_stddev_pop_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    hidden_by_steam_id?: boolean | number
+    vote_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "news_comments" */
+export interface news_comments_stddev_pop_order_by {author_steam_id?: (order_by | null),hidden_by_steam_id?: (order_by | null),vote_count?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface news_comments_stddev_samp_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    hidden_by_steam_id?: boolean | number
+    vote_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "news_comments" */
+export interface news_comments_stddev_samp_order_by {author_steam_id?: (order_by | null),hidden_by_steam_id?: (order_by | null),vote_count?: (order_by | null)}
+
+
+/** Streaming cursor of the table "news_comments" */
+export interface news_comments_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: news_comments_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface news_comments_stream_cursor_value_input {article_id?: (Scalars['uuid'] | null),author_steam_id?: (Scalars['bigint'] | null),body?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),deleted_at?: (Scalars['timestamptz'] | null),deleted_by_staff?: (Scalars['Boolean'] | null),edited_at?: (Scalars['timestamptz'] | null),hidden_at?: (Scalars['timestamptz'] | null),hidden_by_steam_id?: (Scalars['bigint'] | null),hidden_reason?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),parent_id?: (Scalars['uuid'] | null),vote_count?: (Scalars['Int'] | null)}
+
+
+/** aggregate sum on columns */
+export interface news_comments_sum_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    hidden_by_steam_id?: boolean | number
+    vote_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "news_comments" */
+export interface news_comments_sum_order_by {author_steam_id?: (order_by | null),hidden_by_steam_id?: (order_by | null),vote_count?: (order_by | null)}
+
+export interface news_comments_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (news_comments_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (news_comments_set_input | null),
+/** filter the rows which have to be updated */
+where: news_comments_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface news_comments_var_pop_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    hidden_by_steam_id?: boolean | number
+    vote_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "news_comments" */
+export interface news_comments_var_pop_order_by {author_steam_id?: (order_by | null),hidden_by_steam_id?: (order_by | null),vote_count?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface news_comments_var_samp_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    hidden_by_steam_id?: boolean | number
+    vote_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "news_comments" */
+export interface news_comments_var_samp_order_by {author_steam_id?: (order_by | null),hidden_by_steam_id?: (order_by | null),vote_count?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface news_comments_variance_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    hidden_by_steam_id?: boolean | number
+    vote_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "news_comments" */
+export interface news_comments_variance_order_by {author_steam_id?: (order_by | null),hidden_by_steam_id?: (order_by | null),vote_count?: (order_by | null)}
 
 
 /** columns and relationships of "notification_preferences" */
@@ -94217,6 +96996,221 @@ export interface player_steam_match_auth_variance_fieldsGenqlSelection{
 }
 
 
+/** columns and relationships of "player_twitch_accounts" */
+export interface player_twitch_accountsGenqlSelection{
+    checked_at?: boolean | number
+    created_at?: boolean | number
+    display_name?: boolean | number
+    game_name?: boolean | number
+    is_live?: boolean | number
+    login?: boolean | number
+    /** An object relationship */
+    player?: playersGenqlSelection
+    started_at?: boolean | number
+    steam_id?: boolean | number
+    stream_title?: boolean | number
+    thumbnail_url?: boolean | number
+    twitch_user_id?: boolean | number
+    viewer_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "player_twitch_accounts" */
+export interface player_twitch_accounts_aggregateGenqlSelection{
+    aggregate?: player_twitch_accounts_aggregate_fieldsGenqlSelection
+    nodes?: player_twitch_accountsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "player_twitch_accounts" */
+export interface player_twitch_accounts_aggregate_fieldsGenqlSelection{
+    avg?: player_twitch_accounts_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (player_twitch_accounts_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: player_twitch_accounts_max_fieldsGenqlSelection
+    min?: player_twitch_accounts_min_fieldsGenqlSelection
+    stddev?: player_twitch_accounts_stddev_fieldsGenqlSelection
+    stddev_pop?: player_twitch_accounts_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: player_twitch_accounts_stddev_samp_fieldsGenqlSelection
+    sum?: player_twitch_accounts_sum_fieldsGenqlSelection
+    var_pop?: player_twitch_accounts_var_pop_fieldsGenqlSelection
+    var_samp?: player_twitch_accounts_var_samp_fieldsGenqlSelection
+    variance?: player_twitch_accounts_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface player_twitch_accounts_avg_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    viewer_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "player_twitch_accounts". All fields are combined with a logical 'AND'. */
+export interface player_twitch_accounts_bool_exp {_and?: (player_twitch_accounts_bool_exp[] | null),_not?: (player_twitch_accounts_bool_exp | null),_or?: (player_twitch_accounts_bool_exp[] | null),checked_at?: (timestamptz_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),display_name?: (String_comparison_exp | null),game_name?: (String_comparison_exp | null),is_live?: (Boolean_comparison_exp | null),login?: (String_comparison_exp | null),player?: (players_bool_exp | null),started_at?: (timestamptz_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),stream_title?: (String_comparison_exp | null),thumbnail_url?: (String_comparison_exp | null),twitch_user_id?: (String_comparison_exp | null),viewer_count?: (Int_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "player_twitch_accounts" */
+export interface player_twitch_accounts_inc_input {steam_id?: (Scalars['bigint'] | null),viewer_count?: (Scalars['Int'] | null)}
+
+
+/** input type for inserting data into table "player_twitch_accounts" */
+export interface player_twitch_accounts_insert_input {checked_at?: (Scalars['timestamptz'] | null),created_at?: (Scalars['timestamptz'] | null),display_name?: (Scalars['String'] | null),game_name?: (Scalars['String'] | null),is_live?: (Scalars['Boolean'] | null),login?: (Scalars['String'] | null),player?: (players_obj_rel_insert_input | null),started_at?: (Scalars['timestamptz'] | null),steam_id?: (Scalars['bigint'] | null),stream_title?: (Scalars['String'] | null),thumbnail_url?: (Scalars['String'] | null),twitch_user_id?: (Scalars['String'] | null),viewer_count?: (Scalars['Int'] | null)}
+
+
+/** aggregate max on columns */
+export interface player_twitch_accounts_max_fieldsGenqlSelection{
+    checked_at?: boolean | number
+    created_at?: boolean | number
+    display_name?: boolean | number
+    game_name?: boolean | number
+    login?: boolean | number
+    started_at?: boolean | number
+    steam_id?: boolean | number
+    stream_title?: boolean | number
+    thumbnail_url?: boolean | number
+    twitch_user_id?: boolean | number
+    viewer_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface player_twitch_accounts_min_fieldsGenqlSelection{
+    checked_at?: boolean | number
+    created_at?: boolean | number
+    display_name?: boolean | number
+    game_name?: boolean | number
+    login?: boolean | number
+    started_at?: boolean | number
+    steam_id?: boolean | number
+    stream_title?: boolean | number
+    thumbnail_url?: boolean | number
+    twitch_user_id?: boolean | number
+    viewer_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "player_twitch_accounts" */
+export interface player_twitch_accounts_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: player_twitch_accountsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "player_twitch_accounts" */
+export interface player_twitch_accounts_on_conflict {constraint: player_twitch_accounts_constraint,update_columns?: player_twitch_accounts_update_column[],where?: (player_twitch_accounts_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "player_twitch_accounts". */
+export interface player_twitch_accounts_order_by {checked_at?: (order_by | null),created_at?: (order_by | null),display_name?: (order_by | null),game_name?: (order_by | null),is_live?: (order_by | null),login?: (order_by | null),player?: (players_order_by | null),started_at?: (order_by | null),steam_id?: (order_by | null),stream_title?: (order_by | null),thumbnail_url?: (order_by | null),twitch_user_id?: (order_by | null),viewer_count?: (order_by | null)}
+
+
+/** primary key columns input for table: player_twitch_accounts */
+export interface player_twitch_accounts_pk_columns_input {steam_id: Scalars['bigint']}
+
+
+/** input type for updating data in table "player_twitch_accounts" */
+export interface player_twitch_accounts_set_input {checked_at?: (Scalars['timestamptz'] | null),created_at?: (Scalars['timestamptz'] | null),display_name?: (Scalars['String'] | null),game_name?: (Scalars['String'] | null),is_live?: (Scalars['Boolean'] | null),login?: (Scalars['String'] | null),started_at?: (Scalars['timestamptz'] | null),steam_id?: (Scalars['bigint'] | null),stream_title?: (Scalars['String'] | null),thumbnail_url?: (Scalars['String'] | null),twitch_user_id?: (Scalars['String'] | null),viewer_count?: (Scalars['Int'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface player_twitch_accounts_stddev_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    viewer_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_twitch_accounts_stddev_pop_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    viewer_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_twitch_accounts_stddev_samp_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    viewer_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "player_twitch_accounts" */
+export interface player_twitch_accounts_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: player_twitch_accounts_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface player_twitch_accounts_stream_cursor_value_input {checked_at?: (Scalars['timestamptz'] | null),created_at?: (Scalars['timestamptz'] | null),display_name?: (Scalars['String'] | null),game_name?: (Scalars['String'] | null),is_live?: (Scalars['Boolean'] | null),login?: (Scalars['String'] | null),started_at?: (Scalars['timestamptz'] | null),steam_id?: (Scalars['bigint'] | null),stream_title?: (Scalars['String'] | null),thumbnail_url?: (Scalars['String'] | null),twitch_user_id?: (Scalars['String'] | null),viewer_count?: (Scalars['Int'] | null)}
+
+
+/** aggregate sum on columns */
+export interface player_twitch_accounts_sum_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    viewer_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface player_twitch_accounts_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (player_twitch_accounts_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (player_twitch_accounts_set_input | null),
+/** filter the rows which have to be updated */
+where: player_twitch_accounts_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface player_twitch_accounts_var_pop_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    viewer_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface player_twitch_accounts_var_samp_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    viewer_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface player_twitch_accounts_variance_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    viewer_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
 /** columns and relationships of "player_unused_utility" */
 export interface player_unused_utilityGenqlSelection{
     deleted_at?: boolean | number
@@ -95481,6 +98475,18 @@ export interface playersGenqlSelection{
     language?: boolean | number
     last_read_news_at?: boolean | number
     last_sign_in_at?: boolean | number
+    /** A computed field, executes function "get_player_live_lineup" */
+    live_lineup?: (match_lineup_playersGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_lineup_players_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_lineup_players_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_lineup_players_bool_exp | null)} })
     /** An array relationship */
     lobby_players?: (lobby_playersGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -96088,6 +99094,10 @@ export interface players_aggregate_fieldsGenqlSelection{
 }
 
 
+/** order by aggregate values of table "players" */
+export interface players_aggregate_order_by {avg?: (players_avg_order_by | null),count?: (order_by | null),max?: (players_max_order_by | null),min?: (players_min_order_by | null),stddev?: (players_stddev_order_by | null),stddev_pop?: (players_stddev_pop_order_by | null),stddev_samp?: (players_stddev_samp_order_by | null),sum?: (players_sum_order_by | null),var_pop?: (players_var_pop_order_by | null),var_samp?: (players_var_samp_order_by | null),variance?: (players_variance_order_by | null)}
+
+
 /** aggregate avg on columns */
 export interface players_avg_fieldsGenqlSelection{
     days_since_last_ban?: boolean | number
@@ -96124,8 +99134,12 @@ export interface players_avg_fieldsGenqlSelection{
 }
 
 
+/** order by avg() on columns of table "players" */
+export interface players_avg_order_by {days_since_last_ban?: (order_by | null),faceit_elo?: (order_by | null),faceit_skill_level?: (order_by | null),game_ban_count?: (order_by | null),premier_rank?: (order_by | null),steam_id?: (order_by | null),vac_ban_count?: (order_by | null)}
+
+
 /** Boolean expression to filter rows from the table "players". All fields are combined with a logical 'AND'. */
-export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),aim_weapon_stats?: (player_aim_weapon_stats_bool_exp | null),aim_weapon_stats_aggregate?: (player_aim_weapon_stats_aggregate_bool_exp | null),allow_message_requests?: (Boolean_comparison_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),awards?: (award_recipients_bool_exp | null),awards_aggregate?: (award_recipients_aggregate_bool_exp | null),banned_until?: (timestamptz_comparison_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_lobby_id?: (uuid_comparison_exp | null),custom_avatar_url?: (String_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),days_since_last_ban?: (Int_comparison_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),draft_game_players?: (draft_game_players_bool_exp | null),draft_game_players_aggregate?: (draft_game_players_aggregate_bool_exp | null),elo?: (jsonb_comparison_exp | null),elo_history?: (v_player_elo_bool_exp | null),elo_history_aggregate?: (v_player_elo_aggregate_bool_exp | null),faceit_elo?: (Int_comparison_exp | null),faceit_nickname?: (String_comparison_exp | null),faceit_player_id?: (String_comparison_exp | null),faceit_rank_history?: (player_faceit_rank_history_bool_exp | null),faceit_rank_history_aggregate?: (player_faceit_rank_history_aggregate_bool_exp | null),faceit_skill_level?: (Int_comparison_exp | null),faceit_updated_at?: (timestamptz_comparison_exp | null),faceit_url?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),friends?: (my_friends_bool_exp | null),friends_aggregate?: (my_friends_aggregate_bool_exp | null),game_ban_count?: (Int_comparison_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_admin_sanctioned?: (Boolean_comparison_exp | null),is_banned?: (Boolean_comparison_exp | null),is_gagged?: (Boolean_comparison_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),is_in_draft?: (Boolean_comparison_exp | null),is_in_lobby?: (Boolean_comparison_exp | null),is_muted?: (Boolean_comparison_exp | null),is_registered?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),kills_by_weapons?: (player_kills_by_weapon_bool_exp | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_bool_exp | null),language?: (String_comparison_exp | null),last_read_news_at?: (timestamptz_comparison_exp | null),last_sign_in_at?: (timestamptz_comparison_exp | null),lobby_players?: (lobby_players_bool_exp | null),lobby_players_aggregate?: (lobby_players_aggregate_bool_exp | null),losses?: (Int_comparison_exp | null),losses_competitive?: (Int_comparison_exp | null),losses_duel?: (Int_comparison_exp | null),losses_rush?: (Int_comparison_exp | null),losses_wingman?: (Int_comparison_exp | null),match_map_hltv?: (v_player_match_map_hltv_bool_exp | null),match_map_hltv_aggregate?: (v_player_match_map_hltv_aggregate_bool_exp | null),match_map_stats?: (player_match_map_stats_bool_exp | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_bool_exp | null),match_stats?: (player_match_stats_v_bool_exp | null),match_stats_aggregate?: (player_match_stats_v_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),name_registered?: (Boolean_comparison_exp | null),notification_timezone?: (String_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),peak_elo?: (jsonb_comparison_exp | null),pending_match_imports?: (pending_match_import_players_bool_exp | null),pending_match_imports_aggregate?: (pending_match_import_players_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),premier_rank?: (Int_comparison_exp | null),premier_rank_history?: (player_premier_rank_history_bool_exp | null),premier_rank_history_aggregate?: (player_premier_rank_history_aggregate_bool_exp | null),premier_rank_updated_at?: (timestamptz_comparison_exp | null),profile_url?: (String_comparison_exp | null),quiet_hours_end?: (time_comparison_exp | null),quiet_hours_start?: (time_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),roster_image_url?: (String_comparison_exp | null),sanctions?: (player_sanctions_bool_exp | null),sanctions_aggregate?: (player_sanctions_aggregate_bool_exp | null),season_stats?: (player_season_stats_bool_exp | null),season_stats_aggregate?: (player_season_stats_aggregate_bool_exp | null),show_match_ready_modal?: (Boolean_comparison_exp | null),stats?: (player_stats_bool_exp | null),steam_bans_checked_at?: (timestamptz_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),total_matches?: (Int_comparison_exp | null),tournament_cooldown?: (timestamptz_comparison_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null),vac_ban_count?: (Int_comparison_exp | null),vac_banned?: (Boolean_comparison_exp | null),weapon_stats?: (player_weapon_stats_v_bool_exp | null),weapon_stats_aggregate?: (player_weapon_stats_v_aggregate_bool_exp | null),wins?: (Int_comparison_exp | null),wins_competitive?: (Int_comparison_exp | null),wins_duel?: (Int_comparison_exp | null),wins_rush?: (Int_comparison_exp | null),wins_wingman?: (Int_comparison_exp | null)}
+export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),aim_weapon_stats?: (player_aim_weapon_stats_bool_exp | null),aim_weapon_stats_aggregate?: (player_aim_weapon_stats_aggregate_bool_exp | null),allow_message_requests?: (Boolean_comparison_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),awards?: (award_recipients_bool_exp | null),awards_aggregate?: (award_recipients_aggregate_bool_exp | null),banned_until?: (timestamptz_comparison_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_lobby_id?: (uuid_comparison_exp | null),custom_avatar_url?: (String_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),days_since_last_ban?: (Int_comparison_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),draft_game_players?: (draft_game_players_bool_exp | null),draft_game_players_aggregate?: (draft_game_players_aggregate_bool_exp | null),elo?: (jsonb_comparison_exp | null),elo_history?: (v_player_elo_bool_exp | null),elo_history_aggregate?: (v_player_elo_aggregate_bool_exp | null),faceit_elo?: (Int_comparison_exp | null),faceit_nickname?: (String_comparison_exp | null),faceit_player_id?: (String_comparison_exp | null),faceit_rank_history?: (player_faceit_rank_history_bool_exp | null),faceit_rank_history_aggregate?: (player_faceit_rank_history_aggregate_bool_exp | null),faceit_skill_level?: (Int_comparison_exp | null),faceit_updated_at?: (timestamptz_comparison_exp | null),faceit_url?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),friends?: (my_friends_bool_exp | null),friends_aggregate?: (my_friends_aggregate_bool_exp | null),game_ban_count?: (Int_comparison_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_admin_sanctioned?: (Boolean_comparison_exp | null),is_banned?: (Boolean_comparison_exp | null),is_gagged?: (Boolean_comparison_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),is_in_draft?: (Boolean_comparison_exp | null),is_in_lobby?: (Boolean_comparison_exp | null),is_muted?: (Boolean_comparison_exp | null),is_registered?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),kills_by_weapons?: (player_kills_by_weapon_bool_exp | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_bool_exp | null),language?: (String_comparison_exp | null),last_read_news_at?: (timestamptz_comparison_exp | null),last_sign_in_at?: (timestamptz_comparison_exp | null),live_lineup?: (match_lineup_players_bool_exp | null),lobby_players?: (lobby_players_bool_exp | null),lobby_players_aggregate?: (lobby_players_aggregate_bool_exp | null),losses?: (Int_comparison_exp | null),losses_competitive?: (Int_comparison_exp | null),losses_duel?: (Int_comparison_exp | null),losses_rush?: (Int_comparison_exp | null),losses_wingman?: (Int_comparison_exp | null),match_map_hltv?: (v_player_match_map_hltv_bool_exp | null),match_map_hltv_aggregate?: (v_player_match_map_hltv_aggregate_bool_exp | null),match_map_stats?: (player_match_map_stats_bool_exp | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_bool_exp | null),match_stats?: (player_match_stats_v_bool_exp | null),match_stats_aggregate?: (player_match_stats_v_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),name_registered?: (Boolean_comparison_exp | null),notification_timezone?: (String_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),peak_elo?: (jsonb_comparison_exp | null),pending_match_imports?: (pending_match_import_players_bool_exp | null),pending_match_imports_aggregate?: (pending_match_import_players_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),premier_rank?: (Int_comparison_exp | null),premier_rank_history?: (player_premier_rank_history_bool_exp | null),premier_rank_history_aggregate?: (player_premier_rank_history_aggregate_bool_exp | null),premier_rank_updated_at?: (timestamptz_comparison_exp | null),profile_url?: (String_comparison_exp | null),quiet_hours_end?: (time_comparison_exp | null),quiet_hours_start?: (time_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),roster_image_url?: (String_comparison_exp | null),sanctions?: (player_sanctions_bool_exp | null),sanctions_aggregate?: (player_sanctions_aggregate_bool_exp | null),season_stats?: (player_season_stats_bool_exp | null),season_stats_aggregate?: (player_season_stats_aggregate_bool_exp | null),show_match_ready_modal?: (Boolean_comparison_exp | null),stats?: (player_stats_bool_exp | null),steam_bans_checked_at?: (timestamptz_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),total_matches?: (Int_comparison_exp | null),tournament_cooldown?: (timestamptz_comparison_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null),vac_ban_count?: (Int_comparison_exp | null),vac_banned?: (Boolean_comparison_exp | null),weapon_stats?: (player_weapon_stats_v_bool_exp | null),weapon_stats_aggregate?: (player_weapon_stats_v_aggregate_bool_exp | null),wins?: (Int_comparison_exp | null),wins_competitive?: (Int_comparison_exp | null),wins_duel?: (Int_comparison_exp | null),wins_rush?: (Int_comparison_exp | null),wins_wingman?: (Int_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "players" */
@@ -96198,6 +99212,10 @@ export interface players_max_fieldsGenqlSelection{
 }
 
 
+/** order by max() on columns of table "players" */
+export interface players_max_order_by {avatar_url?: (order_by | null),country?: (order_by | null),created_at?: (order_by | null),custom_avatar_url?: (order_by | null),days_since_last_ban?: (order_by | null),discord_id?: (order_by | null),faceit_elo?: (order_by | null),faceit_nickname?: (order_by | null),faceit_player_id?: (order_by | null),faceit_skill_level?: (order_by | null),faceit_updated_at?: (order_by | null),faceit_url?: (order_by | null),game_ban_count?: (order_by | null),language?: (order_by | null),last_read_news_at?: (order_by | null),last_sign_in_at?: (order_by | null),name?: (order_by | null),notification_timezone?: (order_by | null),premier_rank?: (order_by | null),premier_rank_updated_at?: (order_by | null),profile_url?: (order_by | null),roster_image_url?: (order_by | null),steam_bans_checked_at?: (order_by | null),steam_id?: (order_by | null),vac_ban_count?: (order_by | null)}
+
+
 /** aggregate min on columns */
 export interface players_min_fieldsGenqlSelection{
     avatar_url?: boolean | number
@@ -96260,6 +99278,10 @@ export interface players_min_fieldsGenqlSelection{
 }
 
 
+/** order by min() on columns of table "players" */
+export interface players_min_order_by {avatar_url?: (order_by | null),country?: (order_by | null),created_at?: (order_by | null),custom_avatar_url?: (order_by | null),days_since_last_ban?: (order_by | null),discord_id?: (order_by | null),faceit_elo?: (order_by | null),faceit_nickname?: (order_by | null),faceit_player_id?: (order_by | null),faceit_skill_level?: (order_by | null),faceit_updated_at?: (order_by | null),faceit_url?: (order_by | null),game_ban_count?: (order_by | null),language?: (order_by | null),last_read_news_at?: (order_by | null),last_sign_in_at?: (order_by | null),name?: (order_by | null),notification_timezone?: (order_by | null),premier_rank?: (order_by | null),premier_rank_updated_at?: (order_by | null),profile_url?: (order_by | null),roster_image_url?: (order_by | null),steam_bans_checked_at?: (order_by | null),steam_id?: (order_by | null),vac_ban_count?: (order_by | null)}
+
+
 /** response of any mutation on the table "players" */
 export interface players_mutation_responseGenqlSelection{
     /** number of rows affected by the mutation */
@@ -96282,7 +99304,7 @@ export interface players_on_conflict {constraint: players_constraint,update_colu
 
 
 /** Ordering options when selecting data from "players". */
-export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),aim_weapon_stats_aggregate?: (player_aim_weapon_stats_aggregate_order_by | null),allow_message_requests?: (order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),awards_aggregate?: (award_recipients_aggregate_order_by | null),banned_until?: (order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),country?: (order_by | null),created_at?: (order_by | null),current_lobby_id?: (order_by | null),custom_avatar_url?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),days_since_last_ban?: (order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),draft_game_players_aggregate?: (draft_game_players_aggregate_order_by | null),elo?: (order_by | null),elo_history_aggregate?: (v_player_elo_aggregate_order_by | null),faceit_elo?: (order_by | null),faceit_nickname?: (order_by | null),faceit_player_id?: (order_by | null),faceit_rank_history_aggregate?: (player_faceit_rank_history_aggregate_order_by | null),faceit_skill_level?: (order_by | null),faceit_updated_at?: (order_by | null),faceit_url?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),friends_aggregate?: (my_friends_aggregate_order_by | null),game_ban_count?: (order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_admin_sanctioned?: (order_by | null),is_banned?: (order_by | null),is_gagged?: (order_by | null),is_in_another_match?: (order_by | null),is_in_draft?: (order_by | null),is_in_lobby?: (order_by | null),is_muted?: (order_by | null),is_registered?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_order_by | null),language?: (order_by | null),last_read_news_at?: (order_by | null),last_sign_in_at?: (order_by | null),lobby_players_aggregate?: (lobby_players_aggregate_order_by | null),losses?: (order_by | null),losses_competitive?: (order_by | null),losses_duel?: (order_by | null),losses_rush?: (order_by | null),losses_wingman?: (order_by | null),match_map_hltv_aggregate?: (v_player_match_map_hltv_aggregate_order_by | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_order_by | null),match_stats_aggregate?: (player_match_stats_v_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),name_registered?: (order_by | null),notification_timezone?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),peak_elo?: (order_by | null),pending_match_imports_aggregate?: (pending_match_import_players_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),premier_rank?: (order_by | null),premier_rank_history_aggregate?: (player_premier_rank_history_aggregate_order_by | null),premier_rank_updated_at?: (order_by | null),profile_url?: (order_by | null),quiet_hours_end?: (order_by | null),quiet_hours_start?: (order_by | null),role?: (order_by | null),roster_image_url?: (order_by | null),sanctions_aggregate?: (player_sanctions_aggregate_order_by | null),season_stats_aggregate?: (player_season_stats_aggregate_order_by | null),show_match_ready_modal?: (order_by | null),stats?: (player_stats_order_by | null),steam_bans_checked_at?: (order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),total_matches?: (order_by | null),tournament_cooldown?: (order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null),vac_ban_count?: (order_by | null),vac_banned?: (order_by | null),weapon_stats_aggregate?: (player_weapon_stats_v_aggregate_order_by | null),wins?: (order_by | null),wins_competitive?: (order_by | null),wins_duel?: (order_by | null),wins_rush?: (order_by | null),wins_wingman?: (order_by | null)}
+export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),aim_weapon_stats_aggregate?: (player_aim_weapon_stats_aggregate_order_by | null),allow_message_requests?: (order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),awards_aggregate?: (award_recipients_aggregate_order_by | null),banned_until?: (order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),country?: (order_by | null),created_at?: (order_by | null),current_lobby_id?: (order_by | null),custom_avatar_url?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),days_since_last_ban?: (order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),draft_game_players_aggregate?: (draft_game_players_aggregate_order_by | null),elo?: (order_by | null),elo_history_aggregate?: (v_player_elo_aggregate_order_by | null),faceit_elo?: (order_by | null),faceit_nickname?: (order_by | null),faceit_player_id?: (order_by | null),faceit_rank_history_aggregate?: (player_faceit_rank_history_aggregate_order_by | null),faceit_skill_level?: (order_by | null),faceit_updated_at?: (order_by | null),faceit_url?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),friends_aggregate?: (my_friends_aggregate_order_by | null),game_ban_count?: (order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_admin_sanctioned?: (order_by | null),is_banned?: (order_by | null),is_gagged?: (order_by | null),is_in_another_match?: (order_by | null),is_in_draft?: (order_by | null),is_in_lobby?: (order_by | null),is_muted?: (order_by | null),is_registered?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_order_by | null),language?: (order_by | null),last_read_news_at?: (order_by | null),last_sign_in_at?: (order_by | null),live_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),lobby_players_aggregate?: (lobby_players_aggregate_order_by | null),losses?: (order_by | null),losses_competitive?: (order_by | null),losses_duel?: (order_by | null),losses_rush?: (order_by | null),losses_wingman?: (order_by | null),match_map_hltv_aggregate?: (v_player_match_map_hltv_aggregate_order_by | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_order_by | null),match_stats_aggregate?: (player_match_stats_v_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),name_registered?: (order_by | null),notification_timezone?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),peak_elo?: (order_by | null),pending_match_imports_aggregate?: (pending_match_import_players_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),premier_rank?: (order_by | null),premier_rank_history_aggregate?: (player_premier_rank_history_aggregate_order_by | null),premier_rank_updated_at?: (order_by | null),profile_url?: (order_by | null),quiet_hours_end?: (order_by | null),quiet_hours_start?: (order_by | null),role?: (order_by | null),roster_image_url?: (order_by | null),sanctions_aggregate?: (player_sanctions_aggregate_order_by | null),season_stats_aggregate?: (player_season_stats_aggregate_order_by | null),show_match_ready_modal?: (order_by | null),stats?: (player_stats_order_by | null),steam_bans_checked_at?: (order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),total_matches?: (order_by | null),tournament_cooldown?: (order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null),vac_ban_count?: (order_by | null),vac_banned?: (order_by | null),weapon_stats_aggregate?: (player_weapon_stats_v_aggregate_order_by | null),wins?: (order_by | null),wins_competitive?: (order_by | null),wins_duel?: (order_by | null),wins_rush?: (order_by | null),wins_wingman?: (order_by | null)}
 
 
 /** primary key columns input for table: players */
@@ -96329,6 +99351,10 @@ export interface players_stddev_fieldsGenqlSelection{
 }
 
 
+/** order by stddev() on columns of table "players" */
+export interface players_stddev_order_by {days_since_last_ban?: (order_by | null),faceit_elo?: (order_by | null),faceit_skill_level?: (order_by | null),game_ban_count?: (order_by | null),premier_rank?: (order_by | null),steam_id?: (order_by | null),vac_ban_count?: (order_by | null)}
+
+
 /** aggregate stddev_pop on columns */
 export interface players_stddev_pop_fieldsGenqlSelection{
     days_since_last_ban?: boolean | number
@@ -96365,6 +99391,10 @@ export interface players_stddev_pop_fieldsGenqlSelection{
 }
 
 
+/** order by stddev_pop() on columns of table "players" */
+export interface players_stddev_pop_order_by {days_since_last_ban?: (order_by | null),faceit_elo?: (order_by | null),faceit_skill_level?: (order_by | null),game_ban_count?: (order_by | null),premier_rank?: (order_by | null),steam_id?: (order_by | null),vac_ban_count?: (order_by | null)}
+
+
 /** aggregate stddev_samp on columns */
 export interface players_stddev_samp_fieldsGenqlSelection{
     days_since_last_ban?: boolean | number
@@ -96399,6 +99429,10 @@ export interface players_stddev_samp_fieldsGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** order by stddev_samp() on columns of table "players" */
+export interface players_stddev_samp_order_by {days_since_last_ban?: (order_by | null),faceit_elo?: (order_by | null),faceit_skill_level?: (order_by | null),game_ban_count?: (order_by | null),premier_rank?: (order_by | null),steam_id?: (order_by | null),vac_ban_count?: (order_by | null)}
 
 
 /** Streaming cursor of the table "players" */
@@ -96448,6 +99482,10 @@ export interface players_sum_fieldsGenqlSelection{
     __scalar?: boolean | number
 }
 
+
+/** order by sum() on columns of table "players" */
+export interface players_sum_order_by {days_since_last_ban?: (order_by | null),faceit_elo?: (order_by | null),faceit_skill_level?: (order_by | null),game_ban_count?: (order_by | null),premier_rank?: (order_by | null),steam_id?: (order_by | null),vac_ban_count?: (order_by | null)}
+
 export interface players_updates {
 /** increments the numeric columns with given value of the filtered values */
 _inc?: (players_inc_input | null),
@@ -96493,6 +99531,10 @@ export interface players_var_pop_fieldsGenqlSelection{
 }
 
 
+/** order by var_pop() on columns of table "players" */
+export interface players_var_pop_order_by {days_since_last_ban?: (order_by | null),faceit_elo?: (order_by | null),faceit_skill_level?: (order_by | null),game_ban_count?: (order_by | null),premier_rank?: (order_by | null),steam_id?: (order_by | null),vac_ban_count?: (order_by | null)}
+
+
 /** aggregate var_samp on columns */
 export interface players_var_samp_fieldsGenqlSelection{
     days_since_last_ban?: boolean | number
@@ -96529,6 +99571,10 @@ export interface players_var_samp_fieldsGenqlSelection{
 }
 
 
+/** order by var_samp() on columns of table "players" */
+export interface players_var_samp_order_by {days_since_last_ban?: (order_by | null),faceit_elo?: (order_by | null),faceit_skill_level?: (order_by | null),game_ban_count?: (order_by | null),premier_rank?: (order_by | null),steam_id?: (order_by | null),vac_ban_count?: (order_by | null)}
+
+
 /** aggregate variance on columns */
 export interface players_variance_fieldsGenqlSelection{
     days_since_last_ban?: boolean | number
@@ -96563,6 +99609,10 @@ export interface players_variance_fieldsGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** order by variance() on columns of table "players" */
+export interface players_variance_order_by {days_since_last_ban?: (order_by | null),faceit_elo?: (order_by | null),faceit_skill_level?: (order_by | null),game_ban_count?: (order_by | null),premier_rank?: (order_by | null),steam_id?: (order_by | null),vac_ban_count?: (order_by | null)}
 
 
 /** columns and relationships of "plugin_versions" */
@@ -97177,6 +100227,32 @@ export interface query_rootGenqlSelection{
     where?: (chat_read_state_bool_exp | null)} })
     /** fetch data from the table: "chat_read_state" using primary key columns */
     chat_read_state_by_pk?: (chat_read_stateGenqlSelection & { __args: {steam_id: Scalars['bigint'], thread: Scalars['String']} })
+    /** fetch data from the table: "chat_room_settings" */
+    chat_room_settings?: (chat_room_settingsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (chat_room_settings_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (chat_room_settings_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (chat_room_settings_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "chat_room_settings" */
+    chat_room_settings_aggregate?: (chat_room_settings_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (chat_room_settings_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (chat_room_settings_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (chat_room_settings_bool_exp | null)} })
+    /** fetch data from the table: "chat_room_settings" using primary key columns */
+    chat_room_settings_by_pk?: (chat_room_settingsGenqlSelection & { __args: {steam_id: Scalars['bigint'], thread: Scalars['String']} })
     /** Ask whether a lineup's smoke makes an angle one-way */
     checkUtilityOneWay?: (UtilityOneWayOutputGenqlSelection & { __args: {lineup_id: Scalars['uuid'], pairs: UtilitySightlinePairInput[]} })
     /** Ask whether a lineup's smoke blocks a set of sightlines */
@@ -100485,6 +103561,32 @@ export interface query_rootGenqlSelection{
     where?: (news_articles_bool_exp | null)} })
     /** fetch data from the table: "news_articles" using primary key columns */
     news_articles_by_pk?: (news_articlesGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "news_comments" */
+    news_comments?: (news_commentsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (news_comments_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (news_comments_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (news_comments_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "news_comments" */
+    news_comments_aggregate?: (news_comments_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (news_comments_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (news_comments_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (news_comments_bool_exp | null)} })
+    /** fetch data from the table: "news_comments" using primary key columns */
+    news_comments_by_pk?: (news_commentsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** fetch data from the table: "notification_preferences" */
     notification_preferences?: (notification_preferencesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -101227,6 +104329,32 @@ export interface query_rootGenqlSelection{
     where?: (player_steam_match_auth_bool_exp | null)} })
     /** fetch data from the table: "player_steam_match_auth" using primary key columns */
     player_steam_match_auth_by_pk?: (player_steam_match_authGenqlSelection & { __args: {steam_id: Scalars['bigint']} })
+    /** fetch data from the table: "player_twitch_accounts" */
+    player_twitch_accounts?: (player_twitch_accountsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_twitch_accounts_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_twitch_accounts_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_twitch_accounts_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_twitch_accounts" */
+    player_twitch_accounts_aggregate?: (player_twitch_accounts_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_twitch_accounts_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_twitch_accounts_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_twitch_accounts_bool_exp | null)} })
+    /** fetch data from the table: "player_twitch_accounts" using primary key columns */
+    player_twitch_accounts_by_pk?: (player_twitch_accountsGenqlSelection & { __args: {steam_id: Scalars['bigint']} })
     /** fetch data from the table: "player_unused_utility" */
     player_unused_utility?: (player_unused_utilityGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -101355,6 +104483,8 @@ export interface query_rootGenqlSelection{
     where?: (plugin_versions_bool_exp | null)} })
     /** fetch data from the table: "plugin_versions" using primary key columns */
     plugin_versions_by_pk?: (plugin_versionsGenqlSelection & { __args: {runtime: e_plugin_runtimes_enum, version: Scalars['String']} })
+    /** The shape a smoke takes when it pops at a point on a map */
+    previewUtilitySmoke?: (UtilitySmokePreviewOutputGenqlSelection & { __args: {map_name: Scalars['String'], x: Scalars['Float'], y: Scalars['Float'], z: Scalars['Float']} })
     /** fetch data from the table: "push_subscriptions" */
     push_subscriptions?: (push_subscriptionsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -102062,6 +105192,8 @@ export interface query_rootGenqlSelection{
     /** fetch data from the table: "teams" using primary key columns */
     teams_by_pk?: (teamsGenqlSelection & { __args: {id: Scalars['uuid']} })
     telemetryStats?: (TelemetryStatsGenqlSelection & { __args?: {includeSelf?: (Scalars['Boolean'] | null)} })
+    /** The winning team's players who played, ranked the way the automatic MVP pick ranks them */
+    tournamentMvpCandidates?: (TournamentMvpCandidateGenqlSelection & { __args: {tournament_id: Scalars['uuid']} })
     /** fetch data from the table: "tournament_awards" */
     tournament_awards?: (tournament_awardsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -102268,6 +105400,32 @@ export interface query_rootGenqlSelection{
     order_by?: (tournament_leaderboard_entries_order_by[] | null), 
     /** filter the rows returned */
     where?: (tournament_leaderboard_entries_bool_exp | null)} })
+    /** fetch data from the table: "tournament_mvp_picks" */
+    tournament_mvp_picks?: (tournament_mvp_picksGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_mvp_picks_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_mvp_picks_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_mvp_picks_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "tournament_mvp_picks" */
+    tournament_mvp_picks_aggregate?: (tournament_mvp_picks_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_mvp_picks_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_mvp_picks_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_mvp_picks_bool_exp | null)} })
+    /** fetch data from the table: "tournament_mvp_picks" using primary key columns */
+    tournament_mvp_picks_by_pk?: (tournament_mvp_picksGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** fetch data from the table: "tournament_no_shows" */
     tournament_no_shows?: (tournament_no_showsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -102554,6 +105712,8 @@ export interface query_rootGenqlSelection{
     tournaments_by_pk?: (tournamentsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** Which way everybody misses one lineup, from their practice throws */
     utilityLineupMissPattern?: (UtilityMissPatternOutputGenqlSelection & { __args: {utility_lineup_id: Scalars['uuid']} })
+    /** Which public lineups have no preview, or one filmed by an older render version */
+    utilityLineupRenderCoverage?: (UtilityRenderCoverageOutputGenqlSelection & { __args?: {map_name?: (Scalars['String'] | null)} })
     /** Report a player's mined utility throws for a match */
     utilityMatchUtilityReport?: (UtilityUtilityReportOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], steam_id?: (Scalars['String'] | null)} })
     /** Rank what to practise next on a map from the mined meta */
@@ -102669,6 +105829,58 @@ export interface query_rootGenqlSelection{
     where?: (utility_demo_throws_bool_exp | null)} })
     /** fetch data from the table: "utility_demo_throws" using primary key columns */
     utility_demo_throws_by_pk?: (utility_demo_throwsGenqlSelection & { __args: {grenade_id: Scalars['Int'], match_map_demo_id: Scalars['uuid']} })
+    /** fetch data from the table: "utility_discoveries" */
+    utility_discoveries?: (utility_discoveriesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (utility_discoveries_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (utility_discoveries_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (utility_discoveries_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "utility_discoveries" */
+    utility_discoveries_aggregate?: (utility_discoveries_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (utility_discoveries_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (utility_discoveries_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (utility_discoveries_bool_exp | null)} })
+    /** fetch data from the table: "utility_discoveries" using primary key columns */
+    utility_discoveries_by_pk?: (utility_discoveriesGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "utility_discovery_results" */
+    utility_discovery_results?: (utility_discovery_resultsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (utility_discovery_results_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (utility_discovery_results_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (utility_discovery_results_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "utility_discovery_results" */
+    utility_discovery_results_aggregate?: (utility_discovery_results_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (utility_discovery_results_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (utility_discovery_results_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (utility_discovery_results_bool_exp | null)} })
+    /** fetch data from the table: "utility_discovery_results" using primary key columns */
+    utility_discovery_results_by_pk?: (utility_discovery_resultsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** fetch data from the table: "utility_drift_results" */
     utility_drift_results?: (utility_drift_resultsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -107621,6 +110833,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (chat_read_state_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (chat_read_state_bool_exp | null)} })
+    /** fetch data from the table: "chat_room_settings" */
+    chat_room_settings?: (chat_room_settingsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (chat_room_settings_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (chat_room_settings_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (chat_room_settings_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "chat_room_settings" */
+    chat_room_settings_aggregate?: (chat_room_settings_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (chat_room_settings_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (chat_room_settings_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (chat_room_settings_bool_exp | null)} })
+    /** fetch data from the table: "chat_room_settings" using primary key columns */
+    chat_room_settings_by_pk?: (chat_room_settingsGenqlSelection & { __args: {steam_id: Scalars['bigint'], thread: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "chat_room_settings" */
+    chat_room_settings_stream?: (chat_room_settingsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (chat_room_settings_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (chat_room_settings_bool_exp | null)} })
     /** An array relationship */
     clip_render_jobs?: (clip_render_jobsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -111837,6 +115083,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (news_articles_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (news_articles_bool_exp | null)} })
+    /** fetch data from the table: "news_comments" */
+    news_comments?: (news_commentsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (news_comments_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (news_comments_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (news_comments_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "news_comments" */
+    news_comments_aggregate?: (news_comments_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (news_comments_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (news_comments_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (news_comments_bool_exp | null)} })
+    /** fetch data from the table: "news_comments" using primary key columns */
+    news_comments_by_pk?: (news_commentsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "news_comments" */
+    news_comments_stream?: (news_commentsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (news_comments_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (news_comments_bool_exp | null)} })
     /** fetch data from the table: "notification_preferences" */
     notification_preferences?: (notification_preferencesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -112811,6 +116091,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (player_steam_match_auth_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (player_steam_match_auth_bool_exp | null)} })
+    /** fetch data from the table: "player_twitch_accounts" */
+    player_twitch_accounts?: (player_twitch_accountsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_twitch_accounts_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_twitch_accounts_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_twitch_accounts_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_twitch_accounts" */
+    player_twitch_accounts_aggregate?: (player_twitch_accounts_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_twitch_accounts_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_twitch_accounts_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_twitch_accounts_bool_exp | null)} })
+    /** fetch data from the table: "player_twitch_accounts" using primary key columns */
+    player_twitch_accounts_by_pk?: (player_twitch_accountsGenqlSelection & { __args: {steam_id: Scalars['bigint']} })
+    /** fetch data from the table in a streaming manner: "player_twitch_accounts" */
+    player_twitch_accounts_stream?: (player_twitch_accountsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (player_twitch_accounts_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (player_twitch_accounts_bool_exp | null)} })
     /** fetch data from the table: "player_unused_utility" */
     player_unused_utility?: (player_unused_utilityGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -114163,6 +117477,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (tournament_leaderboard_entries_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (tournament_leaderboard_entries_bool_exp | null)} })
+    /** fetch data from the table: "tournament_mvp_picks" */
+    tournament_mvp_picks?: (tournament_mvp_picksGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_mvp_picks_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_mvp_picks_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_mvp_picks_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "tournament_mvp_picks" */
+    tournament_mvp_picks_aggregate?: (tournament_mvp_picks_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_mvp_picks_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_mvp_picks_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_mvp_picks_bool_exp | null)} })
+    /** fetch data from the table: "tournament_mvp_picks" using primary key columns */
+    tournament_mvp_picks_by_pk?: (tournament_mvp_picksGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "tournament_mvp_picks" */
+    tournament_mvp_picks_stream?: (tournament_mvp_picksGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (tournament_mvp_picks_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (tournament_mvp_picks_bool_exp | null)} })
     /** fetch data from the table: "tournament_no_shows" */
     tournament_no_shows?: (tournament_no_showsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -114671,6 +118019,74 @@ export interface subscription_rootGenqlSelection{
     cursor: (utility_demo_throws_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (utility_demo_throws_bool_exp | null)} })
+    /** fetch data from the table: "utility_discoveries" */
+    utility_discoveries?: (utility_discoveriesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (utility_discoveries_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (utility_discoveries_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (utility_discoveries_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "utility_discoveries" */
+    utility_discoveries_aggregate?: (utility_discoveries_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (utility_discoveries_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (utility_discoveries_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (utility_discoveries_bool_exp | null)} })
+    /** fetch data from the table: "utility_discoveries" using primary key columns */
+    utility_discoveries_by_pk?: (utility_discoveriesGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "utility_discoveries" */
+    utility_discoveries_stream?: (utility_discoveriesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (utility_discoveries_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (utility_discoveries_bool_exp | null)} })
+    /** fetch data from the table: "utility_discovery_results" */
+    utility_discovery_results?: (utility_discovery_resultsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (utility_discovery_results_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (utility_discovery_results_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (utility_discovery_results_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "utility_discovery_results" */
+    utility_discovery_results_aggregate?: (utility_discovery_results_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (utility_discovery_results_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (utility_discovery_results_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (utility_discovery_results_bool_exp | null)} })
+    /** fetch data from the table: "utility_discovery_results" using primary key columns */
+    utility_discovery_results_by_pk?: (utility_discovery_resultsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "utility_discovery_results" */
+    utility_discovery_results_stream?: (utility_discovery_resultsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (utility_discovery_results_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (utility_discovery_results_bool_exp | null)} })
     /** fetch data from the table: "utility_drift_results" */
     utility_drift_results?: (utility_drift_resultsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -119460,7 +122876,6 @@ export interface tournament_free_agentsGenqlSelection{
     /** An object relationship */
     e_tournament_free_agent_status?: e_tournament_free_agent_statusesGenqlSelection
     id?: boolean | number
-    party_id?: boolean | number
     /** An object relationship */
     player?: playersGenqlSelection
     player_steam_id?: boolean | number
@@ -119530,7 +122945,7 @@ export interface tournament_free_agents_avg_order_by {player_steam_id?: (order_b
 
 
 /** Boolean expression to filter rows from the table "tournament_free_agents". All fields are combined with a logical 'AND'. */
-export interface tournament_free_agents_bool_exp {_and?: (tournament_free_agents_bool_exp[] | null),_not?: (tournament_free_agents_bool_exp | null),_or?: (tournament_free_agents_bool_exp[] | null),checked_in_at?: (timestamptz_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),e_tournament_free_agent_status?: (e_tournament_free_agent_statuses_bool_exp | null),id?: (uuid_comparison_exp | null),party_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),status?: (e_tournament_free_agent_statuses_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null),tournament_team?: (tournament_teams_bool_exp | null),tournament_team_id?: (uuid_comparison_exp | null)}
+export interface tournament_free_agents_bool_exp {_and?: (tournament_free_agents_bool_exp[] | null),_not?: (tournament_free_agents_bool_exp | null),_or?: (tournament_free_agents_bool_exp[] | null),checked_in_at?: (timestamptz_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),e_tournament_free_agent_status?: (e_tournament_free_agent_statuses_bool_exp | null),id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),status?: (e_tournament_free_agent_statuses_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null),tournament_team?: (tournament_teams_bool_exp | null),tournament_team_id?: (uuid_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "tournament_free_agents" */
@@ -119540,7 +122955,7 @@ export interface tournament_free_agents_inc_input {player_steam_id?: (Scalars['b
 /** input type for inserting data into table "tournament_free_agents" */
 export interface tournament_free_agents_insert_input {checked_in_at?: (Scalars['timestamptz'] | null),
 /** Registration priority: decides who makes the cut */
-created_at?: (Scalars['timestamptz'] | null),e_tournament_free_agent_status?: (e_tournament_free_agent_statuses_obj_rel_insert_input | null),id?: (Scalars['uuid'] | null),party_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),status?: (e_tournament_free_agent_statuses_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null),tournament_team?: (tournament_teams_obj_rel_insert_input | null),tournament_team_id?: (Scalars['uuid'] | null)}
+created_at?: (Scalars['timestamptz'] | null),e_tournament_free_agent_status?: (e_tournament_free_agent_statuses_obj_rel_insert_input | null),id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),status?: (e_tournament_free_agent_statuses_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null),tournament_team?: (tournament_teams_obj_rel_insert_input | null),tournament_team_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate max on columns */
@@ -119549,7 +122964,6 @@ export interface tournament_free_agents_max_fieldsGenqlSelection{
     /** Registration priority: decides who makes the cut */
     created_at?: boolean | number
     id?: boolean | number
-    party_id?: boolean | number
     player_steam_id?: boolean | number
     tournament_id?: boolean | number
     tournament_team_id?: boolean | number
@@ -119561,7 +122975,7 @@ export interface tournament_free_agents_max_fieldsGenqlSelection{
 /** order by max() on columns of table "tournament_free_agents" */
 export interface tournament_free_agents_max_order_by {checked_in_at?: (order_by | null),
 /** Registration priority: decides who makes the cut */
-created_at?: (order_by | null),id?: (order_by | null),party_id?: (order_by | null),player_steam_id?: (order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null)}
+created_at?: (order_by | null),id?: (order_by | null),player_steam_id?: (order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -119570,7 +122984,6 @@ export interface tournament_free_agents_min_fieldsGenqlSelection{
     /** Registration priority: decides who makes the cut */
     created_at?: boolean | number
     id?: boolean | number
-    party_id?: boolean | number
     player_steam_id?: boolean | number
     tournament_id?: boolean | number
     tournament_team_id?: boolean | number
@@ -119582,7 +122995,7 @@ export interface tournament_free_agents_min_fieldsGenqlSelection{
 /** order by min() on columns of table "tournament_free_agents" */
 export interface tournament_free_agents_min_order_by {checked_in_at?: (order_by | null),
 /** Registration priority: decides who makes the cut */
-created_at?: (order_by | null),id?: (order_by | null),party_id?: (order_by | null),player_steam_id?: (order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null)}
+created_at?: (order_by | null),id?: (order_by | null),player_steam_id?: (order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "tournament_free_agents" */
@@ -119601,7 +123014,7 @@ export interface tournament_free_agents_on_conflict {constraint: tournament_free
 
 
 /** Ordering options when selecting data from "tournament_free_agents". */
-export interface tournament_free_agents_order_by {checked_in_at?: (order_by | null),created_at?: (order_by | null),e_tournament_free_agent_status?: (e_tournament_free_agent_statuses_order_by | null),id?: (order_by | null),party_id?: (order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),status?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null),tournament_team?: (tournament_teams_order_by | null),tournament_team_id?: (order_by | null)}
+export interface tournament_free_agents_order_by {checked_in_at?: (order_by | null),created_at?: (order_by | null),e_tournament_free_agent_status?: (e_tournament_free_agent_statuses_order_by | null),id?: (order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),status?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null),tournament_team?: (tournament_teams_order_by | null),tournament_team_id?: (order_by | null)}
 
 
 /** primary key columns input for table: tournament_free_agents */
@@ -119611,7 +123024,7 @@ export interface tournament_free_agents_pk_columns_input {id: Scalars['uuid']}
 /** input type for updating data in table "tournament_free_agents" */
 export interface tournament_free_agents_set_input {checked_in_at?: (Scalars['timestamptz'] | null),
 /** Registration priority: decides who makes the cut */
-created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),party_id?: (Scalars['uuid'] | null),player_steam_id?: (Scalars['bigint'] | null),status?: (e_tournament_free_agent_statuses_enum | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
+created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),player_steam_id?: (Scalars['bigint'] | null),status?: (e_tournament_free_agent_statuses_enum | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -119661,7 +123074,7 @@ ordering?: (cursor_ordering | null)}
 /** Initial value of the column from where the streaming should start */
 export interface tournament_free_agents_stream_cursor_value_input {checked_in_at?: (Scalars['timestamptz'] | null),
 /** Registration priority: decides who makes the cut */
-created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),party_id?: (Scalars['uuid'] | null),player_steam_id?: (Scalars['bigint'] | null),status?: (e_tournament_free_agent_statuses_enum | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
+created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),player_steam_id?: (Scalars['bigint'] | null),status?: (e_tournament_free_agent_statuses_enum | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate sum on columns */
@@ -120687,6 +124100,341 @@ export interface tournament_leaderboard_entries_variance_fieldsGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** columns and relationships of "tournament_mvp_picks" */
+export interface tournament_mvp_picksGenqlSelection{
+    automatic_impact?: boolean | number
+    /** An object relationship */
+    automatic_player?: playersGenqlSelection
+    automatic_steam_id?: boolean | number
+    created_at?: boolean | number
+    id?: boolean | number
+    kept_automatic?: boolean | number
+    note?: boolean | number
+    /** An object relationship */
+    picked_by?: playersGenqlSelection
+    picked_by_steam_id?: boolean | number
+    /** An object relationship */
+    player?: playersGenqlSelection
+    player_impact?: boolean | number
+    player_steam_id?: boolean | number
+    /** An object relationship */
+    replaced_player?: playersGenqlSelection
+    replaced_steam_id?: boolean | number
+    /** An object relationship */
+    tournament?: tournamentsGenqlSelection
+    tournament_id?: boolean | number
+    /** An object relationship */
+    tournament_team?: tournament_teamsGenqlSelection
+    tournament_team_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "tournament_mvp_picks" */
+export interface tournament_mvp_picks_aggregateGenqlSelection{
+    aggregate?: tournament_mvp_picks_aggregate_fieldsGenqlSelection
+    nodes?: tournament_mvp_picksGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface tournament_mvp_picks_aggregate_bool_exp {avg?: (tournament_mvp_picks_aggregate_bool_exp_avg | null),bool_and?: (tournament_mvp_picks_aggregate_bool_exp_bool_and | null),bool_or?: (tournament_mvp_picks_aggregate_bool_exp_bool_or | null),corr?: (tournament_mvp_picks_aggregate_bool_exp_corr | null),count?: (tournament_mvp_picks_aggregate_bool_exp_count | null),covar_samp?: (tournament_mvp_picks_aggregate_bool_exp_covar_samp | null),max?: (tournament_mvp_picks_aggregate_bool_exp_max | null),min?: (tournament_mvp_picks_aggregate_bool_exp_min | null),stddev_samp?: (tournament_mvp_picks_aggregate_bool_exp_stddev_samp | null),sum?: (tournament_mvp_picks_aggregate_bool_exp_sum | null),var_samp?: (tournament_mvp_picks_aggregate_bool_exp_var_samp | null)}
+
+export interface tournament_mvp_picks_aggregate_bool_exp_avg {arguments: tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_avg_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (tournament_mvp_picks_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface tournament_mvp_picks_aggregate_bool_exp_bool_and {arguments: tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_bool_and_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (tournament_mvp_picks_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface tournament_mvp_picks_aggregate_bool_exp_bool_or {arguments: tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_bool_or_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (tournament_mvp_picks_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface tournament_mvp_picks_aggregate_bool_exp_corr {arguments: tournament_mvp_picks_aggregate_bool_exp_corr_arguments,distinct?: (Scalars['Boolean'] | null),filter?: (tournament_mvp_picks_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface tournament_mvp_picks_aggregate_bool_exp_corr_arguments {X: tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_corr_arguments_columns,Y: tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_corr_arguments_columns}
+
+export interface tournament_mvp_picks_aggregate_bool_exp_count {arguments?: (tournament_mvp_picks_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (tournament_mvp_picks_bool_exp | null),predicate: Int_comparison_exp}
+
+export interface tournament_mvp_picks_aggregate_bool_exp_covar_samp {arguments: tournament_mvp_picks_aggregate_bool_exp_covar_samp_arguments,distinct?: (Scalars['Boolean'] | null),filter?: (tournament_mvp_picks_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface tournament_mvp_picks_aggregate_bool_exp_covar_samp_arguments {X: tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_covar_samp_arguments_columns,Y: tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_covar_samp_arguments_columns}
+
+export interface tournament_mvp_picks_aggregate_bool_exp_max {arguments: tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_max_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (tournament_mvp_picks_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface tournament_mvp_picks_aggregate_bool_exp_min {arguments: tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_min_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (tournament_mvp_picks_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface tournament_mvp_picks_aggregate_bool_exp_stddev_samp {arguments: tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_stddev_samp_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (tournament_mvp_picks_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface tournament_mvp_picks_aggregate_bool_exp_sum {arguments: tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_sum_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (tournament_mvp_picks_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface tournament_mvp_picks_aggregate_bool_exp_var_samp {arguments: tournament_mvp_picks_select_column_tournament_mvp_picks_aggregate_bool_exp_var_samp_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (tournament_mvp_picks_bool_exp | null),predicate: float8_comparison_exp}
+
+
+/** aggregate fields of "tournament_mvp_picks" */
+export interface tournament_mvp_picks_aggregate_fieldsGenqlSelection{
+    avg?: tournament_mvp_picks_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (tournament_mvp_picks_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: tournament_mvp_picks_max_fieldsGenqlSelection
+    min?: tournament_mvp_picks_min_fieldsGenqlSelection
+    stddev?: tournament_mvp_picks_stddev_fieldsGenqlSelection
+    stddev_pop?: tournament_mvp_picks_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: tournament_mvp_picks_stddev_samp_fieldsGenqlSelection
+    sum?: tournament_mvp_picks_sum_fieldsGenqlSelection
+    var_pop?: tournament_mvp_picks_var_pop_fieldsGenqlSelection
+    var_samp?: tournament_mvp_picks_var_samp_fieldsGenqlSelection
+    variance?: tournament_mvp_picks_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "tournament_mvp_picks" */
+export interface tournament_mvp_picks_aggregate_order_by {avg?: (tournament_mvp_picks_avg_order_by | null),count?: (order_by | null),max?: (tournament_mvp_picks_max_order_by | null),min?: (tournament_mvp_picks_min_order_by | null),stddev?: (tournament_mvp_picks_stddev_order_by | null),stddev_pop?: (tournament_mvp_picks_stddev_pop_order_by | null),stddev_samp?: (tournament_mvp_picks_stddev_samp_order_by | null),sum?: (tournament_mvp_picks_sum_order_by | null),var_pop?: (tournament_mvp_picks_var_pop_order_by | null),var_samp?: (tournament_mvp_picks_var_samp_order_by | null),variance?: (tournament_mvp_picks_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "tournament_mvp_picks" */
+export interface tournament_mvp_picks_arr_rel_insert_input {data: tournament_mvp_picks_insert_input[],
+/** upsert condition */
+on_conflict?: (tournament_mvp_picks_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface tournament_mvp_picks_avg_fieldsGenqlSelection{
+    automatic_impact?: boolean | number
+    automatic_steam_id?: boolean | number
+    picked_by_steam_id?: boolean | number
+    player_impact?: boolean | number
+    player_steam_id?: boolean | number
+    replaced_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "tournament_mvp_picks" */
+export interface tournament_mvp_picks_avg_order_by {automatic_impact?: (order_by | null),automatic_steam_id?: (order_by | null),picked_by_steam_id?: (order_by | null),player_impact?: (order_by | null),player_steam_id?: (order_by | null),replaced_steam_id?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "tournament_mvp_picks". All fields are combined with a logical 'AND'. */
+export interface tournament_mvp_picks_bool_exp {_and?: (tournament_mvp_picks_bool_exp[] | null),_not?: (tournament_mvp_picks_bool_exp | null),_or?: (tournament_mvp_picks_bool_exp[] | null),automatic_impact?: (float8_comparison_exp | null),automatic_player?: (players_bool_exp | null),automatic_steam_id?: (bigint_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),kept_automatic?: (Boolean_comparison_exp | null),note?: (String_comparison_exp | null),picked_by?: (players_bool_exp | null),picked_by_steam_id?: (bigint_comparison_exp | null),player?: (players_bool_exp | null),player_impact?: (float8_comparison_exp | null),player_steam_id?: (bigint_comparison_exp | null),replaced_player?: (players_bool_exp | null),replaced_steam_id?: (bigint_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null),tournament_team?: (tournament_teams_bool_exp | null),tournament_team_id?: (uuid_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "tournament_mvp_picks" */
+export interface tournament_mvp_picks_inc_input {automatic_impact?: (Scalars['float8'] | null),automatic_steam_id?: (Scalars['bigint'] | null),picked_by_steam_id?: (Scalars['bigint'] | null),player_impact?: (Scalars['float8'] | null),player_steam_id?: (Scalars['bigint'] | null),replaced_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "tournament_mvp_picks" */
+export interface tournament_mvp_picks_insert_input {automatic_impact?: (Scalars['float8'] | null),automatic_player?: (players_obj_rel_insert_input | null),automatic_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),kept_automatic?: (Scalars['Boolean'] | null),note?: (Scalars['String'] | null),picked_by?: (players_obj_rel_insert_input | null),picked_by_steam_id?: (Scalars['bigint'] | null),player?: (players_obj_rel_insert_input | null),player_impact?: (Scalars['float8'] | null),player_steam_id?: (Scalars['bigint'] | null),replaced_player?: (players_obj_rel_insert_input | null),replaced_steam_id?: (Scalars['bigint'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null),tournament_team?: (tournament_teams_obj_rel_insert_input | null),tournament_team_id?: (Scalars['uuid'] | null)}
+
+
+/** aggregate max on columns */
+export interface tournament_mvp_picks_max_fieldsGenqlSelection{
+    automatic_impact?: boolean | number
+    automatic_steam_id?: boolean | number
+    created_at?: boolean | number
+    id?: boolean | number
+    note?: boolean | number
+    picked_by_steam_id?: boolean | number
+    player_impact?: boolean | number
+    player_steam_id?: boolean | number
+    replaced_steam_id?: boolean | number
+    tournament_id?: boolean | number
+    tournament_team_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "tournament_mvp_picks" */
+export interface tournament_mvp_picks_max_order_by {automatic_impact?: (order_by | null),automatic_steam_id?: (order_by | null),created_at?: (order_by | null),id?: (order_by | null),note?: (order_by | null),picked_by_steam_id?: (order_by | null),player_impact?: (order_by | null),player_steam_id?: (order_by | null),replaced_steam_id?: (order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface tournament_mvp_picks_min_fieldsGenqlSelection{
+    automatic_impact?: boolean | number
+    automatic_steam_id?: boolean | number
+    created_at?: boolean | number
+    id?: boolean | number
+    note?: boolean | number
+    picked_by_steam_id?: boolean | number
+    player_impact?: boolean | number
+    player_steam_id?: boolean | number
+    replaced_steam_id?: boolean | number
+    tournament_id?: boolean | number
+    tournament_team_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "tournament_mvp_picks" */
+export interface tournament_mvp_picks_min_order_by {automatic_impact?: (order_by | null),automatic_steam_id?: (order_by | null),created_at?: (order_by | null),id?: (order_by | null),note?: (order_by | null),picked_by_steam_id?: (order_by | null),player_impact?: (order_by | null),player_steam_id?: (order_by | null),replaced_steam_id?: (order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null)}
+
+
+/** response of any mutation on the table "tournament_mvp_picks" */
+export interface tournament_mvp_picks_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: tournament_mvp_picksGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "tournament_mvp_picks" */
+export interface tournament_mvp_picks_on_conflict {constraint: tournament_mvp_picks_constraint,update_columns?: tournament_mvp_picks_update_column[],where?: (tournament_mvp_picks_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "tournament_mvp_picks". */
+export interface tournament_mvp_picks_order_by {automatic_impact?: (order_by | null),automatic_player?: (players_order_by | null),automatic_steam_id?: (order_by | null),created_at?: (order_by | null),id?: (order_by | null),kept_automatic?: (order_by | null),note?: (order_by | null),picked_by?: (players_order_by | null),picked_by_steam_id?: (order_by | null),player?: (players_order_by | null),player_impact?: (order_by | null),player_steam_id?: (order_by | null),replaced_player?: (players_order_by | null),replaced_steam_id?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null),tournament_team?: (tournament_teams_order_by | null),tournament_team_id?: (order_by | null)}
+
+
+/** primary key columns input for table: tournament_mvp_picks */
+export interface tournament_mvp_picks_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "tournament_mvp_picks" */
+export interface tournament_mvp_picks_set_input {automatic_impact?: (Scalars['float8'] | null),automatic_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),kept_automatic?: (Scalars['Boolean'] | null),note?: (Scalars['String'] | null),picked_by_steam_id?: (Scalars['bigint'] | null),player_impact?: (Scalars['float8'] | null),player_steam_id?: (Scalars['bigint'] | null),replaced_steam_id?: (Scalars['bigint'] | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface tournament_mvp_picks_stddev_fieldsGenqlSelection{
+    automatic_impact?: boolean | number
+    automatic_steam_id?: boolean | number
+    picked_by_steam_id?: boolean | number
+    player_impact?: boolean | number
+    player_steam_id?: boolean | number
+    replaced_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "tournament_mvp_picks" */
+export interface tournament_mvp_picks_stddev_order_by {automatic_impact?: (order_by | null),automatic_steam_id?: (order_by | null),picked_by_steam_id?: (order_by | null),player_impact?: (order_by | null),player_steam_id?: (order_by | null),replaced_steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface tournament_mvp_picks_stddev_pop_fieldsGenqlSelection{
+    automatic_impact?: boolean | number
+    automatic_steam_id?: boolean | number
+    picked_by_steam_id?: boolean | number
+    player_impact?: boolean | number
+    player_steam_id?: boolean | number
+    replaced_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "tournament_mvp_picks" */
+export interface tournament_mvp_picks_stddev_pop_order_by {automatic_impact?: (order_by | null),automatic_steam_id?: (order_by | null),picked_by_steam_id?: (order_by | null),player_impact?: (order_by | null),player_steam_id?: (order_by | null),replaced_steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface tournament_mvp_picks_stddev_samp_fieldsGenqlSelection{
+    automatic_impact?: boolean | number
+    automatic_steam_id?: boolean | number
+    picked_by_steam_id?: boolean | number
+    player_impact?: boolean | number
+    player_steam_id?: boolean | number
+    replaced_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "tournament_mvp_picks" */
+export interface tournament_mvp_picks_stddev_samp_order_by {automatic_impact?: (order_by | null),automatic_steam_id?: (order_by | null),picked_by_steam_id?: (order_by | null),player_impact?: (order_by | null),player_steam_id?: (order_by | null),replaced_steam_id?: (order_by | null)}
+
+
+/** Streaming cursor of the table "tournament_mvp_picks" */
+export interface tournament_mvp_picks_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: tournament_mvp_picks_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface tournament_mvp_picks_stream_cursor_value_input {automatic_impact?: (Scalars['float8'] | null),automatic_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),kept_automatic?: (Scalars['Boolean'] | null),note?: (Scalars['String'] | null),picked_by_steam_id?: (Scalars['bigint'] | null),player_impact?: (Scalars['float8'] | null),player_steam_id?: (Scalars['bigint'] | null),replaced_steam_id?: (Scalars['bigint'] | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
+
+
+/** aggregate sum on columns */
+export interface tournament_mvp_picks_sum_fieldsGenqlSelection{
+    automatic_impact?: boolean | number
+    automatic_steam_id?: boolean | number
+    picked_by_steam_id?: boolean | number
+    player_impact?: boolean | number
+    player_steam_id?: boolean | number
+    replaced_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "tournament_mvp_picks" */
+export interface tournament_mvp_picks_sum_order_by {automatic_impact?: (order_by | null),automatic_steam_id?: (order_by | null),picked_by_steam_id?: (order_by | null),player_impact?: (order_by | null),player_steam_id?: (order_by | null),replaced_steam_id?: (order_by | null)}
+
+export interface tournament_mvp_picks_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (tournament_mvp_picks_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (tournament_mvp_picks_set_input | null),
+/** filter the rows which have to be updated */
+where: tournament_mvp_picks_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface tournament_mvp_picks_var_pop_fieldsGenqlSelection{
+    automatic_impact?: boolean | number
+    automatic_steam_id?: boolean | number
+    picked_by_steam_id?: boolean | number
+    player_impact?: boolean | number
+    player_steam_id?: boolean | number
+    replaced_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "tournament_mvp_picks" */
+export interface tournament_mvp_picks_var_pop_order_by {automatic_impact?: (order_by | null),automatic_steam_id?: (order_by | null),picked_by_steam_id?: (order_by | null),player_impact?: (order_by | null),player_steam_id?: (order_by | null),replaced_steam_id?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface tournament_mvp_picks_var_samp_fieldsGenqlSelection{
+    automatic_impact?: boolean | number
+    automatic_steam_id?: boolean | number
+    picked_by_steam_id?: boolean | number
+    player_impact?: boolean | number
+    player_steam_id?: boolean | number
+    replaced_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "tournament_mvp_picks" */
+export interface tournament_mvp_picks_var_samp_order_by {automatic_impact?: (order_by | null),automatic_steam_id?: (order_by | null),picked_by_steam_id?: (order_by | null),player_impact?: (order_by | null),player_steam_id?: (order_by | null),replaced_steam_id?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface tournament_mvp_picks_variance_fieldsGenqlSelection{
+    automatic_impact?: boolean | number
+    automatic_steam_id?: boolean | number
+    picked_by_steam_id?: boolean | number
+    player_impact?: boolean | number
+    player_steam_id?: boolean | number
+    replaced_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "tournament_mvp_picks" */
+export interface tournament_mvp_picks_variance_order_by {automatic_impact?: (order_by | null),automatic_steam_id?: (order_by | null),picked_by_steam_id?: (order_by | null),player_impact?: (order_by | null),player_steam_id?: (order_by | null),replaced_steam_id?: (order_by | null)}
 
 
 /** columns and relationships of "tournament_no_shows" */
@@ -122622,6 +126370,7 @@ export interface tournament_team_invites_variance_order_by {invited_by_player_st
 /** columns and relationships of "tournament_team_roster" */
 export interface tournament_team_rosterGenqlSelection{
     checked_in_at?: boolean | number
+    created_at?: boolean | number
     /** An object relationship */
     e_team_role?: e_team_rolesGenqlSelection
     /** An object relationship */
@@ -122695,7 +126444,7 @@ export interface tournament_team_roster_avg_order_by {player_steam_id?: (order_b
 
 
 /** Boolean expression to filter rows from the table "tournament_team_roster". All fields are combined with a logical 'AND'. */
-export interface tournament_team_roster_bool_exp {_and?: (tournament_team_roster_bool_exp[] | null),_not?: (tournament_team_roster_bool_exp | null),_or?: (tournament_team_roster_bool_exp[] | null),checked_in_at?: (timestamptz_comparison_exp | null),e_team_role?: (e_team_roles_bool_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),role?: (e_team_roles_enum_comparison_exp | null),target_eligible?: (Boolean_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null),tournament_team?: (tournament_teams_bool_exp | null),tournament_team_id?: (uuid_comparison_exp | null)}
+export interface tournament_team_roster_bool_exp {_and?: (tournament_team_roster_bool_exp[] | null),_not?: (tournament_team_roster_bool_exp | null),_or?: (tournament_team_roster_bool_exp[] | null),checked_in_at?: (timestamptz_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),e_team_role?: (e_team_roles_bool_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),role?: (e_team_roles_enum_comparison_exp | null),target_eligible?: (Boolean_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null),tournament_team?: (tournament_teams_bool_exp | null),tournament_team_id?: (uuid_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "tournament_team_roster" */
@@ -122703,12 +126452,13 @@ export interface tournament_team_roster_inc_input {player_steam_id?: (Scalars['b
 
 
 /** input type for inserting data into table "tournament_team_roster" */
-export interface tournament_team_roster_insert_input {checked_in_at?: (Scalars['timestamptz'] | null),e_team_role?: (e_team_roles_obj_rel_insert_input | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),role?: (e_team_roles_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null),tournament_team?: (tournament_teams_obj_rel_insert_input | null),tournament_team_id?: (Scalars['uuid'] | null)}
+export interface tournament_team_roster_insert_input {checked_in_at?: (Scalars['timestamptz'] | null),created_at?: (Scalars['timestamptz'] | null),e_team_role?: (e_team_roles_obj_rel_insert_input | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),role?: (e_team_roles_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null),tournament_team?: (tournament_teams_obj_rel_insert_input | null),tournament_team_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate max on columns */
 export interface tournament_team_roster_max_fieldsGenqlSelection{
     checked_in_at?: boolean | number
+    created_at?: boolean | number
     player_steam_id?: boolean | number
     tournament_id?: boolean | number
     tournament_team_id?: boolean | number
@@ -122718,12 +126468,13 @@ export interface tournament_team_roster_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "tournament_team_roster" */
-export interface tournament_team_roster_max_order_by {checked_in_at?: (order_by | null),player_steam_id?: (order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null)}
+export interface tournament_team_roster_max_order_by {checked_in_at?: (order_by | null),created_at?: (order_by | null),player_steam_id?: (order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface tournament_team_roster_min_fieldsGenqlSelection{
     checked_in_at?: boolean | number
+    created_at?: boolean | number
     player_steam_id?: boolean | number
     tournament_id?: boolean | number
     tournament_team_id?: boolean | number
@@ -122733,7 +126484,7 @@ export interface tournament_team_roster_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "tournament_team_roster" */
-export interface tournament_team_roster_min_order_by {checked_in_at?: (order_by | null),player_steam_id?: (order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null)}
+export interface tournament_team_roster_min_order_by {checked_in_at?: (order_by | null),created_at?: (order_by | null),player_steam_id?: (order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "tournament_team_roster" */
@@ -122752,7 +126503,7 @@ export interface tournament_team_roster_on_conflict {constraint: tournament_team
 
 
 /** Ordering options when selecting data from "tournament_team_roster". */
-export interface tournament_team_roster_order_by {checked_in_at?: (order_by | null),e_team_role?: (e_team_roles_order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),role?: (order_by | null),target_eligible?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null),tournament_team?: (tournament_teams_order_by | null),tournament_team_id?: (order_by | null)}
+export interface tournament_team_roster_order_by {checked_in_at?: (order_by | null),created_at?: (order_by | null),e_team_role?: (e_team_roles_order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),role?: (order_by | null),target_eligible?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null),tournament_team?: (tournament_teams_order_by | null),tournament_team_id?: (order_by | null)}
 
 
 /** primary key columns input for table: tournament_team_roster */
@@ -122760,7 +126511,7 @@ export interface tournament_team_roster_pk_columns_input {player_steam_id: Scala
 
 
 /** input type for updating data in table "tournament_team_roster" */
-export interface tournament_team_roster_set_input {checked_in_at?: (Scalars['timestamptz'] | null),player_steam_id?: (Scalars['bigint'] | null),role?: (e_team_roles_enum | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
+export interface tournament_team_roster_set_input {checked_in_at?: (Scalars['timestamptz'] | null),created_at?: (Scalars['timestamptz'] | null),player_steam_id?: (Scalars['bigint'] | null),role?: (e_team_roles_enum | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -122808,7 +126559,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface tournament_team_roster_stream_cursor_value_input {checked_in_at?: (Scalars['timestamptz'] | null),player_steam_id?: (Scalars['bigint'] | null),role?: (e_team_roles_enum | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
+export interface tournament_team_roster_stream_cursor_value_input {checked_in_at?: (Scalars['timestamptz'] | null),created_at?: (Scalars['timestamptz'] | null),player_steam_id?: (Scalars['bigint'] | null),role?: (e_team_roles_enum | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate sum on columns */
@@ -123310,6 +127061,8 @@ export interface tournamentsGenqlSelection{
     can_open_registration?: boolean | number
     /** A computed field, executes function "can_pause_tournament" */
     can_pause?: boolean | number
+    /** A computed field, executes function "can_pick_tournament_mvp" */
+    can_pick_mvp?: boolean | number
     /** A computed field, executes function "can_resume_tournament" */
     can_resume?: boolean | number
     /** A computed field, executes function "can_review_tournament_check_in" */
@@ -123433,9 +127186,34 @@ export interface tournamentsGenqlSelection{
     min_role?: boolean | number
     /** A computed field, executes function "tournament_missed_check_in_count" */
     missed_check_in_count?: boolean | number
+    /** An array relationship */
+    mvp_picks?: (tournament_mvp_picksGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_mvp_picks_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_mvp_picks_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_mvp_picks_bool_exp | null)} })
+    /** An aggregate relationship */
+    mvp_picks_aggregate?: (tournament_mvp_picks_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_mvp_picks_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_mvp_picks_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_mvp_picks_bool_exp | null)} })
     name?: boolean | number
     /** An object relationship */
     options?: match_optionsGenqlSelection
+    organizer_picks_mvp?: boolean | number
     organizer_steam_id?: boolean | number
     /** An array relationship */
     organizer_teams?: (tournament_organizer_teamsGenqlSelection & { __args?: {
@@ -123509,6 +127287,10 @@ export interface tournamentsGenqlSelection{
     order_by?: (v_tournament_player_stats_order_by[] | null), 
     /** filter the rows returned */
     where?: (v_tournament_player_stats_bool_exp | null)} })
+    /** A computed field, executes function "tournament_podium" */
+    podium?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
     /** An array relationship */
     prizes?: (tournament_prizesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -123734,7 +127516,7 @@ export interface tournaments_avg_order_by {check_in_closes_before_minutes?: (ord
 
 
 /** Boolean expression to filter rows from the table "tournaments". All fields are combined with a logical 'AND'. */
-export interface tournaments_bool_exp {_and?: (tournaments_bool_exp[] | null),_not?: (tournaments_bool_exp | null),_or?: (tournaments_bool_exp[] | null),admin?: (players_bool_exp | null),auto_start?: (Boolean_comparison_exp | null),award_configs?: (tournament_awards_bool_exp | null),award_configs_aggregate?: (tournament_awards_aggregate_bool_exp | null),awards?: (award_recipients_bool_exp | null),awards_aggregate?: (award_recipients_aggregate_bool_exp | null),awards_enabled?: (Boolean_comparison_exp | null),banner?: (String_comparison_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_close_registration?: (Boolean_comparison_exp | null),can_join?: (Boolean_comparison_exp | null),can_open_registration?: (Boolean_comparison_exp | null),can_pause?: (Boolean_comparison_exp | null),can_resume?: (Boolean_comparison_exp | null),can_review_check_in?: (Boolean_comparison_exp | null),can_setup?: (Boolean_comparison_exp | null),can_start?: (Boolean_comparison_exp | null),categories?: (tournament_categories_bool_exp | null),categories_aggregate?: (tournament_categories_aggregate_bool_exp | null),check_in_closed_for?: (timestamptz_comparison_exp | null),check_in_closes_before_minutes?: (Int_comparison_exp | null),check_in_closing_notified_for?: (timestamptz_comparison_exp | null),check_in_ends_at?: (timestamptz_comparison_exp | null),check_in_open?: (Boolean_comparison_exp | null),check_in_opens_before_minutes?: (Int_comparison_exp | null),check_in_required?: (Boolean_comparison_exp | null),check_in_setting?: (e_check_in_settings_enum_comparison_exp | null),check_in_started?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_stage?: (Int_comparison_exp | null),description?: (String_comparison_exp | null),discord_guild_id?: (String_comparison_exp | null),discord_notifications_enabled?: (Boolean_comparison_exp | null),discord_notify_Canceled?: (Boolean_comparison_exp | null),discord_notify_Finished?: (Boolean_comparison_exp | null),discord_notify_Forfeit?: (Boolean_comparison_exp | null),discord_notify_Live?: (Boolean_comparison_exp | null),discord_notify_MapPaused?: (Boolean_comparison_exp | null),discord_notify_PickingPlayers?: (Boolean_comparison_exp | null),discord_notify_Scheduled?: (Boolean_comparison_exp | null),discord_notify_Surrendered?: (Boolean_comparison_exp | null),discord_notify_Tie?: (Boolean_comparison_exp | null),discord_notify_Veto?: (Boolean_comparison_exp | null),discord_notify_WaitingForCheckIn?: (Boolean_comparison_exp | null),discord_notify_WaitingForServer?: (Boolean_comparison_exp | null),discord_role_id?: (String_comparison_exp | null),discord_voice_enabled?: (Boolean_comparison_exp | null),discord_webhook?: (String_comparison_exp | null),e_tournament_status?: (e_tournament_status_bool_exp | null),finished_at?: (timestamptz_comparison_exp | null),free_agents?: (tournament_free_agents_bool_exp | null),free_agents_aggregate?: (tournament_free_agents_aggregate_bool_exp | null),has_min_teams?: (Boolean_comparison_exp | null),homepage?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_only?: (Boolean_comparison_exp | null),is_league?: (Boolean_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),joined_tournament?: (Boolean_comparison_exp | null),latitude?: (float8_comparison_exp | null),league_season_division?: (league_season_divisions_bool_exp | null),location?: (String_comparison_exp | null),logo?: (String_comparison_exp | null),longitude?: (float8_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),max_elo?: (Int_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),meets_min_role?: (Boolean_comparison_exp | null),min_elo?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),min_role?: (e_player_roles_enum_comparison_exp | null),missed_check_in_count?: (Int_comparison_exp | null),name?: (String_comparison_exp | null),options?: (match_options_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),organizer_teams?: (tournament_organizer_teams_bool_exp | null),organizer_teams_aggregate?: (tournament_organizer_teams_aggregate_bool_exp | null),organizers?: (tournament_organizers_bool_exp | null),organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),player_stats?: (v_tournament_player_stats_bool_exp | null),player_stats_aggregate?: (v_tournament_player_stats_aggregate_bool_exp | null),prizes?: (tournament_prizes_bool_exp | null),prizes_aggregate?: (tournament_prizes_aggregate_bool_exp | null),registration_type?: (e_tournament_registration_types_enum_comparison_exp | null),registration_unlocked?: (Boolean_comparison_exp | null),results?: (v_team_tournament_results_bool_exp | null),results_aggregate?: (v_team_tournament_results_aggregate_bool_exp | null),rosters?: (tournament_team_roster_bool_exp | null),rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),scheduling_mode?: (String_comparison_exp | null),stages?: (tournament_stages_bool_exp | null),stages_aggregate?: (tournament_stages_aggregate_bool_exp | null),start?: (timestamptz_comparison_exp | null),status?: (e_tournament_status_enum_comparison_exp | null),substitutes_enabled?: (Boolean_comparison_exp | null),teams?: (tournament_teams_bool_exp | null),teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
+export interface tournaments_bool_exp {_and?: (tournaments_bool_exp[] | null),_not?: (tournaments_bool_exp | null),_or?: (tournaments_bool_exp[] | null),admin?: (players_bool_exp | null),auto_start?: (Boolean_comparison_exp | null),award_configs?: (tournament_awards_bool_exp | null),award_configs_aggregate?: (tournament_awards_aggregate_bool_exp | null),awards?: (award_recipients_bool_exp | null),awards_aggregate?: (award_recipients_aggregate_bool_exp | null),awards_enabled?: (Boolean_comparison_exp | null),banner?: (String_comparison_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_close_registration?: (Boolean_comparison_exp | null),can_join?: (Boolean_comparison_exp | null),can_open_registration?: (Boolean_comparison_exp | null),can_pause?: (Boolean_comparison_exp | null),can_pick_mvp?: (Boolean_comparison_exp | null),can_resume?: (Boolean_comparison_exp | null),can_review_check_in?: (Boolean_comparison_exp | null),can_setup?: (Boolean_comparison_exp | null),can_start?: (Boolean_comparison_exp | null),categories?: (tournament_categories_bool_exp | null),categories_aggregate?: (tournament_categories_aggregate_bool_exp | null),check_in_closed_for?: (timestamptz_comparison_exp | null),check_in_closes_before_minutes?: (Int_comparison_exp | null),check_in_closing_notified_for?: (timestamptz_comparison_exp | null),check_in_ends_at?: (timestamptz_comparison_exp | null),check_in_open?: (Boolean_comparison_exp | null),check_in_opens_before_minutes?: (Int_comparison_exp | null),check_in_required?: (Boolean_comparison_exp | null),check_in_setting?: (e_check_in_settings_enum_comparison_exp | null),check_in_started?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_stage?: (Int_comparison_exp | null),description?: (String_comparison_exp | null),discord_guild_id?: (String_comparison_exp | null),discord_notifications_enabled?: (Boolean_comparison_exp | null),discord_notify_Canceled?: (Boolean_comparison_exp | null),discord_notify_Finished?: (Boolean_comparison_exp | null),discord_notify_Forfeit?: (Boolean_comparison_exp | null),discord_notify_Live?: (Boolean_comparison_exp | null),discord_notify_MapPaused?: (Boolean_comparison_exp | null),discord_notify_PickingPlayers?: (Boolean_comparison_exp | null),discord_notify_Scheduled?: (Boolean_comparison_exp | null),discord_notify_Surrendered?: (Boolean_comparison_exp | null),discord_notify_Tie?: (Boolean_comparison_exp | null),discord_notify_Veto?: (Boolean_comparison_exp | null),discord_notify_WaitingForCheckIn?: (Boolean_comparison_exp | null),discord_notify_WaitingForServer?: (Boolean_comparison_exp | null),discord_role_id?: (String_comparison_exp | null),discord_voice_enabled?: (Boolean_comparison_exp | null),discord_webhook?: (String_comparison_exp | null),e_tournament_status?: (e_tournament_status_bool_exp | null),finished_at?: (timestamptz_comparison_exp | null),free_agents?: (tournament_free_agents_bool_exp | null),free_agents_aggregate?: (tournament_free_agents_aggregate_bool_exp | null),has_min_teams?: (Boolean_comparison_exp | null),homepage?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_only?: (Boolean_comparison_exp | null),is_league?: (Boolean_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),joined_tournament?: (Boolean_comparison_exp | null),latitude?: (float8_comparison_exp | null),league_season_division?: (league_season_divisions_bool_exp | null),location?: (String_comparison_exp | null),logo?: (String_comparison_exp | null),longitude?: (float8_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),max_elo?: (Int_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),meets_min_role?: (Boolean_comparison_exp | null),min_elo?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),min_role?: (e_player_roles_enum_comparison_exp | null),missed_check_in_count?: (Int_comparison_exp | null),mvp_picks?: (tournament_mvp_picks_bool_exp | null),mvp_picks_aggregate?: (tournament_mvp_picks_aggregate_bool_exp | null),name?: (String_comparison_exp | null),options?: (match_options_bool_exp | null),organizer_picks_mvp?: (Boolean_comparison_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),organizer_teams?: (tournament_organizer_teams_bool_exp | null),organizer_teams_aggregate?: (tournament_organizer_teams_aggregate_bool_exp | null),organizers?: (tournament_organizers_bool_exp | null),organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),player_stats?: (v_tournament_player_stats_bool_exp | null),player_stats_aggregate?: (v_tournament_player_stats_aggregate_bool_exp | null),podium?: (jsonb_comparison_exp | null),prizes?: (tournament_prizes_bool_exp | null),prizes_aggregate?: (tournament_prizes_aggregate_bool_exp | null),registration_type?: (e_tournament_registration_types_enum_comparison_exp | null),registration_unlocked?: (Boolean_comparison_exp | null),results?: (v_team_tournament_results_bool_exp | null),results_aggregate?: (v_team_tournament_results_aggregate_bool_exp | null),rosters?: (tournament_team_roster_bool_exp | null),rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),scheduling_mode?: (String_comparison_exp | null),stages?: (tournament_stages_bool_exp | null),stages_aggregate?: (tournament_stages_aggregate_bool_exp | null),start?: (timestamptz_comparison_exp | null),status?: (e_tournament_status_enum_comparison_exp | null),substitutes_enabled?: (Boolean_comparison_exp | null),teams?: (tournament_teams_bool_exp | null),teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "tournaments" */
@@ -123750,7 +127532,7 @@ check_in_closing_notified_for?: (Scalars['timestamptz'] | null),
 /** When the check-in window closes; NULL until it opens */
 check_in_ends_at?: (Scalars['timestamptz'] | null),check_in_opens_before_minutes?: (Scalars['Int'] | null),check_in_required?: (Scalars['Boolean'] | null),
 /** Who confirms a team: Captains, every rostered Player, or the organizer (Admin) */
-check_in_setting?: (e_check_in_settings_enum | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),e_tournament_status?: (e_tournament_status_obj_rel_insert_input | null),finished_at?: (Scalars['timestamptz'] | null),free_agents?: (tournament_free_agents_arr_rel_insert_input | null),homepage?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),invite_only?: (Scalars['Boolean'] | null),is_league?: (Scalars['Boolean'] | null),latitude?: (Scalars['float8'] | null),league_season_division?: (league_season_divisions_obj_rel_insert_input | null),location?: (Scalars['String'] | null),logo?: (Scalars['String'] | null),longitude?: (Scalars['float8'] | null),match_options_id?: (Scalars['uuid'] | null),max_elo?: (Scalars['Int'] | null),min_elo?: (Scalars['Int'] | null),min_role?: (e_player_roles_enum | null),name?: (Scalars['String'] | null),options?: (match_options_obj_rel_insert_input | null),organizer_steam_id?: (Scalars['bigint'] | null),organizer_teams?: (tournament_organizer_teams_arr_rel_insert_input | null),organizers?: (tournament_organizers_arr_rel_insert_input | null),player_stats?: (v_tournament_player_stats_arr_rel_insert_input | null),prizes?: (tournament_prizes_arr_rel_insert_input | null),registration_type?: (e_tournament_registration_types_enum | null),results?: (v_team_tournament_results_arr_rel_insert_input | null),rosters?: (tournament_team_roster_arr_rel_insert_input | null),scheduling_mode?: (Scalars['String'] | null),stages?: (tournament_stages_arr_rel_insert_input | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null),
+check_in_setting?: (e_check_in_settings_enum | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),e_tournament_status?: (e_tournament_status_obj_rel_insert_input | null),finished_at?: (Scalars['timestamptz'] | null),free_agents?: (tournament_free_agents_arr_rel_insert_input | null),homepage?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),invite_only?: (Scalars['Boolean'] | null),is_league?: (Scalars['Boolean'] | null),latitude?: (Scalars['float8'] | null),league_season_division?: (league_season_divisions_obj_rel_insert_input | null),location?: (Scalars['String'] | null),logo?: (Scalars['String'] | null),longitude?: (Scalars['float8'] | null),match_options_id?: (Scalars['uuid'] | null),max_elo?: (Scalars['Int'] | null),min_elo?: (Scalars['Int'] | null),min_role?: (e_player_roles_enum | null),mvp_picks?: (tournament_mvp_picks_arr_rel_insert_input | null),name?: (Scalars['String'] | null),options?: (match_options_obj_rel_insert_input | null),organizer_picks_mvp?: (Scalars['Boolean'] | null),organizer_steam_id?: (Scalars['bigint'] | null),organizer_teams?: (tournament_organizer_teams_arr_rel_insert_input | null),organizers?: (tournament_organizers_arr_rel_insert_input | null),player_stats?: (v_tournament_player_stats_arr_rel_insert_input | null),prizes?: (tournament_prizes_arr_rel_insert_input | null),registration_type?: (e_tournament_registration_types_enum | null),results?: (v_team_tournament_results_arr_rel_insert_input | null),rosters?: (tournament_team_roster_arr_rel_insert_input | null),scheduling_mode?: (Scalars['String'] | null),stages?: (tournament_stages_arr_rel_insert_input | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null),
 /** Whether teams may roster and field substitutes beyond the starting lineup */
 substitutes_enabled?: (Scalars['Boolean'] | null),teams?: (tournament_teams_arr_rel_insert_input | null)}
 
@@ -123883,7 +127665,7 @@ export interface tournaments_on_conflict {constraint: tournaments_constraint,upd
 
 
 /** Ordering options when selecting data from "tournaments". */
-export interface tournaments_order_by {admin?: (players_order_by | null),auto_start?: (order_by | null),award_configs_aggregate?: (tournament_awards_aggregate_order_by | null),awards_aggregate?: (award_recipients_aggregate_order_by | null),awards_enabled?: (order_by | null),banner?: (order_by | null),can_cancel?: (order_by | null),can_close_registration?: (order_by | null),can_join?: (order_by | null),can_open_registration?: (order_by | null),can_pause?: (order_by | null),can_resume?: (order_by | null),can_review_check_in?: (order_by | null),can_setup?: (order_by | null),can_start?: (order_by | null),categories_aggregate?: (tournament_categories_aggregate_order_by | null),check_in_closed_for?: (order_by | null),check_in_closes_before_minutes?: (order_by | null),check_in_closing_notified_for?: (order_by | null),check_in_ends_at?: (order_by | null),check_in_open?: (order_by | null),check_in_opens_before_minutes?: (order_by | null),check_in_required?: (order_by | null),check_in_setting?: (order_by | null),check_in_started?: (order_by | null),created_at?: (order_by | null),current_stage?: (order_by | null),description?: (order_by | null),discord_guild_id?: (order_by | null),discord_notifications_enabled?: (order_by | null),discord_notify_Canceled?: (order_by | null),discord_notify_Finished?: (order_by | null),discord_notify_Forfeit?: (order_by | null),discord_notify_Live?: (order_by | null),discord_notify_MapPaused?: (order_by | null),discord_notify_PickingPlayers?: (order_by | null),discord_notify_Scheduled?: (order_by | null),discord_notify_Surrendered?: (order_by | null),discord_notify_Tie?: (order_by | null),discord_notify_Veto?: (order_by | null),discord_notify_WaitingForCheckIn?: (order_by | null),discord_notify_WaitingForServer?: (order_by | null),discord_role_id?: (order_by | null),discord_voice_enabled?: (order_by | null),discord_webhook?: (order_by | null),e_tournament_status?: (e_tournament_status_order_by | null),finished_at?: (order_by | null),free_agents_aggregate?: (tournament_free_agents_aggregate_order_by | null),has_min_teams?: (order_by | null),homepage?: (order_by | null),id?: (order_by | null),invite_only?: (order_by | null),is_league?: (order_by | null),is_organizer?: (order_by | null),joined_tournament?: (order_by | null),latitude?: (order_by | null),league_season_division?: (league_season_divisions_order_by | null),location?: (order_by | null),logo?: (order_by | null),longitude?: (order_by | null),match_options_id?: (order_by | null),max_elo?: (order_by | null),max_players_per_lineup?: (order_by | null),meets_min_role?: (order_by | null),min_elo?: (order_by | null),min_players_per_lineup?: (order_by | null),min_role?: (order_by | null),missed_check_in_count?: (order_by | null),name?: (order_by | null),options?: (match_options_order_by | null),organizer_steam_id?: (order_by | null),organizer_teams_aggregate?: (tournament_organizer_teams_aggregate_order_by | null),organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),player_stats_aggregate?: (v_tournament_player_stats_aggregate_order_by | null),prizes_aggregate?: (tournament_prizes_aggregate_order_by | null),registration_type?: (order_by | null),registration_unlocked?: (order_by | null),results_aggregate?: (v_team_tournament_results_aggregate_order_by | null),rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),scheduling_mode?: (order_by | null),stages_aggregate?: (tournament_stages_aggregate_order_by | null),start?: (order_by | null),status?: (order_by | null),substitutes_enabled?: (order_by | null),teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
+export interface tournaments_order_by {admin?: (players_order_by | null),auto_start?: (order_by | null),award_configs_aggregate?: (tournament_awards_aggregate_order_by | null),awards_aggregate?: (award_recipients_aggregate_order_by | null),awards_enabled?: (order_by | null),banner?: (order_by | null),can_cancel?: (order_by | null),can_close_registration?: (order_by | null),can_join?: (order_by | null),can_open_registration?: (order_by | null),can_pause?: (order_by | null),can_pick_mvp?: (order_by | null),can_resume?: (order_by | null),can_review_check_in?: (order_by | null),can_setup?: (order_by | null),can_start?: (order_by | null),categories_aggregate?: (tournament_categories_aggregate_order_by | null),check_in_closed_for?: (order_by | null),check_in_closes_before_minutes?: (order_by | null),check_in_closing_notified_for?: (order_by | null),check_in_ends_at?: (order_by | null),check_in_open?: (order_by | null),check_in_opens_before_minutes?: (order_by | null),check_in_required?: (order_by | null),check_in_setting?: (order_by | null),check_in_started?: (order_by | null),created_at?: (order_by | null),current_stage?: (order_by | null),description?: (order_by | null),discord_guild_id?: (order_by | null),discord_notifications_enabled?: (order_by | null),discord_notify_Canceled?: (order_by | null),discord_notify_Finished?: (order_by | null),discord_notify_Forfeit?: (order_by | null),discord_notify_Live?: (order_by | null),discord_notify_MapPaused?: (order_by | null),discord_notify_PickingPlayers?: (order_by | null),discord_notify_Scheduled?: (order_by | null),discord_notify_Surrendered?: (order_by | null),discord_notify_Tie?: (order_by | null),discord_notify_Veto?: (order_by | null),discord_notify_WaitingForCheckIn?: (order_by | null),discord_notify_WaitingForServer?: (order_by | null),discord_role_id?: (order_by | null),discord_voice_enabled?: (order_by | null),discord_webhook?: (order_by | null),e_tournament_status?: (e_tournament_status_order_by | null),finished_at?: (order_by | null),free_agents_aggregate?: (tournament_free_agents_aggregate_order_by | null),has_min_teams?: (order_by | null),homepage?: (order_by | null),id?: (order_by | null),invite_only?: (order_by | null),is_league?: (order_by | null),is_organizer?: (order_by | null),joined_tournament?: (order_by | null),latitude?: (order_by | null),league_season_division?: (league_season_divisions_order_by | null),location?: (order_by | null),logo?: (order_by | null),longitude?: (order_by | null),match_options_id?: (order_by | null),max_elo?: (order_by | null),max_players_per_lineup?: (order_by | null),meets_min_role?: (order_by | null),min_elo?: (order_by | null),min_players_per_lineup?: (order_by | null),min_role?: (order_by | null),missed_check_in_count?: (order_by | null),mvp_picks_aggregate?: (tournament_mvp_picks_aggregate_order_by | null),name?: (order_by | null),options?: (match_options_order_by | null),organizer_picks_mvp?: (order_by | null),organizer_steam_id?: (order_by | null),organizer_teams_aggregate?: (tournament_organizer_teams_aggregate_order_by | null),organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),player_stats_aggregate?: (v_tournament_player_stats_aggregate_order_by | null),podium?: (order_by | null),prizes_aggregate?: (tournament_prizes_aggregate_order_by | null),registration_type?: (order_by | null),registration_unlocked?: (order_by | null),results_aggregate?: (v_team_tournament_results_aggregate_order_by | null),rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),scheduling_mode?: (order_by | null),stages_aggregate?: (tournament_stages_aggregate_order_by | null),start?: (order_by | null),status?: (order_by | null),substitutes_enabled?: (order_by | null),teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
 
 
 /** primary key columns input for table: tournaments */
@@ -123899,7 +127681,7 @@ check_in_closing_notified_for?: (Scalars['timestamptz'] | null),
 /** When the check-in window closes; NULL until it opens */
 check_in_ends_at?: (Scalars['timestamptz'] | null),check_in_opens_before_minutes?: (Scalars['Int'] | null),check_in_required?: (Scalars['Boolean'] | null),
 /** Who confirms a team: Captains, every rostered Player, or the organizer (Admin) */
-check_in_setting?: (e_check_in_settings_enum | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),finished_at?: (Scalars['timestamptz'] | null),homepage?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),invite_only?: (Scalars['Boolean'] | null),is_league?: (Scalars['Boolean'] | null),latitude?: (Scalars['float8'] | null),location?: (Scalars['String'] | null),logo?: (Scalars['String'] | null),longitude?: (Scalars['float8'] | null),match_options_id?: (Scalars['uuid'] | null),max_elo?: (Scalars['Int'] | null),min_elo?: (Scalars['Int'] | null),min_role?: (e_player_roles_enum | null),name?: (Scalars['String'] | null),organizer_steam_id?: (Scalars['bigint'] | null),registration_type?: (e_tournament_registration_types_enum | null),scheduling_mode?: (Scalars['String'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null),
+check_in_setting?: (e_check_in_settings_enum | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),finished_at?: (Scalars['timestamptz'] | null),homepage?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),invite_only?: (Scalars['Boolean'] | null),is_league?: (Scalars['Boolean'] | null),latitude?: (Scalars['float8'] | null),location?: (Scalars['String'] | null),logo?: (Scalars['String'] | null),longitude?: (Scalars['float8'] | null),match_options_id?: (Scalars['uuid'] | null),max_elo?: (Scalars['Int'] | null),min_elo?: (Scalars['Int'] | null),min_role?: (e_player_roles_enum | null),name?: (Scalars['String'] | null),organizer_picks_mvp?: (Scalars['Boolean'] | null),organizer_steam_id?: (Scalars['bigint'] | null),registration_type?: (e_tournament_registration_types_enum | null),scheduling_mode?: (Scalars['String'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null),
 /** Whether teams may roster and field substitutes beyond the starting lineup */
 substitutes_enabled?: (Scalars['Boolean'] | null)}
 
@@ -123999,7 +127781,7 @@ check_in_closing_notified_for?: (Scalars['timestamptz'] | null),
 /** When the check-in window closes; NULL until it opens */
 check_in_ends_at?: (Scalars['timestamptz'] | null),check_in_opens_before_minutes?: (Scalars['Int'] | null),check_in_required?: (Scalars['Boolean'] | null),
 /** Who confirms a team: Captains, every rostered Player, or the organizer (Admin) */
-check_in_setting?: (e_check_in_settings_enum | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),finished_at?: (Scalars['timestamptz'] | null),homepage?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),invite_only?: (Scalars['Boolean'] | null),is_league?: (Scalars['Boolean'] | null),latitude?: (Scalars['float8'] | null),location?: (Scalars['String'] | null),logo?: (Scalars['String'] | null),longitude?: (Scalars['float8'] | null),match_options_id?: (Scalars['uuid'] | null),max_elo?: (Scalars['Int'] | null),min_elo?: (Scalars['Int'] | null),min_role?: (e_player_roles_enum | null),name?: (Scalars['String'] | null),organizer_steam_id?: (Scalars['bigint'] | null),registration_type?: (e_tournament_registration_types_enum | null),scheduling_mode?: (Scalars['String'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null),
+check_in_setting?: (e_check_in_settings_enum | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),finished_at?: (Scalars['timestamptz'] | null),homepage?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),invite_only?: (Scalars['Boolean'] | null),is_league?: (Scalars['Boolean'] | null),latitude?: (Scalars['float8'] | null),location?: (Scalars['String'] | null),logo?: (Scalars['String'] | null),longitude?: (Scalars['float8'] | null),match_options_id?: (Scalars['uuid'] | null),max_elo?: (Scalars['Int'] | null),min_elo?: (Scalars['Int'] | null),min_role?: (e_player_roles_enum | null),name?: (Scalars['String'] | null),organizer_picks_mvp?: (Scalars['Boolean'] | null),organizer_steam_id?: (Scalars['bigint'] | null),registration_type?: (e_tournament_registration_types_enum | null),scheduling_mode?: (Scalars['String'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null),
 /** Whether teams may roster and field substitutes beyond the starting lineup */
 substitutes_enabled?: (Scalars['Boolean'] | null)}
 
@@ -125121,6 +128903,977 @@ export interface utility_demo_throws_variance_fieldsGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** columns and relationships of "utility_discoveries" */
+export interface utility_discoveriesGenqlSelection{
+    area?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
+    created_at?: boolean | number
+    error?: boolean | number
+    finished_at?: boolean | number
+    grenades?: boolean | number
+    id?: boolean | number
+    map_name?: boolean | number
+    mesh_revision?: boolean | number
+    missed?: boolean | number
+    predicted?: boolean | number
+    radius?: boolean | number
+    /** An object relationship */
+    requested_by?: playersGenqlSelection
+    requested_by_steam_id?: boolean | number
+    /** An array relationship */
+    results?: (utility_discovery_resultsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (utility_discovery_results_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (utility_discovery_results_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (utility_discovery_results_bool_exp | null)} })
+    /** An aggregate relationship */
+    results_aggregate?: (utility_discovery_results_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (utility_discovery_results_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (utility_discovery_results_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (utility_discovery_results_bool_exp | null)} })
+    started_at?: boolean | number
+    status?: boolean | number
+    strengths?: boolean | number
+    target_x?: boolean | number
+    target_y?: boolean | number
+    target_z?: boolean | number
+    techniques?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
+    utility_practice_session_id?: boolean | number
+    utility_type?: boolean | number
+    verified?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "utility_discoveries" */
+export interface utility_discoveries_aggregateGenqlSelection{
+    aggregate?: utility_discoveries_aggregate_fieldsGenqlSelection
+    nodes?: utility_discoveriesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "utility_discoveries" */
+export interface utility_discoveries_aggregate_fieldsGenqlSelection{
+    avg?: utility_discoveries_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (utility_discoveries_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: utility_discoveries_max_fieldsGenqlSelection
+    min?: utility_discoveries_min_fieldsGenqlSelection
+    stddev?: utility_discoveries_stddev_fieldsGenqlSelection
+    stddev_pop?: utility_discoveries_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: utility_discoveries_stddev_samp_fieldsGenqlSelection
+    sum?: utility_discoveries_sum_fieldsGenqlSelection
+    var_pop?: utility_discoveries_var_pop_fieldsGenqlSelection
+    var_samp?: utility_discoveries_var_samp_fieldsGenqlSelection
+    variance?: utility_discoveries_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** append existing jsonb value of filtered columns with new jsonb value */
+export interface utility_discoveries_append_input {area?: (Scalars['jsonb'] | null),techniques?: (Scalars['jsonb'] | null)}
+
+
+/** aggregate avg on columns */
+export interface utility_discoveries_avg_fieldsGenqlSelection{
+    grenades?: boolean | number
+    missed?: boolean | number
+    predicted?: boolean | number
+    radius?: boolean | number
+    requested_by_steam_id?: boolean | number
+    target_x?: boolean | number
+    target_y?: boolean | number
+    target_z?: boolean | number
+    verified?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "utility_discoveries". All fields are combined with a logical 'AND'. */
+export interface utility_discoveries_bool_exp {_and?: (utility_discoveries_bool_exp[] | null),_not?: (utility_discoveries_bool_exp | null),_or?: (utility_discoveries_bool_exp[] | null),area?: (jsonb_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),error?: (String_comparison_exp | null),finished_at?: (timestamptz_comparison_exp | null),grenades?: (Int_comparison_exp | null),id?: (uuid_comparison_exp | null),map_name?: (String_comparison_exp | null),mesh_revision?: (String_comparison_exp | null),missed?: (Int_comparison_exp | null),predicted?: (Int_comparison_exp | null),radius?: (Float_comparison_exp | null),requested_by?: (players_bool_exp | null),requested_by_steam_id?: (bigint_comparison_exp | null),results?: (utility_discovery_results_bool_exp | null),results_aggregate?: (utility_discovery_results_aggregate_bool_exp | null),started_at?: (timestamptz_comparison_exp | null),status?: (String_comparison_exp | null),strengths?: (String_array_comparison_exp | null),target_x?: (float8_comparison_exp | null),target_y?: (float8_comparison_exp | null),target_z?: (float8_comparison_exp | null),techniques?: (jsonb_comparison_exp | null),utility_practice_session_id?: (uuid_comparison_exp | null),utility_type?: (String_comparison_exp | null),verified?: (Int_comparison_exp | null)}
+
+
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+export interface utility_discoveries_delete_at_path_input {area?: (Scalars['String'][] | null),techniques?: (Scalars['String'][] | null)}
+
+
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+export interface utility_discoveries_delete_elem_input {area?: (Scalars['Int'] | null),techniques?: (Scalars['Int'] | null)}
+
+
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+export interface utility_discoveries_delete_key_input {area?: (Scalars['String'] | null),techniques?: (Scalars['String'] | null)}
+
+
+/** input type for incrementing numeric columns in table "utility_discoveries" */
+export interface utility_discoveries_inc_input {grenades?: (Scalars['Int'] | null),missed?: (Scalars['Int'] | null),predicted?: (Scalars['Int'] | null),radius?: (Scalars['Float'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),target_x?: (Scalars['float8'] | null),target_y?: (Scalars['float8'] | null),target_z?: (Scalars['float8'] | null),verified?: (Scalars['Int'] | null)}
+
+
+/** input type for inserting data into table "utility_discoveries" */
+export interface utility_discoveries_insert_input {area?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),error?: (Scalars['String'] | null),finished_at?: (Scalars['timestamptz'] | null),grenades?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),map_name?: (Scalars['String'] | null),mesh_revision?: (Scalars['String'] | null),missed?: (Scalars['Int'] | null),predicted?: (Scalars['Int'] | null),radius?: (Scalars['Float'] | null),requested_by?: (players_obj_rel_insert_input | null),requested_by_steam_id?: (Scalars['bigint'] | null),results?: (utility_discovery_results_arr_rel_insert_input | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),strengths?: (Scalars['String'][] | null),target_x?: (Scalars['float8'] | null),target_y?: (Scalars['float8'] | null),target_z?: (Scalars['float8'] | null),techniques?: (Scalars['jsonb'] | null),utility_practice_session_id?: (Scalars['uuid'] | null),utility_type?: (Scalars['String'] | null),verified?: (Scalars['Int'] | null)}
+
+
+/** aggregate max on columns */
+export interface utility_discoveries_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    error?: boolean | number
+    finished_at?: boolean | number
+    grenades?: boolean | number
+    id?: boolean | number
+    map_name?: boolean | number
+    mesh_revision?: boolean | number
+    missed?: boolean | number
+    predicted?: boolean | number
+    radius?: boolean | number
+    requested_by_steam_id?: boolean | number
+    started_at?: boolean | number
+    status?: boolean | number
+    strengths?: boolean | number
+    target_x?: boolean | number
+    target_y?: boolean | number
+    target_z?: boolean | number
+    utility_practice_session_id?: boolean | number
+    utility_type?: boolean | number
+    verified?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface utility_discoveries_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    error?: boolean | number
+    finished_at?: boolean | number
+    grenades?: boolean | number
+    id?: boolean | number
+    map_name?: boolean | number
+    mesh_revision?: boolean | number
+    missed?: boolean | number
+    predicted?: boolean | number
+    radius?: boolean | number
+    requested_by_steam_id?: boolean | number
+    started_at?: boolean | number
+    status?: boolean | number
+    strengths?: boolean | number
+    target_x?: boolean | number
+    target_y?: boolean | number
+    target_z?: boolean | number
+    utility_practice_session_id?: boolean | number
+    utility_type?: boolean | number
+    verified?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "utility_discoveries" */
+export interface utility_discoveries_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: utility_discoveriesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** input type for inserting object relation for remote table "utility_discoveries" */
+export interface utility_discoveries_obj_rel_insert_input {data: utility_discoveries_insert_input,
+/** upsert condition */
+on_conflict?: (utility_discoveries_on_conflict | null)}
+
+
+/** on_conflict condition type for table "utility_discoveries" */
+export interface utility_discoveries_on_conflict {constraint: utility_discoveries_constraint,update_columns?: utility_discoveries_update_column[],where?: (utility_discoveries_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "utility_discoveries". */
+export interface utility_discoveries_order_by {area?: (order_by | null),created_at?: (order_by | null),error?: (order_by | null),finished_at?: (order_by | null),grenades?: (order_by | null),id?: (order_by | null),map_name?: (order_by | null),mesh_revision?: (order_by | null),missed?: (order_by | null),predicted?: (order_by | null),radius?: (order_by | null),requested_by?: (players_order_by | null),requested_by_steam_id?: (order_by | null),results_aggregate?: (utility_discovery_results_aggregate_order_by | null),started_at?: (order_by | null),status?: (order_by | null),strengths?: (order_by | null),target_x?: (order_by | null),target_y?: (order_by | null),target_z?: (order_by | null),techniques?: (order_by | null),utility_practice_session_id?: (order_by | null),utility_type?: (order_by | null),verified?: (order_by | null)}
+
+
+/** primary key columns input for table: utility_discoveries */
+export interface utility_discoveries_pk_columns_input {id: Scalars['uuid']}
+
+
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+export interface utility_discoveries_prepend_input {area?: (Scalars['jsonb'] | null),techniques?: (Scalars['jsonb'] | null)}
+
+
+/** input type for updating data in table "utility_discoveries" */
+export interface utility_discoveries_set_input {area?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),error?: (Scalars['String'] | null),finished_at?: (Scalars['timestamptz'] | null),grenades?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),map_name?: (Scalars['String'] | null),mesh_revision?: (Scalars['String'] | null),missed?: (Scalars['Int'] | null),predicted?: (Scalars['Int'] | null),radius?: (Scalars['Float'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),strengths?: (Scalars['String'][] | null),target_x?: (Scalars['float8'] | null),target_y?: (Scalars['float8'] | null),target_z?: (Scalars['float8'] | null),techniques?: (Scalars['jsonb'] | null),utility_practice_session_id?: (Scalars['uuid'] | null),utility_type?: (Scalars['String'] | null),verified?: (Scalars['Int'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface utility_discoveries_stddev_fieldsGenqlSelection{
+    grenades?: boolean | number
+    missed?: boolean | number
+    predicted?: boolean | number
+    radius?: boolean | number
+    requested_by_steam_id?: boolean | number
+    target_x?: boolean | number
+    target_y?: boolean | number
+    target_z?: boolean | number
+    verified?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface utility_discoveries_stddev_pop_fieldsGenqlSelection{
+    grenades?: boolean | number
+    missed?: boolean | number
+    predicted?: boolean | number
+    radius?: boolean | number
+    requested_by_steam_id?: boolean | number
+    target_x?: boolean | number
+    target_y?: boolean | number
+    target_z?: boolean | number
+    verified?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface utility_discoveries_stddev_samp_fieldsGenqlSelection{
+    grenades?: boolean | number
+    missed?: boolean | number
+    predicted?: boolean | number
+    radius?: boolean | number
+    requested_by_steam_id?: boolean | number
+    target_x?: boolean | number
+    target_y?: boolean | number
+    target_z?: boolean | number
+    verified?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "utility_discoveries" */
+export interface utility_discoveries_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: utility_discoveries_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface utility_discoveries_stream_cursor_value_input {area?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),error?: (Scalars['String'] | null),finished_at?: (Scalars['timestamptz'] | null),grenades?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),map_name?: (Scalars['String'] | null),mesh_revision?: (Scalars['String'] | null),missed?: (Scalars['Int'] | null),predicted?: (Scalars['Int'] | null),radius?: (Scalars['Float'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),strengths?: (Scalars['String'][] | null),target_x?: (Scalars['float8'] | null),target_y?: (Scalars['float8'] | null),target_z?: (Scalars['float8'] | null),techniques?: (Scalars['jsonb'] | null),utility_practice_session_id?: (Scalars['uuid'] | null),utility_type?: (Scalars['String'] | null),verified?: (Scalars['Int'] | null)}
+
+
+/** aggregate sum on columns */
+export interface utility_discoveries_sum_fieldsGenqlSelection{
+    grenades?: boolean | number
+    missed?: boolean | number
+    predicted?: boolean | number
+    radius?: boolean | number
+    requested_by_steam_id?: boolean | number
+    target_x?: boolean | number
+    target_y?: boolean | number
+    target_z?: boolean | number
+    verified?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface utility_discoveries_updates {
+/** append existing jsonb value of filtered columns with new jsonb value */
+_append?: (utility_discoveries_append_input | null),
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+_delete_at_path?: (utility_discoveries_delete_at_path_input | null),
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+_delete_elem?: (utility_discoveries_delete_elem_input | null),
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+_delete_key?: (utility_discoveries_delete_key_input | null),
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (utility_discoveries_inc_input | null),
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+_prepend?: (utility_discoveries_prepend_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (utility_discoveries_set_input | null),
+/** filter the rows which have to be updated */
+where: utility_discoveries_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface utility_discoveries_var_pop_fieldsGenqlSelection{
+    grenades?: boolean | number
+    missed?: boolean | number
+    predicted?: boolean | number
+    radius?: boolean | number
+    requested_by_steam_id?: boolean | number
+    target_x?: boolean | number
+    target_y?: boolean | number
+    target_z?: boolean | number
+    verified?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface utility_discoveries_var_samp_fieldsGenqlSelection{
+    grenades?: boolean | number
+    missed?: boolean | number
+    predicted?: boolean | number
+    radius?: boolean | number
+    requested_by_steam_id?: boolean | number
+    target_x?: boolean | number
+    target_y?: boolean | number
+    target_z?: boolean | number
+    verified?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface utility_discoveries_variance_fieldsGenqlSelection{
+    grenades?: boolean | number
+    missed?: boolean | number
+    predicted?: boolean | number
+    radius?: boolean | number
+    requested_by_steam_id?: boolean | number
+    target_x?: boolean | number
+    target_y?: boolean | number
+    target_z?: boolean | number
+    verified?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** columns and relationships of "utility_discovery_results" */
+export interface utility_discovery_resultsGenqlSelection{
+    bounces?: boolean | number
+    created_at?: boolean | number
+    /** An object relationship */
+    discovery?: utility_discoveriesGenqlSelection
+    discovery_id?: boolean | number
+    distance?: boolean | number
+    eye_z?: boolean | number
+    flight_time_ms?: boolean | number
+    forgiveness?: boolean | number
+    grenades?: boolean | number
+    id?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    is_new?: boolean | number
+    jump_throw?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    /** An object relationship */
+    lineup?: utility_lineupsGenqlSelection
+    measured?: boolean | number
+    move_direction?: boolean | number
+    move_gait?: boolean | number
+    path?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
+    pitch?: boolean | number
+    predicted_bounces?: boolean | number
+    predicted_distance?: boolean | number
+    predicted_land_x?: boolean | number
+    predicted_land_y?: boolean | number
+    predicted_land_z?: boolean | number
+    predicted_spread?: boolean | number
+    rank?: boolean | number
+    stand_x?: boolean | number
+    stand_y?: boolean | number
+    stand_z?: boolean | number
+    status?: boolean | number
+    strength?: boolean | number
+    technique?: boolean | number
+    utility_lineup_id?: boolean | number
+    verified_at?: boolean | number
+    yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "utility_discovery_results" */
+export interface utility_discovery_results_aggregateGenqlSelection{
+    aggregate?: utility_discovery_results_aggregate_fieldsGenqlSelection
+    nodes?: utility_discovery_resultsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface utility_discovery_results_aggregate_bool_exp {avg?: (utility_discovery_results_aggregate_bool_exp_avg | null),bool_and?: (utility_discovery_results_aggregate_bool_exp_bool_and | null),bool_or?: (utility_discovery_results_aggregate_bool_exp_bool_or | null),corr?: (utility_discovery_results_aggregate_bool_exp_corr | null),count?: (utility_discovery_results_aggregate_bool_exp_count | null),covar_samp?: (utility_discovery_results_aggregate_bool_exp_covar_samp | null),max?: (utility_discovery_results_aggregate_bool_exp_max | null),min?: (utility_discovery_results_aggregate_bool_exp_min | null),stddev_samp?: (utility_discovery_results_aggregate_bool_exp_stddev_samp | null),sum?: (utility_discovery_results_aggregate_bool_exp_sum | null),var_samp?: (utility_discovery_results_aggregate_bool_exp_var_samp | null)}
+
+export interface utility_discovery_results_aggregate_bool_exp_avg {arguments: utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_avg_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (utility_discovery_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface utility_discovery_results_aggregate_bool_exp_bool_and {arguments: utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_bool_and_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (utility_discovery_results_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface utility_discovery_results_aggregate_bool_exp_bool_or {arguments: utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_bool_or_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (utility_discovery_results_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface utility_discovery_results_aggregate_bool_exp_corr {arguments: utility_discovery_results_aggregate_bool_exp_corr_arguments,distinct?: (Scalars['Boolean'] | null),filter?: (utility_discovery_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface utility_discovery_results_aggregate_bool_exp_corr_arguments {X: utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_corr_arguments_columns,Y: utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_corr_arguments_columns}
+
+export interface utility_discovery_results_aggregate_bool_exp_count {arguments?: (utility_discovery_results_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (utility_discovery_results_bool_exp | null),predicate: Int_comparison_exp}
+
+export interface utility_discovery_results_aggregate_bool_exp_covar_samp {arguments: utility_discovery_results_aggregate_bool_exp_covar_samp_arguments,distinct?: (Scalars['Boolean'] | null),filter?: (utility_discovery_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface utility_discovery_results_aggregate_bool_exp_covar_samp_arguments {X: utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_covar_samp_arguments_columns,Y: utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_covar_samp_arguments_columns}
+
+export interface utility_discovery_results_aggregate_bool_exp_max {arguments: utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_max_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (utility_discovery_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface utility_discovery_results_aggregate_bool_exp_min {arguments: utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_min_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (utility_discovery_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface utility_discovery_results_aggregate_bool_exp_stddev_samp {arguments: utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_stddev_samp_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (utility_discovery_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface utility_discovery_results_aggregate_bool_exp_sum {arguments: utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_sum_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (utility_discovery_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface utility_discovery_results_aggregate_bool_exp_var_samp {arguments: utility_discovery_results_select_column_utility_discovery_results_aggregate_bool_exp_var_samp_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (utility_discovery_results_bool_exp | null),predicate: float8_comparison_exp}
+
+
+/** aggregate fields of "utility_discovery_results" */
+export interface utility_discovery_results_aggregate_fieldsGenqlSelection{
+    avg?: utility_discovery_results_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (utility_discovery_results_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: utility_discovery_results_max_fieldsGenqlSelection
+    min?: utility_discovery_results_min_fieldsGenqlSelection
+    stddev?: utility_discovery_results_stddev_fieldsGenqlSelection
+    stddev_pop?: utility_discovery_results_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: utility_discovery_results_stddev_samp_fieldsGenqlSelection
+    sum?: utility_discovery_results_sum_fieldsGenqlSelection
+    var_pop?: utility_discovery_results_var_pop_fieldsGenqlSelection
+    var_samp?: utility_discovery_results_var_samp_fieldsGenqlSelection
+    variance?: utility_discovery_results_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "utility_discovery_results" */
+export interface utility_discovery_results_aggregate_order_by {avg?: (utility_discovery_results_avg_order_by | null),count?: (order_by | null),max?: (utility_discovery_results_max_order_by | null),min?: (utility_discovery_results_min_order_by | null),stddev?: (utility_discovery_results_stddev_order_by | null),stddev_pop?: (utility_discovery_results_stddev_pop_order_by | null),stddev_samp?: (utility_discovery_results_stddev_samp_order_by | null),sum?: (utility_discovery_results_sum_order_by | null),var_pop?: (utility_discovery_results_var_pop_order_by | null),var_samp?: (utility_discovery_results_var_samp_order_by | null),variance?: (utility_discovery_results_variance_order_by | null)}
+
+
+/** append existing jsonb value of filtered columns with new jsonb value */
+export interface utility_discovery_results_append_input {path?: (Scalars['jsonb'] | null)}
+
+
+/** input type for inserting array relation for remote table "utility_discovery_results" */
+export interface utility_discovery_results_arr_rel_insert_input {data: utility_discovery_results_insert_input[],
+/** upsert condition */
+on_conflict?: (utility_discovery_results_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface utility_discovery_results_avg_fieldsGenqlSelection{
+    bounces?: boolean | number
+    distance?: boolean | number
+    eye_z?: boolean | number
+    flight_time_ms?: boolean | number
+    forgiveness?: boolean | number
+    grenades?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    pitch?: boolean | number
+    predicted_bounces?: boolean | number
+    predicted_distance?: boolean | number
+    predicted_land_x?: boolean | number
+    predicted_land_y?: boolean | number
+    predicted_land_z?: boolean | number
+    predicted_spread?: boolean | number
+    rank?: boolean | number
+    stand_x?: boolean | number
+    stand_y?: boolean | number
+    stand_z?: boolean | number
+    yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "utility_discovery_results" */
+export interface utility_discovery_results_avg_order_by {bounces?: (order_by | null),distance?: (order_by | null),eye_z?: (order_by | null),flight_time_ms?: (order_by | null),forgiveness?: (order_by | null),grenades?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),pitch?: (order_by | null),predicted_bounces?: (order_by | null),predicted_distance?: (order_by | null),predicted_land_x?: (order_by | null),predicted_land_y?: (order_by | null),predicted_land_z?: (order_by | null),predicted_spread?: (order_by | null),rank?: (order_by | null),stand_x?: (order_by | null),stand_y?: (order_by | null),stand_z?: (order_by | null),yaw?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "utility_discovery_results". All fields are combined with a logical 'AND'. */
+export interface utility_discovery_results_bool_exp {_and?: (utility_discovery_results_bool_exp[] | null),_not?: (utility_discovery_results_bool_exp | null),_or?: (utility_discovery_results_bool_exp[] | null),bounces?: (Int_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),discovery?: (utility_discoveries_bool_exp | null),discovery_id?: (uuid_comparison_exp | null),distance?: (Float_comparison_exp | null),eye_z?: (float8_comparison_exp | null),flight_time_ms?: (Int_comparison_exp | null),forgiveness?: (Float_comparison_exp | null),grenades?: (Int_comparison_exp | null),id?: (uuid_comparison_exp | null),initial_pos_x?: (float8_comparison_exp | null),initial_pos_y?: (float8_comparison_exp | null),initial_pos_z?: (float8_comparison_exp | null),initial_vel_x?: (float8_comparison_exp | null),initial_vel_y?: (float8_comparison_exp | null),initial_vel_z?: (float8_comparison_exp | null),is_new?: (Boolean_comparison_exp | null),jump_throw?: (Boolean_comparison_exp | null),land_x?: (float8_comparison_exp | null),land_y?: (float8_comparison_exp | null),land_z?: (float8_comparison_exp | null),lineup?: (utility_lineups_bool_exp | null),measured?: (Boolean_comparison_exp | null),move_direction?: (String_comparison_exp | null),move_gait?: (String_comparison_exp | null),path?: (jsonb_comparison_exp | null),pitch?: (float8_comparison_exp | null),predicted_bounces?: (Int_comparison_exp | null),predicted_distance?: (Float_comparison_exp | null),predicted_land_x?: (float8_comparison_exp | null),predicted_land_y?: (float8_comparison_exp | null),predicted_land_z?: (float8_comparison_exp | null),predicted_spread?: (Float_comparison_exp | null),rank?: (Int_comparison_exp | null),stand_x?: (float8_comparison_exp | null),stand_y?: (float8_comparison_exp | null),stand_z?: (float8_comparison_exp | null),status?: (String_comparison_exp | null),strength?: (String_comparison_exp | null),technique?: (String_comparison_exp | null),utility_lineup_id?: (uuid_comparison_exp | null),verified_at?: (timestamptz_comparison_exp | null),yaw?: (float8_comparison_exp | null)}
+
+
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+export interface utility_discovery_results_delete_at_path_input {path?: (Scalars['String'][] | null)}
+
+
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+export interface utility_discovery_results_delete_elem_input {path?: (Scalars['Int'] | null)}
+
+
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+export interface utility_discovery_results_delete_key_input {path?: (Scalars['String'] | null)}
+
+
+/** input type for incrementing numeric columns in table "utility_discovery_results" */
+export interface utility_discovery_results_inc_input {bounces?: (Scalars['Int'] | null),distance?: (Scalars['Float'] | null),eye_z?: (Scalars['float8'] | null),flight_time_ms?: (Scalars['Int'] | null),forgiveness?: (Scalars['Float'] | null),grenades?: (Scalars['Int'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),pitch?: (Scalars['float8'] | null),predicted_bounces?: (Scalars['Int'] | null),predicted_distance?: (Scalars['Float'] | null),predicted_land_x?: (Scalars['float8'] | null),predicted_land_y?: (Scalars['float8'] | null),predicted_land_z?: (Scalars['float8'] | null),predicted_spread?: (Scalars['Float'] | null),rank?: (Scalars['Int'] | null),stand_x?: (Scalars['float8'] | null),stand_y?: (Scalars['float8'] | null),stand_z?: (Scalars['float8'] | null),yaw?: (Scalars['float8'] | null)}
+
+
+/** input type for inserting data into table "utility_discovery_results" */
+export interface utility_discovery_results_insert_input {bounces?: (Scalars['Int'] | null),created_at?: (Scalars['timestamptz'] | null),discovery?: (utility_discoveries_obj_rel_insert_input | null),discovery_id?: (Scalars['uuid'] | null),distance?: (Scalars['Float'] | null),eye_z?: (Scalars['float8'] | null),flight_time_ms?: (Scalars['Int'] | null),forgiveness?: (Scalars['Float'] | null),grenades?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),is_new?: (Scalars['Boolean'] | null),jump_throw?: (Scalars['Boolean'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),lineup?: (utility_lineups_obj_rel_insert_input | null),measured?: (Scalars['Boolean'] | null),move_direction?: (Scalars['String'] | null),move_gait?: (Scalars['String'] | null),path?: (Scalars['jsonb'] | null),pitch?: (Scalars['float8'] | null),predicted_bounces?: (Scalars['Int'] | null),predicted_distance?: (Scalars['Float'] | null),predicted_land_x?: (Scalars['float8'] | null),predicted_land_y?: (Scalars['float8'] | null),predicted_land_z?: (Scalars['float8'] | null),predicted_spread?: (Scalars['Float'] | null),rank?: (Scalars['Int'] | null),stand_x?: (Scalars['float8'] | null),stand_y?: (Scalars['float8'] | null),stand_z?: (Scalars['float8'] | null),status?: (Scalars['String'] | null),strength?: (Scalars['String'] | null),technique?: (Scalars['String'] | null),utility_lineup_id?: (Scalars['uuid'] | null),verified_at?: (Scalars['timestamptz'] | null),yaw?: (Scalars['float8'] | null)}
+
+
+/** aggregate max on columns */
+export interface utility_discovery_results_max_fieldsGenqlSelection{
+    bounces?: boolean | number
+    created_at?: boolean | number
+    discovery_id?: boolean | number
+    distance?: boolean | number
+    eye_z?: boolean | number
+    flight_time_ms?: boolean | number
+    forgiveness?: boolean | number
+    grenades?: boolean | number
+    id?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    move_direction?: boolean | number
+    move_gait?: boolean | number
+    pitch?: boolean | number
+    predicted_bounces?: boolean | number
+    predicted_distance?: boolean | number
+    predicted_land_x?: boolean | number
+    predicted_land_y?: boolean | number
+    predicted_land_z?: boolean | number
+    predicted_spread?: boolean | number
+    rank?: boolean | number
+    stand_x?: boolean | number
+    stand_y?: boolean | number
+    stand_z?: boolean | number
+    status?: boolean | number
+    strength?: boolean | number
+    technique?: boolean | number
+    utility_lineup_id?: boolean | number
+    verified_at?: boolean | number
+    yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "utility_discovery_results" */
+export interface utility_discovery_results_max_order_by {bounces?: (order_by | null),created_at?: (order_by | null),discovery_id?: (order_by | null),distance?: (order_by | null),eye_z?: (order_by | null),flight_time_ms?: (order_by | null),forgiveness?: (order_by | null),grenades?: (order_by | null),id?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),move_direction?: (order_by | null),move_gait?: (order_by | null),pitch?: (order_by | null),predicted_bounces?: (order_by | null),predicted_distance?: (order_by | null),predicted_land_x?: (order_by | null),predicted_land_y?: (order_by | null),predicted_land_z?: (order_by | null),predicted_spread?: (order_by | null),rank?: (order_by | null),stand_x?: (order_by | null),stand_y?: (order_by | null),stand_z?: (order_by | null),status?: (order_by | null),strength?: (order_by | null),technique?: (order_by | null),utility_lineup_id?: (order_by | null),verified_at?: (order_by | null),yaw?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface utility_discovery_results_min_fieldsGenqlSelection{
+    bounces?: boolean | number
+    created_at?: boolean | number
+    discovery_id?: boolean | number
+    distance?: boolean | number
+    eye_z?: boolean | number
+    flight_time_ms?: boolean | number
+    forgiveness?: boolean | number
+    grenades?: boolean | number
+    id?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    move_direction?: boolean | number
+    move_gait?: boolean | number
+    pitch?: boolean | number
+    predicted_bounces?: boolean | number
+    predicted_distance?: boolean | number
+    predicted_land_x?: boolean | number
+    predicted_land_y?: boolean | number
+    predicted_land_z?: boolean | number
+    predicted_spread?: boolean | number
+    rank?: boolean | number
+    stand_x?: boolean | number
+    stand_y?: boolean | number
+    stand_z?: boolean | number
+    status?: boolean | number
+    strength?: boolean | number
+    technique?: boolean | number
+    utility_lineup_id?: boolean | number
+    verified_at?: boolean | number
+    yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "utility_discovery_results" */
+export interface utility_discovery_results_min_order_by {bounces?: (order_by | null),created_at?: (order_by | null),discovery_id?: (order_by | null),distance?: (order_by | null),eye_z?: (order_by | null),flight_time_ms?: (order_by | null),forgiveness?: (order_by | null),grenades?: (order_by | null),id?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),move_direction?: (order_by | null),move_gait?: (order_by | null),pitch?: (order_by | null),predicted_bounces?: (order_by | null),predicted_distance?: (order_by | null),predicted_land_x?: (order_by | null),predicted_land_y?: (order_by | null),predicted_land_z?: (order_by | null),predicted_spread?: (order_by | null),rank?: (order_by | null),stand_x?: (order_by | null),stand_y?: (order_by | null),stand_z?: (order_by | null),status?: (order_by | null),strength?: (order_by | null),technique?: (order_by | null),utility_lineup_id?: (order_by | null),verified_at?: (order_by | null),yaw?: (order_by | null)}
+
+
+/** response of any mutation on the table "utility_discovery_results" */
+export interface utility_discovery_results_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: utility_discovery_resultsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "utility_discovery_results" */
+export interface utility_discovery_results_on_conflict {constraint: utility_discovery_results_constraint,update_columns?: utility_discovery_results_update_column[],where?: (utility_discovery_results_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "utility_discovery_results". */
+export interface utility_discovery_results_order_by {bounces?: (order_by | null),created_at?: (order_by | null),discovery?: (utility_discoveries_order_by | null),discovery_id?: (order_by | null),distance?: (order_by | null),eye_z?: (order_by | null),flight_time_ms?: (order_by | null),forgiveness?: (order_by | null),grenades?: (order_by | null),id?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),is_new?: (order_by | null),jump_throw?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),lineup?: (utility_lineups_order_by | null),measured?: (order_by | null),move_direction?: (order_by | null),move_gait?: (order_by | null),path?: (order_by | null),pitch?: (order_by | null),predicted_bounces?: (order_by | null),predicted_distance?: (order_by | null),predicted_land_x?: (order_by | null),predicted_land_y?: (order_by | null),predicted_land_z?: (order_by | null),predicted_spread?: (order_by | null),rank?: (order_by | null),stand_x?: (order_by | null),stand_y?: (order_by | null),stand_z?: (order_by | null),status?: (order_by | null),strength?: (order_by | null),technique?: (order_by | null),utility_lineup_id?: (order_by | null),verified_at?: (order_by | null),yaw?: (order_by | null)}
+
+
+/** primary key columns input for table: utility_discovery_results */
+export interface utility_discovery_results_pk_columns_input {id: Scalars['uuid']}
+
+
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+export interface utility_discovery_results_prepend_input {path?: (Scalars['jsonb'] | null)}
+
+
+/** input type for updating data in table "utility_discovery_results" */
+export interface utility_discovery_results_set_input {bounces?: (Scalars['Int'] | null),created_at?: (Scalars['timestamptz'] | null),discovery_id?: (Scalars['uuid'] | null),distance?: (Scalars['Float'] | null),eye_z?: (Scalars['float8'] | null),flight_time_ms?: (Scalars['Int'] | null),forgiveness?: (Scalars['Float'] | null),grenades?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),is_new?: (Scalars['Boolean'] | null),jump_throw?: (Scalars['Boolean'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),measured?: (Scalars['Boolean'] | null),move_direction?: (Scalars['String'] | null),move_gait?: (Scalars['String'] | null),path?: (Scalars['jsonb'] | null),pitch?: (Scalars['float8'] | null),predicted_bounces?: (Scalars['Int'] | null),predicted_distance?: (Scalars['Float'] | null),predicted_land_x?: (Scalars['float8'] | null),predicted_land_y?: (Scalars['float8'] | null),predicted_land_z?: (Scalars['float8'] | null),predicted_spread?: (Scalars['Float'] | null),rank?: (Scalars['Int'] | null),stand_x?: (Scalars['float8'] | null),stand_y?: (Scalars['float8'] | null),stand_z?: (Scalars['float8'] | null),status?: (Scalars['String'] | null),strength?: (Scalars['String'] | null),technique?: (Scalars['String'] | null),utility_lineup_id?: (Scalars['uuid'] | null),verified_at?: (Scalars['timestamptz'] | null),yaw?: (Scalars['float8'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface utility_discovery_results_stddev_fieldsGenqlSelection{
+    bounces?: boolean | number
+    distance?: boolean | number
+    eye_z?: boolean | number
+    flight_time_ms?: boolean | number
+    forgiveness?: boolean | number
+    grenades?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    pitch?: boolean | number
+    predicted_bounces?: boolean | number
+    predicted_distance?: boolean | number
+    predicted_land_x?: boolean | number
+    predicted_land_y?: boolean | number
+    predicted_land_z?: boolean | number
+    predicted_spread?: boolean | number
+    rank?: boolean | number
+    stand_x?: boolean | number
+    stand_y?: boolean | number
+    stand_z?: boolean | number
+    yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "utility_discovery_results" */
+export interface utility_discovery_results_stddev_order_by {bounces?: (order_by | null),distance?: (order_by | null),eye_z?: (order_by | null),flight_time_ms?: (order_by | null),forgiveness?: (order_by | null),grenades?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),pitch?: (order_by | null),predicted_bounces?: (order_by | null),predicted_distance?: (order_by | null),predicted_land_x?: (order_by | null),predicted_land_y?: (order_by | null),predicted_land_z?: (order_by | null),predicted_spread?: (order_by | null),rank?: (order_by | null),stand_x?: (order_by | null),stand_y?: (order_by | null),stand_z?: (order_by | null),yaw?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface utility_discovery_results_stddev_pop_fieldsGenqlSelection{
+    bounces?: boolean | number
+    distance?: boolean | number
+    eye_z?: boolean | number
+    flight_time_ms?: boolean | number
+    forgiveness?: boolean | number
+    grenades?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    pitch?: boolean | number
+    predicted_bounces?: boolean | number
+    predicted_distance?: boolean | number
+    predicted_land_x?: boolean | number
+    predicted_land_y?: boolean | number
+    predicted_land_z?: boolean | number
+    predicted_spread?: boolean | number
+    rank?: boolean | number
+    stand_x?: boolean | number
+    stand_y?: boolean | number
+    stand_z?: boolean | number
+    yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "utility_discovery_results" */
+export interface utility_discovery_results_stddev_pop_order_by {bounces?: (order_by | null),distance?: (order_by | null),eye_z?: (order_by | null),flight_time_ms?: (order_by | null),forgiveness?: (order_by | null),grenades?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),pitch?: (order_by | null),predicted_bounces?: (order_by | null),predicted_distance?: (order_by | null),predicted_land_x?: (order_by | null),predicted_land_y?: (order_by | null),predicted_land_z?: (order_by | null),predicted_spread?: (order_by | null),rank?: (order_by | null),stand_x?: (order_by | null),stand_y?: (order_by | null),stand_z?: (order_by | null),yaw?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface utility_discovery_results_stddev_samp_fieldsGenqlSelection{
+    bounces?: boolean | number
+    distance?: boolean | number
+    eye_z?: boolean | number
+    flight_time_ms?: boolean | number
+    forgiveness?: boolean | number
+    grenades?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    pitch?: boolean | number
+    predicted_bounces?: boolean | number
+    predicted_distance?: boolean | number
+    predicted_land_x?: boolean | number
+    predicted_land_y?: boolean | number
+    predicted_land_z?: boolean | number
+    predicted_spread?: boolean | number
+    rank?: boolean | number
+    stand_x?: boolean | number
+    stand_y?: boolean | number
+    stand_z?: boolean | number
+    yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "utility_discovery_results" */
+export interface utility_discovery_results_stddev_samp_order_by {bounces?: (order_by | null),distance?: (order_by | null),eye_z?: (order_by | null),flight_time_ms?: (order_by | null),forgiveness?: (order_by | null),grenades?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),pitch?: (order_by | null),predicted_bounces?: (order_by | null),predicted_distance?: (order_by | null),predicted_land_x?: (order_by | null),predicted_land_y?: (order_by | null),predicted_land_z?: (order_by | null),predicted_spread?: (order_by | null),rank?: (order_by | null),stand_x?: (order_by | null),stand_y?: (order_by | null),stand_z?: (order_by | null),yaw?: (order_by | null)}
+
+
+/** Streaming cursor of the table "utility_discovery_results" */
+export interface utility_discovery_results_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: utility_discovery_results_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface utility_discovery_results_stream_cursor_value_input {bounces?: (Scalars['Int'] | null),created_at?: (Scalars['timestamptz'] | null),discovery_id?: (Scalars['uuid'] | null),distance?: (Scalars['Float'] | null),eye_z?: (Scalars['float8'] | null),flight_time_ms?: (Scalars['Int'] | null),forgiveness?: (Scalars['Float'] | null),grenades?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),is_new?: (Scalars['Boolean'] | null),jump_throw?: (Scalars['Boolean'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),measured?: (Scalars['Boolean'] | null),move_direction?: (Scalars['String'] | null),move_gait?: (Scalars['String'] | null),path?: (Scalars['jsonb'] | null),pitch?: (Scalars['float8'] | null),predicted_bounces?: (Scalars['Int'] | null),predicted_distance?: (Scalars['Float'] | null),predicted_land_x?: (Scalars['float8'] | null),predicted_land_y?: (Scalars['float8'] | null),predicted_land_z?: (Scalars['float8'] | null),predicted_spread?: (Scalars['Float'] | null),rank?: (Scalars['Int'] | null),stand_x?: (Scalars['float8'] | null),stand_y?: (Scalars['float8'] | null),stand_z?: (Scalars['float8'] | null),status?: (Scalars['String'] | null),strength?: (Scalars['String'] | null),technique?: (Scalars['String'] | null),utility_lineup_id?: (Scalars['uuid'] | null),verified_at?: (Scalars['timestamptz'] | null),yaw?: (Scalars['float8'] | null)}
+
+
+/** aggregate sum on columns */
+export interface utility_discovery_results_sum_fieldsGenqlSelection{
+    bounces?: boolean | number
+    distance?: boolean | number
+    eye_z?: boolean | number
+    flight_time_ms?: boolean | number
+    forgiveness?: boolean | number
+    grenades?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    pitch?: boolean | number
+    predicted_bounces?: boolean | number
+    predicted_distance?: boolean | number
+    predicted_land_x?: boolean | number
+    predicted_land_y?: boolean | number
+    predicted_land_z?: boolean | number
+    predicted_spread?: boolean | number
+    rank?: boolean | number
+    stand_x?: boolean | number
+    stand_y?: boolean | number
+    stand_z?: boolean | number
+    yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "utility_discovery_results" */
+export interface utility_discovery_results_sum_order_by {bounces?: (order_by | null),distance?: (order_by | null),eye_z?: (order_by | null),flight_time_ms?: (order_by | null),forgiveness?: (order_by | null),grenades?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),pitch?: (order_by | null),predicted_bounces?: (order_by | null),predicted_distance?: (order_by | null),predicted_land_x?: (order_by | null),predicted_land_y?: (order_by | null),predicted_land_z?: (order_by | null),predicted_spread?: (order_by | null),rank?: (order_by | null),stand_x?: (order_by | null),stand_y?: (order_by | null),stand_z?: (order_by | null),yaw?: (order_by | null)}
+
+export interface utility_discovery_results_updates {
+/** append existing jsonb value of filtered columns with new jsonb value */
+_append?: (utility_discovery_results_append_input | null),
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+_delete_at_path?: (utility_discovery_results_delete_at_path_input | null),
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+_delete_elem?: (utility_discovery_results_delete_elem_input | null),
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+_delete_key?: (utility_discovery_results_delete_key_input | null),
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (utility_discovery_results_inc_input | null),
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+_prepend?: (utility_discovery_results_prepend_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (utility_discovery_results_set_input | null),
+/** filter the rows which have to be updated */
+where: utility_discovery_results_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface utility_discovery_results_var_pop_fieldsGenqlSelection{
+    bounces?: boolean | number
+    distance?: boolean | number
+    eye_z?: boolean | number
+    flight_time_ms?: boolean | number
+    forgiveness?: boolean | number
+    grenades?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    pitch?: boolean | number
+    predicted_bounces?: boolean | number
+    predicted_distance?: boolean | number
+    predicted_land_x?: boolean | number
+    predicted_land_y?: boolean | number
+    predicted_land_z?: boolean | number
+    predicted_spread?: boolean | number
+    rank?: boolean | number
+    stand_x?: boolean | number
+    stand_y?: boolean | number
+    stand_z?: boolean | number
+    yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "utility_discovery_results" */
+export interface utility_discovery_results_var_pop_order_by {bounces?: (order_by | null),distance?: (order_by | null),eye_z?: (order_by | null),flight_time_ms?: (order_by | null),forgiveness?: (order_by | null),grenades?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),pitch?: (order_by | null),predicted_bounces?: (order_by | null),predicted_distance?: (order_by | null),predicted_land_x?: (order_by | null),predicted_land_y?: (order_by | null),predicted_land_z?: (order_by | null),predicted_spread?: (order_by | null),rank?: (order_by | null),stand_x?: (order_by | null),stand_y?: (order_by | null),stand_z?: (order_by | null),yaw?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface utility_discovery_results_var_samp_fieldsGenqlSelection{
+    bounces?: boolean | number
+    distance?: boolean | number
+    eye_z?: boolean | number
+    flight_time_ms?: boolean | number
+    forgiveness?: boolean | number
+    grenades?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    pitch?: boolean | number
+    predicted_bounces?: boolean | number
+    predicted_distance?: boolean | number
+    predicted_land_x?: boolean | number
+    predicted_land_y?: boolean | number
+    predicted_land_z?: boolean | number
+    predicted_spread?: boolean | number
+    rank?: boolean | number
+    stand_x?: boolean | number
+    stand_y?: boolean | number
+    stand_z?: boolean | number
+    yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "utility_discovery_results" */
+export interface utility_discovery_results_var_samp_order_by {bounces?: (order_by | null),distance?: (order_by | null),eye_z?: (order_by | null),flight_time_ms?: (order_by | null),forgiveness?: (order_by | null),grenades?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),pitch?: (order_by | null),predicted_bounces?: (order_by | null),predicted_distance?: (order_by | null),predicted_land_x?: (order_by | null),predicted_land_y?: (order_by | null),predicted_land_z?: (order_by | null),predicted_spread?: (order_by | null),rank?: (order_by | null),stand_x?: (order_by | null),stand_y?: (order_by | null),stand_z?: (order_by | null),yaw?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface utility_discovery_results_variance_fieldsGenqlSelection{
+    bounces?: boolean | number
+    distance?: boolean | number
+    eye_z?: boolean | number
+    flight_time_ms?: boolean | number
+    forgiveness?: boolean | number
+    grenades?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    pitch?: boolean | number
+    predicted_bounces?: boolean | number
+    predicted_distance?: boolean | number
+    predicted_land_x?: boolean | number
+    predicted_land_y?: boolean | number
+    predicted_land_z?: boolean | number
+    predicted_spread?: boolean | number
+    rank?: boolean | number
+    stand_x?: boolean | number
+    stand_y?: boolean | number
+    stand_z?: boolean | number
+    yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "utility_discovery_results" */
+export interface utility_discovery_results_variance_order_by {bounces?: (order_by | null),distance?: (order_by | null),eye_z?: (order_by | null),flight_time_ms?: (order_by | null),forgiveness?: (order_by | null),grenades?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),pitch?: (order_by | null),predicted_bounces?: (order_by | null),predicted_distance?: (order_by | null),predicted_land_x?: (order_by | null),predicted_land_y?: (order_by | null),predicted_land_z?: (order_by | null),predicted_spread?: (order_by | null),rank?: (order_by | null),stand_x?: (order_by | null),stand_y?: (order_by | null),stand_z?: (order_by | null),yaw?: (order_by | null)}
 
 
 /** columns and relationships of "utility_drift_results" */
@@ -126366,6 +131119,7 @@ export interface utility_lineup_rendersGenqlSelection{
     /** An object relationship */
     practice_session?: utility_practice_sessionsGenqlSelection
     progress?: boolean | number
+    render_version?: boolean | number
     /** An object relationship */
     requested_by?: playersGenqlSelection
     requested_by_steam_id?: boolean | number
@@ -126439,6 +131193,7 @@ on_conflict?: (utility_lineup_renders_on_conflict | null)}
 export interface utility_lineup_renders_avg_fieldsGenqlSelection{
     duration_ms?: boolean | number
     progress?: boolean | number
+    render_version?: boolean | number
     requested_by_steam_id?: boolean | number
     sort_index?: boolean | number
     __typename?: boolean | number
@@ -126447,11 +131202,11 @@ export interface utility_lineup_renders_avg_fieldsGenqlSelection{
 
 
 /** order by avg() on columns of table "utility_lineup_renders" */
-export interface utility_lineup_renders_avg_order_by {duration_ms?: (order_by | null),progress?: (order_by | null),requested_by_steam_id?: (order_by | null),sort_index?: (order_by | null)}
+export interface utility_lineup_renders_avg_order_by {duration_ms?: (order_by | null),progress?: (order_by | null),render_version?: (order_by | null),requested_by_steam_id?: (order_by | null),sort_index?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "utility_lineup_renders". All fields are combined with a logical 'AND'. */
-export interface utility_lineup_renders_bool_exp {_and?: (utility_lineup_renders_bool_exp[] | null),_not?: (utility_lineup_renders_bool_exp | null),_or?: (utility_lineup_renders_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),duration_ms?: (Int_comparison_exp | null),error_message?: (String_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),k8s_job_name?: (String_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),lineup?: (utility_lineups_bool_exp | null),map_name?: (String_comparison_exp | null),paused?: (Boolean_comparison_exp | null),practice_session?: (utility_practice_sessions_bool_exp | null),progress?: (numeric_comparison_exp | null),requested_by?: (players_bool_exp | null),requested_by_steam_id?: (bigint_comparison_exp | null),session_token?: (String_comparison_exp | null),skip_reason?: (String_comparison_exp | null),sort_index?: (Int_comparison_exp | null),spec?: (jsonb_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),utility_lineup_id?: (uuid_comparison_exp | null),utility_practice_session_id?: (uuid_comparison_exp | null)}
+export interface utility_lineup_renders_bool_exp {_and?: (utility_lineup_renders_bool_exp[] | null),_not?: (utility_lineup_renders_bool_exp | null),_or?: (utility_lineup_renders_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),duration_ms?: (Int_comparison_exp | null),error_message?: (String_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),k8s_job_name?: (String_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),lineup?: (utility_lineups_bool_exp | null),map_name?: (String_comparison_exp | null),paused?: (Boolean_comparison_exp | null),practice_session?: (utility_practice_sessions_bool_exp | null),progress?: (numeric_comparison_exp | null),render_version?: (Int_comparison_exp | null),requested_by?: (players_bool_exp | null),requested_by_steam_id?: (bigint_comparison_exp | null),session_token?: (String_comparison_exp | null),skip_reason?: (String_comparison_exp | null),sort_index?: (Int_comparison_exp | null),spec?: (jsonb_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),utility_lineup_id?: (uuid_comparison_exp | null),utility_practice_session_id?: (uuid_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -126467,11 +131222,11 @@ export interface utility_lineup_renders_delete_key_input {spec?: (Scalars['Strin
 
 
 /** input type for incrementing numeric columns in table "utility_lineup_renders" */
-export interface utility_lineup_renders_inc_input {duration_ms?: (Scalars['Int'] | null),progress?: (Scalars['numeric'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),sort_index?: (Scalars['Int'] | null)}
+export interface utility_lineup_renders_inc_input {duration_ms?: (Scalars['Int'] | null),progress?: (Scalars['numeric'] | null),render_version?: (Scalars['Int'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),sort_index?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "utility_lineup_renders" */
-export interface utility_lineup_renders_insert_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),error_message?: (Scalars['String'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),lineup?: (utility_lineups_obj_rel_insert_input | null),map_name?: (Scalars['String'] | null),paused?: (Scalars['Boolean'] | null),practice_session?: (utility_practice_sessions_obj_rel_insert_input | null),progress?: (Scalars['numeric'] | null),requested_by?: (players_obj_rel_insert_input | null),requested_by_steam_id?: (Scalars['bigint'] | null),session_token?: (Scalars['String'] | null),skip_reason?: (Scalars['String'] | null),sort_index?: (Scalars['Int'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),utility_lineup_id?: (Scalars['uuid'] | null),utility_practice_session_id?: (Scalars['uuid'] | null)}
+export interface utility_lineup_renders_insert_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),error_message?: (Scalars['String'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),lineup?: (utility_lineups_obj_rel_insert_input | null),map_name?: (Scalars['String'] | null),paused?: (Scalars['Boolean'] | null),practice_session?: (utility_practice_sessions_obj_rel_insert_input | null),progress?: (Scalars['numeric'] | null),render_version?: (Scalars['Int'] | null),requested_by?: (players_obj_rel_insert_input | null),requested_by_steam_id?: (Scalars['bigint'] | null),session_token?: (Scalars['String'] | null),skip_reason?: (Scalars['String'] | null),sort_index?: (Scalars['Int'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),utility_lineup_id?: (Scalars['uuid'] | null),utility_practice_session_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate max on columns */
@@ -126485,6 +131240,7 @@ export interface utility_lineup_renders_max_fieldsGenqlSelection{
     last_status_at?: boolean | number
     map_name?: boolean | number
     progress?: boolean | number
+    render_version?: boolean | number
     requested_by_steam_id?: boolean | number
     session_token?: boolean | number
     skip_reason?: boolean | number
@@ -126498,7 +131254,7 @@ export interface utility_lineup_renders_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "utility_lineup_renders" */
-export interface utility_lineup_renders_max_order_by {created_at?: (order_by | null),duration_ms?: (order_by | null),error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),map_name?: (order_by | null),progress?: (order_by | null),requested_by_steam_id?: (order_by | null),session_token?: (order_by | null),skip_reason?: (order_by | null),sort_index?: (order_by | null),status?: (order_by | null),utility_lineup_id?: (order_by | null),utility_practice_session_id?: (order_by | null)}
+export interface utility_lineup_renders_max_order_by {created_at?: (order_by | null),duration_ms?: (order_by | null),error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),map_name?: (order_by | null),progress?: (order_by | null),render_version?: (order_by | null),requested_by_steam_id?: (order_by | null),session_token?: (order_by | null),skip_reason?: (order_by | null),sort_index?: (order_by | null),status?: (order_by | null),utility_lineup_id?: (order_by | null),utility_practice_session_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -126512,6 +131268,7 @@ export interface utility_lineup_renders_min_fieldsGenqlSelection{
     last_status_at?: boolean | number
     map_name?: boolean | number
     progress?: boolean | number
+    render_version?: boolean | number
     requested_by_steam_id?: boolean | number
     session_token?: boolean | number
     skip_reason?: boolean | number
@@ -126525,7 +131282,7 @@ export interface utility_lineup_renders_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "utility_lineup_renders" */
-export interface utility_lineup_renders_min_order_by {created_at?: (order_by | null),duration_ms?: (order_by | null),error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),map_name?: (order_by | null),progress?: (order_by | null),requested_by_steam_id?: (order_by | null),session_token?: (order_by | null),skip_reason?: (order_by | null),sort_index?: (order_by | null),status?: (order_by | null),utility_lineup_id?: (order_by | null),utility_practice_session_id?: (order_by | null)}
+export interface utility_lineup_renders_min_order_by {created_at?: (order_by | null),duration_ms?: (order_by | null),error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),map_name?: (order_by | null),progress?: (order_by | null),render_version?: (order_by | null),requested_by_steam_id?: (order_by | null),session_token?: (order_by | null),skip_reason?: (order_by | null),sort_index?: (order_by | null),status?: (order_by | null),utility_lineup_id?: (order_by | null),utility_practice_session_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "utility_lineup_renders" */
@@ -126544,7 +131301,7 @@ export interface utility_lineup_renders_on_conflict {constraint: utility_lineup_
 
 
 /** Ordering options when selecting data from "utility_lineup_renders". */
-export interface utility_lineup_renders_order_by {created_at?: (order_by | null),duration_ms?: (order_by | null),error_message?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),lineup?: (utility_lineups_order_by | null),map_name?: (order_by | null),paused?: (order_by | null),practice_session?: (utility_practice_sessions_order_by | null),progress?: (order_by | null),requested_by?: (players_order_by | null),requested_by_steam_id?: (order_by | null),session_token?: (order_by | null),skip_reason?: (order_by | null),sort_index?: (order_by | null),spec?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),utility_lineup_id?: (order_by | null),utility_practice_session_id?: (order_by | null)}
+export interface utility_lineup_renders_order_by {created_at?: (order_by | null),duration_ms?: (order_by | null),error_message?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),lineup?: (utility_lineups_order_by | null),map_name?: (order_by | null),paused?: (order_by | null),practice_session?: (utility_practice_sessions_order_by | null),progress?: (order_by | null),render_version?: (order_by | null),requested_by?: (players_order_by | null),requested_by_steam_id?: (order_by | null),session_token?: (order_by | null),skip_reason?: (order_by | null),sort_index?: (order_by | null),spec?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),utility_lineup_id?: (order_by | null),utility_practice_session_id?: (order_by | null)}
 
 
 /** primary key columns input for table: utility_lineup_renders */
@@ -126556,13 +131313,14 @@ export interface utility_lineup_renders_prepend_input {spec?: (Scalars['jsonb'] 
 
 
 /** input type for updating data in table "utility_lineup_renders" */
-export interface utility_lineup_renders_set_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),paused?: (Scalars['Boolean'] | null),progress?: (Scalars['numeric'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),session_token?: (Scalars['String'] | null),skip_reason?: (Scalars['String'] | null),sort_index?: (Scalars['Int'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),utility_lineup_id?: (Scalars['uuid'] | null),utility_practice_session_id?: (Scalars['uuid'] | null)}
+export interface utility_lineup_renders_set_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),paused?: (Scalars['Boolean'] | null),progress?: (Scalars['numeric'] | null),render_version?: (Scalars['Int'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),session_token?: (Scalars['String'] | null),skip_reason?: (Scalars['String'] | null),sort_index?: (Scalars['Int'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),utility_lineup_id?: (Scalars['uuid'] | null),utility_practice_session_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate stddev on columns */
 export interface utility_lineup_renders_stddev_fieldsGenqlSelection{
     duration_ms?: boolean | number
     progress?: boolean | number
+    render_version?: boolean | number
     requested_by_steam_id?: boolean | number
     sort_index?: boolean | number
     __typename?: boolean | number
@@ -126571,13 +131329,14 @@ export interface utility_lineup_renders_stddev_fieldsGenqlSelection{
 
 
 /** order by stddev() on columns of table "utility_lineup_renders" */
-export interface utility_lineup_renders_stddev_order_by {duration_ms?: (order_by | null),progress?: (order_by | null),requested_by_steam_id?: (order_by | null),sort_index?: (order_by | null)}
+export interface utility_lineup_renders_stddev_order_by {duration_ms?: (order_by | null),progress?: (order_by | null),render_version?: (order_by | null),requested_by_steam_id?: (order_by | null),sort_index?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
 export interface utility_lineup_renders_stddev_pop_fieldsGenqlSelection{
     duration_ms?: boolean | number
     progress?: boolean | number
+    render_version?: boolean | number
     requested_by_steam_id?: boolean | number
     sort_index?: boolean | number
     __typename?: boolean | number
@@ -126586,13 +131345,14 @@ export interface utility_lineup_renders_stddev_pop_fieldsGenqlSelection{
 
 
 /** order by stddev_pop() on columns of table "utility_lineup_renders" */
-export interface utility_lineup_renders_stddev_pop_order_by {duration_ms?: (order_by | null),progress?: (order_by | null),requested_by_steam_id?: (order_by | null),sort_index?: (order_by | null)}
+export interface utility_lineup_renders_stddev_pop_order_by {duration_ms?: (order_by | null),progress?: (order_by | null),render_version?: (order_by | null),requested_by_steam_id?: (order_by | null),sort_index?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
 export interface utility_lineup_renders_stddev_samp_fieldsGenqlSelection{
     duration_ms?: boolean | number
     progress?: boolean | number
+    render_version?: boolean | number
     requested_by_steam_id?: boolean | number
     sort_index?: boolean | number
     __typename?: boolean | number
@@ -126601,7 +131361,7 @@ export interface utility_lineup_renders_stddev_samp_fieldsGenqlSelection{
 
 
 /** order by stddev_samp() on columns of table "utility_lineup_renders" */
-export interface utility_lineup_renders_stddev_samp_order_by {duration_ms?: (order_by | null),progress?: (order_by | null),requested_by_steam_id?: (order_by | null),sort_index?: (order_by | null)}
+export interface utility_lineup_renders_stddev_samp_order_by {duration_ms?: (order_by | null),progress?: (order_by | null),render_version?: (order_by | null),requested_by_steam_id?: (order_by | null),sort_index?: (order_by | null)}
 
 
 /** Streaming cursor of the table "utility_lineup_renders" */
@@ -126613,13 +131373,14 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface utility_lineup_renders_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),paused?: (Scalars['Boolean'] | null),progress?: (Scalars['numeric'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),session_token?: (Scalars['String'] | null),skip_reason?: (Scalars['String'] | null),sort_index?: (Scalars['Int'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),utility_lineup_id?: (Scalars['uuid'] | null),utility_practice_session_id?: (Scalars['uuid'] | null)}
+export interface utility_lineup_renders_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),paused?: (Scalars['Boolean'] | null),progress?: (Scalars['numeric'] | null),render_version?: (Scalars['Int'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),session_token?: (Scalars['String'] | null),skip_reason?: (Scalars['String'] | null),sort_index?: (Scalars['Int'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),utility_lineup_id?: (Scalars['uuid'] | null),utility_practice_session_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate sum on columns */
 export interface utility_lineup_renders_sum_fieldsGenqlSelection{
     duration_ms?: boolean | number
     progress?: boolean | number
+    render_version?: boolean | number
     requested_by_steam_id?: boolean | number
     sort_index?: boolean | number
     __typename?: boolean | number
@@ -126628,7 +131389,7 @@ export interface utility_lineup_renders_sum_fieldsGenqlSelection{
 
 
 /** order by sum() on columns of table "utility_lineup_renders" */
-export interface utility_lineup_renders_sum_order_by {duration_ms?: (order_by | null),progress?: (order_by | null),requested_by_steam_id?: (order_by | null),sort_index?: (order_by | null)}
+export interface utility_lineup_renders_sum_order_by {duration_ms?: (order_by | null),progress?: (order_by | null),render_version?: (order_by | null),requested_by_steam_id?: (order_by | null),sort_index?: (order_by | null)}
 
 export interface utility_lineup_renders_updates {
 /** append existing jsonb value of filtered columns with new jsonb value */
@@ -126653,6 +131414,7 @@ where: utility_lineup_renders_bool_exp}
 export interface utility_lineup_renders_var_pop_fieldsGenqlSelection{
     duration_ms?: boolean | number
     progress?: boolean | number
+    render_version?: boolean | number
     requested_by_steam_id?: boolean | number
     sort_index?: boolean | number
     __typename?: boolean | number
@@ -126661,13 +131423,14 @@ export interface utility_lineup_renders_var_pop_fieldsGenqlSelection{
 
 
 /** order by var_pop() on columns of table "utility_lineup_renders" */
-export interface utility_lineup_renders_var_pop_order_by {duration_ms?: (order_by | null),progress?: (order_by | null),requested_by_steam_id?: (order_by | null),sort_index?: (order_by | null)}
+export interface utility_lineup_renders_var_pop_order_by {duration_ms?: (order_by | null),progress?: (order_by | null),render_version?: (order_by | null),requested_by_steam_id?: (order_by | null),sort_index?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
 export interface utility_lineup_renders_var_samp_fieldsGenqlSelection{
     duration_ms?: boolean | number
     progress?: boolean | number
+    render_version?: boolean | number
     requested_by_steam_id?: boolean | number
     sort_index?: boolean | number
     __typename?: boolean | number
@@ -126676,13 +131439,14 @@ export interface utility_lineup_renders_var_samp_fieldsGenqlSelection{
 
 
 /** order by var_samp() on columns of table "utility_lineup_renders" */
-export interface utility_lineup_renders_var_samp_order_by {duration_ms?: (order_by | null),progress?: (order_by | null),requested_by_steam_id?: (order_by | null),sort_index?: (order_by | null)}
+export interface utility_lineup_renders_var_samp_order_by {duration_ms?: (order_by | null),progress?: (order_by | null),render_version?: (order_by | null),requested_by_steam_id?: (order_by | null),sort_index?: (order_by | null)}
 
 
 /** aggregate variance on columns */
 export interface utility_lineup_renders_variance_fieldsGenqlSelection{
     duration_ms?: boolean | number
     progress?: boolean | number
+    render_version?: boolean | number
     requested_by_steam_id?: boolean | number
     sort_index?: boolean | number
     __typename?: boolean | number
@@ -126691,7 +131455,7 @@ export interface utility_lineup_renders_variance_fieldsGenqlSelection{
 
 
 /** order by variance() on columns of table "utility_lineup_renders" */
-export interface utility_lineup_renders_variance_order_by {duration_ms?: (order_by | null),progress?: (order_by | null),requested_by_steam_id?: (order_by | null),sort_index?: (order_by | null)}
+export interface utility_lineup_renders_variance_order_by {duration_ms?: (order_by | null),progress?: (order_by | null),render_version?: (order_by | null),requested_by_steam_id?: (order_by | null),sort_index?: (order_by | null)}
 
 
 /** columns and relationships of "utility_lineup_repairs" */
@@ -127354,6 +132118,7 @@ export interface utility_lineupsGenqlSelection{
     preview_thumbnail_url?: boolean | number
     /** A computed field, executes function "utility_lineup_preview_url" */
     preview_url?: boolean | number
+    preview_version?: boolean | number
     /** An array relationship */
     progress?: (utility_lineup_progressGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -127431,6 +132196,10 @@ export interface utility_lineupsGenqlSelection{
     /** filter the rows returned */
     where?: (utility_lineup_repairs_bool_exp | null)} })
     side?: boolean | number
+    smoke_voxels_at?: boolean | number
+    smoke_voxels_file?: boolean | number
+    /** A computed field, executes function "utility_lineup_smoke_voxels_url" */
+    smoke_voxels_url?: boolean | number
     source_grenade_id?: boolean | number
     /** An object relationship */
     source_match?: matchesGenqlSelection
@@ -127584,6 +132353,7 @@ export interface utility_lineups_avg_fieldsGenqlSelection{
     practice_players?: boolean | number
     practice_successes?: boolean | number
     preview_duration_ms?: boolean | number
+    preview_version?: boolean | number
     public_reviewed_by?: boolean | number
     source_grenade_id?: boolean | number
     trajectory_size?: boolean | number
@@ -127598,11 +132368,11 @@ export interface utility_lineups_avg_fieldsGenqlSelection{
 
 
 /** order by avg() on columns of table "utility_lineups" */
-export interface utility_lineups_avg_order_by {aim_tolerance?: (order_by | null),author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+export interface utility_lineups_avg_order_by {aim_tolerance?: (order_by | null),author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),preview_version?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "utility_lineups". All fields are combined with a logical 'AND'. */
-export interface utility_lineups_bool_exp {_and?: (utility_lineups_bool_exp[] | null),_not?: (utility_lineups_bool_exp | null),_or?: (utility_lineups_bool_exp[] | null),aim_tolerance?: (float8_comparison_exp | null),approach?: (jsonb_comparison_exp | null),archived_at?: (timestamptz_comparison_exp | null),author?: (players_bool_exp | null),author_steam_id?: (bigint_comparison_exp | null),can_edit?: (Boolean_comparison_exp | null),can_view?: (Boolean_comparison_exp | null),collection_items?: (utility_collection_items_bool_exp | null),collection_items_aggregate?: (utility_collection_items_aggregate_bool_exp | null),confidence?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),difficulty?: (String_comparison_exp | null),downvotes?: (Int_comparison_exp | null),external_id?: (String_comparison_exp | null),eye_z?: (float8_comparison_exp | null),favorited_by?: (utility_lineup_favorites_bool_exp | null),favorited_by_aggregate?: (utility_lineup_favorites_aggregate_bool_exp | null),favorites?: (Int_comparison_exp | null),flight_time_ms?: (Int_comparison_exp | null),forked_from?: (utility_lineups_bool_exp | null),forked_from_utility_lineup_id?: (uuid_comparison_exp | null),id?: (uuid_comparison_exp | null),initial_pos_x?: (float8_comparison_exp | null),initial_pos_y?: (float8_comparison_exp | null),initial_pos_z?: (float8_comparison_exp | null),initial_vel_x?: (float8_comparison_exp | null),initial_vel_y?: (float8_comparison_exp | null),initial_vel_z?: (float8_comparison_exp | null),is_favorited?: (Boolean_comparison_exp | null),jump_throw_bind?: (Boolean_comparison_exp | null),land_x?: (float8_comparison_exp | null),land_y?: (float8_comparison_exp | null),land_z?: (float8_comparison_exp | null),lineup_bucket?: (String_comparison_exp | null),map_name?: (String_comparison_exp | null),my_vote?: (smallint_comparison_exp | null),name?: (String_comparison_exp | null),origin_source?: (e_utility_sources_enum_comparison_exp | null),origin_x?: (float8_comparison_exp | null),origin_y?: (float8_comparison_exp | null),origin_z?: (float8_comparison_exp | null),practice_attempts?: (Int_comparison_exp | null),practice_players?: (Int_comparison_exp | null),practice_successes?: (Int_comparison_exp | null),preview_duration_ms?: (Int_comparison_exp | null),preview_file?: (String_comparison_exp | null),preview_rendered_at?: (timestamptz_comparison_exp | null),preview_stills?: (jsonb_comparison_exp | null),preview_stills_url?: (jsonb_comparison_exp | null),preview_thumbnail?: (String_comparison_exp | null),preview_thumbnail_url?: (String_comparison_exp | null),preview_url?: (String_comparison_exp | null),progress?: (utility_lineup_progress_bool_exp | null),progress_aggregate?: (utility_lineup_progress_aggregate_bool_exp | null),public_requested_at?: (timestamptz_comparison_exp | null),public_review_note?: (String_comparison_exp | null),public_reviewed_at?: (timestamptz_comparison_exp | null),public_reviewed_by?: (bigint_comparison_exp | null),renders?: (utility_lineup_renders_bool_exp | null),renders_aggregate?: (utility_lineup_renders_aggregate_bool_exp | null),repairs?: (utility_lineup_repairs_bool_exp | null),repairs_aggregate?: (utility_lineup_repairs_aggregate_bool_exp | null),side?: (e_sides_enum_comparison_exp | null),source_grenade_id?: (Int_comparison_exp | null),source_match?: (matches_bool_exp | null),source_match_id?: (uuid_comparison_exp | null),source_match_map?: (match_maps_bool_exp | null),source_match_map_id?: (uuid_comparison_exp | null),source_url?: (String_comparison_exp | null),tags?: (String_array_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),technique?: (e_utility_techniques_enum_comparison_exp | null),throw_strength?: (e_utility_throw_strengths_enum_comparison_exp | null),trajectory_file?: (String_comparison_exp | null),trajectory_preview?: (jsonb_comparison_exp | null),trajectory_size?: (Int_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),upvotes?: (Int_comparison_exp | null),utility_type?: (e_utility_types_enum_comparison_exp | null),verified_at?: (timestamptz_comparison_exp | null),view_pitch?: (float8_comparison_exp | null),view_pitch_delta?: (float8_comparison_exp | null),view_yaw?: (float8_comparison_exp | null),view_yaw_delta?: (float8_comparison_exp | null),visibility?: (e_utility_visibility_enum_comparison_exp | null),votes?: (utility_lineup_votes_bool_exp | null),votes_aggregate?: (utility_lineup_votes_aggregate_bool_exp | null),workshop_map_id?: (String_comparison_exp | null)}
+export interface utility_lineups_bool_exp {_and?: (utility_lineups_bool_exp[] | null),_not?: (utility_lineups_bool_exp | null),_or?: (utility_lineups_bool_exp[] | null),aim_tolerance?: (float8_comparison_exp | null),approach?: (jsonb_comparison_exp | null),archived_at?: (timestamptz_comparison_exp | null),author?: (players_bool_exp | null),author_steam_id?: (bigint_comparison_exp | null),can_edit?: (Boolean_comparison_exp | null),can_view?: (Boolean_comparison_exp | null),collection_items?: (utility_collection_items_bool_exp | null),collection_items_aggregate?: (utility_collection_items_aggregate_bool_exp | null),confidence?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),difficulty?: (String_comparison_exp | null),downvotes?: (Int_comparison_exp | null),external_id?: (String_comparison_exp | null),eye_z?: (float8_comparison_exp | null),favorited_by?: (utility_lineup_favorites_bool_exp | null),favorited_by_aggregate?: (utility_lineup_favorites_aggregate_bool_exp | null),favorites?: (Int_comparison_exp | null),flight_time_ms?: (Int_comparison_exp | null),forked_from?: (utility_lineups_bool_exp | null),forked_from_utility_lineup_id?: (uuid_comparison_exp | null),id?: (uuid_comparison_exp | null),initial_pos_x?: (float8_comparison_exp | null),initial_pos_y?: (float8_comparison_exp | null),initial_pos_z?: (float8_comparison_exp | null),initial_vel_x?: (float8_comparison_exp | null),initial_vel_y?: (float8_comparison_exp | null),initial_vel_z?: (float8_comparison_exp | null),is_favorited?: (Boolean_comparison_exp | null),jump_throw_bind?: (Boolean_comparison_exp | null),land_x?: (float8_comparison_exp | null),land_y?: (float8_comparison_exp | null),land_z?: (float8_comparison_exp | null),lineup_bucket?: (String_comparison_exp | null),map_name?: (String_comparison_exp | null),my_vote?: (smallint_comparison_exp | null),name?: (String_comparison_exp | null),origin_source?: (e_utility_sources_enum_comparison_exp | null),origin_x?: (float8_comparison_exp | null),origin_y?: (float8_comparison_exp | null),origin_z?: (float8_comparison_exp | null),practice_attempts?: (Int_comparison_exp | null),practice_players?: (Int_comparison_exp | null),practice_successes?: (Int_comparison_exp | null),preview_duration_ms?: (Int_comparison_exp | null),preview_file?: (String_comparison_exp | null),preview_rendered_at?: (timestamptz_comparison_exp | null),preview_stills?: (jsonb_comparison_exp | null),preview_stills_url?: (jsonb_comparison_exp | null),preview_thumbnail?: (String_comparison_exp | null),preview_thumbnail_url?: (String_comparison_exp | null),preview_url?: (String_comparison_exp | null),preview_version?: (Int_comparison_exp | null),progress?: (utility_lineup_progress_bool_exp | null),progress_aggregate?: (utility_lineup_progress_aggregate_bool_exp | null),public_requested_at?: (timestamptz_comparison_exp | null),public_review_note?: (String_comparison_exp | null),public_reviewed_at?: (timestamptz_comparison_exp | null),public_reviewed_by?: (bigint_comparison_exp | null),renders?: (utility_lineup_renders_bool_exp | null),renders_aggregate?: (utility_lineup_renders_aggregate_bool_exp | null),repairs?: (utility_lineup_repairs_bool_exp | null),repairs_aggregate?: (utility_lineup_repairs_aggregate_bool_exp | null),side?: (e_sides_enum_comparison_exp | null),smoke_voxels_at?: (timestamptz_comparison_exp | null),smoke_voxels_file?: (String_comparison_exp | null),smoke_voxels_url?: (String_comparison_exp | null),source_grenade_id?: (Int_comparison_exp | null),source_match?: (matches_bool_exp | null),source_match_id?: (uuid_comparison_exp | null),source_match_map?: (match_maps_bool_exp | null),source_match_map_id?: (uuid_comparison_exp | null),source_url?: (String_comparison_exp | null),tags?: (String_array_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),technique?: (e_utility_techniques_enum_comparison_exp | null),throw_strength?: (e_utility_throw_strengths_enum_comparison_exp | null),trajectory_file?: (String_comparison_exp | null),trajectory_preview?: (jsonb_comparison_exp | null),trajectory_size?: (Int_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),upvotes?: (Int_comparison_exp | null),utility_type?: (e_utility_types_enum_comparison_exp | null),verified_at?: (timestamptz_comparison_exp | null),view_pitch?: (float8_comparison_exp | null),view_pitch_delta?: (float8_comparison_exp | null),view_yaw?: (float8_comparison_exp | null),view_yaw_delta?: (float8_comparison_exp | null),visibility?: (e_utility_visibility_enum_comparison_exp | null),votes?: (utility_lineup_votes_bool_exp | null),votes_aggregate?: (utility_lineup_votes_aggregate_bool_exp | null),workshop_map_id?: (String_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -127618,11 +132388,11 @@ export interface utility_lineups_delete_key_input {approach?: (Scalars['String']
 
 
 /** input type for incrementing numeric columns in table "utility_lineups" */
-export interface utility_lineups_inc_input {aim_tolerance?: (Scalars['float8'] | null),author_steam_id?: (Scalars['bigint'] | null),downvotes?: (Scalars['Int'] | null),eye_z?: (Scalars['float8'] | null),favorites?: (Scalars['Int'] | null),flight_time_ms?: (Scalars['Int'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),practice_attempts?: (Scalars['Int'] | null),practice_players?: (Scalars['Int'] | null),practice_successes?: (Scalars['Int'] | null),preview_duration_ms?: (Scalars['Int'] | null),public_reviewed_by?: (Scalars['bigint'] | null),source_grenade_id?: (Scalars['Int'] | null),trajectory_size?: (Scalars['Int'] | null),upvotes?: (Scalars['Int'] | null),view_pitch?: (Scalars['float8'] | null),view_pitch_delta?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null),view_yaw_delta?: (Scalars['float8'] | null)}
+export interface utility_lineups_inc_input {aim_tolerance?: (Scalars['float8'] | null),author_steam_id?: (Scalars['bigint'] | null),downvotes?: (Scalars['Int'] | null),eye_z?: (Scalars['float8'] | null),favorites?: (Scalars['Int'] | null),flight_time_ms?: (Scalars['Int'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),practice_attempts?: (Scalars['Int'] | null),practice_players?: (Scalars['Int'] | null),practice_successes?: (Scalars['Int'] | null),preview_duration_ms?: (Scalars['Int'] | null),preview_version?: (Scalars['Int'] | null),public_reviewed_by?: (Scalars['bigint'] | null),source_grenade_id?: (Scalars['Int'] | null),trajectory_size?: (Scalars['Int'] | null),upvotes?: (Scalars['Int'] | null),view_pitch?: (Scalars['float8'] | null),view_pitch_delta?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null),view_yaw_delta?: (Scalars['float8'] | null)}
 
 
 /** input type for inserting data into table "utility_lineups" */
-export interface utility_lineups_insert_input {aim_tolerance?: (Scalars['float8'] | null),approach?: (Scalars['jsonb'] | null),archived_at?: (Scalars['timestamptz'] | null),author?: (players_obj_rel_insert_input | null),author_steam_id?: (Scalars['bigint'] | null),collection_items?: (utility_collection_items_arr_rel_insert_input | null),confidence?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),downvotes?: (Scalars['Int'] | null),external_id?: (Scalars['String'] | null),eye_z?: (Scalars['float8'] | null),favorited_by?: (utility_lineup_favorites_arr_rel_insert_input | null),favorites?: (Scalars['Int'] | null),flight_time_ms?: (Scalars['Int'] | null),forked_from?: (utility_lineups_obj_rel_insert_input | null),forked_from_utility_lineup_id?: (Scalars['uuid'] | null),id?: (Scalars['uuid'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),jump_throw_bind?: (Scalars['Boolean'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),origin_source?: (e_utility_sources_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),practice_attempts?: (Scalars['Int'] | null),practice_players?: (Scalars['Int'] | null),practice_successes?: (Scalars['Int'] | null),preview_duration_ms?: (Scalars['Int'] | null),preview_file?: (Scalars['String'] | null),preview_rendered_at?: (Scalars['timestamptz'] | null),preview_stills?: (Scalars['jsonb'] | null),preview_thumbnail?: (Scalars['String'] | null),progress?: (utility_lineup_progress_arr_rel_insert_input | null),public_requested_at?: (Scalars['timestamptz'] | null),public_review_note?: (Scalars['String'] | null),public_reviewed_at?: (Scalars['timestamptz'] | null),public_reviewed_by?: (Scalars['bigint'] | null),renders?: (utility_lineup_renders_arr_rel_insert_input | null),repairs?: (utility_lineup_repairs_arr_rel_insert_input | null),side?: (e_sides_enum | null),source_grenade_id?: (Scalars['Int'] | null),source_match?: (matches_obj_rel_insert_input | null),source_match_id?: (Scalars['uuid'] | null),source_match_map?: (match_maps_obj_rel_insert_input | null),source_match_map_id?: (Scalars['uuid'] | null),source_url?: (Scalars['String'] | null),tags?: (Scalars['String'][] | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),technique?: (e_utility_techniques_enum | null),throw_strength?: (e_utility_throw_strengths_enum | null),trajectory_file?: (Scalars['String'] | null),trajectory_preview?: (Scalars['jsonb'] | null),trajectory_size?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),upvotes?: (Scalars['Int'] | null),utility_type?: (e_utility_types_enum | null),verified_at?: (Scalars['timestamptz'] | null),view_pitch?: (Scalars['float8'] | null),view_pitch_delta?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null),view_yaw_delta?: (Scalars['float8'] | null),visibility?: (e_utility_visibility_enum | null),votes?: (utility_lineup_votes_arr_rel_insert_input | null),workshop_map_id?: (Scalars['String'] | null)}
+export interface utility_lineups_insert_input {aim_tolerance?: (Scalars['float8'] | null),approach?: (Scalars['jsonb'] | null),archived_at?: (Scalars['timestamptz'] | null),author?: (players_obj_rel_insert_input | null),author_steam_id?: (Scalars['bigint'] | null),collection_items?: (utility_collection_items_arr_rel_insert_input | null),confidence?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),downvotes?: (Scalars['Int'] | null),external_id?: (Scalars['String'] | null),eye_z?: (Scalars['float8'] | null),favorited_by?: (utility_lineup_favorites_arr_rel_insert_input | null),favorites?: (Scalars['Int'] | null),flight_time_ms?: (Scalars['Int'] | null),forked_from?: (utility_lineups_obj_rel_insert_input | null),forked_from_utility_lineup_id?: (Scalars['uuid'] | null),id?: (Scalars['uuid'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),jump_throw_bind?: (Scalars['Boolean'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),origin_source?: (e_utility_sources_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),practice_attempts?: (Scalars['Int'] | null),practice_players?: (Scalars['Int'] | null),practice_successes?: (Scalars['Int'] | null),preview_duration_ms?: (Scalars['Int'] | null),preview_file?: (Scalars['String'] | null),preview_rendered_at?: (Scalars['timestamptz'] | null),preview_stills?: (Scalars['jsonb'] | null),preview_thumbnail?: (Scalars['String'] | null),preview_version?: (Scalars['Int'] | null),progress?: (utility_lineup_progress_arr_rel_insert_input | null),public_requested_at?: (Scalars['timestamptz'] | null),public_review_note?: (Scalars['String'] | null),public_reviewed_at?: (Scalars['timestamptz'] | null),public_reviewed_by?: (Scalars['bigint'] | null),renders?: (utility_lineup_renders_arr_rel_insert_input | null),repairs?: (utility_lineup_repairs_arr_rel_insert_input | null),side?: (e_sides_enum | null),smoke_voxels_at?: (Scalars['timestamptz'] | null),smoke_voxels_file?: (Scalars['String'] | null),source_grenade_id?: (Scalars['Int'] | null),source_match?: (matches_obj_rel_insert_input | null),source_match_id?: (Scalars['uuid'] | null),source_match_map?: (match_maps_obj_rel_insert_input | null),source_match_map_id?: (Scalars['uuid'] | null),source_url?: (Scalars['String'] | null),tags?: (Scalars['String'][] | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),technique?: (e_utility_techniques_enum | null),throw_strength?: (e_utility_throw_strengths_enum | null),trajectory_file?: (Scalars['String'] | null),trajectory_preview?: (Scalars['jsonb'] | null),trajectory_size?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),upvotes?: (Scalars['Int'] | null),utility_type?: (e_utility_types_enum | null),verified_at?: (Scalars['timestamptz'] | null),view_pitch?: (Scalars['float8'] | null),view_pitch_delta?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null),view_yaw_delta?: (Scalars['float8'] | null),visibility?: (e_utility_visibility_enum | null),votes?: (utility_lineup_votes_arr_rel_insert_input | null),workshop_map_id?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -127670,10 +132440,15 @@ export interface utility_lineups_max_fieldsGenqlSelection{
     preview_thumbnail_url?: boolean | number
     /** A computed field, executes function "utility_lineup_preview_url" */
     preview_url?: boolean | number
+    preview_version?: boolean | number
     public_requested_at?: boolean | number
     public_review_note?: boolean | number
     public_reviewed_at?: boolean | number
     public_reviewed_by?: boolean | number
+    smoke_voxels_at?: boolean | number
+    smoke_voxels_file?: boolean | number
+    /** A computed field, executes function "utility_lineup_smoke_voxels_url" */
+    smoke_voxels_url?: boolean | number
     source_grenade_id?: boolean | number
     source_match_id?: boolean | number
     source_match_map_id?: boolean | number
@@ -127696,7 +132471,7 @@ export interface utility_lineups_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "utility_lineups" */
-export interface utility_lineups_max_order_by {aim_tolerance?: (order_by | null),archived_at?: (order_by | null),author_steam_id?: (order_by | null),confidence?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),downvotes?: (order_by | null),external_id?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),forked_from_utility_lineup_id?: (order_by | null),id?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),lineup_bucket?: (order_by | null),map_name?: (order_by | null),name?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),preview_file?: (order_by | null),preview_rendered_at?: (order_by | null),preview_thumbnail?: (order_by | null),public_requested_at?: (order_by | null),public_review_note?: (order_by | null),public_reviewed_at?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),source_match_id?: (order_by | null),source_match_map_id?: (order_by | null),source_url?: (order_by | null),tags?: (order_by | null),team_id?: (order_by | null),trajectory_file?: (order_by | null),trajectory_size?: (order_by | null),updated_at?: (order_by | null),upvotes?: (order_by | null),verified_at?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null),workshop_map_id?: (order_by | null)}
+export interface utility_lineups_max_order_by {aim_tolerance?: (order_by | null),archived_at?: (order_by | null),author_steam_id?: (order_by | null),confidence?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),downvotes?: (order_by | null),external_id?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),forked_from_utility_lineup_id?: (order_by | null),id?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),lineup_bucket?: (order_by | null),map_name?: (order_by | null),name?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),preview_file?: (order_by | null),preview_rendered_at?: (order_by | null),preview_thumbnail?: (order_by | null),preview_version?: (order_by | null),public_requested_at?: (order_by | null),public_review_note?: (order_by | null),public_reviewed_at?: (order_by | null),public_reviewed_by?: (order_by | null),smoke_voxels_at?: (order_by | null),smoke_voxels_file?: (order_by | null),source_grenade_id?: (order_by | null),source_match_id?: (order_by | null),source_match_map_id?: (order_by | null),source_url?: (order_by | null),tags?: (order_by | null),team_id?: (order_by | null),trajectory_file?: (order_by | null),trajectory_size?: (order_by | null),updated_at?: (order_by | null),upvotes?: (order_by | null),verified_at?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null),workshop_map_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -127744,10 +132519,15 @@ export interface utility_lineups_min_fieldsGenqlSelection{
     preview_thumbnail_url?: boolean | number
     /** A computed field, executes function "utility_lineup_preview_url" */
     preview_url?: boolean | number
+    preview_version?: boolean | number
     public_requested_at?: boolean | number
     public_review_note?: boolean | number
     public_reviewed_at?: boolean | number
     public_reviewed_by?: boolean | number
+    smoke_voxels_at?: boolean | number
+    smoke_voxels_file?: boolean | number
+    /** A computed field, executes function "utility_lineup_smoke_voxels_url" */
+    smoke_voxels_url?: boolean | number
     source_grenade_id?: boolean | number
     source_match_id?: boolean | number
     source_match_map_id?: boolean | number
@@ -127770,7 +132550,7 @@ export interface utility_lineups_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "utility_lineups" */
-export interface utility_lineups_min_order_by {aim_tolerance?: (order_by | null),archived_at?: (order_by | null),author_steam_id?: (order_by | null),confidence?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),downvotes?: (order_by | null),external_id?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),forked_from_utility_lineup_id?: (order_by | null),id?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),lineup_bucket?: (order_by | null),map_name?: (order_by | null),name?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),preview_file?: (order_by | null),preview_rendered_at?: (order_by | null),preview_thumbnail?: (order_by | null),public_requested_at?: (order_by | null),public_review_note?: (order_by | null),public_reviewed_at?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),source_match_id?: (order_by | null),source_match_map_id?: (order_by | null),source_url?: (order_by | null),tags?: (order_by | null),team_id?: (order_by | null),trajectory_file?: (order_by | null),trajectory_size?: (order_by | null),updated_at?: (order_by | null),upvotes?: (order_by | null),verified_at?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null),workshop_map_id?: (order_by | null)}
+export interface utility_lineups_min_order_by {aim_tolerance?: (order_by | null),archived_at?: (order_by | null),author_steam_id?: (order_by | null),confidence?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),downvotes?: (order_by | null),external_id?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),forked_from_utility_lineup_id?: (order_by | null),id?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),lineup_bucket?: (order_by | null),map_name?: (order_by | null),name?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),preview_file?: (order_by | null),preview_rendered_at?: (order_by | null),preview_thumbnail?: (order_by | null),preview_version?: (order_by | null),public_requested_at?: (order_by | null),public_review_note?: (order_by | null),public_reviewed_at?: (order_by | null),public_reviewed_by?: (order_by | null),smoke_voxels_at?: (order_by | null),smoke_voxels_file?: (order_by | null),source_grenade_id?: (order_by | null),source_match_id?: (order_by | null),source_match_map_id?: (order_by | null),source_url?: (order_by | null),tags?: (order_by | null),team_id?: (order_by | null),trajectory_file?: (order_by | null),trajectory_size?: (order_by | null),updated_at?: (order_by | null),upvotes?: (order_by | null),verified_at?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null),workshop_map_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "utility_lineups" */
@@ -127795,7 +132575,7 @@ export interface utility_lineups_on_conflict {constraint: utility_lineups_constr
 
 
 /** Ordering options when selecting data from "utility_lineups". */
-export interface utility_lineups_order_by {aim_tolerance?: (order_by | null),approach?: (order_by | null),archived_at?: (order_by | null),author?: (players_order_by | null),author_steam_id?: (order_by | null),can_edit?: (order_by | null),can_view?: (order_by | null),collection_items_aggregate?: (utility_collection_items_aggregate_order_by | null),confidence?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),difficulty?: (order_by | null),downvotes?: (order_by | null),external_id?: (order_by | null),eye_z?: (order_by | null),favorited_by_aggregate?: (utility_lineup_favorites_aggregate_order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),forked_from?: (utility_lineups_order_by | null),forked_from_utility_lineup_id?: (order_by | null),id?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),is_favorited?: (order_by | null),jump_throw_bind?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),lineup_bucket?: (order_by | null),map_name?: (order_by | null),my_vote?: (order_by | null),name?: (order_by | null),origin_source?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),preview_file?: (order_by | null),preview_rendered_at?: (order_by | null),preview_stills?: (order_by | null),preview_stills_url?: (order_by | null),preview_thumbnail?: (order_by | null),preview_thumbnail_url?: (order_by | null),preview_url?: (order_by | null),progress_aggregate?: (utility_lineup_progress_aggregate_order_by | null),public_requested_at?: (order_by | null),public_review_note?: (order_by | null),public_reviewed_at?: (order_by | null),public_reviewed_by?: (order_by | null),renders_aggregate?: (utility_lineup_renders_aggregate_order_by | null),repairs_aggregate?: (utility_lineup_repairs_aggregate_order_by | null),side?: (order_by | null),source_grenade_id?: (order_by | null),source_match?: (matches_order_by | null),source_match_id?: (order_by | null),source_match_map?: (match_maps_order_by | null),source_match_map_id?: (order_by | null),source_url?: (order_by | null),tags?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),technique?: (order_by | null),throw_strength?: (order_by | null),trajectory_file?: (order_by | null),trajectory_preview?: (order_by | null),trajectory_size?: (order_by | null),updated_at?: (order_by | null),upvotes?: (order_by | null),utility_type?: (order_by | null),verified_at?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null),visibility?: (order_by | null),votes_aggregate?: (utility_lineup_votes_aggregate_order_by | null),workshop_map_id?: (order_by | null)}
+export interface utility_lineups_order_by {aim_tolerance?: (order_by | null),approach?: (order_by | null),archived_at?: (order_by | null),author?: (players_order_by | null),author_steam_id?: (order_by | null),can_edit?: (order_by | null),can_view?: (order_by | null),collection_items_aggregate?: (utility_collection_items_aggregate_order_by | null),confidence?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),difficulty?: (order_by | null),downvotes?: (order_by | null),external_id?: (order_by | null),eye_z?: (order_by | null),favorited_by_aggregate?: (utility_lineup_favorites_aggregate_order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),forked_from?: (utility_lineups_order_by | null),forked_from_utility_lineup_id?: (order_by | null),id?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),is_favorited?: (order_by | null),jump_throw_bind?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),lineup_bucket?: (order_by | null),map_name?: (order_by | null),my_vote?: (order_by | null),name?: (order_by | null),origin_source?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),preview_file?: (order_by | null),preview_rendered_at?: (order_by | null),preview_stills?: (order_by | null),preview_stills_url?: (order_by | null),preview_thumbnail?: (order_by | null),preview_thumbnail_url?: (order_by | null),preview_url?: (order_by | null),preview_version?: (order_by | null),progress_aggregate?: (utility_lineup_progress_aggregate_order_by | null),public_requested_at?: (order_by | null),public_review_note?: (order_by | null),public_reviewed_at?: (order_by | null),public_reviewed_by?: (order_by | null),renders_aggregate?: (utility_lineup_renders_aggregate_order_by | null),repairs_aggregate?: (utility_lineup_repairs_aggregate_order_by | null),side?: (order_by | null),smoke_voxels_at?: (order_by | null),smoke_voxels_file?: (order_by | null),smoke_voxels_url?: (order_by | null),source_grenade_id?: (order_by | null),source_match?: (matches_order_by | null),source_match_id?: (order_by | null),source_match_map?: (match_maps_order_by | null),source_match_map_id?: (order_by | null),source_url?: (order_by | null),tags?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),technique?: (order_by | null),throw_strength?: (order_by | null),trajectory_file?: (order_by | null),trajectory_preview?: (order_by | null),trajectory_size?: (order_by | null),updated_at?: (order_by | null),upvotes?: (order_by | null),utility_type?: (order_by | null),verified_at?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null),visibility?: (order_by | null),votes_aggregate?: (utility_lineup_votes_aggregate_order_by | null),workshop_map_id?: (order_by | null)}
 
 
 /** primary key columns input for table: utility_lineups */
@@ -127807,7 +132587,7 @@ export interface utility_lineups_prepend_input {approach?: (Scalars['jsonb'] | n
 
 
 /** input type for updating data in table "utility_lineups" */
-export interface utility_lineups_set_input {aim_tolerance?: (Scalars['float8'] | null),approach?: (Scalars['jsonb'] | null),archived_at?: (Scalars['timestamptz'] | null),author_steam_id?: (Scalars['bigint'] | null),confidence?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),downvotes?: (Scalars['Int'] | null),external_id?: (Scalars['String'] | null),eye_z?: (Scalars['float8'] | null),favorites?: (Scalars['Int'] | null),flight_time_ms?: (Scalars['Int'] | null),forked_from_utility_lineup_id?: (Scalars['uuid'] | null),id?: (Scalars['uuid'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),jump_throw_bind?: (Scalars['Boolean'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),origin_source?: (e_utility_sources_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),practice_attempts?: (Scalars['Int'] | null),practice_players?: (Scalars['Int'] | null),practice_successes?: (Scalars['Int'] | null),preview_duration_ms?: (Scalars['Int'] | null),preview_file?: (Scalars['String'] | null),preview_rendered_at?: (Scalars['timestamptz'] | null),preview_stills?: (Scalars['jsonb'] | null),preview_thumbnail?: (Scalars['String'] | null),public_requested_at?: (Scalars['timestamptz'] | null),public_review_note?: (Scalars['String'] | null),public_reviewed_at?: (Scalars['timestamptz'] | null),public_reviewed_by?: (Scalars['bigint'] | null),side?: (e_sides_enum | null),source_grenade_id?: (Scalars['Int'] | null),source_match_id?: (Scalars['uuid'] | null),source_match_map_id?: (Scalars['uuid'] | null),source_url?: (Scalars['String'] | null),tags?: (Scalars['String'][] | null),team_id?: (Scalars['uuid'] | null),technique?: (e_utility_techniques_enum | null),throw_strength?: (e_utility_throw_strengths_enum | null),trajectory_file?: (Scalars['String'] | null),trajectory_preview?: (Scalars['jsonb'] | null),trajectory_size?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),upvotes?: (Scalars['Int'] | null),utility_type?: (e_utility_types_enum | null),verified_at?: (Scalars['timestamptz'] | null),view_pitch?: (Scalars['float8'] | null),view_pitch_delta?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null),view_yaw_delta?: (Scalars['float8'] | null),visibility?: (e_utility_visibility_enum | null),workshop_map_id?: (Scalars['String'] | null)}
+export interface utility_lineups_set_input {aim_tolerance?: (Scalars['float8'] | null),approach?: (Scalars['jsonb'] | null),archived_at?: (Scalars['timestamptz'] | null),author_steam_id?: (Scalars['bigint'] | null),confidence?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),downvotes?: (Scalars['Int'] | null),external_id?: (Scalars['String'] | null),eye_z?: (Scalars['float8'] | null),favorites?: (Scalars['Int'] | null),flight_time_ms?: (Scalars['Int'] | null),forked_from_utility_lineup_id?: (Scalars['uuid'] | null),id?: (Scalars['uuid'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),jump_throw_bind?: (Scalars['Boolean'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),origin_source?: (e_utility_sources_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),practice_attempts?: (Scalars['Int'] | null),practice_players?: (Scalars['Int'] | null),practice_successes?: (Scalars['Int'] | null),preview_duration_ms?: (Scalars['Int'] | null),preview_file?: (Scalars['String'] | null),preview_rendered_at?: (Scalars['timestamptz'] | null),preview_stills?: (Scalars['jsonb'] | null),preview_thumbnail?: (Scalars['String'] | null),preview_version?: (Scalars['Int'] | null),public_requested_at?: (Scalars['timestamptz'] | null),public_review_note?: (Scalars['String'] | null),public_reviewed_at?: (Scalars['timestamptz'] | null),public_reviewed_by?: (Scalars['bigint'] | null),side?: (e_sides_enum | null),smoke_voxels_at?: (Scalars['timestamptz'] | null),smoke_voxels_file?: (Scalars['String'] | null),source_grenade_id?: (Scalars['Int'] | null),source_match_id?: (Scalars['uuid'] | null),source_match_map_id?: (Scalars['uuid'] | null),source_url?: (Scalars['String'] | null),tags?: (Scalars['String'][] | null),team_id?: (Scalars['uuid'] | null),technique?: (e_utility_techniques_enum | null),throw_strength?: (e_utility_throw_strengths_enum | null),trajectory_file?: (Scalars['String'] | null),trajectory_preview?: (Scalars['jsonb'] | null),trajectory_size?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),upvotes?: (Scalars['Int'] | null),utility_type?: (e_utility_types_enum | null),verified_at?: (Scalars['timestamptz'] | null),view_pitch?: (Scalars['float8'] | null),view_pitch_delta?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null),view_yaw_delta?: (Scalars['float8'] | null),visibility?: (e_utility_visibility_enum | null),workshop_map_id?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -127836,6 +132616,7 @@ export interface utility_lineups_stddev_fieldsGenqlSelection{
     practice_players?: boolean | number
     practice_successes?: boolean | number
     preview_duration_ms?: boolean | number
+    preview_version?: boolean | number
     public_reviewed_by?: boolean | number
     source_grenade_id?: boolean | number
     trajectory_size?: boolean | number
@@ -127850,7 +132631,7 @@ export interface utility_lineups_stddev_fieldsGenqlSelection{
 
 
 /** order by stddev() on columns of table "utility_lineups" */
-export interface utility_lineups_stddev_order_by {aim_tolerance?: (order_by | null),author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+export interface utility_lineups_stddev_order_by {aim_tolerance?: (order_by | null),author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),preview_version?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
@@ -127879,6 +132660,7 @@ export interface utility_lineups_stddev_pop_fieldsGenqlSelection{
     practice_players?: boolean | number
     practice_successes?: boolean | number
     preview_duration_ms?: boolean | number
+    preview_version?: boolean | number
     public_reviewed_by?: boolean | number
     source_grenade_id?: boolean | number
     trajectory_size?: boolean | number
@@ -127893,7 +132675,7 @@ export interface utility_lineups_stddev_pop_fieldsGenqlSelection{
 
 
 /** order by stddev_pop() on columns of table "utility_lineups" */
-export interface utility_lineups_stddev_pop_order_by {aim_tolerance?: (order_by | null),author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+export interface utility_lineups_stddev_pop_order_by {aim_tolerance?: (order_by | null),author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),preview_version?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
@@ -127922,6 +132704,7 @@ export interface utility_lineups_stddev_samp_fieldsGenqlSelection{
     practice_players?: boolean | number
     practice_successes?: boolean | number
     preview_duration_ms?: boolean | number
+    preview_version?: boolean | number
     public_reviewed_by?: boolean | number
     source_grenade_id?: boolean | number
     trajectory_size?: boolean | number
@@ -127936,7 +132719,7 @@ export interface utility_lineups_stddev_samp_fieldsGenqlSelection{
 
 
 /** order by stddev_samp() on columns of table "utility_lineups" */
-export interface utility_lineups_stddev_samp_order_by {aim_tolerance?: (order_by | null),author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+export interface utility_lineups_stddev_samp_order_by {aim_tolerance?: (order_by | null),author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),preview_version?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
 
 
 /** Streaming cursor of the table "utility_lineups" */
@@ -127948,7 +132731,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface utility_lineups_stream_cursor_value_input {aim_tolerance?: (Scalars['float8'] | null),approach?: (Scalars['jsonb'] | null),archived_at?: (Scalars['timestamptz'] | null),author_steam_id?: (Scalars['bigint'] | null),confidence?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),downvotes?: (Scalars['Int'] | null),external_id?: (Scalars['String'] | null),eye_z?: (Scalars['float8'] | null),favorites?: (Scalars['Int'] | null),flight_time_ms?: (Scalars['Int'] | null),forked_from_utility_lineup_id?: (Scalars['uuid'] | null),id?: (Scalars['uuid'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),jump_throw_bind?: (Scalars['Boolean'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),lineup_bucket?: (Scalars['String'] | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),origin_source?: (e_utility_sources_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),practice_attempts?: (Scalars['Int'] | null),practice_players?: (Scalars['Int'] | null),practice_successes?: (Scalars['Int'] | null),preview_duration_ms?: (Scalars['Int'] | null),preview_file?: (Scalars['String'] | null),preview_rendered_at?: (Scalars['timestamptz'] | null),preview_stills?: (Scalars['jsonb'] | null),preview_thumbnail?: (Scalars['String'] | null),public_requested_at?: (Scalars['timestamptz'] | null),public_review_note?: (Scalars['String'] | null),public_reviewed_at?: (Scalars['timestamptz'] | null),public_reviewed_by?: (Scalars['bigint'] | null),side?: (e_sides_enum | null),source_grenade_id?: (Scalars['Int'] | null),source_match_id?: (Scalars['uuid'] | null),source_match_map_id?: (Scalars['uuid'] | null),source_url?: (Scalars['String'] | null),tags?: (Scalars['String'][] | null),team_id?: (Scalars['uuid'] | null),technique?: (e_utility_techniques_enum | null),throw_strength?: (e_utility_throw_strengths_enum | null),trajectory_file?: (Scalars['String'] | null),trajectory_preview?: (Scalars['jsonb'] | null),trajectory_size?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),upvotes?: (Scalars['Int'] | null),utility_type?: (e_utility_types_enum | null),verified_at?: (Scalars['timestamptz'] | null),view_pitch?: (Scalars['float8'] | null),view_pitch_delta?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null),view_yaw_delta?: (Scalars['float8'] | null),visibility?: (e_utility_visibility_enum | null),workshop_map_id?: (Scalars['String'] | null)}
+export interface utility_lineups_stream_cursor_value_input {aim_tolerance?: (Scalars['float8'] | null),approach?: (Scalars['jsonb'] | null),archived_at?: (Scalars['timestamptz'] | null),author_steam_id?: (Scalars['bigint'] | null),confidence?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),downvotes?: (Scalars['Int'] | null),external_id?: (Scalars['String'] | null),eye_z?: (Scalars['float8'] | null),favorites?: (Scalars['Int'] | null),flight_time_ms?: (Scalars['Int'] | null),forked_from_utility_lineup_id?: (Scalars['uuid'] | null),id?: (Scalars['uuid'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),jump_throw_bind?: (Scalars['Boolean'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),lineup_bucket?: (Scalars['String'] | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),origin_source?: (e_utility_sources_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),practice_attempts?: (Scalars['Int'] | null),practice_players?: (Scalars['Int'] | null),practice_successes?: (Scalars['Int'] | null),preview_duration_ms?: (Scalars['Int'] | null),preview_file?: (Scalars['String'] | null),preview_rendered_at?: (Scalars['timestamptz'] | null),preview_stills?: (Scalars['jsonb'] | null),preview_thumbnail?: (Scalars['String'] | null),preview_version?: (Scalars['Int'] | null),public_requested_at?: (Scalars['timestamptz'] | null),public_review_note?: (Scalars['String'] | null),public_reviewed_at?: (Scalars['timestamptz'] | null),public_reviewed_by?: (Scalars['bigint'] | null),side?: (e_sides_enum | null),smoke_voxels_at?: (Scalars['timestamptz'] | null),smoke_voxels_file?: (Scalars['String'] | null),source_grenade_id?: (Scalars['Int'] | null),source_match_id?: (Scalars['uuid'] | null),source_match_map_id?: (Scalars['uuid'] | null),source_url?: (Scalars['String'] | null),tags?: (Scalars['String'][] | null),team_id?: (Scalars['uuid'] | null),technique?: (e_utility_techniques_enum | null),throw_strength?: (e_utility_throw_strengths_enum | null),trajectory_file?: (Scalars['String'] | null),trajectory_preview?: (Scalars['jsonb'] | null),trajectory_size?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),upvotes?: (Scalars['Int'] | null),utility_type?: (e_utility_types_enum | null),verified_at?: (Scalars['timestamptz'] | null),view_pitch?: (Scalars['float8'] | null),view_pitch_delta?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null),view_yaw_delta?: (Scalars['float8'] | null),visibility?: (e_utility_visibility_enum | null),workshop_map_id?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -127977,6 +132760,7 @@ export interface utility_lineups_sum_fieldsGenqlSelection{
     practice_players?: boolean | number
     practice_successes?: boolean | number
     preview_duration_ms?: boolean | number
+    preview_version?: boolean | number
     public_reviewed_by?: boolean | number
     source_grenade_id?: boolean | number
     trajectory_size?: boolean | number
@@ -127991,7 +132775,7 @@ export interface utility_lineups_sum_fieldsGenqlSelection{
 
 
 /** order by sum() on columns of table "utility_lineups" */
-export interface utility_lineups_sum_order_by {aim_tolerance?: (order_by | null),author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+export interface utility_lineups_sum_order_by {aim_tolerance?: (order_by | null),author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),preview_version?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
 
 export interface utility_lineups_updates {
 /** append existing jsonb value of filtered columns with new jsonb value */
@@ -128038,6 +132822,7 @@ export interface utility_lineups_var_pop_fieldsGenqlSelection{
     practice_players?: boolean | number
     practice_successes?: boolean | number
     preview_duration_ms?: boolean | number
+    preview_version?: boolean | number
     public_reviewed_by?: boolean | number
     source_grenade_id?: boolean | number
     trajectory_size?: boolean | number
@@ -128052,7 +132837,7 @@ export interface utility_lineups_var_pop_fieldsGenqlSelection{
 
 
 /** order by var_pop() on columns of table "utility_lineups" */
-export interface utility_lineups_var_pop_order_by {aim_tolerance?: (order_by | null),author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+export interface utility_lineups_var_pop_order_by {aim_tolerance?: (order_by | null),author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),preview_version?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
@@ -128081,6 +132866,7 @@ export interface utility_lineups_var_samp_fieldsGenqlSelection{
     practice_players?: boolean | number
     practice_successes?: boolean | number
     preview_duration_ms?: boolean | number
+    preview_version?: boolean | number
     public_reviewed_by?: boolean | number
     source_grenade_id?: boolean | number
     trajectory_size?: boolean | number
@@ -128095,7 +132881,7 @@ export interface utility_lineups_var_samp_fieldsGenqlSelection{
 
 
 /** order by var_samp() on columns of table "utility_lineups" */
-export interface utility_lineups_var_samp_order_by {aim_tolerance?: (order_by | null),author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+export interface utility_lineups_var_samp_order_by {aim_tolerance?: (order_by | null),author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),preview_version?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
 
 
 /** aggregate variance on columns */
@@ -128124,6 +132910,7 @@ export interface utility_lineups_variance_fieldsGenqlSelection{
     practice_players?: boolean | number
     practice_successes?: boolean | number
     preview_duration_ms?: boolean | number
+    preview_version?: boolean | number
     public_reviewed_by?: boolean | number
     source_grenade_id?: boolean | number
     trajectory_size?: boolean | number
@@ -128138,7 +132925,7 @@ export interface utility_lineups_variance_fieldsGenqlSelection{
 
 
 /** order by variance() on columns of table "utility_lineups" */
-export interface utility_lineups_variance_order_by {aim_tolerance?: (order_by | null),author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+export interface utility_lineups_variance_order_by {aim_tolerance?: (order_by | null),author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),preview_duration_ms?: (order_by | null),preview_version?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
 
 
 /** columns and relationships of "utility_meta_lineups" */
@@ -129264,6 +134051,7 @@ export interface utility_practice_sessionsGenqlSelection{
     order_by?: (utility_practice_invites_order_by[] | null), 
     /** filter the rows returned */
     where?: (utility_practice_invites_bool_exp | null)} })
+    is_discovery?: boolean | number
     /** A computed field, executes function "is_utility_practice_member" */
     is_member?: boolean | number
     is_open?: boolean | number
@@ -129279,6 +134067,8 @@ export interface utility_practice_sessionsGenqlSelection{
     playbook?: utility_playbooksGenqlSelection
     playbook_id?: boolean | number
     region?: boolean | number
+    render_job_name?: boolean | number
+    render_seen_at?: boolean | number
     status?: boolean | number
     /** An object relationship */
     team?: teamsGenqlSelection
@@ -129347,7 +134137,7 @@ export interface utility_practice_sessions_avg_order_by {host_steam_id?: (order_
 
 
 /** Boolean expression to filter rows from the table "utility_practice_sessions". All fields are combined with a logical 'AND'. */
-export interface utility_practice_sessions_bool_exp {_and?: (utility_practice_sessions_bool_exp[] | null),_not?: (utility_practice_sessions_bool_exp | null),_or?: (utility_practice_sessions_bool_exp[] | null),access?: (e_utility_practice_access_enum_comparison_exp | null),can_manage?: (Boolean_comparison_exp | null),can_view?: (Boolean_comparison_exp | null),collection?: (utility_collections_bool_exp | null),collection_id?: (uuid_comparison_exp | null),connection_link?: (String_comparison_exp | null),connection_string?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),e_utility_practice_status?: (e_utility_practice_statuses_bool_exp | null),empty_since?: (timestamptz_comparison_exp | null),expires_at?: (timestamptz_comparison_exp | null),failure_reason?: (String_comparison_exp | null),first_joined_at?: (timestamptz_comparison_exp | null),host?: (players_bool_exp | null),host_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),invites?: (utility_practice_invites_bool_exp | null),invites_aggregate?: (utility_practice_invites_aggregate_bool_exp | null),is_member?: (Boolean_comparison_exp | null),is_open?: (Boolean_comparison_exp | null),is_render?: (Boolean_comparison_exp | null),last_occupied_at?: (timestamptz_comparison_exp | null),map_changing_at?: (timestamptz_comparison_exp | null),map_name?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),notify_when_ready?: (Boolean_comparison_exp | null),playbook?: (utility_playbooks_bool_exp | null),playbook_id?: (uuid_comparison_exp | null),region?: (String_comparison_exp | null),status?: (e_utility_practice_statuses_enum_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
+export interface utility_practice_sessions_bool_exp {_and?: (utility_practice_sessions_bool_exp[] | null),_not?: (utility_practice_sessions_bool_exp | null),_or?: (utility_practice_sessions_bool_exp[] | null),access?: (e_utility_practice_access_enum_comparison_exp | null),can_manage?: (Boolean_comparison_exp | null),can_view?: (Boolean_comparison_exp | null),collection?: (utility_collections_bool_exp | null),collection_id?: (uuid_comparison_exp | null),connection_link?: (String_comparison_exp | null),connection_string?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),e_utility_practice_status?: (e_utility_practice_statuses_bool_exp | null),empty_since?: (timestamptz_comparison_exp | null),expires_at?: (timestamptz_comparison_exp | null),failure_reason?: (String_comparison_exp | null),first_joined_at?: (timestamptz_comparison_exp | null),host?: (players_bool_exp | null),host_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),invites?: (utility_practice_invites_bool_exp | null),invites_aggregate?: (utility_practice_invites_aggregate_bool_exp | null),is_discovery?: (Boolean_comparison_exp | null),is_member?: (Boolean_comparison_exp | null),is_open?: (Boolean_comparison_exp | null),is_render?: (Boolean_comparison_exp | null),last_occupied_at?: (timestamptz_comparison_exp | null),map_changing_at?: (timestamptz_comparison_exp | null),map_name?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),notify_when_ready?: (Boolean_comparison_exp | null),playbook?: (utility_playbooks_bool_exp | null),playbook_id?: (uuid_comparison_exp | null),region?: (String_comparison_exp | null),render_job_name?: (String_comparison_exp | null),render_seen_at?: (timestamptz_comparison_exp | null),status?: (e_utility_practice_statuses_enum_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "utility_practice_sessions" */
@@ -129355,7 +134145,7 @@ export interface utility_practice_sessions_inc_input {host_steam_id?: (Scalars['
 
 
 /** input type for inserting data into table "utility_practice_sessions" */
-export interface utility_practice_sessions_insert_input {access?: (e_utility_practice_access_enum | null),collection?: (utility_collections_obj_rel_insert_input | null),collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),e_utility_practice_status?: (e_utility_practice_statuses_obj_rel_insert_input | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),first_joined_at?: (Scalars['timestamptz'] | null),host?: (players_obj_rel_insert_input | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),invites?: (utility_practice_invites_arr_rel_insert_input | null),is_open?: (Scalars['Boolean'] | null),is_render?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_changing_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),notify_when_ready?: (Scalars['Boolean'] | null),playbook?: (utility_playbooks_obj_rel_insert_input | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),status?: (e_utility_practice_statuses_enum | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface utility_practice_sessions_insert_input {access?: (e_utility_practice_access_enum | null),collection?: (utility_collections_obj_rel_insert_input | null),collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),e_utility_practice_status?: (e_utility_practice_statuses_obj_rel_insert_input | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),first_joined_at?: (Scalars['timestamptz'] | null),host?: (players_obj_rel_insert_input | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),invites?: (utility_practice_invites_arr_rel_insert_input | null),is_discovery?: (Scalars['Boolean'] | null),is_open?: (Scalars['Boolean'] | null),is_render?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_changing_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),notify_when_ready?: (Scalars['Boolean'] | null),playbook?: (utility_playbooks_obj_rel_insert_input | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),render_job_name?: (Scalars['String'] | null),render_seen_at?: (Scalars['timestamptz'] | null),status?: (e_utility_practice_statuses_enum | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate max on columns */
@@ -129379,6 +134169,8 @@ export interface utility_practice_sessions_max_fieldsGenqlSelection{
     match_id?: boolean | number
     playbook_id?: boolean | number
     region?: boolean | number
+    render_job_name?: boolean | number
+    render_seen_at?: boolean | number
     team_id?: boolean | number
     updated_at?: boolean | number
     __typename?: boolean | number
@@ -129387,7 +134179,7 @@ export interface utility_practice_sessions_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "utility_practice_sessions" */
-export interface utility_practice_sessions_max_order_by {collection_id?: (order_by | null),created_at?: (order_by | null),empty_since?: (order_by | null),expires_at?: (order_by | null),failure_reason?: (order_by | null),first_joined_at?: (order_by | null),host_steam_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),last_occupied_at?: (order_by | null),map_changing_at?: (order_by | null),map_name?: (order_by | null),match_id?: (order_by | null),playbook_id?: (order_by | null),region?: (order_by | null),team_id?: (order_by | null),updated_at?: (order_by | null)}
+export interface utility_practice_sessions_max_order_by {collection_id?: (order_by | null),created_at?: (order_by | null),empty_since?: (order_by | null),expires_at?: (order_by | null),failure_reason?: (order_by | null),first_joined_at?: (order_by | null),host_steam_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),last_occupied_at?: (order_by | null),map_changing_at?: (order_by | null),map_name?: (order_by | null),match_id?: (order_by | null),playbook_id?: (order_by | null),region?: (order_by | null),render_job_name?: (order_by | null),render_seen_at?: (order_by | null),team_id?: (order_by | null),updated_at?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -129411,6 +134203,8 @@ export interface utility_practice_sessions_min_fieldsGenqlSelection{
     match_id?: boolean | number
     playbook_id?: boolean | number
     region?: boolean | number
+    render_job_name?: boolean | number
+    render_seen_at?: boolean | number
     team_id?: boolean | number
     updated_at?: boolean | number
     __typename?: boolean | number
@@ -129419,7 +134213,7 @@ export interface utility_practice_sessions_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "utility_practice_sessions" */
-export interface utility_practice_sessions_min_order_by {collection_id?: (order_by | null),created_at?: (order_by | null),empty_since?: (order_by | null),expires_at?: (order_by | null),failure_reason?: (order_by | null),first_joined_at?: (order_by | null),host_steam_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),last_occupied_at?: (order_by | null),map_changing_at?: (order_by | null),map_name?: (order_by | null),match_id?: (order_by | null),playbook_id?: (order_by | null),region?: (order_by | null),team_id?: (order_by | null),updated_at?: (order_by | null)}
+export interface utility_practice_sessions_min_order_by {collection_id?: (order_by | null),created_at?: (order_by | null),empty_since?: (order_by | null),expires_at?: (order_by | null),failure_reason?: (order_by | null),first_joined_at?: (order_by | null),host_steam_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),last_occupied_at?: (order_by | null),map_changing_at?: (order_by | null),map_name?: (order_by | null),match_id?: (order_by | null),playbook_id?: (order_by | null),region?: (order_by | null),render_job_name?: (order_by | null),render_seen_at?: (order_by | null),team_id?: (order_by | null),updated_at?: (order_by | null)}
 
 
 /** response of any mutation on the table "utility_practice_sessions" */
@@ -129444,7 +134238,7 @@ export interface utility_practice_sessions_on_conflict {constraint: utility_prac
 
 
 /** Ordering options when selecting data from "utility_practice_sessions". */
-export interface utility_practice_sessions_order_by {access?: (order_by | null),can_manage?: (order_by | null),can_view?: (order_by | null),collection?: (utility_collections_order_by | null),collection_id?: (order_by | null),connection_link?: (order_by | null),connection_string?: (order_by | null),created_at?: (order_by | null),e_utility_practice_status?: (e_utility_practice_statuses_order_by | null),empty_since?: (order_by | null),expires_at?: (order_by | null),failure_reason?: (order_by | null),first_joined_at?: (order_by | null),host?: (players_order_by | null),host_steam_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),invites_aggregate?: (utility_practice_invites_aggregate_order_by | null),is_member?: (order_by | null),is_open?: (order_by | null),is_render?: (order_by | null),last_occupied_at?: (order_by | null),map_changing_at?: (order_by | null),map_name?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),notify_when_ready?: (order_by | null),playbook?: (utility_playbooks_order_by | null),playbook_id?: (order_by | null),region?: (order_by | null),status?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),updated_at?: (order_by | null)}
+export interface utility_practice_sessions_order_by {access?: (order_by | null),can_manage?: (order_by | null),can_view?: (order_by | null),collection?: (utility_collections_order_by | null),collection_id?: (order_by | null),connection_link?: (order_by | null),connection_string?: (order_by | null),created_at?: (order_by | null),e_utility_practice_status?: (e_utility_practice_statuses_order_by | null),empty_since?: (order_by | null),expires_at?: (order_by | null),failure_reason?: (order_by | null),first_joined_at?: (order_by | null),host?: (players_order_by | null),host_steam_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),invites_aggregate?: (utility_practice_invites_aggregate_order_by | null),is_discovery?: (order_by | null),is_member?: (order_by | null),is_open?: (order_by | null),is_render?: (order_by | null),last_occupied_at?: (order_by | null),map_changing_at?: (order_by | null),map_name?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),notify_when_ready?: (order_by | null),playbook?: (utility_playbooks_order_by | null),playbook_id?: (order_by | null),region?: (order_by | null),render_job_name?: (order_by | null),render_seen_at?: (order_by | null),status?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),updated_at?: (order_by | null)}
 
 
 /** primary key columns input for table: utility_practice_sessions */
@@ -129452,7 +134246,7 @@ export interface utility_practice_sessions_pk_columns_input {id: Scalars['uuid']
 
 
 /** input type for updating data in table "utility_practice_sessions" */
-export interface utility_practice_sessions_set_input {access?: (e_utility_practice_access_enum | null),collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),first_joined_at?: (Scalars['timestamptz'] | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),is_open?: (Scalars['Boolean'] | null),is_render?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_changing_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),notify_when_ready?: (Scalars['Boolean'] | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),status?: (e_utility_practice_statuses_enum | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface utility_practice_sessions_set_input {access?: (e_utility_practice_access_enum | null),collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),first_joined_at?: (Scalars['timestamptz'] | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),is_discovery?: (Scalars['Boolean'] | null),is_open?: (Scalars['Boolean'] | null),is_render?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_changing_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),notify_when_ready?: (Scalars['Boolean'] | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),render_job_name?: (Scalars['String'] | null),render_seen_at?: (Scalars['timestamptz'] | null),status?: (e_utility_practice_statuses_enum | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -129500,7 +134294,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface utility_practice_sessions_stream_cursor_value_input {access?: (e_utility_practice_access_enum | null),collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),first_joined_at?: (Scalars['timestamptz'] | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),is_open?: (Scalars['Boolean'] | null),is_render?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_changing_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),notify_when_ready?: (Scalars['Boolean'] | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),status?: (e_utility_practice_statuses_enum | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface utility_practice_sessions_stream_cursor_value_input {access?: (e_utility_practice_access_enum | null),collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),first_joined_at?: (Scalars['timestamptz'] | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),is_discovery?: (Scalars['Boolean'] | null),is_open?: (Scalars['Boolean'] | null),is_render?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_changing_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),notify_when_ready?: (Scalars['Boolean'] | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),render_job_name?: (Scalars['String'] | null),render_seen_at?: (Scalars['timestamptz'] | null),status?: (e_utility_practice_statuses_enum | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate sum on columns */
@@ -137207,6 +142001,7 @@ export interface v_team_tournament_results_variance_order_by {head_to_head_match
 
 /** columns and relationships of "v_tournament_player_stats" */
 export interface v_tournament_player_statsGenqlSelection{
+    adr?: boolean | number
     assists?: boolean | number
     deaths?: boolean | number
     headshot_percentage?: boolean | number
@@ -137286,6 +142081,7 @@ export interface v_tournament_player_stats_arr_rel_insert_input {data: v_tournam
 
 /** aggregate avg on columns */
 export interface v_tournament_player_stats_avg_fieldsGenqlSelection{
+    adr?: boolean | number
     assists?: boolean | number
     deaths?: boolean | number
     headshot_percentage?: boolean | number
@@ -137300,19 +142096,20 @@ export interface v_tournament_player_stats_avg_fieldsGenqlSelection{
 
 
 /** order by avg() on columns of table "v_tournament_player_stats" */
-export interface v_tournament_player_stats_avg_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player_steam_id?: (order_by | null)}
+export interface v_tournament_player_stats_avg_order_by {adr?: (order_by | null),assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player_steam_id?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "v_tournament_player_stats". All fields are combined with a logical 'AND'. */
-export interface v_tournament_player_stats_bool_exp {_and?: (v_tournament_player_stats_bool_exp[] | null),_not?: (v_tournament_player_stats_bool_exp | null),_or?: (v_tournament_player_stats_bool_exp[] | null),assists?: (Int_comparison_exp | null),deaths?: (Int_comparison_exp | null),headshot_percentage?: (float8_comparison_exp | null),headshots?: (Int_comparison_exp | null),kdr?: (float8_comparison_exp | null),kills?: (Int_comparison_exp | null),matches_played?: (Int_comparison_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null)}
+export interface v_tournament_player_stats_bool_exp {_and?: (v_tournament_player_stats_bool_exp[] | null),_not?: (v_tournament_player_stats_bool_exp | null),_or?: (v_tournament_player_stats_bool_exp[] | null),adr?: (float8_comparison_exp | null),assists?: (Int_comparison_exp | null),deaths?: (Int_comparison_exp | null),headshot_percentage?: (float8_comparison_exp | null),headshots?: (Int_comparison_exp | null),kdr?: (float8_comparison_exp | null),kills?: (Int_comparison_exp | null),matches_played?: (Int_comparison_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null)}
 
 
 /** input type for inserting data into table "v_tournament_player_stats" */
-export interface v_tournament_player_stats_insert_input {assists?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),headshot_percentage?: (Scalars['float8'] | null),headshots?: (Scalars['Int'] | null),kdr?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),matches_played?: (Scalars['Int'] | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null)}
+export interface v_tournament_player_stats_insert_input {adr?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),headshot_percentage?: (Scalars['float8'] | null),headshots?: (Scalars['Int'] | null),kdr?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),matches_played?: (Scalars['Int'] | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate max on columns */
 export interface v_tournament_player_stats_max_fieldsGenqlSelection{
+    adr?: boolean | number
     assists?: boolean | number
     deaths?: boolean | number
     headshot_percentage?: boolean | number
@@ -137328,11 +142125,12 @@ export interface v_tournament_player_stats_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "v_tournament_player_stats" */
-export interface v_tournament_player_stats_max_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player_steam_id?: (order_by | null),tournament_id?: (order_by | null)}
+export interface v_tournament_player_stats_max_order_by {adr?: (order_by | null),assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player_steam_id?: (order_by | null),tournament_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface v_tournament_player_stats_min_fieldsGenqlSelection{
+    adr?: boolean | number
     assists?: boolean | number
     deaths?: boolean | number
     headshot_percentage?: boolean | number
@@ -137348,15 +142146,16 @@ export interface v_tournament_player_stats_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "v_tournament_player_stats" */
-export interface v_tournament_player_stats_min_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player_steam_id?: (order_by | null),tournament_id?: (order_by | null)}
+export interface v_tournament_player_stats_min_order_by {adr?: (order_by | null),assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player_steam_id?: (order_by | null),tournament_id?: (order_by | null)}
 
 
 /** Ordering options when selecting data from "v_tournament_player_stats". */
-export interface v_tournament_player_stats_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null)}
+export interface v_tournament_player_stats_order_by {adr?: (order_by | null),assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null)}
 
 
 /** aggregate stddev on columns */
 export interface v_tournament_player_stats_stddev_fieldsGenqlSelection{
+    adr?: boolean | number
     assists?: boolean | number
     deaths?: boolean | number
     headshot_percentage?: boolean | number
@@ -137371,11 +142170,12 @@ export interface v_tournament_player_stats_stddev_fieldsGenqlSelection{
 
 
 /** order by stddev() on columns of table "v_tournament_player_stats" */
-export interface v_tournament_player_stats_stddev_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player_steam_id?: (order_by | null)}
+export interface v_tournament_player_stats_stddev_order_by {adr?: (order_by | null),assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player_steam_id?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
 export interface v_tournament_player_stats_stddev_pop_fieldsGenqlSelection{
+    adr?: boolean | number
     assists?: boolean | number
     deaths?: boolean | number
     headshot_percentage?: boolean | number
@@ -137390,11 +142190,12 @@ export interface v_tournament_player_stats_stddev_pop_fieldsGenqlSelection{
 
 
 /** order by stddev_pop() on columns of table "v_tournament_player_stats" */
-export interface v_tournament_player_stats_stddev_pop_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player_steam_id?: (order_by | null)}
+export interface v_tournament_player_stats_stddev_pop_order_by {adr?: (order_by | null),assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player_steam_id?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
 export interface v_tournament_player_stats_stddev_samp_fieldsGenqlSelection{
+    adr?: boolean | number
     assists?: boolean | number
     deaths?: boolean | number
     headshot_percentage?: boolean | number
@@ -137409,7 +142210,7 @@ export interface v_tournament_player_stats_stddev_samp_fieldsGenqlSelection{
 
 
 /** order by stddev_samp() on columns of table "v_tournament_player_stats" */
-export interface v_tournament_player_stats_stddev_samp_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player_steam_id?: (order_by | null)}
+export interface v_tournament_player_stats_stddev_samp_order_by {adr?: (order_by | null),assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player_steam_id?: (order_by | null)}
 
 
 /** Streaming cursor of the table "v_tournament_player_stats" */
@@ -137421,11 +142222,12 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface v_tournament_player_stats_stream_cursor_value_input {assists?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),headshot_percentage?: (Scalars['float8'] | null),headshots?: (Scalars['Int'] | null),kdr?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),matches_played?: (Scalars['Int'] | null),player_steam_id?: (Scalars['bigint'] | null),tournament_id?: (Scalars['uuid'] | null)}
+export interface v_tournament_player_stats_stream_cursor_value_input {adr?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),headshot_percentage?: (Scalars['float8'] | null),headshots?: (Scalars['Int'] | null),kdr?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),matches_played?: (Scalars['Int'] | null),player_steam_id?: (Scalars['bigint'] | null),tournament_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate sum on columns */
 export interface v_tournament_player_stats_sum_fieldsGenqlSelection{
+    adr?: boolean | number
     assists?: boolean | number
     deaths?: boolean | number
     headshot_percentage?: boolean | number
@@ -137440,11 +142242,12 @@ export interface v_tournament_player_stats_sum_fieldsGenqlSelection{
 
 
 /** order by sum() on columns of table "v_tournament_player_stats" */
-export interface v_tournament_player_stats_sum_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player_steam_id?: (order_by | null)}
+export interface v_tournament_player_stats_sum_order_by {adr?: (order_by | null),assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player_steam_id?: (order_by | null)}
 
 
 /** aggregate var_pop on columns */
 export interface v_tournament_player_stats_var_pop_fieldsGenqlSelection{
+    adr?: boolean | number
     assists?: boolean | number
     deaths?: boolean | number
     headshot_percentage?: boolean | number
@@ -137459,11 +142262,12 @@ export interface v_tournament_player_stats_var_pop_fieldsGenqlSelection{
 
 
 /** order by var_pop() on columns of table "v_tournament_player_stats" */
-export interface v_tournament_player_stats_var_pop_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player_steam_id?: (order_by | null)}
+export interface v_tournament_player_stats_var_pop_order_by {adr?: (order_by | null),assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player_steam_id?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
 export interface v_tournament_player_stats_var_samp_fieldsGenqlSelection{
+    adr?: boolean | number
     assists?: boolean | number
     deaths?: boolean | number
     headshot_percentage?: boolean | number
@@ -137478,11 +142282,12 @@ export interface v_tournament_player_stats_var_samp_fieldsGenqlSelection{
 
 
 /** order by var_samp() on columns of table "v_tournament_player_stats" */
-export interface v_tournament_player_stats_var_samp_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player_steam_id?: (order_by | null)}
+export interface v_tournament_player_stats_var_samp_order_by {adr?: (order_by | null),assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player_steam_id?: (order_by | null)}
 
 
 /** aggregate variance on columns */
 export interface v_tournament_player_stats_variance_fieldsGenqlSelection{
+    adr?: boolean | number
     assists?: boolean | number
     deaths?: boolean | number
     headshot_percentage?: boolean | number
@@ -137497,7 +142302,7 @@ export interface v_tournament_player_stats_variance_fieldsGenqlSelection{
 
 
 /** order by variance() on columns of table "v_tournament_player_stats" */
-export interface v_tournament_player_stats_variance_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player_steam_id?: (order_by | null)}
+export interface v_tournament_player_stats_variance_order_by {adr?: (order_by | null),assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kdr?: (order_by | null),kills?: (order_by | null),matches_played?: (order_by | null),player_steam_id?: (order_by | null)}
 
 export type QueryGenqlSelection = query_rootGenqlSelection
 export type MutationGenqlSelection = mutation_rootGenqlSelection
@@ -137852,6 +142657,22 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isNetworkStats = (obj?: { __typename?: any } | null): obj is NetworkStats => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isNetworkStats"')
       return NetworkStats_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NewsCommentOutput_possibleTypes: string[] = ['NewsCommentOutput']
+    export const isNewsCommentOutput = (obj?: { __typename?: any } | null): obj is NewsCommentOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNewsCommentOutput"')
+      return NewsCommentOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NewsCommentVoteOutput_possibleTypes: string[] = ['NewsCommentVoteOutput']
+    export const isNewsCommentVoteOutput = (obj?: { __typename?: any } | null): obj is NewsCommentVoteOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNewsCommentVoteOutput"')
+      return NewsCommentVoteOutput_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -138416,6 +143237,14 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const TournamentMvpCandidate_possibleTypes: string[] = ['TournamentMvpCandidate']
+    export const isTournamentMvpCandidate = (obj?: { __typename?: any } | null): obj is TournamentMvpCandidate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isTournamentMvpCandidate"')
+      return TournamentMvpCandidate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const UtilityBlockingOutput_possibleTypes: string[] = ['UtilityBlockingOutput']
     export const isUtilityBlockingOutput = (obj?: { __typename?: any } | null): obj is UtilityBlockingOutput => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isUtilityBlockingOutput"')
@@ -138436,6 +143265,22 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isUtilityCalibrationOutput = (obj?: { __typename?: any } | null): obj is UtilityCalibrationOutput => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isUtilityCalibrationOutput"')
       return UtilityCalibrationOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const UtilityDiscoveryOutput_possibleTypes: string[] = ['UtilityDiscoveryOutput']
+    export const isUtilityDiscoveryOutput = (obj?: { __typename?: any } | null): obj is UtilityDiscoveryOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isUtilityDiscoveryOutput"')
+      return UtilityDiscoveryOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const UtilityDiscoverySaveOutput_possibleTypes: string[] = ['UtilityDiscoverySaveOutput']
+    export const isUtilityDiscoverySaveOutput = (obj?: { __typename?: any } | null): obj is UtilityDiscoverySaveOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isUtilityDiscoverySaveOutput"')
+      return UtilityDiscoverySaveOutput_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -138616,10 +143461,34 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const UtilityRenderBulkOutput_possibleTypes: string[] = ['UtilityRenderBulkOutput']
+    export const isUtilityRenderBulkOutput = (obj?: { __typename?: any } | null): obj is UtilityRenderBulkOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isUtilityRenderBulkOutput"')
+      return UtilityRenderBulkOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const UtilityRenderClearOutput_possibleTypes: string[] = ['UtilityRenderClearOutput']
     export const isUtilityRenderClearOutput = (obj?: { __typename?: any } | null): obj is UtilityRenderClearOutput => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isUtilityRenderClearOutput"')
       return UtilityRenderClearOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const UtilityRenderCoverageOutput_possibleTypes: string[] = ['UtilityRenderCoverageOutput']
+    export const isUtilityRenderCoverageOutput = (obj?: { __typename?: any } | null): obj is UtilityRenderCoverageOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isUtilityRenderCoverageOutput"')
+      return UtilityRenderCoverageOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const UtilityRenderGap_possibleTypes: string[] = ['UtilityRenderGap']
+    export const isUtilityRenderGap = (obj?: { __typename?: any } | null): obj is UtilityRenderGap => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isUtilityRenderGap"')
+      return UtilityRenderGap_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -138644,6 +143513,14 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isUtilitySightlineResult = (obj?: { __typename?: any } | null): obj is UtilitySightlineResult => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isUtilitySightlineResult"')
       return UtilitySightlineResult_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const UtilitySmokePreviewOutput_possibleTypes: string[] = ['UtilitySmokePreviewOutput']
+    export const isUtilitySmokePreviewOutput = (obj?: { __typename?: any } | null): obj is UtilitySmokePreviewOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isUtilitySmokePreviewOutput"')
+      return UtilitySmokePreviewOutput_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -139652,6 +144529,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const ischat_read_state_variance_fields = (obj?: { __typename?: any } | null): obj is chat_read_state_variance_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ischat_read_state_variance_fields"')
       return chat_read_state_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_room_settings_possibleTypes: string[] = ['chat_room_settings']
+    export const ischat_room_settings = (obj?: { __typename?: any } | null): obj is chat_room_settings => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_room_settings"')
+      return chat_room_settings_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_room_settings_aggregate_possibleTypes: string[] = ['chat_room_settings_aggregate']
+    export const ischat_room_settings_aggregate = (obj?: { __typename?: any } | null): obj is chat_room_settings_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_room_settings_aggregate"')
+      return chat_room_settings_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_room_settings_aggregate_fields_possibleTypes: string[] = ['chat_room_settings_aggregate_fields']
+    export const ischat_room_settings_aggregate_fields = (obj?: { __typename?: any } | null): obj is chat_room_settings_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_room_settings_aggregate_fields"')
+      return chat_room_settings_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_room_settings_avg_fields_possibleTypes: string[] = ['chat_room_settings_avg_fields']
+    export const ischat_room_settings_avg_fields = (obj?: { __typename?: any } | null): obj is chat_room_settings_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_room_settings_avg_fields"')
+      return chat_room_settings_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_room_settings_max_fields_possibleTypes: string[] = ['chat_room_settings_max_fields']
+    export const ischat_room_settings_max_fields = (obj?: { __typename?: any } | null): obj is chat_room_settings_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_room_settings_max_fields"')
+      return chat_room_settings_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_room_settings_min_fields_possibleTypes: string[] = ['chat_room_settings_min_fields']
+    export const ischat_room_settings_min_fields = (obj?: { __typename?: any } | null): obj is chat_room_settings_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_room_settings_min_fields"')
+      return chat_room_settings_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_room_settings_mutation_response_possibleTypes: string[] = ['chat_room_settings_mutation_response']
+    export const ischat_room_settings_mutation_response = (obj?: { __typename?: any } | null): obj is chat_room_settings_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_room_settings_mutation_response"')
+      return chat_room_settings_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_room_settings_stddev_fields_possibleTypes: string[] = ['chat_room_settings_stddev_fields']
+    export const ischat_room_settings_stddev_fields = (obj?: { __typename?: any } | null): obj is chat_room_settings_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_room_settings_stddev_fields"')
+      return chat_room_settings_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_room_settings_stddev_pop_fields_possibleTypes: string[] = ['chat_room_settings_stddev_pop_fields']
+    export const ischat_room_settings_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is chat_room_settings_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_room_settings_stddev_pop_fields"')
+      return chat_room_settings_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_room_settings_stddev_samp_fields_possibleTypes: string[] = ['chat_room_settings_stddev_samp_fields']
+    export const ischat_room_settings_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is chat_room_settings_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_room_settings_stddev_samp_fields"')
+      return chat_room_settings_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_room_settings_sum_fields_possibleTypes: string[] = ['chat_room_settings_sum_fields']
+    export const ischat_room_settings_sum_fields = (obj?: { __typename?: any } | null): obj is chat_room_settings_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_room_settings_sum_fields"')
+      return chat_room_settings_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_room_settings_var_pop_fields_possibleTypes: string[] = ['chat_room_settings_var_pop_fields']
+    export const ischat_room_settings_var_pop_fields = (obj?: { __typename?: any } | null): obj is chat_room_settings_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_room_settings_var_pop_fields"')
+      return chat_room_settings_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_room_settings_var_samp_fields_possibleTypes: string[] = ['chat_room_settings_var_samp_fields']
+    export const ischat_room_settings_var_samp_fields = (obj?: { __typename?: any } | null): obj is chat_room_settings_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_room_settings_var_samp_fields"')
+      return chat_room_settings_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_room_settings_variance_fields_possibleTypes: string[] = ['chat_room_settings_variance_fields']
+    export const ischat_room_settings_variance_fields = (obj?: { __typename?: any } | null): obj is chat_room_settings_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_room_settings_variance_fields"')
+      return chat_room_settings_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -148304,6 +153293,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const news_comments_possibleTypes: string[] = ['news_comments']
+    export const isnews_comments = (obj?: { __typename?: any } | null): obj is news_comments => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnews_comments"')
+      return news_comments_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const news_comments_aggregate_possibleTypes: string[] = ['news_comments_aggregate']
+    export const isnews_comments_aggregate = (obj?: { __typename?: any } | null): obj is news_comments_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnews_comments_aggregate"')
+      return news_comments_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const news_comments_aggregate_fields_possibleTypes: string[] = ['news_comments_aggregate_fields']
+    export const isnews_comments_aggregate_fields = (obj?: { __typename?: any } | null): obj is news_comments_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnews_comments_aggregate_fields"')
+      return news_comments_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const news_comments_avg_fields_possibleTypes: string[] = ['news_comments_avg_fields']
+    export const isnews_comments_avg_fields = (obj?: { __typename?: any } | null): obj is news_comments_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnews_comments_avg_fields"')
+      return news_comments_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const news_comments_max_fields_possibleTypes: string[] = ['news_comments_max_fields']
+    export const isnews_comments_max_fields = (obj?: { __typename?: any } | null): obj is news_comments_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnews_comments_max_fields"')
+      return news_comments_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const news_comments_min_fields_possibleTypes: string[] = ['news_comments_min_fields']
+    export const isnews_comments_min_fields = (obj?: { __typename?: any } | null): obj is news_comments_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnews_comments_min_fields"')
+      return news_comments_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const news_comments_mutation_response_possibleTypes: string[] = ['news_comments_mutation_response']
+    export const isnews_comments_mutation_response = (obj?: { __typename?: any } | null): obj is news_comments_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnews_comments_mutation_response"')
+      return news_comments_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const news_comments_stddev_fields_possibleTypes: string[] = ['news_comments_stddev_fields']
+    export const isnews_comments_stddev_fields = (obj?: { __typename?: any } | null): obj is news_comments_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnews_comments_stddev_fields"')
+      return news_comments_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const news_comments_stddev_pop_fields_possibleTypes: string[] = ['news_comments_stddev_pop_fields']
+    export const isnews_comments_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is news_comments_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnews_comments_stddev_pop_fields"')
+      return news_comments_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const news_comments_stddev_samp_fields_possibleTypes: string[] = ['news_comments_stddev_samp_fields']
+    export const isnews_comments_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is news_comments_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnews_comments_stddev_samp_fields"')
+      return news_comments_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const news_comments_sum_fields_possibleTypes: string[] = ['news_comments_sum_fields']
+    export const isnews_comments_sum_fields = (obj?: { __typename?: any } | null): obj is news_comments_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnews_comments_sum_fields"')
+      return news_comments_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const news_comments_var_pop_fields_possibleTypes: string[] = ['news_comments_var_pop_fields']
+    export const isnews_comments_var_pop_fields = (obj?: { __typename?: any } | null): obj is news_comments_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnews_comments_var_pop_fields"')
+      return news_comments_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const news_comments_var_samp_fields_possibleTypes: string[] = ['news_comments_var_samp_fields']
+    export const isnews_comments_var_samp_fields = (obj?: { __typename?: any } | null): obj is news_comments_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnews_comments_var_samp_fields"')
+      return news_comments_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const news_comments_variance_fields_possibleTypes: string[] = ['news_comments_variance_fields']
+    export const isnews_comments_variance_fields = (obj?: { __typename?: any } | null): obj is news_comments_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnews_comments_variance_fields"')
+      return news_comments_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const notification_preferences_possibleTypes: string[] = ['notification_preferences']
     export const isnotification_preferences = (obj?: { __typename?: any } | null): obj is notification_preferences => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isnotification_preferences"')
@@ -151508,6 +156609,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isplayer_steam_match_auth_variance_fields = (obj?: { __typename?: any } | null): obj is player_steam_match_auth_variance_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_steam_match_auth_variance_fields"')
       return player_steam_match_auth_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_twitch_accounts_possibleTypes: string[] = ['player_twitch_accounts']
+    export const isplayer_twitch_accounts = (obj?: { __typename?: any } | null): obj is player_twitch_accounts => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_twitch_accounts"')
+      return player_twitch_accounts_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_twitch_accounts_aggregate_possibleTypes: string[] = ['player_twitch_accounts_aggregate']
+    export const isplayer_twitch_accounts_aggregate = (obj?: { __typename?: any } | null): obj is player_twitch_accounts_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_twitch_accounts_aggregate"')
+      return player_twitch_accounts_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_twitch_accounts_aggregate_fields_possibleTypes: string[] = ['player_twitch_accounts_aggregate_fields']
+    export const isplayer_twitch_accounts_aggregate_fields = (obj?: { __typename?: any } | null): obj is player_twitch_accounts_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_twitch_accounts_aggregate_fields"')
+      return player_twitch_accounts_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_twitch_accounts_avg_fields_possibleTypes: string[] = ['player_twitch_accounts_avg_fields']
+    export const isplayer_twitch_accounts_avg_fields = (obj?: { __typename?: any } | null): obj is player_twitch_accounts_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_twitch_accounts_avg_fields"')
+      return player_twitch_accounts_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_twitch_accounts_max_fields_possibleTypes: string[] = ['player_twitch_accounts_max_fields']
+    export const isplayer_twitch_accounts_max_fields = (obj?: { __typename?: any } | null): obj is player_twitch_accounts_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_twitch_accounts_max_fields"')
+      return player_twitch_accounts_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_twitch_accounts_min_fields_possibleTypes: string[] = ['player_twitch_accounts_min_fields']
+    export const isplayer_twitch_accounts_min_fields = (obj?: { __typename?: any } | null): obj is player_twitch_accounts_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_twitch_accounts_min_fields"')
+      return player_twitch_accounts_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_twitch_accounts_mutation_response_possibleTypes: string[] = ['player_twitch_accounts_mutation_response']
+    export const isplayer_twitch_accounts_mutation_response = (obj?: { __typename?: any } | null): obj is player_twitch_accounts_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_twitch_accounts_mutation_response"')
+      return player_twitch_accounts_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_twitch_accounts_stddev_fields_possibleTypes: string[] = ['player_twitch_accounts_stddev_fields']
+    export const isplayer_twitch_accounts_stddev_fields = (obj?: { __typename?: any } | null): obj is player_twitch_accounts_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_twitch_accounts_stddev_fields"')
+      return player_twitch_accounts_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_twitch_accounts_stddev_pop_fields_possibleTypes: string[] = ['player_twitch_accounts_stddev_pop_fields']
+    export const isplayer_twitch_accounts_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is player_twitch_accounts_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_twitch_accounts_stddev_pop_fields"')
+      return player_twitch_accounts_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_twitch_accounts_stddev_samp_fields_possibleTypes: string[] = ['player_twitch_accounts_stddev_samp_fields']
+    export const isplayer_twitch_accounts_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is player_twitch_accounts_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_twitch_accounts_stddev_samp_fields"')
+      return player_twitch_accounts_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_twitch_accounts_sum_fields_possibleTypes: string[] = ['player_twitch_accounts_sum_fields']
+    export const isplayer_twitch_accounts_sum_fields = (obj?: { __typename?: any } | null): obj is player_twitch_accounts_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_twitch_accounts_sum_fields"')
+      return player_twitch_accounts_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_twitch_accounts_var_pop_fields_possibleTypes: string[] = ['player_twitch_accounts_var_pop_fields']
+    export const isplayer_twitch_accounts_var_pop_fields = (obj?: { __typename?: any } | null): obj is player_twitch_accounts_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_twitch_accounts_var_pop_fields"')
+      return player_twitch_accounts_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_twitch_accounts_var_samp_fields_possibleTypes: string[] = ['player_twitch_accounts_var_samp_fields']
+    export const isplayer_twitch_accounts_var_samp_fields = (obj?: { __typename?: any } | null): obj is player_twitch_accounts_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_twitch_accounts_var_samp_fields"')
+      return player_twitch_accounts_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_twitch_accounts_variance_fields_possibleTypes: string[] = ['player_twitch_accounts_variance_fields']
+    export const isplayer_twitch_accounts_variance_fields = (obj?: { __typename?: any } | null): obj is player_twitch_accounts_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_twitch_accounts_variance_fields"')
+      return player_twitch_accounts_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -155416,6 +160629,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const tournament_mvp_picks_possibleTypes: string[] = ['tournament_mvp_picks']
+    export const istournament_mvp_picks = (obj?: { __typename?: any } | null): obj is tournament_mvp_picks => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_mvp_picks"')
+      return tournament_mvp_picks_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_mvp_picks_aggregate_possibleTypes: string[] = ['tournament_mvp_picks_aggregate']
+    export const istournament_mvp_picks_aggregate = (obj?: { __typename?: any } | null): obj is tournament_mvp_picks_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_mvp_picks_aggregate"')
+      return tournament_mvp_picks_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_mvp_picks_aggregate_fields_possibleTypes: string[] = ['tournament_mvp_picks_aggregate_fields']
+    export const istournament_mvp_picks_aggregate_fields = (obj?: { __typename?: any } | null): obj is tournament_mvp_picks_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_mvp_picks_aggregate_fields"')
+      return tournament_mvp_picks_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_mvp_picks_avg_fields_possibleTypes: string[] = ['tournament_mvp_picks_avg_fields']
+    export const istournament_mvp_picks_avg_fields = (obj?: { __typename?: any } | null): obj is tournament_mvp_picks_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_mvp_picks_avg_fields"')
+      return tournament_mvp_picks_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_mvp_picks_max_fields_possibleTypes: string[] = ['tournament_mvp_picks_max_fields']
+    export const istournament_mvp_picks_max_fields = (obj?: { __typename?: any } | null): obj is tournament_mvp_picks_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_mvp_picks_max_fields"')
+      return tournament_mvp_picks_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_mvp_picks_min_fields_possibleTypes: string[] = ['tournament_mvp_picks_min_fields']
+    export const istournament_mvp_picks_min_fields = (obj?: { __typename?: any } | null): obj is tournament_mvp_picks_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_mvp_picks_min_fields"')
+      return tournament_mvp_picks_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_mvp_picks_mutation_response_possibleTypes: string[] = ['tournament_mvp_picks_mutation_response']
+    export const istournament_mvp_picks_mutation_response = (obj?: { __typename?: any } | null): obj is tournament_mvp_picks_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_mvp_picks_mutation_response"')
+      return tournament_mvp_picks_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_mvp_picks_stddev_fields_possibleTypes: string[] = ['tournament_mvp_picks_stddev_fields']
+    export const istournament_mvp_picks_stddev_fields = (obj?: { __typename?: any } | null): obj is tournament_mvp_picks_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_mvp_picks_stddev_fields"')
+      return tournament_mvp_picks_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_mvp_picks_stddev_pop_fields_possibleTypes: string[] = ['tournament_mvp_picks_stddev_pop_fields']
+    export const istournament_mvp_picks_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is tournament_mvp_picks_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_mvp_picks_stddev_pop_fields"')
+      return tournament_mvp_picks_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_mvp_picks_stddev_samp_fields_possibleTypes: string[] = ['tournament_mvp_picks_stddev_samp_fields']
+    export const istournament_mvp_picks_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is tournament_mvp_picks_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_mvp_picks_stddev_samp_fields"')
+      return tournament_mvp_picks_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_mvp_picks_sum_fields_possibleTypes: string[] = ['tournament_mvp_picks_sum_fields']
+    export const istournament_mvp_picks_sum_fields = (obj?: { __typename?: any } | null): obj is tournament_mvp_picks_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_mvp_picks_sum_fields"')
+      return tournament_mvp_picks_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_mvp_picks_var_pop_fields_possibleTypes: string[] = ['tournament_mvp_picks_var_pop_fields']
+    export const istournament_mvp_picks_var_pop_fields = (obj?: { __typename?: any } | null): obj is tournament_mvp_picks_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_mvp_picks_var_pop_fields"')
+      return tournament_mvp_picks_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_mvp_picks_var_samp_fields_possibleTypes: string[] = ['tournament_mvp_picks_var_samp_fields']
+    export const istournament_mvp_picks_var_samp_fields = (obj?: { __typename?: any } | null): obj is tournament_mvp_picks_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_mvp_picks_var_samp_fields"')
+      return tournament_mvp_picks_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_mvp_picks_variance_fields_possibleTypes: string[] = ['tournament_mvp_picks_variance_fields']
+    export const istournament_mvp_picks_variance_fields = (obj?: { __typename?: any } | null): obj is tournament_mvp_picks_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_mvp_picks_variance_fields"')
+      return tournament_mvp_picks_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const tournament_no_shows_possibleTypes: string[] = ['tournament_no_shows']
     export const istournament_no_shows = (obj?: { __typename?: any } | null): obj is tournament_no_shows => {
       if (!obj?.__typename) throw new Error('__typename is missing in "istournament_no_shows"')
@@ -157028,6 +162353,230 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isutility_demo_throws_variance_fields = (obj?: { __typename?: any } | null): obj is utility_demo_throws_variance_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isutility_demo_throws_variance_fields"')
       return utility_demo_throws_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discoveries_possibleTypes: string[] = ['utility_discoveries']
+    export const isutility_discoveries = (obj?: { __typename?: any } | null): obj is utility_discoveries => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discoveries"')
+      return utility_discoveries_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discoveries_aggregate_possibleTypes: string[] = ['utility_discoveries_aggregate']
+    export const isutility_discoveries_aggregate = (obj?: { __typename?: any } | null): obj is utility_discoveries_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discoveries_aggregate"')
+      return utility_discoveries_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discoveries_aggregate_fields_possibleTypes: string[] = ['utility_discoveries_aggregate_fields']
+    export const isutility_discoveries_aggregate_fields = (obj?: { __typename?: any } | null): obj is utility_discoveries_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discoveries_aggregate_fields"')
+      return utility_discoveries_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discoveries_avg_fields_possibleTypes: string[] = ['utility_discoveries_avg_fields']
+    export const isutility_discoveries_avg_fields = (obj?: { __typename?: any } | null): obj is utility_discoveries_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discoveries_avg_fields"')
+      return utility_discoveries_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discoveries_max_fields_possibleTypes: string[] = ['utility_discoveries_max_fields']
+    export const isutility_discoveries_max_fields = (obj?: { __typename?: any } | null): obj is utility_discoveries_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discoveries_max_fields"')
+      return utility_discoveries_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discoveries_min_fields_possibleTypes: string[] = ['utility_discoveries_min_fields']
+    export const isutility_discoveries_min_fields = (obj?: { __typename?: any } | null): obj is utility_discoveries_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discoveries_min_fields"')
+      return utility_discoveries_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discoveries_mutation_response_possibleTypes: string[] = ['utility_discoveries_mutation_response']
+    export const isutility_discoveries_mutation_response = (obj?: { __typename?: any } | null): obj is utility_discoveries_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discoveries_mutation_response"')
+      return utility_discoveries_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discoveries_stddev_fields_possibleTypes: string[] = ['utility_discoveries_stddev_fields']
+    export const isutility_discoveries_stddev_fields = (obj?: { __typename?: any } | null): obj is utility_discoveries_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discoveries_stddev_fields"')
+      return utility_discoveries_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discoveries_stddev_pop_fields_possibleTypes: string[] = ['utility_discoveries_stddev_pop_fields']
+    export const isutility_discoveries_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is utility_discoveries_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discoveries_stddev_pop_fields"')
+      return utility_discoveries_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discoveries_stddev_samp_fields_possibleTypes: string[] = ['utility_discoveries_stddev_samp_fields']
+    export const isutility_discoveries_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is utility_discoveries_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discoveries_stddev_samp_fields"')
+      return utility_discoveries_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discoveries_sum_fields_possibleTypes: string[] = ['utility_discoveries_sum_fields']
+    export const isutility_discoveries_sum_fields = (obj?: { __typename?: any } | null): obj is utility_discoveries_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discoveries_sum_fields"')
+      return utility_discoveries_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discoveries_var_pop_fields_possibleTypes: string[] = ['utility_discoveries_var_pop_fields']
+    export const isutility_discoveries_var_pop_fields = (obj?: { __typename?: any } | null): obj is utility_discoveries_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discoveries_var_pop_fields"')
+      return utility_discoveries_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discoveries_var_samp_fields_possibleTypes: string[] = ['utility_discoveries_var_samp_fields']
+    export const isutility_discoveries_var_samp_fields = (obj?: { __typename?: any } | null): obj is utility_discoveries_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discoveries_var_samp_fields"')
+      return utility_discoveries_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discoveries_variance_fields_possibleTypes: string[] = ['utility_discoveries_variance_fields']
+    export const isutility_discoveries_variance_fields = (obj?: { __typename?: any } | null): obj is utility_discoveries_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discoveries_variance_fields"')
+      return utility_discoveries_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discovery_results_possibleTypes: string[] = ['utility_discovery_results']
+    export const isutility_discovery_results = (obj?: { __typename?: any } | null): obj is utility_discovery_results => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discovery_results"')
+      return utility_discovery_results_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discovery_results_aggregate_possibleTypes: string[] = ['utility_discovery_results_aggregate']
+    export const isutility_discovery_results_aggregate = (obj?: { __typename?: any } | null): obj is utility_discovery_results_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discovery_results_aggregate"')
+      return utility_discovery_results_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discovery_results_aggregate_fields_possibleTypes: string[] = ['utility_discovery_results_aggregate_fields']
+    export const isutility_discovery_results_aggregate_fields = (obj?: { __typename?: any } | null): obj is utility_discovery_results_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discovery_results_aggregate_fields"')
+      return utility_discovery_results_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discovery_results_avg_fields_possibleTypes: string[] = ['utility_discovery_results_avg_fields']
+    export const isutility_discovery_results_avg_fields = (obj?: { __typename?: any } | null): obj is utility_discovery_results_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discovery_results_avg_fields"')
+      return utility_discovery_results_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discovery_results_max_fields_possibleTypes: string[] = ['utility_discovery_results_max_fields']
+    export const isutility_discovery_results_max_fields = (obj?: { __typename?: any } | null): obj is utility_discovery_results_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discovery_results_max_fields"')
+      return utility_discovery_results_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discovery_results_min_fields_possibleTypes: string[] = ['utility_discovery_results_min_fields']
+    export const isutility_discovery_results_min_fields = (obj?: { __typename?: any } | null): obj is utility_discovery_results_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discovery_results_min_fields"')
+      return utility_discovery_results_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discovery_results_mutation_response_possibleTypes: string[] = ['utility_discovery_results_mutation_response']
+    export const isutility_discovery_results_mutation_response = (obj?: { __typename?: any } | null): obj is utility_discovery_results_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discovery_results_mutation_response"')
+      return utility_discovery_results_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discovery_results_stddev_fields_possibleTypes: string[] = ['utility_discovery_results_stddev_fields']
+    export const isutility_discovery_results_stddev_fields = (obj?: { __typename?: any } | null): obj is utility_discovery_results_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discovery_results_stddev_fields"')
+      return utility_discovery_results_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discovery_results_stddev_pop_fields_possibleTypes: string[] = ['utility_discovery_results_stddev_pop_fields']
+    export const isutility_discovery_results_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is utility_discovery_results_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discovery_results_stddev_pop_fields"')
+      return utility_discovery_results_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discovery_results_stddev_samp_fields_possibleTypes: string[] = ['utility_discovery_results_stddev_samp_fields']
+    export const isutility_discovery_results_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is utility_discovery_results_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discovery_results_stddev_samp_fields"')
+      return utility_discovery_results_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discovery_results_sum_fields_possibleTypes: string[] = ['utility_discovery_results_sum_fields']
+    export const isutility_discovery_results_sum_fields = (obj?: { __typename?: any } | null): obj is utility_discovery_results_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discovery_results_sum_fields"')
+      return utility_discovery_results_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discovery_results_var_pop_fields_possibleTypes: string[] = ['utility_discovery_results_var_pop_fields']
+    export const isutility_discovery_results_var_pop_fields = (obj?: { __typename?: any } | null): obj is utility_discovery_results_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discovery_results_var_pop_fields"')
+      return utility_discovery_results_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discovery_results_var_samp_fields_possibleTypes: string[] = ['utility_discovery_results_var_samp_fields']
+    export const isutility_discovery_results_var_samp_fields = (obj?: { __typename?: any } | null): obj is utility_discovery_results_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discovery_results_var_samp_fields"')
+      return utility_discovery_results_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const utility_discovery_results_variance_fields_possibleTypes: string[] = ['utility_discovery_results_variance_fields']
+    export const isutility_discovery_results_variance_fields = (obj?: { __typename?: any } | null): obj is utility_discovery_results_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isutility_discovery_results_variance_fields"')
+      return utility_discovery_results_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -162266,6 +167815,28 @@ export const enumChatReadStateUpdateColumn = {
    thread: 'thread' as const
 }
 
+export const enumChatRoomSettingsConstraint = {
+   chat_room_settings_pkey: 'chat_room_settings_pkey' as const
+}
+
+export const enumChatRoomSettingsSelectColumn = {
+   mute_minutes: 'mute_minutes' as const,
+   muted: 'muted' as const,
+   muted_until: 'muted_until' as const,
+   notify: 'notify' as const,
+   steam_id: 'steam_id' as const,
+   thread: 'thread' as const
+}
+
+export const enumChatRoomSettingsUpdateColumn = {
+   mute_minutes: 'mute_minutes' as const,
+   muted: 'muted' as const,
+   muted_until: 'muted_until' as const,
+   notify: 'notify' as const,
+   steam_id: 'steam_id' as const,
+   thread: 'thread' as const
+}
+
 export const enumClipRenderJobsConstraint = {
    clip_render_jobs_pkey: 'clip_render_jobs_pkey' as const
 }
@@ -163263,6 +168834,7 @@ export const enumENotificationTypesEnum = {
    NameChangeApproved: 'NameChangeApproved' as const,
    NameChangeDenied: 'NameChangeDenied' as const,
    NameChangeRequest: 'NameChangeRequest' as const,
+   NewsCommentReply: 'NewsCommentReply' as const,
    NewsPublished: 'NewsPublished' as const,
    PlayerReindex: 'PlayerReindex' as const,
    PlayerSanctioned: 'PlayerSanctioned' as const,
@@ -163782,6 +169354,7 @@ export const enumEUtilitySourcesConstraint = {
 
 export const enumEUtilitySourcesEnum = {
    demo: 'demo' as const,
+   discovery: 'discovery' as const,
    editor: 'editor' as const,
    fork: 'fork' as const,
    import: 'import' as const,
@@ -165016,18 +170589,21 @@ export const enumMapsSelectColumn = {
    name: 'name' as const,
    patch: 'patch' as const,
    poster: 'poster' as const,
+   seeded: 'seeded' as const,
    type: 'type' as const,
    workshop_map_id: 'workshop_map_id' as const
 }
 
 export const enumMapsSelectColumnMapsAggregateBoolExpBoolAndArgumentsColumns = {
    active_pool: 'active_pool' as const,
-   enabled: 'enabled' as const
+   enabled: 'enabled' as const,
+   seeded: 'seeded' as const
 }
 
 export const enumMapsSelectColumnMapsAggregateBoolExpBoolOrArgumentsColumns = {
    active_pool: 'active_pool' as const,
-   enabled: 'enabled' as const
+   enabled: 'enabled' as const,
+   seeded: 'seeded' as const
 }
 
 export const enumMapsUpdateColumn = {
@@ -165039,6 +170615,7 @@ export const enumMapsUpdateColumn = {
    name: 'name' as const,
    patch: 'patch' as const,
    poster: 'poster' as const,
+   seeded: 'seeded' as const,
    type: 'type' as const,
    workshop_map_id: 'workshop_map_id' as const
 }
@@ -165657,6 +171234,7 @@ export const enumMigrationHashesHashesUpdateColumn = {
 }
 
 export const enumMyFriendsSelectColumn = {
+   allow_message_requests: 'allow_message_requests' as const,
    avatar_url: 'avatar_url' as const,
    country: 'country' as const,
    created_at: 'created_at' as const,
@@ -165697,12 +171275,14 @@ export const enumMyFriendsSelectColumn = {
 }
 
 export const enumMyFriendsSelectColumnMyFriendsAggregateBoolExpBoolAndArgumentsColumns = {
+   allow_message_requests: 'allow_message_requests' as const,
    name_registered: 'name_registered' as const,
    show_match_ready_modal: 'show_match_ready_modal' as const,
    vac_banned: 'vac_banned' as const
 }
 
 export const enumMyFriendsSelectColumnMyFriendsAggregateBoolExpBoolOrArgumentsColumns = {
+   allow_message_requests: 'allow_message_requests' as const,
    name_registered: 'name_registered' as const,
    show_match_ready_modal: 'show_match_ready_modal' as const,
    vac_banned: 'vac_banned' as const
@@ -165741,6 +171321,50 @@ export const enumNewsArticlesUpdateColumn = {
    title: 'title' as const,
    updated_at: 'updated_at' as const,
    view_count: 'view_count' as const
+}
+
+export const enumNewsCommentsConstraint = {
+   news_comments_pkey: 'news_comments_pkey' as const
+}
+
+export const enumNewsCommentsSelectColumn = {
+   article_id: 'article_id' as const,
+   author_steam_id: 'author_steam_id' as const,
+   body: 'body' as const,
+   created_at: 'created_at' as const,
+   deleted_at: 'deleted_at' as const,
+   deleted_by_staff: 'deleted_by_staff' as const,
+   edited_at: 'edited_at' as const,
+   hidden_at: 'hidden_at' as const,
+   hidden_by_steam_id: 'hidden_by_steam_id' as const,
+   hidden_reason: 'hidden_reason' as const,
+   id: 'id' as const,
+   parent_id: 'parent_id' as const,
+   vote_count: 'vote_count' as const
+}
+
+export const enumNewsCommentsSelectColumnNewsCommentsAggregateBoolExpBoolAndArgumentsColumns = {
+   deleted_by_staff: 'deleted_by_staff' as const
+}
+
+export const enumNewsCommentsSelectColumnNewsCommentsAggregateBoolExpBoolOrArgumentsColumns = {
+   deleted_by_staff: 'deleted_by_staff' as const
+}
+
+export const enumNewsCommentsUpdateColumn = {
+   article_id: 'article_id' as const,
+   author_steam_id: 'author_steam_id' as const,
+   body: 'body' as const,
+   created_at: 'created_at' as const,
+   deleted_at: 'deleted_at' as const,
+   deleted_by_staff: 'deleted_by_staff' as const,
+   edited_at: 'edited_at' as const,
+   hidden_at: 'hidden_at' as const,
+   hidden_by_steam_id: 'hidden_by_steam_id' as const,
+   hidden_reason: 'hidden_reason' as const,
+   id: 'id' as const,
+   parent_id: 'parent_id' as const,
+   vote_count: 'vote_count' as const
 }
 
 export const enumNotificationPreferencesConstraint = {
@@ -166808,6 +172432,41 @@ export const enumPlayerSteamMatchAuthUpdateColumn = {
    updated_at: 'updated_at' as const
 }
 
+export const enumPlayerTwitchAccountsConstraint = {
+   player_twitch_accounts_pkey: 'player_twitch_accounts_pkey' as const,
+   player_twitch_accounts_twitch_user_id_key: 'player_twitch_accounts_twitch_user_id_key' as const
+}
+
+export const enumPlayerTwitchAccountsSelectColumn = {
+   checked_at: 'checked_at' as const,
+   created_at: 'created_at' as const,
+   display_name: 'display_name' as const,
+   game_name: 'game_name' as const,
+   is_live: 'is_live' as const,
+   login: 'login' as const,
+   started_at: 'started_at' as const,
+   steam_id: 'steam_id' as const,
+   stream_title: 'stream_title' as const,
+   thumbnail_url: 'thumbnail_url' as const,
+   twitch_user_id: 'twitch_user_id' as const,
+   viewer_count: 'viewer_count' as const
+}
+
+export const enumPlayerTwitchAccountsUpdateColumn = {
+   checked_at: 'checked_at' as const,
+   created_at: 'created_at' as const,
+   display_name: 'display_name' as const,
+   game_name: 'game_name' as const,
+   is_live: 'is_live' as const,
+   login: 'login' as const,
+   started_at: 'started_at' as const,
+   steam_id: 'steam_id' as const,
+   stream_title: 'stream_title' as const,
+   thumbnail_url: 'thumbnail_url' as const,
+   twitch_user_id: 'twitch_user_id' as const,
+   viewer_count: 'viewer_count' as const
+}
+
 export const enumPlayerUnusedUtilityConstraint = {
    player_unused_utility_pkey: 'player_unused_utility_pkey' as const
 }
@@ -167841,7 +173500,6 @@ export const enumTournamentFreeAgentsSelectColumn = {
    checked_in_at: 'checked_in_at' as const,
    created_at: 'created_at' as const,
    id: 'id' as const,
-   party_id: 'party_id' as const,
    player_steam_id: 'player_steam_id' as const,
    status: 'status' as const,
    tournament_id: 'tournament_id' as const,
@@ -167852,7 +173510,6 @@ export const enumTournamentFreeAgentsUpdateColumn = {
    checked_in_at: 'checked_in_at' as const,
    created_at: 'created_at' as const,
    id: 'id' as const,
-   party_id: 'party_id' as const,
    player_steam_id: 'player_steam_id' as const,
    status: 'status' as const,
    tournament_id: 'tournament_id' as const,
@@ -167946,6 +173603,88 @@ export const enumTournamentLeaderboardEntriesSelectColumn = {
    rating: 'rating' as const,
    rounds_played: 'rounds_played' as const,
    team_name: 'team_name' as const,
+   tournament_team_id: 'tournament_team_id' as const
+}
+
+export const enumTournamentMvpPicksConstraint = {
+   tournament_mvp_picks_pkey: 'tournament_mvp_picks_pkey' as const
+}
+
+export const enumTournamentMvpPicksSelectColumn = {
+   automatic_impact: 'automatic_impact' as const,
+   automatic_steam_id: 'automatic_steam_id' as const,
+   created_at: 'created_at' as const,
+   id: 'id' as const,
+   kept_automatic: 'kept_automatic' as const,
+   note: 'note' as const,
+   picked_by_steam_id: 'picked_by_steam_id' as const,
+   player_impact: 'player_impact' as const,
+   player_steam_id: 'player_steam_id' as const,
+   replaced_steam_id: 'replaced_steam_id' as const,
+   tournament_id: 'tournament_id' as const,
+   tournament_team_id: 'tournament_team_id' as const
+}
+
+export const enumTournamentMvpPicksSelectColumnTournamentMvpPicksAggregateBoolExpAvgArgumentsColumns = {
+   automatic_impact: 'automatic_impact' as const,
+   player_impact: 'player_impact' as const
+}
+
+export const enumTournamentMvpPicksSelectColumnTournamentMvpPicksAggregateBoolExpBoolAndArgumentsColumns = {
+   kept_automatic: 'kept_automatic' as const
+}
+
+export const enumTournamentMvpPicksSelectColumnTournamentMvpPicksAggregateBoolExpBoolOrArgumentsColumns = {
+   kept_automatic: 'kept_automatic' as const
+}
+
+export const enumTournamentMvpPicksSelectColumnTournamentMvpPicksAggregateBoolExpCorrArgumentsColumns = {
+   automatic_impact: 'automatic_impact' as const,
+   player_impact: 'player_impact' as const
+}
+
+export const enumTournamentMvpPicksSelectColumnTournamentMvpPicksAggregateBoolExpCovarSampArgumentsColumns = {
+   automatic_impact: 'automatic_impact' as const,
+   player_impact: 'player_impact' as const
+}
+
+export const enumTournamentMvpPicksSelectColumnTournamentMvpPicksAggregateBoolExpMaxArgumentsColumns = {
+   automatic_impact: 'automatic_impact' as const,
+   player_impact: 'player_impact' as const
+}
+
+export const enumTournamentMvpPicksSelectColumnTournamentMvpPicksAggregateBoolExpMinArgumentsColumns = {
+   automatic_impact: 'automatic_impact' as const,
+   player_impact: 'player_impact' as const
+}
+
+export const enumTournamentMvpPicksSelectColumnTournamentMvpPicksAggregateBoolExpStddevSampArgumentsColumns = {
+   automatic_impact: 'automatic_impact' as const,
+   player_impact: 'player_impact' as const
+}
+
+export const enumTournamentMvpPicksSelectColumnTournamentMvpPicksAggregateBoolExpSumArgumentsColumns = {
+   automatic_impact: 'automatic_impact' as const,
+   player_impact: 'player_impact' as const
+}
+
+export const enumTournamentMvpPicksSelectColumnTournamentMvpPicksAggregateBoolExpVarSampArgumentsColumns = {
+   automatic_impact: 'automatic_impact' as const,
+   player_impact: 'player_impact' as const
+}
+
+export const enumTournamentMvpPicksUpdateColumn = {
+   automatic_impact: 'automatic_impact' as const,
+   automatic_steam_id: 'automatic_steam_id' as const,
+   created_at: 'created_at' as const,
+   id: 'id' as const,
+   kept_automatic: 'kept_automatic' as const,
+   note: 'note' as const,
+   picked_by_steam_id: 'picked_by_steam_id' as const,
+   player_impact: 'player_impact' as const,
+   player_steam_id: 'player_steam_id' as const,
+   replaced_steam_id: 'replaced_steam_id' as const,
+   tournament_id: 'tournament_id' as const,
    tournament_team_id: 'tournament_team_id' as const
 }
 
@@ -168146,6 +173885,7 @@ export const enumTournamentTeamRosterConstraint = {
 
 export const enumTournamentTeamRosterSelectColumn = {
    checked_in_at: 'checked_in_at' as const,
+   created_at: 'created_at' as const,
    player_steam_id: 'player_steam_id' as const,
    role: 'role' as const,
    tournament_id: 'tournament_id' as const,
@@ -168154,6 +173894,7 @@ export const enumTournamentTeamRosterSelectColumn = {
 
 export const enumTournamentTeamRosterUpdateColumn = {
    checked_in_at: 'checked_in_at' as const,
+   created_at: 'created_at' as const,
    player_steam_id: 'player_steam_id' as const,
    role: 'role' as const,
    tournament_id: 'tournament_id' as const,
@@ -168254,6 +173995,7 @@ export const enumTournamentsSelectColumn = {
    min_elo: 'min_elo' as const,
    min_role: 'min_role' as const,
    name: 'name' as const,
+   organizer_picks_mvp: 'organizer_picks_mvp' as const,
    organizer_steam_id: 'organizer_steam_id' as const,
    registration_type: 'registration_type' as const,
    scheduling_mode: 'scheduling_mode' as const,
@@ -168287,6 +174029,7 @@ export const enumTournamentsSelectColumnTournamentsAggregateBoolExpBoolAndArgume
    discord_voice_enabled: 'discord_voice_enabled' as const,
    invite_only: 'invite_only' as const,
    is_league: 'is_league' as const,
+   organizer_picks_mvp: 'organizer_picks_mvp' as const,
    substitutes_enabled: 'substitutes_enabled' as const
 }
 
@@ -168310,6 +174053,7 @@ export const enumTournamentsSelectColumnTournamentsAggregateBoolExpBoolOrArgumen
    discord_voice_enabled: 'discord_voice_enabled' as const,
    invite_only: 'invite_only' as const,
    is_league: 'is_league' as const,
+   organizer_picks_mvp: 'organizer_picks_mvp' as const,
    substitutes_enabled: 'substitutes_enabled' as const
 }
 
@@ -168392,6 +174136,7 @@ export const enumTournamentsUpdateColumn = {
    min_elo: 'min_elo' as const,
    min_role: 'min_role' as const,
    name: 'name' as const,
+   organizer_picks_mvp: 'organizer_picks_mvp' as const,
    organizer_steam_id: 'organizer_steam_id' as const,
    registration_type: 'registration_type' as const,
    scheduling_mode: 'scheduling_mode' as const,
@@ -168523,6 +174268,333 @@ export const enumUtilityDemoThrowsUpdateColumn = {
    utility_type: 'utility_type' as const,
    view_pitch: 'view_pitch' as const,
    view_yaw: 'view_yaw' as const
+}
+
+export const enumUtilityDiscoveriesConstraint = {
+   utility_discoveries_one_active_idx: 'utility_discoveries_one_active_idx' as const,
+   utility_discoveries_pkey: 'utility_discoveries_pkey' as const
+}
+
+export const enumUtilityDiscoveriesSelectColumn = {
+   area: 'area' as const,
+   created_at: 'created_at' as const,
+   error: 'error' as const,
+   finished_at: 'finished_at' as const,
+   grenades: 'grenades' as const,
+   id: 'id' as const,
+   map_name: 'map_name' as const,
+   mesh_revision: 'mesh_revision' as const,
+   missed: 'missed' as const,
+   predicted: 'predicted' as const,
+   radius: 'radius' as const,
+   requested_by_steam_id: 'requested_by_steam_id' as const,
+   started_at: 'started_at' as const,
+   status: 'status' as const,
+   strengths: 'strengths' as const,
+   target_x: 'target_x' as const,
+   target_y: 'target_y' as const,
+   target_z: 'target_z' as const,
+   techniques: 'techniques' as const,
+   utility_practice_session_id: 'utility_practice_session_id' as const,
+   utility_type: 'utility_type' as const,
+   verified: 'verified' as const
+}
+
+export const enumUtilityDiscoveriesUpdateColumn = {
+   area: 'area' as const,
+   created_at: 'created_at' as const,
+   error: 'error' as const,
+   finished_at: 'finished_at' as const,
+   grenades: 'grenades' as const,
+   id: 'id' as const,
+   map_name: 'map_name' as const,
+   mesh_revision: 'mesh_revision' as const,
+   missed: 'missed' as const,
+   predicted: 'predicted' as const,
+   radius: 'radius' as const,
+   requested_by_steam_id: 'requested_by_steam_id' as const,
+   started_at: 'started_at' as const,
+   status: 'status' as const,
+   strengths: 'strengths' as const,
+   target_x: 'target_x' as const,
+   target_y: 'target_y' as const,
+   target_z: 'target_z' as const,
+   techniques: 'techniques' as const,
+   utility_practice_session_id: 'utility_practice_session_id' as const,
+   utility_type: 'utility_type' as const,
+   verified: 'verified' as const
+}
+
+export const enumUtilityDiscoveryResultsConstraint = {
+   utility_discovery_results_pkey: 'utility_discovery_results_pkey' as const
+}
+
+export const enumUtilityDiscoveryResultsSelectColumn = {
+   bounces: 'bounces' as const,
+   created_at: 'created_at' as const,
+   discovery_id: 'discovery_id' as const,
+   distance: 'distance' as const,
+   eye_z: 'eye_z' as const,
+   flight_time_ms: 'flight_time_ms' as const,
+   forgiveness: 'forgiveness' as const,
+   grenades: 'grenades' as const,
+   id: 'id' as const,
+   initial_pos_x: 'initial_pos_x' as const,
+   initial_pos_y: 'initial_pos_y' as const,
+   initial_pos_z: 'initial_pos_z' as const,
+   initial_vel_x: 'initial_vel_x' as const,
+   initial_vel_y: 'initial_vel_y' as const,
+   initial_vel_z: 'initial_vel_z' as const,
+   is_new: 'is_new' as const,
+   jump_throw: 'jump_throw' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   measured: 'measured' as const,
+   move_direction: 'move_direction' as const,
+   move_gait: 'move_gait' as const,
+   path: 'path' as const,
+   pitch: 'pitch' as const,
+   predicted_bounces: 'predicted_bounces' as const,
+   predicted_distance: 'predicted_distance' as const,
+   predicted_land_x: 'predicted_land_x' as const,
+   predicted_land_y: 'predicted_land_y' as const,
+   predicted_land_z: 'predicted_land_z' as const,
+   predicted_spread: 'predicted_spread' as const,
+   rank: 'rank' as const,
+   stand_x: 'stand_x' as const,
+   stand_y: 'stand_y' as const,
+   stand_z: 'stand_z' as const,
+   status: 'status' as const,
+   strength: 'strength' as const,
+   technique: 'technique' as const,
+   utility_lineup_id: 'utility_lineup_id' as const,
+   verified_at: 'verified_at' as const,
+   yaw: 'yaw' as const
+}
+
+export const enumUtilityDiscoveryResultsSelectColumnUtilityDiscoveryResultsAggregateBoolExpAvgArgumentsColumns = {
+   eye_z: 'eye_z' as const,
+   initial_pos_x: 'initial_pos_x' as const,
+   initial_pos_y: 'initial_pos_y' as const,
+   initial_pos_z: 'initial_pos_z' as const,
+   initial_vel_x: 'initial_vel_x' as const,
+   initial_vel_y: 'initial_vel_y' as const,
+   initial_vel_z: 'initial_vel_z' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   pitch: 'pitch' as const,
+   predicted_land_x: 'predicted_land_x' as const,
+   predicted_land_y: 'predicted_land_y' as const,
+   predicted_land_z: 'predicted_land_z' as const,
+   stand_x: 'stand_x' as const,
+   stand_y: 'stand_y' as const,
+   stand_z: 'stand_z' as const,
+   yaw: 'yaw' as const
+}
+
+export const enumUtilityDiscoveryResultsSelectColumnUtilityDiscoveryResultsAggregateBoolExpBoolAndArgumentsColumns = {
+   is_new: 'is_new' as const,
+   jump_throw: 'jump_throw' as const,
+   measured: 'measured' as const
+}
+
+export const enumUtilityDiscoveryResultsSelectColumnUtilityDiscoveryResultsAggregateBoolExpBoolOrArgumentsColumns = {
+   is_new: 'is_new' as const,
+   jump_throw: 'jump_throw' as const,
+   measured: 'measured' as const
+}
+
+export const enumUtilityDiscoveryResultsSelectColumnUtilityDiscoveryResultsAggregateBoolExpCorrArgumentsColumns = {
+   eye_z: 'eye_z' as const,
+   initial_pos_x: 'initial_pos_x' as const,
+   initial_pos_y: 'initial_pos_y' as const,
+   initial_pos_z: 'initial_pos_z' as const,
+   initial_vel_x: 'initial_vel_x' as const,
+   initial_vel_y: 'initial_vel_y' as const,
+   initial_vel_z: 'initial_vel_z' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   pitch: 'pitch' as const,
+   predicted_land_x: 'predicted_land_x' as const,
+   predicted_land_y: 'predicted_land_y' as const,
+   predicted_land_z: 'predicted_land_z' as const,
+   stand_x: 'stand_x' as const,
+   stand_y: 'stand_y' as const,
+   stand_z: 'stand_z' as const,
+   yaw: 'yaw' as const
+}
+
+export const enumUtilityDiscoveryResultsSelectColumnUtilityDiscoveryResultsAggregateBoolExpCovarSampArgumentsColumns = {
+   eye_z: 'eye_z' as const,
+   initial_pos_x: 'initial_pos_x' as const,
+   initial_pos_y: 'initial_pos_y' as const,
+   initial_pos_z: 'initial_pos_z' as const,
+   initial_vel_x: 'initial_vel_x' as const,
+   initial_vel_y: 'initial_vel_y' as const,
+   initial_vel_z: 'initial_vel_z' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   pitch: 'pitch' as const,
+   predicted_land_x: 'predicted_land_x' as const,
+   predicted_land_y: 'predicted_land_y' as const,
+   predicted_land_z: 'predicted_land_z' as const,
+   stand_x: 'stand_x' as const,
+   stand_y: 'stand_y' as const,
+   stand_z: 'stand_z' as const,
+   yaw: 'yaw' as const
+}
+
+export const enumUtilityDiscoveryResultsSelectColumnUtilityDiscoveryResultsAggregateBoolExpMaxArgumentsColumns = {
+   eye_z: 'eye_z' as const,
+   initial_pos_x: 'initial_pos_x' as const,
+   initial_pos_y: 'initial_pos_y' as const,
+   initial_pos_z: 'initial_pos_z' as const,
+   initial_vel_x: 'initial_vel_x' as const,
+   initial_vel_y: 'initial_vel_y' as const,
+   initial_vel_z: 'initial_vel_z' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   pitch: 'pitch' as const,
+   predicted_land_x: 'predicted_land_x' as const,
+   predicted_land_y: 'predicted_land_y' as const,
+   predicted_land_z: 'predicted_land_z' as const,
+   stand_x: 'stand_x' as const,
+   stand_y: 'stand_y' as const,
+   stand_z: 'stand_z' as const,
+   yaw: 'yaw' as const
+}
+
+export const enumUtilityDiscoveryResultsSelectColumnUtilityDiscoveryResultsAggregateBoolExpMinArgumentsColumns = {
+   eye_z: 'eye_z' as const,
+   initial_pos_x: 'initial_pos_x' as const,
+   initial_pos_y: 'initial_pos_y' as const,
+   initial_pos_z: 'initial_pos_z' as const,
+   initial_vel_x: 'initial_vel_x' as const,
+   initial_vel_y: 'initial_vel_y' as const,
+   initial_vel_z: 'initial_vel_z' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   pitch: 'pitch' as const,
+   predicted_land_x: 'predicted_land_x' as const,
+   predicted_land_y: 'predicted_land_y' as const,
+   predicted_land_z: 'predicted_land_z' as const,
+   stand_x: 'stand_x' as const,
+   stand_y: 'stand_y' as const,
+   stand_z: 'stand_z' as const,
+   yaw: 'yaw' as const
+}
+
+export const enumUtilityDiscoveryResultsSelectColumnUtilityDiscoveryResultsAggregateBoolExpStddevSampArgumentsColumns = {
+   eye_z: 'eye_z' as const,
+   initial_pos_x: 'initial_pos_x' as const,
+   initial_pos_y: 'initial_pos_y' as const,
+   initial_pos_z: 'initial_pos_z' as const,
+   initial_vel_x: 'initial_vel_x' as const,
+   initial_vel_y: 'initial_vel_y' as const,
+   initial_vel_z: 'initial_vel_z' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   pitch: 'pitch' as const,
+   predicted_land_x: 'predicted_land_x' as const,
+   predicted_land_y: 'predicted_land_y' as const,
+   predicted_land_z: 'predicted_land_z' as const,
+   stand_x: 'stand_x' as const,
+   stand_y: 'stand_y' as const,
+   stand_z: 'stand_z' as const,
+   yaw: 'yaw' as const
+}
+
+export const enumUtilityDiscoveryResultsSelectColumnUtilityDiscoveryResultsAggregateBoolExpSumArgumentsColumns = {
+   eye_z: 'eye_z' as const,
+   initial_pos_x: 'initial_pos_x' as const,
+   initial_pos_y: 'initial_pos_y' as const,
+   initial_pos_z: 'initial_pos_z' as const,
+   initial_vel_x: 'initial_vel_x' as const,
+   initial_vel_y: 'initial_vel_y' as const,
+   initial_vel_z: 'initial_vel_z' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   pitch: 'pitch' as const,
+   predicted_land_x: 'predicted_land_x' as const,
+   predicted_land_y: 'predicted_land_y' as const,
+   predicted_land_z: 'predicted_land_z' as const,
+   stand_x: 'stand_x' as const,
+   stand_y: 'stand_y' as const,
+   stand_z: 'stand_z' as const,
+   yaw: 'yaw' as const
+}
+
+export const enumUtilityDiscoveryResultsSelectColumnUtilityDiscoveryResultsAggregateBoolExpVarSampArgumentsColumns = {
+   eye_z: 'eye_z' as const,
+   initial_pos_x: 'initial_pos_x' as const,
+   initial_pos_y: 'initial_pos_y' as const,
+   initial_pos_z: 'initial_pos_z' as const,
+   initial_vel_x: 'initial_vel_x' as const,
+   initial_vel_y: 'initial_vel_y' as const,
+   initial_vel_z: 'initial_vel_z' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   pitch: 'pitch' as const,
+   predicted_land_x: 'predicted_land_x' as const,
+   predicted_land_y: 'predicted_land_y' as const,
+   predicted_land_z: 'predicted_land_z' as const,
+   stand_x: 'stand_x' as const,
+   stand_y: 'stand_y' as const,
+   stand_z: 'stand_z' as const,
+   yaw: 'yaw' as const
+}
+
+export const enumUtilityDiscoveryResultsUpdateColumn = {
+   bounces: 'bounces' as const,
+   created_at: 'created_at' as const,
+   discovery_id: 'discovery_id' as const,
+   distance: 'distance' as const,
+   eye_z: 'eye_z' as const,
+   flight_time_ms: 'flight_time_ms' as const,
+   forgiveness: 'forgiveness' as const,
+   grenades: 'grenades' as const,
+   id: 'id' as const,
+   initial_pos_x: 'initial_pos_x' as const,
+   initial_pos_y: 'initial_pos_y' as const,
+   initial_pos_z: 'initial_pos_z' as const,
+   initial_vel_x: 'initial_vel_x' as const,
+   initial_vel_y: 'initial_vel_y' as const,
+   initial_vel_z: 'initial_vel_z' as const,
+   is_new: 'is_new' as const,
+   jump_throw: 'jump_throw' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   measured: 'measured' as const,
+   move_direction: 'move_direction' as const,
+   move_gait: 'move_gait' as const,
+   path: 'path' as const,
+   pitch: 'pitch' as const,
+   predicted_bounces: 'predicted_bounces' as const,
+   predicted_distance: 'predicted_distance' as const,
+   predicted_land_x: 'predicted_land_x' as const,
+   predicted_land_y: 'predicted_land_y' as const,
+   predicted_land_z: 'predicted_land_z' as const,
+   predicted_spread: 'predicted_spread' as const,
+   rank: 'rank' as const,
+   stand_x: 'stand_x' as const,
+   stand_y: 'stand_y' as const,
+   stand_z: 'stand_z' as const,
+   status: 'status' as const,
+   strength: 'strength' as const,
+   technique: 'technique' as const,
+   utility_lineup_id: 'utility_lineup_id' as const,
+   verified_at: 'verified_at' as const,
+   yaw: 'yaw' as const
 }
 
 export const enumUtilityDriftResultsConstraint = {
@@ -168763,6 +174835,7 @@ export const enumUtilityLineupRendersSelectColumn = {
    map_name: 'map_name' as const,
    paused: 'paused' as const,
    progress: 'progress' as const,
+   render_version: 'render_version' as const,
    requested_by_steam_id: 'requested_by_steam_id' as const,
    session_token: 'session_token' as const,
    skip_reason: 'skip_reason' as const,
@@ -168793,6 +174866,7 @@ export const enumUtilityLineupRendersUpdateColumn = {
    map_name: 'map_name' as const,
    paused: 'paused' as const,
    progress: 'progress' as const,
+   render_version: 'render_version' as const,
    requested_by_steam_id: 'requested_by_steam_id' as const,
    session_token: 'session_token' as const,
    skip_reason: 'skip_reason' as const,
@@ -168932,11 +175006,14 @@ export const enumUtilityLineupsSelectColumn = {
    preview_rendered_at: 'preview_rendered_at' as const,
    preview_stills: 'preview_stills' as const,
    preview_thumbnail: 'preview_thumbnail' as const,
+   preview_version: 'preview_version' as const,
    public_requested_at: 'public_requested_at' as const,
    public_review_note: 'public_review_note' as const,
    public_reviewed_at: 'public_reviewed_at' as const,
    public_reviewed_by: 'public_reviewed_by' as const,
    side: 'side' as const,
+   smoke_voxels_at: 'smoke_voxels_at' as const,
+   smoke_voxels_file: 'smoke_voxels_file' as const,
    source_grenade_id: 'source_grenade_id' as const,
    source_match_id: 'source_match_id' as const,
    source_match_map_id: 'source_match_map_id' as const,
@@ -169175,11 +175252,14 @@ export const enumUtilityLineupsUpdateColumn = {
    preview_rendered_at: 'preview_rendered_at' as const,
    preview_stills: 'preview_stills' as const,
    preview_thumbnail: 'preview_thumbnail' as const,
+   preview_version: 'preview_version' as const,
    public_requested_at: 'public_requested_at' as const,
    public_review_note: 'public_review_note' as const,
    public_reviewed_at: 'public_reviewed_at' as const,
    public_reviewed_by: 'public_reviewed_by' as const,
    side: 'side' as const,
+   smoke_voxels_at: 'smoke_voxels_at' as const,
+   smoke_voxels_file: 'smoke_voxels_file' as const,
    source_grenade_id: 'source_grenade_id' as const,
    source_match_id: 'source_match_id' as const,
    source_match_map_id: 'source_match_map_id' as const,
@@ -169348,6 +175428,7 @@ export const enumUtilityPracticeSessionsSelectColumn = {
    host_steam_id: 'host_steam_id' as const,
    id: 'id' as const,
    invite_code: 'invite_code' as const,
+   is_discovery: 'is_discovery' as const,
    is_open: 'is_open' as const,
    is_render: 'is_render' as const,
    last_occupied_at: 'last_occupied_at' as const,
@@ -169357,18 +175438,22 @@ export const enumUtilityPracticeSessionsSelectColumn = {
    notify_when_ready: 'notify_when_ready' as const,
    playbook_id: 'playbook_id' as const,
    region: 'region' as const,
+   render_job_name: 'render_job_name' as const,
+   render_seen_at: 'render_seen_at' as const,
    status: 'status' as const,
    team_id: 'team_id' as const,
    updated_at: 'updated_at' as const
 }
 
 export const enumUtilityPracticeSessionsSelectColumnUtilityPracticeSessionsAggregateBoolExpBoolAndArgumentsColumns = {
+   is_discovery: 'is_discovery' as const,
    is_open: 'is_open' as const,
    is_render: 'is_render' as const,
    notify_when_ready: 'notify_when_ready' as const
 }
 
 export const enumUtilityPracticeSessionsSelectColumnUtilityPracticeSessionsAggregateBoolExpBoolOrArgumentsColumns = {
+   is_discovery: 'is_discovery' as const,
    is_open: 'is_open' as const,
    is_render: 'is_render' as const,
    notify_when_ready: 'notify_when_ready' as const
@@ -169385,6 +175470,7 @@ export const enumUtilityPracticeSessionsUpdateColumn = {
    host_steam_id: 'host_steam_id' as const,
    id: 'id' as const,
    invite_code: 'invite_code' as const,
+   is_discovery: 'is_discovery' as const,
    is_open: 'is_open' as const,
    is_render: 'is_render' as const,
    last_occupied_at: 'last_occupied_at' as const,
@@ -169394,6 +175480,8 @@ export const enumUtilityPracticeSessionsUpdateColumn = {
    notify_when_ready: 'notify_when_ready' as const,
    playbook_id: 'playbook_id' as const,
    region: 'region' as const,
+   render_job_name: 'render_job_name' as const,
+   render_seen_at: 'render_seen_at' as const,
    status: 'status' as const,
    team_id: 'team_id' as const,
    updated_at: 'updated_at' as const
@@ -170095,6 +176183,7 @@ export const enumVTeamTournamentResultsSelectColumnVTeamTournamentResultsAggrega
 }
 
 export const enumVTournamentPlayerStatsSelectColumn = {
+   adr: 'adr' as const,
    assists: 'assists' as const,
    deaths: 'deaths' as const,
    headshot_percentage: 'headshot_percentage' as const,
@@ -170107,41 +176196,49 @@ export const enumVTournamentPlayerStatsSelectColumn = {
 }
 
 export const enumVTournamentPlayerStatsSelectColumnVTournamentPlayerStatsAggregateBoolExpAvgArgumentsColumns = {
+   adr: 'adr' as const,
    headshot_percentage: 'headshot_percentage' as const,
    kdr: 'kdr' as const
 }
 
 export const enumVTournamentPlayerStatsSelectColumnVTournamentPlayerStatsAggregateBoolExpCorrArgumentsColumns = {
+   adr: 'adr' as const,
    headshot_percentage: 'headshot_percentage' as const,
    kdr: 'kdr' as const
 }
 
 export const enumVTournamentPlayerStatsSelectColumnVTournamentPlayerStatsAggregateBoolExpCovarSampArgumentsColumns = {
+   adr: 'adr' as const,
    headshot_percentage: 'headshot_percentage' as const,
    kdr: 'kdr' as const
 }
 
 export const enumVTournamentPlayerStatsSelectColumnVTournamentPlayerStatsAggregateBoolExpMaxArgumentsColumns = {
+   adr: 'adr' as const,
    headshot_percentage: 'headshot_percentage' as const,
    kdr: 'kdr' as const
 }
 
 export const enumVTournamentPlayerStatsSelectColumnVTournamentPlayerStatsAggregateBoolExpMinArgumentsColumns = {
+   adr: 'adr' as const,
    headshot_percentage: 'headshot_percentage' as const,
    kdr: 'kdr' as const
 }
 
 export const enumVTournamentPlayerStatsSelectColumnVTournamentPlayerStatsAggregateBoolExpStddevSampArgumentsColumns = {
+   adr: 'adr' as const,
    headshot_percentage: 'headshot_percentage' as const,
    kdr: 'kdr' as const
 }
 
 export const enumVTournamentPlayerStatsSelectColumnVTournamentPlayerStatsAggregateBoolExpSumArgumentsColumns = {
+   adr: 'adr' as const,
    headshot_percentage: 'headshot_percentage' as const,
    kdr: 'kdr' as const
 }
 
 export const enumVTournamentPlayerStatsSelectColumnVTournamentPlayerStatsAggregateBoolExpVarSampArgumentsColumns = {
+   adr: 'adr' as const,
    headshot_percentage: 'headshot_percentage' as const,
    kdr: 'kdr' as const
 }

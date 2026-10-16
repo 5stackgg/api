@@ -9,6 +9,10 @@ describe("ExtensionController", () => {
   function make({ faceit = true, valve = true } = {}) {
     const extension = {
       imports: jest.fn(async () => ({ faceit, valve })),
+      faceitAccount: jest.fn(async () => ({
+        player_id: "ac71ba3c-d3d4-45e7-8be2-26aa3986867d",
+        nickname: "LukePOLO",
+      })),
       queueFaceitDemo: jest.fn(async () => ({ state: "queued" })),
       queueShareCodes: jest.fn(async () => ({})),
     };
@@ -37,7 +41,21 @@ describe("ExtensionController", () => {
       avatar_url: null,
       role: "user",
       imports: { faceit: true, valve: false },
+      faceit: {
+        player_id: "ac71ba3c-d3d4-45e7-8be2-26aa3986867d",
+        nickname: "LukePOLO",
+      },
     });
+  });
+
+  it("logs the player out of 5Stack by ending the session", async () => {
+    const { controller } = make();
+    const destroy = jest.fn((done: (error?: Error) => void) => done());
+
+    await expect(
+      controller.logout({ user: USER, session: { destroy } } as never),
+    ).resolves.toEqual({ success: true });
+    expect(destroy).toHaveBeenCalled();
   });
 
   it("refuses a FACEIT import when the panel has FACEIT imports off", async () => {
@@ -54,7 +72,7 @@ describe("ExtensionController", () => {
 
     await controller.importFaceit(as(USER), { match_id: ROOM, url: SIGNED });
 
-    expect(extension.queueFaceitDemo).toHaveBeenCalledWith(USER.steam_id, {
+    expect(extension.queueFaceitDemo).toHaveBeenCalledWith(USER, {
       matchId: ROOM,
       url: SIGNED,
     });

@@ -33,7 +33,17 @@ export class ExtensionController {
       avatar_url: user.avatar_url ?? null,
       role: user.role,
       imports: await this.extension.imports(),
+      faceit: await this.extension.faceitAccount(user.steam_id),
     };
+  }
+
+  @Post("logout")
+  public async logout(@Req() request: Request) {
+    this.user(request);
+    await new Promise<void>((resolve, reject) =>
+      request.session.destroy((error) => (error ? reject(error) : resolve())),
+    );
+    return { success: true };
   }
 
   @Post("lookup")
@@ -82,7 +92,7 @@ export class ExtensionController {
       throw new BadRequestException("invalid demo url");
     }
 
-    return this.extension.queueFaceitDemo(user.steam_id, {
+    return this.extension.queueFaceitDemo(user, {
       matchId,
       url: body.url,
     });

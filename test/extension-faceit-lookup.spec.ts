@@ -71,6 +71,21 @@ describe("extension FACEIT lookup", () => {
     ).resolves.toEqual({ [ROOM]: { state: "none", match_ids: [first] } });
   });
 
+  it("knows a player's FACEIT account once 5Stack has linked it", async () => {
+    const steamId = await fx.player();
+    await expect(service.faceitAccount(steamId)).resolves.toBeNull();
+
+    await postgres.query(
+      `UPDATE players SET faceit_player_id = $2, faceit_nickname = $3
+        WHERE steam_id = $1::bigint`,
+      [steamId, "ac71ba3c-d3d4-45e7-8be2-26aa3986867d", "LukePOLO"],
+    );
+    await expect(service.faceitAccount(steamId)).resolves.toEqual({
+      player_id: "ac71ba3c-d3d4-45e7-8be2-26aa3986867d",
+      nickname: "LukePOLO",
+    });
+  });
+
   it("does not count a Valve match that happens to share the id", async () => {
     const { matchId } = await fx.bareMatch();
     await postgres.query(

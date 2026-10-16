@@ -113,6 +113,7 @@ describe("ExtensionService imports", () => {
       getMatchDemos: jest.fn(async () => ({
         demoUrls: [RESOURCE, RESOURCE_2],
         finishedAt: "2026-10-05T23:17:49.000Z",
+        players: ["7656", "76561198000000002"],
       })),
     };
     const service = new ExtensionService(
@@ -134,6 +135,8 @@ describe("ExtensionService imports", () => {
     ...extra,
     remove: jest.fn(async (): Promise<void> => undefined),
   });
+
+  const PLAYER = { steam_id: "7656", role: "user" };
 
   const demo = (map = 1) => ({
     matchId: ROOM,
@@ -213,7 +216,7 @@ describe("ExtensionService imports", () => {
   it("files a demo under the map FACEIT lists it as", async () => {
     const { service, fetchQueue } = make();
 
-    await expect(service.queueFaceitDemo("7656", demo(2))).resolves.toEqual({
+    await expect(service.queueFaceitDemo(PLAYER, demo(2))).resolves.toEqual({
       state: "queued",
     });
     expect(fetchQueue.add).toHaveBeenCalledWith(
@@ -231,8 +234,8 @@ describe("ExtensionService imports", () => {
   it("asks FACEIT about a series once for all of its maps", async () => {
     const { service, faceit } = make();
 
-    await service.queueFaceitDemo("7656", demo(1));
-    await service.queueFaceitDemo("7656", demo(2));
+    await service.queueFaceitDemo(PLAYER, demo(1));
+    await service.queueFaceitDemo(PLAYER, demo(2));
 
     expect(faceit.getMatchDemos).toHaveBeenCalledTimes(1);
   });
@@ -241,7 +244,7 @@ describe("ExtensionService imports", () => {
     const { service, fetchQueue } = make();
 
     await expect(
-      service.queueFaceitDemo("7656", {
+      service.queueFaceitDemo(PLAYER, {
         matchId: ROOM,
         url: SIGNED.replace(`${ROOM}-1-1`, `${ROOM}-3-1`),
       }),
@@ -253,7 +256,7 @@ describe("ExtensionService imports", () => {
     const { service, faceit } = make({ lookupsAllowed: false });
 
     const error = await service
-      .queueFaceitDemo("7656", demo())
+      .queueFaceitDemo(PLAYER, demo())
       .catch((e: HttpException) => e);
 
     expect((error as HttpException).getStatus()).toBe(429);
@@ -266,7 +269,7 @@ describe("ExtensionService imports", () => {
       fetchJobs: { [`ext.faceit.${ROOM}`]: expired },
     });
 
-    await service.queueFaceitDemo("7656", demo());
+    await service.queueFaceitDemo(PLAYER, demo());
 
     expect(expired.remove).toHaveBeenCalled();
     expect(fetchQueue.add).toHaveBeenCalled();
@@ -279,7 +282,7 @@ describe("ExtensionService imports", () => {
       fetchJobs: { [`ext.faceit.${ROOM}`]: locked },
     });
 
-    await service.queueFaceitDemo("7656", demo());
+    await service.queueFaceitDemo(PLAYER, demo());
 
     expect(fetchQueue.add).toHaveBeenCalled();
   });
@@ -289,7 +292,7 @@ describe("ExtensionService imports", () => {
       fetchJobs: { [`ext.faceit.${ROOM}`]: job("active") },
     });
 
-    await expect(service.queueFaceitDemo("7656", demo())).resolves.toEqual({
+    await expect(service.queueFaceitDemo(PLAYER, demo())).resolves.toEqual({
       state: "importing",
     });
     expect(cache.consume).not.toHaveBeenCalledWith(
@@ -310,7 +313,7 @@ describe("ExtensionService imports", () => {
       },
     });
 
-    await expect(service.queueFaceitDemo("7656", demo())).resolves.toEqual({
+    await expect(service.queueFaceitDemo(PLAYER, demo())).resolves.toEqual({
       state: "imported",
       match_id: "match-from-upload",
     });
@@ -330,7 +333,7 @@ describe("ExtensionService imports", () => {
       parseJobs: { [`ext.faceit.${ROOM}.parse`]: stuck },
     });
 
-    await expect(service.queueFaceitDemo("7656", demo())).rejects.toThrow(
+    await expect(service.queueFaceitDemo(PLAYER, demo())).rejects.toThrow(
       "redis unavailable",
     );
     expect(fetchQueue.add).not.toHaveBeenCalled();
@@ -341,17 +344,39 @@ describe("ExtensionService imports", () => {
     faceit.getMatchDemos.mockResolvedValueOnce(null as never);
 
     const error = await service
-      .queueFaceitDemo("7656", demo())
+      .queueFaceitDemo(PLAYER, demo())
       .catch((e: HttpException) => e);
 
     expect((error as HttpException).getStatus()).toBe(503);
+  });
+
+  it("refuses a match the player was not in", async () => {
+    const { service, fetchQueue } = make();
+
+    const error = await service
+      .queueFaceitDemo({ steam_id: "76561198999999999", role: "user" }, demo())
+      .catch((e: HttpException) => e);
+
+    expect((error as HttpException).getStatus()).toBe(403);
+    expect(fetchQueue.add).not.toHaveBeenCalled();
+  });
+
+  it("lets an administrator import a match they were not in", async () => {
+    const { service, fetchQueue } = make();
+
+    await service.queueFaceitDemo(
+      { steam_id: "76561198999999999", role: "administrator" },
+      demo(),
+    );
+
+    expect(fetchQueue.add).toHaveBeenCalled();
   });
 
   it("refuses an import over the hourly limit", async () => {
     const { service, fetchQueue } = make({ importsAllowed: false });
 
     const error = await service
-      .queueFaceitDemo("7656", demo())
+      .queueFaceitDemo(PLAYER, demo())
       .catch((e: HttpException) => e);
 
     expect((error as HttpException).getStatus()).toBe(429);
