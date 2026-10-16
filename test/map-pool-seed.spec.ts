@@ -85,6 +85,63 @@ describe("seed map pools on boot (SQL-driven)", () => {
     expect(await mapNamesIn(replacement)).toContain("de_dust2");
   });
 
+  const valveRotation = () => {
+    const rotated = seedSql
+      .replace(
+        "('de_cache', 'Competitive', true)",
+        "('de_cache', 'Competitive', false)",
+      )
+      .replace(
+        "('de_overpass', 'Competitive', false)",
+        "('de_overpass', 'Competitive', true)",
+      );
+    expect(rotated).toContain("('de_cache', 'Competitive', false)");
+    expect(rotated).toContain("('de_overpass', 'Competitive', true)");
+    return rotated;
+  };
+
+  const activeDuty = async () => {
+    const rows = await postgres.query<Array<{ name: string }>>(
+      `SELECT name FROM maps
+        WHERE type = 'Competitive' AND active_pool = true AND deleted_at IS NULL
+        ORDER BY name`,
+    );
+    return rows.map((row) => row.name);
+  };
+
+  it("moves the live pool to a new active-duty list when update_map_pools is on", async () => {
+    const [poolId] = await enabledSeedPoolIds();
+
+    await postgres.query(valveRotation());
+
+    const pools = await enabledSeedPoolIds();
+    expect(pools).toHaveLength(1);
+    expect(pools[0]).not.toBe(poolId);
+    expect(await mapNamesIn(pools[0])).toEqual(await activeDuty());
+    expect(await mapNamesIn(pools[0])).toContain("de_overpass");
+    expect(await mapNamesIn(pools[0])).not.toContain("de_cache");
+  });
+
+  it("keeps the operator's pool through a new active-duty list when update_map_pools is off", async () => {
+    await setUpdateMapPools("false");
+    const [poolId] = await enabledSeedPoolIds();
+    const before = await mapNamesIn(poolId);
+
+    await postgres.query(valveRotation());
+
+    expect(await enabledSeedPoolIds()).toEqual([poolId]);
+    expect(await mapNamesIn(poolId)).toEqual(before);
+  });
+
+  it("puts missing active-duty maps back when update_map_pools is turned on", async () => {
+    await setUpdateMapPools("false");
+    const poolId = await customiseLivePool();
+
+    await setUpdateMapPools("true");
+
+    expect(await mapNamesIn(poolId)).toEqual(await activeDuty());
+  });
+
   it("treats a missing update_map_pools setting as on", async () => {
     await postgres.query(
       "DELETE FROM settings WHERE name = 'update_map_pools'",
