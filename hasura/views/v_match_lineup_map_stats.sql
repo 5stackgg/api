@@ -1,3 +1,7 @@
+-- Every match page filters on match_id. A filter only passes below a window
+-- function, a DISTINCT ON or a GROUP BY on one of its keys, so match_id is in
+-- each of them even though match_map_id already implies it; without it every
+-- page read computed the view for every match on the panel.
 CREATE OR REPLACE VIEW public.v_match_lineup_map_stats AS
 WITH round_lineup AS (
   SELECT
@@ -46,10 +50,11 @@ round_start AS (
     (rl.match_type IS DISTINCT FROM 'Rush' AND rl.round > rl.mr * 2
       AND (rl.round - rl.mr * 2 - 1) % 3 = 0) AS ot_half_start
   FROM round_lineup rl
-  WINDOW w AS (PARTITION BY rl.match_map_id, rl.match_lineup_id ORDER BY rl.round)
+  WINDOW w AS (PARTITION BY rl.match_id, rl.match_map_id, rl.match_lineup_id ORDER BY rl.round)
 ),
 first_kill AS (
-  SELECT DISTINCT ON (pk.match_map_id, pk.round)
+  SELECT DISTINCT ON (pk.match_id, pk.match_map_id, pk.round)
+    pk.match_id,
     pk.match_map_id,
     pk.round,
     pk.attacker_steam_id,
@@ -59,16 +64,17 @@ first_kill AS (
     AND pk.attacker_team <> pk.attacked_team
     AND pk.attacker_steam_id IS NOT NULL
     AND pk.attacker_steam_id <> pk.attacked_steam_id
-  ORDER BY pk.match_map_id, pk.round, pk."time" ASC
+  ORDER BY pk.match_id, pk.match_map_id, pk.round, pk."time" ASC
 ),
 fk_lineups AS (
   SELECT
+    fk.match_id,
     fk.match_map_id,
     fk.round,
     klp.match_lineup_id AS killer_lineup,
     vlp.match_lineup_id AS victim_lineup
   FROM first_kill fk
-  JOIN public.match_maps mm ON mm.id = fk.match_map_id
+  JOIN public.match_maps mm ON mm.id = fk.match_map_id AND mm.match_id = fk.match_id
   JOIN public.matches m ON m.id = mm.match_id
   LEFT JOIN public.match_lineup_players klp
     ON klp.steam_id = fk.attacker_steam_id
@@ -97,7 +103,8 @@ per_round AS (
     (fk.victim_lineup = rl.match_lineup_id)        AS lost_first
   FROM round_start rl
   LEFT JOIN fk_lineups fk
-    ON fk.match_map_id = rl.match_map_id
+    ON fk.match_id = rl.match_id
+   AND fk.match_map_id = rl.match_map_id
    AND fk.round = rl.round
   WHERE rl.side IS NOT NULL
 )

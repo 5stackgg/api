@@ -1,7 +1,12 @@
+-- Every match page filters on match_id. A filter only passes below a window
+-- function, a DISTINCT ON or a GROUP BY on one of its keys, so match_id is a
+-- key of each even though match_map_id already implies it; without it every
+-- page read computed the view for every match on the panel.
 DROP VIEW IF EXISTS public.v_player_match_map_roles;
 CREATE VIEW public.v_player_match_map_roles AS
 WITH kills_agg AS (
     SELECT
+        pk.match_id,
         pk.match_map_id,
         pk.attacker_steam_id AS steam_id,
         COUNT(*)::int AS total_kills,
@@ -11,31 +16,35 @@ WITH kills_agg AS (
     FROM player_kills pk
     WHERE pk.attacker_steam_id IS NOT NULL
       AND pk.attacker_steam_id <> pk.attacked_steam_id
-    GROUP BY pk.match_map_id, pk.attacker_steam_id
+    GROUP BY pk.match_id, pk.match_map_id, pk.attacker_steam_id
 ),
 first_kills AS (
-    SELECT DISTINCT ON (pk.match_map_id, pk.round)
+    SELECT DISTINCT ON (pk.match_id, pk.match_map_id, pk.round)
+        pk.match_id,
         pk.match_map_id,
         pk.attacker_steam_id,
         pk.attacked_steam_id
     FROM player_kills pk
     WHERE pk.attacker_steam_id <> pk.attacked_steam_id
-    ORDER BY pk.match_map_id, pk.round, pk."time" ASC
+    ORDER BY pk.match_id, pk.match_map_id, pk.round, pk."time" ASC
 ),
+-- One pass over first_kills: a CTE read twice is materialized past the match
+-- filter, and forcing it inline makes reads without that filter (the profile,
+-- role-filtered leaderboards) scan every kill twice.
 opening AS (
     SELECT
-        match_map_id,
-        steam_id,
+        fk.match_id,
+        fk.match_map_id,
+        v.steam_id,
         COUNT(*)::int AS opening_attempts,
-        COUNT(*) FILTER (WHERE is_kill)::int AS open_kills,
-        COUNT(*) FILTER (WHERE NOT is_kill)::int AS open_deaths
-    FROM (
-        SELECT match_map_id, attacker_steam_id AS steam_id, true AS is_kill FROM first_kills
-        UNION ALL
-        SELECT match_map_id, attacked_steam_id AS steam_id, false AS is_kill FROM first_kills
-    ) o
-    WHERE steam_id IS NOT NULL
-    GROUP BY match_map_id, steam_id
+        COUNT(*) FILTER (WHERE v.is_kill)::int AS open_kills,
+        COUNT(*) FILTER (WHERE NOT v.is_kill)::int AS open_deaths
+    FROM first_kills fk
+    CROSS JOIN LATERAL (
+        VALUES (fk.attacker_steam_id, true), (fk.attacked_steam_id, false)
+    ) AS v(steam_id, is_kill)
+    WHERE v.steam_id IS NOT NULL
+    GROUP BY fk.match_id, fk.match_map_id, v.steam_id
 ),
 base AS (
     SELECT
@@ -67,8 +76,10 @@ base AS (
         (s.flash_assists + (s.he_damage + s.molotov_damage) / 100.0 + s.flashes_thrown * 0.3)
             / NULLIF(s.rounds_played, 0) AS support_idx
     FROM player_match_map_stats s
-    LEFT JOIN kills_agg k ON k.match_map_id = s.match_map_id AND k.steam_id = s.steam_id
-    LEFT JOIN opening o ON o.match_map_id = s.match_map_id AND o.steam_id = s.steam_id
+    LEFT JOIN kills_agg k
+        ON k.match_id = s.match_id AND k.match_map_id = s.match_map_id AND k.steam_id = s.steam_id
+    LEFT JOIN opening o
+        ON o.match_id = s.match_id AND o.match_map_id = s.match_map_id AND o.steam_id = s.steam_id
     LEFT JOIN v_player_match_map_hltv h ON h.match_map_id = s.match_map_id AND h.steam_id = s.steam_id
     LEFT JOIN LATERAL (
         SELECT ml.id AS lineup_id
@@ -83,7 +94,7 @@ ranked AS (
     SELECT
         b.*,
         ROW_NUMBER() OVER (
-            PARTITION BY b.match_map_id, b.lineup_id
+            PARTITION BY b.match_id, b.match_map_id, b.lineup_id
             ORDER BY b.awp_kills DESC, b.awp_share DESC, b.steam_id
         ) AS awp_rk
     FROM base b
@@ -95,7 +106,7 @@ flag_awp AS (
 rank_entry AS (
     SELECT *,
         ROW_NUMBER() OVER (
-            PARTITION BY match_map_id, lineup_id
+            PARTITION BY match_id, match_map_id, lineup_id
             ORDER BY (CASE WHEN is_awper THEN -1 ELSE entry_rate END) DESC, steam_id
         ) AS entry_rk
     FROM flag_awp
@@ -107,7 +118,7 @@ flag_entry AS (
 rank_support AS (
     SELECT *,
         ROW_NUMBER() OVER (
-            PARTITION BY match_map_id, lineup_id
+            PARTITION BY match_id, match_map_id, lineup_id
             ORDER BY (CASE WHEN is_awper OR is_entry THEN -1 ELSE support_idx END) DESC, steam_id
         ) AS support_rk
     FROM flag_entry
