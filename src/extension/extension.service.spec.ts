@@ -136,7 +136,7 @@ describe("ExtensionService imports", () => {
     remove: jest.fn(async (): Promise<void> => undefined),
   });
 
-  const PLAYER = { steam_id: "7656", role: "user" };
+  const PLAYER = { steam_id: "7656", role: "user" as const };
 
   const demo = (map = 1) => ({
     matchId: ROOM,
@@ -380,15 +380,29 @@ describe("ExtensionService imports", () => {
     expect(fetchQueue.add).not.toHaveBeenCalled();
   });
 
-  it("lets an administrator import a match they were not in", async () => {
+  it("lets a match organizer import a match they were not in", async () => {
     const { service, fetchQueue } = make();
 
     await service.queueFaceitDemo(
-      { steam_id: "76561198999999999", role: "administrator" },
+      { steam_id: "76561198999999999", role: "match_organizer" },
       demo(),
     );
 
     expect(fetchQueue.add).toHaveBeenCalled();
+  });
+
+  it("does not let a moderator import a match they were not in", async () => {
+    const { service, fetchQueue } = make();
+
+    const error = await service
+      .queueFaceitDemo(
+        { steam_id: "76561198999999999", role: "moderator" },
+        demo(),
+      )
+      .catch((e: HttpException) => e);
+
+    expect((error as HttpException).getStatus()).toBe(403);
+    expect(fetchQueue.add).not.toHaveBeenCalled();
   });
 
   it("refuses an import over the hourly limit", async () => {

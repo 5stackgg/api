@@ -357,12 +357,20 @@ describe("a share code import is only for someone who played", () => {
     expect(parseQueue.add).not.toHaveBeenCalled();
   });
 
-  it("lets an administrator import a match they were not in", async () => {
-    const admin = await fx.player("admin", "administrator");
+  it("lets a match organizer import a match they were not in", async () => {
+    const organizer = await fx.player("organizer", "match_organizer");
 
-    const { parseQueue } = await resolveWith(admin, [12345]);
+    const { parseQueue } = await resolveWith(organizer, [12345]);
 
     expect(parseQueue.add).toHaveBeenCalled();
+  });
+
+  it("does not let a moderator import a match they were not in", async () => {
+    const moderator = await fx.player("moderator", "moderator");
+
+    const { row } = await resolveWith(moderator, [12345]);
+
+    expect(row.status).toBe("Failed");
   });
 
   it("refuses an import when Valve names no players", async () => {

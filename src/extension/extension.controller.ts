@@ -32,7 +32,10 @@ export class ExtensionController {
       name: user.name,
       avatar_url: user.avatar_url ?? null,
       role: user.role,
-      imports: await this.extension.imports(),
+      imports: {
+        ...(await this.extension.imports()),
+        anyone: ExtensionService.canImportAnyone(user),
+      },
       faceit: await this.extension.faceitAccount(user.steam_id),
     };
   }

@@ -139,8 +139,8 @@ export class ResolveMatchMetadata extends WorkerHost {
   }
 
   // Imports are for a player's own matches: someone who asked for this one has
-  // to be in the GC's reservation, unless an administrator asked. A reservation
-  // that names nobody proves nothing, so only an administrator gets past it.
+  // to be in the GC's reservation, unless a match organizer or above asked. A
+  // reservation that names nobody proves nothing, so only they get past it.
   private async requestedByAPlayer(
     valveMatchId: string,
     accountIds: Array<number>,
@@ -154,7 +154,7 @@ export class ResolveMatchMetadata extends WorkerHost {
            JOIN public.players player ON player.steam_id = requester.steam_id
           WHERE requester.valve_match_id = $1::numeric
             AND (requester.steam_id = ANY($2::bigint[])
-                 OR player.role = 'administrator')
+                 OR public.is_role_below('match_organizer', player.role))
        ) AS allowed`,
       [valveMatchId, players],
     );

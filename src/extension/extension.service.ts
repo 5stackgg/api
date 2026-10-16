@@ -9,6 +9,8 @@ import {
 import { InjectQueue } from "@nestjs/bullmq";
 import { Job, Queue } from "bullmq";
 import { CacheService } from "../cache/cache.service";
+import { User } from "../auth/types/User";
+import { isRoleAbove } from "../utilities/isRoleAbove";
 import { PostgresService } from "../postgres/postgres.service";
 import { FaceitService } from "../faceit/faceit.service";
 import {
@@ -197,8 +199,12 @@ export class ExtensionService {
     return result;
   }
 
+  public static canImportAnyone(user: Pick<User, "role">): boolean {
+    return isRoleAbove(user.role, "match_organizer");
+  }
+
   public async queueFaceitDemo(
-    user: { steam_id: string; role: string },
+    user: Pick<User, "steam_id" | "role">,
     demo: { matchId: string; url: string },
   ): Promise<ImportLookup> {
     const steamId = user.steam_id;
@@ -208,8 +214,12 @@ export class ExtensionService {
         "FACEIT did not answer, try again shortly",
       );
     }
-    // Imports are for a player's own matches; administrators may import any.
-    if (user.role !== "administrator" && !match.players.includes(steamId)) {
+    // Imports are for a player's own matches; match organizers and above may
+    // import any.
+    if (
+      !ExtensionService.canImportAnyone(user) &&
+      !match.players.includes(steamId)
+    ) {
       throw new ForbiddenException("only players in this match can import it");
     }
     const index = match.demoUrls.findIndex((resourceUrl) => {
