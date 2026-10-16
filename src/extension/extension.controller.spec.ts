@@ -40,7 +40,7 @@ describe("ExtensionController", () => {
       name: USER.name,
       avatar_url: null,
       role: "user",
-      imports: { faceit: true, valve: false },
+      imports: { faceit: true, valve: false, anyone: false },
       faceit: {
         player_id: "ac71ba3c-d3d4-45e7-8be2-26aa3986867d",
         nickname: "LukePOLO",
