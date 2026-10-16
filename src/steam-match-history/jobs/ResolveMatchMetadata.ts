@@ -139,17 +139,12 @@ export class ResolveMatchMetadata extends WorkerHost {
   }
 
   // Imports are for a player's own matches: someone who asked for this one has
-  // to be in the GC's reservation, unless an administrator asked.
+  // to be in the GC's reservation, unless an administrator asked. A reservation
+  // that names nobody proves nothing, so only an administrator gets past it.
   private async requestedByAPlayer(
     valveMatchId: string,
     accountIds: Array<number>,
   ): Promise<boolean> {
-    if (accountIds.length === 0) {
-      this.logger.warn(
-        `resolve: gc named no players for valve_match_id=${valveMatchId}, not checking who asked`,
-      );
-      return true;
-    }
     const players = accountIds.map((id) =>
       (STEAM64_INDIVIDUAL_OFFSET + BigInt(id)).toString(),
     );

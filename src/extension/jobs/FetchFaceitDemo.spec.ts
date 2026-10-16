@@ -54,9 +54,12 @@ describe("FetchFaceitDemo", () => {
     ) as never;
   }
 
+  const updateProgress = jest.fn(async (): Promise<void> => undefined);
+
   const run = (job: FetchFaceitDemo, url = signedUrl(new Date())) =>
     job.process({
       id: `ext.faceit.${ROOM}.2`,
+      updateProgress,
       data: {
         url,
         external_id: `${ROOM}.2`,
@@ -86,6 +89,43 @@ describe("FetchFaceitDemo", () => {
       },
       expect.objectContaining({ jobId: `ext.faceit.${ROOM}.2.parse` }),
     );
+  });
+
+  it("reports how much of FACEIT's file has arrived", async () => {
+    const { job } = make();
+    updateProgress.mockClear();
+    const zstd = zstdCompressSync(DEMO);
+    const chunks = Array.from({ length: 10 }, (_, i) =>
+      zstd.subarray(
+        Math.floor((zstd.length * i) / 10),
+        Math.floor((zstd.length * (i + 1)) / 10),
+      ),
+    );
+    global.fetch = jest.fn(
+      async () =>
+        new Response(
+          new ReadableStream({
+            pull(controller) {
+              const next = chunks.shift();
+              if (next) {
+                controller.enqueue(new Uint8Array(next));
+              } else {
+                controller.close();
+              }
+            },
+          }),
+          { headers: { "content-length": String(zstd.length) } },
+        ),
+    ) as never;
+
+    await run(job);
+
+    const reported = updateProgress.mock.calls.map(
+      (call) => (call as unknown as [number])[0],
+    );
+    expect(reported.length).toBeGreaterThan(3);
+    expect(reported).toEqual([...reported].sort((a, b) => a - b));
+    expect(Math.max(...reported)).toBeLessThan(100);
   });
 
   it("also takes the older gzip demos", async () => {

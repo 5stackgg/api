@@ -203,6 +203,23 @@ describe("ExtensionService imports", () => {
     });
   });
 
+  it("says how far a demo's download has got", async () => {
+    const { service } = make({
+      fetchJobs: {
+        [`ext.faceit.${ROOM}`]: job("active", { progress: 42 } as never),
+      },
+    });
+
+    await expect(service.lookupFaceit([{ id: ROOM }])).resolves.toEqual({
+      [ROOM]: {
+        state: "importing",
+        match_ids: [],
+        stage: "downloading",
+        progress: 42,
+      },
+    });
+  });
+
   it("does not leave a finished download looking queued once its parse job is gone", async () => {
     const { service } = make({
       fetchJobs: { [`ext.faceit.${ROOM}`]: job("completed") },
@@ -294,6 +311,8 @@ describe("ExtensionService imports", () => {
 
     await expect(service.queueFaceitDemo(PLAYER, demo())).resolves.toEqual({
       state: "importing",
+      stage: "downloading",
+      progress: 0,
     });
     expect(cache.consume).not.toHaveBeenCalledWith(
       "extension:imports:7656",

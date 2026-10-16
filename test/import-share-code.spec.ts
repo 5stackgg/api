@@ -365,10 +365,19 @@ describe("a share code import is only for someone who played", () => {
     expect(parseQueue.add).toHaveBeenCalled();
   });
 
-  it("does not block an import when Valve names no players", async () => {
+  it("refuses an import when Valve names no players", async () => {
     const player = await fx.player();
 
-    const { parseQueue } = await resolveWith(player, []);
+    const { row, parseQueue } = await resolveWith(player, []);
+
+    expect(row.status).toBe("Failed");
+    expect(parseQueue.add).not.toHaveBeenCalled();
+  });
+
+  it("still lets an administrator import when Valve names no players", async () => {
+    const admin = await fx.player("admin", "administrator");
+
+    const { parseQueue } = await resolveWith(admin, []);
 
     expect(parseQueue.add).toHaveBeenCalled();
   });

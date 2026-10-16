@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { pipeline, PassThrough, Readable } from "stream";
+import { pipeline, PassThrough, Readable, Transform } from "stream";
 import { ReadableStream } from "stream/web";
 import { createGunzip, createZstdDecompress } from "zlib";
 import { Job, Queue, UnrecoverableError } from "bullmq";
@@ -61,7 +61,8 @@ export class FetchFaceitDemo extends WorkerHost {
           : `FACEIT storage answered ${response.status}`,
       );
     }
-    if (Number(response.headers.get("content-length")) > MAX_DEMO_SIZE) {
+    const size = Number(response.headers.get("content-length")) || 0;
+    if (size > MAX_DEMO_SIZE) {
       await response.body.cancel();
       throw new UnrecoverableError("demo exceeds 2GB limit");
     }
@@ -70,6 +71,7 @@ export class FetchFaceitDemo extends WorkerHost {
     const demo = FetchFaceitDemo.decompress(
       body,
       await FetchFaceitDemo.peek(body),
+      FetchFaceitDemo.progress(job, size),
     );
 
     const key = `demo-uploads/${steam_id}/${randomUUID()}.dem`;
@@ -164,7 +166,31 @@ export class FetchFaceitDemo extends WorkerHost {
     });
   }
 
-  private static decompress(stream: Readable, head: Buffer): Readable {
+  // How much of FACEIT's file has arrived, for the extension's progress ring.
+  // Reported in whole steps so the queue is not written on every chunk.
+  private static progress(job: Job, size: number): Transform {
+    let received = 0;
+    let reported = 0;
+    return new Transform({
+      transform(chunk: Buffer, _encoding, done) {
+        received += chunk.length;
+        const percent = size
+          ? Math.min(99, Math.floor((received / size) * 100))
+          : 0;
+        if (percent >= reported + 5) {
+          reported = percent;
+          void job.updateProgress(percent).catch((): undefined => undefined);
+        }
+        done(null, chunk);
+      },
+    });
+  }
+
+  private static decompress(
+    stream: Readable,
+    head: Buffer,
+    counter: Transform,
+  ): Readable {
     const decoder = head.subarray(0, ZSTD_MAGIC.length).equals(ZSTD_MAGIC)
       ? createZstdDecompress()
       : head.subarray(0, GZIP_MAGIC.length).equals(GZIP_MAGIC)
@@ -176,6 +202,6 @@ export class FetchFaceitDemo extends WorkerHost {
       stream.destroy();
       throw new UnrecoverableError("not a CS2 demo");
     }
-    return pipeline(stream, decoder, () => {});
+    return pipeline(stream, counter, decoder, () => {});
   }
 }

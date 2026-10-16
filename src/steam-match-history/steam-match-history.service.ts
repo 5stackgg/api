@@ -14,6 +14,10 @@ export type ImportLookup = {
   state: "imported" | "queued" | "importing" | "failed" | "none";
   match_id?: string;
   reason?: string;
+  // How far an import has got, when it can tell: "downloading" with a percent,
+  // then "processing" while the demo is parsed.
+  stage?: "downloading" | "processing";
+  progress?: number;
 };
 
 export type PollResult = {

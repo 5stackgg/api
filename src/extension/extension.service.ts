@@ -26,6 +26,8 @@ export type FaceitLookup = {
   state: ImportLookup["state"];
   match_ids: Array<string>;
   reason?: string;
+  stage?: ImportLookup["stage"];
+  progress?: number;
 };
 
 export type FaceitRoom = { id: string; maps?: number };
@@ -180,11 +182,15 @@ export class ExtensionService {
       const state = ExtensionService.STATE_PRIORITY.find((candidate) =>
         maps.some((map) => map.state === candidate),
       );
+      const busy = maps.find((map) => map.state === "importing");
       result[roomId] = {
         state,
         match_ids: maps.map((map) => map.match_id).filter(Boolean),
         ...(state === "failed"
           ? { reason: maps.find((map) => map.state === "failed").reason }
+          : {}),
+        ...(state === "importing" && busy?.stage
+          ? { stage: busy.stage, progress: busy.progress }
           : {}),
       };
     }
@@ -382,14 +388,31 @@ export class ExtensionService {
         const matchId = (parseJob.data as { match_id?: string }).match_id;
         return matchId ? { state: "imported", match_id: matchId } : null;
       }
-      return ExtensionService.pendingLookup(state, parseJob.failedReason);
+      const lookup = ExtensionService.pendingLookup(
+        state,
+        parseJob.failedReason,
+      );
+      return lookup.state === "importing"
+        ? { ...lookup, stage: "processing" }
+        : lookup;
     }
     if (fetchJob) {
       const state = await fetchJob.getState();
       if (state === "completed") {
         return null;
       }
-      return ExtensionService.pendingLookup(state, fetchJob.failedReason);
+      const lookup = ExtensionService.pendingLookup(
+        state,
+        fetchJob.failedReason,
+      );
+      return lookup.state === "importing"
+        ? {
+            ...lookup,
+            stage: "downloading",
+            progress:
+              typeof fetchJob.progress === "number" ? fetchJob.progress : 0,
+          }
+        : lookup;
     }
     return null;
   }
