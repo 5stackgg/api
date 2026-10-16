@@ -74,7 +74,7 @@ fk_lineups AS (
     klp.match_lineup_id AS killer_lineup,
     vlp.match_lineup_id AS victim_lineup
   FROM first_kill fk
-  JOIN public.match_maps mm ON mm.id = fk.match_map_id
+  JOIN public.match_maps mm ON mm.id = fk.match_map_id AND mm.match_id = fk.match_id
   JOIN public.matches m ON m.id = mm.match_id
   LEFT JOIN public.match_lineup_players klp
     ON klp.steam_id = fk.attacker_steam_id

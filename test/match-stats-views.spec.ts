@@ -6,8 +6,9 @@ import {
   SqlTestDb,
 } from "./utils/sql-test-db";
 
-// The match page reads v_match_player_buy_types, v_match_lineup_buy_types and
-// v_match_lineup_map_stats by match_id.
+// The match page reads v_match_player_buy_types, v_match_lineup_buy_types,
+// v_match_lineup_map_stats, v_match_player_opening_duels and
+// v_player_match_map_roles by match_id.
 describe("match stats views", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
@@ -203,15 +204,158 @@ describe("match stats views", () => {
     });
   });
 
-  it("reads one match without touching the rest of the panel's rounds and kills", async () => {
-    const { match, a1, b1 } = await playedMatch();
+  it("credits openings and the trade of an opening death to each player", async () => {
+    const match = await fx.match({ type: "Competitive", mr: 12 });
+    const mapId = await firstMap(match.id);
+    const a1 = await fx.lineupPlayer(match.lineup_1_id);
+    const a2 = await fx.lineupPlayer(match.lineup_1_id);
+    const b1 = await fx.lineupPlayer(match.lineup_2_id);
+    const b2 = await fx.lineupPlayer(match.lineup_2_id);
+    await postgres.query(
+      `INSERT INTO match_map_rounds
+         (match_map_id, round, lineup_1_score, lineup_2_score, lineup_1_money, lineup_2_money,
+          "time", lineup_1_timeouts_available, lineup_2_timeouts_available,
+          lineup_1_side, lineup_2_side, winning_side)
+       SELECT $1, r, 0, 0, 4000, 4000, now() - make_interval(mins => 100 - r), 3, 3,
+              'TERRORIST', 'CT', 'CT'
+         FROM generate_series(1, 2) r`,
+      [mapId],
+    );
+    const ctx = { matchId: match.id, mapId };
+    const at = (round: number, second: number) =>
+      new Date(
+        Date.now() - (100 - round) * 60_000 + second * 1000,
+      ).toISOString();
+    const t = { attackerTeam: "TERRORIST", victimTeam: "CT" };
+    const ct = { attackerTeam: "CT", victimTeam: "TERRORIST" };
+    // Round 1: a1 opens on b1, and b2 trades a1. Round 2: b2 opens on a2.
+    await fx.kill(ctx, a1, b1, { ...t, round: 1, time: at(1, 1) });
+    await fx.kill(ctx, b2, a1, { ...ct, round: 1, time: at(1, 2) });
+    await fx.kill(ctx, b2, a2, { ...ct, round: 2, time: at(2, 1) });
+
+    const rows = await postgres.query<
+      Array<{
+        steam_id: string;
+        attempts: number;
+        wins: number;
+        deaths: number;
+        traded_deaths: number;
+      }>
+    >(
+      `SELECT steam_id::text, attempts, wins, deaths, traded_deaths
+         FROM v_match_player_opening_duels WHERE match_id = $1 ORDER BY steam_id`,
+      [match.id],
+    );
+    const row = (steam_id: string, wins: number, traded_deaths: number) => ({
+      steam_id,
+      attempts: 1,
+      wins,
+      deaths: 1 - wins,
+      traded_deaths,
+    });
+    expect(rows).toEqual(
+      [row(a1, 1, 0), row(a2, 0, 0), row(b1, 0, 1), row(b2, 1, 0)].sort(
+        (x, y) => x.steam_id.localeCompare(y.steam_id),
+      ),
+    );
+  });
+
+  it("picks each lineup's entry and support from openings and utility", async () => {
+    const { match, mapId, a1, a2, b1, b2 } = await playedMatch();
+    for (const [steam, kills, deaths, flashAssists, flashes] of [
+      [a1, 2, 1, 0, 0],
+      [a2, 1, 2, 2, 3],
+      [b1, 2, 1, 0, 0],
+      [b2, 1, 2, 0, 0],
+    ] as Array<[string, number, number, number, number]>) {
+      await postgres.query(
+        `INSERT INTO player_match_map_stats
+           (steam_id, match_map_id, match_id, kills, deaths, assists, damage, flash_assists,
+            he_damage, molotov_damage, flashes_thrown, trade_kill_successes,
+            traded_death_successes, rounds_played, kast_rounds, kast_total_rounds)
+         VALUES ($1, $2, $3, $4, $5, 0, 100, $6, 0, 0, $7, 0, 0, 4, 2, 4)`,
+        [steam, mapId, match.id, kills, deaths, flashAssists, flashes],
+      );
+    }
+
+    const rows = await postgres.query<
+      Array<{
+        steam_id: string;
+        role: string;
+        opening_attempts: number;
+        open_kills: number;
+        open_deaths: number;
+      }>
+    >(
+      `SELECT steam_id::text, role, opening_attempts, open_kills, open_deaths
+         FROM v_player_match_map_roles WHERE match_id = $1 ORDER BY steam_id`,
+      [match.id],
+    );
+    expect(rows).toEqual(
+      [
+        {
+          steam_id: a1,
+          role: "Entry",
+          opening_attempts: 3,
+          open_kills: 2,
+          open_deaths: 1,
+        },
+        {
+          steam_id: a2,
+          role: "Support",
+          opening_attempts: 0,
+          open_kills: 0,
+          open_deaths: 0,
+        },
+        {
+          steam_id: b1,
+          role: "Entry",
+          opening_attempts: 2,
+          open_kills: 1,
+          open_deaths: 1,
+        },
+        {
+          steam_id: b2,
+          role: "Rifler",
+          opening_attempts: 1,
+          open_kills: 0,
+          open_deaths: 1,
+        },
+      ].sort((x, y) => x.steam_id.localeCompare(y.steam_id)),
+    );
+  });
+
+  // Measured at two panel sizes with fresh statistics both times, so the
+  // comparison is the same plan reading more data, not two different plans.
+  // Doubling a small panel still costs a read filtered to one match a few
+  // buffers as tiny tables trade seq scans for index lookups; reading the
+  // whole panel costs hundreds.
+  it("reads one match the same however many other matches the panel holds", async () => {
+    const { match, mapId, a1, a2, b1, b2 } = await playedMatch();
+    const stats = (steam: string, matchId: string, matchMapId: string) =>
+      postgres.query(
+        `INSERT INTO player_match_map_stats
+           (steam_id, match_map_id, match_id, kills, deaths, assists, damage, flash_assists,
+            he_damage, molotov_damage, flashes_thrown, trade_kill_successes,
+            traded_death_successes, rounds_played, kast_rounds, kast_total_rounds)
+         VALUES ($1, $2, $3, 1, 1, 0, 100, 0, 0, 0, 0, 0, 0, 4, 2, 4)`,
+        [steam, matchMapId, matchId],
+      );
+    for (const steam of [a1, a2, b1, b2]) {
+      await stats(steam, match.id, mapId);
+    }
 
     const views = [
       "SELECT * FROM v_match_player_buy_types WHERE match_id = $1",
       "SELECT * FROM v_match_lineup_buy_types WHERE match_id = $1",
       "SELECT * FROM v_match_lineup_map_stats WHERE match_id = $1",
+      "SELECT * FROM v_match_player_opening_duels WHERE match_id = $1",
+      "SELECT * FROM v_player_match_map_roles WHERE match_id = $1",
     ];
     const buffers = async () => {
+      await postgres.query(
+        "ANALYZE match_map_rounds, player_kills, match_maps, matches, match_lineup_players, player_match_map_stats",
+      );
       const read: Array<number> = [];
       for (const sql of views) {
         const explain = `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${sql}`;
@@ -226,37 +370,42 @@ describe("match stats views", () => {
       }
       return read;
     };
+    const addMatches = async (count: number) => {
+      for (let i = 0; i < count; i++) {
+        const { matchId, mapId } = await fx.bareMatch(new Date().toISOString());
+        await postgres.query(
+          `INSERT INTO match_map_rounds
+             (match_map_id, round, lineup_1_score, lineup_2_score, lineup_1_money, lineup_2_money,
+              "time", lineup_1_timeouts_available, lineup_2_timeouts_available,
+              lineup_1_side, lineup_2_side, winning_side)
+           SELECT $1, r, 0, 0, 10000, 10000, now() - make_interval(mins => 100 - r), 3, 3,
+                  'TERRORIST', 'CT', 'CT'
+             FROM generate_series(1, 30) r`,
+          [mapId],
+        );
+        await postgres.query(
+          `INSERT INTO player_kills
+             (match_id, match_map_id, round, attacker_steam_id, attacker_team,
+              attacked_steam_id, attacked_team, attacked_location, "with", hitgroup, "time")
+           SELECT $1, $2, r, $3, 'TERRORIST', $4, 'CT', 'site', 'ak47', 'head',
+                  now() - make_interval(mins => 100 - r, secs => k)
+             FROM generate_series(1, 30) r CROSS JOIN generate_series(1, 3) k`,
+          [matchId, mapId, a1, b1],
+        );
+        await stats(a1, matchId, mapId);
+        await stats(b1, matchId, mapId);
+      }
+    };
+
+    await addMatches(75);
     const before = await buffers();
-
-    for (let i = 0; i < 150; i++) {
-      const { matchId, mapId } = await fx.bareMatch(new Date().toISOString());
-      await postgres.query(
-        `INSERT INTO match_map_rounds
-           (match_map_id, round, lineup_1_score, lineup_2_score, lineup_1_money, lineup_2_money,
-            "time", lineup_1_timeouts_available, lineup_2_timeouts_available,
-            lineup_1_side, lineup_2_side, winning_side)
-         SELECT $1, r, 0, 0, 10000, 10000, now() - make_interval(mins => 100 - r), 3, 3,
-                'TERRORIST', 'CT', 'CT'
-           FROM generate_series(1, 30) r`,
-        [mapId],
-      );
-      await postgres.query(
-        `INSERT INTO player_kills
-           (match_id, match_map_id, round, attacker_steam_id, attacker_team,
-            attacked_steam_id, attacked_team, attacked_location, "with", hitgroup, "time")
-         SELECT $1, $2, r, $3, 'TERRORIST', $4, 'CT', 'site', 'ak47', 'head',
-                now() - make_interval(mins => 100 - r, secs => k)
-           FROM generate_series(1, 30) r CROSS JOIN generate_series(1, 3) k`,
-        [matchId, mapId, a1, b1],
-      );
-    }
-    await postgres.query("ANALYZE match_map_rounds, player_kills, match_maps");
-
+    await addMatches(75);
     const after = await buffers();
+
     const growth = views.map((sql, i) => ({
       sql,
       buffers: after[i] - before[i],
     }));
-    expect(growth.filter(({ buffers }) => buffers > 10)).toEqual([]);
-  }, 120_000);
+    expect(growth.filter(({ buffers }) => buffers > 30)).toEqual([]);
+  }, 180_000);
 });

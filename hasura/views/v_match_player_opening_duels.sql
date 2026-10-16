@@ -1,5 +1,10 @@
+-- Every match page filters on match_id. A filter only passes below a window
+-- function, a DISTINCT ON or a GROUP BY on one of its keys, and never into a
+-- CTE used twice unless it is NOT MATERIALIZED, so match_id is a key of each
+-- even though match_map_id already implies it; without it every page read
+-- computed the view for every match on the panel.
 CREATE OR REPLACE VIEW public.v_match_player_opening_duels AS
-WITH round_sides AS (
+WITH round_sides AS NOT MATERIALIZED (
   SELECT
     mm.match_id, mmr.match_map_id, mmr.round,
     m.lineup_1_id AS l1, public.normalize_side(mmr.lineup_1_side) AS l1_side,
@@ -10,19 +15,19 @@ WITH round_sides AS (
   WHERE mmr.round > 0 AND mmr.deleted_at IS NULL
 ),
 first_kill AS (
-  SELECT DISTINCT ON (pk.match_map_id, pk.round)
-    pk.match_map_id, pk.round, pk."time",
+  SELECT DISTINCT ON (pk.match_id, pk.match_map_id, pk.round)
+    pk.match_id, pk.match_map_id, pk.round, pk."time",
     pk.attacker_steam_id AS killer, pk.attacked_steam_id AS victim
   FROM public.player_kills pk
   WHERE pk.attacker_team IS NOT NULL
     AND pk.attacker_team <> pk.attacked_team
     AND pk.attacker_steam_id IS NOT NULL
     AND pk.attacker_steam_id <> pk.attacked_steam_id
-  ORDER BY pk.match_map_id, pk.round, pk."time" ASC
+  ORDER BY pk.match_id, pk.match_map_id, pk.round, pk."time" ASC
 ),
-fk AS (
+fk AS NOT MATERIALIZED (
   SELECT
-    fk.match_map_id, fk.round, fk.killer, fk.victim,
+    fk.match_id, fk.match_map_id, fk.round, fk.killer, fk.victim,
     EXISTS (
       SELECT 1 FROM public.player_kills t
       WHERE t.match_map_id = fk.match_map_id
@@ -38,7 +43,8 @@ duel_rows AS (
     CASE WHEN klp.match_lineup_id = rs.l1 THEN rs.l1_side ELSE rs.l2_side END AS side,
     fk.killer AS steam_id, true AS is_win, false AS is_death, false AS traded
   FROM fk
-  JOIN round_sides rs ON rs.match_map_id = fk.match_map_id AND rs.round = fk.round
+  JOIN round_sides rs
+    ON rs.match_id = fk.match_id AND rs.match_map_id = fk.match_map_id AND rs.round = fk.round
   JOIN public.match_lineup_players klp
     ON klp.steam_id = fk.killer AND klp.match_lineup_id IN (rs.l1, rs.l2)
   UNION ALL
@@ -46,7 +52,8 @@ duel_rows AS (
     CASE WHEN vlp.match_lineup_id = rs.l1 THEN rs.l1_side ELSE rs.l2_side END,
     fk.victim, false, true, fk.victim_traded
   FROM fk
-  JOIN round_sides rs ON rs.match_map_id = fk.match_map_id AND rs.round = fk.round
+  JOIN round_sides rs
+    ON rs.match_id = fk.match_id AND rs.match_map_id = fk.match_map_id AND rs.round = fk.round
   JOIN public.match_lineup_players vlp
     ON vlp.steam_id = fk.victim AND vlp.match_lineup_id IN (rs.l1, rs.l2)
 ),
