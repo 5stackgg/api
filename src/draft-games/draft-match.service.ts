@@ -7,8 +7,10 @@ import { CacheService } from "src/cache/cache.service";
 import { MatchAssistantService } from "src/matches/match-assistant/match-assistant.service";
 import { ChatService } from "src/chat/chat.service";
 import { ChatLobbyType } from "src/chat/enums/ChatLobbyTypes";
+import { User } from "../auth/types/User";
 import { DraftGameService } from "./draft-game.service";
 import { DraftGame, DraftGamePlayer } from "./types/DraftGame";
+import { DraftGameError } from "./types/DraftGameError";
 
 @Injectable()
 export class DraftMatchService {
@@ -123,6 +125,155 @@ export class DraftMatchService {
     });
 
     await this.matchAssistant.updateMatchStatus(match.id, "WaitingForCheckIn");
+  }
+
+  // Someone who never checks in is swapped for one of the lobby's backups, or
+  // just dropped, instead of the whole match being canceled out from under the
+  // players who did show up.
+  public async replaceNoShow(
+    user: User,
+    draftGameId: string,
+    steamId: string,
+    replacementSteamId?: string | null,
+  ) {
+    return this.cache.lock(DraftGameService.lockKey(draftGameId), async () => {
+      const draftGame = await this.draftGameService.getDraftGame(draftGameId);
+
+      if (!draftGame?.match_id) {
+        throw new DraftGameError("This draft has no match yet");
+      }
+
+      if (!this.draftGameService.isOrganizerOrHost(user, draftGame)) {
+        throw new DraftGameError(
+          "Only the host or an organizer can replace players",
+        );
+      }
+
+      const { matches_by_pk: match } = await this.hasura.query({
+        matches_by_pk: {
+          __args: { id: draftGame.match_id },
+          status: true,
+          lineup_1_id: true,
+          lineup_2_id: true,
+          lineup_1: {
+            lineup_players: { steam_id: true, checked_in: true, captain: true },
+          },
+          lineup_2: {
+            lineup_players: { steam_id: true, checked_in: true, captain: true },
+          },
+        },
+      });
+
+      if (match?.status !== "WaitingForCheckIn") {
+        throw new DraftGameError(
+          "Players can only be replaced during check-in",
+        );
+      }
+
+      const sides = [
+        {
+          lineup: 1,
+          lineupId: match.lineup_1_id,
+          players: match.lineup_1?.lineup_players ?? [],
+        },
+        {
+          lineup: 2,
+          lineupId: match.lineup_2_id,
+          players: match.lineup_2?.lineup_players ?? [],
+        },
+      ];
+      const inSide = (side: (typeof sides)[number], id: string) =>
+        side.players.some((player) => String(player.steam_id) === id);
+
+      const side = sides.find((candidate) => inSide(candidate, steamId));
+      const noShow = side?.players.find(
+        (player) => String(player.steam_id) === steamId,
+      );
+
+      if (!side || !noShow) {
+        throw new DraftGameError("That player is not in the match");
+      }
+
+      if (noShow.checked_in) {
+        throw new DraftGameError("That player has already checked in");
+      }
+
+      const replacement = replacementSteamId
+        ? draftGame.players.find(
+            (player) =>
+              player.steam_id === replacementSteamId &&
+              player.status === "Waitlist" &&
+              (player.lineup == null || player.lineup === side.lineup),
+          )
+        : undefined;
+
+      if (replacementSteamId && !replacement) {
+        throw new DraftGameError(
+          "Only one of this side's backups can be swapped in",
+        );
+      }
+
+      // A Teams lobby's backups already ride in the lineup's substitute slots.
+      if (
+        replacement &&
+        sides.some(
+          (candidate) =>
+            candidate !== side && inSide(candidate, replacement.steam_id),
+        )
+      ) {
+        throw new DraftGameError("That backup is on the other side");
+      }
+
+      await this.hasura.mutation({
+        delete_match_lineup_players: {
+          __args: {
+            where: {
+              match_lineup_id: { _eq: side.lineupId },
+              steam_id: { _eq: steamId },
+            },
+          },
+          __typename: true,
+        },
+      });
+
+      if (replacement && !inSide(side, replacement.steam_id)) {
+        await this.fillLineup(side.lineupId, [replacement.steam_id]);
+      }
+
+      await this.hasura.mutation({
+        delete_draft_game_players_by_pk: {
+          __args: { draft_game_id: draftGameId, steam_id: steamId },
+          __typename: true,
+        },
+      });
+
+      if (replacement) {
+        await this.hasura.mutation({
+          update_draft_game_players_by_pk: {
+            __args: {
+              pk_columns: {
+                draft_game_id: draftGameId,
+                steam_id: replacement.steam_id,
+              },
+              _set: { status: "Accepted", lineup: side.lineup },
+            },
+            __typename: true,
+          },
+        });
+      }
+
+      // Removing the captain lets the lineup pick whoever has the lowest steam
+      // id, so hand the armband on by the lobby's own order instead.
+      if (noShow.captain) {
+        const updated = await this.draftGameService.getDraftGame(draftGameId);
+        const captains = await this.getTeamCaptains(draftGame);
+        await this.assignCaptain(
+          side.lineupId,
+          updated.players.filter((player) => player.lineup === side.lineup),
+          side.lineup === 1 ? captains.team1 : captains.team2,
+        );
+      }
+    });
   }
 
   private async ensureLineups(
@@ -440,13 +591,17 @@ export class DraftMatchService {
     return match;
   }
 
-  // Backups carry no pick_order, so they have to sort last or a substitute
-  // would end up captaining the lineup.
+  // The captain the lobby named wins, then pick order -- the draft's, or the
+  // order a Host lobby placed players on the side. Backups carry no
+  // pick_order, so they have to sort last or a substitute would end up
+  // captaining the lineup.
   private captainSteamId(team: Array<DraftGamePlayer>) {
     return [...team].sort(
       (a, b) =>
+        Number(b.is_captain) - Number(a.is_captain) ||
         (a.pick_order ?? Number.MAX_SAFE_INTEGER) -
-        (b.pick_order ?? Number.MAX_SAFE_INTEGER),
+          (b.pick_order ?? Number.MAX_SAFE_INTEGER) ||
+        String(a.joined_at || "").localeCompare(String(b.joined_at || "")),
     )[0]?.steam_id;
   }
 

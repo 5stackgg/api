@@ -9,6 +9,13 @@ DECLARE
 BEGIN
     SELECT * INTO game FROM public.draft_games WHERE id = NEW.draft_game_id;
 
+    IF game.mode = 'Host' AND NEW.lineup IS NOT NULL THEN
+        NEW.pick_order := (
+            SELECT COALESCE(max(pick_order), 0) + 1 FROM public.draft_game_players
+            WHERE draft_game_id = NEW.draft_game_id AND lineup = NEW.lineup
+        );
+    END IF;
+
     IF NEW.elo_snapshot IS NULL THEN
         SELECT public.get_player_elo(p) INTO player_elo FROM public.players p WHERE p.steam_id = NEW.steam_id;
         NEW.elo_snapshot := COALESCE(NULLIF(player_elo ->> lower(game.type), '')::numeric::integer, 5000);
@@ -44,6 +51,39 @@ $$;
 
 DROP TRIGGER IF EXISTS tbi_draft_game_players ON public.draft_game_players;
 CREATE TRIGGER tbi_draft_game_players BEFORE INSERT ON public.draft_game_players FOR EACH ROW EXECUTE FUNCTION public.tbi_draft_game_players();
+
+
+-- A Host lobby numbers each side in the order players land on it, so the first
+-- one placed captains the side until the host hands the armband to someone
+-- else. Leaving the side takes the armband with you, and coming back puts you
+-- at the end of the line rather than straight back in charge.
+CREATE OR REPLACE FUNCTION public.tbu_draft_game_players() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NEW.lineup IS NOT DISTINCT FROM OLD.lineup THEN
+        RETURN NEW;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM public.draft_games WHERE id = NEW.draft_game_id AND mode = 'Host') THEN
+        RETURN NEW;
+    END IF;
+
+    NEW.is_captain := false;
+    NEW.pick_order := CASE
+        WHEN NEW.lineup IS NULL THEN NULL
+        ELSE (
+            SELECT COALESCE(max(pick_order), 0) + 1 FROM public.draft_game_players
+            WHERE draft_game_id = NEW.draft_game_id AND lineup = NEW.lineup
+        )
+    END;
+
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tbu_draft_game_players ON public.draft_game_players;
+CREATE TRIGGER tbu_draft_game_players BEFORE UPDATE ON public.draft_game_players FOR EACH ROW EXECUTE FUNCTION public.tbu_draft_game_players();
 
 
 CREATE OR REPLACE FUNCTION public.tai_draft_game_players() RETURNS TRIGGER
