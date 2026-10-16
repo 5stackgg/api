@@ -1,11 +1,17 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import { PostgresService } from "./../src/postgres/postgres.service";
-import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
+import {
+  bootMigratedDb,
+  seedRegionWithServer,
+  SqlTestDb,
+} from "./utils/sql-test-db";
+import { Fixtures } from "./utils/fixtures";
 
 describe("seed map pools on boot (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
+  let fx: Fixtures;
 
   const seedSql = readFileSync(
     join(__dirname, "../hasura/enums/maps.sql"),
@@ -15,6 +21,8 @@ describe("seed map pools on boot (SQL-driven)", () => {
   beforeAll(async () => {
     db = await bootMigratedDb("MapPoolSeedTest");
     postgres = db.postgres;
+    fx = new Fixtures(postgres, 76561199800000000n);
+    await seedRegionWithServer(postgres, "TestA");
   }, 600_000);
 
   afterAll(async () => {
@@ -169,9 +177,18 @@ describe("seed map pools on boot (SQL-driven)", () => {
     expect(await mapNamesIn(await livePool())).not.toContain("de_train");
   });
 
+  const poolExists = async (poolId: string) => {
+    const rows = await postgres.query<Array<{ id: string }>>(
+      "SELECT id FROM map_pools WHERE id = $1",
+      [poolId],
+    );
+    return rows.length === 1;
+  };
+
   it("follows Active Duty flipped in the panel, leaving the old pool to the matches already on it", async () => {
     const poolId = await livePool();
     const before = await mapNamesIn(poolId);
+    await fx.matchOptions({ mapPoolId: poolId });
 
     await postgres.query(
       "UPDATE maps SET active_pool = true WHERE name = 'de_overpass'",
@@ -186,6 +203,92 @@ describe("seed map pools on boot (SQL-driven)", () => {
     expect(await mapNamesIn(live)).toContain("de_overpass");
     expect(await mapNamesIn(live)).not.toContain("de_cache");
     expect(await mapNamesIn(poolId)).toEqual(before);
+  });
+
+  it("drops a replaced pool nothing plays from", async () => {
+    const poolId = await livePool();
+
+    await postgres.query(
+      "UPDATE maps SET active_pool = true WHERE name = 'de_overpass'",
+    );
+
+    expect(await livePool()).not.toBe(poolId);
+    expect(await poolExists(poolId)).toBe(false);
+  });
+
+  it("keeps a replaced pool a draft game is set to play from", async () => {
+    const poolId = await livePool();
+    const [draft] = await postgres.query<Array<{ id: string }>>(
+      `INSERT INTO draft_games (host_steam_id, type, map_pool_id)
+       VALUES ($1, 'Competitive', $2) RETURNING id`,
+      [await fx.player(), poolId],
+    );
+
+    try {
+      await postgres.query(
+        "UPDATE maps SET active_pool = true WHERE name = 'de_overpass'",
+      );
+
+      expect(await livePool()).not.toBe(poolId);
+      expect(await poolExists(poolId)).toBe(true);
+    } finally {
+      await postgres.query("DELETE FROM draft_games WHERE id = $1", [draft.id]);
+    }
+  });
+
+  it("serialises concurrent Active Duty changes so the live pool ends up with both", async () => {
+    type Client = {
+      query(
+        sql: string,
+        params?: Array<unknown>,
+      ): Promise<{ rows: Array<Record<string, unknown>> }>;
+      release(): void;
+    };
+    const pool = (
+      postgres as unknown as { pool: { connect(): Promise<Client> } }
+    ).pool;
+    const first = await pool.connect();
+    const second = await pool.connect();
+    let flipped: Promise<unknown> | undefined;
+
+    try {
+      await first.query("BEGIN");
+      await first.query(
+        "UPDATE maps SET active_pool = true WHERE name = 'de_overpass'",
+      );
+
+      await second.query("BEGIN");
+      flipped = second.query(
+        "UPDATE maps SET active_pool = false WHERE name = 'de_cache'",
+      );
+
+      for (let attempt = 0; ; attempt++) {
+        const [row] = await postgres.query<Array<{ waiting: number }>>(
+          `SELECT count(*)::int AS waiting FROM pg_stat_activity
+           WHERE datname = current_database() AND wait_event_type = 'Lock'`,
+        );
+        if (row.waiting > 0) {
+          break;
+        }
+        if (attempt > 400) {
+          throw new Error("the second change never waited on the first");
+        }
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+
+      await first.query("COMMIT");
+      await flipped;
+      await second.query("COMMIT");
+    } finally {
+      await flipped?.catch((): void => undefined);
+      first.release();
+      second.release();
+    }
+
+    const live = await livePool();
+    expect(await mapNamesIn(live)).toEqual(await activeDuty());
+    expect(await mapNamesIn(live)).toContain("de_overpass");
+    expect(await mapNamesIn(live)).not.toContain("de_cache");
   });
 
   it("adds a map created with Active Duty on", async () => {

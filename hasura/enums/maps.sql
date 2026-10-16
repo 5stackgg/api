@@ -31,6 +31,9 @@ returns boolean as $$
 declare
     _update_map_pools boolean;
 begin
+    -- Serialised, or a concurrent change never compares against the pool another transaction just swapped in.
+    PERFORM pg_advisory_xact_lock(hashtext('update_map_pools'));
+
     _update_map_pools := COALESCE(NULLIF((SELECT value FROM settings WHERE name = 'update_map_pools'), ''), 'true') = 'true';
 
     IF _update_map_pools THEN
@@ -52,6 +55,13 @@ begin
                   WHERE m.type = p.type AND m.active_pool AND m.enabled AND m.deleted_at IS NULL
               );
     END IF;
+
+    -- draft_games' foreign key nulls on delete instead of refusing, so it has to be checked here.
+    DELETE FROM map_pools p
+    WHERE p.seed = true
+      AND p.enabled = false
+      AND NOT EXISTS (SELECT 1 FROM match_options mo WHERE mo.map_pool_id = p.id)
+      AND NOT EXISTS (SELECT 1 FROM draft_games dg WHERE dg.map_pool_id = p.id);
 
     INSERT INTO map_pools ("type", "enabled", "seed")
     SELECT t.type, true, true
