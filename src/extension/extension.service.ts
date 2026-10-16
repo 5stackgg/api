@@ -3,6 +3,7 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  ServiceUnavailableException,
 } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Job, Queue } from "bullmq";
@@ -179,7 +180,12 @@ export class ExtensionService {
     demo: { matchId: string; url: string },
   ): Promise<ImportLookup> {
     const match = await this.faceitDemos(steamId, demo.matchId);
-    const index = (match?.demoUrls ?? []).findIndex((resourceUrl) => {
+    if (!match) {
+      throw new ServiceUnavailableException(
+        "FACEIT did not answer, try again shortly",
+      );
+    }
+    const index = match.demoUrls.findIndex((resourceUrl) => {
       try {
         ExtensionService.assertSignedLinkFor(demo.url, resourceUrl);
         return true;
@@ -207,7 +213,11 @@ export class ExtensionService {
     }
 
     const current = await this.jobLookup(externalId);
-    if (current?.state === "queued" || current?.state === "importing") {
+    if (
+      current?.state === "queued" ||
+      current?.state === "importing" ||
+      current?.state === "imported"
+    ) {
       return current;
     }
 
@@ -219,13 +229,12 @@ export class ExtensionService {
     );
 
     // A failed or finished attempt keeps its job id, and the queue would
-    // ignore a new job under it. One that another request has just picked up
-    // is locked and stays.
+    // ignore a new job under it. A fetch another request has just picked up
+    // is locked and stays; the parse job has to go, or the new fetch's parse
+    // would be swallowed by it.
     const [fetchJob, parseJob] = await this.jobs(externalId);
-    await Promise.all([
-      fetchJob?.remove().catch((): undefined => undefined),
-      parseJob?.remove().catch((): undefined => undefined),
-    ]);
+    await parseJob?.remove();
+    await fetchJob?.remove().catch((): undefined => undefined);
 
     await this.fetchQueue.add(
       FetchFaceitDemo.name,

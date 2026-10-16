@@ -302,6 +302,52 @@ describe("ExtensionService imports", () => {
     expect(fetchQueue.add).not.toHaveBeenCalled();
   });
 
+  it("does not fetch again a demo that already resolved to a match", async () => {
+    const { service, fetchQueue, cache } = make({
+      parseJobs: {
+        [`ext.faceit.${ROOM}.parse`]: job("completed", {
+          data: { match_id: "match-from-upload" },
+        }),
+      },
+    });
+
+    await expect(service.queueFaceitDemo("7656", demo())).resolves.toEqual({
+      state: "imported",
+      match_id: "match-from-upload",
+    });
+    expect(cache.consume).not.toHaveBeenCalledWith(
+      "extension:imports:7656",
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+    );
+    expect(fetchQueue.add).not.toHaveBeenCalled();
+  });
+
+  it("queues nothing when the old parse job cannot be cleared", async () => {
+    const stuck = job("failed");
+    stuck.remove.mockRejectedValue(new Error("redis unavailable"));
+    const { service, fetchQueue } = make({
+      parseJobs: { [`ext.faceit.${ROOM}.parse`]: stuck },
+    });
+
+    await expect(service.queueFaceitDemo("7656", demo())).rejects.toThrow(
+      "redis unavailable",
+    );
+    expect(fetchQueue.add).not.toHaveBeenCalled();
+  });
+
+  it("says FACEIT did not answer rather than blaming the link", async () => {
+    const { service, faceit } = make();
+    faceit.getMatchDemos.mockResolvedValueOnce(null as never);
+
+    const error = await service
+      .queueFaceitDemo("7656", demo())
+      .catch((e: HttpException) => e);
+
+    expect((error as HttpException).getStatus()).toBe(503);
+  });
+
   it("refuses an import over the hourly limit", async () => {
     const { service, fetchQueue } = make({ importsAllowed: false });
 

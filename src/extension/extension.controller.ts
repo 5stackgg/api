@@ -74,10 +74,10 @@ export class ExtensionController {
       throw new ForbiddenException("FACEIT imports are off on this panel");
     }
 
-    const matchId = body?.match_id;
-    if (!ExtensionService.isFaceitMatchId(matchId)) {
+    if (!ExtensionService.isFaceitMatchId(body?.match_id)) {
       throw new BadRequestException("invalid FACEIT match id");
     }
+    const matchId = body.match_id.toLowerCase();
     if (typeof body.url !== "string") {
       throw new BadRequestException("invalid demo url");
     }

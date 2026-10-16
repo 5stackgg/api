@@ -117,14 +117,19 @@ describe("FetchFaceitDemo", () => {
   it("reads the demo's magic across a first chunk shorter than it", async () => {
     const { job, stored } = make();
     const zstd = zstdCompressSync(DEMO);
+    const chunks = [zstd.subarray(0, 3), zstd.subarray(3)];
     global.fetch = jest.fn(
       async () =>
         new Response(
           new ReadableStream({
-            start(controller) {
-              controller.enqueue(new Uint8Array(zstd.subarray(0, 3)));
-              controller.enqueue(new Uint8Array(zstd.subarray(3)));
-              controller.close();
+            async pull(controller) {
+              const next = chunks.shift();
+              if (!next) {
+                controller.close();
+                return;
+              }
+              await new Promise((resolve) => setTimeout(resolve, 20));
+              controller.enqueue(new Uint8Array(next));
             },
           }),
         ),
@@ -145,6 +150,17 @@ describe("FetchFaceitDemo", () => {
       expect.stringMatching(/^demo-uploads\/76561198000000001\//),
     );
     expect(processUploadQueue.add).not.toHaveBeenCalled();
+  });
+
+  it("removes what it stored when the parse cannot be queued", async () => {
+    const { job, s3, stored, processUploadQueue } = make();
+    processUploadQueue.add.mockRejectedValueOnce(
+      new Error("redis unavailable"),
+    );
+    serve(zstdCompressSync(DEMO));
+
+    await expect(run(job)).rejects.toThrow("redis unavailable");
+    expect(s3.remove).toHaveBeenCalledWith([...stored.keys()][0]);
   });
 
   it("queues the parse behind admin uploads", async () => {
