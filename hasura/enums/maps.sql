@@ -186,9 +186,9 @@ map_type_config AS (
         ('de_rooftop', 'Wingman', false),
         ('de_transit', 'Wingman', false),
         ('de_poseidon', 'Wingman', true),
-        ('de_sanctum', 'Wingman', true),
-        ('de_debris', 'Competitive', false),
-        ('de_eldorado', 'Competitive', false),
+        ('de_sanctum', 'Wingman', false),
+        ('de_debris', 'Wingman', true),
+        ('de_eldorado', 'Wingman', true),
 
         -- Duel maps
         ('de_inferno', 'Duel', true),
@@ -204,9 +204,9 @@ map_type_config AS (
         ('de_rooftop', 'Duel', false),
         ('de_transit', 'Duel', false),
         ('de_poseidon', 'Duel', true),
-        ('de_sanctum', 'Duel', true),
-        ('de_debris', 'Duel', false),
-        ('de_eldorado', 'Duel', false),
+        ('de_sanctum', 'Duel', false),
+        ('de_debris', 'Duel', true),
+        ('de_eldorado', 'Duel', true),
 
         -- Rush maps
         ('rush_001', 'Rush', true)
