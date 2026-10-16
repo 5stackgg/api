@@ -110,7 +110,7 @@ WITH map_data AS (
         ('de_dust2_night', '3296013569', '/img/maps/screenshots/de_dust2_night.webp', '/img/maps/icons/de_dust2.svg', null),
         ('de_train', null, '/img/maps/screenshots/de_train.webp', '/img/maps/icons/de_train.svg', null),
         ('cs_office', null, '/img/maps/screenshots/cs_office.webp', '/img/maps/icons/cs_office.svg', null),
-        ('cs_italy', null, null, null, null),
+        ('cs_italy', null, null, '/img/maps/icons/cs_italy.svg', null),
         ('de_cache', null, '/img/maps/screenshots/de_cache.webp', '/img/maps/icons/de_cache.svg', null),
         -- Workshop maps
         ('de_thera', '3121217565', '/img/maps/screenshots/de_thera.webp', '/img/maps/icons/de_thera.svg', null),
