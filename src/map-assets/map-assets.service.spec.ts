@@ -693,6 +693,51 @@ describe("MapAssetsService", () => {
       expect(outcome.failed).toEqual([]);
     });
 
+    it("records the last of several revisions", async () => {
+      finished({ succeeded: 1 });
+      for (const key of ["manifest.json", "manifest.r2.json"]) {
+        files[`25537370/${key}`] = {
+          version: 1,
+          build: "25537370",
+          maps,
+          failed: ["de_dogtown"],
+        };
+      }
+      files["25537370/manifest.r3.json"] = {
+        version: 1,
+        build: "25537370",
+        maps,
+      };
+
+      const outcome = await service.build("node-1", "25537370");
+
+      expect(outcome.manifest).toBe("25537370/manifest.r3.json");
+      expect(outcome.failed).toEqual([]);
+    });
+
+    it("records no revision when a newer one cannot be read", async () => {
+      finished({ succeeded: 1 });
+      files["25537370/manifest.json"] = {
+        version: 1,
+        build: "25537370",
+        maps,
+        failed: ["de_dogtown"],
+      };
+      const read = global.fetch as jest.Mock;
+      const answer = read.getMockImplementation()!;
+      read.mockImplementation(async (url: string) =>
+        url.endsWith("/25537370/manifest.r2.json")
+          ? { ok: false, status: 503, json: async (): Promise<unknown> => null }
+          : answer(url),
+      );
+
+      const outcome = await service.build("node-1", "25537370");
+
+      expect(outcome.manifest).toBeNull();
+      expect(outcome.maps).toBeNull();
+      expect(finalUpdate().params[2]).toBeNull();
+    });
+
     it("records the build's first manifest when it has no other revision", async () => {
       finished({ succeeded: 1 });
       files["25537370/manifest.json"] = { version: 1, build: "25537370", maps };

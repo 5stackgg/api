@@ -252,6 +252,37 @@ export class MapAssetsService {
     return `${MapAssetsService.MAPS_HOST}/${MapAssetsService.PINNED_BUILD}/${map}${suffix}`;
   }
 
+  public static manifestKey(buildId: string, revision: number): string {
+    return revision === 1
+      ? `${buildId}/manifest.json`
+      : `${buildId}/manifest.r${revision}.json`;
+  }
+
+  public static manifestRevision(key: string, buildId: string): number | null {
+    const match = /^([^/]+)\/manifest(?:\.r(\d+))?\.json$/.exec(key);
+    return match && match[1] === buildId ? Number(match[2] ?? 1) : null;
+  }
+
+  // Each manifest.rN.json is published on top of the one before it, so the
+  // first revision missing from `revision` on ends the probe. Revisions are
+  // immutable and a missing key is never served from the edge cache, unlike
+  // latest.json, which the edge holds for a minute.
+  public static async newestManifest(
+    buildId: string,
+    revision = 1,
+  ): Promise<{ key: string; manifest: MapAssetsManifest } | null> {
+    let newest: { key: string; manifest: MapAssetsManifest } | null = null;
+    for (let next = revision; ; next++) {
+      const key = MapAssetsService.manifestKey(buildId, next);
+      const manifest =
+        await MapAssetsService.fetchIndex<MapAssetsManifest>(key);
+      if (!manifest) {
+        return newest;
+      }
+      newest = { key, manifest };
+    }
+  }
+
   // B2 has no ListBucket grant on these keys, so a missing object can arrive as
   // 403 as well as 404; both mean "not published".
   public static async fetchIndex<T>(key: string): Promise<T | null> {
@@ -1022,9 +1053,8 @@ export class MapAssetsService {
     );
   }
 
-  // A retry or a forced rebuild publishes the build's next manifest revision
-  // (<build>/manifest.rN.json), so the newest one that exists is what the run
-  // published. latest.json cannot say: the edge holds it for a minute, so a
+  // A retry or a forced rebuild publishes the build's next manifest revision,
+  // so the newest one is what the run published. latest.json cannot say: a
   // job that has just moved it still reads as the revision before, and it
   // never names a build that is no longer the newest.
   private async publishedManifest(
@@ -1033,28 +1063,14 @@ export class MapAssetsService {
     Pick<MapAssetBuildOutcome, "manifest" | "maps" | "failed" | "failed_view">
   > {
     try {
-      let key: string | null = null;
-      let manifest: MapAssetsManifest | null = null;
-      for (let revision = 1; ; revision++) {
-        const next =
-          revision === 1
-            ? `${buildId}/manifest.json`
-            : `${buildId}/manifest.r${revision}.json`;
-        const found =
-          await MapAssetsService.fetchIndex<MapAssetsManifest>(next);
-        if (!found) {
-          break;
-        }
-        key = next;
-        manifest = found;
-      }
+      const newest = await MapAssetsService.newestManifest(buildId);
 
-      if (key && manifest) {
+      if (newest) {
         return {
-          manifest: key,
-          maps: manifest.maps ?? null,
-          failed: manifest.failed ?? [],
-          failed_view: manifest.failed_view ?? [],
+          manifest: newest.key,
+          maps: newest.manifest.maps ?? null,
+          failed: newest.manifest.failed ?? [],
+          failed_view: newest.manifest.failed_view ?? [],
         };
       }
 
