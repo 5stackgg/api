@@ -413,35 +413,34 @@ describe("seed map pools on boot (SQL-driven)", () => {
     expect(await activeIn("Rush")).toEqual(["rush_001"]);
   });
 
-  // Valve maps never take a workshop id; a community map outside the active
-  // pools can leave the client, so it has to load from the Workshop.
-  it("loads active maps by name and inactive community maps by workshop id", async () => {
-    const activeFromWorkshop = await postgres.query<Array<{ name: string }>>(
-      `SELECT DISTINCT name FROM maps
-        WHERE active_pool AND workshop_map_id IS NOT NULL
-        ORDER BY name`,
-    );
-    expect(activeFromWorkshop).toEqual([]);
-
+  // A community map outside the active pools can leave the client, so it has to
+  // load from the Workshop.
+  it("gives inactive community maps their workshop ids", async () => {
     const community = await postgres.query<
       Array<{ name: string; workshop_map_id: string | null }>
     >(
       `SELECT DISTINCT name, workshop_map_id FROM maps
-        WHERE name IN ('de_boulder', 'de_fachwerk')
+        WHERE name IN ('cs_shelter', 'de_boulder', 'de_fachwerk')
         ORDER BY name`,
     );
     expect(community).toEqual([
+      { name: "cs_shelter", workshop_map_id: "3737179295" },
       { name: "de_boulder", workshop_map_id: "3663186989" },
       { name: "de_fachwerk", workshop_map_id: "3442040035" },
     ]);
   });
 
-  it("offers Italy as a Competitive map outside Active Duty", async () => {
-    const [italy] = await postgres.query<
-      Array<{ workshop_map_id: string | null; active_pool: boolean }>
+  it("offers Italy and Shelter as Competitive maps outside Active Duty", async () => {
+    const maps = await postgres.query<
+      Array<{ name: string; active_pool: boolean }>
     >(
-      "SELECT workshop_map_id, active_pool FROM maps WHERE name = 'cs_italy' AND type = 'Competitive'",
+      `SELECT name, active_pool FROM maps
+        WHERE name IN ('cs_italy', 'cs_shelter') AND type = 'Competitive'
+        ORDER BY name`,
     );
-    expect(italy).toEqual({ workshop_map_id: null, active_pool: false });
+    expect(maps).toEqual([
+      { name: "cs_italy", active_pool: false },
+      { name: "cs_shelter", active_pool: false },
+    ]);
   });
 });
