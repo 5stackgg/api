@@ -9,6 +9,8 @@ import { SteamGcService, ResolvedMatch } from "../steam-gc.service";
 import { MatchImportService } from "../match-import.service";
 import { ParseImportedDemo } from "./ParseImportedDemo";
 
+const STEAM64_INDIVIDUAL_OFFSET = 76561197960265728n;
+
 export type ResolveMatchMetadataPayload = {
   valve_match_id: string;
 };
@@ -94,6 +96,16 @@ export class ResolveMatchMetadata extends WorkerHost {
       return;
     }
 
+    // Checked before the demo url is stored: a stored url skips the GC on a
+    // retry, and with it this check.
+    if (!(await this.requestedByAPlayer(valve_match_id, resolved.accountIds))) {
+      await this.markFailed(
+        valve_match_id,
+        "only players in this match can import it",
+      );
+      return;
+    }
+
     const demoUrl = resolved.demoUrl ?? row.demo_url;
 
     const matchStartTime =
@@ -124,6 +136,29 @@ export class ResolveMatchMetadata extends WorkerHost {
       demo_url: demoUrl,
       match_start_time: matchStartTime,
     });
+  }
+
+  // Imports are for a player's own matches: someone who asked for this one has
+  // to be in the GC's reservation, unless an administrator asked. A reservation
+  // that names nobody proves nothing, so only an administrator gets past it.
+  private async requestedByAPlayer(
+    valveMatchId: string,
+    accountIds: Array<number>,
+  ): Promise<boolean> {
+    const players = accountIds.map((id) =>
+      (STEAM64_INDIVIDUAL_OFFSET + BigInt(id)).toString(),
+    );
+    const [row] = await this.postgres.query<Array<{ allowed: boolean }>>(
+      `SELECT EXISTS (
+         SELECT 1 FROM public.pending_match_import_players requester
+           JOIN public.players player ON player.steam_id = requester.steam_id
+          WHERE requester.valve_match_id = $1::numeric
+            AND (requester.steam_id = ANY($2::bigint[])
+                 OR player.role = 'administrator')
+       ) AS allowed`,
+      [valveMatchId, players],
+    );
+    return row?.allowed === true;
   }
 
   private async enqueueParse(

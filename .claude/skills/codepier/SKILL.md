@@ -11,7 +11,7 @@ description: |
   in the pod" failures, native-module/platform errors right after an install, or when resolving a
   .local hostname or port to a service.
 metadata:
-  version: 2.0.47
+  version: 2.0.50
 ---
 
 # CodePier
@@ -26,7 +26,7 @@ comes from forgetting one of those three facts.
 
 **If a `codepier` command is refused before it even runs** — "blocked by the classifier", or a
 permission prompt in a session that cannot answer one — the project is missing the allow rule, not
-the tool. `codepier skills install` writes it into `.claude/settings.json` alongside this skill; add
+the tool. `codepier skills` writes it into `.claude/settings.json` alongside this skill; add
 it by hand if it is absent:
 
 ```json

@@ -10,6 +10,16 @@ import { ResolveMatchMetadata } from "./jobs/ResolveMatchMetadata";
 import { SteamGcService } from "./steam-gc.service";
 import { decodeShareCode } from "./shareCode";
 
+export type ImportLookup = {
+  state: "imported" | "queued" | "importing" | "failed" | "none";
+  match_id?: string;
+  reason?: string;
+  // How far an import has got, when it can tell: "downloading" with a percent,
+  // then "processing" while the demo is parsed.
+  stage?: "downloading" | "processing";
+  progress?: number;
+};
+
 export type PollResult = {
   collected: number;
   lastShareCode: string | null;
@@ -186,6 +196,7 @@ export class SteamMatchHistoryService {
   public async importShareCode(
     steamId: string,
     input: string,
+    options: { cooldown?: boolean } = {},
   ): Promise<{ ok: boolean; error?: string }> {
     if (!(await this.isImportingAllowed())) {
       return { ok: false, error: "external match imports are disabled" };
@@ -200,17 +211,17 @@ export class SteamMatchHistoryService {
       return { ok: false, error: "invalid share code" };
     }
 
-    const cooldownKey =
-      SteamMatchHistoryService.shareCodeImportCooldownKey(steamId);
-    const acquired = await this.cache.acquireLock(
-      cooldownKey,
-      SteamMatchHistoryService.SHARE_CODE_IMPORT_COOLDOWN_SECONDS,
-    );
-    if (!acquired) {
-      return {
-        ok: false,
-        error: "wait a few seconds before importing another match",
-      };
+    if (options.cooldown !== false) {
+      const acquired = await this.cache.acquireLock(
+        SteamMatchHistoryService.shareCodeImportCooldownKey(steamId),
+        SteamMatchHistoryService.SHARE_CODE_IMPORT_COOLDOWN_SECONDS,
+      );
+      if (!acquired) {
+        return {
+          ok: false,
+          error: "wait a few seconds before importing another match",
+        };
+      }
     }
 
     const valveMatchId = decodeShareCode(shareCode).matchId.toString();
@@ -246,6 +257,81 @@ export class SteamMatchHistoryService {
     );
 
     return { ok: true };
+  }
+
+  public async canImportShareCodes(): Promise<boolean> {
+    return this.steamGc.isAvailable() && (await this.isImportingAllowed());
+  }
+
+  public async lookupShareCodes(
+    inputs: Array<string>,
+  ): Promise<Record<string, ImportLookup>> {
+    const result: Record<string, ImportLookup> = {};
+    const inputByValveMatchId = new Map<string, string>();
+    const inputByShareCode = new Map<string, string>();
+    for (const input of inputs) {
+      const shareCode = SteamMatchHistoryService.extractShareCode(input);
+      if (!shareCode) {
+        result[input] = { state: "none", reason: "invalid share code" };
+        continue;
+      }
+      inputByValveMatchId.set(
+        decodeShareCode(shareCode).matchId.toString(),
+        input,
+      );
+      inputByShareCode.set(shareCode, input);
+      result[input] = { state: "none" };
+    }
+
+    const valveMatchIds = [...inputByValveMatchId.keys()];
+    if (valveMatchIds.length === 0) {
+      return result;
+    }
+
+    const pending = await this.postgres.query<
+      Array<{ valve_match_id: string; status: string; error: string | null }>
+    >(
+      `SELECT valve_match_id::text AS valve_match_id, status, error
+         FROM public.pending_match_imports
+        WHERE valve_match_id = ANY($1::numeric[])`,
+      [valveMatchIds],
+    );
+    for (const row of pending) {
+      const input = inputByValveMatchId.get(row.valve_match_id);
+      if (row.status === "Failed") {
+        result[input] = {
+          state: "failed",
+          reason: row.error ?? "import failed",
+        };
+      } else {
+        result[input] = {
+          state: row.status === "Parsing" ? "importing" : "queued",
+        };
+      }
+    }
+
+    const imported = await this.postgres.query<
+      Array<{
+        id: string;
+        external_id: string | null;
+        share_code: string | null;
+      }>
+    >(
+      `SELECT id, external_id, share_code FROM public.matches
+        WHERE (source = 'valve' AND external_id = ANY($1::text[]))
+           OR share_code = ANY($2::text[])`,
+      [valveMatchIds, [...inputByShareCode.keys()]],
+    );
+    for (const row of imported) {
+      const input =
+        inputByValveMatchId.get(row.external_id) ??
+        inputByShareCode.get(row.share_code);
+      if (input) {
+        result[input] = { state: "imported", match_id: row.id };
+      }
+    }
+
+    return result;
   }
 
   private async isPendingRequester(

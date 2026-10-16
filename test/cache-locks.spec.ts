@@ -99,4 +99,23 @@ describe("cache locks", () => {
     expect(await cache.acquireLock("reindex", 60, "job:1")).toBeNull();
     expect(await cache.refreshLock("reindex", "job:1", 60)).toBe(true);
   });
+
+  it("allows up to the limit in a window and opens again once it ends", async () => {
+    expect(await cache.consume("imports", 20, 30, 60_000)).toBe(true);
+    expect(await cache.consume("imports", 10, 30, 60_000)).toBe(true);
+    expect(await cache.consume("imports", 1, 30, 60_000)).toBe(false);
+    expect(await redis.pttl("imports")).toBeGreaterThan(0);
+
+    await redis.del("imports");
+
+    expect(await cache.consume("imports", 1, 30, 60_000)).toBe(true);
+  });
+
+  it("hands back a refused amount so it does not use up the window", async () => {
+    expect(await cache.consume("imports", 25, 30, 60_000)).toBe(true);
+    expect(await cache.consume("imports", 10, 30, 60_000)).toBe(false);
+
+    expect(await cache.consume("imports", 5, 30, 60_000)).toBe(true);
+    expect(await redis.get("imports")).toBe("30");
+  });
 });

@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { Job } from "bullmq";
+import { Job, UnrecoverableError } from "bullmq";
 import { Logger } from "@nestjs/common";
 import { WorkerHost } from "@nestjs/bullmq";
 import { UseQueue } from "src/utilities/QueueProcessors";
@@ -13,6 +13,10 @@ export type ProcessUploadedDemoPayload = {
   key: string;
   file_name: string;
   steam_id: string;
+  external_id?: string;
+  source?: "faceit";
+  match_start_time?: string | null;
+  match_id?: string;
 };
 
 @UseQueue("SteamMatchHistory", SteamMatchHistoryQueues.ProcessUploadedDemo, {
@@ -30,7 +34,8 @@ export class ProcessUploadedDemo extends WorkerHost {
   }
 
   async process(job: Job<ProcessUploadedDemoPayload>): Promise<void> {
-    const { key, file_name, steam_id } = job.data;
+    const { key, file_name, steam_id, external_id, source, match_start_time } =
+      job.data;
     const lastAttempt = (job.attemptsMade ?? 0) >= (job.opts.attempts ?? 1) - 1;
 
     try {
@@ -49,6 +54,7 @@ export class ProcessUploadedDemo extends WorkerHost {
       }
 
       const dedupeKey =
+        external_id ??
         MatchImportService.extractFaceitMatchId(file_name) ??
         file_name
           .replace(/^.*\//, "")
@@ -57,10 +63,10 @@ export class ProcessUploadedDemo extends WorkerHost {
 
       const result = await this.matchImport.importExternalDemo(
         parsed,
-        "valve",
+        source ?? "valve",
         dedupeKey,
         {
-          matchStartTime: null,
+          matchStartTime: match_start_time ?? null,
           externalId: dedupeKey,
           sourceObjectKey: key,
           matchMapId,
@@ -71,9 +77,21 @@ export class ProcessUploadedDemo extends WorkerHost {
         `process-uploaded-demo done steam_id=${steam_id} match_id=${result.matchId ?? "<none>"}${result.skipped ? ` skipped=${result.skipped}` : ""}`,
       );
 
+      // The queue drops a job's return value, so the extension's status lookup
+      // reads the outcome off the job: a skip as its failure reason, and the
+      // match, which a duplicate demo resolves to under another external id.
+      if (external_id) {
+        if (!result.matchId) {
+          throw new UnrecoverableError(
+            result.skipped ?? "demo was not imported",
+          );
+        }
+        await job.updateData({ ...job.data, match_id: result.matchId });
+      }
+
       await this.s3.remove(key);
     } catch (error) {
-      if (lastAttempt) {
+      if (lastAttempt || error instanceof UnrecoverableError) {
         await this.s3.remove(key);
         this.logger.warn(
           `process-uploaded-demo failed steam_id=${steam_id} key=${key}: ${(error as Error)?.message ?? error}`,
