@@ -134,8 +134,8 @@ WITH map_data AS (
         ('de_stronghold', '3076973469', '/img/maps/screenshots/de_stronghold.webp', '/img/maps/icons/de_stronghold.svg', null),
         ('de_warden', '3256988376', '/img/maps/screenshots/de_warden.webp', '/img/maps/icons/de_warden.svg', null),
         ('de_boulder', '3663186989', '/img/maps/screenshots/de_boulder.webp', '/img/maps/icons/de_boulder.svg', null),
-        ('de_debris', null, '/img/maps/screenshots/de_debris.webp', '/img/maps/icons/de_debris.svg', null),
-        ('de_eldorado', null, '/img/maps/screenshots/de_eldorado.webp', '/img/maps/icons/de_eldorado.svg', null),
+        ('de_debris', '3539217452', '/img/maps/screenshots/de_debris.webp', '/img/maps/icons/de_debris.svg', null),
+        ('de_eldorado', '3408790618', '/img/maps/screenshots/de_eldorado.webp', '/img/maps/icons/de_eldorado.svg', null),
         ('de_fachwerk', '3442040035', '/img/maps/screenshots/de_fachwerk.webp', '/img/maps/icons/de_fachwerk.svg', null),
         ('cs_shelter', '3737179295', '/img/maps/screenshots/cs_shelter.webp', '/img/maps/icons/cs_shelter.svg', null),
         ('rush_001', null, '/img/maps/screenshots/rush_001.webp', '/img/maps/icons/rush_001.svg', null)
