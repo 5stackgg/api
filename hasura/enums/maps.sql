@@ -217,6 +217,12 @@ map_type_config AS (
 
     ) AS data(name, type, active_pool)
 ),
+retired_map_types AS (
+    SELECT * FROM (VALUES
+        ('de_debris', 'Competitive'),
+        ('de_eldorado', 'Competitive')
+    ) AS data(name, type)
+),
 all_maps AS (
     SELECT 
         md.name,
@@ -255,13 +261,19 @@ on conflict("name", "type") do update set
     "patch" = EXCLUDED."patch", 
     "label" = EXCLUDED."label"
 )
--- A mode the seed stops listing for one of its maps is retired, not left selectable.
+-- A map's details belong to the map, not one mode, so the mode rows the seed does not list (an
+-- admin's, or one it retired) carry them too; only a retired mode is switched off.
 UPDATE maps m
-SET enabled = false
-WHERE m.name IN (SELECT name FROM map_data)
-  AND NOT EXISTS (SELECT 1 FROM map_type_config mtc WHERE mtc.name = m.name AND mtc.type = m.type)
-  AND m.enabled
-  AND NOT m.active_pool;
+SET workshop_map_id = md.workshop_map_id,
+    poster = md.poster,
+    patch = md.patch,
+    label = md.label,
+    enabled = m.enabled AND NOT EXISTS (
+        SELECT 1 FROM retired_map_types r WHERE r.name = m.name AND r.type = m.type
+    )
+FROM map_data md
+WHERE m.name = md.name
+  AND NOT EXISTS (SELECT 1 FROM map_type_config mtc WHERE mtc.name = m.name AND mtc.type = m.type);
 
 DO $$
 BEGIN

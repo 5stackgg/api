@@ -458,11 +458,12 @@ describe("seed map pools on boot (SQL-driven)", () => {
     ]);
   });
 
-  it("retires a mode the seed no longer lists for one of its maps", async () => {
+  it("switches off a retired mode and gives every mode row its map's details", async () => {
     await postgres.query(
       `INSERT INTO maps (name, type, active_pool, enabled)
        VALUES ('de_debris', 'Competitive', false, true),
-              ('de_eldorado', 'Competitive', false, true),
+              ('de_eldorado', 'Competitive', true, true),
+              ('de_brewery', 'Competitive', false, true),
               ('de_sync_probe', 'Competitive', false, true)`,
     );
 
@@ -470,24 +471,26 @@ describe("seed map pools on boot (SQL-driven)", () => {
       await reseed();
 
       const rows = await postgres.query<
-        Array<{ name: string; type: string; enabled: boolean }>
+        Array<{
+          name: string;
+          enabled: boolean;
+          workshop_map_id: string | null;
+        }>
       >(
-        `SELECT name, type, enabled FROM maps
-          WHERE name IN ('de_debris', 'de_eldorado', 'de_sync_probe')
-          ORDER BY name, type`,
+        `SELECT name, enabled, workshop_map_id FROM maps
+          WHERE type = 'Competitive'
+            AND name IN ('de_brewery', 'de_debris', 'de_eldorado', 'de_sync_probe')
+          ORDER BY name`,
       );
       expect(rows).toEqual([
-        { name: "de_debris", type: "Competitive", enabled: false },
-        { name: "de_debris", type: "Duel", enabled: true },
-        { name: "de_debris", type: "Wingman", enabled: true },
-        { name: "de_eldorado", type: "Competitive", enabled: false },
-        { name: "de_eldorado", type: "Duel", enabled: true },
-        { name: "de_eldorado", type: "Wingman", enabled: true },
-        { name: "de_sync_probe", type: "Competitive", enabled: true },
+        { name: "de_brewery", enabled: true, workshop_map_id: "3070290240" },
+        { name: "de_debris", enabled: false, workshop_map_id: "3539217452" },
+        { name: "de_eldorado", enabled: false, workshop_map_id: "3408790618" },
+        { name: "de_sync_probe", enabled: true, workshop_map_id: null },
       ]);
     } finally {
       await postgres.query(
-        "DELETE FROM maps WHERE type = 'Competitive' AND name IN ('de_debris', 'de_eldorado')",
+        "DELETE FROM maps WHERE type = 'Competitive' AND name IN ('de_brewery', 'de_debris', 'de_eldorado')",
       );
     }
   });
