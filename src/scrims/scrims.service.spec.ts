@@ -6,6 +6,7 @@ describe("ScrimsService", () => {
     const pools = [
       { id: "retired-seed", type: "Competitive", seed: true, enabled: false },
       { id: "custom", type: "Custom", seed: false, enabled: true },
+      { id: "non-seed", type: "Competitive", seed: false, enabled: true },
       { id: "live-seed", type: "Competitive", seed: true, enabled: true },
     ];
 
