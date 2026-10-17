@@ -153,6 +153,11 @@ describe("recreating an orphaned tournament bracket match (SQL-driven)", () => {
       "UPDATE tournament_brackets SET scheduled_at = now() + interval '5 minutes' WHERE id = $1",
       [semi.id],
     );
+    // A time inside the 15-minute window materializes the match at once, so
+    // it is deleted again to leave the slot orphaned with its time set.
+    const materialized = (await bracket(semi.id)).match_id;
+    expect(materialized).not.toBeNull();
+    await postgres.query("DELETE FROM matches WHERE id = $1", [materialized]);
     const matchId = await recreate(semi.id);
 
     expect((await bracket(semi.id)).match_id).toBe(matchId);

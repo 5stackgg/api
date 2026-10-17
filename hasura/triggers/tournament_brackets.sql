@@ -32,6 +32,19 @@ BEGIN
         PERFORM calculate_tournament_bracket_start_times(tournament_id);
      END IF;
 
+     -- CheckForScheduledTournamentBrackets materializes a bracket 15 minutes
+     -- before its time; one scheduled inside that window starts now rather
+     -- than on the job's next tick.
+     IF NEW.match_id IS NULL
+        AND NEW.finished = false
+        AND NEW.scheduled_at IS DISTINCT FROM OLD.scheduled_at
+        AND NEW.scheduled_at <= now() + interval '15 minutes'
+        AND NEW.tournament_team_id_1 IS NOT NULL
+        AND NEW.tournament_team_id_2 IS NOT NULL
+        AND EXISTS (SELECT 1 FROM tournaments t WHERE t.id = tournament_id AND t.status = 'Live') THEN
+        PERFORM schedule_tournament_match(NEW);
+     END IF;
+
      IF OLD.match_id IS NOT NULL THEN
         -- The match already exists, so nothing below will schedule it. If the
         -- teams themselves changed (an organizer reassigning a winner), the
@@ -136,3 +149,9 @@ DROP TRIGGER IF EXISTS tad_tournament_brackets ON public.tournament_brackets;
 CREATE TRIGGER tad_tournament_brackets AFTER DELETE ON public.tournament_brackets
     FOR EACH ROW EXECUTE FUNCTION public.tad_cleanup_match_options();
 DROP FUNCTION IF EXISTS public.tad_tournament_brackets();
+
+DROP TRIGGER IF EXISTS tbiu_tournament_brackets_claim_match_options ON public.tournament_brackets;
+CREATE TRIGGER tbiu_tournament_brackets_claim_match_options
+    BEFORE INSERT OR UPDATE OF match_options_id ON public.tournament_brackets
+    FOR EACH ROW
+    EXECUTE FUNCTION public.tbiu_claim_match_options();

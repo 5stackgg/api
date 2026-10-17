@@ -3,7 +3,6 @@ CREATE OR REPLACE FUNCTION public.tau_tournaments() RETURNS TRIGGER
     AS $$
 DECLARE
     first_stage_id uuid;
-    bracket_row tournament_brackets%ROWTYPE;
 BEGIN
     -- The free agent draft runs once, so a field taking entries again starts
     -- from an undrafted pool. Not out of CheckInReview: reopening there only
@@ -79,45 +78,11 @@ BEGIN
            AND m.scheduled_at <= GREATEST(NEW."start", now()) + interval '15 minutes';
     END IF;
 
-    -- When tournament resumes from Paused, schedule all ready brackets (only if auto_start)
     IF (
         NEW.status IS DISTINCT FROM OLD.status AND
         OLD.status = 'Paused' AND NEW.status = 'Live'
-        AND NEW.auto_start
-    ) THEN
-        -- Resolve runtime byes first (one team, no pending feeders)
-        -- Process lower rounds first so cascading byes propagate correctly
-        FOR bracket_row IN
-            SELECT tb.*
-            FROM tournament_brackets tb
-            INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
-            WHERE ts.tournament_id = NEW.id
-              AND tb.match_id IS NULL
-              AND tb.finished = false
-              AND tb.bye = false
-              AND ((tb.tournament_team_id_1 IS NOT NULL AND tb.tournament_team_id_2 IS NULL)
-                OR (tb.tournament_team_id_1 IS NULL AND tb.tournament_team_id_2 IS NOT NULL))
-            ORDER BY tb.round, tb.match_number
-        LOOP
-            PERFORM resolve_bracket_bye(bracket_row);
-        END LOOP;
-
-        -- Then schedule matches with both teams present
-        FOR bracket_row IN
-            SELECT tb.*
-            FROM tournament_brackets tb
-            INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
-            WHERE ts.tournament_id = NEW.id
-              AND tb.match_id IS NULL
-              AND tb.finished = false
-              AND tb.tournament_team_id_1 IS NOT NULL
-              AND tb.tournament_team_id_2 IS NOT NULL
-            ORDER BY tb.round, tb.match_number
-        LOOP
-            PERFORM schedule_tournament_match(bracket_row);
-        END LOOP;
-
-        PERFORM calculate_tournament_bracket_start_times(NEW.id);
+    ) OR (NEW.auto_start AND NOT OLD.auto_start) THEN
+        PERFORM schedule_ready_tournament_brackets(NEW.id);
     END IF;
 
 	RETURN NEW;
@@ -408,3 +373,9 @@ CREATE TRIGGER tau_tournaments_awards
     AFTER UPDATE ON public.tournaments
     FOR EACH ROW
     EXECUTE FUNCTION public.tau_tournaments_awards();
+
+DROP TRIGGER IF EXISTS tbiu_tournaments_claim_match_options ON public.tournaments;
+CREATE TRIGGER tbiu_tournaments_claim_match_options
+    BEFORE INSERT OR UPDATE OF match_options_id ON public.tournaments
+    FOR EACH ROW
+    EXECUTE FUNCTION public.tbiu_claim_match_options();
