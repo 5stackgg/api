@@ -494,6 +494,7 @@ export class GameServerNodeService {
   public async setAcceptingNewMatches(
     nodeId: string,
     accepting: boolean,
+    changedBy: string | null = null,
   ): Promise<boolean> {
     const updated = await this.postgres.query<Array<{ id: string }>>(
       `UPDATE public.game_server_nodes
@@ -502,11 +503,12 @@ export class GameServerNodeService {
                 WHEN status NOT IN ('Online', 'NotAcceptingNewMatches') THEN status
                 WHEN $2::boolean THEN 'Online'
                 ELSE 'NotAcceptingNewMatches'
-              END
+              END,
+              last_changed_by_steam_id = $3::bigint
         WHERE id = $1
           AND status <> 'Setup'
         RETURNING id`,
-      [nodeId, accepting],
+      [nodeId, accepting, changedBy],
     );
 
     return updated.length === 1;

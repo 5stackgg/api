@@ -51,3 +51,17 @@ $$;
 
 DROP TRIGGER IF EXISTS tbiu_server_regions ON public.server_regions;
 CREATE TRIGGER tbiu_server_regions BEFORE INSERT OR UPDATE ON public.server_regions FOR EACH ROW EXECUTE FUNCTION public.tbiu_server_regions();
+
+-- Runs after tbiu_server_regions, which turns Steam relay back off on a LAN
+-- region.
+DROP TRIGGER IF EXISTS y_tbu_server_regions_last_changed_by ON public.server_regions;
+CREATE TRIGGER y_tbu_server_regions_last_changed_by
+    BEFORE UPDATE OF last_changed_by_steam_id ON public.server_regions
+    FOR EACH ROW EXECUTE FUNCTION public.tbu_last_changed_by_named();
+
+DROP TRIGGER IF EXISTS z_tbiu_server_regions_last_changed ON public.server_regions;
+CREATE TRIGGER z_tbiu_server_regions_last_changed
+    BEFORE INSERT OR UPDATE ON public.server_regions
+    FOR EACH ROW EXECUTE FUNCTION public.tbiu_stamp_last_changed(
+        'description', 'is_lan', 'steam_relay', 'value'
+    );

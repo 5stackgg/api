@@ -57,13 +57,14 @@ export class DedicatedServerConfigService {
         eventIds: Array<string>;
       } | null;
     },
+    changedBy: string | null = null,
   ): Promise<void> {
     if (settings.mapRotation) {
       await this.setMapRotation(
         serverId,
         settings.mapRotation.mapIds,
         settings.mapRotation.shuffle,
-        { restart: false },
+        { restart: false, changedBy },
       );
     }
 
@@ -77,8 +78,16 @@ export class DedicatedServerConfigService {
       });
     }
 
+    // Plugins live in their own tables, so the server row records the save.
+    if ((settings.plugins || settings.pluginConfigs) && changedBy) {
+      await this.postgres.query(
+        `UPDATE servers SET last_changed_by_steam_id = $2 WHERE id = $1`,
+        [serverId, changedBy],
+      );
+    }
+
     if (settings.access) {
-      await this.setAccess(serverId, settings.access);
+      await this.setAccess(serverId, settings.access, changedBy);
     }
 
     if (settings.mapRotation || settings.plugins || settings.pluginConfigs) {
@@ -90,7 +99,7 @@ export class DedicatedServerConfigService {
     serverId: string,
     mapIds: Array<string>,
     shuffle: boolean,
-    options: { restart?: boolean } = {},
+    options: { restart?: boolean; changedBy?: string | null } = {},
   ): Promise<void> {
     const server = await this.communityServer(serverId);
 
@@ -133,8 +142,10 @@ export class DedicatedServerConfigService {
       );
 
       await client.query(
-        `UPDATE servers SET map_rotation_shuffle = $2 WHERE id = $1`,
-        [serverId, shuffle],
+        `UPDATE servers
+            SET map_rotation_shuffle = $2, last_changed_by_steam_id = $3
+          WHERE id = $1`,
+        [serverId, shuffle, options.changedBy ?? null],
       );
     });
 
@@ -254,6 +265,7 @@ export class DedicatedServerConfigService {
       steamIds: Array<string>;
       eventIds: Array<string>;
     },
+    changedBy: string | null = null,
   ): Promise<void> {
     const [server] = await this.postgres.query<
       Array<{ is_dedicated: boolean; type: string; game: string }>
@@ -283,9 +295,10 @@ export class DedicatedServerConfigService {
     await this.postgres.transaction(async (client) => {
       await client.query(
         `UPDATE servers
-            SET access_restricted = $2, access_min_role = $3
+            SET access_restricted = $2, access_min_role = $3,
+                last_changed_by_steam_id = $4
           WHERE id = $1`,
-        [serverId, access.restricted, access.minRole || null],
+        [serverId, access.restricted, access.minRole || null, changedBy],
       );
 
       await client.query(

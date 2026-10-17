@@ -1,6 +1,10 @@
 table:
   name: seasons
   schema: public
+object_relationships:
+  - name: last_changed_by
+    using:
+      foreign_key_constraint_on: last_changed_by_steam_id
 array_relationships:
   - name: awards
     using:
@@ -27,6 +31,8 @@ select_permissions:
         - ends_at
         - created_at
         - needs_rebuild
+        - last_changed_at
+        - last_changed_by_steam_id
       filter: {}
     comment: ""
 insert_permissions:

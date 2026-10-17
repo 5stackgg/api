@@ -195,11 +195,12 @@ export class AwardsController {
     )
     file: Express.Multer.File,
   ) {
-    await this.assertCanCreate(request.user as User | undefined);
+    const user = await this.assertCanCreate(request.user as User | undefined);
     const path = await this.awards.uploadAwardImage(
       awardId,
       file.buffer,
       file.mimetype,
+      user.steam_id,
     );
     return { success: true, path };
   }
@@ -209,8 +210,8 @@ export class AwardsController {
     @Req() request: Request,
     @Param("awardId") awardId: string,
   ) {
-    await this.assertCanCreate(request.user as User | undefined);
-    await this.awards.removeAwardImage(awardId);
+    const user = await this.assertCanCreate(request.user as User | undefined);
+    await this.awards.removeAwardImage(awardId, user.steam_id);
     return { success: true };
   }
 

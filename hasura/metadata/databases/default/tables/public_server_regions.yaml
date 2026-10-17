@@ -1,6 +1,10 @@
 table:
   name: server_regions
   schema: public
+object_relationships:
+  - name: last_changed_by
+    using:
+      foreign_key_constraint_on: last_changed_by_steam_id
 array_relationships:
   - name: game_server_nodes
     using:
@@ -48,6 +52,8 @@ select_permissions:
         - steam_relay
         - description
         - value
+        - last_changed_at
+        - last_changed_by_steam_id
       computed_fields:
         - available_server_count
         - has_node

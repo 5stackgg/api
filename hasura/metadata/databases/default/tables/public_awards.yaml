@@ -8,6 +8,9 @@ object_relationships:
   - name: event
     using:
       foreign_key_constraint_on: event_id
+  - name: last_changed_by
+    using:
+      foreign_key_constraint_on: last_changed_by_steam_id
   - name: league_season
     using:
       foreign_key_constraint_on: league_season_id
@@ -51,6 +54,8 @@ select_permissions:
         - league_season_id
         - created_at
         - updated_at
+        - last_changed_at
+        - last_changed_by_steam_id
       filter: {}
       allow_aggregations: true
     comment: ""

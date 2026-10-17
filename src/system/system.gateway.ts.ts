@@ -15,6 +15,7 @@ import { LoggingService } from "src/k8s/logging/logging.service";
 import { MapAssetsService } from "src/map-assets/map-assets.service";
 
 interface ActiveLogStream {
+  service: string;
   stream: PassThrough;
   onClientClose: () => void;
 }
@@ -23,6 +24,19 @@ const activeLogStreams = new WeakMap<
   FiveStackWebSocketClient,
   ActiveLogStream
 >();
+
+function stopLogStream(client: FiveStackWebSocketClient) {
+  const active = activeLogStreams.get(client);
+  if (!active) {
+    return;
+  }
+
+  client.removeListener("close", active.onClientClose);
+  if (!active.stream.destroyed) {
+    active.stream.destroy();
+  }
+  activeLogStreams.delete(client);
+}
 
 @WebSocketGateway({
   path: "/ws/web",
@@ -75,14 +89,7 @@ export class SystemGateway {
           ? MapAssetsService.GET_JOB_NAME(service.replace("map-assets:", ""))
           : service;
 
-    const previousActive = activeLogStreams.get(client);
-    if (previousActive) {
-      client.removeListener("close", previousActive.onClientClose);
-      if (!previousActive.stream.destroyed) {
-        previousActive.stream.destroy();
-      }
-      activeLogStreams.delete(client);
-    }
+    stopLogStream(client);
 
     const stream = new PassThrough();
 
@@ -111,7 +118,7 @@ export class SystemGateway {
 
     stream.on("close", cleanup);
 
-    activeLogStreams.set(client, { stream, onClientClose });
+    activeLogStreams.set(client, { service, stream, onClientClose });
 
     stream.on("end", async () => {
       let jobFinshed = false;
@@ -161,5 +168,26 @@ export class SystemGateway {
         stream.end();
       }
     }
+  }
+
+  // Sent when the Logs page is left or hidden; a service names the stream the
+  // page was showing, so a stop that arrives after a newer request is ignored.
+  @SubscribeMessage("logs:stop")
+  async stopLogs(
+    @MessageBody() data: { service?: string } | undefined,
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+  ) {
+    await client.authentication;
+
+    if (!client.user || !isRoleAbove(client.user.role, "administrator")) {
+      return;
+    }
+
+    const active = activeLogStreams.get(client);
+    if (!active || (data?.service && data.service !== active.service)) {
+      return;
+    }
+
+    stopLogStream(client);
   }
 }
