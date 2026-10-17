@@ -391,6 +391,23 @@ export class GameStreamerService {
     return value === "h265" ? "h265" : "h264";
   }
 
+  private async resolveVideoEncoder(): Promise<"auto" | "gpu" | "cpu"> {
+    const value = ((await this.readSetting("video_encoder")) ?? "")
+      .trim()
+      .toLowerCase();
+    if (!value || value === "auto") return "auto";
+    if (value === "gpu" || value === "cpu") return value;
+    this.logger.warn(
+      `ignoring video_encoder setting "${value}": expected auto, gpu or cpu`,
+    );
+    return "auto";
+  }
+
+  private async videoEncoderEnv(): Promise<V1EnvVar[]> {
+    const mode = await this.resolveVideoEncoder();
+    return mode === "auto" ? [] : [{ name: "GS_VIDEO_ENCODER", value: mode }];
+  }
+
   private async resolveClipBakeBranding(): Promise<"0" | "1"> {
     const value =
       (await this.readSetting("clip_bake_branding")) ??
@@ -920,6 +937,7 @@ export class GameStreamerService {
     }
 
     env.push(...(await this.buildNodeCs2OptionsEnv(nodeId)));
+    env.push(...(await this.videoEncoderEnv()));
 
     const kc = new KubeConfig();
     kc.loadFromDefault();
@@ -1829,6 +1847,7 @@ export class GameStreamerService {
     ];
 
     const nodeCs2Env = await this.buildNodeCs2OptionsEnv(nodeId);
+    const encoderEnv = await this.videoEncoderEnv();
 
     const jobName = GameStreamerService.GetLiveJobId(matchId);
 
@@ -1855,7 +1874,7 @@ export class GameStreamerService {
           matchId,
           "live",
           nodeId,
-          [...connectEnv, ...reporterEnv, ...nodeCs2Env],
+          [...connectEnv, ...reporterEnv, ...nodeCs2Env, ...encoderEnv],
           {},
           steamAccount,
           gpu,
@@ -2549,6 +2568,7 @@ export class GameStreamerService {
       value: await this.resolveClipBakeBranding(),
     });
     env.push(...(await this.buildNodeCs2OptionsEnv(nodeId)));
+    env.push(...(await this.videoEncoderEnv()));
 
     this.logger.log(
       `[batch-highlights ${matchMapId}] dispatching ${jobs.length} job(s) to pod ${jobName} on node ${nodeId}`,
@@ -2811,6 +2831,7 @@ export class GameStreamerService {
       value: await this.resolveClipVideoCodec(),
     });
     env.push(...(await this.buildNodeCs2OptionsEnv(nodeId)));
+    env.push(...(await this.videoEncoderEnv()));
 
     const kc = new KubeConfig();
     kc.loadFromDefault();
