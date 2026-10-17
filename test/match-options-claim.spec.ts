@@ -88,17 +88,87 @@ describe("match options a client points at (SQL-driven)", () => {
       ).rejects.toThrow(REFUSAL);
     });
 
-    it("can't create a tournament on another tournament's options", async () => {
-      const { victimOptions, attacker } = await victimAndAttacker();
+    // A tournament's own options are unique already, so this takes a stage's.
+    it("can't create a tournament on another tournament stage's options", async () => {
+      const victim = await tfx.createTournament(SE4);
+      const stageOptions = await fx.matchOptions({ type: "Wingman" });
+      await postgres.query(
+        "UPDATE tournament_stages SET match_options_id = $2 WHERE id = $1",
+        [victim.stageIds[0], stageOptions],
+      );
+      const attacker = await fx.player();
 
       await expect(
         asUser(
-          attacker.organizer,
+          attacker,
           `INSERT INTO tournaments (name, start, organizer_steam_id, match_options_id, status)
            VALUES ('copy', now() + interval '1 day', $1, $2, 'Setup')`,
-          [attacker.organizer, victimOptions],
+          [attacker, stageOptions],
         ),
       ).rejects.toThrow(REFUSAL);
+    });
+
+    it.each([
+      "verified_user",
+      "streamer",
+      "moderator",
+      "match_organizer",
+      "tournament_organizer",
+    ])("refuses %s too", async (role) => {
+      const { victimOptions, attacker } = await victimAndAttacker();
+
+      await expect(
+        runAsUser(postgres, attacker.organizer, role, (query) =>
+          query(
+            "UPDATE tournament_stages SET match_options_id = $2 WHERE id = $1",
+            [attacker.stageIds[0], victimOptions],
+          ),
+        ),
+      ).rejects.toThrow(REFUSAL);
+    });
+
+    // Each saw the row free while the other had not committed yet.
+    it("lets only one of two sessions attaching the same free options at once have them", async () => {
+      const first = await tfx.createTournament(SE4);
+      const second = await tfx.createTournament(SE4);
+      const fresh = await fx.matchOptions({ type: "Wingman" });
+
+      type Client = {
+        query(sql: string, params?: unknown[]): Promise<unknown>;
+        release(): void;
+      };
+      const client = await (
+        postgres as unknown as { pool: { connect(): Promise<Client> } }
+      ).pool.connect();
+      try {
+        await client.query("BEGIN");
+        await client.query("SELECT set_config('hasura.user', $1, true)", [
+          JSON.stringify({
+            "x-hasura-role": "user",
+            "x-hasura-user-id": first.organizer,
+          }),
+        ]);
+        await client.query(
+          "UPDATE tournament_stages SET match_options_id = $2 WHERE id = $1",
+          [first.stageIds[0], fresh],
+        );
+
+        const racing = asUser(
+          second.organizer,
+          "UPDATE tournament_stages SET match_options_id = $2 WHERE id = $1",
+          [second.stageIds[0], fresh],
+        ).then(
+          () => "attached",
+          (error: Error) => error.message,
+        );
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        await client.query("COMMIT");
+
+        expect(await racing).toMatch(REFUSAL);
+      } finally {
+        await client.query("SELECT set_config('hasura.user', '{}', false)");
+        client.release();
+      }
     });
 
     it("can't point a bracket at another tournament's options", async () => {
@@ -120,11 +190,9 @@ describe("match options a client points at (SQL-driven)", () => {
       const attacker = await fx.player();
 
       await expect(
-        asUser(
-          attacker,
-          "INSERT INTO matches (match_options_id) VALUES ($1)",
-          [victim.options_id],
-        ),
+        asUser(attacker, "INSERT INTO matches (match_options_id) VALUES ($1)", [
+          victim.options_id,
+        ]),
       ).rejects.toThrow(REFUSAL);
     });
 
@@ -152,9 +220,11 @@ describe("match options a client points at (SQL-driven)", () => {
       );
 
       const player = await fx.player();
-      await asUser(player, "INSERT INTO matches (match_options_id) VALUES ($1)", [
-        await fx.matchOptions(),
-      ]);
+      await asUser(
+        player,
+        "INSERT INTO matches (match_options_id) VALUES ($1)",
+        [await fx.matchOptions()],
+      );
     });
 
     it("can save a row whose options the backend shares without changing them", async () => {
@@ -181,6 +251,17 @@ describe("match options a client points at (SQL-driven)", () => {
   // The backend makes a scrim's or draft's match on the options it was set up
   // with, so the row is shared on purpose there.
   describe("the backend", () => {
+    it("lets an administrator attach options another row uses", async () => {
+      const { victimOptions, attacker } = await victimAndAttacker();
+
+      await runAsUser(postgres, attacker.organizer, "administrator", (query) =>
+        query(
+          "UPDATE tournament_stages SET match_options_id = $2 WHERE id = $1",
+          [attacker.stageIds[0], victimOptions],
+        ),
+      );
+    });
+
     it("can create a match on a draft's options", async () => {
       const host = await fx.player();
       const options = await fx.matchOptions();

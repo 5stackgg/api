@@ -33,6 +33,10 @@ BEGIN
         RETURN NEW;
     END IF;
 
+    -- Held so two sessions attaching the same unattached row at once can't
+    -- both see it free; the foreign key's own lock doesn't make them wait.
+    PERFORM 1 FROM match_options WHERE id = NEW.match_options_id FOR NO KEY UPDATE;
+
     IF match_options_claimed(NEW.match_options_id, TG_TABLE_NAME, NEW.id) THEN
         RAISE EXCEPTION 'Those match options already belong to another match, tournament or draft' USING ERRCODE = '22000';
     END IF;
