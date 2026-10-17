@@ -1,0 +1,3070 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`GameStreamerService Job spec goldens AMD profile amd batch-highlights 1`] = `
+{
+  "apiVersion": "batch/v1",
+  "kind": "Job",
+  "metadata": {
+    "labels": {
+      "5stack-gpu-vendor": "amd",
+      "app": "game-streamer",
+      "match-id": "match-golden",
+      "match-map-demo-id": "demo-golden",
+      "match-map-id": "map-golden",
+      "role": "batch-highlights",
+    },
+    "name": "gs-batch-mapgolde-demogold",
+  },
+  "spec": {
+    "backoffLimit": 0,
+    "template": {
+      "metadata": {
+        "labels": {
+          "5stack-gpu-vendor": "amd",
+          "app": "game-streamer",
+          "match-id": "match-golden",
+          "match-map-demo-id": "demo-golden",
+          "match-map-id": "map-golden",
+          "role": "batch-highlights",
+        },
+      },
+      "spec": {
+        "affinity": {
+          "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "nodeSelectorTerms": [
+                {
+                  "matchExpressions": [
+                    {
+                      "key": "kubernetes.io/hostname",
+                      "operator": "In",
+                      "values": [
+                        "node-golden",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        "containers": [
+          {
+            "args": [
+              "batch-highlights",
+            ],
+            "env": [
+              {
+                "name": "MATCH_ID",
+                "value": "match-golden",
+              },
+              {
+                "name": "DISPLAY_SIZEW",
+                "value": "1920",
+              },
+              {
+                "name": "DISPLAY_SIZEH",
+                "value": "1080",
+              },
+              {
+                "name": "API_BASE",
+                "value": "http://api:5585",
+              },
+              {
+                "name": "STEAM_USER",
+                "value": "golden-bot",
+              },
+              {
+                "name": "STEAM_PASSWORD",
+                "value": "golden-pw",
+              },
+              {
+                "name": "BATCH_MATCH_MAP_ID",
+                "value": "map-golden",
+              },
+              {
+                "name": "GS_GPU_VENDOR",
+                "value": "amd",
+              },
+              {
+                "name": "GS_GPU_PCI_ADDRESS",
+                "value": "0000:c4:00.0",
+              },
+            ],
+            "image": "5stack/game-streamer:golden",
+            "imagePullPolicy": "Always",
+            "name": "batch",
+            "ports": [
+              {
+                "containerPort": 1350,
+                "name": "spec",
+              },
+            ],
+            "resources": {
+              "limits": {
+                "memory": "16Gi",
+              },
+              "requests": {
+                "memory": "8Gi",
+              },
+            },
+            "securityContext": {
+              "privileged": true,
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/dev/shm",
+                "name": "dshm",
+              },
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "dnsConfig": {
+          "options": [
+            {
+              "name": "ndots",
+              "value": "1",
+            },
+          ],
+        },
+        "dnsPolicy": "ClusterFirstWithHostNet",
+        "hostNetwork": true,
+        "initContainers": [
+          {
+            "command": [
+              "sh",
+              "-c",
+              "mkdir -p /mnt/game-streamer/steam /mnt/game-streamer/steamapps /mnt/game-streamer/demos /mnt/game-streamer/clips",
+            ],
+            "image": "busybox:1.36",
+            "name": "prep-cache",
+            "volumeMounts": [
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "restartPolicy": "Never",
+        "volumes": [
+          {
+            "emptyDir": {
+              "medium": "Memory",
+              "sizeLimit": "2Gi",
+            },
+            "name": "dshm",
+          },
+          {
+            "hostPath": {
+              "path": "/opt/5stack/game-streamer",
+              "type": "DirectoryOrCreate",
+            },
+            "name": "cache",
+          },
+        ],
+      },
+    },
+    "ttlSecondsAfterFinished": 86400,
+  },
+}
+`;
+
+exports[`GameStreamerService Job spec goldens AMD profile amd create-clips 1`] = `
+{
+  "apiVersion": "batch/v1",
+  "kind": "Job",
+  "metadata": {
+    "labels": {
+      "5stack-gpu-vendor": "amd",
+      "app": "game-streamer",
+      "match-id": "match-golden",
+      "role": "create-clips",
+    },
+    "name": "gs-clips-match-golden",
+  },
+  "spec": {
+    "backoffLimit": 0,
+    "template": {
+      "metadata": {
+        "labels": {
+          "5stack-gpu-vendor": "amd",
+          "app": "game-streamer",
+          "match-id": "match-golden",
+          "role": "create-clips",
+        },
+      },
+      "spec": {
+        "affinity": {
+          "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "nodeSelectorTerms": [
+                {
+                  "matchExpressions": [
+                    {
+                      "key": "kubernetes.io/hostname",
+                      "operator": "In",
+                      "values": [
+                        "node-golden",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        "containers": [
+          {
+            "args": [
+              "create-clips",
+            ],
+            "env": [
+              {
+                "name": "MATCH_ID",
+                "value": "match-golden",
+              },
+              {
+                "name": "DISPLAY_SIZEW",
+                "value": "1920",
+              },
+              {
+                "name": "DISPLAY_SIZEH",
+                "value": "1080",
+              },
+              {
+                "name": "API_BASE",
+                "value": "http://api:5585",
+              },
+              {
+                "name": "STEAM_USER",
+                "value": "golden-bot",
+              },
+              {
+                "name": "STEAM_PASSWORD",
+                "value": "golden-pw",
+              },
+              {
+                "name": "CLIP_JOB_ID",
+                "value": "clip-golden",
+              },
+              {
+                "name": "GS_GPU_VENDOR",
+                "value": "amd",
+              },
+              {
+                "name": "GS_GPU_PCI_ADDRESS",
+                "value": "0000:c4:00.0",
+              },
+            ],
+            "image": "5stack/game-streamer:golden",
+            "imagePullPolicy": "Always",
+            "name": "clips",
+            "ports": undefined,
+            "resources": {
+              "limits": {
+                "memory": "16Gi",
+              },
+              "requests": {
+                "memory": "8Gi",
+              },
+            },
+            "securityContext": {
+              "privileged": true,
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/dev/shm",
+                "name": "dshm",
+              },
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "dnsConfig": {
+          "options": [
+            {
+              "name": "ndots",
+              "value": "1",
+            },
+          ],
+        },
+        "dnsPolicy": "ClusterFirstWithHostNet",
+        "hostNetwork": true,
+        "initContainers": [
+          {
+            "command": [
+              "sh",
+              "-c",
+              "mkdir -p /mnt/game-streamer/steam /mnt/game-streamer/steamapps /mnt/game-streamer/demos /mnt/game-streamer/clips",
+            ],
+            "image": "busybox:1.36",
+            "name": "prep-cache",
+            "volumeMounts": [
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "restartPolicy": "Never",
+        "volumes": [
+          {
+            "emptyDir": {
+              "medium": "Memory",
+              "sizeLimit": "2Gi",
+            },
+            "name": "dshm",
+          },
+          {
+            "hostPath": {
+              "path": "/opt/5stack/game-streamer",
+              "type": "DirectoryOrCreate",
+            },
+            "name": "cache",
+          },
+        ],
+      },
+    },
+    "ttlSecondsAfterFinished": 86400,
+  },
+}
+`;
+
+exports[`GameStreamerService Job spec goldens AMD profile amd demo 1`] = `
+{
+  "apiVersion": "batch/v1",
+  "kind": "Job",
+  "metadata": {
+    "labels": {
+      "5stack-gpu-vendor": "amd",
+      "app": "game-streamer",
+      "match-id": "match-golden",
+      "role": "demo",
+      "session-id": "session-golden",
+    },
+    "name": "gs-demo-sessiongolde",
+  },
+  "spec": {
+    "backoffLimit": 0,
+    "template": {
+      "metadata": {
+        "labels": {
+          "5stack-gpu-vendor": "amd",
+          "app": "game-streamer",
+          "match-id": "match-golden",
+          "role": "demo",
+          "session-id": "session-golden",
+        },
+      },
+      "spec": {
+        "affinity": {
+          "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "nodeSelectorTerms": [
+                {
+                  "matchExpressions": [
+                    {
+                      "key": "kubernetes.io/hostname",
+                      "operator": "In",
+                      "values": [
+                        "node-golden",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        "containers": [
+          {
+            "args": [
+              "demo",
+            ],
+            "env": [
+              {
+                "name": "MATCH_ID",
+                "value": "match-golden",
+              },
+              {
+                "name": "DISPLAY_SIZEW",
+                "value": "1920",
+              },
+              {
+                "name": "DISPLAY_SIZEH",
+                "value": "1080",
+              },
+              {
+                "name": "API_BASE",
+                "value": "http://api:5585",
+              },
+              {
+                "name": "STEAM_USER",
+                "value": "golden-bot",
+              },
+              {
+                "name": "STEAM_PASSWORD",
+                "value": "golden-pw",
+              },
+              {
+                "name": "DEMO_SESSION_ID",
+                "value": "session-golden",
+              },
+              {
+                "name": "GS_GPU_VENDOR",
+                "value": "amd",
+              },
+              {
+                "name": "GS_GPU_PCI_ADDRESS",
+                "value": "0000:c4:00.0",
+              },
+            ],
+            "image": "5stack/game-streamer:golden",
+            "imagePullPolicy": "Always",
+            "name": "demo",
+            "ports": [
+              {
+                "containerPort": 1350,
+                "name": "spec",
+              },
+            ],
+            "resources": {
+              "limits": {
+                "memory": "16Gi",
+              },
+              "requests": {
+                "memory": "8Gi",
+              },
+            },
+            "securityContext": {
+              "privileged": true,
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/dev/shm",
+                "name": "dshm",
+              },
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "dnsConfig": {
+          "options": [
+            {
+              "name": "ndots",
+              "value": "1",
+            },
+          ],
+        },
+        "dnsPolicy": "ClusterFirstWithHostNet",
+        "hostNetwork": true,
+        "initContainers": [
+          {
+            "command": [
+              "sh",
+              "-c",
+              "mkdir -p /mnt/game-streamer/steam /mnt/game-streamer/steamapps /mnt/game-streamer/demos /mnt/game-streamer/clips",
+            ],
+            "image": "busybox:1.36",
+            "name": "prep-cache",
+            "volumeMounts": [
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "restartPolicy": "Never",
+        "volumes": [
+          {
+            "emptyDir": {
+              "medium": "Memory",
+              "sizeLimit": "2Gi",
+            },
+            "name": "dshm",
+          },
+          {
+            "hostPath": {
+              "path": "/opt/5stack/game-streamer",
+              "type": "DirectoryOrCreate",
+            },
+            "name": "cache",
+          },
+        ],
+      },
+    },
+    "ttlSecondsAfterFinished": 86400,
+  },
+}
+`;
+
+exports[`GameStreamerService Job spec goldens AMD profile amd live 1`] = `
+{
+  "apiVersion": "batch/v1",
+  "kind": "Job",
+  "metadata": {
+    "labels": {
+      "5stack-gpu-vendor": "amd",
+      "app": "game-streamer",
+      "match-id": "match-golden",
+      "role": "live",
+    },
+    "name": "gs-live-match-golden",
+  },
+  "spec": {
+    "backoffLimit": 0,
+    "template": {
+      "metadata": {
+        "labels": {
+          "5stack-gpu-vendor": "amd",
+          "app": "game-streamer",
+          "match-id": "match-golden",
+          "role": "live",
+        },
+      },
+      "spec": {
+        "affinity": {
+          "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "nodeSelectorTerms": [
+                {
+                  "matchExpressions": [
+                    {
+                      "key": "kubernetes.io/hostname",
+                      "operator": "In",
+                      "values": [
+                        "node-golden",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        "containers": [
+          {
+            "args": [
+              "live",
+            ],
+            "env": [
+              {
+                "name": "MATCH_ID",
+                "value": "match-golden",
+              },
+              {
+                "name": "DISPLAY_SIZEW",
+                "value": "1920",
+              },
+              {
+                "name": "DISPLAY_SIZEH",
+                "value": "1080",
+              },
+              {
+                "name": "API_BASE",
+                "value": "http://api:5585",
+              },
+              {
+                "name": "STEAM_USER",
+                "value": "golden-bot",
+              },
+              {
+                "name": "STEAM_PASSWORD",
+                "value": "golden-pw",
+              },
+              {
+                "name": "CONNECT_ADDR",
+                "value": "10.0.0.5:27015",
+              },
+              {
+                "name": "GS_GPU_VENDOR",
+                "value": "amd",
+              },
+              {
+                "name": "GS_GPU_PCI_ADDRESS",
+                "value": "0000:c4:00.0",
+              },
+            ],
+            "image": "5stack/game-streamer:golden",
+            "imagePullPolicy": "Always",
+            "name": "live",
+            "ports": [
+              {
+                "containerPort": 1350,
+                "name": "spec",
+              },
+            ],
+            "resources": {
+              "limits": {
+                "memory": "16Gi",
+              },
+              "requests": {
+                "memory": "8Gi",
+              },
+            },
+            "securityContext": {
+              "privileged": true,
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/dev/shm",
+                "name": "dshm",
+              },
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "dnsConfig": {
+          "options": [
+            {
+              "name": "ndots",
+              "value": "1",
+            },
+          ],
+        },
+        "dnsPolicy": "ClusterFirstWithHostNet",
+        "hostNetwork": true,
+        "initContainers": [
+          {
+            "command": [
+              "sh",
+              "-c",
+              "mkdir -p /mnt/game-streamer/steam /mnt/game-streamer/steamapps /mnt/game-streamer/demos /mnt/game-streamer/clips",
+            ],
+            "image": "busybox:1.36",
+            "name": "prep-cache",
+            "volumeMounts": [
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "restartPolicy": "Never",
+        "volumes": [
+          {
+            "emptyDir": {
+              "medium": "Memory",
+              "sizeLimit": "2Gi",
+            },
+            "name": "dshm",
+          },
+          {
+            "hostPath": {
+              "path": "/opt/5stack/game-streamer",
+              "type": "DirectoryOrCreate",
+            },
+            "name": "cache",
+          },
+        ],
+      },
+    },
+    "ttlSecondsAfterFinished": 86400,
+  },
+}
+`;
+
+exports[`GameStreamerService Job spec goldens AMD profile amd nade-previews 1`] = `
+{
+  "apiVersion": "batch/v1",
+  "kind": "Job",
+  "metadata": {
+    "labels": {
+      "5stack-gpu-vendor": "amd",
+      "app": "game-streamer",
+      "match-id": "match-golden",
+      "role": "nade-previews",
+      "utility-map": "de_mirage",
+    },
+    "name": "gs-nades-demirage",
+  },
+  "spec": {
+    "backoffLimit": 0,
+    "template": {
+      "metadata": {
+        "labels": {
+          "5stack-gpu-vendor": "amd",
+          "app": "game-streamer",
+          "match-id": "match-golden",
+          "role": "nade-previews",
+          "utility-map": "de_mirage",
+        },
+      },
+      "spec": {
+        "affinity": {
+          "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "nodeSelectorTerms": [
+                {
+                  "matchExpressions": [
+                    {
+                      "key": "kubernetes.io/hostname",
+                      "operator": "In",
+                      "values": [
+                        "node-golden",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        "containers": [
+          {
+            "args": [
+              "nade-previews",
+            ],
+            "env": [
+              {
+                "name": "MATCH_ID",
+                "value": "match-golden",
+              },
+              {
+                "name": "DISPLAY_SIZEW",
+                "value": "1920",
+              },
+              {
+                "name": "DISPLAY_SIZEH",
+                "value": "1080",
+              },
+              {
+                "name": "API_BASE",
+                "value": "http://api:5585",
+              },
+              {
+                "name": "STEAM_USER",
+                "value": "golden-bot",
+              },
+              {
+                "name": "STEAM_PASSWORD",
+                "value": "golden-pw",
+              },
+              {
+                "name": "NADE_BATCH_MODE",
+                "value": "1",
+              },
+              {
+                "name": "GS_GPU_VENDOR",
+                "value": "amd",
+              },
+              {
+                "name": "GS_GPU_PCI_ADDRESS",
+                "value": "0000:c4:00.0",
+              },
+            ],
+            "image": "5stack/game-streamer:golden",
+            "imagePullPolicy": "Always",
+            "name": "nades",
+            "ports": [
+              {
+                "containerPort": 1350,
+                "name": "spec",
+              },
+            ],
+            "resources": {
+              "limits": {
+                "memory": "16Gi",
+              },
+              "requests": {
+                "memory": "8Gi",
+              },
+            },
+            "securityContext": {
+              "privileged": true,
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/dev/shm",
+                "name": "dshm",
+              },
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "dnsConfig": {
+          "options": [
+            {
+              "name": "ndots",
+              "value": "1",
+            },
+          ],
+        },
+        "dnsPolicy": "ClusterFirstWithHostNet",
+        "hostNetwork": true,
+        "initContainers": [
+          {
+            "command": [
+              "sh",
+              "-c",
+              "mkdir -p /mnt/game-streamer/steam /mnt/game-streamer/steamapps /mnt/game-streamer/demos /mnt/game-streamer/clips",
+            ],
+            "image": "busybox:1.36",
+            "name": "prep-cache",
+            "volumeMounts": [
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "restartPolicy": "Never",
+        "volumes": [
+          {
+            "emptyDir": {
+              "medium": "Memory",
+              "sizeLimit": "2Gi",
+            },
+            "name": "dshm",
+          },
+          {
+            "hostPath": {
+              "path": "/opt/5stack/game-streamer",
+              "type": "DirectoryOrCreate",
+            },
+            "name": "cache",
+          },
+        ],
+      },
+    },
+    "ttlSecondsAfterFinished": 86400,
+  },
+}
+`;
+
+exports[`GameStreamerService Job spec goldens AMD profile amd warm-shaders 1`] = `
+{
+  "apiVersion": "batch/v1",
+  "kind": "Job",
+  "metadata": {
+    "labels": {
+      "5stack-gpu-vendor": "amd",
+      "app": "game-streamer",
+      "match-id": "node-golden",
+      "node-id": "node-golden",
+      "role": "warm-shaders",
+    },
+    "name": "shader-bake-node-golden",
+  },
+  "spec": {
+    "backoffLimit": 0,
+    "template": {
+      "metadata": {
+        "labels": {
+          "5stack-gpu-vendor": "amd",
+          "app": "game-streamer",
+          "match-id": "node-golden",
+          "node-id": "node-golden",
+          "role": "warm-shaders",
+        },
+      },
+      "spec": {
+        "affinity": {
+          "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "nodeSelectorTerms": [
+                {
+                  "matchExpressions": [
+                    {
+                      "key": "kubernetes.io/hostname",
+                      "operator": "In",
+                      "values": [
+                        "node-golden",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        "containers": [
+          {
+            "args": [
+              "warm-shaders",
+            ],
+            "env": [
+              {
+                "name": "MATCH_ID",
+                "value": "node-golden",
+              },
+              {
+                "name": "DISPLAY_SIZEW",
+                "value": "1920",
+              },
+              {
+                "name": "DISPLAY_SIZEH",
+                "value": "1080",
+              },
+              {
+                "name": "API_BASE",
+                "value": "http://api:5585",
+              },
+              {
+                "name": "STEAM_USER",
+                "value": "golden-bot",
+              },
+              {
+                "name": "STEAM_PASSWORD",
+                "value": "golden-pw",
+              },
+              {
+                "name": "BAKE_NODE_ID",
+                "value": "node-golden",
+              },
+              {
+                "name": "CS2_VIDEO_SETTINGS",
+                "value": "{}",
+              },
+              {
+                "name": "GS_GPU_VENDOR",
+                "value": "amd",
+              },
+              {
+                "name": "GS_GPU_PCI_ADDRESS",
+                "value": "0000:c4:00.0",
+              },
+            ],
+            "image": "5stack/game-streamer:golden",
+            "imagePullPolicy": "Always",
+            "name": "warm",
+            "ports": [
+              {
+                "containerPort": 1350,
+                "name": "spec",
+              },
+            ],
+            "resources": {
+              "limits": {
+                "memory": "16Gi",
+              },
+              "requests": {
+                "memory": "8Gi",
+              },
+            },
+            "securityContext": {
+              "privileged": true,
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/dev/shm",
+                "name": "dshm",
+              },
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "dnsConfig": {
+          "options": [
+            {
+              "name": "ndots",
+              "value": "1",
+            },
+          ],
+        },
+        "dnsPolicy": "ClusterFirstWithHostNet",
+        "hostNetwork": true,
+        "initContainers": [
+          {
+            "command": [
+              "sh",
+              "-c",
+              "mkdir -p /mnt/game-streamer/steam /mnt/game-streamer/steamapps /mnt/game-streamer/demos /mnt/game-streamer/clips",
+            ],
+            "image": "busybox:1.36",
+            "name": "prep-cache",
+            "volumeMounts": [
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "restartPolicy": "Never",
+        "volumes": [
+          {
+            "emptyDir": {
+              "medium": "Memory",
+              "sizeLimit": "2Gi",
+            },
+            "name": "dshm",
+          },
+          {
+            "hostPath": {
+              "path": "/opt/5stack/game-streamer",
+              "type": "DirectoryOrCreate",
+            },
+            "name": "cache",
+          },
+        ],
+      },
+    },
+    "ttlSecondsAfterFinished": 86400,
+  },
+}
+`;
+
+exports[`GameStreamerService Job spec goldens batch-highlights 1`] = `
+{
+  "apiVersion": "batch/v1",
+  "kind": "Job",
+  "metadata": {
+    "labels": {
+      "app": "game-streamer",
+      "match-id": "match-golden",
+      "match-map-demo-id": "demo-golden",
+      "match-map-id": "map-golden",
+      "role": "batch-highlights",
+    },
+    "name": "gs-batch-mapgolde-demogold",
+  },
+  "spec": {
+    "backoffLimit": 0,
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "game-streamer",
+          "match-id": "match-golden",
+          "match-map-demo-id": "demo-golden",
+          "match-map-id": "map-golden",
+          "role": "batch-highlights",
+        },
+      },
+      "spec": {
+        "affinity": {
+          "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "nodeSelectorTerms": [
+                {
+                  "matchExpressions": [
+                    {
+                      "key": "kubernetes.io/hostname",
+                      "operator": "In",
+                      "values": [
+                        "node-golden",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        "containers": [
+          {
+            "args": [
+              "batch-highlights",
+            ],
+            "env": [
+              {
+                "name": "MATCH_ID",
+                "value": "match-golden",
+              },
+              {
+                "name": "DISPLAY_SIZEW",
+                "value": "1920",
+              },
+              {
+                "name": "DISPLAY_SIZEH",
+                "value": "1080",
+              },
+              {
+                "name": "API_BASE",
+                "value": "http://api:5585",
+              },
+              {
+                "name": "STEAM_USER",
+                "value": "golden-bot",
+              },
+              {
+                "name": "STEAM_PASSWORD",
+                "value": "golden-pw",
+              },
+              {
+                "name": "BATCH_MATCH_MAP_ID",
+                "value": "map-golden",
+              },
+            ],
+            "image": "5stack/game-streamer:golden",
+            "imagePullPolicy": "Always",
+            "name": "batch",
+            "ports": [
+              {
+                "containerPort": 1350,
+                "name": "spec",
+              },
+            ],
+            "resources": {
+              "limits": {
+                "memory": "16Gi",
+                "nvidia.com/gpu": "1",
+              },
+              "requests": {
+                "memory": "8Gi",
+                "nvidia.com/gpu": "1",
+              },
+            },
+            "securityContext": {
+              "privileged": true,
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/dev/shm",
+                "name": "dshm",
+              },
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "dnsConfig": {
+          "options": [
+            {
+              "name": "ndots",
+              "value": "1",
+            },
+          ],
+        },
+        "dnsPolicy": "ClusterFirstWithHostNet",
+        "hostNetwork": true,
+        "initContainers": [
+          {
+            "command": [
+              "sh",
+              "-c",
+              "mkdir -p /mnt/game-streamer/steam /mnt/game-streamer/steamapps /mnt/game-streamer/demos /mnt/game-streamer/clips",
+            ],
+            "image": "busybox:1.36",
+            "name": "prep-cache",
+            "volumeMounts": [
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "restartPolicy": "Never",
+        "runtimeClassName": "nvidia",
+        "volumes": [
+          {
+            "emptyDir": {
+              "medium": "Memory",
+              "sizeLimit": "2Gi",
+            },
+            "name": "dshm",
+          },
+          {
+            "hostPath": {
+              "path": "/opt/5stack/game-streamer",
+              "type": "DirectoryOrCreate",
+            },
+            "name": "cache",
+          },
+        ],
+      },
+    },
+    "ttlSecondsAfterFinished": 86400,
+  },
+}
+`;
+
+exports[`GameStreamerService Job spec goldens create-clips 1`] = `
+{
+  "apiVersion": "batch/v1",
+  "kind": "Job",
+  "metadata": {
+    "labels": {
+      "app": "game-streamer",
+      "match-id": "match-golden",
+      "role": "create-clips",
+    },
+    "name": "gs-clips-match-golden",
+  },
+  "spec": {
+    "backoffLimit": 0,
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "game-streamer",
+          "match-id": "match-golden",
+          "role": "create-clips",
+        },
+      },
+      "spec": {
+        "affinity": {
+          "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "nodeSelectorTerms": [
+                {
+                  "matchExpressions": [
+                    {
+                      "key": "kubernetes.io/hostname",
+                      "operator": "In",
+                      "values": [
+                        "node-golden",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        "containers": [
+          {
+            "args": [
+              "create-clips",
+            ],
+            "env": [
+              {
+                "name": "MATCH_ID",
+                "value": "match-golden",
+              },
+              {
+                "name": "DISPLAY_SIZEW",
+                "value": "1920",
+              },
+              {
+                "name": "DISPLAY_SIZEH",
+                "value": "1080",
+              },
+              {
+                "name": "API_BASE",
+                "value": "http://api:5585",
+              },
+              {
+                "name": "STEAM_USER",
+                "value": "golden-bot",
+              },
+              {
+                "name": "STEAM_PASSWORD",
+                "value": "golden-pw",
+              },
+              {
+                "name": "CLIP_JOB_ID",
+                "value": "clip-golden",
+              },
+            ],
+            "image": "5stack/game-streamer:golden",
+            "imagePullPolicy": "Always",
+            "name": "clips",
+            "ports": undefined,
+            "resources": {
+              "limits": {
+                "memory": "16Gi",
+                "nvidia.com/gpu": "1",
+              },
+              "requests": {
+                "memory": "8Gi",
+                "nvidia.com/gpu": "1",
+              },
+            },
+            "securityContext": {
+              "privileged": true,
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/dev/shm",
+                "name": "dshm",
+              },
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "dnsConfig": {
+          "options": [
+            {
+              "name": "ndots",
+              "value": "1",
+            },
+          ],
+        },
+        "dnsPolicy": "ClusterFirstWithHostNet",
+        "hostNetwork": true,
+        "initContainers": [
+          {
+            "command": [
+              "sh",
+              "-c",
+              "mkdir -p /mnt/game-streamer/steam /mnt/game-streamer/steamapps /mnt/game-streamer/demos /mnt/game-streamer/clips",
+            ],
+            "image": "busybox:1.36",
+            "name": "prep-cache",
+            "volumeMounts": [
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "restartPolicy": "Never",
+        "runtimeClassName": "nvidia",
+        "volumes": [
+          {
+            "emptyDir": {
+              "medium": "Memory",
+              "sizeLimit": "2Gi",
+            },
+            "name": "dshm",
+          },
+          {
+            "hostPath": {
+              "path": "/opt/5stack/game-streamer",
+              "type": "DirectoryOrCreate",
+            },
+            "name": "cache",
+          },
+        ],
+      },
+    },
+    "ttlSecondsAfterFinished": 86400,
+  },
+}
+`;
+
+exports[`GameStreamerService Job spec goldens demo 1`] = `
+{
+  "apiVersion": "batch/v1",
+  "kind": "Job",
+  "metadata": {
+    "labels": {
+      "app": "game-streamer",
+      "match-id": "match-golden",
+      "role": "demo",
+      "session-id": "session-golden",
+    },
+    "name": "gs-demo-sessiongolde",
+  },
+  "spec": {
+    "backoffLimit": 0,
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "game-streamer",
+          "match-id": "match-golden",
+          "role": "demo",
+          "session-id": "session-golden",
+        },
+      },
+      "spec": {
+        "affinity": {
+          "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "nodeSelectorTerms": [
+                {
+                  "matchExpressions": [
+                    {
+                      "key": "kubernetes.io/hostname",
+                      "operator": "In",
+                      "values": [
+                        "node-golden",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        "containers": [
+          {
+            "args": [
+              "demo",
+            ],
+            "env": [
+              {
+                "name": "MATCH_ID",
+                "value": "match-golden",
+              },
+              {
+                "name": "DISPLAY_SIZEW",
+                "value": "1920",
+              },
+              {
+                "name": "DISPLAY_SIZEH",
+                "value": "1080",
+              },
+              {
+                "name": "API_BASE",
+                "value": "http://api:5585",
+              },
+              {
+                "name": "STEAM_USER",
+                "value": "golden-bot",
+              },
+              {
+                "name": "STEAM_PASSWORD",
+                "value": "golden-pw",
+              },
+              {
+                "name": "DEMO_SESSION_ID",
+                "value": "session-golden",
+              },
+            ],
+            "image": "5stack/game-streamer:golden",
+            "imagePullPolicy": "Always",
+            "name": "demo",
+            "ports": [
+              {
+                "containerPort": 1350,
+                "name": "spec",
+              },
+            ],
+            "resources": {
+              "limits": {
+                "memory": "16Gi",
+                "nvidia.com/gpu": "1",
+              },
+              "requests": {
+                "memory": "8Gi",
+                "nvidia.com/gpu": "1",
+              },
+            },
+            "securityContext": {
+              "privileged": true,
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/dev/shm",
+                "name": "dshm",
+              },
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "dnsConfig": {
+          "options": [
+            {
+              "name": "ndots",
+              "value": "1",
+            },
+          ],
+        },
+        "dnsPolicy": "ClusterFirstWithHostNet",
+        "hostNetwork": true,
+        "initContainers": [
+          {
+            "command": [
+              "sh",
+              "-c",
+              "mkdir -p /mnt/game-streamer/steam /mnt/game-streamer/steamapps /mnt/game-streamer/demos /mnt/game-streamer/clips",
+            ],
+            "image": "busybox:1.36",
+            "name": "prep-cache",
+            "volumeMounts": [
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "restartPolicy": "Never",
+        "runtimeClassName": "nvidia",
+        "volumes": [
+          {
+            "emptyDir": {
+              "medium": "Memory",
+              "sizeLimit": "2Gi",
+            },
+            "name": "dshm",
+          },
+          {
+            "hostPath": {
+              "path": "/opt/5stack/game-streamer",
+              "type": "DirectoryOrCreate",
+            },
+            "name": "cache",
+          },
+        ],
+      },
+    },
+    "ttlSecondsAfterFinished": 86400,
+  },
+}
+`;
+
+exports[`GameStreamerService Job spec goldens display tier amd batch-highlights with tier C 1`] = `
+{
+  "apiVersion": "batch/v1",
+  "kind": "Job",
+  "metadata": {
+    "labels": {
+      "5stack-gpu-vendor": "amd",
+      "app": "game-streamer",
+      "match-id": "match-golden",
+      "match-map-demo-id": "demo-golden",
+      "match-map-id": "map-golden",
+      "role": "batch-highlights",
+    },
+    "name": "gs-batch-mapgolde-demogold",
+  },
+  "spec": {
+    "backoffLimit": 0,
+    "template": {
+      "metadata": {
+        "labels": {
+          "5stack-gpu-vendor": "amd",
+          "app": "game-streamer",
+          "match-id": "match-golden",
+          "match-map-demo-id": "demo-golden",
+          "match-map-id": "map-golden",
+          "role": "batch-highlights",
+        },
+      },
+      "spec": {
+        "affinity": {
+          "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "nodeSelectorTerms": [
+                {
+                  "matchExpressions": [
+                    {
+                      "key": "kubernetes.io/hostname",
+                      "operator": "In",
+                      "values": [
+                        "node-golden",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        "containers": [
+          {
+            "args": [
+              "batch-highlights",
+            ],
+            "env": [
+              {
+                "name": "MATCH_ID",
+                "value": "match-golden",
+              },
+              {
+                "name": "DISPLAY_SIZEW",
+                "value": "1920",
+              },
+              {
+                "name": "DISPLAY_SIZEH",
+                "value": "1080",
+              },
+              {
+                "name": "API_BASE",
+                "value": "http://api:5585",
+              },
+              {
+                "name": "STEAM_USER",
+                "value": "golden-bot",
+              },
+              {
+                "name": "STEAM_PASSWORD",
+                "value": "golden-pw",
+              },
+              {
+                "name": "BATCH_MATCH_MAP_ID",
+                "value": "map-golden",
+              },
+              {
+                "name": "GS_GPU_VENDOR",
+                "value": "amd",
+              },
+              {
+                "name": "GS_GPU_PCI_ADDRESS",
+                "value": "0000:c4:00.0",
+              },
+              {
+                "name": "GS_DISPLAY_TIER",
+                "value": "C",
+              },
+            ],
+            "image": "5stack/game-streamer:golden",
+            "imagePullPolicy": "Always",
+            "name": "batch",
+            "ports": [
+              {
+                "containerPort": 1350,
+                "name": "spec",
+              },
+            ],
+            "resources": {
+              "limits": {
+                "memory": "16Gi",
+              },
+              "requests": {
+                "memory": "8Gi",
+              },
+            },
+            "securityContext": {
+              "privileged": true,
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/dev/shm",
+                "name": "dshm",
+              },
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "dnsConfig": {
+          "options": [
+            {
+              "name": "ndots",
+              "value": "1",
+            },
+          ],
+        },
+        "dnsPolicy": "ClusterFirstWithHostNet",
+        "hostNetwork": true,
+        "initContainers": [
+          {
+            "command": [
+              "sh",
+              "-c",
+              "mkdir -p /mnt/game-streamer/steam /mnt/game-streamer/steamapps /mnt/game-streamer/demos /mnt/game-streamer/clips",
+            ],
+            "image": "busybox:1.36",
+            "name": "prep-cache",
+            "volumeMounts": [
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "restartPolicy": "Never",
+        "volumes": [
+          {
+            "emptyDir": {
+              "medium": "Memory",
+              "sizeLimit": "2Gi",
+            },
+            "name": "dshm",
+          },
+          {
+            "hostPath": {
+              "path": "/opt/5stack/game-streamer",
+              "type": "DirectoryOrCreate",
+            },
+            "name": "cache",
+          },
+        ],
+      },
+    },
+    "ttlSecondsAfterFinished": 86400,
+  },
+}
+`;
+
+exports[`GameStreamerService Job spec goldens display tier amd create-clips with tier C 1`] = `
+{
+  "apiVersion": "batch/v1",
+  "kind": "Job",
+  "metadata": {
+    "labels": {
+      "5stack-gpu-vendor": "amd",
+      "app": "game-streamer",
+      "match-id": "match-golden",
+      "role": "create-clips",
+    },
+    "name": "gs-clips-match-golden",
+  },
+  "spec": {
+    "backoffLimit": 0,
+    "template": {
+      "metadata": {
+        "labels": {
+          "5stack-gpu-vendor": "amd",
+          "app": "game-streamer",
+          "match-id": "match-golden",
+          "role": "create-clips",
+        },
+      },
+      "spec": {
+        "affinity": {
+          "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "nodeSelectorTerms": [
+                {
+                  "matchExpressions": [
+                    {
+                      "key": "kubernetes.io/hostname",
+                      "operator": "In",
+                      "values": [
+                        "node-golden",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        "containers": [
+          {
+            "args": [
+              "create-clips",
+            ],
+            "env": [
+              {
+                "name": "MATCH_ID",
+                "value": "match-golden",
+              },
+              {
+                "name": "DISPLAY_SIZEW",
+                "value": "1920",
+              },
+              {
+                "name": "DISPLAY_SIZEH",
+                "value": "1080",
+              },
+              {
+                "name": "API_BASE",
+                "value": "http://api:5585",
+              },
+              {
+                "name": "STEAM_USER",
+                "value": "golden-bot",
+              },
+              {
+                "name": "STEAM_PASSWORD",
+                "value": "golden-pw",
+              },
+              {
+                "name": "CLIP_JOB_ID",
+                "value": "clip-golden",
+              },
+              {
+                "name": "GS_GPU_VENDOR",
+                "value": "amd",
+              },
+              {
+                "name": "GS_GPU_PCI_ADDRESS",
+                "value": "0000:c4:00.0",
+              },
+              {
+                "name": "GS_DISPLAY_TIER",
+                "value": "C",
+              },
+            ],
+            "image": "5stack/game-streamer:golden",
+            "imagePullPolicy": "Always",
+            "name": "clips",
+            "ports": undefined,
+            "resources": {
+              "limits": {
+                "memory": "16Gi",
+              },
+              "requests": {
+                "memory": "8Gi",
+              },
+            },
+            "securityContext": {
+              "privileged": true,
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/dev/shm",
+                "name": "dshm",
+              },
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "dnsConfig": {
+          "options": [
+            {
+              "name": "ndots",
+              "value": "1",
+            },
+          ],
+        },
+        "dnsPolicy": "ClusterFirstWithHostNet",
+        "hostNetwork": true,
+        "initContainers": [
+          {
+            "command": [
+              "sh",
+              "-c",
+              "mkdir -p /mnt/game-streamer/steam /mnt/game-streamer/steamapps /mnt/game-streamer/demos /mnt/game-streamer/clips",
+            ],
+            "image": "busybox:1.36",
+            "name": "prep-cache",
+            "volumeMounts": [
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "restartPolicy": "Never",
+        "volumes": [
+          {
+            "emptyDir": {
+              "medium": "Memory",
+              "sizeLimit": "2Gi",
+            },
+            "name": "dshm",
+          },
+          {
+            "hostPath": {
+              "path": "/opt/5stack/game-streamer",
+              "type": "DirectoryOrCreate",
+            },
+            "name": "cache",
+          },
+        ],
+      },
+    },
+    "ttlSecondsAfterFinished": 86400,
+  },
+}
+`;
+
+exports[`GameStreamerService Job spec goldens display tier amd demo with tier C 1`] = `
+{
+  "apiVersion": "batch/v1",
+  "kind": "Job",
+  "metadata": {
+    "labels": {
+      "5stack-gpu-vendor": "amd",
+      "app": "game-streamer",
+      "match-id": "match-golden",
+      "role": "demo",
+      "session-id": "session-golden",
+    },
+    "name": "gs-demo-sessiongolde",
+  },
+  "spec": {
+    "backoffLimit": 0,
+    "template": {
+      "metadata": {
+        "labels": {
+          "5stack-gpu-vendor": "amd",
+          "app": "game-streamer",
+          "match-id": "match-golden",
+          "role": "demo",
+          "session-id": "session-golden",
+        },
+      },
+      "spec": {
+        "affinity": {
+          "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "nodeSelectorTerms": [
+                {
+                  "matchExpressions": [
+                    {
+                      "key": "kubernetes.io/hostname",
+                      "operator": "In",
+                      "values": [
+                        "node-golden",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        "containers": [
+          {
+            "args": [
+              "demo",
+            ],
+            "env": [
+              {
+                "name": "MATCH_ID",
+                "value": "match-golden",
+              },
+              {
+                "name": "DISPLAY_SIZEW",
+                "value": "1920",
+              },
+              {
+                "name": "DISPLAY_SIZEH",
+                "value": "1080",
+              },
+              {
+                "name": "API_BASE",
+                "value": "http://api:5585",
+              },
+              {
+                "name": "STEAM_USER",
+                "value": "golden-bot",
+              },
+              {
+                "name": "STEAM_PASSWORD",
+                "value": "golden-pw",
+              },
+              {
+                "name": "DEMO_SESSION_ID",
+                "value": "session-golden",
+              },
+              {
+                "name": "GS_GPU_VENDOR",
+                "value": "amd",
+              },
+              {
+                "name": "GS_GPU_PCI_ADDRESS",
+                "value": "0000:c4:00.0",
+              },
+              {
+                "name": "GS_DISPLAY_TIER",
+                "value": "C",
+              },
+            ],
+            "image": "5stack/game-streamer:golden",
+            "imagePullPolicy": "Always",
+            "name": "demo",
+            "ports": [
+              {
+                "containerPort": 1350,
+                "name": "spec",
+              },
+            ],
+            "resources": {
+              "limits": {
+                "memory": "16Gi",
+              },
+              "requests": {
+                "memory": "8Gi",
+              },
+            },
+            "securityContext": {
+              "privileged": true,
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/dev/shm",
+                "name": "dshm",
+              },
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "dnsConfig": {
+          "options": [
+            {
+              "name": "ndots",
+              "value": "1",
+            },
+          ],
+        },
+        "dnsPolicy": "ClusterFirstWithHostNet",
+        "hostNetwork": true,
+        "initContainers": [
+          {
+            "command": [
+              "sh",
+              "-c",
+              "mkdir -p /mnt/game-streamer/steam /mnt/game-streamer/steamapps /mnt/game-streamer/demos /mnt/game-streamer/clips",
+            ],
+            "image": "busybox:1.36",
+            "name": "prep-cache",
+            "volumeMounts": [
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "restartPolicy": "Never",
+        "volumes": [
+          {
+            "emptyDir": {
+              "medium": "Memory",
+              "sizeLimit": "2Gi",
+            },
+            "name": "dshm",
+          },
+          {
+            "hostPath": {
+              "path": "/opt/5stack/game-streamer",
+              "type": "DirectoryOrCreate",
+            },
+            "name": "cache",
+          },
+        ],
+      },
+    },
+    "ttlSecondsAfterFinished": 86400,
+  },
+}
+`;
+
+exports[`GameStreamerService Job spec goldens display tier amd live with tier C 1`] = `
+{
+  "apiVersion": "batch/v1",
+  "kind": "Job",
+  "metadata": {
+    "labels": {
+      "5stack-gpu-vendor": "amd",
+      "app": "game-streamer",
+      "match-id": "match-golden",
+      "role": "live",
+    },
+    "name": "gs-live-match-golden",
+  },
+  "spec": {
+    "backoffLimit": 0,
+    "template": {
+      "metadata": {
+        "labels": {
+          "5stack-gpu-vendor": "amd",
+          "app": "game-streamer",
+          "match-id": "match-golden",
+          "role": "live",
+        },
+      },
+      "spec": {
+        "affinity": {
+          "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "nodeSelectorTerms": [
+                {
+                  "matchExpressions": [
+                    {
+                      "key": "kubernetes.io/hostname",
+                      "operator": "In",
+                      "values": [
+                        "node-golden",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        "containers": [
+          {
+            "args": [
+              "live",
+            ],
+            "env": [
+              {
+                "name": "MATCH_ID",
+                "value": "match-golden",
+              },
+              {
+                "name": "DISPLAY_SIZEW",
+                "value": "1920",
+              },
+              {
+                "name": "DISPLAY_SIZEH",
+                "value": "1080",
+              },
+              {
+                "name": "API_BASE",
+                "value": "http://api:5585",
+              },
+              {
+                "name": "STEAM_USER",
+                "value": "golden-bot",
+              },
+              {
+                "name": "STEAM_PASSWORD",
+                "value": "golden-pw",
+              },
+              {
+                "name": "CONNECT_ADDR",
+                "value": "10.0.0.5:27015",
+              },
+              {
+                "name": "GS_GPU_VENDOR",
+                "value": "amd",
+              },
+              {
+                "name": "GS_GPU_PCI_ADDRESS",
+                "value": "0000:c4:00.0",
+              },
+              {
+                "name": "GS_DISPLAY_TIER",
+                "value": "C",
+              },
+            ],
+            "image": "5stack/game-streamer:golden",
+            "imagePullPolicy": "Always",
+            "name": "live",
+            "ports": [
+              {
+                "containerPort": 1350,
+                "name": "spec",
+              },
+            ],
+            "resources": {
+              "limits": {
+                "memory": "16Gi",
+              },
+              "requests": {
+                "memory": "8Gi",
+              },
+            },
+            "securityContext": {
+              "privileged": true,
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/dev/shm",
+                "name": "dshm",
+              },
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "dnsConfig": {
+          "options": [
+            {
+              "name": "ndots",
+              "value": "1",
+            },
+          ],
+        },
+        "dnsPolicy": "ClusterFirstWithHostNet",
+        "hostNetwork": true,
+        "initContainers": [
+          {
+            "command": [
+              "sh",
+              "-c",
+              "mkdir -p /mnt/game-streamer/steam /mnt/game-streamer/steamapps /mnt/game-streamer/demos /mnt/game-streamer/clips",
+            ],
+            "image": "busybox:1.36",
+            "name": "prep-cache",
+            "volumeMounts": [
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "restartPolicy": "Never",
+        "volumes": [
+          {
+            "emptyDir": {
+              "medium": "Memory",
+              "sizeLimit": "2Gi",
+            },
+            "name": "dshm",
+          },
+          {
+            "hostPath": {
+              "path": "/opt/5stack/game-streamer",
+              "type": "DirectoryOrCreate",
+            },
+            "name": "cache",
+          },
+        ],
+      },
+    },
+    "ttlSecondsAfterFinished": 86400,
+  },
+}
+`;
+
+exports[`GameStreamerService Job spec goldens display tier amd nade-previews with tier C 1`] = `
+{
+  "apiVersion": "batch/v1",
+  "kind": "Job",
+  "metadata": {
+    "labels": {
+      "5stack-gpu-vendor": "amd",
+      "app": "game-streamer",
+      "match-id": "match-golden",
+      "role": "nade-previews",
+      "utility-map": "de_mirage",
+    },
+    "name": "gs-nades-demirage",
+  },
+  "spec": {
+    "backoffLimit": 0,
+    "template": {
+      "metadata": {
+        "labels": {
+          "5stack-gpu-vendor": "amd",
+          "app": "game-streamer",
+          "match-id": "match-golden",
+          "role": "nade-previews",
+          "utility-map": "de_mirage",
+        },
+      },
+      "spec": {
+        "affinity": {
+          "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "nodeSelectorTerms": [
+                {
+                  "matchExpressions": [
+                    {
+                      "key": "kubernetes.io/hostname",
+                      "operator": "In",
+                      "values": [
+                        "node-golden",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        "containers": [
+          {
+            "args": [
+              "nade-previews",
+            ],
+            "env": [
+              {
+                "name": "MATCH_ID",
+                "value": "match-golden",
+              },
+              {
+                "name": "DISPLAY_SIZEW",
+                "value": "1920",
+              },
+              {
+                "name": "DISPLAY_SIZEH",
+                "value": "1080",
+              },
+              {
+                "name": "API_BASE",
+                "value": "http://api:5585",
+              },
+              {
+                "name": "STEAM_USER",
+                "value": "golden-bot",
+              },
+              {
+                "name": "STEAM_PASSWORD",
+                "value": "golden-pw",
+              },
+              {
+                "name": "NADE_BATCH_MODE",
+                "value": "1",
+              },
+              {
+                "name": "GS_GPU_VENDOR",
+                "value": "amd",
+              },
+              {
+                "name": "GS_GPU_PCI_ADDRESS",
+                "value": "0000:c4:00.0",
+              },
+              {
+                "name": "GS_DISPLAY_TIER",
+                "value": "C",
+              },
+            ],
+            "image": "5stack/game-streamer:golden",
+            "imagePullPolicy": "Always",
+            "name": "nades",
+            "ports": [
+              {
+                "containerPort": 1350,
+                "name": "spec",
+              },
+            ],
+            "resources": {
+              "limits": {
+                "memory": "16Gi",
+              },
+              "requests": {
+                "memory": "8Gi",
+              },
+            },
+            "securityContext": {
+              "privileged": true,
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/dev/shm",
+                "name": "dshm",
+              },
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "dnsConfig": {
+          "options": [
+            {
+              "name": "ndots",
+              "value": "1",
+            },
+          ],
+        },
+        "dnsPolicy": "ClusterFirstWithHostNet",
+        "hostNetwork": true,
+        "initContainers": [
+          {
+            "command": [
+              "sh",
+              "-c",
+              "mkdir -p /mnt/game-streamer/steam /mnt/game-streamer/steamapps /mnt/game-streamer/demos /mnt/game-streamer/clips",
+            ],
+            "image": "busybox:1.36",
+            "name": "prep-cache",
+            "volumeMounts": [
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "restartPolicy": "Never",
+        "volumes": [
+          {
+            "emptyDir": {
+              "medium": "Memory",
+              "sizeLimit": "2Gi",
+            },
+            "name": "dshm",
+          },
+          {
+            "hostPath": {
+              "path": "/opt/5stack/game-streamer",
+              "type": "DirectoryOrCreate",
+            },
+            "name": "cache",
+          },
+        ],
+      },
+    },
+    "ttlSecondsAfterFinished": 86400,
+  },
+}
+`;
+
+exports[`GameStreamerService Job spec goldens display tier amd warm-shaders with tier C 1`] = `
+{
+  "apiVersion": "batch/v1",
+  "kind": "Job",
+  "metadata": {
+    "labels": {
+      "5stack-gpu-vendor": "amd",
+      "app": "game-streamer",
+      "match-id": "node-golden",
+      "node-id": "node-golden",
+      "role": "warm-shaders",
+    },
+    "name": "shader-bake-node-golden",
+  },
+  "spec": {
+    "backoffLimit": 0,
+    "template": {
+      "metadata": {
+        "labels": {
+          "5stack-gpu-vendor": "amd",
+          "app": "game-streamer",
+          "match-id": "node-golden",
+          "node-id": "node-golden",
+          "role": "warm-shaders",
+        },
+      },
+      "spec": {
+        "affinity": {
+          "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "nodeSelectorTerms": [
+                {
+                  "matchExpressions": [
+                    {
+                      "key": "kubernetes.io/hostname",
+                      "operator": "In",
+                      "values": [
+                        "node-golden",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        "containers": [
+          {
+            "args": [
+              "warm-shaders",
+            ],
+            "env": [
+              {
+                "name": "MATCH_ID",
+                "value": "node-golden",
+              },
+              {
+                "name": "DISPLAY_SIZEW",
+                "value": "1920",
+              },
+              {
+                "name": "DISPLAY_SIZEH",
+                "value": "1080",
+              },
+              {
+                "name": "API_BASE",
+                "value": "http://api:5585",
+              },
+              {
+                "name": "STEAM_USER",
+                "value": "golden-bot",
+              },
+              {
+                "name": "STEAM_PASSWORD",
+                "value": "golden-pw",
+              },
+              {
+                "name": "BAKE_NODE_ID",
+                "value": "node-golden",
+              },
+              {
+                "name": "CS2_VIDEO_SETTINGS",
+                "value": "{}",
+              },
+              {
+                "name": "GS_GPU_VENDOR",
+                "value": "amd",
+              },
+              {
+                "name": "GS_GPU_PCI_ADDRESS",
+                "value": "0000:c4:00.0",
+              },
+              {
+                "name": "GS_DISPLAY_TIER",
+                "value": "C",
+              },
+            ],
+            "image": "5stack/game-streamer:golden",
+            "imagePullPolicy": "Always",
+            "name": "warm",
+            "ports": [
+              {
+                "containerPort": 1350,
+                "name": "spec",
+              },
+            ],
+            "resources": {
+              "limits": {
+                "memory": "16Gi",
+              },
+              "requests": {
+                "memory": "8Gi",
+              },
+            },
+            "securityContext": {
+              "privileged": true,
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/dev/shm",
+                "name": "dshm",
+              },
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "dnsConfig": {
+          "options": [
+            {
+              "name": "ndots",
+              "value": "1",
+            },
+          ],
+        },
+        "dnsPolicy": "ClusterFirstWithHostNet",
+        "hostNetwork": true,
+        "initContainers": [
+          {
+            "command": [
+              "sh",
+              "-c",
+              "mkdir -p /mnt/game-streamer/steam /mnt/game-streamer/steamapps /mnt/game-streamer/demos /mnt/game-streamer/clips",
+            ],
+            "image": "busybox:1.36",
+            "name": "prep-cache",
+            "volumeMounts": [
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "restartPolicy": "Never",
+        "volumes": [
+          {
+            "emptyDir": {
+              "medium": "Memory",
+              "sizeLimit": "2Gi",
+            },
+            "name": "dshm",
+          },
+          {
+            "hostPath": {
+              "path": "/opt/5stack/game-streamer",
+              "type": "DirectoryOrCreate",
+            },
+            "name": "cache",
+          },
+        ],
+      },
+    },
+    "ttlSecondsAfterFinished": 86400,
+  },
+}
+`;
+
+exports[`GameStreamerService Job spec goldens live 1`] = `
+{
+  "apiVersion": "batch/v1",
+  "kind": "Job",
+  "metadata": {
+    "labels": {
+      "app": "game-streamer",
+      "match-id": "match-golden",
+      "role": "live",
+    },
+    "name": "gs-live-match-golden",
+  },
+  "spec": {
+    "backoffLimit": 0,
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "game-streamer",
+          "match-id": "match-golden",
+          "role": "live",
+        },
+      },
+      "spec": {
+        "affinity": {
+          "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "nodeSelectorTerms": [
+                {
+                  "matchExpressions": [
+                    {
+                      "key": "kubernetes.io/hostname",
+                      "operator": "In",
+                      "values": [
+                        "node-golden",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        "containers": [
+          {
+            "args": [
+              "live",
+            ],
+            "env": [
+              {
+                "name": "MATCH_ID",
+                "value": "match-golden",
+              },
+              {
+                "name": "DISPLAY_SIZEW",
+                "value": "1920",
+              },
+              {
+                "name": "DISPLAY_SIZEH",
+                "value": "1080",
+              },
+              {
+                "name": "API_BASE",
+                "value": "http://api:5585",
+              },
+              {
+                "name": "STEAM_USER",
+                "value": "golden-bot",
+              },
+              {
+                "name": "STEAM_PASSWORD",
+                "value": "golden-pw",
+              },
+              {
+                "name": "CONNECT_ADDR",
+                "value": "10.0.0.5:27015",
+              },
+            ],
+            "image": "5stack/game-streamer:golden",
+            "imagePullPolicy": "Always",
+            "name": "live",
+            "ports": [
+              {
+                "containerPort": 1350,
+                "name": "spec",
+              },
+            ],
+            "resources": {
+              "limits": {
+                "memory": "16Gi",
+                "nvidia.com/gpu": "1",
+              },
+              "requests": {
+                "memory": "8Gi",
+                "nvidia.com/gpu": "1",
+              },
+            },
+            "securityContext": {
+              "privileged": true,
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/dev/shm",
+                "name": "dshm",
+              },
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "dnsConfig": {
+          "options": [
+            {
+              "name": "ndots",
+              "value": "1",
+            },
+          ],
+        },
+        "dnsPolicy": "ClusterFirstWithHostNet",
+        "hostNetwork": true,
+        "initContainers": [
+          {
+            "command": [
+              "sh",
+              "-c",
+              "mkdir -p /mnt/game-streamer/steam /mnt/game-streamer/steamapps /mnt/game-streamer/demos /mnt/game-streamer/clips",
+            ],
+            "image": "busybox:1.36",
+            "name": "prep-cache",
+            "volumeMounts": [
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "restartPolicy": "Never",
+        "runtimeClassName": "nvidia",
+        "volumes": [
+          {
+            "emptyDir": {
+              "medium": "Memory",
+              "sizeLimit": "2Gi",
+            },
+            "name": "dshm",
+          },
+          {
+            "hostPath": {
+              "path": "/opt/5stack/game-streamer",
+              "type": "DirectoryOrCreate",
+            },
+            "name": "cache",
+          },
+        ],
+      },
+    },
+    "ttlSecondsAfterFinished": 86400,
+  },
+}
+`;
+
+exports[`GameStreamerService Job spec goldens nade-previews 1`] = `
+{
+  "apiVersion": "batch/v1",
+  "kind": "Job",
+  "metadata": {
+    "labels": {
+      "app": "game-streamer",
+      "match-id": "match-golden",
+      "role": "nade-previews",
+      "utility-map": "de_mirage",
+    },
+    "name": "gs-nades-demirage",
+  },
+  "spec": {
+    "backoffLimit": 0,
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "game-streamer",
+          "match-id": "match-golden",
+          "role": "nade-previews",
+          "utility-map": "de_mirage",
+        },
+      },
+      "spec": {
+        "affinity": {
+          "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "nodeSelectorTerms": [
+                {
+                  "matchExpressions": [
+                    {
+                      "key": "kubernetes.io/hostname",
+                      "operator": "In",
+                      "values": [
+                        "node-golden",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        "containers": [
+          {
+            "args": [
+              "nade-previews",
+            ],
+            "env": [
+              {
+                "name": "MATCH_ID",
+                "value": "match-golden",
+              },
+              {
+                "name": "DISPLAY_SIZEW",
+                "value": "1920",
+              },
+              {
+                "name": "DISPLAY_SIZEH",
+                "value": "1080",
+              },
+              {
+                "name": "API_BASE",
+                "value": "http://api:5585",
+              },
+              {
+                "name": "STEAM_USER",
+                "value": "golden-bot",
+              },
+              {
+                "name": "STEAM_PASSWORD",
+                "value": "golden-pw",
+              },
+              {
+                "name": "NADE_BATCH_MODE",
+                "value": "1",
+              },
+            ],
+            "image": "5stack/game-streamer:golden",
+            "imagePullPolicy": "Always",
+            "name": "nades",
+            "ports": [
+              {
+                "containerPort": 1350,
+                "name": "spec",
+              },
+            ],
+            "resources": {
+              "limits": {
+                "memory": "16Gi",
+                "nvidia.com/gpu": "1",
+              },
+              "requests": {
+                "memory": "8Gi",
+                "nvidia.com/gpu": "1",
+              },
+            },
+            "securityContext": {
+              "privileged": true,
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/dev/shm",
+                "name": "dshm",
+              },
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "dnsConfig": {
+          "options": [
+            {
+              "name": "ndots",
+              "value": "1",
+            },
+          ],
+        },
+        "dnsPolicy": "ClusterFirstWithHostNet",
+        "hostNetwork": true,
+        "initContainers": [
+          {
+            "command": [
+              "sh",
+              "-c",
+              "mkdir -p /mnt/game-streamer/steam /mnt/game-streamer/steamapps /mnt/game-streamer/demos /mnt/game-streamer/clips",
+            ],
+            "image": "busybox:1.36",
+            "name": "prep-cache",
+            "volumeMounts": [
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "restartPolicy": "Never",
+        "runtimeClassName": "nvidia",
+        "volumes": [
+          {
+            "emptyDir": {
+              "medium": "Memory",
+              "sizeLimit": "2Gi",
+            },
+            "name": "dshm",
+          },
+          {
+            "hostPath": {
+              "path": "/opt/5stack/game-streamer",
+              "type": "DirectoryOrCreate",
+            },
+            "name": "cache",
+          },
+        ],
+      },
+    },
+    "ttlSecondsAfterFinished": 86400,
+  },
+}
+`;
+
+exports[`GameStreamerService Job spec goldens warm-shaders 1`] = `
+{
+  "apiVersion": "batch/v1",
+  "kind": "Job",
+  "metadata": {
+    "labels": {
+      "app": "game-streamer",
+      "match-id": "node-golden",
+      "node-id": "node-golden",
+      "role": "warm-shaders",
+    },
+    "name": "shader-bake-node-golden",
+  },
+  "spec": {
+    "backoffLimit": 0,
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "game-streamer",
+          "match-id": "node-golden",
+          "node-id": "node-golden",
+          "role": "warm-shaders",
+        },
+      },
+      "spec": {
+        "affinity": {
+          "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "nodeSelectorTerms": [
+                {
+                  "matchExpressions": [
+                    {
+                      "key": "kubernetes.io/hostname",
+                      "operator": "In",
+                      "values": [
+                        "node-golden",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        "containers": [
+          {
+            "args": [
+              "warm-shaders",
+            ],
+            "env": [
+              {
+                "name": "MATCH_ID",
+                "value": "node-golden",
+              },
+              {
+                "name": "DISPLAY_SIZEW",
+                "value": "1920",
+              },
+              {
+                "name": "DISPLAY_SIZEH",
+                "value": "1080",
+              },
+              {
+                "name": "API_BASE",
+                "value": "http://api:5585",
+              },
+              {
+                "name": "STEAM_USER",
+                "value": "golden-bot",
+              },
+              {
+                "name": "STEAM_PASSWORD",
+                "value": "golden-pw",
+              },
+              {
+                "name": "BAKE_NODE_ID",
+                "value": "node-golden",
+              },
+              {
+                "name": "CS2_VIDEO_SETTINGS",
+                "value": "{}",
+              },
+            ],
+            "image": "5stack/game-streamer:golden",
+            "imagePullPolicy": "Always",
+            "name": "warm",
+            "ports": [
+              {
+                "containerPort": 1350,
+                "name": "spec",
+              },
+            ],
+            "resources": {
+              "limits": {
+                "memory": "16Gi",
+                "nvidia.com/gpu": "1",
+              },
+              "requests": {
+                "memory": "8Gi",
+                "nvidia.com/gpu": "1",
+              },
+            },
+            "securityContext": {
+              "privileged": true,
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/dev/shm",
+                "name": "dshm",
+              },
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "dnsConfig": {
+          "options": [
+            {
+              "name": "ndots",
+              "value": "1",
+            },
+          ],
+        },
+        "dnsPolicy": "ClusterFirstWithHostNet",
+        "hostNetwork": true,
+        "initContainers": [
+          {
+            "command": [
+              "sh",
+              "-c",
+              "mkdir -p /mnt/game-streamer/steam /mnt/game-streamer/steamapps /mnt/game-streamer/demos /mnt/game-streamer/clips",
+            ],
+            "image": "busybox:1.36",
+            "name": "prep-cache",
+            "volumeMounts": [
+              {
+                "mountPath": "/mnt/game-streamer",
+                "name": "cache",
+              },
+            ],
+          },
+        ],
+        "restartPolicy": "Never",
+        "runtimeClassName": "nvidia",
+        "volumes": [
+          {
+            "emptyDir": {
+              "medium": "Memory",
+              "sizeLimit": "2Gi",
+            },
+            "name": "dshm",
+          },
+          {
+            "hostPath": {
+              "path": "/opt/5stack/game-streamer",
+              "type": "DirectoryOrCreate",
+            },
+            "name": "cache",
+          },
+        ],
+      },
+    },
+    "ttlSecondsAfterFinished": 86400,
+  },
+}
+`;
