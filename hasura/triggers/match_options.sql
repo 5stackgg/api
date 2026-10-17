@@ -221,6 +221,20 @@ BEGIN
 
     PERFORM sync_tournament_match_options(OLD, NEW);
 
+    IF NEW.match_mode = 'auto' AND OLD.match_mode IS DISTINCT FROM 'auto' THEN
+        PERFORM schedule_ready_tournament_brackets(owner.tournament_id)
+        FROM (
+            SELECT t.id AS tournament_id FROM tournaments t WHERE t.match_options_id = NEW.id
+            UNION
+            SELECT ts.tournament_id FROM tournament_stages ts WHERE ts.match_options_id = NEW.id
+            UNION
+            SELECT ts.tournament_id
+            FROM tournament_brackets tb
+            INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
+            WHERE tb.match_options_id = NEW.id
+        ) owner;
+    END IF;
+
     RETURN NEW;
 END;
 $$;
