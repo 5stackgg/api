@@ -5,6 +5,7 @@ import {
   GamedataValidationResult,
   NodeWorkloads,
 } from "./game-server-node.service";
+import { GpuDevice } from "./interfaces/NodeStats";
 
 const entry = (
   signature: string,
@@ -321,5 +322,221 @@ describe("GameServerNodeService.isInService", () => {
         }),
       ),
     ).toBe(true);
+  });
+});
+
+describe("GameServerNodeService.updateStatus GPU vendor", () => {
+  // The stored row matches every ping below except in its GPU columns. Its
+  // build ids are numbers equal to the pinged ones and no update is running,
+  // so neither the build change branch nor createVolumes runs.
+  const storedNode = (
+    fields: Record<string, unknown> = {},
+  ): Record<string, unknown> => ({
+    token: null,
+    status: "Online",
+    label: "gpu-node",
+    offline_at: null,
+    enabled: true,
+    enabled_for_match_making: false,
+    gpu_streaming_enabled: true,
+    gpu_demos_enabled: true,
+    gpu_rendering_enabled: true,
+    servers: [],
+    lan_ip: "10.0.0.2",
+    node_ip: "10.0.0.2",
+    build_id: 20512345,
+    csgo_build_id: 7654321,
+    public_ip: "203.0.113.2",
+    gpu: false,
+    gpu_info: null,
+    gpu_vendor: null,
+    cpu_sockets: 1,
+    cpu_cores_per_socket: 8,
+    cpu_threads_per_core: 2,
+    supports_low_latency: false,
+    supports_cpu_pinning: false,
+    cpu_governor_info: { governor: "performance", cpus: { 0: "performance" } },
+    cpu_frequency_info: { cpus: { 0: 3000 }, frequency: 3000 },
+    cpu_warnings: [],
+    update_status: null,
+    ...fields,
+  });
+
+  // An in-memory Hasura: a query returns only the selected columns of the
+  // row, and an update merges its _set into the row as the table stores it.
+  const build = (row: Record<string, unknown>) => {
+    const hasura = {
+      query: jest.fn(async (query: Record<string, any>) => ({
+        game_server_nodes_by_pk: Object.fromEntries(
+          Object.keys(query.game_server_nodes_by_pk)
+            .filter((column) => column !== "__args")
+            .map((column) => [column, structuredClone(row[column])]),
+        ),
+      })),
+      mutation: jest.fn(async (mutation: Record<string, any>) => {
+        Object.assign(
+          row,
+          JSON.parse(
+            JSON.stringify(mutation.update_game_server_nodes_by_pk.__args._set),
+          ),
+        );
+        return {};
+      }),
+    };
+    const nodes = new GameServerNodeService(
+      { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
+      { get: () => ({ namespace: "5stack" }) } as any,
+      hasura as any,
+      { getConnection: () => ({}) } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {
+        queueBuild: jest.fn().mockResolvedValue(true),
+        queueCalloutsSync: jest.fn().mockResolvedValue(undefined),
+      } as any,
+      { query: jest.fn().mockResolvedValue([]) } as any,
+      {} as any,
+    );
+    const writes = () =>
+      hasura.mutation.mock.calls.map(
+        ([mutation]) => mutation.update_game_server_nodes_by_pk.__args._set,
+      );
+    return { nodes, writes };
+  };
+
+  // Today's 15 arguments, plus gpuVendor only when a case passes one.
+  const ping = (
+    nodes: GameServerNodeService,
+    gpu: { count: number; devices: Array<GpuDevice> | null },
+    ...gpuVendor: [] | ["nvidia" | "amd"]
+  ) =>
+    nodes.updateStatus(
+      "gpu-node",
+      "10.0.0.2",
+      "10.0.0.2",
+      "203.0.113.2",
+      20512345,
+      7654321,
+      false,
+      false,
+      { sockets: 1, coresPerSocket: 8, threadsPerCore: 2 },
+      { governor: "performance", cpus: { 0: "performance" } },
+      { cpus: { 0: 3000 }, frequency: 3000 },
+      gpu,
+      "Online",
+      undefined,
+      [],
+      ...gpuVendor,
+    );
+
+  const nvidiaDevice: GpuDevice = {
+    index: 0,
+    name: "NVIDIA GeForce RTX 3060",
+    memory_mb: 12288,
+    memory_used_mb: 1024,
+    temperature_c: 41,
+    power_w: 35,
+    utilization_percent: 2,
+  };
+
+  // The device as mergeAmdGpu hands it on: index 0, a lowercase PCI address.
+  const amdDevice: GpuDevice = {
+    index: 0,
+    name: "AMD Radeon 8060S Graphics",
+    memory_mb: 512,
+    memory_used_mb: 180,
+    gtt_total_mb: 65536,
+    gtt_used_mb: 2300,
+    utilization_percent: 3,
+    temperature_c: 46,
+    power_w: 28,
+    encoder_utilization_percent: 0,
+    pci_bus_id: "0000:c5:00.0",
+    pci_id: "1002:1586",
+    pci_revision: "c1",
+    render_node: "renderD128",
+    integrated: true,
+  };
+
+  it("stores an NVIDIA ping as 'nvidia' with today's gpu_info, and writes once", async () => {
+    const { nodes, writes } = build(storedNode());
+
+    await ping(nodes, { count: 1, devices: [nvidiaDevice] });
+    await ping(nodes, { count: 1, devices: [nvidiaDevice] });
+
+    expect(writes()).toHaveLength(1);
+    expect(writes()[0]).toMatchObject({ gpu: true, gpu_vendor: "nvidia" });
+    expect(writes()[0].gpu_info).toStrictEqual([
+      { index: 0, name: "NVIDIA GeForce RTX 3060", memory_mb: 12288 },
+    ]);
+  });
+
+  it("stores an AMD ping as 'amd' with the five identity keys, and writes once", async () => {
+    const { nodes, writes } = build(storedNode());
+
+    await ping(nodes, { count: 1, devices: [amdDevice] }, "amd");
+    await ping(nodes, { count: 1, devices: [amdDevice] }, "amd");
+
+    expect(writes()).toHaveLength(1);
+    expect(writes()[0]).toMatchObject({ gpu: true, gpu_vendor: "amd" });
+    expect(writes()[0].gpu_info).toStrictEqual([
+      {
+        index: 0,
+        name: "AMD Radeon 8060S Graphics",
+        memory_mb: 512,
+        pci_bus_id: "0000:c5:00.0",
+        pci_id: "1002:1586",
+        pci_revision: "c1",
+        render_node: "renderD128",
+        integrated: true,
+      },
+    ]);
+  });
+
+  it.each([
+    ["the default vendor", []],
+    ["'amd'", ["amd"]],
+  ] as Array<[string, [] | ["amd"]]>)(
+    "stores a CPU node as gpu false with no vendor when called with %s, and writes once",
+    async (_label, gpuVendor) => {
+      // The row still holds the GPU the node had before, so the first ping
+      // writes.
+      const { nodes, writes } = build(
+        storedNode({
+          gpu: true,
+          gpu_vendor: "nvidia",
+          gpu_info: [
+            { index: 0, name: "NVIDIA GeForce RTX 3060", memory_mb: 12288 },
+          ],
+        }),
+      );
+
+      await ping(nodes, { count: 0, devices: null }, ...gpuVendor);
+      await ping(nodes, { count: 0, devices: null }, ...gpuVendor);
+
+      expect(writes()).toHaveLength(1);
+      expect(writes()[0]).toMatchObject({
+        gpu: false,
+        gpu_vendor: null,
+        gpu_info: null,
+      });
+    },
+  );
+
+  it("stores a legacy nvidiaGPU ping as 'nvidia', and writes once", async () => {
+    // The gpu the controller builds from an old connector's
+    // { nvidiaGPU: true, gpuInfo: null }.
+    const { nodes, writes } = build(storedNode());
+
+    await ping(nodes, { count: 1, devices: null });
+    await ping(nodes, { count: 1, devices: null });
+
+    expect(writes()).toHaveLength(1);
+    expect(writes()[0]).toMatchObject({
+      gpu: true,
+      gpu_vendor: "nvidia",
+      gpu_info: null,
+    });
   });
 });

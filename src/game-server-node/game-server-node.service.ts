@@ -278,6 +278,7 @@ export class GameServerNodeService {
     status: e_game_server_node_statuses_enum,
     rootDisk?: NodeDisk,
     cpuWarnings: Array<string> = [],
+    gpuVendor: "nvidia" | "amd" = "nvidia",
   ) {
     // The connector leaves a build out when its manifest is gone: CS2 is not on
     // disk. Left undefined it drops out of the update below, and the node kept
@@ -297,12 +298,29 @@ export class GameServerNodeService {
       : null;
     const gpuDevicesAll = gpu?.devices ?? null;
     const hasGpu = (gpu?.count ?? 0) > 0 || (gpuDevicesAll?.length ?? 0) > 0;
+    // A node without a GPU stores no vendor.
+    const storedGpuVendor = hasGpu ? gpuVendor : null;
+    // The AMD identity keys are copied only when the device carries them, so
+    // an NVIDIA device keeps today's {index, name, memory_mb}.
     const gpuDevices = gpuDevicesAll
       ? gpuDevicesAll.map((device) => ({
           index: device.index,
           name: device.name,
           ...(device.memory_mb !== undefined
             ? { memory_mb: device.memory_mb }
+            : {}),
+          ...(device.pci_bus_id !== undefined
+            ? { pci_bus_id: device.pci_bus_id }
+            : {}),
+          ...(device.pci_id !== undefined ? { pci_id: device.pci_id } : {}),
+          ...(device.pci_revision !== undefined
+            ? { pci_revision: device.pci_revision }
+            : {}),
+          ...(device.render_node !== undefined
+            ? { render_node: device.render_node }
+            : {}),
+          ...(device.integrated !== undefined
+            ? { integrated: device.integrated }
             : {}),
         }))
       : null;
@@ -322,6 +340,7 @@ export class GameServerNodeService {
         csgo_build_id: true,
         public_ip: true,
         gpu: true,
+        gpu_vendor: true,
         gpu_info: true,
         cpu_sockets: true,
         cpu_cores_per_socket: true,
@@ -396,6 +415,7 @@ export class GameServerNodeService {
       game_server_nodes_by_pk.supports_cpu_pinning !== supportsCpuPinning ||
       game_server_nodes_by_pk.supports_low_latency !== supportsLowLatency ||
       game_server_nodes_by_pk.gpu !== hasGpu ||
+      game_server_nodes_by_pk.gpu_vendor !== storedGpuVendor ||
       !isJsonEqual(game_server_nodes_by_pk.gpu_info, gpuDevices) ||
       game_server_nodes_by_pk.cpu_sockets !== cpuInfo.sockets ||
       game_server_nodes_by_pk.cpu_cores_per_socket !== cpuInfo.coresPerSocket ||
@@ -430,6 +450,7 @@ export class GameServerNodeService {
                 ? { csgo_build_id: installedCsgoBuild }
                 : {}),
               gpu: hasGpu,
+              gpu_vendor: storedGpuVendor,
               gpu_info: gpuDevices,
               cpu_sockets: cpuInfo.sockets,
               cpu_cores_per_socket: cpuInfo.coresPerSocket,

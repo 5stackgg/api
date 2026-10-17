@@ -29,6 +29,7 @@ import { RconService } from "src/rcon/rcon.service";
 import { CacheService } from "src/cache/cache.service";
 import { EventPattern } from "@nestjs/microservices";
 import { NodeStats } from "./interfaces/NodeStats";
+import { mergeAmdGpu } from "./amd-gpu-merge";
 import { PodStats } from "./interfaces/PodStats";
 import { MarkGameServerNodeOffline } from "./jobs/MarkGameServerNodeOffline";
 import { MarkGameServerNodeOnline } from "./jobs/MarkGameServerNodeOnline";
@@ -48,6 +49,9 @@ export class GameServerNodeController {
   private appConfig: AppConfig;
   private diskWarningCooldowns = new Map<string, number>();
   private static DISK_WARNING_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
+  // The AMD GPU warnings already logged, as "<node>:<warning>". A node sends
+  // the same warning on every ping, so each one is logged once per process.
+  private amdGpuWarnings = new Set<string>();
 
   constructor(
     protected readonly logger: Logger,
@@ -132,7 +136,7 @@ export class GameServerNodeController {
         memory_mb: number;
       }> | null;
     };
-    const gpu = payload.nodeStats.gpu ?? {
+    let gpu = payload.nodeStats.gpu ?? {
       count: legacy.nvidiaGPU ? 1 : 0,
       devices:
         legacy.gpuInfo?.map((device, index) => ({
@@ -141,6 +145,23 @@ export class GameServerNodeController {
           memory_mb: device.memory_mb,
         })) ?? null,
     };
+
+    // Only a node labelled 5stack-gpu-vendor=amd sends nodeStats.amdGpu, so
+    // NVIDIA and unlabelled nodes keep the gpu above and 'nvidia'.
+    // mergeAmdGpu checks the AMD GPU before the node counts as a GPU node.
+    let gpuVendor: "nvidia" | "amd" = "nvidia";
+    if (payload.nodeStats.amdGpu) {
+      const merged = mergeAmdGpu(gpu, payload.nodeStats.amdGpu, payload.labels);
+      gpu = merged.gpu;
+      gpuVendor = merged.gpuVendor;
+      for (const warning of merged.warnings) {
+        const key = `${payload.node}:${warning}`;
+        if (!this.amdGpuWarnings.has(key)) {
+          this.amdGpuWarnings.add(key);
+          this.logger.warn(`Node ${payload.node}: ${warning}`);
+        }
+      }
+    }
 
     // updateStatus only persists the static device info to the
     // gpu_info column; runtime metrics (utilization, temp, power,
@@ -163,6 +184,7 @@ export class GameServerNodeController {
       "Online",
       rootDisk,
       payload.cpuWarnings ?? [],
+      gpuVendor,
     );
 
     if (result?.transitionedFromOffline) {

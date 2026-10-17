@@ -87,6 +87,7 @@ select_permissions:
         - gpu_info
         - gpu_rendering_enabled
         - gpu_streaming_enabled
+        - gpu_vendor
         - id
         - label
         - lan_ip
