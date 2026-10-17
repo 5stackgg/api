@@ -460,3 +460,8 @@ $$;
 
 DROP TRIGGER IF EXISTS tad_tournament_stages ON public.tournament_stages;
 CREATE TRIGGER tad_tournament_stages AFTER DELETE ON public.tournament_stages FOR EACH ROW EXECUTE FUNCTION public.tad_tournament_stages(); 
+DROP TRIGGER IF EXISTS tbiu_tournament_stages_claim_match_options ON public.tournament_stages;
+CREATE TRIGGER tbiu_tournament_stages_claim_match_options
+    BEFORE INSERT OR UPDATE OF match_options_id ON public.tournament_stages
+    FOR EACH ROW
+    EXECUTE FUNCTION public.tbiu_claim_match_options();

@@ -568,3 +568,9 @@ $$;
 
 DROP TRIGGER IF EXISTS tbd_matches ON public.matches;
 CREATE TRIGGER tbd_matches BEFORE DELETE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbd_matches();
+
+DROP TRIGGER IF EXISTS tbiu_matches_claim_match_options ON public.matches;
+CREATE TRIGGER tbiu_matches_claim_match_options
+    BEFORE INSERT OR UPDATE OF match_options_id ON public.matches
+    FOR EACH ROW
+    EXECUTE FUNCTION public.tbiu_claim_match_options();
