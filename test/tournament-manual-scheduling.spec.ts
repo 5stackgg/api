@@ -272,6 +272,121 @@ describe("tournament brackets waiting on an organizer (SQL-driven)", () => {
     });
   });
 
+  // create_tournaments_role defaults to user, and tbi_match caps how many
+  // pending matches a user may organize. Tournament matches are created in the
+  // owner's name, so the second one in a statement used to hit that cap.
+  describe("an owner with the user role", () => {
+    const asUser = (t: Tournament, sql: string, params: Array<unknown>) =>
+      runAsUser(postgres, t.organizer, "user", (query) => query(sql, params));
+
+    it("can turn Auto Start on and get every ready match", async () => {
+      const t = await tfx.createTournament(ROUND_ROBIN);
+      await postgres.query(
+        "UPDATE tournaments SET auto_start = false WHERE id = $1",
+        [t.id],
+      );
+      await draw(t, 4);
+
+      await asUser(t, "UPDATE tournaments SET auto_start = true WHERE id = $1", [
+        t.id,
+      ]);
+
+      expect(await roundsWithMatches(t.stageIds[0])).toEqual([1, 1]);
+    });
+
+    it("can switch a stage to auto match mode", async () => {
+      const t = await stuckRoundRobin();
+
+      await asUser(
+        t,
+        "UPDATE match_options SET match_mode = 'auto' WHERE id = $1",
+        [t.optionsId],
+      );
+
+      expect(await roundsWithMatches(t.stageIds[0])).toEqual([1, 1]);
+    });
+
+    it("can schedule one match ASAP after another", async () => {
+      const t = await stuckRoundRobin();
+      const round1 = (await tfx.getBrackets(t.stageIds[0])).filter(
+        (bracket) => bracket.round === 1,
+      );
+
+      for (const bracket of round1) {
+        await asUser(
+          t,
+          "UPDATE tournament_brackets SET scheduled_at = now() WHERE id = $1",
+          [bracket.id],
+        );
+      }
+
+      expect(await roundsWithMatches(t.stageIds[0])).toEqual([1, 1]);
+    });
+
+    it("can resume a paused tournament whose next round filled up meanwhile", async () => {
+      const t = await tfx.launch(
+        [{ type: "SingleElimination", order: 1, minTeams: 8, maxTeams: 8 }],
+        8,
+      );
+      await tfx.setStatus(t.id, t.organizer, "Paused");
+      await tfx.playRound(t.stageIds[0], 1);
+      expect(await roundsWithMatches(t.stageIds[0])).toEqual([1, 1, 1, 1]);
+
+      await asUser(t, "UPDATE tournaments SET status = 'Live' WHERE id = $1", [
+        t.id,
+      ]);
+
+      expect(await roundsWithMatches(t.stageIds[0])).toEqual([
+        1, 1, 1, 1, 2, 2,
+      ]);
+    });
+  });
+
+  // Each side used to read the other's uncommitted state: the draw saw the old
+  // admin mode, the switch saw RegistrationOpen, and neither scheduled a match.
+  it("a switch to auto racing the close of registration still schedules the draw", async () => {
+    const t = await tfx.createTournament(ROUND_ROBIN);
+    const optionsId = await giveStageOwnOptions(t, "admin");
+    await tfx.setStatus(t.id, t.organizer, "RegistrationOpen");
+    for (let i = 0; i < 4; i++) {
+      await tfx.registerTeam(t.id, await fx.team(1));
+    }
+
+    const client = await (
+      postgres as unknown as {
+        pool: {
+          connect(): Promise<{
+            query(sql: string, params?: unknown[]): Promise<unknown>;
+            release(): void;
+          }>;
+        };
+      }
+    ).pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("SELECT set_config('hasura.user', $1, true)", [
+        JSON.stringify({
+          "x-hasura-role": "admin",
+          "x-hasura-user-id": t.organizer,
+        }),
+      ]);
+      await client.query(
+        "UPDATE match_options SET match_mode = 'auto' WHERE id = $1",
+        [optionsId],
+      );
+
+      const close = tfx.setStatus(t.id, t.organizer, "RegistrationClosed");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await client.query("COMMIT");
+      await close;
+    } finally {
+      await client.query("SELECT set_config('hasura.user', '{}', false)");
+      client.release();
+    }
+
+    expect(await roundsWithMatches(t.stageIds[0])).toEqual([1, 1]);
+  });
+
   describe("a drawn stage's own options", () => {
     const bracketIds = async (stageId: string) =>
       (await tfx.getBrackets(stageId)).map((bracket) => bracket.id).sort();
@@ -313,12 +428,17 @@ describe("tournament brackets waiting on an organizer (SQL-driven)", () => {
       expect(await bracketIds(t.stageIds[0])).toEqual(before);
     });
 
-    it("refuses options of another match type and map pool", async () => {
+    it("refuses options of the same match type with other maps", async () => {
       const t = await stuckRoundRobin();
+      const { poolId } = await fx.mapPool(3, { mapType: "Wingman" });
       const [row] = await postgres.query<Array<{ id: string }>>(
-        `INSERT INTO match_options (mr, best_of, type, map_pool_id, map_veto, region_veto, regions)
-         SELECT 12, 1, 'Competitive', id, false, true, '{TestA}'
-         FROM map_pools WHERE type = 'Competitive' AND seed = true LIMIT 1 RETURNING id`,
+        `SELECT clone_match_options(match_options_id) AS id
+           FROM tournaments WHERE id = $1`,
+        [t.id],
+      );
+      await postgres.query(
+        "UPDATE match_options SET map_pool_id = $2 WHERE id = $1",
+        [row.id, poolId],
       );
 
       await expect(
