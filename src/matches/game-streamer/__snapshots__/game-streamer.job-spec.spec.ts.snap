@@ -59,6 +59,10 @@ exports[`GameStreamerService Job spec goldens AMD profile amd batch-highlights 1
                 "value": "match-golden",
               },
               {
+                "name": "SPEC_SERVER_TOKEN",
+                "value": "Vu6qLf8xlAm_YrZ6pwntlaHEDectjaLKiTHrLb6K5Is",
+              },
+              {
                 "name": "DISPLAY_SIZEW",
                 "value": "1920",
               },
@@ -229,6 +233,10 @@ exports[`GameStreamerService Job spec goldens AMD profile amd create-clips 1`] =
                 "value": "match-golden",
               },
               {
+                "name": "SPEC_SERVER_TOKEN",
+                "value": "1M9PXz4T4go6Sh8zaXmNIJxetdZzJtBJRJccl_Q_bhI",
+              },
+              {
                 "name": "DISPLAY_SIZEW",
                 "value": "1920",
               },
@@ -394,6 +402,10 @@ exports[`GameStreamerService Job spec goldens AMD profile amd demo 1`] = `
               {
                 "name": "MATCH_ID",
                 "value": "match-golden",
+              },
+              {
+                "name": "SPEC_SERVER_TOKEN",
+                "value": "oIO0zGjvzsLEC0wekqpXlBlBbV2E3MR03obsh6Yclm0",
               },
               {
                 "name": "DISPLAY_SIZEW",
@@ -564,6 +576,10 @@ exports[`GameStreamerService Job spec goldens AMD profile amd live 1`] = `
               {
                 "name": "MATCH_ID",
                 "value": "match-golden",
+              },
+              {
+                "name": "SPEC_SERVER_TOKEN",
+                "value": "u6MdtaCZcN8AS2_egVVqEf2gbj2kLPjwXkI9yDmGqGA",
               },
               {
                 "name": "DISPLAY_SIZEW",
@@ -738,6 +754,10 @@ exports[`GameStreamerService Job spec goldens AMD profile amd nade-previews 1`] 
                 "value": "match-golden",
               },
               {
+                "name": "SPEC_SERVER_TOKEN",
+                "value": "Ezr6-aNJSVwE3X6bMYzcssSYsHOmLTdstsJ6mbn4I0M",
+              },
+              {
                 "name": "DISPLAY_SIZEW",
                 "value": "1920",
               },
@@ -908,6 +928,10 @@ exports[`GameStreamerService Job spec goldens AMD profile amd warm-shaders 1`] =
               {
                 "name": "MATCH_ID",
                 "value": "node-golden",
+              },
+              {
+                "name": "SPEC_SERVER_TOKEN",
+                "value": "5hVbxyR3Ru_F20tGMyQ37l3fotUaXBA0dthVrVbEBwY",
               },
               {
                 "name": "DISPLAY_SIZEW",
@@ -1086,6 +1110,10 @@ exports[`GameStreamerService Job spec goldens batch-highlights 1`] = `
                 "value": "match-golden",
               },
               {
+                "name": "SPEC_SERVER_TOKEN",
+                "value": "Vu6qLf8xlAm_YrZ6pwntlaHEDectjaLKiTHrLb6K5Is",
+              },
+              {
                 "name": "DISPLAY_SIZEW",
                 "value": "1920",
               },
@@ -1249,6 +1277,10 @@ exports[`GameStreamerService Job spec goldens create-clips 1`] = `
                 "value": "match-golden",
               },
               {
+                "name": "SPEC_SERVER_TOKEN",
+                "value": "1M9PXz4T4go6Sh8zaXmNIJxetdZzJtBJRJccl_Q_bhI",
+              },
+              {
                 "name": "DISPLAY_SIZEW",
                 "value": "1920",
               },
@@ -1407,6 +1439,10 @@ exports[`GameStreamerService Job spec goldens demo 1`] = `
               {
                 "name": "MATCH_ID",
                 "value": "match-golden",
+              },
+              {
+                "name": "SPEC_SERVER_TOKEN",
+                "value": "oIO0zGjvzsLEC0wekqpXlBlBbV2E3MR03obsh6Yclm0",
               },
               {
                 "name": "DISPLAY_SIZEW",
@@ -1576,6 +1612,10 @@ exports[`GameStreamerService Job spec goldens display tier amd batch-highlights 
               {
                 "name": "MATCH_ID",
                 "value": "match-golden",
+              },
+              {
+                "name": "SPEC_SERVER_TOKEN",
+                "value": "Vu6qLf8xlAm_YrZ6pwntlaHEDectjaLKiTHrLb6K5Is",
               },
               {
                 "name": "DISPLAY_SIZEW",
@@ -1752,6 +1792,10 @@ exports[`GameStreamerService Job spec goldens display tier amd create-clips with
                 "value": "match-golden",
               },
               {
+                "name": "SPEC_SERVER_TOKEN",
+                "value": "1M9PXz4T4go6Sh8zaXmNIJxetdZzJtBJRJccl_Q_bhI",
+              },
+              {
                 "name": "DISPLAY_SIZEW",
                 "value": "1920",
               },
@@ -1921,6 +1965,10 @@ exports[`GameStreamerService Job spec goldens display tier amd demo with tier C 
               {
                 "name": "MATCH_ID",
                 "value": "match-golden",
+              },
+              {
+                "name": "SPEC_SERVER_TOKEN",
+                "value": "oIO0zGjvzsLEC0wekqpXlBlBbV2E3MR03obsh6Yclm0",
               },
               {
                 "name": "DISPLAY_SIZEW",
@@ -2095,6 +2143,10 @@ exports[`GameStreamerService Job spec goldens display tier amd live with tier C 
               {
                 "name": "MATCH_ID",
                 "value": "match-golden",
+              },
+              {
+                "name": "SPEC_SERVER_TOKEN",
+                "value": "u6MdtaCZcN8AS2_egVVqEf2gbj2kLPjwXkI9yDmGqGA",
               },
               {
                 "name": "DISPLAY_SIZEW",
@@ -2273,6 +2325,10 @@ exports[`GameStreamerService Job spec goldens display tier amd nade-previews wit
                 "value": "match-golden",
               },
               {
+                "name": "SPEC_SERVER_TOKEN",
+                "value": "Ezr6-aNJSVwE3X6bMYzcssSYsHOmLTdstsJ6mbn4I0M",
+              },
+              {
                 "name": "DISPLAY_SIZEW",
                 "value": "1920",
               },
@@ -2447,6 +2503,10 @@ exports[`GameStreamerService Job spec goldens display tier amd warm-shaders with
               {
                 "name": "MATCH_ID",
                 "value": "node-golden",
+              },
+              {
+                "name": "SPEC_SERVER_TOKEN",
+                "value": "5hVbxyR3Ru_F20tGMyQ37l3fotUaXBA0dthVrVbEBwY",
               },
               {
                 "name": "DISPLAY_SIZEW",
@@ -2625,6 +2685,10 @@ exports[`GameStreamerService Job spec goldens live 1`] = `
                 "value": "match-golden",
               },
               {
+                "name": "SPEC_SERVER_TOKEN",
+                "value": "u6MdtaCZcN8AS2_egVVqEf2gbj2kLPjwXkI9yDmGqGA",
+              },
+              {
                 "name": "DISPLAY_SIZEW",
                 "value": "1920",
               },
@@ -2790,6 +2854,10 @@ exports[`GameStreamerService Job spec goldens nade-previews 1`] = `
                 "value": "match-golden",
               },
               {
+                "name": "SPEC_SERVER_TOKEN",
+                "value": "Ezr6-aNJSVwE3X6bMYzcssSYsHOmLTdstsJ6mbn4I0M",
+              },
+              {
                 "name": "DISPLAY_SIZEW",
                 "value": "1920",
               },
@@ -2953,6 +3021,10 @@ exports[`GameStreamerService Job spec goldens warm-shaders 1`] = `
               {
                 "name": "MATCH_ID",
                 "value": "node-golden",
+              },
+              {
+                "name": "SPEC_SERVER_TOKEN",
+                "value": "5hVbxyR3Ru_F20tGMyQ37l3fotUaXBA0dthVrVbEBwY",
               },
               {
                 "name": "DISPLAY_SIZEW",

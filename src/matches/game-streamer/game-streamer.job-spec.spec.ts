@@ -173,7 +173,7 @@ describe("GameStreamerService Job spec goldens", () => {
     );
   };
 
-  // build(mode) is the call that the "%s" cases above pin to the commit A
+  // build(mode) is the call that the "%s" cases above pin to the unchanged-main
   // snapshot in this same run, so equal to it means equal to the golden.
   describe("NVIDIA identity", () => {
     it.each(MODES)("%s with a null profile equals the golden", (mode) => {
@@ -336,7 +336,7 @@ describe("GameStreamerService Job spec goldens", () => {
     });
 
     // golden is built before the env is set: the call that the "%s" cases
-    // pin to the commit A snapshot.
+    // pin to the unchanged-main snapshot.
     it.each(MODES)("%s with a null profile ignores tier C", (mode) => {
       const golden = build(mode);
       process.env.GAME_STREAMER_DISPLAY_TIER = "C";
