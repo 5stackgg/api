@@ -3710,7 +3710,7 @@ export class GameStreamerService {
     } catch (error) {
       if ((error as { code?: string })?.code === "42703") {
         this.logger.error(
-          `[gpu-profile] game_server_nodes.gpu_vendor is missing: migration 1889000001250_game_server_nodes_gpu_vendor has not run, so node ${nodeId} gets the NVIDIA Job spec`,
+          `[gpu-profile] game_server_nodes.gpu_vendor is missing: migration 1890000001100_game_server_nodes_gpu_vendor has not run, so node ${nodeId} gets the NVIDIA Job spec`,
         );
         return null;
       }

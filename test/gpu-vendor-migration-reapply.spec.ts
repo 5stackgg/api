@@ -11,7 +11,7 @@ describe("gpu_vendor migration re-apply", () => {
 
   const migration = join(
     __dirname,
-    "../hasura/migrations/default/1889000001250_game_server_nodes_gpu_vendor",
+    "../hasura/migrations/default/1890000001100_game_server_nodes_gpu_vendor",
   );
   const up = readFileSync(join(migration, "up.sql"), "utf8");
   const down = readFileSync(join(migration, "down.sql"), "utf8");

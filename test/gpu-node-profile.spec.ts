@@ -3,7 +3,7 @@ import { GPU_NODE_PROFILE_SQL } from "./../src/matches/game-streamer/game-stream
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 
 // The resolver's one read, run against the migrated schema: gpu_vendor from
-// migration 1889000001250 and the PCI address of gpu_info element 0.
+// migration 1890000001100 and the PCI address of gpu_info element 0.
 describe("GPU node profile read (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
