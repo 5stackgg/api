@@ -9,3 +9,8 @@ CREATE TRIGGER z_tbiu_system_alerts_last_changed
     FOR EACH ROW EXECUTE FUNCTION public.tbiu_stamp_last_changed(
         'type', 'title', 'message', 'is_active', 'dismissible', 'expires_at'
     );
+
+DROP TRIGGER IF EXISTS taiu_system_alert_activations ON public.system_alerts;
+CREATE TRIGGER taiu_system_alert_activations
+    AFTER INSERT OR UPDATE OF is_active ON public.system_alerts
+    FOR EACH ROW EXECUTE FUNCTION public.taiu_system_alert_activations();

@@ -5,6 +5,14 @@ object_relationships:
   - name: last_changed_by
     using:
       foreign_key_constraint_on: last_changed_by_steam_id
+array_relationships:
+  - name: activations
+    using:
+      foreign_key_constraint_on:
+        column: alert_id
+        table:
+          name: system_alert_activations
+          schema: public
 insert_permissions:
   - role: administrator
     permission:
