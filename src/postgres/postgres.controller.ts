@@ -482,7 +482,9 @@ export class PostgresController {
         state,
         COUNT(*) as count,
         wait_event_type,
-        COUNT(*) FILTER (WHERE wait_event_type IS NOT NULL) as waiting_count
+        -- Blocked on a lock. Idle sessions sit in a Client wait (ClientRead)
+        -- and background workers in Activity waits; neither is waiting.
+        COUNT(*) FILTER (WHERE wait_event_type = 'Lock') as waiting_count
       FROM pg_stat_activity
       GROUP BY state, wait_event_type
     `);
