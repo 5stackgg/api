@@ -45,10 +45,11 @@ export class PostgresController {
       SELECT
           queryid,
           query,
-          plan,
           SUM(calls) AS calls,
           SUM(total_exec_time) AS total_exec_time,
-          AVG(mean_exec_time) AS mean_exec_time,
+          -- One statement can have a row per user and database; weight the
+          -- mean by calls rather than averaging the per-row means.
+          SUM(total_exec_time) / NULLIF(SUM(calls), 0) AS mean_exec_time,
           MAX(max_exec_time) AS max_exec_time,
           MIN(min_exec_time) AS min_exec_time,
           SUM(rows) AS total_rows,
@@ -57,6 +58,7 @@ export class PostgresController {
           SUM(local_blks_hit) AS local_blks_hit,
           SUM(local_blks_read) AS local_blks_read
       FROM pg_stat_statements
+      WHERE queryid IS NOT NULL
       GROUP BY queryid, query
       HAVING SUM(calls) > 5
       ORDER BY mean_exec_time DESC
