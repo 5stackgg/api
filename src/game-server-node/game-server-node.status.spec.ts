@@ -176,14 +176,19 @@ describe("GameServerNodeService.updateStatus", () => {
     expect(written("node_ip")).toEqual(["100.64.0.99"]);
   });
 
-  it("refreshes disk space when nothing else changed", async () => {
+  it("refreshes free disk space when nothing else changed", async () => {
     hasura.query.mockResolvedValue({
       game_server_nodes_by_pk: stored({ build_id: BUILD }),
     });
-    await heartbeat({ csBuild: BUILD, rootDisk: disk(97, 52) });
-    expect([
-      written("disk_available_gb"),
-      written("disk_used_percent"),
-    ]).toEqual([[97], [52]]);
+    await heartbeat({ csBuild: BUILD, rootDisk: disk(97, 50) });
+    expect(written("disk_available_gb")).toEqual([97]);
+  });
+
+  it("refreshes disk usage when nothing else changed", async () => {
+    hasura.query.mockResolvedValue({
+      game_server_nodes_by_pk: stored({ build_id: BUILD }),
+    });
+    await heartbeat({ csBuild: BUILD, rootDisk: disk(100, 52) });
+    expect(written("disk_used_percent")).toEqual([52]);
   });
 });
