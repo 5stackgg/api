@@ -272,6 +272,8 @@ describe("GameStreamerService GPU profile on the dispatch paths", () => {
     delete process.env.GAME_STREAM_DOMAIN;
     delete process.env.DEBUG_STREAM;
     delete process.env.GAME_STREAMER_DISPLAY_TIER;
+    delete process.env.GAME_STREAMER_AMD_MEMORY_LIMIT;
+    delete process.env.GAME_STREAMER_AMD_MEMORY_REQUEST;
     // bakeShaders starts its monitor through a 5 s setTimeout.
     jest.useFakeTimers();
 
@@ -348,6 +350,8 @@ describe("GameStreamerService GPU profile on the dispatch paths", () => {
 
   afterEach(() => {
     jest.useRealTimers();
+    delete process.env.GAME_STREAMER_AMD_MEMORY_LIMIT;
+    delete process.env.GAME_STREAMER_AMD_MEMORY_REQUEST;
   });
 
   const createdBody = () => createNamespacedJob.mock.calls[0][0].body;
@@ -546,6 +550,58 @@ describe("GameStreamerService GPU profile on the dispatch paths", () => {
       const body = createdBody();
       expect(body).toStrictEqual(nvidiaBuild(...args.slice(0, 7)));
       expect(body.spec.template.spec.runtimeClassName).toBe("nvidia");
+    },
+  );
+
+  it.each(PATHS)(
+    "$name applies the configured AMD memory budget",
+    async (path) => {
+      process.env.GAME_STREAMER_AMD_MEMORY_LIMIT = "32Gi";
+      process.env.GAME_STREAMER_AMD_MEMORY_REQUEST = "24576Mi";
+
+      await path.start();
+
+      expect(
+        createdBody().spec.template.spec.containers[0].resources,
+      ).toStrictEqual({
+        limits: { memory: "32Gi" },
+        requests: { memory: "24576Mi" },
+      });
+    },
+  );
+
+  it.each(PATHS)(
+    "$name leaves NVIDIA resources unchanged with AMD overrides",
+    async (path) => {
+      readProfile = async () => [{ gpu_vendor: "nvidia" }];
+      process.env.GAME_STREAMER_AMD_MEMORY_LIMIT = "32Gi";
+      process.env.GAME_STREAMER_AMD_MEMORY_REQUEST = "24Gi";
+
+      await path.start();
+
+      const args = buildJobSpec.mock.calls[0];
+      expect(createdBody()).toStrictEqual(nvidiaBuild(...args.slice(0, 7)));
+    },
+  );
+
+  it.each([
+    ["32Gi", undefined],
+    [undefined, "24Gi"],
+    ["16Gi", "24Gi"],
+    ["0Gi", "1Gi"],
+    ["32Gi", "bad"],
+    ["999999999999999999Gi", "24Gi"],
+  ])(
+    "rejects invalid AMD memory sizing %p / %p before creating a Job",
+    async (limit, request) => {
+      if (limit) process.env.GAME_STREAMER_AMD_MEMORY_LIMIT = limit;
+      if (request) process.env.GAME_STREAMER_AMD_MEMORY_REQUEST = request;
+
+      await expect(service.bakeShaders(NODE_ID)).rejects.toThrow(
+        "GAME_STREAMER_AMD_MEMORY_LIMIT",
+      );
+      expect(createNamespacedJob).not.toHaveBeenCalled();
+      expect(steamAccounts.release).toHaveBeenCalled();
     },
   );
 

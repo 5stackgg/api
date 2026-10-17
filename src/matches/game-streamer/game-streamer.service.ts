@@ -3952,6 +3952,30 @@ export class GameStreamerService {
     delete container.resources.limits["nvidia.com/gpu"];
     delete container.resources.requests["nvidia.com/gpu"];
 
+    // UMA GPU allocations share the container's memory budget with CS2. Keep
+    // the existing defaults unless the operator sizes both AMD values.
+    const memoryLimit = process.env.GAME_STREAMER_AMD_MEMORY_LIMIT?.trim();
+    const memoryRequest = process.env.GAME_STREAMER_AMD_MEMORY_REQUEST?.trim();
+    if (memoryLimit || memoryRequest) {
+      const mib = (quantity?: string): number => {
+        const match = quantity?.match(/^([1-9]\d*)(Mi|Gi)$/);
+        return match ? Number(match[1]) * (match[2] === "Gi" ? 1024 : 1) : NaN;
+      };
+      const limitMiB = mib(memoryLimit);
+      const requestMiB = mib(memoryRequest);
+      if (
+        !Number.isSafeInteger(limitMiB) ||
+        !Number.isSafeInteger(requestMiB) ||
+        requestMiB > limitMiB
+      ) {
+        throw new Error(
+          "Set both GAME_STREAMER_AMD_MEMORY_LIMIT and GAME_STREAMER_AMD_MEMORY_REQUEST to positive Mi/Gi quantities, with request <= limit",
+        );
+      }
+      container.resources.limits.memory = memoryLimit;
+      container.resources.requests.memory = memoryRequest;
+    }
+
     job.metadata.labels = {
       ...job.metadata.labels,
       "5stack-gpu-vendor": "amd",
