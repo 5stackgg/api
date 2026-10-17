@@ -387,6 +387,83 @@ describe("tournament brackets waiting on an organizer (SQL-driven)", () => {
     expect(await roundsWithMatches(t.stageIds[0])).toEqual([1, 1]);
   });
 
+  // The switch's sync locks the cloned options of the matches already drawn,
+  // and a reopen of registration holds the tournament while it deletes them.
+  // Taking the tournament after the sync made each wait on the other.
+  it("a switch to auto racing a reopen of registration does not deadlock", async () => {
+    const t = await tfx.createTournament([
+      { type: "RoundRobin", order: 1, minTeams: 4, maxTeams: 8 },
+    ]);
+    const optionsId = await giveStageOwnOptions(t, "auto");
+    await draw(t, 4, "RegistrationClosed");
+    expect(await roundsWithMatches(t.stageIds[0])).toEqual([1, 1]);
+    await asOrganizer(
+      t,
+      "UPDATE match_options SET match_mode = 'admin' WHERE id = $1",
+      [optionsId],
+    );
+
+    type Client = {
+      query(sql: string, params?: unknown[]): Promise<unknown>;
+      release(): void;
+    };
+    const connect = async (): Promise<Client> => {
+      const client = await (
+        postgres as unknown as { pool: { connect(): Promise<Client> } }
+      ).pool.connect();
+      await client.query("BEGIN");
+      await client.query("SELECT set_config('hasura.user', $1, true)", [
+        JSON.stringify({
+          "x-hasura-role": "admin",
+          "x-hasura-user-id": t.organizer,
+        }),
+      ]);
+      return client;
+    };
+    const settle = (client: Client, statement: Promise<unknown>) =>
+      statement.then(
+        async () => {
+          await client.query("COMMIT");
+          return "ok";
+        },
+        async (error: { message: string }) => {
+          await client.query("ROLLBACK");
+          return error.message;
+        },
+      );
+
+    const reopen = await connect();
+    const toggle = await connect();
+    try {
+      await reopen.query(
+        "SELECT 1 FROM tournaments WHERE id = $1 FOR NO KEY UPDATE",
+        [t.id],
+      );
+      const switched = settle(
+        toggle,
+        toggle.query(
+          "UPDATE match_options SET match_mode = 'auto' WHERE id = $1",
+          [optionsId],
+        ),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const reopened = settle(
+        reopen,
+        reopen.query(
+          "UPDATE tournaments SET status = 'RegistrationOpen' WHERE id = $1",
+          [t.id],
+        ),
+      );
+
+      expect(await Promise.all([switched, reopened])).toEqual(["ok", "ok"]);
+    } finally {
+      for (const client of [reopen, toggle]) {
+        await client.query("SELECT set_config('hasura.user', '{}', false)");
+        client.release();
+      }
+    }
+  });
+
   describe("a drawn stage's own options", () => {
     const bracketIds = async (stageId: string) =>
       (await tfx.getBrackets(stageId)).map((bracket) => bracket.id).sort();
@@ -439,6 +516,27 @@ describe("tournament brackets waiting on an organizer (SQL-driven)", () => {
       await postgres.query(
         "UPDATE match_options SET map_pool_id = $2 WHERE id = $1",
         [row.id, poolId],
+      );
+
+      await expect(
+        asOrganizer(
+          t,
+          "UPDATE tournament_stages SET match_options_id = $2 WHERE id = $1",
+          [t.stageIds[0], row.id],
+        ),
+      ).rejects.toThrow(/match type or map pool/);
+    });
+
+    it("refuses options of another match type on the same maps", async () => {
+      const t = await stuckRoundRobin();
+      const [row] = await postgres.query<Array<{ id: string }>>(
+        `SELECT clone_match_options(match_options_id) AS id
+           FROM tournaments WHERE id = $1`,
+        [t.id],
+      );
+      await postgres.query(
+        "UPDATE match_options SET type = 'Competitive' WHERE id = $1",
+        [row.id],
       );
 
       await expect(
