@@ -359,7 +359,7 @@ export class LoggingService {
         for (const line of chunk.toString().split("\n")) {
           const data = line.trim();
           if (data.length === 0) {
-            return;
+            continue;
           }
           const log = this.parseLog(data);
           if (log.timestamp) {
@@ -528,7 +528,55 @@ export class LoggingService {
 
       const windowUntil = windowSince ? new Date(windowSince.until) : undefined;
 
+      let remainder = "";
+
+      const writeLine = (line: string) => {
+        const data = line.replace(/\r$/, "");
+        if (data.trim().length === 0) {
+          return;
+        }
+
+        const { timestamp, log } = this.parseLog(data);
+
+        const latestTimestamp = new Date(timestamp);
+
+        if (latestTimestamp && !Number.isNaN(latestTimestamp.getTime())) {
+          if (!oldestTimestamp || oldestTimestamp > latestTimestamp) {
+            if (!oldestTimestamp) {
+              stream.emit(
+                "data",
+                JSON.stringify({
+                  oldest_timestamp: latestTimestamp.toISOString(),
+                }),
+              );
+            }
+            oldestTimestamp = latestTimestamp;
+          }
+
+          if (windowUntil && latestTimestamp >= windowUntil) {
+            return;
+          }
+        }
+
+        totalLines++;
+
+        stream.write(
+          JSON.stringify({
+            pod: pod.metadata.name,
+            node: pod.spec.nodeName,
+            container: containerName,
+            timestamp,
+            log,
+          }),
+        );
+      };
+
       logStream.on("end", async () => {
+        if (remainder && !archive) {
+          writeLine(remainder);
+        }
+        remainder = "";
+
         if (windowSince && totalLines < 250 && !session?.aborted) {
           const firstLogTimestamp = await this.getFirstLogTimestamp(
             logApi,
@@ -566,51 +614,18 @@ export class LoggingService {
         }
       });
 
+      // Kubernetes hands the log over in chunks that can end mid-line; the
+      // unfinished tail waits for the next chunk instead of becoming a line of
+      // its own with no timestamp.
       logStream.on("data", (chunk: Buffer) => {
         if (archive) {
           return;
         }
 
-        let text = chunk.toString().trim();
-
-        if (text.length === 0) {
-          return;
-        }
-
-        for (let data of text.split(/\n/)) {
-          const { timestamp, log } = this.parseLog(data);
-
-          const latestTimestamp = new Date(timestamp);
-
-          if (latestTimestamp && !Number.isNaN(latestTimestamp.getTime())) {
-            if (!oldestTimestamp || oldestTimestamp > latestTimestamp) {
-              if (!oldestTimestamp) {
-                stream.emit(
-                  "data",
-                  JSON.stringify({
-                    oldest_timestamp: latestTimestamp.toISOString(),
-                  }),
-                );
-              }
-              oldestTimestamp = latestTimestamp;
-            }
-
-            if (windowUntil && latestTimestamp >= windowUntil) {
-              continue;
-            }
-          }
-
-          totalLines++;
-
-          stream.write(
-            JSON.stringify({
-              pod: pod.metadata.name,
-              node: pod.spec.nodeName,
-              container: containerName,
-              timestamp,
-              log,
-            }),
-          );
+        const parts = (remainder + chunk.toString()).split("\n");
+        remainder = parts.pop() ?? "";
+        for (const part of parts) {
+          writeLine(part);
         }
       });
 
