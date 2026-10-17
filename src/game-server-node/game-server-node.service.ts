@@ -252,8 +252,8 @@ export class GameServerNodeService {
     nodeIP: string,
     lanIP: string,
     publicIP: string,
-    csBulid: number,
-    csgoBuildId: number,
+    csBulid: number | undefined,
+    csgoBuildId: number | undefined,
     supportsCpuPinning: boolean,
     supportsLowLatency: boolean,
     cpuInfo: {
@@ -279,6 +279,12 @@ export class GameServerNodeService {
     rootDisk?: NodeDisk,
     cpuWarnings: Array<string> = [],
   ) {
+    // The connector leaves a build out when its manifest is gone: CS2 is not on
+    // disk. Left undefined it drops out of the update below, and the node kept
+    // showing the build it used to have, which also made the unforced update
+    // skip it as already current.
+    const installedBuild = csBulid ?? null;
+    const installedCsgoBuild = csgoBuildId ?? null;
     const gpuDevicesAll = gpu?.devices ?? null;
     const hasGpu = (gpu?.count ?? 0) > 0 || (gpuDevicesAll?.length ?? 0) > 0;
     const gpuDevices = gpuDevicesAll
@@ -366,9 +372,9 @@ export class GameServerNodeService {
     if (
       game_server_nodes_by_pk.lan_ip !== lanIP ||
       game_server_nodes_by_pk.public_ip !== publicIP ||
-      (game_server_nodes_by_pk.build_id !== csBulid &&
+      (game_server_nodes_by_pk.build_id !== installedBuild &&
         game_server_nodes_by_pk.update_status === null) ||
-      (game_server_nodes_by_pk.csgo_build_id !== csgoBuildId &&
+      (game_server_nodes_by_pk.csgo_build_id !== installedCsgoBuild &&
         game_server_nodes_by_pk.update_status === null) ||
       game_server_nodes_by_pk.supports_cpu_pinning !== supportsCpuPinning ||
       game_server_nodes_by_pk.supports_low_latency !== supportsLowLatency ||
@@ -401,10 +407,10 @@ export class GameServerNodeService {
               supports_low_latency: supportsLowLatency,
               supports_cpu_pinning: supportsCpuPinning,
               ...(game_server_nodes_by_pk.update_status === null
-                ? { build_id: csBulid }
+                ? { build_id: installedBuild }
                 : {}),
               ...(game_server_nodes_by_pk.update_status === null
-                ? { csgo_build_id: csgoBuildId }
+                ? { csgo_build_id: installedCsgoBuild }
                 : {}),
               gpu: hasGpu,
               gpu_info: gpuDevices,
