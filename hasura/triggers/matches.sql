@@ -8,7 +8,12 @@ DECLARE
     has_region_veto BOOLEAN;
     user_match_count int;
 BEGIN
-    IF (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text = 'user' OR (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text = 'verified_user' OR (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text = 'streamer' THEN
+    -- Tournament matches are created in the organizer's name by whatever
+    -- statement made them due, often several in one transaction, so the cap
+    -- would refuse the organizer's own bracket. schedule_tournament_match links
+    -- the bracket before this insert, which is what is_tournament_match reads.
+    IF ((current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text = 'user' OR (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text = 'verified_user' OR (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text = 'streamer')
+       AND NOT is_tournament_match(NEW) THEN
         SELECT COUNT(*) FROM matches
         WHERE organizer_steam_id = (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-user-id')::bigint
         AND status NOT IN (

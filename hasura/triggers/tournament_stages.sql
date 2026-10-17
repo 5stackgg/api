@@ -158,6 +158,16 @@ BEGIN
         RETURN NEW;
     END IF;
 
+    -- Allowed by tbu_tournament_stages without a rebuild; the stage may have
+    -- traded an admin-mode row for an auto one.
+    IF TG_OP = 'UPDATE'
+       AND to_jsonb(NEW) - 'settings' - 'default_best_of' - 'match_options_id'
+         = to_jsonb(OLD) - 'settings' - 'default_best_of' - 'match_options_id'
+       AND tournament_is_drawn(NEW.tournament_id) THEN
+        PERFORM schedule_ready_tournament_brackets(NEW.tournament_id);
+        RETURN NEW;
+    END IF;
+
     BEGIN
         PERFORM 1 FROM pg_temp.taiu_running_flag LIMIT 1;
         RETURN NEW;
@@ -295,6 +305,37 @@ BEGIN
     -- created yet, so a live tournament/league can adjust its series format.
     IF to_jsonb(NEW) - 'settings' - 'default_best_of'
      = to_jsonb(OLD) - 'settings' - 'default_best_of' THEN
+        RETURN NEW;
+    END IF;
+
+    -- The options a stage plays are read when its matches are created, so a
+    -- drawn stage with no match yet may take its own row or hand it back. The
+    -- match type and maps stay fixed with the rest of the draw.
+    IF to_jsonb(NEW) - 'settings' - 'default_best_of' - 'match_options_id'
+         = to_jsonb(OLD) - 'settings' - 'default_best_of' - 'match_options_id'
+       AND tournament_is_drawn(NEW.tournament_id) THEN
+        IF EXISTS (
+            SELECT 1
+            FROM tournament_brackets tb
+            WHERE tb.tournament_stage_id = NEW.id
+              AND tb.match_id IS NOT NULL
+        ) THEN
+            RAISE EXCEPTION 'Unable to modify match options for a stage that has already started' USING ERRCODE = '22000';
+        END IF;
+
+        IF NOT (
+            SELECT old_mo.type = new_mo.type
+               AND (SELECT array_agg(map_id ORDER BY map_id) FROM _map_pool WHERE map_pool_id = old_mo.map_pool_id)
+                   IS NOT DISTINCT FROM
+                   (SELECT array_agg(map_id ORDER BY map_id) FROM _map_pool WHERE map_pool_id = new_mo.map_pool_id)
+            FROM tournaments t
+            INNER JOIN match_options old_mo ON old_mo.id = COALESCE(OLD.match_options_id, t.match_options_id)
+            INNER JOIN match_options new_mo ON new_mo.id = COALESCE(NEW.match_options_id, t.match_options_id)
+            WHERE t.id = NEW.tournament_id
+        ) THEN
+            RAISE EXCEPTION 'Unable to change the match type or map pool once the bracket has been drawn' USING ERRCODE = '22000';
+        END IF;
+
         RETURN NEW;
     END IF;
 

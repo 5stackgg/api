@@ -183,6 +183,7 @@ DECLARE
     _map_ids UUID[];
     _match_maps UUID[];
     _match_status text;
+    _tournament_id UUID;
 BEGIN
     SELECT m.id, m.status INTO _match_id, _match_status
         FROM matches m
@@ -219,7 +220,25 @@ BEGIN
         END IF;
     END IF;
 
+    -- A switch to auto holds its tournaments so a close of registration drawing
+    -- at the same moment sees the new mode; otherwise the draw reads the old
+    -- mode, this reads RegistrationOpen, and neither schedules anything. Taken
+    -- before the sync below locks the matches' cloned options, the order a
+    -- reopen of registration (which deletes them) takes the two in.
+    IF NEW.match_mode = 'auto' AND OLD.match_mode IS DISTINCT FROM 'auto' THEN
+        PERFORM 1
+        FROM tournaments t
+        WHERE t.id IN (SELECT match_options_tournament_ids(NEW.id))
+        FOR SHARE OF t;
+    END IF;
+
     PERFORM sync_tournament_match_options(OLD, NEW);
+
+    IF NEW.match_mode = 'auto' AND OLD.match_mode IS DISTINCT FROM 'auto' THEN
+        FOR _tournament_id IN SELECT match_options_tournament_ids(NEW.id) LOOP
+            PERFORM schedule_ready_tournament_brackets(_tournament_id);
+        END LOOP;
+    END IF;
 
     RETURN NEW;
 END;
