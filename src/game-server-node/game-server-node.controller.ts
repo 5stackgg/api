@@ -80,8 +80,8 @@ export class GameServerNodeController {
     lanIP: string;
     nodeIP: string;
     publicIP: string;
-    csBuild: number;
-    csgoBuild: number;
+    csBuild?: number;
+    csgoBuild?: number;
     supportsLowLatency: boolean;
     supportsCpuPinning: boolean;
     nodeStats: NodeStats;
