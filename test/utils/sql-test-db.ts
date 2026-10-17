@@ -320,9 +320,12 @@ async function cloneFromTemplate(loggerName: string): Promise<SqlTestDb> {
       await endPool(postgres);
       // The container now outlives the run, so a clone that is not dropped here
       // stays on disk forever. A failure to drop must not fail the suite.
+      // pool.end() can resolve before a closing socket has left Postgres.
+      // FORCE can kill that socket and emit a late idle-client error into Jest.
+      // Let an in-use clone survive for the later sweep instead.
       try {
         await withAdmin(connection, (admin) =>
-          admin.query(`DROP DATABASE IF EXISTS "${database}" WITH (FORCE)`),
+          admin.query(`DROP DATABASE IF EXISTS "${database}"`),
         );
       } catch {
         // The sweep on the next run picks it up.
