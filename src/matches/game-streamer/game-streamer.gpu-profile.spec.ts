@@ -150,7 +150,7 @@ describe("GameStreamerService GPU node profile", () => {
       await expect(resolve("node-1")).resolves.toBeNull();
       expect(logger.error).toHaveBeenCalledTimes(1);
       expect(logger.error.mock.calls[0][0]).toContain(
-        "1889000001250_game_server_nodes_gpu_vendor",
+        "1890000001100_game_server_nodes_gpu_vendor",
       );
       expectOneRead("node-1");
     });
