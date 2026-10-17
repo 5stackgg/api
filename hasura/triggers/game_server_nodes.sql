@@ -90,3 +90,19 @@ $$;
 
 DROP TRIGGER IF EXISTS taiud_populate_game_servers ON public.game_server_nodes;
 CREATE TRIGGER taiud_populate_game_servers AFTER INSERT OR UPDATE OR DELETE ON public.game_server_nodes FOR EACH ROW EXECUTE FUNCTION public.taiud_populate_game_servers();
+
+DROP TRIGGER IF EXISTS y_tbu_game_server_nodes_last_changed_by ON public.game_server_nodes;
+CREATE TRIGGER y_tbu_game_server_nodes_last_changed_by
+    BEFORE UPDATE OF last_changed_by_steam_id ON public.game_server_nodes
+    FOR EACH ROW EXECUTE FUNCTION public.tbu_last_changed_by_named();
+
+DROP TRIGGER IF EXISTS z_tbiu_game_server_nodes_last_changed ON public.game_server_nodes;
+CREATE TRIGGER z_tbiu_game_server_nodes_last_changed
+    BEFORE INSERT OR UPDATE ON public.game_server_nodes
+    FOR EACH ROW EXECUTE FUNCTION public.tbiu_stamp_last_changed(
+        'accepting_new_matches', 'cs2_video_settings', 'demo_network_limiter',
+        'enabled', 'enabled_for_match_making', 'end_port_range',
+        'gpu_demos_enabled', 'gpu_rendering_enabled', 'gpu_streaming_enabled',
+        'label', 'pin_build_id', 'pin_plugin_runtime', 'pin_plugin_version',
+        'region', 'start_port_range'
+    );

@@ -150,3 +150,20 @@ CREATE TRIGGER "set_public_servers_updated_at"
 BEFORE UPDATE ON "public"."servers"
 FOR EACH ROW
 EXECUTE PROCEDURE "public"."set_current_timestamp_updated_at"();
+
+-- Runs after tbiu_servers, which can put back what a write asked for (host and
+-- ports follow the node, an unchanged rcon password keeps its old ciphertext).
+DROP TRIGGER IF EXISTS y_tbu_servers_last_changed_by ON public.servers;
+CREATE TRIGGER y_tbu_servers_last_changed_by
+    BEFORE UPDATE OF last_changed_by_steam_id ON public.servers
+    FOR EACH ROW EXECUTE FUNCTION public.tbu_last_changed_by_named();
+
+DROP TRIGGER IF EXISTS z_tbiu_servers_last_changed ON public.servers;
+CREATE TRIGGER z_tbiu_servers_last_changed
+    BEFORE INSERT OR UPDATE ON public.servers
+    FOR EACH ROW EXECUTE FUNCTION public.tbiu_stamp_last_changed(
+        'access_min_role', 'access_restricted', 'connect_password', 'enabled',
+        'featured', 'game', 'game_mode_id', 'game_server_node_id', 'host',
+        'is_dedicated', 'label', 'map_rotation_shuffle', 'max_players', 'port',
+        'rcon_password', 'region', 'tv_port', 'type'
+    );

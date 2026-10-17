@@ -17,6 +17,9 @@ object_relationships:
   - name: game_server_node
     using:
       foreign_key_constraint_on: game_server_node_id
+  - name: last_changed_by
+    using:
+      foreign_key_constraint_on: last_changed_by_steam_id
   - name: server_region
     using:
       manual_configuration:
@@ -131,6 +134,8 @@ select_permissions:
         - id
         - is_dedicated
         - label
+        - last_changed_at
+        - last_changed_by_steam_id
         - map_rotation_shuffle
         - max_players
         - offline_at
@@ -201,6 +206,8 @@ select_permissions:
         - id
         - is_dedicated
         - label
+        - last_changed_at
+        - last_changed_by_steam_id
         - map_rotation_shuffle
         - max_players
         - offline_at

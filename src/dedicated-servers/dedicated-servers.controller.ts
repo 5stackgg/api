@@ -191,29 +191,33 @@ export class DedicatedServersController {
   }) {
     this.assertAdministrator(data.user);
 
-    await this.dedicatedServerConfig.saveSettings(data.server_id, {
-      mapRotation: data.map_rotation
-        ? {
-            mapIds: data.map_rotation.map_ids,
-            shuffle: data.map_rotation.shuffle,
-          }
-        : null,
-      plugins: data.plugins ?? null,
-      pluginConfigs:
-        data.plugin_configs?.map((entry) => ({
-          slug: entry.slug,
-          cfg: entry.cfg ?? null,
-          config: entry.config ?? null,
-        })) ?? null,
-      access: data.access
-        ? {
-            restricted: data.access.restricted,
-            minRole: data.access.min_role ?? null,
-            steamIds: data.access.steam_ids,
-            eventIds: data.access.event_ids,
-          }
-        : null,
-    });
+    await this.dedicatedServerConfig.saveSettings(
+      data.server_id,
+      {
+        mapRotation: data.map_rotation
+          ? {
+              mapIds: data.map_rotation.map_ids,
+              shuffle: data.map_rotation.shuffle,
+            }
+          : null,
+        plugins: data.plugins ?? null,
+        pluginConfigs:
+          data.plugin_configs?.map((entry) => ({
+            slug: entry.slug,
+            cfg: entry.cfg ?? null,
+            config: entry.config ?? null,
+          })) ?? null,
+        access: data.access
+          ? {
+              restricted: data.access.restricted,
+              minRole: data.access.min_role ?? null,
+              steamIds: data.access.steam_ids,
+              eventIds: data.access.event_ids,
+            }
+          : null,
+      },
+      data.user.steam_id,
+    );
 
     return { success: true };
   }
@@ -231,6 +235,7 @@ export class DedicatedServersController {
       data.server_id,
       data.map_ids,
       data.shuffle,
+      { changedBy: data.user.steam_id },
     );
 
     return { success: true };
@@ -272,12 +277,16 @@ export class DedicatedServersController {
   }) {
     this.assertAdministrator(data.user);
 
-    await this.dedicatedServerConfig.setAccess(data.server_id, {
-      restricted: data.restricted,
-      minRole: data.min_role ?? null,
-      steamIds: data.steam_ids,
-      eventIds: data.event_ids,
-    });
+    await this.dedicatedServerConfig.setAccess(
+      data.server_id,
+      {
+        restricted: data.restricted,
+        minRole: data.min_role ?? null,
+        steamIds: data.steam_ids,
+        eventIds: data.event_ids,
+      },
+      data.user.steam_id,
+    );
 
     return { success: true };
   }

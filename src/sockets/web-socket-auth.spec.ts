@@ -187,6 +187,15 @@ const handlers: Array<
   ],
   ["logs", (g, c) => g.system.logEvent({ service: "api" }, c)],
   [
+    "logs:stop",
+    async (g, c) => {
+      await Promise.all([
+        g.system.logEvent({ service: "api" }, c),
+        g.system.stopLogs({ service: "api" }, c),
+      ]);
+    },
+  ],
+  [
     "voice:device-claim",
     (g, c) =>
       g.voice.deviceClaim({ channelId: "c", kind: "mic", claimed: true }, c),

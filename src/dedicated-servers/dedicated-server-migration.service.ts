@@ -604,8 +604,12 @@ export class DedicatedServerMigrationService {
       }
 
       await client.query(
-        `UPDATE servers SET game_server_node_id = $2 WHERE id = $1`,
-        [migration.server_id, migration.to_game_server_node_id],
+        `UPDATE servers SET game_server_node_id = $2,
+                last_changed_by_steam_id = (
+                  SELECT requested_by_steam_id FROM server_migrations WHERE id = $3
+                )
+          WHERE id = $1`,
+        [migration.server_id, migration.to_game_server_node_id, migration.id],
       );
     });
 
