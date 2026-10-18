@@ -2694,7 +2694,6 @@ type UtilityRenderGap {
 
 type UtilityRenderCoverageOutput {
   version: Int!
-  pipeline_version: Int
   total: Int!
   current: Int!
   missing: Int!

@@ -971,7 +971,6 @@ describe("utility lineup renders (SQL-driven)", () => {
 
         expect(coverage).toMatchObject({
           version: UTILITY_RENDER_VERSION,
-          pipeline_version: null,
           total: 5,
           current: 1,
           missing: 1,
@@ -989,26 +988,6 @@ describe("utility lineup renders (SQL-driven)", () => {
           ].sort(),
         );
         expect((await renders.coverage(DISABLED_MAP)).total).toBe(1);
-      });
-
-      it("reports what the last finished render said filmed it", async () => {
-        const [older] = await queueRender(await seeded({ name: "a" }), "done");
-        const [newer] = await queueRender(await seeded({ name: "b" }), "done");
-        await queueRender(await seeded({ name: "c" }), "done");
-        await postgres.query(
-          `UPDATE utility_lineup_renders
-              SET render_version = 2, last_status_at = now() - interval '1 hour'
-            WHERE id = $1::uuid`,
-          [older.id],
-        );
-        await postgres.query(
-          `UPDATE utility_lineup_renders
-              SET render_version = 0, last_status_at = now()
-            WHERE id = $1::uuid`,
-          [newer.id],
-        );
-
-        expect((await renders.coverage()).pipeline_version).toBe(0);
       });
     });
   });
