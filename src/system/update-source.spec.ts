@@ -207,6 +207,38 @@ describe("selected-source checks and update actions", () => {
   });
 });
 
+describe("digest pin platform manifests", () => {
+  it("never restarts an exact pin when the node reports a different platform digest", async () => {
+    const system = new SystemService(
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    );
+    const image = "ghcr.io/example/inventory@" + digest("a");
+    jest
+      .spyOn(system, "getUpdateSource")
+      .mockResolvedValue(installedUpdateSource());
+    jest.spyOn(system, "getServices").mockResolvedValue([]);
+    jest
+      .spyOn(system as any, "getPluginServices")
+      .mockResolvedValue([
+        {
+          service: "inventory",
+          plugin: "Inventory",
+          pod: "inventory-test",
+          image,
+          version: digest("b"),
+          versions: [digest("b")],
+        },
+      ]);
+    const lookup = jest.spyOn(system, "getLatestDigest");
+    expect(await system.getOutdated()).toEqual([]);
+    expect(lookup).not.toHaveBeenCalled();
+  });
+});
+
 describe("source preference persistence", () => {
   let system: SystemService;
   let client: any;

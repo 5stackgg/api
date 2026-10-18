@@ -521,11 +521,11 @@ export class SystemService {
               ? "unavailable"
               : sourceChange
                 ? "source-change"
-                : matches
-                  ? pinned
-                    ? "pinned"
-                    : "current"
-                  : "update";
+                : pinned
+                  ? "pinned"
+                  : matches
+                    ? "current"
+                    : "update";
           return {
             service,
             plugin,
