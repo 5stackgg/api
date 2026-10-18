@@ -29,8 +29,7 @@ export const UTILITY_RENDER_IN_FLIGHT = [
 export const UTILITY_RENDER_VERSION = 3;
 
 // What is recorded for a render whose pod did not say what filmed it. Not
-// NULL, which is a preview from before any of them did: this one was filmed
-// since, so it says the pipeline in use is older than the api expects.
+// NULL, which is a preview from before any of them did.
 export const UTILITY_RENDER_VERSION_UNREPORTED = 0;
 
 export const UTILITY_RENDER_GAP_STATES = [
@@ -53,10 +52,6 @@ export type UtilityRenderGap = {
 
 export type UtilityRenderCoverage = {
   version: number;
-  // What the last finished render said filmed it: null when nothing has been
-  // filmed since previews were versioned. Below `version`, re-rendering an
-  // outdated preview would only produce another outdated one.
-  pipeline_version: number | null;
   total: number;
   current: number;
   missing: number;
@@ -631,7 +626,9 @@ export class UtilityRendersService {
         ? null
         : "its map is not available for practice, so no server can be booked on it");
     if (refusal) {
-      return row.preview_file ? null : { state: "unrenderable", reason: refusal };
+      return row.preview_file
+        ? null
+        : { state: "unrenderable", reason: refusal };
     }
     if (!row.preview_file) {
       return { state: "missing", reason: null };
@@ -678,22 +675,6 @@ export class UtilityRendersService {
     );
   }
 
-  // What the last finished render reported, among those filmed since previews
-  // were versioned.
-  private async pipelineVersion(): Promise<number | null> {
-    const [row] = await this.postgres.query<
-      Array<{ render_version: number | null }>
-    >(
-      `SELECT render_version
-         FROM public.utility_lineup_renders
-        WHERE status = 'done'
-          AND render_version IS NOT NULL
-        ORDER BY last_status_at DESC NULLS LAST
-        LIMIT 1`,
-    );
-    return row?.render_version ?? null;
-  }
-
   /**
    * Every public lineup, sorted into what its preview needs: nothing, a first
    * render, a newer one, or a throw that cannot be filmed at all. A lineup
@@ -705,7 +686,6 @@ export class UtilityRendersService {
     const rows = await this.coverageRows(mapName);
     const coverage: UtilityRenderCoverage = {
       version: UTILITY_RENDER_VERSION,
-      pipeline_version: await this.pipelineVersion(),
       total: rows.length,
       current: 0,
       missing: 0,
@@ -755,22 +735,10 @@ export class UtilityRendersService {
     scope: "missing" | "outdated" | "all",
     options: { mapName?: string | null; requestedBySteamId: string },
   ): Promise<{ queued: number; skipped: number }> {
-    // The pod in use reports an older version than this api expects (the
-    // images are behind it, or pinned). Filming an outdated preview again
-    // would write another outdated one, for every lineup, on every press.
-    const pipeline = await this.pipelineVersion();
-    const behind = pipeline !== null && pipeline < UTILITY_RENDER_VERSION;
-
-    if (behind && scope === "outdated") {
-      throw Error(
-        `the render pod in use films version ${pipeline}, older than version ${UTILITY_RENDER_VERSION} — re-rendering would not bring any preview up to date`,
-      );
-    }
-
     const wanted: ReadonlyArray<UtilityRenderGapState> =
       scope === "outdated"
         ? ["outdated"]
-        : scope === "all" && !behind
+        : scope === "all"
           ? ["missing", "outdated"]
           : ["missing"];
 

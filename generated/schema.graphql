@@ -1424,7 +1424,6 @@ type UtilityRenderCoverageOutput {
   lineups: [UtilityRenderGap!]!
   missing: Int!
   outdated: Int!
-  pipeline_version: Int
   queued: Int!
   total: Int!
   unrenderable: Int!
