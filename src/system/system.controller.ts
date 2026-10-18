@@ -1,4 +1,12 @@
-import { Controller, Post, Req, Res } from "@nestjs/common";
+import {
+  Controller,
+  Post,
+  Req,
+  Res,
+  Put,
+  Body,
+  ForbiddenException,
+} from "@nestjs/common";
 import { Request, Response } from "express";
 import { SystemService } from "./system.service";
 import { HasuraAction } from "src/hasura/hasura.controller";
@@ -31,6 +39,28 @@ export class SystemController {
   @Get("healthz")
   public async status() {
     return;
+  }
+
+  @Get("update-source")
+  public async updateSourceStatus(@Req() request: Request) {
+    if (!request.user || !isRoleAbove(request.user.role, "administrator")) {
+      throw new ForbiddenException();
+    }
+    return await this.system.getUpdateSourceStatus();
+  }
+
+  @Put("update-source")
+  public async saveUpdateSource(
+    @Req() request: Request,
+    @Body() body: { source: unknown; resourceVersion: string },
+  ) {
+    if (!request.user || !isRoleAbove(request.user.role, "administrator")) {
+      throw new ForbiddenException();
+    }
+    return await this.system.saveUpdateSource(
+      body?.source,
+      body?.resourceVersion,
+    );
   }
 
   @Post("logs/download")

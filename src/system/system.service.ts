@@ -1,5 +1,11 @@
 import fetch from "node-fetch";
-import { Injectable, Logger } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  ConflictException,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { CacheService } from "src/cache/cache.service";
 import {
   CoreV1Api,
@@ -17,6 +23,19 @@ import { SteamConfig } from "src/configs/types/SteamConfig";
 import { PostgresService } from "src/postgres/postgres.service";
 import { SystemSettingName } from "./enums/SystemSettingName";
 import { GameServersConfig } from "src/configs/types/GameServersConfig";
+
+import {
+  UPDATE_SOURCE_CONFIG_MAP,
+  UPDATE_SOURCE_COMPONENTS,
+  UpdateSource,
+  PanelSource,
+  installedUpdateSource,
+  parseUpdateSource,
+  sourceImage,
+  sourceLabel,
+  imageDigestReference,
+  validPanelSource,
+} from "./update-source";
 
 @Injectable()
 export class SystemService {
@@ -268,8 +287,14 @@ export class SystemService {
   }
 
   public async updateServices() {
+    const chosen = JSON.stringify(await this.getUpdateSource());
     for (const { service, pod } of await this.getOutdated()) {
-      void this.restartService(service, pod);
+      if (JSON.stringify(await this.getUpdateSource()) !== chosen) {
+        throw new ConflictException(
+          "The update source changed; check updates again",
+        );
+      }
+      await this.restartService(service, pod);
     }
   }
 
@@ -293,16 +318,9 @@ export class SystemService {
   public async setVersions() {
     const hasUpdates = [];
 
-    const panelVersion = await this.getPanelVersion();
-    const latestPanelVersion = await this.getLatestPanelVersion();
-
-    if (panelVersion !== latestPanelVersion) {
-      hasUpdates.push({
-        service: "panel",
-        currentVersion: panelVersion,
-        newVersion: latestPanelVersion,
-      });
-    }
+    const { source, installed } = await this.updateSourceDocument();
+    const panel = await this.panelUpdateStatus(source, installed);
+    if (panel.status === "update") hasUpdates.push(panel);
 
     hasUpdates.push(...(await this.getOutdated()));
 
@@ -334,43 +352,297 @@ export class SystemService {
   // Everything whose running image digest no longer matches the digest its tag
   // points at. Shared by setVersions (report it) and updateServices (apply it),
   // so the header list and the Update button can never disagree.
-  public async getOutdated() {
-    const outdated: Array<{
-      service: string;
-      plugin?: string;
-      pod: string;
-      currentVersion: string;
-      newVersion: string;
-    }> = [];
+  private async updateSourceDocument() {
+    try {
+      const document = await this.apiClient.readNamespacedConfigMap({
+        name: UPDATE_SOURCE_CONFIG_MAP,
+        namespace: "5stack",
+      });
+      const source = document.data?.["profile.json"]
+        ? parseUpdateSource(JSON.parse(document.data["profile.json"]))
+        : installedUpdateSource();
+      const installed = document.data?.["installed.json"]
+        ? JSON.parse(document.data["installed.json"])
+        : null;
+      return { document, source, installed, writable: true };
+    } catch (error) {
+      const code = error?.code ?? error?.statusCode ?? error?.body?.code;
+      if (code === 404) {
+        return {
+          document: null,
+          source: installedUpdateSource(),
+          installed: null,
+          writable: false,
+        };
+      }
+      throw new ServiceUnavailableException(
+        "The selected update source cannot be read",
+      );
+    }
+  }
 
+  public async getUpdateSource(): Promise<UpdateSource> {
+    return (await this.updateSourceDocument()).source;
+  }
+
+  public async saveUpdateSource(value: unknown, resourceVersion: string) {
+    let source: UpdateSource;
+    try {
+      source = parseUpdateSource(value);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+    const { document } = await this.updateSourceDocument();
+    if (!document)
+      throw new ServiceUnavailableException(
+        "Run the panel updater to enable update-source settings",
+      );
+    if (
+      !resourceVersion ||
+      resourceVersion !== document.metadata.resourceVersion
+    ) {
+      throw new ConflictException(
+        "The update source changed; reload before saving",
+      );
+    }
+    try {
+      await this.apiClient.patchNamespacedConfigMap(
+        {
+          name: UPDATE_SOURCE_CONFIG_MAP,
+          namespace: "5stack",
+          body: [
+            {
+              op: "test",
+              path: "/metadata/resourceVersion",
+              value: resourceVersion,
+            },
+            {
+              op: "add",
+              path: "/data",
+              value: {
+                ...document.data,
+                "profile.json": JSON.stringify(source),
+              },
+            },
+          ],
+        },
+        setHeaderOptions("Content-Type", PatchStrategy.JsonPatch),
+      );
+    } catch (error) {
+      if ([409, 422].includes(error?.code ?? error?.statusCode)) {
+        throw new ConflictException(
+          "The update source changed; reload before saving",
+        );
+      }
+      throw new ServiceUnavailableException("Unable to save the update source");
+    }
+    // Saving a preference never changes a running image or restarts a workload.
+    await this.hasura.mutation({
+      insert_settings_one: {
+        __args: {
+          object: { name: SystemSettingName.Updates, value: "[]" },
+          on_conflict: {
+            constraint: "settings_pkey",
+            update_columns: ["value"],
+          },
+        },
+        __typename: true,
+      },
+    });
+    return { source, applied: false };
+  }
+
+  private async currentCoreImages() {
+    const images: Record<string, string> = {};
+    for (const service of ["api", "web", "demo-parser"]) {
+      try {
+        const deployment = await this.appsClient.readNamespacedDeployment({
+          name: service,
+          namespace: "5stack",
+        });
+        images[service] =
+          deployment.spec?.template?.spec?.containers?.[0]?.image;
+      } catch {
+        /* Missing services remain explicit in the form. */
+      }
+    }
+    try {
+      const connector = await this.appsClient.readNamespacedDaemonSet({
+        name: "game-server-node-connector",
+        namespace: "5stack",
+      });
+      images["game-server-node-connector"] =
+        connector.spec?.template?.spec?.containers?.[0]?.image;
+    } catch {
+      /* Older RBAC can still report the actual running reference. */
+    }
+    for (const item of await this.getServices())
+      images[item.service] ??= item.image;
+    const game = this.config.get<GameServersConfig>("gameServers");
+    images["game-streamer"] =
+      game?.gameStreamerImage ?? "ghcr.io/5stackgg/game-streamer:latest";
+    images["game-server-sw"] =
+      game?.serverImageOverride ??
+      game?.pluginRuntimeImages?.swiftlys2 ??
+      "ghcr.io/5stackgg/game-server-sw:latest";
+    images["game-server-css"] =
+      game?.serverImageOverride ??
+      game?.pluginRuntimeImages?.counterstrikesharp ??
+      "ghcr.io/5stackgg/game-server-css:latest";
+    return Object.fromEntries(
+      UPDATE_SOURCE_COMPONENTS.map((name) => [name, images[name] ?? ""]),
+    );
+  }
+
+  private async serviceUpdateStatus(source: UpdateSource) {
     const services: Array<{
-      pod: string;
       service: string;
       plugin?: string;
+      pod: string;
       image: string;
       version: string;
       versions: string[];
     }> = [...(await this.getServices()), ...(await this.getPluginServices())];
+    return await Promise.all(
+      services.map(
+        async ({ service, plugin, pod, image, version, versions }) => {
+          // A plugin retains its own repository; core channel selection cannot replace third-party plugins.
+          const targetImage = plugin
+            ? image
+            : sourceImage(source, service, image);
+          const pinned = imageDigestReference(targetImage);
+          const newVersion =
+            pinned ?? (await this.getLatestDigest(targetImage));
+          const known = versions ?? [version];
+          const matches = !!newVersion && known.includes(newVersion);
+          const sourceChange = image !== targetImage;
+          const status =
+            !image || !version || !newVersion
+              ? "unavailable"
+              : sourceChange
+                ? "source-change"
+                : matches
+                  ? pinned
+                    ? "pinned"
+                    : "current"
+                  : "update";
+          return {
+            service,
+            plugin,
+            pod,
+            currentImage: image,
+            targetImage,
+            currentVersion: version,
+            newVersion,
+            source: plugin ? "plugin" : sourceLabel(source),
+            status,
+            canUpdate: status === "update",
+          };
+        },
+      ),
+    );
+  }
 
-    for (const { service, plugin, pod, image, version, versions } of services) {
-      const newVersion = await this.getLatestDigest(image);
+  private async panelUpdateStatus(source: UpdateSource, installed: any) {
+    const target =
+      source.mode === "installed" ? installed?.panel : source.panel;
+    const currentVersion =
+      installed?.panel?.sha ?? (await this.getPanelVersion());
+    if (!target)
+      return {
+        service: "panel",
+        currentImage: installed?.panel
+          ? installed.panel.repository + "@" + installed.panel.ref
+          : undefined,
+        currentVersion,
+        status: "pinned",
+        canUpdate: false,
+      };
+    if (!validPanelSource(target))
+      return {
+        service: "panel",
+        currentVersion,
+        status: "unavailable",
+        canUpdate: false,
+      };
+    const newVersion = await this.getLatestPanelVersion(target);
+    const sameSource =
+      installed?.panel?.repository === target.repository &&
+      installed?.panel?.ref === target.ref;
+    return {
+      service: "panel",
+      currentImage: installed?.panel
+        ? installed.panel.repository + "@" + installed.panel.ref
+        : undefined,
+      currentVersion,
+      newVersion,
+      repository: target.repository,
+      ref: target.ref,
+      source: sourceLabel(source),
+      status: !newVersion
+        ? "unavailable"
+        : !sameSource
+          ? "source-change"
+          : currentVersion === newVersion
+            ? "current"
+            : "update",
+      // Host manifests and database migrations must run through the host updater.
+      canUpdate: false,
+    };
+  }
 
-      // An unreadable registry or pod tells us nothing. Reporting on it would
-      // show a phantom update; restarting on it would be an endless rollout.
-      if (!image || !version || !newVersion || versions.includes(newVersion)) {
-        continue;
-      }
+  public async getUpdateSourceStatus() {
+    const { document, source, installed, writable } =
+      await this.updateSourceDocument();
+    const [services, panel, installedImages] = await Promise.all([
+      this.serviceUpdateStatus(source),
+      this.panelUpdateStatus(source, installed),
+      this.currentCoreImages(),
+    ]);
+    const runtime = await Promise.all(
+      ["game-streamer", "game-server-sw", "game-server-css"].map(
+        async (service) => {
+          const currentImage = installedImages[service];
+          const targetImage = sourceImage(source, service, currentImage);
+          const pinned = imageDigestReference(targetImage);
+          const newVersion =
+            pinned ?? (await this.getLatestDigest(targetImage));
+          return {
+            service,
+            currentImage,
+            targetImage,
+            currentVersion: imageDigestReference(currentImage),
+            newVersion,
+            source: sourceLabel(source),
+            canUpdate: false,
+            status: !newVersion
+              ? "unavailable"
+              : currentImage !== targetImage
+                ? "source-change"
+                : pinned
+                  ? "pinned"
+                  : "on-demand",
+          };
+        },
+      ),
+    );
+    return {
+      source,
+      writable,
+      resourceVersion: document?.metadata?.resourceVersion ?? null,
+      installedImages,
+      panel,
+      services: [...services, ...runtime],
+      applyMethod: "host-updater",
+      checkedAt: new Date().toISOString(),
+    };
+  }
 
-      outdated.push({
-        service,
-        plugin,
-        pod,
-        currentVersion: version,
-        newVersion,
-      });
-    }
-
-    return outdated;
+  public async getOutdated() {
+    const source = await this.getUpdateSource();
+    return (await this.serviceUpdateStatus(source)).filter(
+      (item) => item.canUpdate,
+    );
   }
 
   // The digest the given tag currently points at, or null if the registry is
@@ -394,6 +666,7 @@ export class SystemService {
           const response = await fetch(
             `https://${registry === "docker.io" ? "registry-1.docker.io" : registry}/v2/${repository}/manifests/${tag}`,
             {
+              signal: AbortSignal.timeout(5000),
               headers: {
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 // Multi-arch images answer with an index, single-arch ones with
@@ -702,6 +975,7 @@ export class SystemService {
       registry === "docker.io"
         ? `https://auth.docker.io/token?service=registry.docker.io&scope=${scope}`
         : `https://${registry}/token?scope=${scope}`,
+      { signal: AbortSignal.timeout(5000) },
     );
 
     if (!response.ok) {
@@ -732,19 +1006,30 @@ export class SystemService {
     }
   }
 
-  private async getLatestPanelVersion() {
-    return await this.cache.remember<string>(
-      this.getServiceCacheKey("panel"),
+  private async getLatestPanelVersion(
+    source: PanelSource,
+  ): Promise<string | null> {
+    return await this.cache.remember<string | null>(
+      this.getServiceCacheKey("panel:" + source.repository + ":" + source.ref),
       async () => {
         try {
           const response = await fetch(
-            "https://api.github.com/repos/5stackgg/5stack-panel/commits/main",
+            "https://api.github.com/repos/" +
+              source.repository +
+              "/commits/" +
+              encodeURIComponent(source.ref),
+            {
+              signal: AbortSignal.timeout(5000),
+              headers: { Accept: "application/vnd.github+json" },
+            },
           );
+          if (!response.ok) return null;
           const { sha } = await response.json();
-          return sha;
-        } catch (error) {
-          this.logger.warn("Unable to fetch latest panel version", error);
-          return "";
+          return typeof sha === "string" && /^[a-f0-9]{40}$/.test(sha)
+            ? sha
+            : null;
+        } catch {
+          return null;
         }
       },
       300,
