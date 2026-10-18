@@ -12,5 +12,5 @@ CREATE TRIGGER z_tbiu_system_alerts_last_changed
 
 DROP TRIGGER IF EXISTS taiu_system_alert_activations ON public.system_alerts;
 CREATE TRIGGER taiu_system_alert_activations
-    AFTER INSERT OR UPDATE OF is_active ON public.system_alerts
+    AFTER INSERT OR UPDATE OF is_active, expires_at ON public.system_alerts
     FOR EACH ROW EXECUTE FUNCTION public.taiu_system_alert_activations();

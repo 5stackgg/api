@@ -123,6 +123,83 @@ describe("system_alert_activations", () => {
     ]);
   });
 
+  // Expiry is client-side: an expired alert stays is_active, so its period
+  // has to end at the expiry rather than run on until someone touches it.
+  const expireIt = async (alertId: string) => {
+    await db.postgres.query(
+      "UPDATE public.system_alerts SET expires_at = '2026-01-10Z' WHERE id = $1",
+      [alertId],
+    );
+    await db.postgres.query(
+      `UPDATE public.system_alert_activations SET started_at = '2026-01-05Z'
+        WHERE alert_id = $1`,
+      [alertId],
+    );
+  };
+
+  const spans = (alertId: string) =>
+    db.postgres.query(
+      `SELECT (started_at AT TIME ZONE 'UTC')::date::text AS started,
+              (ended_at AT TIME ZONE 'UTC')::date::text AS ended,
+              ended_by_steam_id::text AS ended_by,
+              started_by_steam_id::text AS started_by
+         FROM public.system_alert_activations
+        WHERE alert_id = $1
+        ORDER BY started_at`,
+      [alertId],
+    );
+
+  it("ends an expired alert's period at its expiry when it is put back up, and opens a new one", async () => {
+    const id = await createAlert(ADMIN, true);
+    await expireIt(id);
+
+    await runAsUser(db.postgres, OTHER_ADMIN, "administrator", (query) =>
+      query(
+        "UPDATE public.system_alerts SET expires_at = now() + interval '1 day' WHERE id = $1",
+        [id],
+      ),
+    );
+
+    const [old, current] = (await spans(id)) as Array<Record<string, any>>;
+    expect(old).toEqual({
+      started: "2026-01-05",
+      ended: "2026-01-10",
+      ended_by: null,
+      started_by: ADMIN,
+    });
+    expect(current).toMatchObject({ ended: null, started_by: OTHER_ADMIN });
+  });
+
+  it("ends an expired alert's period at its expiry when it is switched off, naming nobody", async () => {
+    const id = await createAlert(ADMIN, true);
+    await expireIt(id);
+
+    await setActive(OTHER_ADMIN, id, false);
+
+    expect(await spans(id)).toEqual([
+      {
+        started: "2026-01-05",
+        ended: "2026-01-10",
+        ended_by: null,
+        started_by: ADMIN,
+      },
+    ]);
+  });
+
+  it("leaves the period alone when a live alert's expiry just moves", async () => {
+    const id = await createAlert(ADMIN, true);
+    await runAsUser(db.postgres, OTHER_ADMIN, "administrator", (query) =>
+      query(
+        "UPDATE public.system_alerts SET expires_at = now() + interval '2 days' WHERE id = $1",
+        [id],
+      ),
+    );
+
+    expect(await periods(id)).toEqual([
+      { started_by: ADMIN, ended_by: null, open: true, estimated: false },
+    ]);
+  });
+
   it("goes with its alert", async () => {
     const id = await createAlert(ADMIN, true);
     await setActive(ADMIN, id, false);
