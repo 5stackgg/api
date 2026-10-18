@@ -288,10 +288,16 @@ export class SystemService {
 
   public async updateServices() {
     const chosen = JSON.stringify(await this.getUpdateSource());
-    for (const { service, pod } of await this.getOutdated()) {
+    for (const { service, pod, targetImage } of await this.getOutdated()) {
       if (JSON.stringify(await this.getUpdateSource()) !== chosen) {
         throw new ConflictException(
           "The update source changed; check updates again",
+        );
+      }
+      const configuredImage = await this.desiredServiceImage(service);
+      if (!configuredImage || configuredImage !== targetImage) {
+        throw new ConflictException(
+          "The workload source changed; apply the selected source with the host updater before restarting",
         );
       }
       await this.restartService(service, pod);
@@ -494,6 +500,33 @@ export class SystemService {
     );
   }
 
+  private async desiredServiceImage(service: string): Promise<string | null> {
+    try {
+      const daemon =
+        service === "game-server-node-connector" ||
+        service === "game-server-node-connector-nvidia";
+      const workload = daemon
+        ? await this.appsClient.readNamespacedDaemonSet({
+            name: service,
+            namespace: "5stack",
+          })
+        : await this.appsClient.readNamespacedDeployment({
+            name: service,
+            namespace: "5stack",
+          });
+      const spec = workload.spec?.template?.spec;
+      return (
+        (service === "hasura"
+          ? spec?.initContainers?.[0]?.image
+          : spec?.containers?.[0]?.image) ?? null
+      );
+    } catch {
+      // A Pod restart recreates the controller template, not the old Pod spec.
+      // An unreadable controller must never authorize switching image sources.
+      return null;
+    }
+  }
+
   private async serviceUpdateStatus(source: UpdateSource) {
     const services: Array<{
       service: string;
@@ -515,9 +548,13 @@ export class SystemService {
             pinned ?? (await this.getLatestDigest(targetImage));
           const known = versions ?? [version];
           const matches = !!newVersion && known.includes(newVersion);
-          const sourceChange = image !== targetImage;
+          const configuredImage = plugin
+            ? image
+            : await this.desiredServiceImage(service);
+          const sourceChange =
+            image !== targetImage || configuredImage !== targetImage;
           const status =
-            !image || !version || !newVersion
+            !image || !version || !newVersion || !configuredImage
               ? "unavailable"
               : sourceChange
                 ? "source-change"
@@ -531,6 +568,7 @@ export class SystemService {
             plugin,
             pod,
             currentImage: image,
+            configuredImage,
             targetImage,
             currentVersion: version,
             newVersion,

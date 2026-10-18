@@ -242,6 +242,9 @@ describe("SystemService.getOutdated", () => {
     jest
       .spyOn(system, "getUpdateSource")
       .mockResolvedValue({ version: 1, mode: "installed" });
+    jest
+      .spyOn(system as any, "desiredServiceImage")
+      .mockResolvedValue(`${repo}:latest`);
     jest.spyOn(system as any, "getPluginServices").mockResolvedValue([]);
     jest.spyOn(system, "getLatestDigest").mockResolvedValue(latest);
   });
@@ -273,6 +276,7 @@ describe("SystemService.getOutdated", () => {
         currentVersion: old,
         newVersion: latest,
         currentImage: `${repo}:latest`,
+        configuredImage: `${repo}:latest`,
         targetImage: `${repo}:latest`,
         source: "installed",
         status: "update",

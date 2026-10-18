@@ -115,6 +115,13 @@ describe("selected-source checks and update actions", () => {
       {} as any,
     );
     jest.spyOn(system as any, "getPluginServices").mockResolvedValue([]);
+    jest
+      .spyOn(system as any, "desiredServiceImage")
+      .mockImplementation(
+        async (service) =>
+          (await system.getServices()).find((row) => row.service === service)
+            ?.image ?? null,
+      );
     lookup = jest
       .spyOn(system, "getLatestDigest")
       .mockResolvedValue(digest("b"));
@@ -207,6 +214,85 @@ describe("selected-source checks and update actions", () => {
   });
 });
 
+describe("controller source guards", () => {
+  let system: SystemService;
+  beforeEach(() => {
+    system = new SystemService(
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    );
+    jest
+      .spyOn(system, "getUpdateSource")
+      .mockResolvedValue(installedUpdateSource());
+    jest.spyOn(system as any, "getPluginServices").mockResolvedValue([]);
+    jest.spyOn(system, "getLatestDigest").mockResolvedValue(digest("b"));
+    jest
+      .spyOn(system, "getServices")
+      .mockResolvedValue([
+        {
+          service: "game-server-node-connector",
+          pod: "connector-old",
+          image: "ghcr.io/5stackgg/game-server-node-connector:latest",
+          version: digest("a"),
+          versions: [digest("a")],
+        },
+      ]);
+  });
+  it("does not advertise a restart when an OnDelete Pod differs from its controller source", async () => {
+    jest
+      .spyOn(system as any, "desiredServiceImage")
+      .mockResolvedValue("ghcr.io/example/game-server-node-connector:testing");
+    expect(await system.getOutdated()).toEqual([]);
+  });
+  it("does not advertise an update when the controller is unreadable", async () => {
+    jest.spyOn(system as any, "desiredServiceImage").mockResolvedValue(null);
+    expect(await system.getOutdated()).toEqual([]);
+  });
+  it("rechecks the controller immediately before a restart", async () => {
+    jest
+      .spyOn(system, "getOutdated")
+      .mockResolvedValue([
+        {
+          service: "api",
+          pod: "api-test",
+          targetImage: "ghcr.io/example/api:testing",
+        },
+      ] as any);
+    jest
+      .spyOn(system as any, "desiredServiceImage")
+      .mockResolvedValue("ghcr.io/5stackgg/api:latest");
+    const restart = jest
+      .spyOn(system, "restartService")
+      .mockResolvedValue(undefined);
+    await expect(system.updateServices()).rejects.toMatchObject({
+      status: 409,
+    });
+    expect(restart).not.toHaveBeenCalled();
+  });
+  it("allows a restart only when the controller uses the exact selected image", async () => {
+    jest
+      .spyOn(system, "getOutdated")
+      .mockResolvedValue([
+        {
+          service: "api",
+          pod: "api-test",
+          targetImage: "ghcr.io/example/api:testing",
+        },
+      ] as any);
+    jest
+      .spyOn(system as any, "desiredServiceImage")
+      .mockResolvedValue("ghcr.io/example/api:testing");
+    const restart = jest
+      .spyOn(system, "restartService")
+      .mockResolvedValue(undefined);
+    await system.updateServices();
+    expect(restart).toHaveBeenCalledWith("api", "api-test");
+  });
+});
+
 describe("digest pin platform manifests", () => {
   it("never restarts an exact pin when the node reports a different platform digest", async () => {
     const system = new SystemService(
@@ -221,18 +307,16 @@ describe("digest pin platform manifests", () => {
       .spyOn(system, "getUpdateSource")
       .mockResolvedValue(installedUpdateSource());
     jest.spyOn(system, "getServices").mockResolvedValue([]);
-    jest
-      .spyOn(system as any, "getPluginServices")
-      .mockResolvedValue([
-        {
-          service: "inventory",
-          plugin: "Inventory",
-          pod: "inventory-test",
-          image,
-          version: digest("b"),
-          versions: [digest("b")],
-        },
-      ]);
+    jest.spyOn(system as any, "getPluginServices").mockResolvedValue([
+      {
+        service: "inventory",
+        plugin: "Inventory",
+        pod: "inventory-test",
+        image,
+        version: digest("b"),
+        versions: [digest("b")],
+      },
+    ]);
     const lookup = jest.spyOn(system, "getLatestDigest");
     expect(await system.getOutdated()).toEqual([]);
     expect(lookup).not.toHaveBeenCalled();
