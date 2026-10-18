@@ -64,19 +64,26 @@ describe("match recovery (SQL-driven)", () => {
           sent.push(round);
           return "";
         },
-        updateMatchStatus: (matchId: string, status: string) =>
-          postgres.query("UPDATE matches SET status = $2 WHERE id = $1", [
-            matchId,
-            status,
-          ]),
       } as never,
     );
 
+  const admin = {
+    steam_id: "76561199419999999",
+    role: "administrator",
+  } as const;
+
+  // A duel on its second map: map 1 is over, map 2 is being played.
   const liveMatch = async () => {
-    const match = await fx.match({ type: "Competitive", mr: 12 });
+    const match = await fx.match({ type: "Duel", bestOf: 3 });
+    const [finished] = await postgres.query<Array<{ id: string }>>(
+      `INSERT INTO match_maps (match_id, map_id, "order", status, lineup_1_side, lineup_2_side)
+       SELECT $1, id, 1, 'Finished', 'CT', 'TERRORIST' FROM maps ORDER BY name LIMIT 1
+       RETURNING id`,
+      [match.id],
+    );
     const [map] = await postgres.query<Array<{ id: string }>>(
       `INSERT INTO match_maps (match_id, map_id, "order", status, lineup_1_side, lineup_2_side)
-       SELECT $1, id, 1, 'Live', 'CT', 'TERRORIST' FROM maps ORDER BY name LIMIT 1
+       SELECT $1, id, 2, 'Live', 'CT', 'TERRORIST' FROM maps ORDER BY name OFFSET 1 LIMIT 1
        RETURNING id`,
       [match.id],
     );
@@ -99,21 +106,29 @@ describe("match recovery (SQL-driven)", () => {
       );
     }
 
-    for (const [round, file] of [
-      [1, backup(157864, "vexa", 3250)],
-      [2, null],
-    ] as Array<[number, string | null]>) {
+    for (const [mapId, round, file] of [
+      [finished.id, 1, null],
+      [map.id, 1, backup(157864, "vexa", 3250)],
+      [map.id, 2, null],
+    ] as Array<[string, number, string | null]>) {
       await postgres.query(
         `INSERT INTO match_map_rounds
            (match_map_id, round, lineup_1_score, lineup_2_score, lineup_1_money, lineup_2_money,
             "time", lineup_1_timeouts_available, lineup_2_timeouts_available,
             lineup_1_side, lineup_2_side, winning_side, backup_file)
          VALUES ($1, $2, $2, 0, 800, 800, now(), 3, 3, 'CT', 'TERRORIST', 'CT', $3)`,
-        [map.id, round, file],
+        [mapId, round, file],
       );
     }
 
-    return { match, mapId: map.id };
+    await fx.kill(
+      { matchId: match.id, mapId: map.id },
+      steamId(157864),
+      steamId(235177),
+      { round: 2 },
+    );
+
+    return { match, mapId: map.id, finishedMapId: finished.id };
   };
 
   it("reads the current map's backups and who is connected", async () => {
@@ -123,12 +138,16 @@ describe("match recovery (SQL-driven)", () => {
       [steamId(235177)],
     );
 
-    const result = await service().getRestoreRounds(match.id);
+    const result = await service().getRestoreRounds(match.id, admin);
 
     expect(result).toMatchObject({
       match_map_id: mapId,
       restorable: true,
+      blocked_reason: null,
       live_round: 3,
+      economy_hidden: false,
+      connected_players: 1,
+      expected_players: 2,
       disconnected: ["osk"],
     });
     expect(result.rounds.map((round) => round.has_backup)).toEqual([
@@ -145,20 +164,43 @@ describe("match recovery (SQL-driven)", () => {
     ]);
   });
 
+  it("treats a lineup's coach as on that team", async () => {
+    const { match } = await liveMatch();
+    const coach = await fx.player();
+    await postgres.query(
+      "UPDATE match_lineups SET coach_steam_id = $2 WHERE id = $1",
+      [match.lineup_1_id, coach],
+    );
+
+    const result = await service().getRestoreRounds(match.id, {
+      steam_id: coach,
+      role: "user",
+    });
+
+    expect(result).toMatchObject({
+      economy_hidden: true,
+      blocked_reason: "team_member",
+    });
+    expect(result.rounds[0].players).toEqual([]);
+    await expect(
+      service().restoreRound(match.id, 1, { steam_id: coach, role: "user" }),
+    ).rejects.toThrow("organizers on one of the teams can't restore rounds");
+  });
+
   it("sends a restore only for a round that has a backup", async () => {
     const { match } = await liveMatch();
     const sent: Array<number> = [];
 
-    await expect(service(sent).restoreRound(match.id, 2)).rejects.toThrow(
-      "round 2 has no backup to restore",
-    );
-    await service(sent).restoreRound(match.id, 1);
+    await expect(
+      service(sent).restoreRound(match.id, 2, admin),
+    ).rejects.toThrow("round 2 has no backup to restore");
+    await service(sent).restoreRound(match.id, 1, admin);
 
     expect(sent).toEqual([1]);
   });
 
-  it("restarts a live match back to check-in", async () => {
-    const { match } = await liveMatch();
+  it("restarts a live match from check-in with the map in progress back at the start", async () => {
+    const { match, mapId, finishedMapId } = await liveMatch();
 
     await service().restartMatch(match.id);
 
@@ -171,5 +213,31 @@ describe("match recovery (SQL-driven)", () => {
       status: "WaitingForCheckIn",
       winning_lineup_id: null,
     });
+
+    const maps = await postgres.query<Array<{ id: string; status: string }>>(
+      'SELECT id, status FROM match_maps WHERE match_id = $1 ORDER BY "order"',
+      [match.id],
+    );
+    expect(maps).toEqual([
+      { id: finishedMapId, status: "Finished" },
+      { id: mapId, status: "Scheduled" },
+    ]);
+
+    const live = await postgres.query<Array<{ table: string; left: number }>>(
+      `SELECT 'rounds' AS table, count(*)::int AS left FROM match_map_rounds
+        WHERE match_map_id = $1 AND deleted_at IS NULL
+       UNION ALL
+       SELECT 'kills', count(*)::int FROM player_kills
+        WHERE match_map_id = $1 AND deleted_at IS NULL
+       UNION ALL
+       SELECT 'finished rounds', count(*)::int FROM match_map_rounds
+        WHERE match_map_id = $2 AND deleted_at IS NULL`,
+      [mapId, finishedMapId],
+    );
+    expect(live).toEqual([
+      { table: "rounds", left: 0 },
+      { table: "kills", left: 0 },
+      { table: "finished rounds", left: 1 },
+    ]);
   });
 });

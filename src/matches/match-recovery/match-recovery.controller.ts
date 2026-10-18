@@ -15,10 +15,7 @@ export class MatchRecoveryController {
   public async getMatchRestoreRounds(data: { match_id: string; user: User }) {
     await this.requireOrganizer(data.match_id, data.user);
 
-    return await this.recovery.getRestoreRounds(
-      data.match_id,
-      data.user.steam_id,
-    );
+    return await this.recovery.getRestoreRounds(data.match_id, data.user);
   }
 
   @HasuraAction()
@@ -29,7 +26,11 @@ export class MatchRecoveryController {
   }) {
     await this.requireOrganizer(data.match_id, data.user);
 
-    return await this.recovery.restoreRound(data.match_id, data.round);
+    return await this.recovery.restoreRound(
+      data.match_id,
+      data.round,
+      data.user,
+    );
   }
 
   @HasuraAction()

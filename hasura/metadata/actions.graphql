@@ -1102,6 +1102,8 @@ type MatchRestoreRoundsOutput {
   blocked_reason: String
   live_round: Int
   economy_hidden: Boolean!
+  connected_players: Int!
+  expected_players: Int!
   disconnected: [String!]!
   rounds: [MatchRestoreRound!]!
 }

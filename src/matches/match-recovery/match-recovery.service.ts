@@ -1,6 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PostgresService } from "src/postgres/postgres.service";
 import { MatchAssistantService } from "../match-assistant/match-assistant.service";
+import { isRoleAbove } from "src/utilities/isRoleAbove";
+import { e_player_roles_enum } from "generated";
 
 type KeyValue = string | KeyValues;
 type KeyValues = Array<[string, KeyValue]>;
@@ -33,6 +35,11 @@ type RoundRow = {
   lineup_1_timeouts_available: number | null;
   lineup_2_timeouts_available: number | null;
   backup_file: string | null;
+};
+
+export type RecoveryViewer = {
+  steam_id: string;
+  role: e_player_roles_enum;
 };
 
 type LineupPlayerRow = {
@@ -79,6 +86,8 @@ export type RestoreRounds = {
   blocked_reason: string | null;
   live_round: number | null;
   economy_hidden: boolean;
+  connected_players: number;
+  expected_players: number;
   disconnected: Array<string>;
   rounds: Array<RestoreRound>;
 };
@@ -99,6 +108,26 @@ export class MatchRecoveryService {
     "Live",
   ];
 
+  // The game server's MatchOptions.ExpectedPlayerCount: it refuses a restore
+  // until this many players are in, and benched substitutes don't count.
+  private static readonly EXPECTED_PLAYERS: Record<string, number> = {
+    Rush: 6,
+    Wingman: 4,
+    Duel: 2,
+  };
+
+  private static readonly RESTORE_REFUSED = "restore_round refused:";
+
+  private static readonly STATS_TABLES = [
+    "player_kills",
+    "player_assists",
+    "player_damages",
+    "player_flashes",
+    "player_utility",
+    "player_objectives",
+    "player_unused_utility",
+  ];
+
   private static readonly STEAM_ID_BASE = 76561197960265728n;
 
   private static readonly OVERTIME_MAX_ROUNDS = 6;
@@ -111,18 +140,21 @@ export class MatchRecoveryService {
 
   public async getRestoreRounds(
     matchId: string,
-    viewerSteamId?: string,
+    viewer: RecoveryViewer,
   ): Promise<RestoreRounds> {
     const match = await this.getMatch(matchId);
     const lineupPlayers = await this.getLineupPlayers(match);
+    const affiliated = await this.isTeamAffiliated(match, viewer.steam_id);
 
     const result: RestoreRounds = {
       match_map_id: match.match_map_id,
       map_name: match.map_name,
       restorable: false,
-      blocked_reason: this.restoreBlockedReason(match),
+      blocked_reason: this.restoreBlockedReason(match, viewer, affiliated),
       live_round: null,
       economy_hidden: false,
+      connected_players: this.connectedCount(lineupPlayers),
+      expected_players: this.expectedPlayers(match),
       disconnected: this.disconnectedNames(lineupPlayers),
       rounds: [],
     };
@@ -135,10 +167,7 @@ export class MatchRecoveryService {
       match.map_status ?? "",
     );
 
-    result.economy_hidden =
-      inProgress &&
-      !!viewerSteamId &&
-      lineupPlayers.some((player) => player.steam_id === viewerSteamId);
+    result.economy_hidden = inProgress && affiliated;
 
     const rows = await this.getRounds(match.match_map_id);
     const lineupBySteamId = new Map(
@@ -188,10 +217,18 @@ export class MatchRecoveryService {
 
   // `round` is the backup to load: the last round that stays played. Loading
   // round N's backup starts round N + 1.
-  public async restoreRound(matchId: string, round: number) {
+  public async restoreRound(
+    matchId: string,
+    round: number,
+    viewer: RecoveryViewer,
+  ) {
     const match = await this.getMatch(matchId);
 
-    const blockedReason = this.restoreBlockedReason(match);
+    const blockedReason = this.restoreBlockedReason(
+      match,
+      viewer,
+      await this.isTeamAffiliated(match, viewer.steam_id),
+    );
     if (blockedReason === "rush") {
       throw Error("Rush matches can't restore rounds");
     }
@@ -200,16 +237,24 @@ export class MatchRecoveryService {
       throw Error("there is no map in progress to restore");
     }
 
+    if (blockedReason === "team_member") {
+      throw Error(
+        "organizers on one of the teams can't restore rounds; players can still call the in-game vote",
+      );
+    }
+
     const rows = await this.getRounds(match.match_map_id as string);
     if (!rows.some((row) => row.round === round && !!row.backup_file)) {
       throw Error(`round ${round} has no backup to restore`);
     }
 
-    const disconnected = this.disconnectedNames(
-      await this.getLineupPlayers(match),
-    );
-    if (disconnected.length > 0) {
-      throw Error(`waiting for ${disconnected.join(", ")} to reconnect`);
+    const lineupPlayers = await this.getLineupPlayers(match);
+    const connected = this.connectedCount(lineupPlayers);
+    const expected = this.expectedPlayers(match);
+    if (connected < expected) {
+      throw Error(
+        `waiting for players to reconnect (${connected}/${expected}): ${this.disconnectedNames(lineupPlayers).join(", ")}`,
+      );
     }
 
     const response = await this.matchAssistant.requestRoundRestore(
@@ -220,6 +265,16 @@ export class MatchRecoveryService {
       throw Error("the match server can't be reached");
     }
 
+    const refused = response.indexOf(MatchRecoveryService.RESTORE_REFUSED);
+    if (refused !== -1) {
+      throw Error(
+        response
+          .slice(refused + MatchRecoveryService.RESTORE_REFUSED.length)
+          .trim()
+          .split("\n")[0],
+      );
+    }
+
     this.logger.log(
       `[${matchId}] organizer requested a restore to round ${round}`,
     );
@@ -228,7 +283,9 @@ export class MatchRecoveryService {
   }
 
   // Cancel, then reopen check-in: what an organizer does by hand with Cancel
-  // and Start, in one step. Leaving Canceled is what clears the veto.
+  // and Start, in one step. Leaving Canceled clears a map veto; a map that was
+  // still being played is put back to the start, or the next server would
+  // offer to restore its old rounds.
   public async restartMatch(matchId: string) {
     const match = await this.getMatch(matchId);
 
@@ -249,11 +306,48 @@ export class MatchRecoveryService {
       throw Error(`a ${match.status} match can't be restarted`);
     }
 
-    if (!canceled) {
-      await this.matchAssistant.updateMatchStatus(matchId, "Canceled");
-    }
+    await this.postgres.transaction(async (client) => {
+      if (!canceled) {
+        await client.query(
+          "UPDATE matches SET status = 'Canceled' WHERE id = $1",
+          [matchId],
+        );
+      }
 
-    await this.matchAssistant.updateMatchStatus(matchId, "WaitingForCheckIn");
+      const { rows: maps } = await client.query<{ id: string }>(
+        `SELECT id FROM match_maps WHERE match_id = $1 AND status = ANY($2)`,
+        [matchId, MatchRecoveryService.IN_PROGRESS_MAP_STATUSES],
+      );
+      const mapIds = maps.map((map) => map.id);
+
+      if (mapIds.length > 0) {
+        for (const table of [
+          ...MatchRecoveryService.STATS_TABLES,
+          "match_map_rounds",
+        ]) {
+          await client.query(
+            `UPDATE ${table} SET deleted_at = now()
+              WHERE match_map_id = ANY($1) AND deleted_at IS NULL`,
+            [mapIds],
+          );
+        }
+
+        await client.query(
+          `UPDATE match_maps
+              SET status = 'Scheduled',
+                  started_at = NULL,
+                  lineup_1_timeouts_available = DEFAULT,
+                  lineup_2_timeouts_available = DEFAULT
+            WHERE id = ANY($1)`,
+          [mapIds],
+        );
+      }
+
+      await client.query(
+        "UPDATE matches SET status = 'WaitingForCheckIn' WHERE id = $1",
+        [matchId],
+      );
+    });
 
     this.logger.log(`[${matchId}] organizer restarted the match`);
 
@@ -320,8 +414,21 @@ export class MatchRecoveryService {
         let value = "";
         i++;
         while (i < text.length && text[i] !== '"') {
-          if (text[i] === "\\" && i + 1 < text.length) {
-            value += text[i + 1];
+          // A player name can end in a backslash, so a quote after one still
+          // closes the string when whitespace, a brace or the end follows it.
+          if (text[i] === "\\" && text[i + 1] === '"') {
+            const after = text[i + 2];
+            if (after === undefined || /[\s{}]/.test(after)) {
+              value += "\\";
+              i++;
+              continue;
+            }
+            value += '"';
+            i += 2;
+            continue;
+          }
+          if (text[i] === "\\" && text[i + 1] === "\\") {
+            value += "\\";
             i += 2;
             continue;
           }
@@ -437,7 +544,11 @@ export class MatchRecoveryService {
       : startSide;
   }
 
-  private restoreBlockedReason(match: MatchRow): string | null {
+  private restoreBlockedReason(
+    match: MatchRow,
+    viewer: RecoveryViewer,
+    affiliated: boolean,
+  ): string | null {
     if (match.type === "Rush") {
       return "rush";
     }
@@ -451,7 +562,47 @@ export class MatchRecoveryService {
       return "not_in_progress";
     }
 
+    // The in-game reset needs both teams to vote for it; an organizer who is on
+    // one of them would skip that vote.
+    if (affiliated && !isRoleAbove(viewer.role, "moderator")) {
+      return "team_member";
+    }
+
     return null;
+  }
+
+  private expectedPlayers(match: MatchRow) {
+    return MatchRecoveryService.EXPECTED_PLAYERS[match.type] ?? 10;
+  }
+
+  private connectedCount(players: Array<LineupPlayerRow>) {
+    return players.filter((player) => player.steam_id && player.is_connected)
+      .length;
+  }
+
+  private async isTeamAffiliated(match: MatchRow, steamId: string) {
+    const [row] = await this.postgres.query<Array<{ affiliated: boolean }>>(
+      `SELECT EXISTS (
+                SELECT 1 FROM match_lineup_players mlp
+                 WHERE mlp.match_lineup_id IN ($1, $2)
+                   AND mlp.steam_id = $3
+              )
+              OR EXISTS (
+                SELECT 1 FROM match_lineups ml
+                 WHERE ml.id IN ($1, $2)
+                   AND ml.coach_steam_id = $3
+              )
+              OR EXISTS (
+                SELECT 1 FROM match_lineups ml
+                  JOIN team_roster tr ON tr.team_id = ml.team_id
+                 WHERE ml.id IN ($1, $2)
+                   AND tr.player_steam_id = $3
+                   AND tr.role <> 'Pending'
+              ) AS affiliated`,
+      [match.lineup_1_id, match.lineup_2_id, steamId],
+    );
+
+    return !!row?.affiliated;
   }
 
   private disconnectedNames(players: Array<LineupPlayerRow>) {

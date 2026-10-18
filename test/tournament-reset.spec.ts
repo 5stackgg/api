@@ -784,4 +784,66 @@ describe("tournament match reset (SQL-driven)", () => {
       );
     });
   });
+
+  describe("stages feeding a playoff", () => {
+    // Swiss final-round winners are linked straight into the playoff as each
+    // match ends, before the stage is over.
+    it("unwinds a final-round Swiss result that already reached the playoff, until the stage is done", async () => {
+      const t = await tfx.launch(
+        [
+          { type: "Swiss", order: 1, minTeams: 16, maxTeams: 16 },
+          { type: "SingleElimination", order: 2, minTeams: 8, maxTeams: 8 },
+        ],
+        16,
+      );
+      for (let round = 1; round <= 4; round++) {
+        await tfx.playRound(t.stageIds[0], round);
+      }
+      const finalRound = (await tfx.getBrackets(t.stageIds[0])).filter(
+        (b) => b.round === 5 && b.match_id !== null,
+      );
+      await tfx.winMatch(finalRound[0].match_id!);
+
+      expect(await lockReason(finalRound[0].match_id!)).toBeNull();
+      expect(
+        await canReassignWinner(finalRound[0].match_id!, t.organizer),
+      ).toBe(true);
+      await resetMatch(finalRound[0].match_id!);
+
+      await tfx.playRound(t.stageIds[0], 5);
+      expect(await lockReason(finalRound[1].match_id!)).toMatch(
+        /next stage was already seeded/i,
+      );
+    });
+
+    it("locks a relegation playoff that already moved teams between divisions", async () => {
+      const t = await tfx.launch(
+        [{ type: "RoundRobin", order: 1, minTeams: 4, maxTeams: 4 }],
+        4,
+      );
+      const bracket = (await tfx.getBrackets(t.stageIds[0])).find(
+        (b) => b.match_id !== null,
+      )!;
+      await tfx.winMatch(bracket.match_id!);
+      expect(await lockReason(bracket.match_id!)).toBeNull();
+
+      // The season and divisions don't matter here, only that the playoff resolved.
+      await postgres.query("SET session_replication_role = replica");
+      try {
+        await postgres.query(
+          `INSERT INTO league_relegation_playoffs
+             (league_season_id, higher_division_id, lower_division_id, tournament_id, higher_slots, resolved_at)
+           VALUES (gen_random_uuid(), gen_random_uuid(), gen_random_uuid(), $1, 2, now())`,
+          [t.id],
+        );
+      } finally {
+        await postgres.query("SET session_replication_role = DEFAULT");
+      }
+
+      expect(await lockReason(bracket.match_id!)).toMatch(
+        /already decided the promotions and relegations/i,
+      );
+      await postgres.query("DELETE FROM league_relegation_playoffs");
+    });
+  });
 });

@@ -120,11 +120,48 @@ const ROUNDS = [
   roundRow(13, 7, 6, ["TERRORIST", "CT"]),
 ];
 
+const VIEWER = { steam_id: "76561198000000099", role: "user" } as const;
+
+// A full 5v5: vexa and osk carry the backup data, eight more fill the lineups.
+const lineupPlayers = (oskConnected: boolean, benchedSub: boolean) => [
+  {
+    steam_id: VEXA,
+    name: "vexa",
+    is_connected: true,
+    match_lineup_id: LINEUP_1,
+  },
+  {
+    steam_id: OSK,
+    name: "osk",
+    is_connected: oskConnected,
+    match_lineup_id: LINEUP_2,
+  },
+  ...Array.from({ length: 8 }, (_, index) => ({
+    steam_id: steamId(900 + index),
+    name: `player${index}`,
+    is_connected: true,
+    match_lineup_id: index < 4 ? LINEUP_1 : LINEUP_2,
+  })),
+  ...(benchedSub
+    ? [
+        {
+          steam_id: steamId(999),
+          name: "bench",
+          is_connected: false,
+          match_lineup_id: LINEUP_2,
+        },
+      ]
+    : []),
+];
+
 const setup = (
   options: {
     match?: MatchFixture;
     rounds?: Array<ReturnType<typeof roundRow>>;
     oskConnected?: boolean;
+    benchedSub?: boolean;
+    affiliated?: boolean;
+    liveMaps?: Array<{ id: string }>;
     restoreResponse?: string | undefined;
   } = {},
 ) => {
@@ -136,32 +173,38 @@ const setup = (
       if (sql.includes("FROM match_map_rounds")) {
         return options.rounds ?? ROUNDS;
       }
+      if (sql.includes("AS affiliated")) {
+        return [{ affiliated: options.affiliated ?? false }];
+      }
       if (sql.includes("FROM match_lineup_players")) {
-        return [
-          {
-            steam_id: VEXA,
-            name: "vexa",
-            is_connected: true,
-            match_lineup_id: LINEUP_1,
-          },
-          {
-            steam_id: OSK,
-            name: "osk",
-            is_connected: options.oskConnected ?? true,
-            match_lineup_id: LINEUP_2,
-          },
-        ];
+        return lineupPlayers(
+          options.oskConnected ?? true,
+          options.benchedSub ?? false,
+        );
       }
       return [];
     }),
+    statements: [] as Array<string>,
+    transaction: jest.fn(),
   };
+  postgres.transaction.mockImplementation(
+    async (fn: (client: unknown) => Promise<unknown>) =>
+      fn({
+        query: async (sql: string) => {
+          postgres.statements.push(sql.replace(/\s+/g, " ").trim());
+          if (sql.includes("SELECT id FROM match_maps")) {
+            return { rows: options.liveMaps ?? [] };
+          }
+          return { rows: [] };
+        },
+      }),
+  );
 
   const matchAssistant = {
     requestRoundRestore: jest.fn(
       async (): Promise<string | undefined> =>
         "restoreResponse" in options ? options.restoreResponse : "",
     ),
-    updateMatchStatus: jest.fn(async (): Promise<void> => undefined),
   };
 
   const service = new MatchRecoveryService(
@@ -205,13 +248,24 @@ describe("MatchRecoveryService", () => {
         ["b", [["c", "d"]]],
       ]);
     });
+
+    it("keeps a name that ends in a backslash from swallowing the next key", () => {
+      const { service } = setup();
+
+      expect(
+        service.parseKeyValues(`"name"\t\t"abc\\"\n"cash"\t\t"800"`),
+      ).toEqual([
+        ["name", "abc\\"],
+        ["cash", "800"],
+      ]);
+    });
   });
 
   describe("getRestoreRounds", () => {
     it("reads each backup into the players' state for the round after it", async () => {
       const { service } = setup({ oskConnected: false });
 
-      const result = await service.getRestoreRounds("match-1", "someone-else");
+      const result = await service.getRestoreRounds("match-1", VIEWER);
 
       expect(result).toMatchObject({
         match_map_id: MAP_ID,
@@ -219,6 +273,8 @@ describe("MatchRecoveryService", () => {
         blocked_reason: null,
         live_round: 14,
         economy_hidden: false,
+        connected_players: 9,
+        expected_players: 10,
         disconnected: ["osk"],
       });
 
@@ -263,7 +319,7 @@ describe("MatchRecoveryService", () => {
     it("gives each round the sides the next round is played on", async () => {
       const { service } = setup();
 
-      const rounds = (await service.getRestoreRounds("match-1")).rounds;
+      const rounds = (await service.getRestoreRounds("match-1", VIEWER)).rounds;
 
       expect(
         rounds.map((round) => [
@@ -286,7 +342,7 @@ describe("MatchRecoveryService", () => {
         ],
       });
 
-      const rounds = (await service.getRestoreRounds("match-1")).rounds;
+      const rounds = (await service.getRestoreRounds("match-1", VIEWER)).rounds;
 
       expect(rounds.at(-1)).toMatchObject({
         next_lineup_1_side: "CT",
@@ -294,24 +350,42 @@ describe("MatchRecoveryService", () => {
       });
     });
 
-    it("hides every player's economy from someone playing in the match", async () => {
-      const { service } = setup();
+    it("hides every player's economy from an organizer on one of the teams", async () => {
+      const { service } = setup({ affiliated: true });
 
-      const result = await service.getRestoreRounds("match-1", VEXA);
+      const result = await service.getRestoreRounds("match-1", VIEWER);
 
-      expect(result.economy_hidden).toBe(true);
+      expect(result).toMatchObject({
+        economy_hidden: true,
+        blocked_reason: "team_member",
+      });
       expect(result.rounds).toHaveLength(3);
       expect(result.rounds.every((round) => round.players.length === 0)).toBe(
         true,
       );
     });
 
+    it("still lets a moderator on one of the teams restore", async () => {
+      const { service } = setup({ affiliated: true });
+
+      const result = await service.getRestoreRounds("match-1", {
+        steam_id: VIEWER.steam_id,
+        role: "moderator",
+      });
+
+      expect(result).toMatchObject({
+        economy_hidden: true,
+        blocked_reason: null,
+      });
+    });
+
     it("has nothing to restore in a Rush match", async () => {
       const { service } = setup({ match: matchRow({ type: "Rush" }) });
 
-      expect(await service.getRestoreRounds("match-1")).toMatchObject({
+      expect(await service.getRestoreRounds("match-1", VIEWER)).toMatchObject({
         restorable: false,
         blocked_reason: "rush",
+        expected_players: 6,
         rounds: [],
       });
     });
@@ -321,7 +395,7 @@ describe("MatchRecoveryService", () => {
         match: matchRow({ status: "Finished", map_status: "Finished" }),
       });
 
-      expect(await service.getRestoreRounds("match-1")).toMatchObject({
+      expect(await service.getRestoreRounds("match-1", VIEWER)).toMatchObject({
         restorable: false,
         blocked_reason: "not_in_progress",
         live_round: null,
@@ -333,7 +407,9 @@ describe("MatchRecoveryService", () => {
     it("asks the server to load the backup", async () => {
       const { service, matchAssistant } = setup();
 
-      await expect(service.restoreRound("match-1", 13)).resolves.toEqual({
+      await expect(
+        service.restoreRound("match-1", 13, VIEWER),
+      ).resolves.toEqual({
         success: true,
       });
       expect(matchAssistant.requestRoundRestore).toHaveBeenCalledWith(
@@ -342,13 +418,41 @@ describe("MatchRecoveryService", () => {
       );
     });
 
-    // The server refuses a restore while anyone is missing, after the api has
-    // already marked the later rounds' stats for deletion.
-    it("waits for disconnected players instead of sending it", async () => {
+    // The server refuses a restore while players are missing, after the api
+    // has already marked the later rounds' stats for deletion.
+    it("waits for missing players instead of sending it", async () => {
       const { service, matchAssistant } = setup({ oskConnected: false });
 
-      await expect(service.restoreRound("match-1", 13)).rejects.toThrow(
-        "waiting for osk to reconnect",
+      await expect(service.restoreRound("match-1", 13, VIEWER)).rejects.toThrow(
+        "waiting for players to reconnect (9/10): osk",
+      );
+      expect(matchAssistant.requestRoundRestore).not.toHaveBeenCalled();
+    });
+
+    it("doesn't wait for a benched substitute", async () => {
+      const { service, matchAssistant } = setup({ benchedSub: true });
+
+      await service.restoreRound("match-1", 13, VIEWER);
+
+      expect(matchAssistant.requestRoundRestore).toHaveBeenCalled();
+    });
+
+    it("passes on the server's refusal", async () => {
+      const { service } = setup({
+        restoreResponse:
+          "L 10/18/2026 restore_round refused: waiting for all players to reconnect (3/10)\n",
+      });
+
+      await expect(service.restoreRound("match-1", 13, VIEWER)).rejects.toThrow(
+        /^waiting for all players to reconnect \(3\/10\)$/,
+      );
+    });
+
+    it("refuses an organizer who is on one of the teams", async () => {
+      const { service, matchAssistant } = setup({ affiliated: true });
+
+      await expect(service.restoreRound("match-1", 13, VIEWER)).rejects.toThrow(
+        "organizers on one of the teams can't restore rounds",
       );
       expect(matchAssistant.requestRoundRestore).not.toHaveBeenCalled();
     });
@@ -358,7 +462,7 @@ describe("MatchRecoveryService", () => {
         rounds: [roundRow(13, 7, 6, ["TERRORIST", "CT"], null)],
       });
 
-      await expect(service.restoreRound("match-1", 13)).rejects.toThrow(
+      await expect(service.restoreRound("match-1", 13, VIEWER)).rejects.toThrow(
         "round 13 has no backup to restore",
       );
       expect(matchAssistant.requestRoundRestore).not.toHaveBeenCalled();
@@ -369,7 +473,7 @@ describe("MatchRecoveryService", () => {
         match: matchRow({ map_status: "UploadingDemo" }),
       });
 
-      await expect(service.restoreRound("match-1", 13)).rejects.toThrow(
+      await expect(service.restoreRound("match-1", 13, VIEWER)).rejects.toThrow(
         "there is no map in progress to restore",
       );
     });
@@ -377,7 +481,7 @@ describe("MatchRecoveryService", () => {
     it("refuses Rush matches", async () => {
       const { service } = setup({ match: matchRow({ type: "Rush" }) });
 
-      await expect(service.restoreRound("match-1", 13)).rejects.toThrow(
+      await expect(service.restoreRound("match-1", 13, VIEWER)).rejects.toThrow(
         "Rush matches can't restore rounds",
       );
     });
@@ -385,33 +489,46 @@ describe("MatchRecoveryService", () => {
     it("says so when the server can't be reached", async () => {
       const { service } = setup({ restoreResponse: undefined });
 
-      await expect(service.restoreRound("match-1", 13)).rejects.toThrow(
+      await expect(service.restoreRound("match-1", 13, VIEWER)).rejects.toThrow(
         "the match server can't be reached",
       );
     });
   });
 
   describe("restartMatch", () => {
-    it("cancels a live match, then reopens check-in", async () => {
-      const { service, matchAssistant } = setup();
+    it("cancels a live match, puts the map in progress back to the start, then reopens check-in", async () => {
+      const { service, postgres } = setup({ liveMaps: [{ id: MAP_ID }] });
 
       await service.restartMatch("match-1");
 
-      expect(matchAssistant.updateMatchStatus.mock.calls).toEqual([
-        ["match-1", "Canceled"],
-        ["match-1", "WaitingForCheckIn"],
-      ]);
+      expect(postgres.statements[0]).toBe(
+        "UPDATE matches SET status = 'Canceled' WHERE id = $1",
+      );
+      expect(
+        postgres.statements.filter((sql) =>
+          sql.includes("SET deleted_at = now()"),
+        ),
+      ).toHaveLength(8);
+      expect(
+        postgres.statements.some((sql) =>
+          sql.startsWith("UPDATE match_maps SET status = 'Scheduled'"),
+        ),
+      ).toBe(true);
+      expect(postgres.statements.at(-1)).toBe(
+        "UPDATE matches SET status = 'WaitingForCheckIn' WHERE id = $1",
+      );
     });
 
-    it("reopens a canceled match straight away", async () => {
-      const { service, matchAssistant } = setup({
+    it("reopens a canceled match without touching maps nobody is playing", async () => {
+      const { service, postgres } = setup({
         match: matchRow({ status: "Canceled" }),
       });
 
       await service.restartMatch("match-1");
 
-      expect(matchAssistant.updateMatchStatus.mock.calls).toEqual([
-        ["match-1", "WaitingForCheckIn"],
+      expect(postgres.statements).toEqual([
+        "SELECT id FROM match_maps WHERE match_id = $1 AND status = ANY($2)",
+        "UPDATE matches SET status = 'WaitingForCheckIn' WHERE id = $1",
       ]);
     });
 
@@ -426,10 +543,10 @@ describe("MatchRecoveryService", () => {
         "only matches played on 5stack servers can be restarted",
       ],
     ])("refuses %#", async (match, message) => {
-      const { service, matchAssistant } = setup({ match });
+      const { service, postgres } = setup({ match });
 
       await expect(service.restartMatch("match-1")).rejects.toThrow(message);
-      expect(matchAssistant.updateMatchStatus).not.toHaveBeenCalled();
+      expect(postgres.transaction).not.toHaveBeenCalled();
     });
   });
 });

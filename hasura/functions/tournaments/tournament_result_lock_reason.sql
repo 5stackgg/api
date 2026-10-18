@@ -2,6 +2,10 @@
 -- stage seeds the next one from its standings, and a finished Swiss round
 -- pairs the next round by record. Once that has happened, taking the result
 -- back would leave teams placed by a result that no longer exists.
+--
+-- Final-round Swiss winners are linked into the next stage as each match ends,
+-- before the stage is over. The reset unwinds that slot like an elimination
+-- result, so only a finished stage counts as seeded.
 CREATE OR REPLACE FUNCTION public.tournament_result_lock_reason(_bracket_id uuid)
 RETURNS text
 LANGUAGE plpgsql
@@ -28,6 +32,20 @@ BEGIN
     END IF;
 
     IF EXISTS (
+        SELECT 1
+        FROM league_relegation_playoffs playoff
+        WHERE playoff.tournament_id = _stage.tournament_id
+          AND playoff.resolved_at IS NOT NULL
+    ) THEN
+        RETURN 'this playoff already decided the promotions and relegations';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM tournament_brackets unfinished
+        WHERE unfinished.tournament_stage_id = _stage.id
+          AND unfinished.finished = false
+    ) AND EXISTS (
         SELECT 1
         FROM tournament_stages next_stage
         JOIN tournament_brackets next_bracket

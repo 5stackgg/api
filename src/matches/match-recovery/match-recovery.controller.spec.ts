@@ -45,11 +45,8 @@ describe("MatchRecoveryController", () => {
     await controller.restoreMatchRound({ match_id: "match-1", round: 4, user });
     await controller.restartMatch({ match_id: "match-1", user });
 
-    expect(recovery.getRestoreRounds).toHaveBeenCalledWith(
-      "match-1",
-      "76561198000000001",
-    );
-    expect(recovery.restoreRound).toHaveBeenCalledWith("match-1", 4);
+    expect(recovery.getRestoreRounds).toHaveBeenCalledWith("match-1", user);
+    expect(recovery.restoreRound).toHaveBeenCalledWith("match-1", 4, user);
     expect(recovery.restartMatch).toHaveBeenCalledWith("match-1");
   });
 });
