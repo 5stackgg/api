@@ -692,17 +692,9 @@ describe("UtilityRendersService", () => {
       row({ id: "guessed-but-filmed", confidence: "estimated" }),
     ];
 
-    // The two reads a coverage makes, whichever order it makes them in.
-    const database = (
-      rows: Array<unknown>,
-      pipelineVersion: number | null = null,
-    ) =>
+    const database = (rows: Array<unknown>) =>
       postgres.query.mockImplementation(async (sql: string) =>
-        String(sql).includes("FROM public.utility_lineups l")
-          ? rows
-          : pipelineVersion === null
-            ? []
-            : [{ render_version: pipelineVersion }],
+        String(sql).includes("FROM public.utility_lineups l") ? rows : [],
       );
 
     it("calls a preview outdated when an older version, or none, filmed it", () => {
@@ -722,13 +714,12 @@ describe("UtilityRendersService", () => {
     });
 
     it("sorts every public lineup into what its preview needs", async () => {
-      database(ROWS, UTILITY_RENDER_VERSION);
+      database(ROWS);
 
       const coverage = await service.coverage();
 
       expect(coverage).toMatchObject({
         version: UTILITY_RENDER_VERSION,
-        pipeline_version: UTILITY_RENDER_VERSION,
         total: 9,
         current: 2,
         missing: 1,
@@ -750,12 +741,6 @@ describe("UtilityRendersService", () => {
       expect(coverage.lineups[5].reason).toContain("not available for practice");
     });
 
-    it("knows nothing about the pipeline until something has been filmed since", async () => {
-      database(ROWS);
-
-      expect((await service.coverage()).pipeline_version).toBeNull();
-    });
-
     it("looks only at public, unarchived lineups, on one map when asked", async () => {
       database([]);
 
@@ -773,7 +758,7 @@ describe("UtilityRendersService", () => {
       let enqueue: jest.SpyInstance;
 
       beforeEach(() => {
-        database(ROWS, UTILITY_RENDER_VERSION);
+        database(ROWS);
         enqueue = jest.spyOn(service, "enqueue").mockResolvedValue({
           queued: true,
           render_id: "render",
@@ -838,33 +823,11 @@ describe("UtilityRendersService", () => {
           (_, index) =>
             row({ id: `m-${index}`, preview_file: null, preview_version: null }),
         );
-        database(many, UTILITY_RENDER_VERSION);
+        database(many);
 
         await expect(
           service.enqueueGaps("missing", { requestedBySteamId: "1" }),
         ).resolves.toEqual({ queued: UTILITY_RENDER_BULK_LIMIT, skipped: 5 });
-      });
-
-      // The images are behind the api, or pinned to older ones. Every preview
-      // the pod films comes back outdated again, so "re-render outdated" would
-      // film the whole library on every press and change nothing.
-      describe("when the pod in use films an older version than the api expects", () => {
-        beforeEach(() => {
-          database(ROWS, UTILITY_RENDER_VERSION_UNREPORTED);
-        });
-
-        it("refuses to re-render the outdated ones", async () => {
-          await expect(
-            service.enqueueGaps("outdated", { requestedBySteamId: "1" }),
-          ).rejects.toThrow(/older than version/);
-          expect(enqueue).not.toHaveBeenCalled();
-        });
-
-        it("still films the ones with no preview at all", async () => {
-          await service.enqueueGaps("all", { requestedBySteamId: "1" });
-
-          expect(queuedIds()).toEqual(["missing"]);
-        });
       });
     });
   });
@@ -919,8 +882,7 @@ describe("UtilityRendersService", () => {
     });
 
     // Keeping the old preview's version would call a clip from an old pod
-    // current. Not NULL either, which is a preview from before any pod said:
-    // this one says the pod in use is behind.
+    // current. Not NULL either, which is a preview from before any pod said.
     it("records a preview whose pod did not report a version as unreported", async () => {
       uploading();
 

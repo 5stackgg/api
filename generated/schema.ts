@@ -1374,7 +1374,6 @@ export interface UtilityRenderCoverageOutput {
     lineups: UtilityRenderGap[]
     missing: Scalars['Int']
     outdated: Scalars['Int']
-    pipeline_version: (Scalars['Int'] | null)
     queued: Scalars['Int']
     total: Scalars['Int']
     unrenderable: Scalars['Int']
@@ -52581,7 +52580,6 @@ export interface UtilityRenderCoverageOutputGenqlSelection{
     lineups?: UtilityRenderGapGenqlSelection
     missing?: boolean | number
     outdated?: boolean | number
-    pipeline_version?: boolean | number
     queued?: boolean | number
     total?: boolean | number
     unrenderable?: boolean | number

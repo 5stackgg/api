@@ -4419,9 +4419,6 @@ export default {
             "outdated": [
                 44
             ],
-            "pipeline_version": [
-                44
-            ],
             "queued": [
                 44
             ],
