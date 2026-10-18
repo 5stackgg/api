@@ -70,7 +70,7 @@ DECLARE
     source_match matches%ROWTYPE;
     affected_match_id uuid;
     source_tournament_id uuid;
-    source_stage_type text;
+    lock_reason text;
     feeder record;
 BEGIN
     IF _reset_status NOT IN ('Scheduled', 'WaitingForCheckIn') THEN
@@ -87,16 +87,16 @@ BEGIN
         RAISE EXCEPTION 'match is not linked to a tournament bracket' USING ERRCODE = '22000';
     END IF;
 
-    SELECT ts.tournament_id, ts.type
-    INTO source_tournament_id, source_stage_type
+    SELECT ts.tournament_id
+    INTO source_tournament_id
     FROM tournament_stages ts
     WHERE ts.id = source_bracket.tournament_stage_id
     LIMIT 1;
 
-    -- Swiss/RoundRobin results drive pool assignment and standings-based
-    -- advancement that a parent-chain unwind cannot restore.
-    IF source_stage_type NOT IN ('SingleElimination', 'DoubleElimination') THEN
-        RAISE EXCEPTION 'only elimination stage matches can be reset' USING ERRCODE = '22000';
+    lock_reason := tournament_result_lock_reason(source_bracket.id);
+
+    IF lock_reason IS NOT NULL THEN
+        RAISE EXCEPTION '%', lock_reason USING ERRCODE = '22000';
     END IF;
 
     SELECT *
@@ -224,6 +224,8 @@ BEGIN
         ended_at = NULL,
         cancels_at = NULL
     WHERE id = _match_id;
+
+    PERFORM recompute_tournament_stage_results(source_bracket.tournament_stage_id);
 
     IF source_tournament_id IS NOT NULL THEN
         UPDATE tournaments

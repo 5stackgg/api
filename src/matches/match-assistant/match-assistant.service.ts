@@ -156,6 +156,10 @@ export class MatchAssistantService {
     }
   }
 
+  public async requestRoundRestore(matchId: string, round: number) {
+    return await this.command(matchId, `restore_round ${round}`);
+  }
+
   public async getMatchType(
     matchId: string,
   ): Promise<e_match_types_enum | undefined> {

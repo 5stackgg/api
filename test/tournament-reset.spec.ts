@@ -623,30 +623,165 @@ describe("tournament match reset (SQL-driven)", () => {
     );
   });
 
-  // Swiss/RoundRobin results feed pool assignment and standings advancement
-  // that the parent-chain unwind cannot restore, so resets are rejected.
-  it("refuses to reset Swiss and RoundRobin matches", async () => {
-    for (const [type, teams] of [
-      ["Swiss", 16],
-      ["RoundRobin", 4],
-    ] as Array<[string, number]>) {
+  const lockReason = async (matchId: string) => {
+    const [row] = await postgres.query<Array<{ reason: string | null }>>(
+      `SELECT tournament_result_lock_reason(tb.id) AS reason
+         FROM tournament_brackets tb WHERE tb.match_id = $1`,
+      [matchId],
+    );
+    return row.reason;
+  };
+
+  const canReassignWinner = async (matchId: string, organizer: string) => {
+    const [row] = await postgres.query<Array<{ allowed: boolean }>>(
+      `SELECT can_reassign_winner(m, $2::json) AS allowed FROM matches m WHERE m.id = $1`,
+      [
+        matchId,
+        JSON.stringify({
+          "x-hasura-role": "administrator",
+          "x-hasura-user-id": organizer,
+        }),
+      ],
+    );
+    return row.allowed;
+  };
+
+  describe("round robin resets", () => {
+    const RR4 = [{ type: "RoundRobin", order: 1, minTeams: 4, maxTeams: 4 }];
+
+    it("takes a result back and recalculates the standings", async () => {
+      const t = await tfx.launch(RR4, 4);
+      const bracket = (await tfx.getBrackets(t.stageIds[0])).find(
+        (b) => b.round === 1 && b.match_id !== null,
+      )!;
+      await tfx.winMatch(bracket.match_id!);
+
+      const winsOf = async (team: string) =>
+        Number(
+          (await tfx.stageResults(t.stageIds[0])).find(
+            (row) => row.tournament_team_id === team,
+          )?.wins ?? 0,
+        );
+      expect(await winsOf(bracket.tournament_team_id_1!)).toBe(1);
+      const preview = await postgres.query<Array<unknown>>(
+        "SELECT * FROM preview_tournament_match_reset($1)",
+        [bracket.match_id],
+      );
+      expect(preview.length).toBe(1);
+
+      await resetMatch(bracket.match_id!);
+
+      const after = (await tfx.getBrackets(t.stageIds[0])).find(
+        (b) => b.id === bracket.id,
+      )!;
+      expect(after.finished).toBe(false);
+      expect(after.match_id).toBe(bracket.match_id);
+      expect(await winsOf(bracket.tournament_team_id_1!)).toBe(0);
+
+      const [source] = await postgres.query<
+        Array<{ status: string; winning_lineup_id: string | null }>
+      >("SELECT status, winning_lineup_id FROM matches WHERE id = $1", [
+        bracket.match_id,
+      ]);
+      expect(source).toEqual({
+        status: "WaitingForCheckIn",
+        winning_lineup_id: null,
+      });
+    });
+
+    it("reopens a finished round robin when its last result is taken back", async () => {
+      const t = await tfx.launch(RR4, 4);
+      await tfx.playStage(t.stageIds[0]);
+      expect(await tfx.tournamentStatus(t.id)).toBe("Finished");
+
+      const last = (await tfx.getBrackets(t.stageIds[0])).at(-1)!;
+      await resetMatch(last.match_id!);
+
+      expect(await tfx.tournamentStatus(t.id)).toBe("Live");
+    });
+
+    it("locks once the next stage was seeded from the standings", async () => {
       const t = await tfx.launch(
-        [{ type, order: 1, minTeams: teams, maxTeams: teams }],
-        teams,
+        [
+          ...RR4,
+          { type: "SingleElimination", order: 2, minTeams: 4, maxTeams: 4 },
+        ],
+        4,
+      );
+      await tfx.playStage(t.stageIds[0]);
+      expect(
+        (await tfx.getBrackets(t.stageIds[1])).some(
+          (b) => b.tournament_team_id_1 !== null,
+        ),
+      ).toBe(true);
+
+      const played = (await tfx.getBrackets(t.stageIds[0]))[0];
+
+      await expect(resetMatch(played.match_id!)).rejects.toThrow(
+        /next stage was already seeded/i,
+      );
+      await expect(
+        postgres.query("SELECT * FROM preview_tournament_match_reset($1)", [
+          played.match_id,
+        ]),
+      ).rejects.toThrow(/next stage was already seeded/i);
+      expect(await canReassignWinner(played.match_id!, t.organizer)).toBe(
+        false,
+      );
+    });
+
+    it("still lets the winner change before the next stage is seeded", async () => {
+      const t = await tfx.launch(
+        [
+          ...RR4,
+          { type: "SingleElimination", order: 2, minTeams: 4, maxTeams: 4 },
+        ],
+        4,
       );
       const bracket = (await tfx.getBrackets(t.stageIds[0])).find(
         (b) => b.match_id !== null,
       )!;
       await tfx.winMatch(bracket.match_id!);
 
-      await expect(resetMatch(bracket.match_id!)).rejects.toThrow(
-        /only elimination stage matches can be reset/i,
+      expect(await lockReason(bracket.match_id!)).toBeNull();
+      expect(await canReassignWinner(bracket.match_id!, t.organizer)).toBe(
+        true,
       );
-      await expect(
-        postgres.query("SELECT * FROM preview_tournament_match_reset($1)", [
-          bracket.match_id,
-        ]),
-      ).rejects.toThrow(/only elimination stage matches can be reset/i);
-    }
+    });
+  });
+
+  describe("Swiss resets", () => {
+    const SWISS16 = [{ type: "Swiss", order: 1, minTeams: 16, maxTeams: 16 }];
+
+    it("takes a result back while its round is still being played", async () => {
+      const t = await tfx.launch(SWISS16, 16);
+      const bracket = (await tfx.getBrackets(t.stageIds[0])).find(
+        (b) => b.round === 1 && b.match_id !== null,
+      )!;
+      await tfx.winMatch(bracket.match_id!);
+
+      await resetMatch(bracket.match_id!);
+
+      const after = (await tfx.getBrackets(t.stageIds[0])).find(
+        (b) => b.id === bracket.id,
+      )!;
+      expect(after.finished).toBe(false);
+    });
+
+    it("locks once the next round was paired from the result", async () => {
+      const t = await tfx.launch(SWISS16, 16);
+      await tfx.playRound(t.stageIds[0], 1);
+
+      const played = (await tfx.getBrackets(t.stageIds[0])).find(
+        (b) => b.round === 1,
+      )!;
+
+      await expect(resetMatch(played.match_id!)).rejects.toThrow(
+        /next Swiss round was already paired/i,
+      );
+      expect(await canReassignWinner(played.match_id!, t.organizer)).toBe(
+        false,
+      );
+    });
   });
 });

@@ -15,11 +15,10 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     source_bracket_id uuid;
-    source_stage_type text;
+    lock_reason text;
 BEGIN
-    SELECT tb.id, ts.type INTO source_bracket_id, source_stage_type
+    SELECT tb.id INTO source_bracket_id
     FROM tournament_brackets tb
-    JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
     WHERE tb.match_id = _match_id
     LIMIT 1;
 
@@ -27,8 +26,10 @@ BEGIN
         RETURN;
     END IF;
 
-    IF source_stage_type NOT IN ('SingleElimination', 'DoubleElimination') THEN
-        RAISE EXCEPTION 'only elimination stage matches can be reset' USING ERRCODE = '22000';
+    lock_reason := tournament_result_lock_reason(source_bracket_id);
+
+    IF lock_reason IS NOT NULL THEN
+        RAISE EXCEPTION '%', lock_reason USING ERRCODE = '22000';
     END IF;
 
     RETURN QUERY
