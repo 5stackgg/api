@@ -126,8 +126,8 @@ export class AwardsService {
         `INSERT INTO public.awards
             (name, description, tier, silhouette, allow_multiple,
              created_by_steam_id, tournament_id, event_id, season_id,
-             league_season_id)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+             league_season_id, last_changed_by_steam_id)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $6)
           RETURNING *`,
         [
           input.name.trim(),
@@ -156,7 +156,8 @@ export class AwardsService {
               event_id = $8,
               season_id = $9,
               league_season_id = $10,
-              updated_at = now()
+              updated_at = now(),
+              last_changed_by_steam_id = $11
         WHERE id = $1
         RETURNING *`,
       [
@@ -170,6 +171,7 @@ export class AwardsService {
         input.event_id ?? null,
         input.season_id ?? null,
         input.league_season_id ?? null,
+        steamId,
       ],
     );
 
@@ -503,6 +505,7 @@ export class AwardsService {
     awardId: string,
     buffer: Buffer,
     mimetype: string,
+    steamId: string,
   ): Promise<string> {
     const award = await this.requireAward(awardId);
     const path = this.buildPath(awardId, mimetype);
@@ -514,15 +517,20 @@ export class AwardsService {
     }
 
     await this.postgres.query(
-      `UPDATE public.awards SET image_url = $1, updated_at = now() WHERE id = $2`,
-      [path, awardId],
+      `UPDATE public.awards
+          SET image_url = $1, updated_at = now(), last_changed_by_steam_id = $3
+        WHERE id = $2`,
+      [path, awardId, steamId],
     );
 
     this.logger.log(`Uploaded award ${awardId} image to ${path}`);
     return path;
   }
 
-  public async removeAwardImage(awardId: string): Promise<void> {
+  public async removeAwardImage(
+    awardId: string,
+    steamId: string,
+  ): Promise<void> {
     const award = await this.requireAward(awardId);
     if (!award.image_url) {
       return;
@@ -530,8 +538,10 @@ export class AwardsService {
 
     await this.s3.remove(award.image_url);
     await this.postgres.query(
-      `UPDATE public.awards SET image_url = NULL, updated_at = now() WHERE id = $1`,
-      [awardId],
+      `UPDATE public.awards
+          SET image_url = NULL, updated_at = now(), last_changed_by_steam_id = $2
+        WHERE id = $1`,
+      [awardId, steamId],
     );
   }
 

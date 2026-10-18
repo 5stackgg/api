@@ -1590,7 +1590,7 @@ type QueryDetail {
 
 type ActiveQuery {
   pid: Int!
-  usename: String!
+  usename: String
   application_name: String
   client_addr: String
   state: String!
@@ -1641,7 +1641,7 @@ type ConnectionStats {
 }
 
 type ConnectionByState {
-  state: String!
+  state: String
   count: Int!
   wait_event_type: String
   waiting_count: Int!
@@ -1681,7 +1681,7 @@ type LockInfo {
   granted: Boolean!
   usename: String
   query: String
-  pid: Int!
+  pid: Int
 }
 
 type TableIOStat {

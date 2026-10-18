@@ -1,6 +1,18 @@
 table:
   name: system_alerts
   schema: public
+object_relationships:
+  - name: last_changed_by
+    using:
+      foreign_key_constraint_on: last_changed_by_steam_id
+array_relationships:
+  - name: activations
+    using:
+      foreign_key_constraint_on:
+        column: alert_id
+        table:
+          name: system_alert_activations
+          schema: public
 insert_permissions:
   - role: administrator
     permission:
@@ -29,6 +41,8 @@ select_permissions:
         - created_by
         - created_at
         - updated_at
+        - last_changed_at
+        - last_changed_by_steam_id
       filter: {}
       allow_aggregations: true
     comment: ""

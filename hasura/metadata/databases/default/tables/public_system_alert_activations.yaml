@@ -1,0 +1,27 @@
+table:
+  name: system_alert_activations
+  schema: public
+object_relationships:
+  - name: alert
+    using:
+      foreign_key_constraint_on: alert_id
+  - name: ended_by
+    using:
+      foreign_key_constraint_on: ended_by_steam_id
+  - name: started_by
+    using:
+      foreign_key_constraint_on: started_by_steam_id
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - alert_id
+        - started_at
+        - ended_at
+        - started_by_steam_id
+        - ended_by_steam_id
+        - estimated
+      filter: {}
+      allow_aggregations: true
+    comment: ""

@@ -492,6 +492,7 @@ export class GameServerNodeController {
 
   @HasuraAction()
   public async setGameNodeSchedulingState(data: {
+    user?: User;
     game_server_node_id: string;
     enabled: boolean;
   }) {
@@ -499,6 +500,7 @@ export class GameServerNodeController {
       success: await this.gameServerNodeService.setAcceptingNewMatches(
         data.game_server_node_id,
         data.enabled,
+        data.user?.steam_id ?? null,
       ),
     };
   }

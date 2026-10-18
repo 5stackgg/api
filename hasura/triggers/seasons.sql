@@ -115,3 +115,15 @@ DROP TRIGGER IF EXISTS tai_seasons_reconcile ON public.seasons;
 CREATE TRIGGER tai_seasons_reconcile
 AFTER UPDATE OF starts_at, ends_at ON public.seasons
 FOR EACH ROW EXECUTE FUNCTION public.tai_seasons_reconcile();
+
+DROP TRIGGER IF EXISTS y_tbu_seasons_last_changed_by ON public.seasons;
+CREATE TRIGGER y_tbu_seasons_last_changed_by
+    BEFORE UPDATE OF last_changed_by_steam_id ON public.seasons
+    FOR EACH ROW EXECUTE FUNCTION public.tbu_last_changed_by_named();
+
+DROP TRIGGER IF EXISTS z_tbiu_seasons_last_changed ON public.seasons;
+CREATE TRIGGER z_tbiu_seasons_last_changed
+    BEFORE INSERT OR UPDATE ON public.seasons
+    FOR EACH ROW EXECUTE FUNCTION public.tbiu_stamp_last_changed(
+        'description', 'starts_at', 'ends_at'
+    );

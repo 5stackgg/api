@@ -19,10 +19,33 @@ interface ActiveLogStream {
   onClientClose: () => void;
 }
 
+// A socket keeps one live stream per service, so the Logs page can follow
+// several services at once, plus one for an earlier window ("since") per
+// service, so loading older lines doesn't end the live one. Capped so a client
+// that never sends logs:stop can't pile streams up; the oldest goes first.
+const MAX_STREAMS_PER_CLIENT = 16;
+
 const activeLogStreams = new WeakMap<
   FiveStackWebSocketClient,
-  ActiveLogStream
+  Map<string, ActiveLogStream>
 >();
+
+const streamKey = (service: string, since: boolean) =>
+  `${since ? "since" : "live"}:${service}`;
+
+function stopLogStream(client: FiveStackWebSocketClient, key: string) {
+  const streams = activeLogStreams.get(client);
+  const active = streams?.get(key);
+  if (!active) {
+    return;
+  }
+
+  client.removeListener("close", active.onClientClose);
+  if (!active.stream.destroyed) {
+    active.stream.destroy();
+  }
+  streams.delete(key);
+}
 
 @WebSocketGateway({
   path: "/ws/web",
@@ -75,13 +98,16 @@ export class SystemGateway {
           ? MapAssetsService.GET_JOB_NAME(service.replace("map-assets:", ""))
           : service;
 
-    const previousActive = activeLogStreams.get(client);
-    if (previousActive) {
-      client.removeListener("close", previousActive.onClientClose);
-      if (!previousActive.stream.destroyed) {
-        previousActive.stream.destroy();
-      }
-      activeLogStreams.delete(client);
+    const key = streamKey(service, !!since);
+    stopLogStream(client, key);
+
+    let streams = activeLogStreams.get(client);
+    if (!streams) {
+      streams = new Map();
+      activeLogStreams.set(client, streams);
+    }
+    while (streams.size >= MAX_STREAMS_PER_CLIENT) {
+      stopLogStream(client, streams.keys().next().value);
     }
 
     const stream = new PassThrough();
@@ -104,14 +130,14 @@ export class SystemGateway {
 
     const cleanup = () => {
       client.removeListener("close", onClientClose);
-      if (activeLogStreams.get(client)?.stream === stream) {
-        activeLogStreams.delete(client);
+      if (streams.get(key)?.stream === stream) {
+        streams.delete(key);
       }
     };
 
     stream.on("close", cleanup);
 
-    activeLogStreams.set(client, { stream, onClientClose });
+    streams.set(key, { stream, onClientClose });
 
     stream.on("end", async () => {
       let jobFinshed = false;
@@ -160,6 +186,33 @@ export class SystemGateway {
       if (!stream.destroyed) {
         stream.end();
       }
+    }
+  }
+
+  // Sent when a logs view is left or hidden. Naming a service stops only that
+  // service's streams, so another view still showing a different one keeps it;
+  // no service stops every stream on the socket.
+  @SubscribeMessage("logs:stop")
+  async stopLogs(
+    @MessageBody() data: { service?: string } | undefined,
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+  ) {
+    await client.authentication;
+
+    if (!client.user || !isRoleAbove(client.user.role, "administrator")) {
+      return;
+    }
+
+    const streams = activeLogStreams.get(client);
+    if (!streams) {
+      return;
+    }
+
+    const keys = data?.service
+      ? [streamKey(data.service, false), streamKey(data.service, true)]
+      : [...streams.keys()];
+    for (const key of keys) {
+      stopLogStream(client, key);
     }
   }
 }

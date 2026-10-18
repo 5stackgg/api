@@ -45,10 +45,11 @@ export class PostgresController {
       SELECT
           queryid,
           query,
-          plan,
           SUM(calls) AS calls,
           SUM(total_exec_time) AS total_exec_time,
-          AVG(mean_exec_time) AS mean_exec_time,
+          -- One statement can have a row per user and database; weight the
+          -- mean by calls rather than averaging the per-row means.
+          SUM(total_exec_time) / NULLIF(SUM(calls), 0) AS mean_exec_time,
           MAX(max_exec_time) AS max_exec_time,
           MIN(min_exec_time) AS min_exec_time,
           SUM(rows) AS total_rows,
@@ -57,6 +58,7 @@ export class PostgresController {
           SUM(local_blks_hit) AS local_blks_hit,
           SUM(local_blks_read) AS local_blks_read
       FROM pg_stat_statements
+      WHERE queryid IS NOT NULL
       GROUP BY queryid, query
       HAVING SUM(calls) > 5
       ORDER BY mean_exec_time DESC
@@ -284,7 +286,7 @@ export class PostgresController {
   public async getActiveQueries(): Promise<ActiveQuery[]> {
     type ActiveQueryRow = {
       pid: number;
-      usename: string;
+      usename: string | null;
       application_name: string | null;
       client_addr: string | null;
       state: string;
@@ -309,6 +311,7 @@ export class PostgresController {
         EXTRACT(EPOCH FROM (now() - query_start)) as duration_seconds
       FROM pg_stat_activity
       WHERE state != 'idle'
+        AND query_start IS NOT NULL
         AND pid != pg_backend_pid()
       ORDER BY query_start ASC
     `);
@@ -316,7 +319,7 @@ export class PostgresController {
     return (result as unknown as any[]).map((row) => ({
       __typename: "ActiveQuery",
       pid: Number(row.pid),
-      usename: String(row.usename),
+      usename: row.usename ? String(row.usename) : null,
       application_name: row.application_name
         ? String(row.application_name)
         : null,
@@ -468,7 +471,7 @@ export class PostgresController {
   @HasuraAction()
   public async getConnectionStats(): Promise<ConnectionStats> {
     type ConnectionByStateRow = {
-      state: string;
+      state: string | null;
       count: number;
       wait_event_type: string | null;
       waiting_count: number;
@@ -479,14 +482,16 @@ export class PostgresController {
         state,
         COUNT(*) as count,
         wait_event_type,
-        COUNT(*) FILTER (WHERE wait_event_type IS NOT NULL) as waiting_count
+        -- Blocked on a lock. Idle sessions sit in a Client wait (ClientRead)
+        -- and background workers in Activity waits; neither is waiting.
+        COUNT(*) FILTER (WHERE wait_event_type = 'Lock') as waiting_count
       FROM pg_stat_activity
       GROUP BY state, wait_event_type
     `);
 
     const byState = (result as unknown as any[]).map((row) => ({
       __typename: "ConnectionByState" as const,
-      state: String(row.state),
+      state: row.state ? String(row.state) : null,
       count: Number(row.count),
       wait_event_type: row.wait_event_type ? String(row.wait_event_type) : null,
       waiting_count: Number(row.waiting_count),
@@ -629,7 +634,7 @@ export class PostgresController {
       granted: boolean;
       usename: string | null;
       query: string | null;
-      pid: number;
+      pid: number | null;
     };
 
     const result = await this.postgres.query<LockInfoRow>(`
@@ -654,7 +659,7 @@ export class PostgresController {
       granted: Boolean(row.granted),
       usename: row.usename ? String(row.usename) : null,
       query: row.query ? String(row.query) : null,
-      pid: Number(row.pid),
+      pid: row.pid !== null ? Number(row.pid) : null,
     }));
   }
 
