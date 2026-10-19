@@ -181,12 +181,18 @@ export class BatchUtilityRenderJob extends WorkerHost {
         return this.again(job);
       }
 
+      // Every row nobody has is waiting on this booking, so each gets told why
+      // it is still waiting.
+      const waiting = unclaimed.map((render) => render.id);
+
       if ((await this.gameStreamer.freeRenderGpuNodeIds()).length === 0) {
-        this.logger.log(`${tag} no GPU free to film on yet`);
+        const reason = await this.practice.renderWaitReason();
+        this.logger.log(`${tag} no GPU free to film on yet (${reason})`);
         await this.renders.stampBootStage(
           inFlight.map((render) => render.id),
           "booking_server:NoGpuAvailable",
         );
+        await this.renders.noteBootProblem(waiting, reason);
         return this.delayUntilNext(job, GPU_BUSY_RETRY_MS);
       }
 
@@ -199,9 +205,11 @@ export class BatchUtilityRenderJob extends WorkerHost {
       } catch (error) {
         const message = (error as Error)?.message ?? "no practice server";
         this.logger.log(`${tag} no practice server yet (${message})`);
+        await this.renders.noteBootProblem(waiting, message);
         return this.delayUntilNext(job, SERVER_BUSY_RETRY_MS);
       }
 
+      await this.renders.clearBootProblem(waiting);
       await this.renders.attachSession(
         inFlight.map((render) => render.id),
         session.id,

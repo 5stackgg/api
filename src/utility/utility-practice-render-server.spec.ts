@@ -191,8 +191,9 @@ describe("UtilityPracticeService.startForRender", () => {
     const { service, headroom, createMatch } = makeService();
     headroom.mockResolvedValue(false);
 
+    // Said on the waiting rows, so it names the setting that holds it back.
     await expect(render(service)).rejects.toThrow(
-      "no practice servers are free right now",
+      "Reserved on-demand slots (Settings → Application → Utility)",
     );
 
     expect(headroom).toHaveBeenCalledWith("TestA");
@@ -214,12 +215,15 @@ describe("UtilityPracticeService.startForRender", () => {
     );
   });
 
-  it("waits while no GPU free to render on has a server free", async () => {
+  it("waits while no GPU free to render on has a server free, saying why", async () => {
     const { service, matchAssistant, createMatch } = makeService();
     matchAssistant.renderNodes.mockResolvedValue([]);
+    jest
+      .spyOn(service, "renderWaitReason")
+      .mockResolvedValue("waiting for the GPU node to finish updating CS2");
 
     await expect(render(service)).rejects.toThrow(
-      "no practice servers are free right now",
+      "waiting for the GPU node to finish updating CS2",
     );
     expect(createMatch).not.toHaveBeenCalled();
   });

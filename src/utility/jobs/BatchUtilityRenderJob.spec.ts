@@ -61,6 +61,7 @@ describe("BatchUtilityRenderJob", () => {
       stampBootStage: jest.fn(),
       bootStatusForMatch: jest.fn().mockResolvedValue(null),
       noteBootProblem: jest.fn(),
+      clearBootProblem: jest.fn(),
       failRenders: jest.fn(async (ids: Array<string>) => {
         queue = queue.filter((render) => !ids.includes(render.id));
       }),
@@ -84,6 +85,11 @@ describe("BatchUtilityRenderJob", () => {
       endRenderSession: jest.fn(),
       canPracticeOn: jest.fn().mockResolvedValue(true),
       markRenderPod: jest.fn(),
+      renderWaitReason: jest
+        .fn()
+        .mockResolvedValue(
+          "waiting for a GPU: every one is busy with a live stream, a demo or another render",
+        ),
     };
     gameStreamer = {
       dispatchNadePreviews: jest
@@ -452,7 +458,10 @@ describe("BatchUtilityRenderJob", () => {
   // Booked when every map had a job of its own. Left running as a second
   // queue worker it booked a second server for the same rows.
   it("hands what is left to the queue's one job once a per-map job holds nothing", async () => {
-    const bull = makeJob({ mapName: "de_mirage" }, "utility-render-batch-de_mirage");
+    const bull = makeJob(
+      { mapName: "de_mirage" },
+      "utility-render-batch-de_mirage",
+    );
 
     await job.process(bull as any);
 
@@ -482,9 +491,7 @@ describe("BatchUtilityRenderJob", () => {
   // in flight forever: nothing films it and its lineup cannot be queued again.
   it("fails a render still held by a pod that no longer exists", async () => {
     const orphan = { ...HANDED, utility_practice_session_id: "session-0" };
-    renders.inFlight
-      .mockResolvedValueOnce([orphan])
-      .mockResolvedValueOnce([]);
+    renders.inFlight.mockResolvedValueOnce([orphan]).mockResolvedValueOnce([]);
     gameStreamer.getNadeRenderPodState.mockResolvedValueOnce("absent");
     const bull = makeJob({});
 
@@ -542,7 +549,9 @@ describe("BatchUtilityRenderJob", () => {
     expect(bull.data.sessionId).toBeUndefined();
   });
 
-  it("books nothing while no GPU is free to film on", async () => {
+  // The wait used to be said nowhere: the row sat on "booking a practice
+  // server", and the reason was one api log line.
+  it("books nothing while no GPU is free to film on, and says why on the row", async () => {
     gameStreamer.freeRenderGpuNodeIds.mockResolvedValueOnce([]);
     const bull = makeJob({});
 
@@ -550,6 +559,10 @@ describe("BatchUtilityRenderJob", () => {
 
     expect(practice.startForRender).not.toHaveBeenCalled();
     expect(renders.failRenders).not.toHaveBeenCalled();
+    expect(renders.noteBootProblem).toHaveBeenCalledWith(
+      ["render-1"],
+      "waiting for a GPU: every one is busy with a live stream, a demo or another render",
+    );
   });
 
   it("gives up on a GPU that stays busy and frees the practice server", async () => {
@@ -572,9 +585,9 @@ describe("BatchUtilityRenderJob", () => {
     expect(practice.endRenderSession).toHaveBeenCalled();
   });
 
-  it("retries instead of failing when no practice server is free", async () => {
+  it("retries instead of failing when no practice server is free, and says why on the row", async () => {
     practice.startForRender.mockRejectedValueOnce(
-      new Error("no server available"),
+      new Error("waiting for a free server slot on the GPU node"),
     );
     const bull = makeJob({});
 
@@ -582,6 +595,23 @@ describe("BatchUtilityRenderJob", () => {
 
     expect(renders.failRenders).not.toHaveBeenCalled();
     expect(bull.moveToDelayed).toHaveBeenCalled();
+    expect(renders.noteBootProblem).toHaveBeenCalledWith(
+      ["render-1"],
+      "waiting for a free server slot on the GPU node",
+    );
+    expect(renders.clearBootProblem).not.toHaveBeenCalled();
+  });
+
+  // A pod's status posts keep error_message, so a wait note left behind would
+  // still be on a render that went on to film fine.
+  it("clears the wait note once a server is booked", async () => {
+    const bull = makeJob({});
+
+    await expect(job.process(bull as any)).rejects.toBeInstanceOf(DelayedError);
+
+    expect(practice.startForRender).toHaveBeenCalled();
+    expect(renders.clearBootProblem).toHaveBeenCalledWith(["render-1"]);
+    expect(renders.noteBootProblem).not.toHaveBeenCalled();
   });
 
   it("waits for the server to be Ready before spending a GPU", async () => {

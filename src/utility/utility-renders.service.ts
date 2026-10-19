@@ -1055,8 +1055,24 @@ export class UtilityRendersService {
           SET error_message = $2,
               last_status_at = now()
         WHERE id = ANY($1::uuid[])
-          AND status = ANY($3::text[])`,
+          AND status = ANY($3::text[])
+          AND error_message IS DISTINCT FROM $2`,
       [renderIds, note.slice(0, 500), [...UTILITY_RENDER_IN_FLIGHT]],
+    );
+  }
+
+  // The note goes once the wait it explained is over. Left on the row, every
+  // pod status after it keeps it (error_message is COALESCEd), so a render
+  // that went on to film fine would still read as stuck.
+  public async clearBootProblem(renderIds: Array<string>): Promise<void> {
+    if (renderIds.length === 0) return;
+    await this.postgres.query(
+      `UPDATE public.utility_lineup_renders
+          SET error_message = NULL
+        WHERE id = ANY($1::uuid[])
+          AND status = ANY($2::text[])
+          AND error_message IS NOT NULL`,
+      [renderIds, [...UTILITY_RENDER_IN_FLIGHT]],
     );
   }
 
