@@ -69,6 +69,7 @@ CREATE OR REPLACE FUNCTION public.tbu_match_options() RETURNS TRIGGER
 DECLARE
     _match_status text;
     _tournament_ids uuid[];
+    _in_play text;
 BEGIN
     SELECT m.status INTO _match_status
         FROM matches m
@@ -149,6 +150,32 @@ BEGIN
             END IF;
 
             NEW.map_pool_id := OLD.map_pool_id;
+        END IF;
+    END IF;
+
+    IF NEW.best_of IS DISTINCT FROM OLD.best_of
+        OR EXISTS (
+            SELECT 1 FROM unnest(match_options_rule_columns()) AS rule(col)
+            WHERE to_jsonb(NEW) -> rule.col IS DISTINCT FROM to_jsonb(OLD) -> rule.col
+        ) THEN
+        _in_play := tournament_match_options_in_play(OLD.id);
+
+        IF _in_play IS NOT NULL THEN
+            IF NEW.map_pool_id IS DISTINCT FROM OLD.map_pool_id
+                AND (SELECT array_agg(map_id ORDER BY map_id) FROM _map_pool WHERE map_pool_id = NEW.map_pool_id)
+                    IS NOT DISTINCT FROM
+                    (SELECT array_agg(map_id ORDER BY map_id) FROM _map_pool WHERE map_pool_id = OLD.map_pool_id) THEN
+                NEW.map_pool_id := OLD.map_pool_id;
+            END IF;
+
+            -- No role is exempt: one match playing other rules than its stage is the abuse this stops.
+            IF (_in_play = 'match' AND NEW.best_of IS DISTINCT FROM OLD.best_of)
+                OR EXISTS (
+                    SELECT 1 FROM unnest(match_options_rule_columns()) AS rule(col)
+                    WHERE to_jsonb(NEW) -> rule.col IS DISTINCT FROM to_jsonb(OLD) -> rule.col
+                ) THEN
+                RAISE EXCEPTION 'Match rules are locked once a tournament stage has matches' USING ERRCODE = '22000';
+            END IF;
         END IF;
     END IF;
 

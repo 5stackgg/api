@@ -321,23 +321,21 @@ describe("a tournament's map pool once the bracket is drawn (SQL-driven)", () =>
       ]);
     });
 
-    it("still lets one match that has not started be given another pool", async () => {
+    it("refuses one match that has not started another pool", async () => {
       const tournament = await drawnTournament();
       const before = await tournamentOptions(tournament.id);
       const other = await copyPool(tournament.id, { without: 1 });
 
-      await postgres.query(
-        "UPDATE match_options SET map_pool_id = $1 WHERE id = $2",
-        [other, before.matches[0].id],
+      await expect(
+        postgres.query(
+          "UPDATE match_options SET map_pool_id = $1 WHERE id = $2",
+          [other, before.matches[0].id],
+        ),
+      ).rejects.toThrow(
+        /Match rules are locked once a tournament stage has matches/,
       );
 
-      const after = await tournamentOptions(tournament.id);
-      expect(after.matches.map((match) => match.map_pool_id)).toEqual([
-        other,
-        before.template.map_pool_id,
-      ]);
-      expect(after.template).toEqual(before.template);
-      expect(after.stages).toEqual(before.stages);
+      expect(await tournamentOptions(tournament.id)).toEqual(before);
     });
   });
 
