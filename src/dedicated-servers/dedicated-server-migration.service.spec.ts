@@ -16,6 +16,7 @@ const node = (
   status: "Online",
   node_ip: "100.64.0.2",
   update_status: null,
+  csgo_update_status: null,
   build_id: 100,
   csgo_build_id: null,
   disk_available_gb: 100,
@@ -653,6 +654,12 @@ describe("DedicatedServerMigrationService", () => {
         cs2,
         /updating/,
       ],
+      [
+        "a node updating CS:GO for a CS:GO server",
+        node({ csgo_build_id: 12426148, csgo_update_status: "Initializing" }),
+        { game: "csgo", game_server_node_id: "node-a" },
+        /updating CS:GO/,
+      ],
       ["a node without CS2", node({ build_id: null }), cs2, /CS2/],
       [
         "a node without CS:GO for a CS:GO server",
@@ -673,6 +680,15 @@ describe("DedicatedServerMigrationService", () => {
           target,
         ),
       ).toMatch(reason);
+    });
+
+    it("accepts a CS2 server on a node that is only updating CS:GO", () => {
+      expect(
+        DedicatedServerMigrationService.moveTargetIneligibility(
+          node({ csgo_update_status: "Initializing" }),
+          cs2,
+        ),
+      ).toBeNull();
     });
 
     it("accepts a node that is not taking new matches", () => {

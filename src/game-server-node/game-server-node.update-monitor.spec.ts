@@ -1,12 +1,15 @@
 const createNamespacedJob = jest.fn();
 const deleteNamespacedJob = jest.fn();
+const readNamespacedPodLog = jest.fn();
 
 jest.mock("@kubernetes/client-node", () => ({
   BatchV1Api: class BatchV1Api {
     createNamespacedJob = createNamespacedJob;
     deleteNamespacedJob = deleteNamespacedJob;
   },
-  CoreV1Api: class CoreV1Api {},
+  CoreV1Api: class CoreV1Api {
+    readNamespacedPodLog = readNamespacedPodLog;
+  },
   KubeConfig: class KubeConfig {
     loadFromDefault() {}
     makeApiClient(ctor: new () => unknown) {
@@ -56,6 +59,7 @@ describe("GameServerNodeService — CS2 update status", () => {
     },
   };
   let redisKeys: Set<string>;
+  let nodeRows: Array<Record<string, unknown>>;
   const redis = {
     set: jest.fn(async (key: string) => {
       if (redisKeys.has(key)) {
@@ -74,11 +78,10 @@ describe("GameServerNodeService — CS2 update status", () => {
   const logLine = (log: string) =>
     JSON.stringify({ pod: runningPod.metadata.name, log });
 
-  const statusWrites = () =>
-    hasura.mutation.mock.calls.map(
-      ([mutation]) =>
-        mutation.update_game_server_nodes_by_pk.__args._set.update_status,
-    );
+  const statusWrites = (column = "update_status") =>
+    postgres.query.mock.calls
+      .filter(([sql]) => new RegExp(`SET ${column} = \\$2`).test(sql))
+      .map(([, params]) => params[1]);
 
   const terminalWrites = () =>
     events.filter((event) => event.startsWith("terminal"));
@@ -89,28 +92,29 @@ describe("GameServerNodeService — CS2 update status", () => {
     });
     createNamespacedJob.mockReset().mockResolvedValue({});
     deleteNamespacedJob.mockReset().mockResolvedValue({});
+    readNamespacedPodLog.mockReset().mockResolvedValue("");
     redisKeys = new Set();
+    nodeRows = [];
     events = [];
 
     hasura = {
       query: jest.fn(),
-      mutation: jest.fn(async (mutation) => {
-        const status =
-          mutation.update_game_server_nodes_by_pk.__args._set.update_status;
-        if (status === null) {
-          events.push("terminal:hasura");
-        }
-        return {};
-      }),
+      mutation: jest.fn(),
     };
     postgres = {
-      query: jest.fn(async (sql: string) => {
+      query: jest.fn(async (sql: string, params?: Array<unknown>) => {
+        if (/^\s*SELECT/.test(sql)) {
+          return nodeRows;
+        }
         if (/update_failed_at = now\(\)/.test(sql)) {
           events.push("terminal:failed");
           return [{ id: NODE_ID }];
         }
         if (/update_status = NULL/.test(sql)) {
           events.push("terminal:succeeded");
+        }
+        if (/update_status = \$2/.test(sql) && params?.[1] === null) {
+          events.push("terminal:status");
         }
         return [];
       }),
@@ -177,7 +181,7 @@ describe("GameServerNodeService — CS2 update status", () => {
 
   it("does not let a slow progress write land after the terminal write", async () => {
     let releaseProgress: () => void = () => {};
-    hasura.mutation.mockImplementationOnce(() => {
+    postgres.query.mockImplementationOnce(() => {
       events.push("progress:start");
       return new Promise<void>((resolve) => {
         releaseProgress = () => {
@@ -299,9 +303,13 @@ describe("GameServerNodeService — CS2 update status", () => {
   });
 
   it("does not let a kept csgo failure touch a running cs2 update", async () => {
-    hasura.query.mockResolvedValue({
-      game_server_nodes: [{ id: NODE_ID, update_status: "downloading 12%" }],
-    });
+    nodeRows = [
+      {
+        id: NODE_ID,
+        update_status: "downloading 12%",
+        csgo_update_status: null,
+      },
+    ];
     loggingService.getJob.mockImplementation(async (name: string) =>
       name === CSGO_JOB_NAME
         ? recorded({
@@ -331,11 +339,13 @@ describe("GameServerNodeService — CS2 update status", () => {
   });
 
   it("clears a stale status when only a recorded, kept job is left", async () => {
-    hasura.query.mockResolvedValue({
-      game_server_nodes: [
-        { id: NODE_ID, update_status: "verifying install 49%" },
-      ],
-    });
+    nodeRows = [
+      {
+        id: NODE_ID,
+        update_status: "verifying install 49%",
+        csgo_update_status: null,
+      },
+    ];
     loggingService.getJob.mockImplementation(async (name: string) =>
       name === JOB_NAME ? recorded(failedJob) : null,
     );
@@ -390,7 +400,7 @@ describe("GameServerNodeService — CS2 update status", () => {
     expect(statusWrites().at(-1)).toBeNull();
   });
 
-  it("deletes a succeeded job and clears a previous failure", async () => {
+  it("keeps a succeeded job for its logs and clears a previous failure", async () => {
     loggingService.getJob.mockResolvedValue({
       metadata: { name: JOB_NAME, uid: "uid-succeeded" },
       status: { succeeded: 1 },
@@ -400,18 +410,14 @@ describe("GameServerNodeService — CS2 update status", () => {
     await service.monitorUpdateStatus(NODE_ID);
 
     expect(postgres.query).toHaveBeenCalledWith(
-      expect.stringMatching(/update_failed_at = NULL/),
+      expect.stringMatching(/update_failed_at = NULL,\s+update_error = NULL/),
       [NODE_ID],
     );
-    expect(deleteNamespacedJob).toHaveBeenCalledWith(
-      expect.objectContaining({
-        name: JOB_NAME,
-        body: {
-          propagationPolicy: "Background",
-          preconditions: { uid: "uid-succeeded" },
-        },
-      }),
-    );
+    expect(deleteNamespacedJob).not.toHaveBeenCalled();
+
+    await service.monitorUpdateStatus(NODE_ID);
+
+    expect(terminalWrites()).toEqual(["terminal:succeeded"]);
   });
 
   it("does not report steamcmd's closing unknown state as the update status", async () => {
@@ -465,9 +471,9 @@ describe("GameServerNodeService — CS2 update status", () => {
     expect(finished).toBe(true);
     expect(statusWrites()).toEqual([null]);
 
-    hasura.query.mockResolvedValue({
-      game_server_nodes: [{ id: NODE_ID, update_status: "unknown 0%" }],
-    });
+    nodeRows = [
+      { id: NODE_ID, update_status: "unknown 0%", csgo_update_status: null },
+    ];
     const monitor = jest
       .spyOn(service, "monitorUpdateStatus")
       .mockResolvedValue(undefined);
@@ -479,43 +485,143 @@ describe("GameServerNodeService — CS2 update status", () => {
   });
 
   it("reconciles a stuck status on a disabled node", async () => {
-    const disabledNode = {
-      id: NODE_ID,
-      enabled: false,
-      update_status: "unknown 0%",
-    };
-    const matches = (where: any): boolean =>
-      where._or
-        ? where._or.some(matches)
-        : where.enabled
-          ? disabledNode.enabled === where.enabled._eq
-          : (disabledNode.update_status !== null) ===
-            !where.update_status._is_null;
-    hasura.query.mockImplementation(async ({ game_server_nodes }) => ({
-      game_server_nodes: matches(game_server_nodes.__args.where)
-        ? [disabledNode]
-        : [],
-    }));
+    nodeRows = [
+      {
+        id: NODE_ID,
+        enabled: false,
+        update_status: "unknown 0%",
+        csgo_update_status: null,
+      },
+    ];
     loggingService.getJob.mockResolvedValue(null);
 
     await service.reconcileUpdateStatuses();
 
+    expect(postgres.query.mock.calls[0][0]).toMatch(
+      /WHERE enabled\s+OR update_status IS NOT NULL\s+OR csgo_update_status IS NOT NULL/,
+    );
     expect(statusWrites()).toEqual([null]);
   });
 
   it("leaves the status alone when a retry replaced the succeeded job", async () => {
-    loggingService.getJob.mockResolvedValue({
-      metadata: { name: JOB_NAME, uid: "uid-succeeded" },
-      status: { succeeded: 1 },
-    });
+    loggingService.getJob
+      .mockResolvedValueOnce({
+        metadata: { name: JOB_NAME, uid: "uid-succeeded" },
+        status: { succeeded: 1 },
+      })
+      .mockResolvedValue(runningJob);
     loggingService.getJobPod.mockResolvedValue(undefined);
-    deleteNamespacedJob.mockRejectedValue(
-      Object.assign(new Error("Precondition failed: UID"), { code: 409 }),
-    );
 
     await service.monitorUpdateStatus(NODE_ID);
 
     expect(terminalWrites()).toEqual([]);
+  });
+
+  it("keeps the last lines of a failed update's log", async () => {
+    loggingService.getJob.mockResolvedValue(failedJob);
+    loggingService.getJobPod.mockResolvedValue({
+      ...runningPod,
+      status: { phase: "Failed" },
+    });
+    readNamespacedPodLog.mockResolvedValue(
+      [
+        "---Downloading Depot 2347773 (2/3) manifest 4470192286501839716---",
+        "[depot 2347773] 2731 MB / 3010 MB (90%) downloaded (19807 files)...",
+        "",
+        "\u001b[0mDepot 2347773 download did not complete. Exiting.",
+        "",
+      ].join("\n"),
+    );
+
+    await service.monitorUpdateStatus(NODE_ID);
+
+    expect(readNamespacedPodLog).toHaveBeenCalledWith(
+      expect.objectContaining({ name: runningPod.metadata.name }),
+    );
+    expect(postgres.query).toHaveBeenCalledWith(
+      expect.stringMatching(/update_failed_at = now\(\),\s+update_error = \$2/),
+      [
+        NODE_ID,
+        [
+          "---Downloading Depot 2347773 (2/3) manifest 4470192286501839716---",
+          "[depot 2347773] 2731 MB / 3010 MB (90%) downloaded (19807 files)...",
+          "Depot 2347773 download did not complete. Exiting.",
+        ].join("\n"),
+      ],
+    );
+  });
+
+  it("still records a failure whose log can't be read", async () => {
+    loggingService.getJob.mockResolvedValue(failedJob);
+    loggingService.getJobPod.mockResolvedValue({
+      ...runningPod,
+      status: { phase: "Failed" },
+    });
+    readNamespacedPodLog.mockRejectedValue(new Error("pod is gone"));
+
+    await service.monitorUpdateStatus(NODE_ID);
+
+    expect(terminalWrites()).toEqual(["terminal:failed"]);
+    expect(postgres.query).toHaveBeenCalledWith(
+      expect.stringMatching(/update_error = \$2/),
+      [NODE_ID, null],
+    );
+  });
+
+  it("writes a CS:GO update to CS:GO's own columns", async () => {
+    loggingService.getJob
+      .mockResolvedValueOnce({
+        ...runningJob,
+        metadata: { name: CSGO_JOB_NAME, uid: "uid-csgo" },
+      })
+      .mockResolvedValue({
+        metadata: { name: CSGO_JOB_NAME, uid: "uid-csgo" },
+        status: { succeeded: 1 },
+      });
+    loggingService.getJobPod.mockResolvedValue(runningPod);
+    loggingService.getLogsForPod.mockImplementation(
+      async (_pod: unknown, stream: PassThrough) => {
+        stream.write(logLine(PROGRESS));
+        stream.end();
+      },
+    );
+
+    const monitor = service.monitorUpdateStatus(NODE_ID, "csgo");
+    await jest.advanceTimersByTimeAsync(10 * 1000);
+    await monitor;
+
+    expect(statusWrites("csgo_update_status")).toEqual([
+      "verifying install 49%",
+    ]);
+    expect(statusWrites()).toEqual([]);
+    expect(postgres.query).toHaveBeenCalledWith(
+      expect.stringMatching(
+        /SET csgo_update_status = NULL,\s+csgo_update_failed_at = NULL,\s+csgo_update_error = NULL/,
+      ),
+      [NODE_ID],
+    );
+  });
+
+  it("clears a stale CS:GO status while CS2 keeps updating", async () => {
+    nodeRows = [
+      {
+        id: NODE_ID,
+        update_status: "downloading 12%",
+        csgo_update_status: "Initializing",
+      },
+    ];
+    loggingService.getJob.mockImplementation(async (name: string) =>
+      name === CSGO_JOB_NAME ? null : runningJob,
+    );
+    const monitor = jest
+      .spyOn(service, "monitorUpdateStatus")
+      .mockResolvedValue(undefined);
+
+    await service.reconcileUpdateStatuses();
+
+    expect(monitor.mock.calls).toEqual([[NODE_ID, "cs2"]]);
+    expect(statusWrites()).toEqual([]);
+    expect(statusWrites("csgo_update_status")).toEqual([null]);
   });
 
   it("replaces a failed job when the update is retried instead of only watching it", async () => {
@@ -551,5 +657,51 @@ describe("GameServerNodeService — CS2 update status", () => {
     expect(deleteNamespacedJob.mock.invocationCallOrder[0]).toBeLessThan(
       createNamespacedJob.mock.invocationCallOrder[0],
     );
+    expect(
+      createNamespacedJob.mock.calls[0][0].body.spec.ttlSecondsAfterFinished,
+    ).toBe(7 * 24 * 60 * 60);
+  });
+
+  it("starts a CS:GO update on CS:GO's columns", async () => {
+    hasura.query.mockResolvedValue({
+      game_server_nodes_by_pk: {
+        build_id: 25537370,
+        pinned_version: null,
+        update_status: null,
+        pin_plugin_version: null,
+        pin_plugin_runtime: null,
+      },
+    });
+    jest.spyOn(service as any, "createVolumes").mockResolvedValue(undefined);
+    jest.spyOn(service, "monitorUpdateStatus").mockResolvedValue(undefined);
+    loggingService.getJob.mockResolvedValue(null);
+
+    await service.updateCsServer(NODE_ID, false, "csgo");
+
+    expect(postgres.query).toHaveBeenCalledWith(
+      expect.stringMatching(
+        /SET csgo_update_status = 'Initializing',\s+csgo_update_failed_at = NULL,\s+csgo_update_error = NULL/,
+      ),
+      [NODE_ID],
+    );
+  });
+});
+
+describe("GameServerNodeService update logs", () => {
+  it("names each game's update job from its log service", () => {
+    expect(GameServerNodeService.updateLogJobName("cs-update:node.a")).toBe(
+      "update-cs-server-node-a",
+    );
+    expect(GameServerNodeService.updateLogJobName("csgo-update:node.a")).toBe(
+      "update-csgo-server-node-a",
+    );
+    expect(GameServerNodeService.updateLogJobName("api")).toBeNull();
+  });
+
+  it("keeps the last non-empty lines without colour codes", () => {
+    expect(
+      GameServerNodeService.lastLogLines("one\n\u001b[0mtwo\n\n  \nthree\n", 2),
+    ).toBe("two\nthree");
+    expect(GameServerNodeService.lastLogLines("\n\n", 3)).toBeNull();
   });
 });

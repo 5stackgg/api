@@ -8,6 +8,7 @@ import { HasuraService } from "src/hasura/hasura.service";
 import { NotificationsService } from "src/notifications/notifications.service";
 import { BakeShaders } from "./BakeShaders";
 import { DISCORD_COLORS } from "src/notifications/utilities/constants";
+import { SystemSettingName } from "src/system/enums/SystemSettingName";
 
 type Depot = {
   systemdefined?: string;
@@ -53,6 +54,10 @@ export class CheckGameUpdate extends WorkerHost {
   }
 
   async process(): Promise<void> {
+    await this.updateCsgoBuild().catch((error) => {
+      this.logger.warn("Failed to check for a CS:GO update", error);
+    });
+
     // Read before the prune below, which deletes the previous build's row.
     const previousBuild = await this.gameServerNodeService.getCurrentBuild();
 
@@ -287,6 +292,52 @@ export class CheckGameUpdate extends WorkerHost {
         },
       );
     }
+  }
+
+  // CS:GO's dedicated server (app 740) keeps its own build. Only its number is
+  // kept, for the panel to compare installs against; the setting is written
+  // only when it changes, since every write fires the settings event.
+  private async updateCsgoBuild(): Promise<void> {
+    const response = await fetch("https://api.steamcmd.net/v1/info/740");
+    if (!response.ok) {
+      this.logger.warn("Failed to fetch CS:GO update", {
+        status: response.status,
+        statusText: response.statusText,
+      });
+      return;
+    }
+
+    const { data } = await response.json();
+    const buildId = parseInt(data?.["740"]?.depots?.branches?.public?.buildid);
+    if (!buildId) {
+      return;
+    }
+
+    const { settings_by_pk } = await this.hasuraService.query({
+      settings_by_pk: {
+        __args: { name: SystemSettingName.CsgoBuildId },
+        value: true,
+      },
+    });
+    if (settings_by_pk?.value === buildId.toString()) {
+      return;
+    }
+
+    await this.hasuraService.mutation({
+      insert_settings_one: {
+        __args: {
+          object: {
+            name: SystemSettingName.CsgoBuildId,
+            value: buildId.toString(),
+          },
+          on_conflict: {
+            constraint: "settings_pkey",
+            update_columns: ["value"],
+          },
+        },
+        __typename: true,
+      },
+    });
   }
 
   private async getGameData(): Promise<GameData> {

@@ -72,6 +72,7 @@ export class SystemController {
     // m- = match jobs, u- = utility practice jobs, gs- = game-streamer jobs; all read by job-name label.
     const isJob =
       service.startsWith("cs-update:") ||
+      service.startsWith("csgo-update:") ||
       service.startsWith("shader-bake:") ||
       service.startsWith("m-") ||
       service.startsWith("u-") ||
@@ -107,15 +108,12 @@ export class SystemController {
       });
 
       await this.loggingService.getServiceLogs(
-        service.startsWith("cs-update:")
-          ? GameServerNodeService.GET_UPDATE_JOB_NAME(
-              service.replace("cs-update:", ""),
-            )
-          : service.startsWith("shader-bake:")
+        GameServerNodeService.updateLogJobName(service) ??
+          (service.startsWith("shader-bake:")
             ? GameStreamerService.GET_BAKE_JOB_NAME(
                 service.replace("shader-bake:", ""),
               )
-            : service,
+            : service),
         stream,
         tailLines,
         !!previous,

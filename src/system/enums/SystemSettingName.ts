@@ -33,6 +33,9 @@ export enum SystemSettingName {
   SupportsDiscordBot = "public.supports_discord_bot",
   SupportsGameServerNodes = "supports_game_server_nodes",
   SupportsGameServerVersionPinning = "supports_game_server_version_pinning",
+  // Written by the game update check: CS:GO's latest public build (app 740),
+  // which a node's installed CS:GO build is compared against.
+  CsgoBuildId = "csgo_build_id",
   EventsEnabled = "public.events_enabled",
   NewsEnabled = "public.news_enabled",
   NewsLabel = "public.news_label",

@@ -79,6 +79,9 @@ select_permissions:
         - cpu_warnings
         - cs2_video_settings
         - csgo_build_id
+        - csgo_update_error
+        - csgo_update_failed_at
+        - csgo_update_status
         - demo_network_limiter
         - disk_available_gb
         - disk_used_percent
@@ -111,6 +114,7 @@ select_permissions:
         - status
         - supports_cpu_pinning
         - supports_low_latency
+        - update_error
         - update_failed_at
         - update_status
       computed_fields:

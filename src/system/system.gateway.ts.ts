@@ -81,22 +81,21 @@ export class SystemGateway {
     // m- = match jobs, u- = utility practice jobs, gs- = game-streamer jobs; all read by job-name label.
     const isJob =
       service.startsWith("cs-update:") ||
+      service.startsWith("csgo-update:") ||
       service.startsWith("shader-bake:") ||
       service.startsWith("map-assets:") ||
       service.startsWith("m-") ||
       service.startsWith("u-") ||
       service.startsWith("gs-");
-    const resolvedService = service.startsWith("cs-update:")
-      ? GameServerNodeService.GET_UPDATE_JOB_NAME(
-          service.replace("cs-update:", ""),
-        )
-      : service.startsWith("shader-bake:")
+    const resolvedService =
+      GameServerNodeService.updateLogJobName(service) ??
+      (service.startsWith("shader-bake:")
         ? GameStreamerService.GET_BAKE_JOB_NAME(
             service.replace("shader-bake:", ""),
           )
         : service.startsWith("map-assets:")
           ? MapAssetsService.GET_JOB_NAME(service.replace("map-assets:", ""))
-          : service;
+          : service);
 
     const key = streamKey(service, !!since);
     stopLogStream(client, key);

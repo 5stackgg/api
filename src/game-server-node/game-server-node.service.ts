@@ -162,8 +162,32 @@ export class GameServerNodeService {
     return await SteamRelay.report(this.postgres, serverId, relay);
   }
 
-  // long enough to read a failed update's logs; the monitor deletes succeeded jobs itself
-  private static readonly UPDATE_JOB_TTL_S = 24 * 60 * 60;
+  // finished update jobs are kept a week for their logs, like the gamedata and
+  // map-assets jobs; the next update of the same game deletes the old one first
+  private static readonly UPDATE_JOB_TTL_S = 7 * 24 * 60 * 60;
+
+  // the last log lines kept with a failed update, enough to say why it failed
+  private static readonly UPDATE_ERROR_LINES = 3;
+
+  // CS2 and CS:GO each have their own update status, failure time and error.
+  private static readonly UPDATE_COLUMNS = {
+    cs2: {
+      status: "update_status",
+      failedAt: "update_failed_at",
+      error: "update_error",
+    },
+    csgo: {
+      status: "csgo_update_status",
+      failedAt: "csgo_update_failed_at",
+      error: "csgo_update_error",
+    },
+  } as const;
+
+  private static updateColumns(game: string) {
+    return game === "csgo"
+      ? GameServerNodeService.UPDATE_COLUMNS.csgo
+      : GameServerNodeService.UPDATE_COLUMNS.cs2;
+  }
 
   // a k8s log follow can stall without ever ending, so stop waiting on it and re-check the job
   private static readonly UPDATE_LOG_IDLE_MS = 60 * 1000;
@@ -177,6 +201,23 @@ export class GameServerNodeService {
     return game === "csgo"
       ? `update-csgo-server-${sanitized}`
       : `update-cs-server-${sanitized}`;
+  }
+
+  // The logs view names an update by game and node: cs-update:<node> for CS2,
+  // csgo-update:<node> for CS:GO. Anything else is not an update log.
+  public static updateLogJobName(service: string): string | null {
+    if (service.startsWith("cs-update:")) {
+      return GameServerNodeService.GET_UPDATE_JOB_NAME(
+        service.slice("cs-update:".length),
+      );
+    }
+    if (service.startsWith("csgo-update:")) {
+      return GameServerNodeService.GET_UPDATE_JOB_NAME(
+        service.slice("csgo-update:".length),
+        "csgo",
+      );
+    }
+    return null;
   }
 
   public static GET_NODE_STATS_KEY(nodeId: string) {
@@ -391,8 +432,6 @@ export class GameServerNodeService {
       game_server_nodes_by_pk.disk_used_percent !== diskUsedPercent ||
       (game_server_nodes_by_pk.build_id !== installedBuild &&
         game_server_nodes_by_pk.update_status === null) ||
-      (game_server_nodes_by_pk.csgo_build_id !== installedCsgoBuild &&
-        game_server_nodes_by_pk.update_status === null) ||
       game_server_nodes_by_pk.supports_cpu_pinning !== supportsCpuPinning ||
       game_server_nodes_by_pk.supports_low_latency !== supportsLowLatency ||
       game_server_nodes_by_pk.gpu !== hasGpu ||
@@ -426,9 +465,6 @@ export class GameServerNodeService {
               ...(game_server_nodes_by_pk.update_status === null
                 ? { build_id: installedBuild }
                 : {}),
-              ...(game_server_nodes_by_pk.update_status === null
-                ? { csgo_build_id: installedCsgoBuild }
-                : {}),
               gpu: hasGpu,
               gpu_info: gpuDevices,
               cpu_sockets: cpuInfo.sockets,
@@ -445,6 +481,18 @@ export class GameServerNodeService {
           token: true,
         },
       });
+    }
+
+    // CS:GO's build waits on its own update, which the generated client can't
+    // read yet, so the update itself carries the check.
+    if (game_server_nodes_by_pk.csgo_build_id !== installedCsgoBuild) {
+      await this.postgres.query(
+        `UPDATE game_server_nodes
+            SET csgo_build_id = $2
+          WHERE id = $1
+            AND csgo_update_status IS NULL`,
+        [node, installedCsgoBuild],
+      );
     }
 
     if (
@@ -788,9 +836,12 @@ export class GameServerNodeService {
         },
       });
 
+      const columns = GameServerNodeService.updateColumns(game);
       await this.postgres.query(
         `UPDATE game_server_nodes
-            SET update_status = 'Initializing', update_failed_at = NULL
+            SET ${columns.status} = 'Initializing',
+                ${columns.failedAt} = NULL,
+                ${columns.error} = NULL
           WHERE id = $1`,
         [gameServerNodeId],
       );
@@ -877,7 +928,7 @@ export class GameServerNodeService {
         while (latestStatus !== writtenStatus) {
           const next = latestStatus;
           try {
-            await this.setUpdateStatus(gameServerNodeId, next);
+            await this.setUpdateStatus(gameServerNodeId, next, game);
           } catch (error) {
             this.logger.warn(
               `[${gameServerNodeId}] unable to write update status`,
@@ -1061,29 +1112,27 @@ export class GameServerNodeService {
   /**
    * Periodic safety net: attaches a monitor to any update job that is running,
    * or finished without its result recorded (e.g. after an API restart), and
-   * clears a stale update_status when no such job is left. Failed jobs are
-   * kept for their logs, so one whose result is recorded counts as gone.
+   * clears a game's stale update status when no such job is left. Finished
+   * jobs are kept for their logs, so one whose result is recorded counts as
+   * gone.
    */
   public async reconcileUpdateStatuses(): Promise<void> {
-    const { game_server_nodes } = await this.hasura.query({
-      game_server_nodes: {
-        __args: {
-          where: {
-            _or: [
-              { enabled: { _eq: true } },
-              { update_status: { _is_null: false } },
-            ],
-          },
-        },
-        id: true,
-        update_status: true,
-      },
-    });
+    const nodes = await this.postgres.query<
+      Array<{
+        id: string;
+        update_status: string | null;
+        csgo_update_status: string | null;
+      }>
+    >(
+      `SELECT id, update_status, csgo_update_status
+         FROM game_server_nodes
+        WHERE enabled
+           OR update_status IS NOT NULL
+           OR csgo_update_status IS NOT NULL`,
+    );
 
-    for (const node of game_server_nodes) {
+    for (const node of nodes) {
       try {
-        let hasUpdateJob = false;
-
         for (const game of ["cs2", "csgo"]) {
           const jobName = GameServerNodeService.GET_UPDATE_JOB_NAME(
             node.id,
@@ -1096,21 +1145,20 @@ export class GameServerNodeService {
             (await this.isUpdateResultRecorded(job));
 
           if (job && !settled) {
-            hasUpdateJob = true;
             void this.monitorUpdateStatus(node.id, game);
+            continue;
           }
-        }
 
-        if (
-          !hasUpdateJob &&
-          node.update_status !== null &&
-          !this.activeUpdateMonitors.has(`${node.id}:cs2`) &&
-          !this.activeUpdateMonitors.has(`${node.id}:csgo`)
-        ) {
-          this.logger.warn(
-            `[${node.id}] clearing stale update status (${node.update_status})`,
-          );
-          await this.setUpdateStatus(node.id, null);
+          const status = node[GameServerNodeService.updateColumns(game).status];
+          if (
+            status !== null &&
+            !this.activeUpdateMonitors.has(`${node.id}:${game}`)
+          ) {
+            this.logger.warn(
+              `[${node.id}] clearing stale ${game} update status (${status})`,
+            );
+            await this.setUpdateStatus(node.id, null, game);
+          }
         }
       } catch (error) {
         this.logger.warn(
@@ -1124,20 +1172,14 @@ export class GameServerNodeService {
   private async setUpdateStatus(
     gameServerNodeId: string,
     status: string | null,
+    game = "cs2",
   ): Promise<void> {
-    await this.hasura.mutation({
-      update_game_server_nodes_by_pk: {
-        __args: {
-          pk_columns: {
-            id: gameServerNodeId,
-          },
-          _set: {
-            update_status: status,
-          },
-        },
-        update_status: true,
-      },
-    });
+    await this.postgres.query(
+      `UPDATE game_server_nodes
+          SET ${GameServerNodeService.updateColumns(game).status} = $2
+        WHERE id = $1`,
+      [gameServerNodeId, status],
+    );
   }
 
   // the Failed condition, not status.failed: with backoffLimit 1 a first failed
@@ -1166,9 +1208,9 @@ export class GameServerNodeService {
     );
   }
 
-  // update_status is one column shared by the cs2 and csgo jobs, so whether a
-  // job's result was recorded is keyed by the job's uid; a retry reusing the
-  // name gets its own uid, and the key outlives the kept job
+  // finished jobs are kept, so whether a job's result was recorded is keyed by
+  // the job's uid; a retry reusing the name gets its own uid, and the key
+  // outlives the kept job
   private async claimUpdateResult(job: V1Job): Promise<boolean> {
     try {
       const claimed = await this.redis.set(
@@ -1194,47 +1236,37 @@ export class GameServerNodeService {
     job: V1Job,
     result: "Succeeded" | "Failed",
   ): Promise<void> {
-    // a succeeded job is deleted, which is its record; only a failed job is
-    // kept for its logs and needs the claim. The uid precondition fails when a
-    // retry already replaced the job, so its status is left alone
-    if (result === "Succeeded") {
-      try {
-        await this.batchApi.deleteNamespacedJob({
-          name: job.metadata.name,
-          namespace: this.namespace,
-          body: {
-            propagationPolicy: "Background",
-            preconditions: { uid: job.metadata.uid },
-          },
-        });
-      } catch (error) {
-        if (error.code?.toString() !== "404") {
-          this.logger.warn(
-            `[${gameServerNodeId}] unable to delete finished ${game} update job`,
-            error,
-          );
-          return;
-        }
-      }
+    if (!(await this.claimUpdateResult(job))) {
+      return;
+    }
 
+    // a retry that already replaced the job owns the status now
+    const current = await this.loggingService.getJob(job.metadata.name);
+    if (current && current.metadata?.uid !== job.metadata.uid) {
+      return;
+    }
+
+    const columns = GameServerNodeService.updateColumns(game);
+
+    if (result === "Succeeded") {
       await this.postgres.query(
         `UPDATE game_server_nodes
-            SET update_status = NULL, update_failed_at = NULL
+            SET ${columns.status} = NULL,
+                ${columns.failedAt} = NULL,
+                ${columns.error} = NULL
           WHERE id = $1`,
         [gameServerNodeId],
       );
       return;
     }
 
-    if (!(await this.claimUpdateResult(job))) {
-      return;
-    }
-
     await this.postgres.query(
       `UPDATE game_server_nodes
-          SET update_status = NULL, update_failed_at = now()
+          SET ${columns.status} = NULL,
+              ${columns.failedAt} = now(),
+              ${columns.error} = $2
         WHERE id = $1`,
-      [gameServerNodeId],
+      [gameServerNodeId, await this.updateErrorLines(job)],
     );
 
     this.logger.warn(`[${gameServerNodeId}] ${game} update job failed`);
@@ -1243,6 +1275,41 @@ export class GameServerNodeService {
       title: "Game Update Failed",
       role: "administrator",
     });
+  }
+
+  // The last lines a failed update printed, from its newest pod, or null
+  // when the pod or its log is gone.
+  private async updateErrorLines(job: V1Job): Promise<string | null> {
+    try {
+      const pod = await this.loggingService.getJobPod(job.metadata.name);
+      if (!pod?.metadata?.name) {
+        return null;
+      }
+      const log = await this.coreApi.readNamespacedPodLog({
+        name: pod.metadata.name,
+        namespace: this.namespace,
+        tailLines: 20,
+      });
+      return GameServerNodeService.lastLogLines(
+        String(log ?? ""),
+        GameServerNodeService.UPDATE_ERROR_LINES,
+      );
+    } catch (error) {
+      this.logger.warn(
+        `[${job.metadata.name}] unable to read the failed update's log`,
+        error,
+      );
+      return null;
+    }
+  }
+
+  // steamcmd colours its lines; the panel shows them as plain text.
+  public static lastLogLines(log: string, count: number): string | null {
+    const lines = log
+      .split("\n")
+      .map((line) => line.replace(/\u001b\[[0-9;]*m/g, "").trimEnd())
+      .filter((line) => line.trim() !== "");
+    return lines.length ? lines.slice(-count).join("\n") : null;
   }
 
   private static readonly GAMEDATA_LOCK_TTL_S = 60 * 60;
