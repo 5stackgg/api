@@ -408,4 +408,75 @@ describe("GameStreamerService", () => {
       ).toBe(false);
     });
   });
+
+  describe("monitorBakeShaders", () => {
+    let getJobStatus: jest.Mock;
+    let release: jest.Mock;
+
+    const nodeSetOf = () =>
+      hasura.mutation.mock.calls[0][0].update_game_server_nodes_by_pk.__args
+        ._set;
+
+    beforeEach(() => {
+      getJobStatus = jest.fn();
+      release = jest.fn().mockResolvedValue(undefined);
+      service = new GameStreamerService(
+        logger as any,
+        config as any,
+        hasura as any,
+        {} as any,
+        { getConnection: jest.fn() } as any,
+        {} as any,
+        { getJobStatus } as any,
+        { release } as any,
+        broadcastHuds as any,
+      );
+    });
+
+    it("marks the node's shader cache warm when the bake job succeeds", async () => {
+      getJobStatus.mockResolvedValue({ succeeded: 1 });
+      hasura.query.mockResolvedValueOnce({
+        game_server_nodes_by_pk: {
+          shader_bake_status: "processing_shaders",
+          shader_bake_status_history: [
+            { status: "processing_shaders", at: "2026-10-19T09:06:00.000Z" },
+          ],
+        },
+      });
+
+      await service.monitorBakeShaders("node-1");
+
+      const set = nodeSetOf();
+      expect(set.shader_bake_status).toBe("done");
+      expect(set.shader_bake_progress).toBeNull();
+      expect(set.shader_bake_status_history.at(-1).status).toBe("done");
+      expect(release).toHaveBeenCalledWith(
+        GameStreamerService.GET_BAKE_JOB_NAME("node-1"),
+      );
+    });
+
+    it("marks the bake errored when the job fails", async () => {
+      getJobStatus.mockResolvedValue({ failed: 1 });
+
+      await service.monitorBakeShaders("node-1");
+
+      expect(nodeSetOf().shader_bake_status).toBe("errored");
+      expect(release).toHaveBeenCalled();
+    });
+  });
+
+  describe("reportBakeStatus", () => {
+    it("does not pull a finished bake back to in-progress", async () => {
+      hasura.query.mockResolvedValueOnce({
+        game_server_nodes_by_pk: { id: "node-1", shader_bake_status: "done" },
+      });
+
+      await service.reportBakeStatus("node-1", {
+        status: "processing_shaders",
+        progress: 99,
+      } as any);
+
+      expect(hasura.mutation).not.toHaveBeenCalled();
+    });
+  });
 });

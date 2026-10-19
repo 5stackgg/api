@@ -3416,7 +3416,10 @@ export class GameStreamerService {
     }
 
     if ((status.succeeded ?? 0) > 0) {
-      await this.setBakeStatus(gameServerNodeId, null);
+      await this.steamAccounts.release(
+        GameStreamerService.GET_BAKE_JOB_NAME(gameServerNodeId),
+      );
+      await this.writeBakeProgress(gameServerNodeId, "done", null, null);
       return;
     }
 
@@ -3456,6 +3459,7 @@ export class GameStreamerService {
       downloading_cs2: 1,
       launching_cs2: 2,
       processing_shaders: 3,
+      done: 4,
       errored: 99,
     };
     const status =
