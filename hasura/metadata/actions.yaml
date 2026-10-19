@@ -477,6 +477,14 @@ actions:
     permissions:
       - role: administrator
     comment: Get detailed query analysis with EXPLAIN plan
+  - name: analyzeQuery
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Run EXPLAIN ANALYZE on a pg_stat_statements entry with values for its parameters
   - name: getQueryStats
     definition:
       kind: ""
@@ -2342,6 +2350,7 @@ custom_types:
     - name: ServerPluginConfigInput
     - name: ServerMapRotationInput
     - name: ServerAccessInput
+    - name: QueryParameterInput
   objects:
     - name: Award
     - name: UtilityDiscoveryOutput
@@ -2439,6 +2448,8 @@ custom_types:
     - name: DbStats
     - name: QueryStat
     - name: QueryDetail
+    - name: QueryParameter
+    - name: QueryAnalysis
     - name: ActiveQuery
     - name: TableStat
     - name: IndexStat
