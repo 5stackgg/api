@@ -286,6 +286,7 @@ describe("tournament match rules once a stage has matches (SQL-driven)", () => {
       );
 
       await expect(update(own.id, "mr = 8")).rejects.toThrow(LOCKED);
+      await expect(update(own.id, "best_of = 3")).rejects.toThrow(LOCKED);
       await update(own.id, "tv_delay = 30");
       await expect(
         postgres.query(

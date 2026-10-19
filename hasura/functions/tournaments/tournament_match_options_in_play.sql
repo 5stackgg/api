@@ -23,9 +23,10 @@ AS $$
     ];
 $$;
 
--- 'match' for a tournament match's own row, 'template' for a tournament, stage
--- or bracket row that a stage with matches plays, or a bracket row whose
--- pairing is known, NULL otherwise.
+-- 'match' for a tournament match's own row, 'bracket' for a bracket's own row
+-- once its pairing is known or its stage has a match, 'template' for a
+-- tournament or stage row that a stage with matches plays, NULL otherwise.
+-- A bracket's row is cloned as is, best_of included, so it locks like a match.
 CREATE OR REPLACE FUNCTION public.tournament_match_options_in_play(_match_options_id uuid)
 RETURNS text
 LANGUAGE sql
@@ -52,7 +53,8 @@ AS $$
                         AND played.match_id IS NOT NULL
                   )
               )
-        ) OR EXISTS (
+        ) THEN 'bracket'
+        WHEN EXISTS (
             SELECT 1
             FROM public.tournament_stages ts
             INNER JOIN public.tournament_brackets played ON played.tournament_stage_id = ts.id
