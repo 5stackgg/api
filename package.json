@@ -8,8 +8,9 @@
     "url": "https://5stack.gg"
   },
   "private": false,
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "scripts": {
+    "third-party-notices": "npx --yes generate-license-file@4.2.5 --input package.json --output THIRD_PARTY_NOTICES.txt --overwrite --omit-versions --eol lf --ci",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
