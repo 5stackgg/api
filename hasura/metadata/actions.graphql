@@ -336,6 +336,13 @@ type Query {
 }
 
 type Query {
+  analyzeQuery(
+    queryid: String!
+    parameters: [QueryParameterInput!]!
+  ): QueryAnalysis
+}
+
+type Query {
   getQueryStats: [QueryStat]!
 }
 
@@ -1647,7 +1654,19 @@ type QueryDetail {
   queryid: String!
   query: String!
   explain_plan: String
+  explain_kind: String
+  parameters: [QueryParameter!]!
   stats: QueryStat!
+}
+
+type QueryParameter {
+  number: Int!
+  type: String!
+  list: Boolean!
+}
+
+type QueryAnalysis {
+  explain_plan: String!
 }
 
 type ActiveQuery {
@@ -2955,6 +2974,11 @@ type Mutation {
 input ServerMapRotationInput {
   map_ids: [uuid!]!
   shuffle: Boolean!
+}
+
+input QueryParameterInput {
+  number: Int!
+  values: [String]!
 }
 
 input ServerAccessInput {

@@ -1,4 +1,5 @@
 import { Controller } from "@nestjs/common";
+import { escapeLiteral, PoolClient } from "pg";
 import { HasuraAction } from "src/hasura/hasura.controller";
 import { PostgresService } from "./postgres.service";
 import {
@@ -18,6 +19,22 @@ import {
   HypertableInfo,
   TimescaleJob,
 } from "../../generated";
+
+type QueryParameter = {
+  __typename: "QueryParameter";
+  number: number;
+  type: string;
+  list: boolean;
+};
+
+type QueryAnalysis = {
+  __typename: "QueryAnalysis";
+  explain_plan: string;
+};
+
+// pg_stat_statements writes a constant IN list or ARRAY[] as its first
+// parameter followed by this marker.
+const SQUASHED_PARAMETER = /\$(\d+) \/\*, \.\.\. \*\//g;
 
 @Controller("postgres")
 export class PostgresController {
@@ -154,9 +171,13 @@ export class PostgresController {
   }
 
   @HasuraAction()
-  public async getQueryDetail(args: {
-    queryid: string;
-  }): Promise<QueryDetail | null> {
+  public async getQueryDetail(args: { queryid: string }): Promise<
+    | (QueryDetail & {
+        explain_kind: string | null;
+        parameters: Array<QueryParameter>;
+      })
+    | null
+  > {
     // First get the query stats
     type QueryStatRow = {
       queryid: string;
@@ -211,42 +232,31 @@ export class PostgresController {
 
     const statRow = (statsResult as unknown as any[])[0];
 
-    // Try to get EXPLAIN plan for pev2 (https://github.com/dalibo/pev2)
+    // Opening a query only plans it; running it is analyzeQuery's job.
     let explainPlan: string | null = null;
+    let explainKind: string | null = null;
     try {
-      // ANALYZE executes the statement, so it must not be able to keep
-      // anything. Separate pool queries for BEGIN and ROLLBACK can each land on
-      // a different connection, and READ ONLY alone still lets CREATE TABLE AS
-      // through under EXPLAIN.
-      explainPlan = await this.postgres.throwawayReadOnly(async (client) => {
-        const { rows } = await client.query(
-          `EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON) ${statRow.query}`,
-        );
-        return JSON.stringify(rows[0]["QUERY PLAN"], null, 2);
-      });
+      const explainResult = await this.postgres.query<{
+        "QUERY PLAN": any;
+      }>(`
+        EXPLAIN (COSTS, VERBOSE, BUFFERS, FORMAT JSON) ${statRow.query}
+      `);
+      const jsonPlan = (explainResult as unknown as any[])[0]["QUERY PLAN"];
+      explainPlan = JSON.stringify(jsonPlan, null, 2);
+      explainKind = "estimate";
     } catch {
-      // If ANALYZE fails, try without it (still good for pev2, just no actual stats)
+      // Fall back to generic plan for parameterized queries
       try {
         const explainResult = await this.postgres.query<{
           "QUERY PLAN": any;
         }>(`
-          EXPLAIN (COSTS, VERBOSE, BUFFERS, FORMAT JSON) ${statRow.query}
+          EXPLAIN (FORMAT JSON, GENERIC_PLAN true) ${statRow.query}
         `);
         const jsonPlan = (explainResult as unknown as any[])[0]["QUERY PLAN"];
         explainPlan = JSON.stringify(jsonPlan, null, 2);
+        explainKind = "generic";
       } catch {
-        // Fall back to generic plan for parameterized queries
-        try {
-          const explainResult = await this.postgres.query<{
-            "QUERY PLAN": any;
-          }>(`
-            EXPLAIN (FORMAT JSON, GENERIC_PLAN true) ${statRow.query}
-          `);
-          const jsonPlan = (explainResult as unknown as any[])[0]["QUERY PLAN"];
-          explainPlan = JSON.stringify(jsonPlan, null, 2);
-        } catch {
-          // not able to get explain plan
-        }
+        // not able to get explain plan
       }
     }
 
@@ -255,6 +265,8 @@ export class PostgresController {
       queryid: String(statRow.queryid),
       query: String(statRow.query),
       explain_plan: explainPlan,
+      explain_kind: explainKind,
+      parameters: await this.queryParameters(statRow.query),
       stats: {
         __typename: "QueryStat",
         queryid: String(statRow.queryid),
@@ -280,6 +292,109 @@ export class PostgresController {
         local_blks_read: Number(statRow.local_blks_read),
       },
     };
+  }
+
+  @HasuraAction()
+  public async analyzeQuery(args: {
+    queryid: string;
+    parameters: Array<{ number: number; values: Array<string | null> }>;
+  }): Promise<QueryAnalysis> {
+    const [row] = await this.postgres.query<Array<{ query: string }>>(
+      "SELECT query FROM pg_stat_statements WHERE queryid::text = $1 LIMIT 1",
+      [args.queryid],
+    );
+
+    if (!row) {
+      throw Error("query not found");
+    }
+
+    const values = new Map(
+      args.parameters.map(({ number, values }) => [number, values]),
+    );
+    const literal = (value: string | null) =>
+      value === null ? "NULL" : escapeLiteral(value);
+
+    // ANALYZE executes the statement, so it must not be able to keep
+    // anything. Separate pool queries for BEGIN and ROLLBACK can each land on
+    // a different connection, and READ ONLY alone still lets CREATE TABLE AS
+    // through under EXPLAIN.
+    const plan = await this.postgres.throwawayReadOnly(async (client) => {
+      // Inside Hasura's action timeout, so a slow statement is cut off here
+      // rather than left running after the page has given up on it.
+      await client.query("SET LOCAL statement_timeout = '25s'");
+
+      let statement = row.query;
+      if (values.size > 0) {
+        const types = await this.prepare(client, row.query);
+        const literals = types.map((_, index) => {
+          const [value] = values.get(index + 1) ?? [];
+          if (value === undefined) {
+            throw Error(`$${index + 1} needs a value`);
+          }
+          return literal(value);
+        });
+
+        // A squashed list takes one parameter per value it is given.
+        const unsquashed = row.query.replace(SQUASHED_PARAMETER, (_, number) =>
+          [
+            `$${number}`,
+            ...(values.get(Number(number)) ?? [])
+              .slice(1)
+              .map((value) => `$${literals.push(literal(value))}`),
+          ].join(", "),
+        );
+        if (unsquashed !== row.query) {
+          await client.query("DEALLOCATE query_detail");
+          await client.query(`PREPARE query_detail AS ${unsquashed}`);
+        }
+
+        statement = `EXECUTE query_detail(${literals.join(", ")})`;
+      }
+
+      const { rows } = await client.query(
+        `EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON) ${statement}`,
+      );
+      return JSON.stringify(rows[0]["QUERY PLAN"], null, 2);
+    });
+
+    return {
+      __typename: "QueryAnalysis",
+      explain_plan: plan,
+    };
+  }
+
+  private async queryParameters(sql: string): Promise<Array<QueryParameter>> {
+    if (!/\$\d/.test(sql)) {
+      return [];
+    }
+
+    const squashed = new Set(
+      Array.from(sql.matchAll(SQUASHED_PARAMETER), ([, number]) =>
+        Number(number),
+      ),
+    );
+
+    try {
+      const types = await this.postgres.throwawayReadOnly((client) =>
+        this.prepare(client, sql),
+      );
+      return types.map((type, index) => ({
+        __typename: "QueryParameter",
+        number: index + 1,
+        type,
+        list: squashed.has(index + 1),
+      }));
+    } catch {
+      return [];
+    }
+  }
+
+  private async prepare(client: PoolClient, sql: string): Promise<string[]> {
+    await client.query(`PREPARE query_detail AS ${sql}`);
+    const { rows } = await client.query(
+      "SELECT parameter_types::text[] AS types FROM pg_prepared_statements WHERE name = 'query_detail'",
+    );
+    return rows[0].types;
   }
 
   @HasuraAction()
