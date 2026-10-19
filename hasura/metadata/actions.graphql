@@ -2778,6 +2778,14 @@ type Mutation {
 }
 
 type Mutation {
+  setTournamentTeamCheckIn(
+    tournament_id: uuid!
+    tournament_team_id: uuid!
+    checked_in: Boolean!
+  ): SuccessOutput
+}
+
+type Mutation {
   readmitTournamentTeam(
     tournament_id: uuid!
     tournament_team_id: uuid!
