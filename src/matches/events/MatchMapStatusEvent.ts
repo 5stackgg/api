@@ -79,6 +79,9 @@ export default class MatchMapStatusEvent extends MatchEventProcessor<{
               match_map_id: {
                 _eq: match.current_match_map_id,
               },
+              deleted_at: {
+                _is_null: true,
+              },
             },
             order_by: [{ time: "desc" }],
             limit: 1,

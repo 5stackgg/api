@@ -353,6 +353,31 @@ describe("match recovery (SQL-driven)", () => {
       return { rounds, kills, timeouts };
     };
 
+    const shown = async (mapId: string) => {
+      const [row] = await postgres.query<
+        Array<{ lineup_1: number; kills: number }>
+      >(
+        `SELECT lineup_1_score(mm) AS lineup_1,
+                COALESCE((SELECT sum(kills) FROM player_match_map_stats WHERE match_map_id = mm.id), 0)::int AS kills
+           FROM match_maps mm WHERE mm.id = $1`,
+        [mapId],
+      );
+      return row;
+    };
+
+    it("shows the score and the scoreboard of the round it went back to", async () => {
+      const { match, mapId } = await fiveRounds();
+
+      await reset(mapId, 3);
+      expect(await shown(mapId)).toEqual({ lineup_1: 3, kills: 3 });
+
+      await reset(mapId, 5);
+      expect(await shown(mapId)).toEqual({ lineup_1: 5, kills: 5 });
+
+      await service().restartMatchMap(match.id, admin);
+      expect(await shown(mapId)).toEqual({ lineup_1: 0, kills: 0 });
+    });
+
     it("rolls back to a round and drops the round that was under way", async () => {
       const { mapId } = await fiveRounds();
 

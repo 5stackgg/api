@@ -16,10 +16,13 @@ BEGIN
 
   DELETE FROM public.player_match_map_stats WHERE match_map_id = p_match_map_id;
 
+  -- A round a reset undid is soft-deleted until the next round is played, and
+  -- counts for nothing while it is.
   WITH finalized_rounds AS (
     SELECT round
     FROM public.match_map_rounds
     WHERE match_map_id = p_match_map_id
+      AND deleted_at IS NULL
   ),
   player_set AS (
     SELECT DISTINCT steam_id FROM (
@@ -74,7 +77,7 @@ BEGIN
   -- KAST per (player, round): kill, assist, survive, or traded. round > 0 drops warmup.
   finalized_rounds_pos AS (
     SELECT round FROM public.match_map_rounds
-    WHERE match_map_id = p_match_map_id AND round > 0
+    WHERE match_map_id = p_match_map_id AND round > 0 AND deleted_at IS NULL
   ),
   kast_agg AS (
     SELECT

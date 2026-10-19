@@ -53,15 +53,18 @@ select_permissions:
       computed_fields:
         - has_backup_file
       filter:
-        match_map:
-          status:
-            _in:
-              - Knife
-              - Live
-              - Paused
-              - Overtime
-              - WaitingForTV
-              - UploadingDemo
-              - Finished
-              - Surrendered
+        _and:
+          - deleted_at:
+              _is_null: true
+          - match_map:
+              status:
+                _in:
+                  - Knife
+                  - Live
+                  - Paused
+                  - Overtime
+                  - WaitingForTV
+                  - UploadingDemo
+                  - Finished
+                  - Surrendered
     comment: ""

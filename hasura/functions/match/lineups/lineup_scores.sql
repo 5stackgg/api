@@ -6,6 +6,7 @@ DECLARE
 BEGIN
     select lineup_1_score into score from match_map_rounds mmr
     where mmr.match_map_id = match_map.id
+      and mmr.deleted_at is null
 	order by time desc
 	limit 1;
   IF score IS NULL THEN
@@ -23,6 +24,7 @@ DECLARE
 BEGIN
     select lineup_2_score into score from match_map_rounds mmr
     where mmr.match_map_id = match_map.id
+      and mmr.deleted_at is null
 	order by time desc
 	limit 1;
   IF score IS NULL THEN
