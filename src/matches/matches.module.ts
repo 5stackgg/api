@@ -81,6 +81,8 @@ import { MediaMtxModule } from "../mediamtx/mediamtx.module";
 import { CameraController } from "./camera/camera.controller";
 import { CameraService } from "./camera/camera.service";
 import { CameraMonitorService } from "./camera/camera-monitor.service";
+import { MatchRecoveryController } from "./match-recovery/match-recovery.controller";
+import { MatchRecoveryService } from "./match-recovery/match-recovery.service";
 
 @Module({
   imports: [
@@ -166,7 +168,12 @@ import { CameraMonitorService } from "./camera/camera-monitor.service";
       },
     ),
   ],
-  controllers: [MatchesController, MatchRelayController, CameraController],
+  controllers: [
+    MatchesController,
+    MatchRelayController,
+    CameraController,
+    MatchRecoveryController,
+  ],
   exports: [MatchAssistantService, PlayerEloRecomputeService],
   providers: [
     MatchEventsGateway,
@@ -174,6 +181,7 @@ import { CameraMonitorService } from "./camera/camera-monitor.service";
     MatchRelayService,
     CameraService,
     CameraMonitorService,
+    MatchRecoveryService,
     CheckOnDemandServerJob,
     CheckOnDemandServerJobEvents,
     CancelExpiredMatches,

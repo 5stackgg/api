@@ -623,30 +623,263 @@ describe("tournament match reset (SQL-driven)", () => {
     );
   });
 
-  // Swiss/RoundRobin results feed pool assignment and standings advancement
-  // that the parent-chain unwind cannot restore, so resets are rejected.
-  it("refuses to reset Swiss and RoundRobin matches", async () => {
-    for (const [type, teams] of [
-      ["Swiss", 16],
-      ["RoundRobin", 4],
-    ] as Array<[string, number]>) {
+  const lockReason = async (matchId: string) => {
+    const [row] = await postgres.query<Array<{ reason: string | null }>>(
+      `SELECT tournament_result_lock_reason(tb.id) AS reason
+         FROM tournament_brackets tb WHERE tb.match_id = $1`,
+      [matchId],
+    );
+    return row.reason;
+  };
+
+  const canReassignWinner = async (matchId: string, organizer: string) => {
+    const [row] = await postgres.query<Array<{ allowed: boolean }>>(
+      `SELECT can_reassign_winner(m, $2::json) AS allowed FROM matches m WHERE m.id = $1`,
+      [
+        matchId,
+        JSON.stringify({
+          "x-hasura-role": "administrator",
+          "x-hasura-user-id": organizer,
+        }),
+      ],
+    );
+    return row.allowed;
+  };
+
+  describe("round robin resets", () => {
+    const RR4 = [{ type: "RoundRobin", order: 1, minTeams: 4, maxTeams: 4 }];
+
+    it("takes a result back and recalculates the standings", async () => {
+      const t = await tfx.launch(RR4, 4);
+      const bracket = (await tfx.getBrackets(t.stageIds[0])).find(
+        (b) => b.round === 1 && b.match_id !== null,
+      )!;
+      await tfx.winMatch(bracket.match_id!);
+
+      const winsOf = async (team: string) =>
+        Number(
+          (await tfx.stageResults(t.stageIds[0])).find(
+            (row) => row.tournament_team_id === team,
+          )?.wins ?? 0,
+        );
+      expect(await winsOf(bracket.tournament_team_id_1!)).toBe(1);
+      const preview = await postgres.query<Array<unknown>>(
+        "SELECT * FROM preview_tournament_match_reset($1)",
+        [bracket.match_id],
+      );
+      expect(preview.length).toBe(1);
+
+      await resetMatch(bracket.match_id!);
+
+      const after = (await tfx.getBrackets(t.stageIds[0])).find(
+        (b) => b.id === bracket.id,
+      )!;
+      expect(after.finished).toBe(false);
+      expect(after.match_id).toBe(bracket.match_id);
+      expect(await winsOf(bracket.tournament_team_id_1!)).toBe(0);
+
+      const [source] = await postgres.query<
+        Array<{ status: string; winning_lineup_id: string | null }>
+      >("SELECT status, winning_lineup_id FROM matches WHERE id = $1", [
+        bracket.match_id,
+      ]);
+      expect(source).toEqual({
+        status: "WaitingForCheckIn",
+        winning_lineup_id: null,
+      });
+    });
+
+    it("reopens a finished round robin when its last result is taken back", async () => {
+      const t = await tfx.launch(RR4, 4);
+      await tfx.playStage(t.stageIds[0]);
+      expect(await tfx.tournamentStatus(t.id)).toBe("Finished");
+
+      const last = (await tfx.getBrackets(t.stageIds[0])).at(-1)!;
+      await resetMatch(last.match_id!);
+
+      expect(await tfx.tournamentStatus(t.id)).toBe("Live");
+    });
+
+    it("locks once the next stage was seeded from the standings", async () => {
       const t = await tfx.launch(
-        [{ type, order: 1, minTeams: teams, maxTeams: teams }],
-        teams,
+        [
+          ...RR4,
+          { type: "SingleElimination", order: 2, minTeams: 4, maxTeams: 4 },
+        ],
+        4,
+      );
+      await tfx.playStage(t.stageIds[0]);
+      expect(
+        (await tfx.getBrackets(t.stageIds[1])).some(
+          (b) => b.tournament_team_id_1 !== null,
+        ),
+      ).toBe(true);
+
+      const played = (await tfx.getBrackets(t.stageIds[0]))[0];
+
+      await expect(resetMatch(played.match_id!)).rejects.toThrow(
+        /next stage was already seeded/i,
+      );
+      await expect(
+        postgres.query("SELECT * FROM preview_tournament_match_reset($1)", [
+          played.match_id,
+        ]),
+      ).rejects.toThrow(/next stage was already seeded/i);
+      expect(await canReassignWinner(played.match_id!, t.organizer)).toBe(
+        false,
+      );
+    });
+
+    it("still lets the winner change before the next stage is seeded", async () => {
+      const t = await tfx.launch(
+        [
+          ...RR4,
+          { type: "SingleElimination", order: 2, minTeams: 4, maxTeams: 4 },
+        ],
+        4,
       );
       const bracket = (await tfx.getBrackets(t.stageIds[0])).find(
         (b) => b.match_id !== null,
       )!;
       await tfx.winMatch(bracket.match_id!);
 
-      await expect(resetMatch(bracket.match_id!)).rejects.toThrow(
-        /only elimination stage matches can be reset/i,
+      expect(await lockReason(bracket.match_id!)).toBeNull();
+      expect(await canReassignWinner(bracket.match_id!, t.organizer)).toBe(
+        true,
       );
-      await expect(
-        postgres.query("SELECT * FROM preview_tournament_match_reset($1)", [
-          bracket.match_id,
-        ]),
-      ).rejects.toThrow(/only elimination stage matches can be reset/i);
-    }
+    });
+  });
+
+  describe("Swiss resets", () => {
+    const SWISS16 = [{ type: "Swiss", order: 1, minTeams: 16, maxTeams: 16 }];
+
+    it("takes a result back while its round is still being played", async () => {
+      const t = await tfx.launch(SWISS16, 16);
+      const bracket = (await tfx.getBrackets(t.stageIds[0])).find(
+        (b) => b.round === 1 && b.match_id !== null,
+      )!;
+      await tfx.winMatch(bracket.match_id!);
+
+      await resetMatch(bracket.match_id!);
+
+      const after = (await tfx.getBrackets(t.stageIds[0])).find(
+        (b) => b.id === bracket.id,
+      )!;
+      expect(after.finished).toBe(false);
+    });
+
+    it("locks once the next round was paired from the result", async () => {
+      const t = await tfx.launch(SWISS16, 16);
+      await tfx.playRound(t.stageIds[0], 1);
+
+      const played = (await tfx.getBrackets(t.stageIds[0])).find(
+        (b) => b.round === 1,
+      )!;
+
+      await expect(resetMatch(played.match_id!)).rejects.toThrow(
+        /next Swiss round was already paired/i,
+      );
+      expect(await canReassignWinner(played.match_id!, t.organizer)).toBe(
+        false,
+      );
+    });
+  });
+
+  describe("stages feeding a playoff", () => {
+    // Swiss final-round winners are linked straight into the playoff as each
+    // match ends, before the stage is over.
+    it("unwinds a final-round Swiss result that already reached the playoff, until the stage is done", async () => {
+      const t = await tfx.launch(
+        [
+          { type: "Swiss", order: 1, minTeams: 16, maxTeams: 16 },
+          { type: "SingleElimination", order: 2, minTeams: 8, maxTeams: 8 },
+        ],
+        16,
+      );
+      for (let round = 1; round <= 4; round++) {
+        await tfx.playRound(t.stageIds[0], round);
+      }
+      const finalRound = (await tfx.getBrackets(t.stageIds[0])).filter(
+        (b) => b.round === 5 && b.match_id !== null,
+      );
+      await tfx.winMatch(finalRound[0].match_id!);
+
+      expect(await lockReason(finalRound[0].match_id!)).toBeNull();
+      expect(
+        await canReassignWinner(finalRound[0].match_id!, t.organizer),
+      ).toBe(true);
+      await resetMatch(finalRound[0].match_id!);
+
+      await tfx.playRound(t.stageIds[0], 5);
+      expect(await lockReason(finalRound[1].match_id!)).toMatch(
+        /next stage was already seeded/i,
+      );
+    });
+
+    it("locks a relegation playoff that already moved teams between divisions", async () => {
+      const t = await tfx.launch(
+        [{ type: "RoundRobin", order: 1, minTeams: 4, maxTeams: 4 }],
+        4,
+      );
+      const bracket = (await tfx.getBrackets(t.stageIds[0])).find(
+        (b) => b.match_id !== null,
+      )!;
+      await tfx.winMatch(bracket.match_id!);
+      expect(await lockReason(bracket.match_id!)).toBeNull();
+
+      // The season and divisions don't matter here, only that the playoff resolved.
+      await postgres.transaction(async (client) => {
+        await client.query("SET LOCAL session_replication_role = replica");
+        await client.query(
+          `INSERT INTO league_relegation_playoffs
+             (league_season_id, higher_division_id, lower_division_id, tournament_id, higher_slots, resolved_at)
+           VALUES (gen_random_uuid(), gen_random_uuid(), gen_random_uuid(), $1, 2, now())`,
+          [t.id],
+        );
+      });
+
+      expect(await lockReason(bracket.match_id!)).toMatch(
+        /already decided the promotions and relegations/i,
+      );
+      await postgres.query("DELETE FROM league_relegation_playoffs");
+    });
+
+    it("locks a league division once its season has finished", async () => {
+      const t = await tfx.launch(
+        [{ type: "RoundRobin", order: 1, minTeams: 4, maxTeams: 4 }],
+        4,
+      );
+      const bracket = (await tfx.getBrackets(t.stageIds[0])).find(
+        (b) => b.match_id !== null,
+      )!;
+      await tfx.winMatch(bracket.match_id!);
+
+      // Only the season's status matters here, not a real division setup.
+      await postgres.transaction(async (client) => {
+        await client.query("SET LOCAL session_replication_role = replica");
+        const {
+          rows: [season],
+        } = await client.query<{ id: string }>(
+          "INSERT INTO league_seasons (name, status) VALUES ('Autumn', 'Finished') RETURNING id",
+        );
+        await client.query(
+          `INSERT INTO league_season_divisions (league_season_id, league_division_id, tournament_id)
+           VALUES ($1, gen_random_uuid(), $2)`,
+          [season.id, t.id],
+        );
+      });
+
+      try {
+        expect(await lockReason(bracket.match_id!)).toMatch(
+          /league season already finished/i,
+        );
+      } finally {
+        await postgres.transaction(async (client) => {
+          await client.query("SET LOCAL session_replication_role = replica");
+          await client.query("DELETE FROM league_season_divisions");
+          await client.query("DELETE FROM league_seasons");
+        });
+      }
+    });
   });
 });

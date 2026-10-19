@@ -3,6 +3,7 @@ RETURNS boolean
 LANGUAGE plpgsql STABLE
 AS $$
 DECLARE
+    _bracket_id uuid;
     _parent_bracket_id uuid;
     _loser_parent_bracket_id uuid;
     blocking_downstream int;
@@ -15,14 +16,18 @@ BEGIN
         RETURN false;
     END IF;
 
-    SELECT parent_bracket_id, loser_parent_bracket_id
-    INTO _parent_bracket_id, _loser_parent_bracket_id
+    SELECT id, parent_bracket_id, loser_parent_bracket_id
+    INTO _bracket_id, _parent_bracket_id, _loser_parent_bracket_id
     FROM tournament_brackets
     WHERE match_id = match.id
     LIMIT 1;
 
     IF NOT FOUND THEN
         RETURN true;
+    END IF;
+
+    IF tournament_result_lock_reason(_bracket_id) IS NOT NULL THEN
+        RETURN false;
     END IF;
 
     -- These point *forward*: they are the bracket(s) this match's winner and

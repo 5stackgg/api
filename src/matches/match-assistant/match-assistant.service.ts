@@ -156,6 +156,24 @@ export class MatchAssistantService {
     }
   }
 
+  public async requestRoundRestore(matchId: string, round: number) {
+    return await this.command(matchId, `restore_round ${round}`);
+  }
+
+  // A server no longer reserved for the match gets nothing back from
+  // current-match, so the plugin drops whatever game it still has loaded.
+  public async refreshServerMatch(serverId: string) {
+    try {
+      const rcon = await this.rcon.connect(serverId);
+      await rcon?.send("get_match");
+    } catch (error) {
+      this.logger.warn(
+        `[${serverId}] unable to tell the server to reload its match`,
+        error.message,
+      );
+    }
+  }
+
   public async getMatchType(
     matchId: string,
   ): Promise<e_match_types_enum | undefined> {

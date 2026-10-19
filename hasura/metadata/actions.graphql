@@ -279,6 +279,12 @@ type Query {
 }
 
 type Query {
+  getMatchRestoreRounds(
+    match_id: uuid!
+  ): MatchRestoreRoundsOutput!
+}
+
+type Query {
   getServerLeaderboard(
     server_id: uuid!
     period: String!
@@ -654,8 +660,21 @@ type Mutation {
 }
 
 type Mutation {
+  restartMatch(
+    match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   restartService(
     service: String!
+  ): SuccessOutput
+}
+
+type Mutation {
+  restoreMatchRound(
+    match_id: uuid!
+    round: Int!
   ): SuccessOutput
 }
 
@@ -1044,6 +1063,49 @@ type TournamentMatchResetImpact {
 
 type PreviewTournamentMatchResetOutput {
   impacts: [TournamentMatchResetImpact!]!
+}
+
+type MatchRestorePlayer {
+  steam_id: String!
+  name: String!
+  lineup: Int!
+  cash: Int!
+  armor: Int!
+  helmet: Boolean!
+  alive: Boolean!
+  weapons: [String!]!
+  kills: Int!
+  deaths: Int!
+  assists: Int!
+}
+
+type MatchRestoreRound {
+  round: Int!
+  lineup_1_score: Int!
+  lineup_2_score: Int!
+  lineup_1_side: String
+  lineup_2_side: String
+  winning_side: String
+  winning_reason: String
+  lineup_1_timeouts: Int
+  lineup_2_timeouts: Int
+  next_lineup_1_side: String
+  next_lineup_2_side: String
+  has_backup: Boolean!
+  players: [MatchRestorePlayer!]!
+}
+
+type MatchRestoreRoundsOutput {
+  match_map_id: uuid
+  map_name: String
+  restorable: Boolean!
+  blocked_reason: String
+  live_round: Int
+  economy_hidden: Boolean!
+  connected_players: Int!
+  expected_players: Int!
+  disconnected: [String!]!
+  rounds: [MatchRestoreRound!]!
 }
 
 type MeResponse {
