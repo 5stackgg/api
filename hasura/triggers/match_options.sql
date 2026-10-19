@@ -230,7 +230,16 @@ BEGIN
     SELECT array_agg(map_id ORDER BY "order") INTO _match_maps FROM match_maps WHERE match_id = _match_id;
     SELECT array_agg(map_id ORDER BY map_id) INTO _map_ids FROM _map_pool WHERE map_pool_id = NEW.map_pool_id;
 
-    IF (_match_status != 'Live' AND _match_status != 'Veto' AND (_match_maps IS NULL OR _match_maps IS DISTINCT FROM _map_ids OR NEW.map_pool_id != OLD.map_pool_id)) THEN
+    -- A match waiting for a server is past its veto: its maps are the picks,
+    -- which never equal the pool, and only a new pool may replace them.
+    IF _match_status NOT IN ('Live', 'Veto')
+        AND (
+            NEW.map_pool_id IS DISTINCT FROM OLD.map_pool_id
+            OR (
+                _match_status != 'WaitingForServer'
+                AND (_match_maps IS NULL OR _match_maps IS DISTINCT FROM _map_ids)
+            )
+        ) THEN
         DELETE FROM match_maps
         WHERE match_id = _match_id;
 

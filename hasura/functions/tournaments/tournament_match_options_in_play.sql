@@ -24,9 +24,8 @@ AS $$
 $$;
 
 -- 'match' for a tournament match's own row, 'template' for a tournament, stage
--- or bracket row that a stage with matches plays, NULL otherwise.
--- A bracket row counts once its stage has any match, not only its own: its
--- pairing is public by then.
+-- or bracket row that a stage with matches plays, or a bracket row whose
+-- pairing is known, NULL otherwise.
 CREATE OR REPLACE FUNCTION public.tournament_match_options_in_play(_match_options_id uuid)
 RETURNS text
 LANGUAGE sql
@@ -42,9 +41,17 @@ AS $$
         WHEN EXISTS (
             SELECT 1
             FROM public.tournament_brackets tb
-            INNER JOIN public.tournament_brackets played ON played.tournament_stage_id = tb.tournament_stage_id
             WHERE tb.match_options_id = _match_options_id
-              AND played.match_id IS NOT NULL
+              AND (
+                  tb.tournament_team_id_1 IS NOT NULL
+                  OR tb.tournament_team_id_2 IS NOT NULL
+                  OR EXISTS (
+                      SELECT 1
+                      FROM public.tournament_brackets played
+                      WHERE played.tournament_stage_id = tb.tournament_stage_id
+                        AND played.match_id IS NOT NULL
+                  )
+              )
         ) OR EXISTS (
             SELECT 1
             FROM public.tournament_stages ts

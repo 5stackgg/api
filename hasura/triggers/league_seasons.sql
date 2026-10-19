@@ -202,9 +202,8 @@ CREATE OR REPLACE FUNCTION public.tau_league_seasons() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    -- Series-format edits propagate to the live division stages; only
-    -- matches that have not materialized yet pick up the new best-of
-    -- (same semantics as tournament per-round configuration).
+    -- Series-format edits propagate to the live division stages; matches that
+    -- have not started pick up the new best-of (tau_tournament_stages_best_of).
     IF NEW.week_best_of IS DISTINCT FROM OLD.week_best_of THEN
         UPDATE public.tournament_stages ts
         SET settings = COALESCE(ts.settings, '{}'::jsonb) - 'round_best_of'

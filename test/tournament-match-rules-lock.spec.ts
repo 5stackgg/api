@@ -214,6 +214,16 @@ describe("tournament match rules once a stage has matches (SQL-driven)", () => {
     it("reaches the round's matches that have not started, and no match takes another", async () => {
       const tournament = await tfx.createTournament(SE4);
       await closeRegistration(tournament);
+      await tfx.setStatus(tournament.id, tournament.organizer, "Live");
+      const [vetoing] = await postgres.query<Array<{ id: string }>>(
+        `SELECT tb.match_id AS id FROM tournament_brackets tb
+         WHERE tb.tournament_stage_id = $1 AND tb.round = 1
+         ORDER BY tb.match_number LIMIT 1`,
+        [tournament.stageIds[0]],
+      );
+      await postgres.query("UPDATE matches SET status = 'Veto' WHERE id = $1", [
+        vetoing.id,
+      ]);
 
       await postgres.query(
         `UPDATE tournament_stages SET settings = '{"round_best_of": {"WB:1": 3}}'
@@ -222,12 +232,9 @@ describe("tournament match rules once a stage has matches (SQL-driven)", () => {
       );
 
       const matches = await stageMatches(tournament.stageIds[0]);
-      expect(matches.length).toBe(2);
-      for (const match of matches) {
-        expect(match.best_of).toBe(3);
-      }
+      expect(matches.map((match) => match.best_of)).toEqual([1, 3]);
       await expect(
-        update(matches[0].match_options_id, "best_of = 5"),
+        update(matches[1].match_options_id, "best_of = 5"),
       ).rejects.toThrow(LOCKED);
     });
 
@@ -250,40 +257,57 @@ describe("tournament match rules once a stage has matches (SQL-driven)", () => {
   });
 
   describe("a bracket's own settings", () => {
-    it("lock once its stage has a match, before its own match exists", async () => {
-      const tournament = await tfx.createTournament(SE4);
-      await update(
-        await tournamentOptionsId(tournament.id),
-        "match_mode = 'admin'",
-      );
-      await closeRegistration(tournament);
-      const [first, second] = await tfx.getBrackets(tournament.stageIds[0]);
-      expect(first.match_id).toBeNull();
-      expect(second.match_id).toBeNull();
-
-      const [own] = await postgres.query<Array<{ id: string }>>(
+    const attachOwnOptions = (bracketId: string, tournamentId: string) =>
+      postgres.query<Array<{ id: string }>>(
         `UPDATE tournament_brackets
          SET match_options_id = clone_match_options(
            (SELECT match_options_id FROM tournaments WHERE id = $2)
          )
          WHERE id = $1
          RETURNING match_options_id AS id`,
-        [first.id, tournament.id],
+        [bracketId, tournamentId],
       );
-      await postgres.query(
-        "UPDATE tournament_brackets SET scheduled_at = now() WHERE id = $1",
-        [second.id],
-      );
-      await postgres.query(
-        "SELECT schedule_tournament_match(tb) FROM tournament_brackets tb WHERE tb.id = $1",
-        [second.id],
-      );
-      expect(
-        (await tfx.getBrackets(tournament.stageIds[0]))[1].match_id,
-      ).not.toBeNull();
 
-      await expect(update(own.id, "mr = 12")).rejects.toThrow(LOCKED);
+    it("lock once its pairing is known, before any match of its stage exists", async () => {
+      const tournament = await tfx.createTournament(TWO_STAGES);
+      await closeRegistration(tournament);
+      const [final] = await tfx.getBrackets(tournament.stageIds[1]);
+      const [own] = await attachOwnOptions(final.id, tournament.id);
+
+      await update(own.id, "mr = 12");
+
+      const [team] = await postgres.query<Array<{ id: string }>>(
+        "SELECT id FROM tournament_teams WHERE tournament_id = $1 LIMIT 1",
+        [tournament.id],
+      );
+      await postgres.query(
+        "UPDATE tournament_brackets SET tournament_team_id_1 = $2 WHERE id = $1",
+        [final.id, team.id],
+      );
+
+      await expect(update(own.id, "mr = 8")).rejects.toThrow(LOCKED);
       await update(own.id, "tv_delay = 30");
+      await expect(
+        postgres.query(
+          "UPDATE tournament_brackets SET match_options_id = NULL WHERE id = $1",
+          [final.id],
+        ),
+      ).rejects.toThrow(/whose teams are known/);
+    });
+
+    it("can't be given to a pairing the draw made public", async () => {
+      const tournament = await tfx.createTournament(SE4);
+      await update(
+        await tournamentOptionsId(tournament.id),
+        "match_mode = 'admin'",
+      );
+      await closeRegistration(tournament);
+      const [first] = await tfx.getBrackets(tournament.stageIds[0]);
+      expect(first.match_id).toBeNull();
+
+      await expect(attachOwnOptions(first.id, tournament.id)).rejects.toThrow(
+        /whose teams are known/,
+      );
     });
   });
 

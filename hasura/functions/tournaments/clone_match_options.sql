@@ -9,12 +9,9 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    -- Held until the clone commits, so an edit racing a stage's first match
-    -- waits and then sees that match.
     SELECT * INTO _options
     FROM match_options
-    WHERE id = _match_options_id
-    FOR SHARE;
+    WHERE id = _match_options_id;
 
     IF NOT FOUND THEN
         RETURN NULL;
