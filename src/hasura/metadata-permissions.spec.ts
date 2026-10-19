@@ -394,6 +394,23 @@ describe("hasura table metadata", () => {
     });
   });
 
+  // A round a reset undid stays in the table until the next round is played, so
+  // a restore can still bring it back; nobody watching should see it meanwhile.
+  describe("match_map_rounds", () => {
+    const rounds = () =>
+      tables.find(({ file }) => file === "public_match_map_rounds.yaml")
+        ?.metadata;
+
+    it("hides the rounds a reset undid from every role", () => {
+      const select = blocksByRole(rounds(), "select_permissions");
+
+      expect([...select.keys()]).toEqual(["guest"]);
+      expect(select.get("guest")?.filter._and).toContainEqual({
+        deleted_at: { _is_null: true },
+      });
+    });
+  });
+
   describe("match_clips", () => {
     const clips = () =>
       tables.find(({ file }) => file === "public_match_clips.yaml")?.metadata;
