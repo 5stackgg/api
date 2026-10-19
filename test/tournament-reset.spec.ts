@@ -828,22 +828,58 @@ describe("tournament match reset (SQL-driven)", () => {
       expect(await lockReason(bracket.match_id!)).toBeNull();
 
       // The season and divisions don't matter here, only that the playoff resolved.
-      await postgres.query("SET session_replication_role = replica");
-      try {
-        await postgres.query(
+      await postgres.transaction(async (client) => {
+        await client.query("SET LOCAL session_replication_role = replica");
+        await client.query(
           `INSERT INTO league_relegation_playoffs
              (league_season_id, higher_division_id, lower_division_id, tournament_id, higher_slots, resolved_at)
            VALUES (gen_random_uuid(), gen_random_uuid(), gen_random_uuid(), $1, 2, now())`,
           [t.id],
         );
-      } finally {
-        await postgres.query("SET session_replication_role = DEFAULT");
-      }
+      });
 
       expect(await lockReason(bracket.match_id!)).toMatch(
         /already decided the promotions and relegations/i,
       );
       await postgres.query("DELETE FROM league_relegation_playoffs");
+    });
+
+    it("locks a league division once its season has finished", async () => {
+      const t = await tfx.launch(
+        [{ type: "RoundRobin", order: 1, minTeams: 4, maxTeams: 4 }],
+        4,
+      );
+      const bracket = (await tfx.getBrackets(t.stageIds[0])).find(
+        (b) => b.match_id !== null,
+      )!;
+      await tfx.winMatch(bracket.match_id!);
+
+      // Only the season's status matters here, not a real division setup.
+      await postgres.transaction(async (client) => {
+        await client.query("SET LOCAL session_replication_role = replica");
+        const {
+          rows: [season],
+        } = await client.query<{ id: string }>(
+          "INSERT INTO league_seasons (name, status) VALUES ('Autumn', 'Finished') RETURNING id",
+        );
+        await client.query(
+          `INSERT INTO league_season_divisions (league_season_id, league_division_id, tournament_id)
+           VALUES ($1, gen_random_uuid(), $2)`,
+          [season.id, t.id],
+        );
+      });
+
+      try {
+        expect(await lockReason(bracket.match_id!)).toMatch(
+          /league season already finished/i,
+        );
+      } finally {
+        await postgres.transaction(async (client) => {
+          await client.query("SET LOCAL session_replication_role = replica");
+          await client.query("DELETE FROM league_season_divisions");
+          await client.query("DELETE FROM league_seasons");
+        });
+      }
     });
   });
 });

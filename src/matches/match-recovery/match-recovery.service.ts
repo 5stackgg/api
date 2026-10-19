@@ -11,6 +11,7 @@ type Token = { type: "string" | "open" | "close"; value: string };
 
 type MatchRow = {
   status: string;
+  server_id: string | null;
   source: string | null;
   winning_lineup_id: string | null;
   lineup_1_id: string;
@@ -96,6 +97,7 @@ export type RestoreRounds = {
 export class MatchRecoveryService {
   public static readonly IN_PROGRESS_MAP_STATUSES = [
     "Warmup",
+    "Knife",
     "Live",
     "Overtime",
     "Paused",
@@ -343,11 +345,20 @@ export class MatchRecoveryService {
         );
       }
 
+      // Canceled stamped cancels_at with now, and only auto-cancel re-arms it
+      // on the way back to check-in. Dropping the server frees its reservation,
+      // so the get_match below tells a dedicated server to drop the old game.
       await client.query(
-        "UPDATE matches SET status = 'WaitingForCheckIn' WHERE id = $1",
+        `UPDATE matches
+            SET status = 'WaitingForCheckIn', server_id = NULL, cancels_at = NULL
+          WHERE id = $1`,
         [matchId],
       );
     });
+
+    if (match.server_id) {
+      await this.matchAssistant.refreshServerMatch(match.server_id);
+    }
 
     this.logger.log(`[${matchId}] organizer restarted the match`);
 
@@ -613,7 +624,8 @@ export class MatchRecoveryService {
 
   private async getMatch(matchId: string): Promise<MatchRow> {
     const [match] = await this.postgres.query<Array<MatchRow>>(
-      `SELECT m.status, m.source, m.winning_lineup_id::text AS winning_lineup_id,
+      `SELECT m.status, m.source, m.server_id::text AS server_id,
+              m.winning_lineup_id::text AS winning_lineup_id,
               m.lineup_1_id::text AS lineup_1_id, m.lineup_2_id::text AS lineup_2_id,
               mo.type, mo.mr,
               mm.id::text AS match_map_id, mm.status AS map_status,

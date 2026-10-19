@@ -87,6 +87,36 @@ describe("MatchesController", () => {
     );
   });
 
+  describe("setMapWinner", () => {
+    const setMapWinner = () =>
+      controller.setMapWinner({
+        match_id: "match-1",
+        match_map_id: "map-1",
+        winning_lineup_id: "lineup-2",
+        user: { steam_id: "user-1", role: "match_organizer" } as any,
+      });
+
+    // A map result decides the match, so it must not reopen a result that
+    // already seeded the next stage or round.
+    it("refuses once the match result can no longer change", async () => {
+      matchAssistant.isOrganizer.mockResolvedValue(true);
+      (matchAssistant as any).canReassignWinner = jest
+        .fn()
+        .mockResolvedValue(false);
+      hasura.query.mockResolvedValue({
+        match_maps_by_pk: { id: "map-1", match_id: "match-1" },
+        matches_by_pk: { winning_lineup_id: "lineup-1" },
+      });
+      const mutation = jest.fn();
+      (hasura as any).mutation = mutation;
+
+      await expect(setMapWinner()).rejects.toThrow(
+        "cannot change a map winner",
+      );
+      expect(mutation).not.toHaveBeenCalled();
+    });
+  });
+
   it("rejects non-organizers", async () => {
     matchAssistant.isOrganizer.mockResolvedValue(false);
 

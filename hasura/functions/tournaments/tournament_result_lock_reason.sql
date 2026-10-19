@@ -1,7 +1,9 @@
 -- Round robin and Swiss results are read again after they land: a finished
 -- stage seeds the next one from its standings, and a finished Swiss round
 -- pairs the next round by record. Once that has happened, taking the result
--- back would leave teams placed by a result that no longer exists.
+-- back would leave teams placed by a result that no longer exists. A league
+-- season that finished, or a relegation playoff that resolved, already moved
+-- teams between divisions, whatever the stage type.
 --
 -- Final-round Swiss winners are linked into the next stage as each match ends,
 -- before the stage is over. The reset unwinds that slot like an elimination
@@ -27,10 +29,6 @@ BEGIN
     FROM tournament_stages
     WHERE id = _bracket.tournament_stage_id;
 
-    IF _stage.type NOT IN ('RoundRobin', 'Swiss') THEN
-        RETURN NULL;
-    END IF;
-
     IF EXISTS (
         SELECT 1
         FROM league_relegation_playoffs playoff
@@ -38,6 +36,20 @@ BEGIN
           AND playoff.resolved_at IS NOT NULL
     ) THEN
         RETURN 'this playoff already decided the promotions and relegations';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM league_season_divisions division
+        JOIN league_seasons season ON season.id = division.league_season_id
+        WHERE division.tournament_id = _stage.tournament_id
+          AND season.status = 'Finished'
+    ) THEN
+        RETURN 'the league season already finished and moved teams between divisions';
+    END IF;
+
+    IF _stage.type NOT IN ('RoundRobin', 'Swiss') THEN
+        RETURN NULL;
     END IF;
 
     IF NOT EXISTS (

@@ -64,6 +64,7 @@ describe("match recovery (SQL-driven)", () => {
           sent.push(round);
           return "";
         },
+        refreshServerMatch: async (): Promise<void> => undefined,
       } as never,
     );
 
@@ -239,5 +240,48 @@ describe("match recovery (SQL-driven)", () => {
       { table: "kills", left: 0 },
       { table: "finished rounds", left: 1 },
     ]);
+  });
+
+  // Canceling stamps cancels_at with now, and without auto-cancel nothing
+  // re-arms it, so CancelExpiredMatches would cancel the reopened match again.
+  it("doesn't reopen the match already past its deadline", async () => {
+    const { match } = await liveMatch();
+    await postgres.query(
+      "UPDATE match_options SET auto_cancellation = false WHERE id = $1",
+      [match.options_id],
+    );
+
+    await service().restartMatch(match.id);
+
+    const [after] = await postgres.query<
+      Array<{
+        status: string;
+        cancels_at: Date | null;
+        server_id: string | null;
+      }>
+    >("SELECT status, cancels_at, server_id FROM matches WHERE id = $1", [
+      match.id,
+    ]);
+    expect(after).toEqual({
+      status: "WaitingForCheckIn",
+      cancels_at: null,
+      server_id: null,
+    });
+  });
+
+  it("puts a map still in its knife round back to the start", async () => {
+    const { match, mapId } = await liveMatch();
+    await postgres.query(
+      "UPDATE match_maps SET status = 'Knife' WHERE id = $1",
+      [mapId],
+    );
+
+    await service().restartMatch(match.id);
+
+    const [map] = await postgres.query<Array<{ status: string }>>(
+      "SELECT status FROM match_maps WHERE id = $1",
+      [mapId],
+    );
+    expect(map.status).toBe("Scheduled");
   });
 });

@@ -2298,16 +2298,30 @@ export class MatchesController {
       throw Error("you are not a match organizer");
     }
 
-    const { match_maps_by_pk: targetMap } = await this.hasura.query({
-      match_maps_by_pk: {
-        __args: { id: match_map_id },
-        id: true,
-        match_id: true,
-      },
-    });
+    const { match_maps_by_pk: targetMap, matches_by_pk: current } =
+      await this.hasura.query({
+        match_maps_by_pk: {
+          __args: { id: match_map_id },
+          id: true,
+          match_id: true,
+        },
+        matches_by_pk: {
+          __args: { id: match_id },
+          winning_lineup_id: true,
+        },
+      });
 
     if (!targetMap || targetMap.match_id !== match_id) {
       throw Error("map not found for this match");
+    }
+
+    if (
+      current?.winning_lineup_id &&
+      !(await this.matchAssistant.canReassignWinner(match_id, user))
+    ) {
+      throw Error(
+        "cannot change a map winner: the match result is locked or a downstream tournament match has already started",
+      );
     }
 
     await this.hasura.mutation({

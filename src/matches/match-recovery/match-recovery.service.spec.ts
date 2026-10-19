@@ -66,6 +66,7 @@ const BACKUP = `"SaveFile"
 
 type MatchFixture = {
   status: string;
+  server_id: string | null;
   source: string | null;
   winning_lineup_id: string | null;
   lineup_1_id: string;
@@ -81,6 +82,7 @@ type MatchFixture = {
 
 const matchRow = (overrides: Partial<MatchFixture> = {}): MatchFixture => ({
   status: "Live",
+  server_id: "server-1",
   source: "5stack",
   winning_lineup_id: null,
   lineup_1_id: LINEUP_1,
@@ -205,6 +207,7 @@ const setup = (
       async (): Promise<string | undefined> =>
         "restoreResponse" in options ? options.restoreResponse : "",
     ),
+    refreshServerMatch: jest.fn(async (): Promise<void> => undefined),
   };
 
   const service = new MatchRecoveryService(
@@ -497,7 +500,9 @@ describe("MatchRecoveryService", () => {
 
   describe("restartMatch", () => {
     it("cancels a live match, puts the map in progress back to the start, then reopens check-in", async () => {
-      const { service, postgres } = setup({ liveMaps: [{ id: MAP_ID }] });
+      const { service, postgres, matchAssistant } = setup({
+        liveMaps: [{ id: MAP_ID }],
+      });
 
       await service.restartMatch("match-1");
 
@@ -515,21 +520,25 @@ describe("MatchRecoveryService", () => {
         ),
       ).toBe(true);
       expect(postgres.statements.at(-1)).toBe(
-        "UPDATE matches SET status = 'WaitingForCheckIn' WHERE id = $1",
+        "UPDATE matches SET status = 'WaitingForCheckIn', server_id = NULL, cancels_at = NULL WHERE id = $1",
+      );
+      expect(matchAssistant.refreshServerMatch).toHaveBeenCalledWith(
+        "server-1",
       );
     });
 
     it("reopens a canceled match without touching maps nobody is playing", async () => {
-      const { service, postgres } = setup({
-        match: matchRow({ status: "Canceled" }),
+      const { service, postgres, matchAssistant } = setup({
+        match: matchRow({ status: "Canceled", server_id: null }),
       });
 
       await service.restartMatch("match-1");
 
       expect(postgres.statements).toEqual([
         "SELECT id FROM match_maps WHERE match_id = $1 AND status = ANY($2)",
-        "UPDATE matches SET status = 'WaitingForCheckIn' WHERE id = $1",
+        "UPDATE matches SET status = 'WaitingForCheckIn', server_id = NULL, cancels_at = NULL WHERE id = $1",
       ]);
+      expect(matchAssistant.refreshServerMatch).not.toHaveBeenCalled();
     });
 
     it.each([
