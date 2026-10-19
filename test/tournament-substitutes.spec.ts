@@ -217,16 +217,20 @@ describe("tournament substitutes (SQL-driven)", () => {
       );
     });
 
-    it("raising a scheduled match's substitutes does not reopen stand-in slots", async () => {
+    it("a scheduled match's substitutes can't be raised to reopen stand-in slots", async () => {
       const tournament = await createTournament({
         type: "Duel",
         substitutes: 0,
       });
       const [match] = await seedBracket(tournament, 0);
 
-      await postgres.query(
-        "UPDATE match_options SET number_of_substitutes = 3 WHERE id = $1",
-        [match.match_options_id],
+      await expect(
+        postgres.query(
+          "UPDATE match_options SET number_of_substitutes = 3 WHERE id = $1",
+          [match.match_options_id],
+        ),
+      ).rejects.toThrow(
+        /Match rules are locked once a tournament stage has matches/,
       );
 
       const [row] = await postgres.query<Array<{ max_players: number }>>(

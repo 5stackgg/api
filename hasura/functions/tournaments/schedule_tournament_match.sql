@@ -17,7 +17,6 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      _template_match_options_id UUID;
      _match_options_id UUID;
      _round_best_of int;
-     _swiss_match_type text;
      _max_players_per_lineup int;
  BEGIN
    	IF bracket.match_id IS NOT NULL THEN
@@ -98,37 +97,10 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
          RETURN (SELECT tb.match_id FROM tournament_brackets tb WHERE tb.id = bracket.id);
      END IF;
 
-     -- Per-round best_of resolution (only when bracket has no custom match_options)
-     IF bracket.match_options_id IS NULL THEN
-         IF stage.type = 'Swiss' THEN
-             -- Swiss: decode group (wins*100+losses) to determine match type
-             DECLARE
-                 _wins int;
-                 _losses int;
-                 _wins_needed int := 3;
-             BEGIN
-                 _wins := (bracket."group" / 100)::int;
-                 _losses := (bracket."group" % 100)::int;
-                 -- A no-elim group has no advancement/elimination games — all regular.
-                 IF COALESCE(stage.swiss_no_elimination, false) THEN
-                     _swiss_match_type := 'regular';
-                 ELSIF _wins = _wins_needed - 1 THEN
-                     _swiss_match_type := 'advancement';
-                 ELSIF _losses = _wins_needed - 1 THEN
-                     _swiss_match_type := 'elimination';
-                 ELSE
-                     _swiss_match_type := 'regular';
-                 END IF;
-                 _round_best_of := get_bracket_best_of(stage.id, _swiss_match_type, bracket.round);
-             END;
-         ELSE
-             _round_best_of := get_bracket_best_of(stage.id, bracket.path, bracket.round);
-         END IF;
+     _round_best_of := tournament_bracket_best_of(bracket);
 
-         -- If round best_of differs from the resolved match_options, clone with new best_of
-         IF _round_best_of IS NOT NULL THEN
-             _match_options_id := clone_match_options_with_best_of(_template_match_options_id, _round_best_of);
-         END IF;
+     IF _round_best_of IS NOT NULL THEN
+         _match_options_id := clone_match_options_with_best_of(_template_match_options_id, _round_best_of);
      END IF;
 
      IF _match_options_id IS NULL THEN

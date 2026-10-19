@@ -69,6 +69,7 @@ CREATE OR REPLACE FUNCTION public.tbu_match_options() RETURNS TRIGGER
 DECLARE
     _match_status text;
     _tournament_ids uuid[];
+    _in_play text;
 BEGIN
     SELECT m.status INTO _match_status
         FROM matches m
@@ -152,6 +153,42 @@ BEGIN
         END IF;
     END IF;
 
+    IF NEW.best_of IS DISTINCT FROM OLD.best_of
+        OR EXISTS (
+            SELECT 1 FROM unnest(match_options_rule_columns()) AS rule(col)
+            WHERE to_jsonb(NEW) -> rule.col IS DISTINCT FROM to_jsonb(OLD) -> rule.col
+        ) THEN
+        _in_play := tournament_match_options_in_play(OLD.id);
+
+        IF _in_play IS NOT NULL THEN
+            IF NEW.map_pool_id IS DISTINCT FROM OLD.map_pool_id
+                AND (SELECT array_agg(map_id ORDER BY map_id) FROM _map_pool WHERE map_pool_id = NEW.map_pool_id)
+                    IS NOT DISTINCT FROM
+                    (SELECT array_agg(map_id ORDER BY map_id) FROM _map_pool WHERE map_pool_id = OLD.map_pool_id) THEN
+                NEW.map_pool_id := OLD.map_pool_id;
+            END IF;
+
+            -- No role is exempt: one match playing other rules than its stage is the abuse this stops.
+            -- A match may only take its round's best-of.
+            IF (_in_play = 'match'
+                    AND NEW.best_of IS DISTINCT FROM OLD.best_of
+                    AND NEW.best_of IS DISTINCT FROM (
+                        SELECT tournament_bracket_best_of(tb)
+                        FROM tournament_brackets tb
+                        INNER JOIN matches m ON m.id = tb.match_id
+                        WHERE m.match_options_id = OLD.id
+                        LIMIT 1
+                    ))
+                OR (_in_play = 'bracket' AND NEW.best_of IS DISTINCT FROM OLD.best_of)
+                OR EXISTS (
+                    SELECT 1 FROM unnest(match_options_rule_columns()) AS rule(col)
+                    WHERE to_jsonb(NEW) -> rule.col IS DISTINCT FROM to_jsonb(OLD) -> rule.col
+                ) THEN
+                RAISE EXCEPTION 'Match rules are locked once a tournament stage has matches' USING ERRCODE = '22000';
+            END IF;
+        END IF;
+    END IF;
+
     IF (NEW.game_mode_id IS DISTINCT FROM OLD.game_mode_id) THEN
         PERFORM assert_game_mode_selectable(NEW.game_mode_id);
     END IF;
@@ -194,7 +231,16 @@ BEGIN
     SELECT array_agg(map_id ORDER BY "order") INTO _match_maps FROM match_maps WHERE match_id = _match_id;
     SELECT array_agg(map_id ORDER BY map_id) INTO _map_ids FROM _map_pool WHERE map_pool_id = NEW.map_pool_id;
 
-    IF (_match_status != 'Live' AND _match_status != 'Veto' AND (_match_maps IS NULL OR _match_maps IS DISTINCT FROM _map_ids OR NEW.map_pool_id != OLD.map_pool_id)) THEN
+    -- A match waiting for a server is past its veto: its maps are the picks,
+    -- which never equal the pool, and only a new pool may replace them.
+    IF _match_status NOT IN ('Live', 'Veto')
+        AND (
+            NEW.map_pool_id IS DISTINCT FROM OLD.map_pool_id
+            OR (
+                _match_status != 'WaitingForServer'
+                AND (_match_maps IS NULL OR _match_maps IS DISTINCT FROM _map_ids)
+            )
+        ) THEN
         DELETE FROM match_maps
         WHERE match_id = _match_id;
 

@@ -160,6 +160,24 @@ describe("match options locks (SQL-driven)", () => {
     expect(after[0].map_id).toBe(otherMap);
   });
 
+  it("keeps a vetoed match's maps when a setting changes while it waits for a server", async () => {
+    const { poolId, mapIds } = await fx.mapPool(3);
+    const match = await fx.match({ mapPoolId: poolId, mapVeto: true });
+    await postgres.query(
+      `INSERT INTO match_maps (match_id, map_id, "order") VALUES ($1, $2, 1)`,
+      [match.id, mapIds[1]],
+    );
+    await setMatchStatus(match.id, "WaitingForServer");
+
+    await updateOptions(match.options_id, "tv_delay = 30");
+
+    const maps = await postgres.query<Array<{ map_id: string }>>(
+      "SELECT map_id FROM match_maps WHERE match_id = $1",
+      [match.id],
+    );
+    expect(maps.map(({ map_id }) => map_id)).toEqual([mapIds[1]]);
+  });
+
   it("deleting the match garbage-collects its options and their custom pool", async () => {
     const { matchId, optionsId, poolId } = await createMatch();
 

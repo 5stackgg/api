@@ -17,6 +17,34 @@ BEGIN
      FROM tournament_stages ts
      WHERE ts.id = NEW.tournament_stage_id;
 
+     -- Ahead of the early returns below, which skip every update that leaves
+     -- the teams alone.
+     IF OLD.match_options_id IS DISTINCT FROM NEW.match_options_id THEN
+        SELECT t.status INTO tournament_status
+        FROM tournaments t
+        WHERE t.id = tournament_id;
+
+        IF tournament_status NOT IN ('Setup', 'RegistrationOpen', 'RegistrationClosed', 'Live', 'Paused') THEN
+            RAISE EXCEPTION 'Tournament status must be Setup, Registration Open, Registration Closed, Live or Paused' USING ERRCODE = '22000';
+        END IF;
+
+        SELECT EXISTS (
+            SELECT 1
+            FROM tournament_brackets tb
+            WHERE tb.tournament_stage_id = NEW.tournament_stage_id
+              AND tb.match_id IS NOT NULL
+        ) INTO stage_has_matches;
+
+        IF stage_has_matches THEN
+            RAISE EXCEPTION 'Unable to modify match options for a bracket that has already started' USING ERRCODE = '22000';
+        END IF;
+
+        -- Options for one known pairing would be rules no other match plays.
+        IF NEW.tournament_team_id_1 IS NOT NULL OR NEW.tournament_team_id_2 IS NOT NULL THEN
+            RAISE EXCEPTION 'Unable to modify match options for a bracket whose teams are known' USING ERRCODE = '22000';
+        END IF;
+     END IF;
+
      -- Keep linked match schedule in sync with bracket schedule updates.
      -- If organizers reschedule a non-live match, move it back to Scheduled.
      IF NEW.match_id IS NOT NULL
@@ -95,30 +123,6 @@ BEGIN
             END IF;
          END IF;
      END IF;
-
-    -- Check if stage has started (has at least one match created)
-    SELECT EXISTS (
-        SELECT 1 
-        FROM tournament_brackets tb 
-        WHERE tb.tournament_stage_id = NEW.tournament_stage_id
-        AND tb.match_id IS NOT NULL
-    ) INTO stage_has_matches;
-
-    IF OLD.match_options_id IS DISTINCT FROM NEW.match_options_id THEN
-        SELECT t.status INTO tournament_status
-        FROM tournaments t
-        JOIN tournament_stages ts ON ts.tournament_id = t.id
-        WHERE ts.id = NEW.tournament_stage_id;
-
-        IF tournament_status NOT IN ('Setup', 'RegistrationOpen', 'RegistrationClosed', 'Live', 'Paused') THEN
-            RAISE EXCEPTION 'Tournament status must be Setup, Registration Open, Registration Closed, Live or Paused' USING ERRCODE = '22000';
-        END IF;
-    END IF;
-
-    -- Prevent match_options_id changes once bracket has started
-    IF stage_has_matches AND OLD.match_options_id IS DISTINCT FROM NEW.match_options_id THEN
-        RAISE EXCEPTION 'Unable to modify match options for a bracket that has already started' USING ERRCODE = '22000';
-    END IF;
 
 	RETURN NEW;
 END;
