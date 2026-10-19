@@ -36,6 +36,7 @@ describe("GameServerNodeService.updateStatus", () => {
   });
 
   let hasura: { query: jest.Mock; mutation: jest.Mock };
+  let postgres: { query: jest.Mock };
   let service: GameServerNodeService;
 
   const stored = (
@@ -106,6 +107,7 @@ describe("GameServerNodeService.updateStatus", () => {
 
   beforeEach(() => {
     hasura = { query: jest.fn(), mutation: jest.fn().mockResolvedValue({}) };
+    postgres = { query: jest.fn().mockResolvedValue([]) };
     service = new GameServerNodeService(
       { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
       { get: () => ({ namespace: "5stack" }) } as any,
@@ -118,7 +120,7 @@ describe("GameServerNodeService.updateStatus", () => {
         queueBuild: jest.fn().mockResolvedValue(undefined),
         queueCalloutsSync: jest.fn().mockResolvedValue(undefined),
       } as any,
-      { query: jest.fn().mockResolvedValue([]) } as any,
+      postgres as any,
       {} as any,
     );
     jest
@@ -134,12 +136,32 @@ describe("GameServerNodeService.updateStatus", () => {
     expect(written("build_id")).toEqual([null]);
   });
 
+  // CS:GO's build waits on CS:GO's own update, not CS2's.
   it("clears the CS:GO build once that install is gone", async () => {
+    hasura.query.mockResolvedValue({
+      game_server_nodes_by_pk: stored({
+        csgo_build_id: CSGO_BUILD,
+        update_status: "Downloading",
+      }),
+    });
+    await heartbeat({});
+    expect(postgres.query).toHaveBeenCalledWith(
+      expect.stringMatching(
+        /SET csgo_build_id = \$2\s+WHERE id = \$1\s+AND csgo_update_status IS NULL/,
+      ),
+      [NODE_ID, null],
+    );
+  });
+
+  it("leaves the CS:GO build alone when it hasn't changed", async () => {
     hasura.query.mockResolvedValue({
       game_server_nodes_by_pk: stored({ csgo_build_id: CSGO_BUILD }),
     });
-    await heartbeat({});
-    expect(written("csgo_build_id")).toEqual([null]);
+    await heartbeat({ csgoBuild: CSGO_BUILD });
+    expect(postgres.query).not.toHaveBeenCalledWith(
+      expect.stringMatching(/csgo_build_id/),
+      expect.anything(),
+    );
   });
 
   it("leaves the build alone while an update has the install torn down", async () => {

@@ -22,6 +22,7 @@ export type ServerMigrationNode = {
   status: string;
   node_ip: string | null;
   update_status: string | null;
+  csgo_update_status: string | null;
   build_id: number | null;
   csgo_build_id: number | null;
   disk_available_gb: number | null;
@@ -96,8 +97,8 @@ export class DedicatedServerMigrationService {
     if (!DedicatedServerMigrationService.isNodeUp(node)) {
       return `${name} is ${node.status === "Online" ? "unreachable" : node.status}`;
     }
-    if (node.update_status) {
-      return `${name} is updating CS2`;
+    if (server.game === "csgo" ? node.csgo_update_status : node.update_status) {
+      return `${name} is updating ${server.game === "csgo" ? "CS:GO" : "CS2"}`;
     }
     if (server.game === "csgo" ? !node.csgo_build_id : !node.build_id) {
       return `${name} does not have ${server.game === "csgo" ? "CS:GO" : "CS2"} installed`;
@@ -870,7 +871,7 @@ export class DedicatedServerMigrationService {
   ): Promise<Map<string, ServerMigrationNode>> {
     const nodes = await this.postgres.query<Array<ServerMigrationNode>>(
       `SELECT n.id, n.label, n.enabled, n.status, host(n.node_ip) AS node_ip, n.update_status,
-              n.build_id, n.csgo_build_id, n.disk_available_gb,
+              n.csgo_update_status, n.build_id, n.csgo_build_id, n.disk_available_gb,
               available_dedicated_slot_count(n) AS available_dedicated_slot_count
          FROM game_server_nodes n
         WHERE n.id = ANY($1::text[])`,
