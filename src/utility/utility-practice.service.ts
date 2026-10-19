@@ -294,12 +294,15 @@ export class UtilityPracticeService {
     // one, and the pod does not behave like a guest -- it teleports itself
     // around, throws grenades, and re-presses jointeam until it spawns, which
     // respawns whoever else is standing there.
-    const region = await this.resolveRegion(options.region);
+    let region: string;
+    if (options.isDiscovery) {
+      region = await this.resolveRegion(options.region);
 
-    await this.assertPracticeBuildSupported(region);
-    // A preview clip is never worth the last free slot -- the same reserve a
-    // player's session respects.
-    await this.assertServerHeadroom(region);
+      await this.assertPracticeBuildSupported(region);
+      await this.assertServerHeadroom(region);
+    } else {
+      region = await this.renderRegion();
+    }
 
     const session = await this.insertSession(null, {
       mapName,
@@ -2573,7 +2576,54 @@ export class UtilityPracticeService {
     }
   }
 
-  private async assertServerHeadroom(region: string): Promise<void> {
+  // A render's server boots beside the GPU that films it, so the GPU decides
+  // where -- a LAN node, or a GPU-only one in no region at all, as much as any
+  // other. The match still needs a region its triggers accept: the node's own
+  // when it takes matches, else one that already has Ranked servers, so the
+  // GPU-only node's slot (made in that region) never adds one to the install.
+  private async renderRegion(): Promise<string> {
+    const nodes = await this.matchAssistant.renderNodes();
+    const supported = nodes.filter((node) => node.supported);
+
+    if (nodes.length > 0 && supported.length === 0) {
+      throw new NoPracticeServerHere(
+        UtilityPracticeService.UNSUPPORTED_BUILD_MESSAGE,
+      );
+    }
+
+    for (const node of supported) {
+      // A preview clip is never worth the last free slot of a node that takes
+      // matches -- the same reserve a player's session respects. A GPU-only
+      // node's slot was never matchmaking's to begin with.
+      if (node.gpu_only || (await this.hasServerHeadroom(node.region))) {
+        const [row] = await this.postgres.query<Array<{ value: string }>>(
+          `SELECT sr.value
+             FROM public.server_regions sr
+            WHERE public.total_region_server_count(sr) > 0
+              AND EXISTS (
+                SELECT 1
+                  FROM public.servers s
+                 WHERE s.region = sr.value
+                   AND s.enabled = true
+                   AND s.type = 'Ranked'
+              )
+            ORDER BY (sr.value = $1) DESC NULLS LAST, sr.value
+            LIMIT 1`,
+          [node.region],
+        );
+
+        if (!row) {
+          throw Error("no region has a game server to hold a render's match");
+        }
+
+        return row.value;
+      }
+    }
+
+    throw Error("no practice servers are free right now");
+  }
+
+  private async hasServerHeadroom(region: string): Promise<boolean> {
     const reserved = Number(
       (await this.setting(SystemSettingName.UtilityPracticeReservedServers)) ??
         "2",
@@ -2581,7 +2631,11 @@ export class UtilityPracticeService {
     const headroom = Number.isFinite(reserved) && reserved >= 0 ? reserved : 2;
     const free = await this.matchAssistant.countFreeOnDemandServers(region);
 
-    if (free > headroom) {
+    return free > headroom;
+  }
+
+  private async assertServerHeadroom(region: string): Promise<void> {
+    if (await this.hasServerHeadroom(region)) {
       return;
     }
 
@@ -2664,15 +2718,20 @@ export class UtilityPracticeService {
       return row.value;
     }
 
+    // Only slots a session can be booked on: a node that takes no matches --
+    // a GPU-only node's render slot -- would tip the choice to a region that
+    // has nothing for a player.
     const [row] = await this.postgres.query<Array<{ region: string }>>(
       `SELECT s.region
          FROM public.servers s
          INNER JOIN public.server_regions sr ON sr.value = s.region
+         INNER JOIN public.game_server_nodes n ON n.id = s.game_server_node_id
         WHERE s.enabled = true
           AND s.type = 'Ranked'
           AND s.is_dedicated = false
           AND s.reserved_by_match_id IS NULL
           AND sr.is_lan = false
+          AND n.enabled_for_match_making = true
         GROUP BY s.region
         ORDER BY COUNT(*) DESC
         LIMIT 1`,

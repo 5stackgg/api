@@ -11,12 +11,25 @@ const UNSUPPORTED_BUILD =
 // difference, so the rule is simply that a render never reuses one.
 describe("UtilityPracticeService.startForRender", () => {
   function makeService() {
-    const postgres = { query: jest.fn().mockResolvedValue([]) };
+    // The region lookup answers with the region it was asked to prefer, or
+    // "Fallback" when it was given none -- every region has servers here.
+    const postgres = {
+      query: jest.fn(async (sql: string, params?: Array<unknown>) =>
+        sql.includes("total_region_server_count")
+          ? [{ value: params?.[0] ?? "Fallback" }]
+          : [],
+      ),
+    };
     const matchAssistant = {
       updateMatchStatus: jest.fn().mockResolvedValue(undefined),
       sendUtilityPracticeRefresh: jest.fn().mockResolvedValue(undefined),
       practiceNodeIds: jest.fn().mockResolvedValue(["node-1"]),
       hasOnDemandNodes: jest.fn().mockResolvedValue(true),
+      renderNodes: jest
+        .fn()
+        .mockResolvedValue([
+          { id: "node-1", region: "TestA", gpu_only: false, supported: true },
+        ]),
     };
     const cache = {
       acquireLock: jest.fn().mockResolvedValue("token"),
@@ -40,10 +53,11 @@ describe("UtilityPracticeService.startForRender", () => {
 
     jest.spyOn(service, "isEnabled").mockResolvedValue(true);
     jest.spyOn(service, "resolveMap").mockResolvedValue("de_mirage");
-    jest.spyOn(service, "resolveRegion").mockResolvedValue("TestA");
+    // The region with the most free servers, which is not where any GPU is.
+    jest.spyOn(service, "resolveRegion").mockResolvedValue("Busiest");
     const headroom = jest
-      .spyOn(service, "assertServerHeadroom")
-      .mockResolvedValue(undefined);
+      .spyOn(service, "hasServerHeadroom")
+      .mockResolvedValue(true);
     const insertSession = jest
       .spyOn(service, "insertSession")
       .mockResolvedValue({ id: "session-1" });
@@ -119,23 +133,95 @@ describe("UtilityPracticeService.startForRender", () => {
     );
   });
 
-  // Booking its own server still spends one, so the reserve a player's session
-  // respects has to hold here too -- a preview clip is not worth the last slot.
-  it("still respects the free-server reserve", async () => {
-    const { service } = makeService();
-    const headroom = jest
-      .spyOn(service, "assertServerHeadroom")
-      .mockRejectedValue(new Error("no practice servers are free right now"));
-    jest.spyOn(service, "fail").mockResolvedValue(undefined);
+  const render = (service: any) =>
+    service.startForRender({
+      mapName: "de_mirage",
+      requestedBySteamId: "76561198000000001",
+    });
 
-    await expect(
-      service.startForRender({
-        mapName: "de_mirage",
-        requestedBySteamId: "76561198000000001",
-      }),
-    ).rejects.toThrow("no practice servers are free right now");
+  // The pod films its server over the loopback they share, so the server has
+  // to boot on the GPU's node. Booking into the region with the most free
+  // servers put it wherever that was -- LAN regions never counted -- and the
+  // booking found no GPU there, failing the renders the moment they started.
+  it("books into the region of the GPU that will film it, a LAN one included", async () => {
+    const { service, matchAssistant, createMatch, insertSession, postgres } =
+      makeService();
+    matchAssistant.renderNodes.mockResolvedValue([
+      { id: "lan-gpu", region: "Lan", gpu_only: false, supported: true },
+    ]);
+
+    await render(service);
+
+    expect(createMatch).toHaveBeenCalledWith(
+      expect.objectContaining({ region: "Lan" }),
+    );
+    expect(insertSession).toHaveBeenCalledWith(
+      null,
+      expect.objectContaining({ region: "Lan" }),
+    );
+    expect(service.resolveRegion).not.toHaveBeenCalled();
+    expect(
+      postgres.query.mock.calls.find(([sql]: [string]) =>
+        sql.includes("total_region_server_count"),
+      )?.[1],
+    ).toEqual(["Lan"]);
+  });
+
+  // A GPU-only node takes no matches, so its slot is not one a match could
+  // have had. The region is only one the match's triggers accept.
+  it("books a GPU-only node without spending the free-server reserve", async () => {
+    const { service, matchAssistant, createMatch, headroom } = makeService();
+    matchAssistant.renderNodes.mockResolvedValue([
+      { id: "gpu-only", region: null, gpu_only: true, supported: true },
+    ]);
+    headroom.mockResolvedValue(false);
+
+    await render(service);
+
+    expect(headroom).not.toHaveBeenCalled();
+    expect(createMatch).toHaveBeenCalledWith(
+      expect.objectContaining({ region: "Fallback" }),
+    );
+  });
+
+  // Booking its own server on a node that takes matches still spends one of
+  // them, so the reserve a player's session respects has to hold here too --
+  // a preview clip is not worth the last slot.
+  it("still respects the free-server reserve on a node that takes matches", async () => {
+    const { service, headroom, createMatch } = makeService();
+    headroom.mockResolvedValue(false);
+
+    await expect(render(service)).rejects.toThrow(
+      "no practice servers are free right now",
+    );
 
     expect(headroom).toHaveBeenCalledWith("TestA");
+    expect(createMatch).not.toHaveBeenCalled();
+  });
+
+  it("passes over a node whose region is at its reserve for one that is not", async () => {
+    const { service, matchAssistant, headroom, createMatch } = makeService();
+    matchAssistant.renderNodes.mockResolvedValue([
+      { id: "full", region: "Full", gpu_only: false, supported: true },
+      { id: "roomy", region: "Roomy", gpu_only: false, supported: true },
+    ]);
+    headroom.mockImplementation(async (region: string) => region === "Roomy");
+
+    await render(service);
+
+    expect(createMatch).toHaveBeenCalledWith(
+      expect.objectContaining({ region: "Roomy" }),
+    );
+  });
+
+  it("waits while no GPU free to render on has a server free", async () => {
+    const { service, matchAssistant, createMatch } = makeService();
+    matchAssistant.renderNodes.mockResolvedValue([]);
+
+    await expect(render(service)).rejects.toThrow(
+      "no practice servers are free right now",
+    );
+    expect(createMatch).not.toHaveBeenCalled();
   });
 
   // Practice runs SwiftlyS2 whatever matches run, so an install that moved its
@@ -143,35 +229,51 @@ describe("UtilityPracticeService.startForRender", () => {
   it("books nothing while SwiftlyS2 does not support the CS2 build", async () => {
     const { service, matchAssistant, insertSession, createMatch } =
       makeService();
-    matchAssistant.practiceNodeIds.mockResolvedValue([]);
+    matchAssistant.renderNodes.mockResolvedValue([
+      { id: "node-1", region: "TestA", gpu_only: false, supported: false },
+    ]);
 
-    const booking = service.startForRender({
-      mapName: "de_mirage",
-      requestedBySteamId: "76561198000000001",
-    });
+    const booking = render(service);
 
     await expect(booking).rejects.toBeInstanceOf(NoPracticeServerHere);
     await expect(booking).rejects.toThrow(UNSUPPORTED_BUILD);
-    expect(matchAssistant.practiceNodeIds).toHaveBeenCalledWith("TestA");
     expect(insertSession).not.toHaveBeenCalled();
     expect(createMatch).not.toHaveBeenCalled();
   });
 
-  it("leaves a region with no node at all to the headroom check", async () => {
+  // Nothing films a discovery, so it needs no GPU and books by region as a
+  // player's session does.
+  it("books a discovery by region, within the reserve", async () => {
+    const { service, matchAssistant, createMatch, headroom } = makeService();
+
+    await service.startForRender({
+      mapName: "de_mirage",
+      requestedBySteamId: "76561198000000001",
+      isDiscovery: true,
+    });
+
+    expect(matchAssistant.renderNodes).not.toHaveBeenCalled();
+    expect(matchAssistant.practiceNodeIds).toHaveBeenCalledWith("Busiest");
+    expect(headroom).toHaveBeenCalledWith("Busiest");
+    expect(createMatch).toHaveBeenCalledWith(
+      expect.objectContaining({ region: "Busiest" }),
+    );
+  });
+
+  it("leaves a discovery with no node in its region to the headroom check", async () => {
     const { service, matchAssistant, headroom } = makeService();
     matchAssistant.practiceNodeIds.mockResolvedValue([]);
     matchAssistant.hasOnDemandNodes.mockResolvedValue(false);
-    headroom.mockRejectedValue(
-      new NoPracticeServerHere("no practice server can be started in TestA"),
-    );
+    headroom.mockResolvedValue(false);
     jest.spyOn(service, "fail").mockResolvedValue(undefined);
 
     await expect(
       service.startForRender({
         mapName: "de_mirage",
         requestedBySteamId: "76561198000000001",
+        isDiscovery: true,
       }),
-    ).rejects.toThrow("no practice server can be started in TestA");
+    ).rejects.toThrow("no practice server can be started in Busiest");
   });
 });
 

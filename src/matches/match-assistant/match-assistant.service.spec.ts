@@ -277,12 +277,96 @@ describe("MatchAssistantService", () => {
       return nodesQuery.game_server_nodes.__args.where;
     };
 
-    it("boots a render's server only on a node that can also run its pod", async () => {
-      const where = await nodeWhere(true);
+    // The pod films its server over loopback, so the server comes out of the
+    // slots of nodes whose GPU is free to film it: in the render's region, or
+    // on a GPU-only node, which takes no matches but keeps a slot for this.
+    it("books a render's server on a node whose GPU can film it, whatever the node takes", async () => {
+      postgres.query.mockImplementation(async (sql: string) => {
+        if (sql.includes("is_discovery")) {
+          return [{ discovery: false }];
+        }
+        if (sql.includes("gpu_busy_node_ids")) {
+          return [
+            { id: "gpu-only", region: null, gpu_only: true },
+            { id: "lan-gpu", region: "Lan", gpu_only: false },
+            { id: "far-gpu", region: "Elsewhere", gpu_only: false },
+          ];
+        }
+        return [];
+      });
+      hasura.query.mockImplementation(async (query: any) => {
+        if (query.matches_by_pk) {
+          return {
+            matches_by_pk: {
+              source: "practice",
+              region: "Lan",
+              match_maps: [{ map: { name: "de_mirage" }, order: 1 }],
+            },
+          };
+        }
+        if (query.utility_practice_sessions) {
+          return { utility_practice_sessions: [{ id: "session-1" }] };
+        }
+        return { servers: [], game_server_nodes: [] };
+      });
+      jest.spyOn(service as any, "hasMatchEnded").mockResolvedValue(false);
+      jest
+        .spyOn(service as any, "stopOnDemandServer")
+        .mockResolvedValue(undefined);
+      const { KubeConfig } = jest.requireMock("@kubernetes/client-node");
+      KubeConfig.prototype.loadFromDefault = jest.fn();
+      KubeConfig.prototype.makeApiClient = jest.fn(() => ({}));
 
-      expect(where.gpu).toEqual({ _eq: true });
-      expect(where.gpu_rendering_enabled).toEqual({ _eq: true });
-      expect(where.id).toEqual({ _in: ["node-A"] });
+      expect(await (service as any).assignOnDemandServer("match-1")).toBe(
+        false,
+      );
+
+      // A GPU-only node has no slot until a render needs one.
+      expect(
+        postgres.query.mock.calls.find(([sql]) =>
+          sql.includes("ensure_render_server"),
+        )?.[1],
+      ).toEqual([["gpu-only", "lan-gpu"], "Lan"]);
+
+      const serversQuery = hasura.query.mock.calls.find(
+        ([query]) => query.servers,
+      )[0];
+      expect(serversQuery.servers.__args.where.game_server_node).toEqual({
+        id: { _in: ["gpu-only", "lan-gpu"] },
+      });
+      expect(serversQuery.servers.__args.order_by[0]).toEqual({
+        game_server_node: { enabled_for_match_making: "asc" },
+      });
+    });
+
+    it("books no render where SwiftlyS2 does not support the node's build", async () => {
+      postgres.query.mockImplementation(async (sql: string) =>
+        sql.includes("gpu_busy_node_ids")
+          ? [{ id: "gpu-only", region: null, gpu_only: true, build_id: 1 }]
+          : [{ discovery: false }],
+      );
+      (service as any).pluginRuntimeService.supportsPractice = jest.fn(
+        async () => false,
+      );
+      hasura.query.mockImplementation(async (query: any) => {
+        if (query.matches_by_pk) {
+          return {
+            matches_by_pk: {
+              source: "practice",
+              region: "Lan",
+              match_maps: [{ map: { name: "de_mirage" }, order: 1 }],
+            },
+          };
+        }
+        return { utility_practice_sessions: [{ id: "session-1" }] };
+      });
+
+      expect(await (service as any).assignOnDemandServer("match-1")).toBe(
+        false,
+      );
+      expect(
+        hasura.query.mock.calls.find(([query]) => query.servers),
+      ).toBeUndefined();
     });
 
     it("puts a render's server in render mode and leaves human practice alone", async () => {

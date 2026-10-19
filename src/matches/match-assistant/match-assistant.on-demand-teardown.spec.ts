@@ -787,6 +787,11 @@ describe("MatchAssistantService — on-demand server teardown", () => {
             ? { utility_practice_sessions: [{ id: "session-1" }] }
             : query(request),
         );
+        (service as any).postgres.query = jest.fn(async (sql: string) =>
+          sql.includes("gpu_busy_node_ids")
+            ? [{ id: "node-1", region: "USE", gpu_only: false }]
+            : [],
+        );
 
         await (service as any).assignOnDemandServer("match-1");
 
