@@ -9,6 +9,7 @@ describe("MatchRecoveryController", () => {
       getRestoreRounds: jest.fn(async () => ({ rounds: [] as Array<unknown> })),
       restoreRound: jest.fn(async () => ({ success: true })),
       restartMatch: jest.fn(async () => ({ success: true })),
+      restartMatchMap: jest.fn(async () => ({ success: true })),
     };
 
     return {
@@ -32,10 +33,14 @@ describe("MatchRecoveryController", () => {
     await expect(
       controller.restartMatch({ match_id: "match-1", user }),
     ).rejects.toThrow("you are not a match organizer");
+    await expect(
+      controller.restartMatchMap({ match_id: "match-1", user }),
+    ).rejects.toThrow("you are not a match organizer");
 
     expect(recovery.getRestoreRounds).not.toHaveBeenCalled();
     expect(recovery.restoreRound).not.toHaveBeenCalled();
     expect(recovery.restartMatch).not.toHaveBeenCalled();
+    expect(recovery.restartMatchMap).not.toHaveBeenCalled();
   });
 
   it("hands organizers' requests to the service", async () => {
@@ -44,9 +49,11 @@ describe("MatchRecoveryController", () => {
     await controller.getMatchRestoreRounds({ match_id: "match-1", user });
     await controller.restoreMatchRound({ match_id: "match-1", round: 4, user });
     await controller.restartMatch({ match_id: "match-1", user });
+    await controller.restartMatchMap({ match_id: "match-1", user });
 
     expect(recovery.getRestoreRounds).toHaveBeenCalledWith("match-1", user);
     expect(recovery.restoreRound).toHaveBeenCalledWith("match-1", 4, user);
     expect(recovery.restartMatch).toHaveBeenCalledWith("match-1");
+    expect(recovery.restartMatchMap).toHaveBeenCalledWith("match-1", user);
   });
 });
