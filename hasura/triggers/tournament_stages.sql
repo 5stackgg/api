@@ -465,3 +465,33 @@ CREATE TRIGGER tbiu_tournament_stages_claim_match_options
     BEFORE INSERT OR UPDATE OF match_options_id ON public.tournament_stages
     FOR EACH ROW
     EXECUTE FUNCTION public.tbiu_claim_match_options();
+
+-- A round's best-of reaches its matches that have not started, so one round
+-- never plays two formats.
+CREATE OR REPLACE FUNCTION public.tau_tournament_stages_best_of() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    UPDATE match_options mo
+    SET best_of = resolved.best_of
+    FROM (
+        SELECT m.match_options_id, tournament_bracket_best_of(tb) AS best_of
+        FROM tournament_brackets tb
+        INNER JOIN matches m ON m.id = tb.match_id
+        WHERE tb.tournament_stage_id = NEW.id
+          AND m.status IN ('PickingPlayers', 'Scheduled', 'WaitingForCheckIn')
+    ) resolved
+    WHERE mo.id = resolved.match_options_id
+      AND resolved.best_of IS NOT NULL
+      AND mo.best_of IS DISTINCT FROM resolved.best_of;
+
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tau_tournament_stages_best_of ON public.tournament_stages;
+CREATE TRIGGER tau_tournament_stages_best_of
+    AFTER UPDATE OF settings, default_best_of ON public.tournament_stages
+    FOR EACH ROW
+    WHEN (OLD.settings IS DISTINCT FROM NEW.settings OR OLD.default_best_of IS DISTINCT FROM NEW.default_best_of)
+    EXECUTE FUNCTION public.tau_tournament_stages_best_of();

@@ -24,7 +24,9 @@ AS $$
 $$;
 
 -- 'match' for a tournament match's own row, 'template' for a tournament, stage
--- or bracket row that a drawn match was cloned from, NULL otherwise.
+-- or bracket row that a stage with matches plays, NULL otherwise.
+-- A bracket row counts once its stage has any match, not only its own: its
+-- pairing is public by then.
 CREATE OR REPLACE FUNCTION public.tournament_match_options_in_play(_match_options_id uuid)
 RETURNS text
 LANGUAGE sql
@@ -40,24 +42,23 @@ AS $$
         WHEN EXISTS (
             SELECT 1
             FROM public.tournament_brackets tb
+            INNER JOIN public.tournament_brackets played ON played.tournament_stage_id = tb.tournament_stage_id
             WHERE tb.match_options_id = _match_options_id
-              AND tb.match_id IS NOT NULL
+              AND played.match_id IS NOT NULL
         ) OR EXISTS (
             SELECT 1
             FROM public.tournament_stages ts
-            INNER JOIN public.tournament_brackets tb ON tb.tournament_stage_id = ts.id
+            INNER JOIN public.tournament_brackets played ON played.tournament_stage_id = ts.id
             WHERE ts.match_options_id = _match_options_id
-              AND tb.match_options_id IS NULL
-              AND tb.match_id IS NOT NULL
+              AND played.match_id IS NOT NULL
         ) OR EXISTS (
             SELECT 1
             FROM public.tournaments t
             INNER JOIN public.tournament_stages ts ON ts.tournament_id = t.id
-            INNER JOIN public.tournament_brackets tb ON tb.tournament_stage_id = ts.id
+            INNER JOIN public.tournament_brackets played ON played.tournament_stage_id = ts.id
             WHERE t.match_options_id = _match_options_id
               AND ts.match_options_id IS NULL
-              AND tb.match_options_id IS NULL
-              AND tb.match_id IS NOT NULL
+              AND played.match_id IS NOT NULL
         ) THEN 'template'
     END;
 $$;

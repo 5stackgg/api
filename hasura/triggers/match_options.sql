@@ -169,7 +169,16 @@ BEGIN
             END IF;
 
             -- No role is exempt: one match playing other rules than its stage is the abuse this stops.
-            IF (_in_play = 'match' AND NEW.best_of IS DISTINCT FROM OLD.best_of)
+            -- A match may only take its round's best-of.
+            IF (_in_play = 'match'
+                    AND NEW.best_of IS DISTINCT FROM OLD.best_of
+                    AND NEW.best_of IS DISTINCT FROM (
+                        SELECT tournament_bracket_best_of(tb)
+                        FROM tournament_brackets tb
+                        INNER JOIN matches m ON m.id = tb.match_id
+                        WHERE m.match_options_id = OLD.id
+                        LIMIT 1
+                    ))
                 OR EXISTS (
                     SELECT 1 FROM unnest(match_options_rule_columns()) AS rule(col)
                     WHERE to_jsonb(NEW) -> rule.col IS DISTINCT FROM to_jsonb(OLD) -> rule.col
