@@ -36,13 +36,17 @@ BEGIN
         PERFORM set_config('fivestack.node_server_sync', 'false', true);
     END IF;
 
+    -- Null-safe: a GPU-only node has neither a region nor ports, and with `=`
+    -- every report it sent deleted its render server -- and was refused
+    -- outright while a render held it.
     IF TG_OP = 'UPDATE' AND (
         NEW.enabled = true AND
         (
             OLD.enabled = NEW.enabled AND
-            OLD.region = NEW.region AND
-            OLD.start_port_range = NEW.start_port_range AND
-            OLD.end_port_range = NEW.end_port_range
+            OLD.region IS NOT DISTINCT FROM NEW.region AND
+            OLD.start_port_range IS NOT DISTINCT FROM NEW.start_port_range AND
+            OLD.end_port_range IS NOT DISTINCT FROM NEW.end_port_range AND
+            OLD.enabled_for_match_making = NEW.enabled_for_match_making
         )
     ) THEN
         RETURN NEW;

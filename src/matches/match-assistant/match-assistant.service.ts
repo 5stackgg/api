@@ -957,51 +957,56 @@ export class MatchAssistantService {
     const isRender = isPractice && (await this.isRenderPracticeMatch(matchId));
     const needsGpu =
       isRender && !(await this.isDiscoveryPracticeMatch(matchId));
-    const renderNodeFilter = needsGpu
-      ? {
-          gpu: { _eq: true },
-          gpu_rendering_enabled: { _eq: true },
-          id: { _in: await this.freeRenderGpuNodeIds() },
-        }
-      : {};
+    const renderNodeIds = needsGpu
+      ? await this.renderNodeIdsFor(match.region)
+      : null;
 
-    const { game_server_nodes } = await this.hasura.query({
-      game_server_nodes: {
-        __args: {
-          where: {
-            status: {
-              _eq: "Online",
-            },
-            enabled: {
-              _eq: true,
-            },
-            enabled_for_match_making: {
-              _eq: true,
-            },
-            ...renderNodeFilter,
-            ...(match.region
-              ? {
-                  region: {
-                    _eq: match.region,
-                  },
-                }
-              : {}),
-          },
-        },
-        id: true,
-      },
-    });
-
-    if (game_server_nodes.length === 0) {
+    if (renderNodeIds?.length === 0) {
       this.logger.warn(
-        `[${matchId}] no eligible game server node (Online + enabled + matchmaking${needsGpu ? " + GPU rendering" : ""}${match.region ? ` in ${match.region}` : ""}) — cannot boot an on-demand server`,
+        `[${matchId}] no node with a GPU free to render on has a free server — cannot boot a render server`,
       );
       return false;
     }
 
-    const practiceNodeIds = isPractice
-      ? await this.practiceNodeIds(match.region)
-      : null;
+    if (!renderNodeIds) {
+      const { game_server_nodes } = await this.hasura.query({
+        game_server_nodes: {
+          __args: {
+            where: {
+              status: {
+                _eq: "Online",
+              },
+              enabled: {
+                _eq: true,
+              },
+              enabled_for_match_making: {
+                _eq: true,
+              },
+              ...(match.region
+                ? {
+                    region: {
+                      _eq: match.region,
+                    },
+                  }
+                : {}),
+            },
+          },
+          id: true,
+        },
+      });
+
+      if (game_server_nodes.length === 0) {
+        this.logger.warn(
+          `[${matchId}] no eligible game server node (Online + enabled + matchmaking${match.region ? ` in ${match.region}` : ""}) — cannot boot an on-demand server`,
+        );
+        return false;
+      }
+    }
+
+    const practiceNodeIds =
+      isPractice && !renderNodeIds
+        ? await this.practiceNodeIds(match.region)
+        : null;
 
     if (practiceNodeIds?.length === 0) {
       this.logger.warn(
@@ -1054,16 +1059,31 @@ export class MatchAssistantService {
           match.source,
         );
 
+        if (renderNodeIds) {
+          await this.postgres.query(
+            "SELECT public.ensure_render_server(id, $2) FROM unnest($1::text[]) AS id",
+            [renderNodeIds, match.region],
+          );
+        }
+
         const { servers } = await this.hasura.query({
           servers: {
             __args: {
               limit: 1,
-              order_by: [
-                { game_server_node: { gpu: "asc_nulls_first" } },
-                {
-                  updated_at: "asc",
-                },
-              ],
+              // A GPU-only node's slot first: it costs matchmaking nothing.
+              order_by: renderNodeIds
+                ? [
+                    { game_server_node: { enabled_for_match_making: "asc" } },
+                    {
+                      updated_at: "asc",
+                    },
+                  ]
+                : [
+                    { game_server_node: { gpu: "asc_nulls_first" } },
+                    {
+                      updated_at: "asc",
+                    },
+                  ],
               where: {
                 type: {
                   _eq: "Ranked",
@@ -1078,40 +1098,41 @@ export class MatchAssistantService {
                   _is_null: true,
                 },
                 ...MatchAssistantService.pendingDemoUploadExclusion(),
-                game_server_node: {
-                  _and: [
-                    {
-                      enabled: {
-                        _eq: true,
-                      },
-                      enabled_for_match_making: {
-                        _eq: true,
-                      },
-                      status: {
-                        _eq: "Online",
-                      },
-                      ...renderNodeFilter,
+                game_server_node: renderNodeIds
+                  ? { id: { _in: renderNodeIds } }
+                  : {
+                      _and: [
+                        {
+                          enabled: {
+                            _eq: true,
+                          },
+                          enabled_for_match_making: {
+                            _eq: true,
+                          },
+                          status: {
+                            _eq: "Online",
+                          },
+                        },
+                        ...(match.region
+                          ? [
+                              {
+                                region: {
+                                  _eq: match.region,
+                                },
+                              },
+                            ]
+                          : []),
+                        ...(practiceNodeIds
+                          ? [
+                              {
+                                id: {
+                                  _in: practiceNodeIds,
+                                },
+                              },
+                            ]
+                          : []),
+                      ],
                     },
-                    ...(match.region
-                      ? [
-                          {
-                            region: {
-                              _eq: match.region,
-                            },
-                          },
-                        ]
-                      : []),
-                    ...(practiceNodeIds
-                      ? [
-                          {
-                            id: {
-                              _in: practiceNodeIds,
-                            },
-                          },
-                        ]
-                      : []),
-                  ],
-                },
               },
             },
             id: true,
@@ -1579,16 +1600,101 @@ export class MatchAssistantService {
     return row?.discovery === true;
   }
 
-  // Same predicate as the render pod's GPU claim, so the server never lands on
-  // a node whose GPU something else is already using.
-  private async freeRenderGpuNodeIds(): Promise<Array<string>> {
-    const rows = await this.postgres.query<Array<{ id: string }>>(
-      `SELECT id
-         FROM public.game_server_nodes
-        WHERE id NOT IN (SELECT * FROM public.gpu_busy_node_ids())
-          AND id NOT IN (SELECT * FROM public.gpu_batch_blocked_node_ids())`,
+  // Where a render's practice server can boot, GPU-only nodes first. The pod
+  // films it over the loopback they share, so it goes wherever a GPU is free
+  // to render, whatever the region and whether or not the node takes matches.
+  // The GPU is checked with the same predicate as the pod's own claim, and the
+  // slot with the one the booking takes (pendingDemoUploadExclusion included),
+  // so a node listed here is one the booking can actually use. A GPU-only node
+  // with no slot yet counts: the booking makes it (ensure_render_server).
+  public async renderNodes(): Promise<
+    Array<{
+      id: string;
+      region: string | null;
+      gpu_only: boolean;
+      supported: boolean;
+    }>
+  > {
+    const nodes = await this.postgres.query<
+      Array<{
+        id: string;
+        region: string | null;
+        gpu_only: boolean;
+        build_id: number | null;
+        pin_plugin_version: string | null;
+        pin_plugin_runtime: string | null;
+      }>
+    >(
+      `SELECT n.id,
+              n.region,
+              n.enabled_for_match_making = false AS gpu_only,
+              n.build_id,
+              n.pin_plugin_version,
+              n.pin_plugin_runtime
+         FROM public.game_server_nodes n
+        WHERE n.gpu = true
+          AND n.enabled = true
+          AND n.gpu_rendering_enabled = true
+          AND n.status = 'Online'
+          AND n.id NOT IN (SELECT * FROM public.gpu_busy_node_ids())
+          AND n.id NOT IN (SELECT * FROM public.gpu_batch_blocked_node_ids())
+          AND (
+            EXISTS (
+              SELECT 1
+                FROM public.servers s
+               WHERE s.game_server_node_id = n.id
+                 AND s.type = 'Ranked'
+                 AND s.enabled = true
+                 AND s.is_dedicated = false
+                 AND s.reserved_by_match_id IS NULL
+                 AND NOT EXISTS (
+                   SELECT 1
+                     FROM public.matches m
+                     JOIN public.match_maps mm ON mm.match_id = m.id
+                    WHERE m.server_id = s.id
+                      AND m.ended_at >= now() - interval '10 minutes'
+                      AND mm.status IN ('UploadingDemo', 'WaitingForTV')
+                 )
+            )
+            OR (
+              n.enabled_for_match_making = false
+              AND (n.start_port_range IS NULL OR n.end_port_range IS NULL)
+              AND NOT EXISTS (
+                SELECT 1
+                  FROM public.servers s
+                 WHERE s.game_server_node_id = n.id
+                   AND s.is_dedicated = false
+              )
+            )
+          )
+        ORDER BY n.enabled_for_match_making, n.id`,
     );
-    return rows.map((row) => row.id);
+
+    const supported = await Promise.all(
+      nodes.map((node) => this.pluginRuntimeService.supportsPractice(node)),
+    );
+
+    return nodes.map((node, index) => ({
+      id: node.id,
+      region: node.region,
+      gpu_only: node.gpu_only,
+      supported: supported[index],
+    }));
+  }
+
+  // A GPU-only node takes no matches, so its slot is no region's to hold back
+  // and it stands in for any. A node that takes matches has to be in the
+  // render's own region: that is the one whose reserve the booking checked.
+  private async renderNodeIdsFor(
+    region: string | null,
+  ): Promise<Array<string>> {
+    return (await this.renderNodes())
+      .filter(
+        (node) =>
+          node.supported &&
+          (node.gpu_only || !region || node.region === region),
+      )
+      .map((node) => node.id);
   }
 
   private async utilityPracticeServerEnv(isRender = false) {

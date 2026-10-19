@@ -945,4 +945,153 @@ describe("servers and game server nodes (SQL-driven)", () => {
     );
     expect(await count()).toBe(0);
   });
+
+  // A utility render's pod films its practice server over loopback, so the
+  // server has to boot on the GPU's own node. A GPU-only node takes no matches
+  // and has no port range, so the render booking makes it a slot of its own.
+  describe("a GPU-only node's render server", () => {
+    // What "Use as GPU Only" on the node page leaves: no region, no ports.
+    const createGpuOnlyNode = async () => {
+      const id = `test-node-${++nodeSeq}`;
+      await postgres.query(
+        `INSERT INTO game_server_nodes (id, public_ip, region, status, enabled, label, gpu, enabled_for_match_making)
+         VALUES ($1, '203.0.113.9', NULL, 'Online', true, $1, true, false)`,
+        [id],
+      );
+      return id;
+    };
+
+    const ensureRenderServer = (nodeId: string, region = "NodeRegion") =>
+      postgres.query("SELECT ensure_render_server($1, $2)", [nodeId, region]);
+
+    const slots = async (nodeId: string) =>
+      (await nodeServers(nodeId)).map((s) => [
+        s.label,
+        Number(s.port),
+        Number(s.tv_port),
+        s.enabled,
+      ]);
+
+    it("is made once, in the render's region, the first time a render needs it", async () => {
+      const nodeId = await createGpuOnlyNode();
+      expect(await slots(nodeId)).toEqual([]);
+
+      await ensureRenderServer(nodeId);
+      await ensureRenderServer(nodeId, "OtherRegion");
+
+      expect(await slots(nodeId)).toEqual([["render", 27015, 27016, true]]);
+      const [slot] = await postgres.query<
+        Array<{ type: string; region: string; host: string }>
+      >(
+        "SELECT type, region, host FROM servers WHERE game_server_node_id = $1",
+        [nodeId],
+      );
+      expect(slot).toEqual({
+        type: "Ranked",
+        region: "NodeRegion",
+        host: "203.0.113.9",
+      });
+    });
+
+    it("takes a pair no server left on the node holds", async () => {
+      const nodeId = await createNode();
+      const dedicatedId = await createDedicatedServer(nodeId);
+      expect((await dedicatedServer(dedicatedId)).port).toBe(27015);
+      await postgres.query(
+        `UPDATE game_server_nodes
+            SET gpu = true, enabled_for_match_making = false,
+                start_port_range = NULL, end_port_range = NULL
+          WHERE id = $1`,
+        [nodeId],
+      );
+
+      await ensureRenderServer(nodeId);
+
+      expect(await slots(nodeId)).toEqual([["render", 27017, 27018, true]]);
+    });
+
+    it("is never made on a node that takes matches, has a port range, has no GPU or is disabled", async () => {
+      const matchNode = await createNode();
+      await postgres.query(
+        "UPDATE game_server_nodes SET gpu = true WHERE id = $1",
+        [matchNode],
+      );
+      const rangedGpuOnly = await createNode();
+      await postgres.query(
+        "UPDATE game_server_nodes SET gpu = true, enabled_for_match_making = false WHERE id = $1",
+        [rangedGpuOnly],
+      );
+      const noGpu = await createGpuOnlyNode();
+      await postgres.query(
+        "UPDATE game_server_nodes SET gpu = false WHERE id = $1",
+        [noGpu],
+      );
+      const disabled = await createGpuOnlyNode();
+      await postgres.query(
+        "UPDATE game_server_nodes SET enabled = false WHERE id = $1",
+        [disabled],
+      );
+
+      for (const nodeId of [matchNode, rangedGpuOnly, noGpu, disabled]) {
+        await ensureRenderServer(nodeId);
+      }
+
+      expect((await slots(matchNode)).map(([label]) => label)).not.toContain(
+        "render",
+      );
+      expect(
+        (await slots(rangedGpuOnly)).map(([label]) => label),
+      ).not.toContain("render");
+      expect(await slots(noGpu)).toEqual([]);
+      expect(await slots(disabled)).toEqual([]);
+    });
+
+    // The node reports in all the time. Compared with `=`, its NULL region and
+    // ports read as changed on every report, so each one deleted its servers
+    // -- and, while a render held one, was refused outright.
+    it("keeps its server through the node's reports while a render holds it", async () => {
+      const nodeId = await createGpuOnlyNode();
+      const [slot] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO servers (host, label, rcon_password, port, tv_port, region, game_server_node_id)
+         VALUES ('203.0.113.9', 'render', '\\x00'::bytea, 27015, 27016, 'NodeRegion', $1)
+         RETURNING id`,
+        [nodeId],
+      );
+      await fx.region();
+      const { matchId } = await fx.bareMatch();
+      await postgres.query(
+        "UPDATE servers SET reserved_by_match_id = $2 WHERE id = $1",
+        [slot.id, matchId],
+      );
+
+      await postgres.query(
+        `UPDATE game_server_nodes
+            SET status = 'Online', gpu_rendering_enabled = false, label = 'renamed'
+          WHERE id = $1`,
+        [nodeId],
+      );
+
+      const servers = await postgres.query<
+        Array<{ id: string; reserved_by_match_id: string }>
+      >(
+        "SELECT id, reserved_by_match_id FROM servers WHERE game_server_node_id = $1",
+        [nodeId],
+      );
+      expect(servers).toEqual([{ id: slot.id, reserved_by_match_id: matchId }]);
+    });
+
+    // Left behind on a node that takes matches, the slot would be booked by
+    // matchmaking on a port nobody forwarded.
+    it("goes away when the node takes matches again", async () => {
+      const nodeId = await createGpuOnlyNode();
+      await ensureRenderServer(nodeId);
+
+      await postgres.query(
+        "UPDATE game_server_nodes SET enabled_for_match_making = true WHERE id = $1",
+        [nodeId],
+      );
+
+      expect(await slots(nodeId)).toEqual([]);
+    });
+  });
 });
