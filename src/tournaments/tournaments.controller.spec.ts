@@ -120,6 +120,11 @@ describe("TournamentsController registration and check-in actions", () => {
       if (sql.includes("UPDATE tournament_free_agents")) {
         return freeAgentStamped;
       }
+      // Clearing a team's check-in also clears its roster in the same
+      // statement; the team row is what it answers with.
+      if (sql.includes("SET checked_in_at = NULL")) {
+        return teamStamped;
+      }
       if (sql.includes("UPDATE tournament_team_roster")) {
         return rosterStamped;
       }
@@ -543,6 +548,91 @@ describe("TournamentsController registration and check-in actions", () => {
         statements.some((sql) => sql.includes("update_tournament_stages")),
       ).toBe(true);
       expect(statements.some((sql) => sql.includes("seed_stage"))).toBe(true);
+    });
+  });
+
+  describe("setTournamentTeamCheckIn", () => {
+    const setCheckIn = (checked_in: boolean, user = organizer) =>
+      controller.setTournamentTeamCheckIn({
+        user,
+        tournament_id: "tournament-1",
+        tournament_team_id: "team-1",
+        checked_in,
+      });
+
+    beforeEach(() => {
+      tournamentRow = tournament({ is_organizer: true });
+    });
+
+    it("refuses a non-organizer", async () => {
+      tournamentRow = tournament();
+
+      await expect(setCheckIn(true, player)).rejects.toThrow(/organizer/i);
+      expect(
+        statements.some((sql) => sql.includes("UPDATE tournament_teams")),
+      ).toBe(false);
+    });
+
+    it("refuses when the window is not open", async () => {
+      tournamentRow = tournament({ is_organizer: true, check_in_open: false });
+
+      await expect(setCheckIn(true)).rejects.toThrow(/window is not open/i);
+    });
+
+    it("refuses when the tournament does not require check-in", async () => {
+      tournamentRow = tournament({
+        is_organizer: true,
+        check_in_required: false,
+      });
+
+      await expect(setCheckIn(true)).rejects.toThrow(
+        /does not require check-in/i,
+      );
+    });
+
+    // checkIntoTournament would stamp the organizer's own roster row here.
+    it("checks the team itself in, even in Players mode", async () => {
+      tournamentRow = tournament({
+        is_organizer: true,
+        check_in_setting: "Players",
+      });
+
+      await expect(setCheckIn(true)).resolves.toEqual({ success: true });
+
+      const stamp = statements.find((sql) =>
+        sql.includes("UPDATE tournament_teams"),
+      );
+      expect(stamp).toContain("COALESCE(checked_in_at, now())");
+      expect(
+        statements.some((sql) => sql.includes("UPDATE tournament_team_roster")),
+      ).toBe(false);
+    });
+
+    it("clears the team and its players' confirmations together", async () => {
+      await expect(setCheckIn(false)).resolves.toEqual({ success: true });
+
+      const clear = statements.find((sql) =>
+        sql.includes("SET checked_in_at = NULL"),
+      );
+      expect(clear).toContain("UPDATE tournament_teams");
+      expect(clear).toContain("UPDATE tournament_team_roster");
+    });
+
+    // Re-seeding mid-window drops every team that hasn't confirmed yet.
+    it("never re-seeds", async () => {
+      await setCheckIn(true);
+      await setCheckIn(false);
+
+      expect(
+        statements.some((sql) => sql.includes("assign_seeds_to_teams")),
+      ).toBe(false);
+    });
+
+    it("refuses a team from another tournament", async () => {
+      teamStamped = [];
+
+      await expect(setCheckIn(true)).rejects.toThrow(/not registered/i);
+      await expect(setCheckIn(false)).rejects.toThrow(/not registered/i);
     });
   });
 

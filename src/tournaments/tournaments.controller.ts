@@ -690,6 +690,66 @@ export class TournamentsController {
     return team;
   }
 
+  // The organizer's own switch for one team while the window is open, in any
+  // check_in_setting: checkIntoTournament stamps the caller's own roster row
+  // in Players mode, and nothing else takes a check-in back. No re-seed --
+  // assign_seeds_to_teams mid-window would drop every team that simply hasn't
+  // confirmed yet. Once the window closes, readmitTournamentTeam takes over.
+  @HasuraAction()
+  public async setTournamentTeamCheckIn(data: {
+    user: User;
+    tournament_id: string;
+    tournament_team_id: string;
+    checked_in: boolean;
+  }) {
+    const { tournament_id, tournament_team_id, checked_in } = data;
+    const tournament = await this.getTournamentAccess(tournament_id, data.user);
+
+    this.requireOrganizer(tournament);
+
+    if (!tournament.check_in_required) {
+      throw Error("this tournament does not require check-in");
+    }
+
+    if (!tournament.check_in_open) {
+      throw Error("the check-in window is not open");
+    }
+
+    // Clearing takes the players' own confirmations with it: left stamped, the
+    // next one in Players mode rolls the team straight back up.
+    const updated = await this.postgres.query<Array<{ id: string }>>(
+      checked_in
+        ? `UPDATE tournament_teams
+              SET checked_in_at = COALESCE(checked_in_at, now())
+            WHERE id = $1::uuid AND tournament_id = $2::uuid
+          RETURNING id::text AS id`
+        : `WITH team AS (
+             UPDATE tournament_teams
+                SET checked_in_at = NULL
+              WHERE id = $1::uuid AND tournament_id = $2::uuid
+            RETURNING id
+           ), roster AS (
+             UPDATE tournament_team_roster ttr
+                SET checked_in_at = NULL
+               FROM team
+              WHERE ttr.tournament_team_id = team.id
+                AND ttr.checked_in_at IS NOT NULL
+           )
+           SELECT id::text AS id FROM team`,
+      [tournament_team_id, tournament_id],
+    );
+
+    if (updated.length === 0) {
+      throw Error("team is not registered for this tournament");
+    }
+
+    this.logger.log(
+      `[${tournament_id}] organizer ${checked_in ? "checked in" : "cleared the check-in of"} team ${tournament_team_id}`,
+    );
+
+    return { success: true };
+  }
+
   @HasuraAction()
   public async readmitTournamentTeam(data: {
     user: User;
