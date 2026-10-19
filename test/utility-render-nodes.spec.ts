@@ -22,7 +22,7 @@ describe("render nodes (SQL-driven)", () => {
     fx = new Fixtures(postgres, 76561199710000000n);
     await postgres.query(
       `INSERT INTO server_regions (value, description, is_lan)
-       VALUES ('RenderRegion', 'RenderRegion', false), ('RenderLan', 'RenderLan', true)
+       VALUES ('RenderRegion', 'RenderRegion', false), ('ZRenderLan', 'ZRenderLan', true)
        ON CONFLICT (value) DO NOTHING`,
     );
 
@@ -96,13 +96,13 @@ describe("render nodes (SQL-driven)", () => {
   const ids = async () => (await service.renderNodes()).map((node) => node.id);
 
   it("lists a GPU-only node's slot first, then GPU nodes in any region, LAN included", async () => {
-    const lan = await matchNode("RenderLan");
+    const lan = await matchNode("ZRenderLan");
     const online = await matchNode("RenderRegion");
     const gpuOnly = await gpuOnlyNode();
 
     expect(await service.renderNodes()).toEqual([
       { id: gpuOnly, region: null, gpu_only: true, supported: true },
-      { id: lan, region: "RenderLan", gpu_only: false, supported: true },
+      { id: lan, region: "ZRenderLan", gpu_only: false, supported: true },
       { id: online, region: "RenderRegion", gpu_only: false, supported: true },
     ]);
   });
@@ -199,13 +199,13 @@ describe("render nodes (SQL-driven)", () => {
     it("is the GPU node's own region, a LAN one included", async () => {
       await matchNode("RenderRegion");
       await matchNode("RenderRegion");
-      const lan = await matchNode("RenderLan");
+      const lan = await matchNode("ZRenderLan");
       await postgres.query(
         "UPDATE game_server_nodes SET gpu = false WHERE id <> $1",
         [lan],
       );
 
-      expect(await renderRegion()).toBe("RenderLan");
+      expect(await renderRegion()).toBe("ZRenderLan");
     });
 
     // A GPU-only node has no region, and its slot is made in this one: it has
