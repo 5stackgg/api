@@ -125,6 +125,10 @@ describe("SystemService.setVersions", () => {
     postgres.query.mockResolvedValue(
       stored === undefined ? [] : [{ value: stored }],
     );
+    jest.spyOn(system as any, "updateSourceDocument").mockResolvedValue({
+      source: { version: 1, mode: "installed" },
+      installed: null,
+    });
     jest.spyOn(system, "getPanelVersion").mockResolvedValue("abc123");
     jest
       .spyOn(system as any, "getLatestPanelVersion")
@@ -235,6 +239,12 @@ describe("SystemService.getOutdated", () => {
       })),
     };
 
+    jest
+      .spyOn(system, "getUpdateSource")
+      .mockResolvedValue({ version: 1, mode: "installed" });
+    jest
+      .spyOn(system as any, "desiredServiceImage")
+      .mockResolvedValue(`${repo}:latest`);
     jest.spyOn(system as any, "getPluginServices").mockResolvedValue([]);
     jest.spyOn(system, "getLatestDigest").mockResolvedValue(latest);
   });
@@ -265,6 +275,12 @@ describe("SystemService.getOutdated", () => {
         pod: "game-server-node-connector-x7k2p",
         currentVersion: old,
         newVersion: latest,
+        currentImage: `${repo}:latest`,
+        configuredImage: `${repo}:latest`,
+        targetImage: `${repo}:latest`,
+        source: "installed",
+        status: "update",
+        canUpdate: true,
       },
     ]);
   });

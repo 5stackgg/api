@@ -23,6 +23,15 @@ export = new Proxy(
       if (prop === "__esModule") {
         return false;
       }
+      if (prop === "setHeaderOptions")
+        return (name: string, value: string) => ({
+          headers: { [name]: value },
+        });
+      if (prop === "PatchStrategy")
+        return {
+          JsonPatch: "application/json-patch+json",
+          StrategicMergePatch: "application/strategic-merge-patch+json",
+        };
       return KubeStub;
     },
   },
