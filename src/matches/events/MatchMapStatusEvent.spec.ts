@@ -149,6 +149,20 @@ describe("MatchMapStatusEvent", () => {
       },
     );
 
+    // Rounds a reset undid stay in the table until the next round's score
+    // purges them, which can land after the map's last status.
+    it("checks the winner against the rounds still on the map", async () => {
+      await process("WaitingForTV", "lineup-1");
+
+      const roundsQuery = hasura.query.mock.calls
+        .map(([query]: [any]) => query.match_map_rounds)
+        .find(Boolean);
+      expect(roundsQuery.__args.where).toEqual({
+        match_map_id: { _eq: "map-1" },
+        deleted_at: { _is_null: true },
+      });
+    });
+
     it("keeps the reported winner of a surrendered map", async () => {
       // the team that gives up is frequently the one ahead on rounds, so the
       // score is not the authority here - the forfeit is
