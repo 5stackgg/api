@@ -1031,4 +1031,87 @@ describe("utility lineup renders (SQL-driven)", () => {
       ).rejects.toThrow(/one_live_per_host/);
     });
   });
+  // Why a render is still waiting goes on its row as error_message; a pod's
+  // status posts keep error_message, so the note has to be taken off again.
+  describe("a waiting render's note", () => {
+    let renders: UtilityRendersService;
+
+    beforeEach(() => {
+      renders = new UtilityRendersService(
+        new Logger("UtilityRendersSqlTest"),
+        postgres,
+        { removePrefix: jest.fn(), has: jest.fn() } as never,
+        { add: jest.fn() } as never,
+      );
+    });
+
+    const row = async (id: string) =>
+      (
+        await postgres.query<
+          Array<{
+            status: string;
+            error_message: string | null;
+            last_status_at: Date;
+          }>
+        >(
+          `SELECT status, error_message, last_status_at
+             FROM utility_lineup_renders WHERE id = $1::uuid`,
+          [id],
+        )
+      )[0];
+
+    it("goes on a waiting row once, and never on a finished one", async () => {
+      const [waiting] = await queueRender(await lineup());
+      const [failed] = await queueRender(
+        await lineup({ name: "B site" }),
+        "error",
+      );
+      await postgres.query(
+        "UPDATE utility_lineup_renders SET error_message = 'pod crashed' WHERE id = $1::uuid",
+        [failed.id],
+      );
+
+      await renders.noteBootProblem(
+        [waiting.id, failed.id],
+        "waiting for a GPU node",
+      );
+      const first = await row(waiting.id);
+      await renders.noteBootProblem([waiting.id], "waiting for a GPU node");
+
+      expect(first.error_message).toBe("waiting for a GPU node");
+      expect((await row(waiting.id)).last_status_at).toEqual(
+        first.last_status_at,
+      );
+      expect((await row(failed.id)).error_message).toBe("pod crashed");
+    });
+
+    it("comes off a row still in flight, and leaves a finished one's error", async () => {
+      const [waiting] = await queueRender(await lineup());
+      const [failed] = await queueRender(
+        await lineup({ name: "B site" }),
+        "error",
+      );
+      await postgres.query(
+        "UPDATE utility_lineup_renders SET error_message = 'note' WHERE id = ANY($1::uuid[])",
+        [[waiting.id, failed.id]],
+      );
+
+      await renders.clearBootProblem([waiting.id, failed.id]);
+
+      expect((await row(waiting.id)).error_message).toBeNull();
+      expect((await row(failed.id)).error_message).toBe("note");
+    });
+
+    // Cancelled, the note would read as the reason it failed.
+    it("does not outlive a cancel", async () => {
+      const [waiting] = await queueRender(await lineup());
+      await renders.noteBootProblem([waiting.id], "waiting for a GPU node");
+
+      await renders.cancel(waiting.id);
+
+      expect(await row(waiting.id)).toEqual(
+        expect.objectContaining({ status: "cancelled", error_message: null }),
+      );
+    });
+  });
 });

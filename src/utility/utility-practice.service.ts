@@ -2585,7 +2585,11 @@ export class UtilityPracticeService {
     const nodes = await this.matchAssistant.renderNodes();
     const supported = nodes.filter((node) => node.supported);
 
-    if (nodes.length > 0 && supported.length === 0) {
+    if (nodes.length === 0) {
+      throw Error(await this.renderWaitReason());
+    }
+
+    if (supported.length === 0) {
       throw new NoPracticeServerHere(
         UtilityPracticeService.UNSUPPORTED_BUILD_MESSAGE,
       );
@@ -2620,7 +2624,67 @@ export class UtilityPracticeService {
       }
     }
 
-    throw Error("no practice servers are free right now");
+    throw Error(
+      "waiting for a free server slot: the GPU node's region is down to its Reserved on-demand slots (Settings → Application → Utility)",
+    );
+  }
+
+  // Why no node can take a render right now, for the rows waiting on one --
+  // the conditions renderNodes() applies, asked one at a time. Without it the
+  // queue sat on "booking a practice server" and the reason was nowhere.
+  public async renderWaitReason(): Promise<string> {
+    const nodes = await this.postgres.query<
+      Array<{
+        status: string | null;
+        busy: boolean;
+        paused: boolean;
+        installed: boolean;
+        updating: boolean;
+      }>
+    >(
+      `SELECT n.status,
+              n.id IN (SELECT * FROM public.gpu_busy_node_ids()) AS busy,
+              n.id IN (SELECT * FROM public.gpu_batch_blocked_node_ids()) AS paused,
+              n.build_id IS NOT NULL AS installed,
+              n.update_status IS NOT NULL AS updating
+         FROM public.game_server_nodes n
+        WHERE n.gpu = true
+          AND n.enabled = true
+          AND n.gpu_rendering_enabled = true`,
+    );
+
+    if (nodes.length === 0) {
+      return "waiting for a GPU node: none is enabled with Rendering on";
+    }
+
+    const connected = nodes.filter(
+      (node) =>
+        node.status === "Online" || node.status === "NotAcceptingNewMatches",
+    );
+    if (connected.length === 0) {
+      return "waiting for a GPU node: every one with Rendering on is offline or still being set up";
+    }
+
+    const idle = connected.filter((node) => !node.busy && !node.paused);
+    if (idle.length === 0) {
+      return connected.some((node) => !node.busy)
+        ? 'waiting for the match on the GPU node to end: "Pause highlight renders during active match" (Settings → Application → Highlights) pauses lineup renders too'
+        : "waiting for a GPU: every one is busy with a live stream, a demo or another render";
+    }
+
+    // Only a node that takes new matches boots a render's server.
+    const free = idle.filter((node) => node.status === "Online");
+    if (free.length === 0) {
+      return "waiting for a GPU node: the free one is not accepting new matches";
+    }
+
+    if (free.some((node) => node.installed && !node.updating)) {
+      return "waiting for a free server slot on the GPU node";
+    }
+
+    return free.some((node) => node.updating)
+      ? "waiting for the GPU node to finish updating CS2"
+      : "waiting for CS2 to be installed on the GPU node: Install CS2 on its node page";
   }
 
   private async hasServerHeadroom(region: string): Promise<boolean> {

@@ -61,6 +61,7 @@ describe("BatchUtilityRenderJob", () => {
       stampBootStage: jest.fn(),
       bootStatusForMatch: jest.fn().mockResolvedValue(null),
       noteBootProblem: jest.fn(),
+      clearBootProblem: jest.fn(),
       failRenders: jest.fn(async (ids: Array<string>) => {
         queue = queue.filter((render) => !ids.includes(render.id));
       }),
@@ -84,6 +85,11 @@ describe("BatchUtilityRenderJob", () => {
       endRenderSession: jest.fn(),
       canPracticeOn: jest.fn().mockResolvedValue(true),
       markRenderPod: jest.fn(),
+      renderWaitReason: jest
+        .fn()
+        .mockResolvedValue(
+          "waiting for a GPU: every one is busy with a live stream, a demo or another render",
+        ),
     };
     gameStreamer = {
       dispatchNadePreviews: jest
@@ -542,7 +548,9 @@ describe("BatchUtilityRenderJob", () => {
     expect(bull.data.sessionId).toBeUndefined();
   });
 
-  it("books nothing while no GPU is free to film on", async () => {
+  // The wait used to be said nowhere: the row sat on "booking a practice
+  // server", and the reason was one api log line.
+  it("books nothing while no GPU is free to film on, and says why on the row", async () => {
     gameStreamer.freeRenderGpuNodeIds.mockResolvedValueOnce([]);
     const bull = makeJob({});
 
@@ -550,6 +558,10 @@ describe("BatchUtilityRenderJob", () => {
 
     expect(practice.startForRender).not.toHaveBeenCalled();
     expect(renders.failRenders).not.toHaveBeenCalled();
+    expect(renders.noteBootProblem).toHaveBeenCalledWith(
+      ["render-1"],
+      "waiting for a GPU: every one is busy with a live stream, a demo or another render",
+    );
   });
 
   it("gives up on a GPU that stays busy and frees the practice server", async () => {
@@ -572,9 +584,9 @@ describe("BatchUtilityRenderJob", () => {
     expect(practice.endRenderSession).toHaveBeenCalled();
   });
 
-  it("retries instead of failing when no practice server is free", async () => {
+  it("retries instead of failing when no practice server is free, and says why on the row", async () => {
     practice.startForRender.mockRejectedValueOnce(
-      new Error("no server available"),
+      new Error("waiting for a free server slot on the GPU node"),
     );
     const bull = makeJob({});
 
@@ -582,6 +594,75 @@ describe("BatchUtilityRenderJob", () => {
 
     expect(renders.failRenders).not.toHaveBeenCalled();
     expect(bull.moveToDelayed).toHaveBeenCalled();
+    expect(renders.noteBootProblem).toHaveBeenCalledWith(
+      ["render-1"],
+      "waiting for a free server slot on the GPU node",
+    );
+    expect(renders.clearBootProblem).not.toHaveBeenCalled();
+  });
+
+  // A pod's status posts keep error_message, so a wait note left behind would
+  // still be on a render that went on to film fine.
+  it("clears the wait note once a server is booked", async () => {
+    const bull = makeJob({});
+
+    await expect(job.process(bull as any)).rejects.toBeInstanceOf(DelayedError);
+
+    expect(practice.startForRender).toHaveBeenCalled();
+    expect(renders.clearBootProblem).toHaveBeenCalledWith(["render-1"]);
+    expect(renders.noteBootProblem).not.toHaveBeenCalled();
+  });
+
+  // One booking serves the whole queue, so the rows of the maps behind the
+  // head are waiting on it too -- and on a pod that is not theirs, not at all.
+  it("tells every row nobody has why, whatever its map", async () => {
+    const inferno = { ...RENDER, id: "render-inferno", map_name: "de_inferno" };
+    const taken = {
+      ...HANDED,
+      id: "render-taken",
+      utility_practice_session_id: "session-0",
+    };
+    renders.inFlight.mockResolvedValue([RENDER, taken, inferno]);
+    gameStreamer.getNadeRenderPodState.mockResolvedValue("running");
+    gameStreamer.freeRenderGpuNodeIds.mockResolvedValueOnce([]);
+    const bull = makeJob({});
+
+    await expect(job.process(bull as any)).rejects.toBeInstanceOf(DelayedError);
+
+    expect(renders.noteBootProblem).toHaveBeenCalledWith(
+      ["render-1", "render-inferno"],
+      expect.any(String),
+    );
+  });
+
+  // A boot that wedged for a while notes the pod's log on the rows; once the
+  // server is up and the rows go to a pod, that note is no longer the story,
+  // and a pod's status posts would otherwise carry it to "done".
+  it("clears a boot note when the rows go to a pod", async () => {
+    const bull = makeJob({
+      mapName: "de_mirage",
+      sessionId: "session-1",
+      bookedAt: Date.now(),
+    });
+
+    await expect(job.process(bull as any)).rejects.toBeInstanceOf(DelayedError);
+
+    expect(gameStreamer.dispatchNadePreviews).toHaveBeenCalled();
+    expect(renders.clearBootProblem).toHaveBeenCalledWith(["render-1"]);
+  });
+
+  it("keeps waiting when it cannot say why", async () => {
+    gameStreamer.freeRenderGpuNodeIds.mockResolvedValueOnce([]);
+    practice.renderWaitReason.mockRejectedValueOnce(new Error("db down"));
+    const bull = makeJob({});
+
+    await expect(job.process(bull as any)).rejects.toBeInstanceOf(DelayedError);
+
+    expect(bull.moveToDelayed).toHaveBeenCalled();
+    expect(renders.noteBootProblem).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("could not note why it is waiting"),
+    );
   });
 
   it("waits for the server to be Ready before spending a GPU", async () => {

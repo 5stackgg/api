@@ -251,4 +251,93 @@ describe("render nodes (SQL-driven)", () => {
 
     expect(await (practice as any).resolveRegion(null)).toBe("RenderRegion");
   });
+  // What a waiting render says, one condition at a time: renderNodes() found
+  // nothing, and this is the reason the queue page shows on the row.
+  describe("why a render is waiting", () => {
+    const reason = (): Promise<string> => practice.renderWaitReason();
+    const set = (nodeId: string, sql: string) =>
+      postgres.query(`UPDATE game_server_nodes SET ${sql} WHERE id = $1`, [
+        nodeId,
+      ]);
+
+    it("names a missing GPU node, or one switched off for rendering", async () => {
+      expect(await reason()).toContain("none is enabled with Rendering on");
+
+      const node = await gpuOnlyNode();
+      await set(node, "gpu_rendering_enabled = false");
+      expect(await reason()).toContain("none is enabled with Rendering on");
+    });
+
+    it("names a GPU node that is offline or not taking new matches", async () => {
+      const node = await gpuOnlyNode();
+
+      await set(node, "status = 'Offline'");
+      expect(await reason()).toContain("offline");
+
+      await set(node, "status = 'NotAcceptingNewMatches'");
+      expect(await reason()).toContain("not accepting new matches");
+    });
+
+    // A busy node that takes matches next to an idle one that does not: the
+    // idle one is the answer, and it is not busy.
+    it("names the idle GPU node that is not accepting new matches", async () => {
+      const busy = await gpuOnlyNode();
+      const idle = await gpuOnlyNode();
+      await set(idle, "status = 'NotAcceptingNewMatches'");
+      await fx.region();
+      const { matchId, mapId } = await fx.bareMatch();
+      await postgres.query(
+        `INSERT INTO match_demo_sessions
+           (match_map_id, match_id, watcher_steam_id, k8s_job_name, game_server_node_id)
+         VALUES ($1, $2, $3, 'job', $4)`,
+        [mapId, matchId, await fx.player(), busy],
+      );
+
+      expect(await reason()).toContain("not accepting new matches");
+    });
+
+    it("names a GPU that is busy", async () => {
+      const node = await gpuOnlyNode();
+      await fx.region();
+      const { matchId, mapId } = await fx.bareMatch();
+      await postgres.query(
+        `INSERT INTO match_demo_sessions
+           (match_map_id, match_id, watcher_steam_id, k8s_job_name, game_server_node_id)
+         VALUES ($1, $2, $3, 'job', $4)`,
+        [mapId, matchId, await fx.player(), node],
+      );
+
+      expect(await reason()).toContain("every one is busy");
+    });
+
+    it("names a free GPU node without CS2, or one updating it", async () => {
+      const node = await gpuOnlyNode();
+
+      await set(node, "build_id = NULL");
+      expect(await reason()).toContain("Install CS2");
+
+      await set(node, "update_status = 'Downloading'");
+      expect(await reason()).toContain("finish updating CS2");
+    });
+
+    it("names a free GPU node with no free server slot", async () => {
+      const node = await gpuOnlyNode();
+      await postgres.query("SELECT ensure_render_server($1, 'RenderRegion')", [
+        node,
+      ]);
+      await fx.region();
+      const { matchId } = await fx.bareMatch();
+      await postgres.query(
+        "UPDATE servers SET reserved_by_match_id = $2 WHERE game_server_node_id = $1",
+        [node, matchId],
+      );
+
+      expect(await reason()).toBe(
+        "waiting for a free server slot on the GPU node",
+      );
+      await expect((practice as any).renderRegion()).rejects.toThrow(
+        "waiting for a free server slot on the GPU node",
+      );
+    });
+  });
 });

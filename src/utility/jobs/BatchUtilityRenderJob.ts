@@ -181,11 +181,18 @@ export class BatchUtilityRenderJob extends WorkerHost {
         return this.again(job);
       }
 
+      // Every row nobody has is waiting on this booking, so each gets told why
+      // it is still waiting.
+      const waiting = unclaimed.map((render) => render.id);
+
       if ((await this.gameStreamer.freeRenderGpuNodeIds()).length === 0) {
         this.logger.log(`${tag} no GPU free to film on yet`);
         await this.renders.stampBootStage(
           inFlight.map((render) => render.id),
           "booking_server:NoGpuAvailable",
+        );
+        await this.explainWait(tag, waiting, () =>
+          this.practice.renderWaitReason(),
         );
         return this.delayUntilNext(job, GPU_BUSY_RETRY_MS);
       }
@@ -199,9 +206,11 @@ export class BatchUtilityRenderJob extends WorkerHost {
       } catch (error) {
         const message = (error as Error)?.message ?? "no practice server";
         this.logger.log(`${tag} no practice server yet (${message})`);
+        await this.explainWait(tag, waiting, async () => message);
         return this.delayUntilNext(job, SERVER_BUSY_RETRY_MS);
       }
 
+      await this.renders.clearBootProblem(waiting);
       await this.renders.attachSession(
         inFlight.map((render) => render.id),
         session.id,
@@ -333,6 +342,9 @@ export class BatchUtilityRenderJob extends WorkerHost {
         inFlight.map((render) => render.id),
         "dispatching_pod",
       );
+      // The server came up after all: a "pod is up but silent" note from its
+      // boot is not what these rows are about any more.
+      await this.renders.clearBootProblem(inFlight.map((render) => render.id));
       const first = BatchUtilityRenderJob.firstBatch(
         inFlight.map((render) => ({
           job_id: render.id,
@@ -552,6 +564,22 @@ export class BatchUtilityRenderJob extends WorkerHost {
   // One map's rows failing is not the queue ending. This is the only job, so
   // returning with other maps still queued leaves them with nothing coming
   // until the five-minute reconcile.
+  // Only an explanation: failing to give one must not stop the queue, which
+  // nothing re-dispatches until the next reconcile.
+  private async explainWait(
+    tag: string,
+    renderIds: Array<string>,
+    reason: () => Promise<string>,
+  ): Promise<void> {
+    try {
+      await this.renders.noteBootProblem(renderIds, await reason());
+    } catch (error) {
+      this.logger.warn(
+        `${tag} could not note why it is waiting: ${(error as Error)?.message}`,
+      );
+    }
+  }
+
   private async again(job: Job<JobData>): Promise<void> {
     if ((await this.renders.inFlight()).length > 0) {
       return this.delayUntilNext(job, CHECK_DELAY_MS);
