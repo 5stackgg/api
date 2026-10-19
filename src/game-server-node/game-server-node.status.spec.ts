@@ -52,6 +52,7 @@ describe("GameServerNodeService.updateStatus", () => {
     csgo_build_id: null,
     public_ip: PUBLIC_IP,
     gpu: false,
+    gpu_vendor: null,
     gpu_info: null,
     cpu_sockets: cpuInfo.sockets,
     cpu_cores_per_socket: cpuInfo.coresPerSocket,

@@ -41070,6 +41070,9 @@ export default {
             "gpu_streaming_enabled": [
                 6
             ],
+            "gpu_vendor": [
+                102
+            ],
             "id": [
                 104
             ],
@@ -41622,6 +41625,9 @@ export default {
             "gpu_streaming_enabled": [
                 7
             ],
+            "gpu_vendor": [
+                104
+            ],
             "id": [
                 106
             ],
@@ -41909,6 +41915,9 @@ export default {
             "gpu_streaming_enabled": [
                 6
             ],
+            "gpu_vendor": [
+                102
+            ],
             "id": [
                 104
             ],
@@ -42025,6 +42034,9 @@ export default {
             "end_port_range": [
                 44
             ],
+            "gpu_vendor": [
+                102
+            ],
             "id": [
                 104
             ],
@@ -42104,6 +42116,9 @@ export default {
             ],
             "end_port_range": [
                 3962
+            ],
+            "gpu_vendor": [
+                3881
             ],
             "id": [
                 3962
@@ -42188,6 +42203,9 @@ export default {
             "end_port_range": [
                 44
             ],
+            "gpu_vendor": [
+                102
+            ],
             "id": [
                 104
             ],
@@ -42267,6 +42285,9 @@ export default {
             ],
             "end_port_range": [
                 3962
+            ],
+            "gpu_vendor": [
+                3881
             ],
             "id": [
                 3962
@@ -42431,6 +42452,9 @@ export default {
             ],
             "gpu_streaming_enabled": [
                 3962
+            ],
+            "gpu_vendor": [
+                3881
             ],
             "id": [
                 3962
@@ -42623,6 +42647,9 @@ export default {
             ],
             "gpu_streaming_enabled": [
                 6
+            ],
+            "gpu_vendor": [
+                102
             ],
             "id": [
                 104
@@ -43044,6 +43071,9 @@ export default {
             ],
             "gpu_streaming_enabled": [
                 6
+            ],
+            "gpu_vendor": [
+                102
             ],
             "id": [
                 104

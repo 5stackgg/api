@@ -27,6 +27,14 @@ import {
 } from "src/broadcast-huds/broadcast-huds.service";
 import { LoggingService } from "../../k8s/logging/logging.service";
 import {
+  AMD_GPU_JOB_SELECTOR,
+  classifyGpuJobBoot,
+  gpuJobBootReason,
+  gpuJobNodeName,
+  isGpuJobFinished,
+  isGpuJobYoung,
+} from "./gpu-boot-watchdog";
+import {
   SteamAccountService,
   ClaimedSteamAccount,
 } from "./steam-account.service";
@@ -139,6 +147,26 @@ export type GpuClaim = {
   nodeId: string;
   steamAccount: ClaimedSteamAccount;
 };
+
+// The vendor profile of a GPU node, read by primary key on every dispatch.
+// gpu_info element 0 is the device the node serves.
+export const GPU_NODE_PROFILE_SQL = `SELECT gpu_vendor, gpu_info->0->>'pci_bus_id' AS pci_address FROM game_server_nodes WHERE id = $1`;
+
+export type GpuNodeProfile =
+  | { vendor: "nvidia" }
+  | { vendor: "amd"; pciAddress: string };
+
+const GPU_PCI_ADDRESS_PATTERN = /^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}[.][0-7]$/;
+
+// A GPU node row the api cannot build a Job for: gpu_vendor amd without a
+// valid PCI address, or a vendor it does not know. Never an NVIDIA fallback,
+// because an NVIDIA spec on an AMD node stays Pending and nothing reaps it.
+export class GpuProfileUnavailableError extends Error {
+  constructor(message = "GPU node profile unavailable") {
+    super(message);
+    this.name = "GpuProfileUnavailableError";
+  }
+}
 
 @Injectable()
 export class GameStreamerService {
@@ -361,6 +389,23 @@ export class GameStreamerService {
       process.env.CLIP_VIDEO_CODEC ||
       "h264";
     return value === "h265" ? "h265" : "h264";
+  }
+
+  private async resolveVideoEncoder(): Promise<"auto" | "gpu" | "cpu"> {
+    const value = ((await this.readSetting("video_encoder")) ?? "")
+      .trim()
+      .toLowerCase();
+    if (!value || value === "auto") return "auto";
+    if (value === "gpu" || value === "cpu") return value;
+    this.logger.warn(
+      `ignoring video_encoder setting "${value}": expected auto, gpu or cpu`,
+    );
+    return "auto";
+  }
+
+  private async videoEncoderEnv(): Promise<V1EnvVar[]> {
+    const mode = await this.resolveVideoEncoder();
+    return mode === "auto" ? [] : [{ name: "GS_VIDEO_ENCODER", value: mode }];
   }
 
   private async resolveClipBakeBranding(): Promise<"0" | "1"> {
@@ -848,8 +893,10 @@ export class GameStreamerService {
     });
 
     let claim: GpuClaim;
+    let gpu: GpuNodeProfile | null;
     try {
       claim = await this.claimGpuForDemoSession(sessionId);
+      gpu = await this.resolveGpuNodeProfile(claim.nodeId);
     } catch (error) {
       await this.stopDemoSessionById(sessionId, jobName);
       throw error;
@@ -890,6 +937,7 @@ export class GameStreamerService {
     }
 
     env.push(...(await this.buildNodeCs2OptionsEnv(nodeId)));
+    env.push(...(await this.videoEncoderEnv()));
 
     const kc = new KubeConfig();
     kc.loadFromDefault();
@@ -909,6 +957,7 @@ export class GameStreamerService {
         env,
         { "session-id": sessionId },
         steamAccount,
+        gpu,
       ),
     });
 
@@ -1472,6 +1521,15 @@ export class GameStreamerService {
   }
 
   public async reapIdleDemoSessions(idleSeconds = 60) {
+    // First and on its own, so neither sweep can skip the other.
+    try {
+      await this.reapUnstartableGpuJobs();
+    } catch (error) {
+      this.logger.error(
+        `[gpu-watchdog] sweep failed: ${(error as Error)?.message}`,
+      );
+    }
+
     const threshold = new Date(Date.now() - idleSeconds * 1000).toISOString();
 
     const { match_demo_sessions } = await this.hasura.query({
@@ -1502,6 +1560,91 @@ export class GameStreamerService {
 
     await this.reapOrphanDemoK8sResources();
     await this.reconcileSteamClaims();
+  }
+
+  // Ends AMD game-streamer Jobs that cannot start. NVIDIA Jobs never carry
+  // the AMD label, so on an NVIDIA-only cluster the list is empty.
+  private async reapUnstartableGpuJobs(): Promise<void> {
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const batch = kc.makeApiClient(BatchV1Api);
+
+    let jobs: V1Job[];
+    try {
+      const list = await batch.listNamespacedJob({
+        namespace: this.namespace,
+        labelSelector: AMD_GPU_JOB_SELECTOR,
+      });
+      jobs = list.items;
+    } catch (error) {
+      this.logger.error(
+        `[gpu-watchdog] listJobs failed: ${(error as Error)?.message}`,
+      );
+      return;
+    }
+
+    const now = Date.now();
+    for (const listed of jobs) {
+      const jobName = listed.metadata?.name;
+      if (!jobName || isGpuJobFinished(listed) || isGpuJobYoung(listed, now)) {
+        continue;
+      }
+
+      const diagnostics = await this.loggingService
+        .getJobBootDiagnostics(jobName)
+        .catch((error): null => {
+          this.logger.warn(
+            `[gpu-watchdog] boot diagnostics of AMD Job ${jobName} failed: ${(error as Error)?.message}`,
+          );
+          return null;
+        });
+      // No diagnostics, or the Job is already gone: nothing to end.
+      if (!diagnostics?.job) {
+        continue;
+      }
+
+      const { job, pod, events, detail } = diagnostics;
+      if (classifyGpuJobBoot({ job, pod, events, now }) !== "unstartable") {
+        continue;
+      }
+
+      const node = gpuJobNodeName(job);
+      this.logger.warn(
+        `[gpu-watchdog] ending AMD Job ${jobName} on node ${node}: ${gpuJobBootReason(events, detail)}`,
+      );
+      try {
+        await this.endUnstartableGpuJob(jobName, job.metadata?.labels ?? {});
+      } catch (error) {
+        this.logger.warn(
+          `[gpu-watchdog] teardown of AMD Job ${jobName} on node ${node} failed: ${(error as Error)?.message}`,
+        );
+      }
+    }
+  }
+
+  // The role's own teardown. Each one calls deleteJob, which also releases
+  // the Steam claim.
+  private async endUnstartableGpuJob(
+    jobName: string,
+    labels: Record<string, string>,
+  ): Promise<void> {
+    switch (labels.role) {
+      case "live":
+        return this.stopLive(labels["match-id"]);
+      case "demo":
+        return this.stopDemoSessionById(labels["session-id"], jobName);
+      case "batch-highlights":
+        return this.killBatchHighlightsPod(
+          labels["match-map-id"],
+          labels["match-map-demo-id"],
+        );
+      case "nade-previews":
+        return this.killNadeRenderPod(jobName);
+      case "warm-shaders":
+        return this.cancelBakeShaders(labels["node-id"]);
+      default:
+        return this.deleteJob(jobName);
+    }
   }
 
   private async reconcileSteamClaims(): Promise<void> {
@@ -1704,6 +1847,7 @@ export class GameStreamerService {
     ];
 
     const nodeCs2Env = await this.buildNodeCs2OptionsEnv(nodeId);
+    const encoderEnv = await this.videoEncoderEnv();
 
     const jobName = GameStreamerService.GetLiveJobId(matchId);
 
@@ -1722,6 +1866,7 @@ export class GameStreamerService {
     );
 
     try {
+      const gpu = await this.resolveGpuNodeProfile(nodeId);
       await batch.createNamespacedJob({
         namespace: this.namespace,
         body: this.buildJobSpec(
@@ -1729,9 +1874,10 @@ export class GameStreamerService {
           matchId,
           "live",
           nodeId,
-          [...connectEnv, ...reporterEnv, ...nodeCs2Env],
+          [...connectEnv, ...reporterEnv, ...nodeCs2Env, ...encoderEnv],
           {},
           steamAccount,
+          gpu,
         ),
       });
     } catch (error) {
@@ -2422,6 +2568,7 @@ export class GameStreamerService {
       value: await this.resolveClipBakeBranding(),
     });
     env.push(...(await this.buildNodeCs2OptionsEnv(nodeId)));
+    env.push(...(await this.videoEncoderEnv()));
 
     this.logger.log(
       `[batch-highlights ${matchMapId}] dispatching ${jobs.length} job(s) to pod ${jobName} on node ${nodeId}`,
@@ -2456,6 +2603,7 @@ export class GameStreamerService {
     }
 
     try {
+      const gpu = await this.resolveGpuNodeProfile(nodeId);
       await batch.createNamespacedJob({
         namespace: this.namespace,
         body: this.buildJobSpec(
@@ -2469,6 +2617,7 @@ export class GameStreamerService {
             "match-map-demo-id": resolvedDemoId,
           },
           steamAccount,
+          gpu,
         ),
       });
     } catch (error) {
@@ -2682,6 +2831,7 @@ export class GameStreamerService {
       value: await this.resolveClipVideoCodec(),
     });
     env.push(...(await this.buildNodeCs2OptionsEnv(nodeId)));
+    env.push(...(await this.videoEncoderEnv()));
 
     const kc = new KubeConfig();
     kc.loadFromDefault();
@@ -2692,6 +2842,7 @@ export class GameStreamerService {
     );
 
     try {
+      const gpu = await this.resolveGpuNodeProfile(nodeId);
       await batch.createNamespacedJob({
         namespace: this.namespace,
         body: this.buildJobSpec(
@@ -2702,6 +2853,7 @@ export class GameStreamerService {
           env,
           { "utility-map": mapName },
           steamAccount,
+          gpu,
         ),
       });
     } catch (error) {
@@ -3292,6 +3444,19 @@ export class GameStreamerService {
     await this.deleteJob(jobName);
     await this.waitForJobGone(jobName);
 
+    // After the old bake is gone and before the Steam claim, so a node the
+    // api cannot build a Job for leaves no claim behind; errored tells the
+    // operator why the bake did not start.
+    let gpu: GpuNodeProfile | null;
+    try {
+      gpu = await this.resolveGpuNodeProfile(gameServerNodeId);
+    } catch (error) {
+      if (error instanceof GpuProfileUnavailableError) {
+        await this.setBakeStatus(gameServerNodeId, "errored");
+      }
+      throw error;
+    }
+
     this.logger.log(
       `[bake ${gameServerNodeId}] starting shader bake (job=${jobName})`,
     );
@@ -3320,6 +3485,7 @@ export class GameStreamerService {
         bakeEnv,
         { "node-id": gameServerNodeId },
         steamAccount,
+        gpu,
       ),
     });
 
@@ -3529,6 +3695,49 @@ export class GameStreamerService {
     });
   }
 
+  // One read per dispatch, so a vendor change reaches the next Job. null keeps
+  // today's NVIDIA spec: no row, a NULL vendor, or 42703, which can happen only
+  // while a new api pod runs before the hasura migrations initContainer has
+  // added the column; no row can say amd before that.
+  private async resolveGpuNodeProfile(
+    nodeId: string,
+  ): Promise<GpuNodeProfile | null> {
+    let rows: Array<{ gpu_vendor: string | null; pci_address: string | null }>;
+    try {
+      rows = await this.postgres.query<
+        Array<{ gpu_vendor: string | null; pci_address: string | null }>
+      >(GPU_NODE_PROFILE_SQL, [nodeId]);
+    } catch (error) {
+      if ((error as { code?: string })?.code === "42703") {
+        this.logger.error(
+          `[gpu-profile] game_server_nodes.gpu_vendor is missing: migration 1890000001100_game_server_nodes_gpu_vendor has not run, so node ${nodeId} gets the NVIDIA Job spec`,
+        );
+        return null;
+      }
+      throw error;
+    }
+
+    const row = rows?.[0];
+    if (!row || row.gpu_vendor == null) {
+      return null;
+    }
+    if (row.gpu_vendor === "nvidia") {
+      return { vendor: "nvidia" };
+    }
+    if (row.gpu_vendor === "amd") {
+      const pciAddress = row.pci_address?.toLowerCase();
+      if (pciAddress && GPU_PCI_ADDRESS_PATTERN.test(pciAddress)) {
+        return { vendor: "amd", pciAddress };
+      }
+      throw new GpuProfileUnavailableError(
+        `GPU node ${nodeId} has gpu_vendor amd but gpu_info[0].pci_bus_id is ${JSON.stringify(row.pci_address)}, not a PCI address such as 0000:c4:00.0; disable the node until its connector reports one`,
+      );
+    }
+    throw new GpuProfileUnavailableError(
+      `GPU node ${nodeId} has the unknown gpu_vendor ${JSON.stringify(row.gpu_vendor)}; disable the node until it reports nvidia or amd`,
+    );
+  }
+
   private buildJobSpec(
     jobName: string,
     matchId: string,
@@ -3537,6 +3746,7 @@ export class GameStreamerService {
     extraEnv: V1EnvVar[],
     extraLabels: Record<string, string> = {},
     steamAccount: ClaimedSteamAccount | null = null,
+    gpu: GpuNodeProfile | null = null,
   ): V1Job {
     const steamUser = steamAccount?.username ?? this.steamConfig.steamUser;
     const steamPassword =
@@ -3582,7 +3792,7 @@ export class GameStreamerService {
       ...extraLabels,
     };
 
-    return {
+    const job: V1Job = {
       apiVersion: "batch/v1",
       kind: "Job",
       metadata: {
@@ -3694,10 +3904,14 @@ export class GameStreamerService {
                   ...extraEnv,
                 ],
                 // No CPU request/limit — 1 streamer per GPU node, so let it
-                // use every core (uncapped = no CFS throttling; the CPU-bound
-                // shader compile wants them all). GPU + memory still bounded.
-                // The 8Gi request tracks real steady-state (cs2 alone sits at
-                // ~7Gi) so the scheduler stops treating the node as near-empty.
+                // No CPU request or limit: one streamer pod per node, bakes
+                // included (hostNetwork hostPort 1350), so let it use every
+                // core (uncapped means no CFS throttling; the CPU-bound shader
+                // compile wants them all). The GPU is bounded by
+                // nvidia.com/gpu on NVIDIA and by the DB claims on AMD; memory
+                // is still bounded. The 8Gi request tracks real steady state
+                // (cs2 alone sits at about 7Gi) so the scheduler stops
+                // treating the node as near-empty.
                 resources: {
                   limits: {
                     memory: "16Gi",
@@ -3732,5 +3946,80 @@ export class GameStreamerService {
         },
       },
     };
+
+    // A null or nvidia profile gets the literal above unchanged.
+    if (gpu?.vendor === "amd") {
+      this.applyAmdGpuProfile(job, gpu);
+    }
+
+    return job;
+  }
+
+  // An AMD node has no nvidia runtime handler and no nvidia.com/gpu device
+  // plugin, so either one would keep the pod from starting. Under the default
+  // runc handler the privileged container already sees /dev/dri and
+  // /dev/kfd, and the streamer finds its render node from the PCI address.
+  // The env goes after extraEnv so it wins over a duplicate. The Job and the
+  // pod template get new label objects, because both use the one labels
+  // object that buildJobSpec built.
+  private applyAmdGpuProfile(
+    job: V1Job,
+    gpu: Extract<GpuNodeProfile, { vendor: "amd" }>,
+  ): void {
+    const podSpec = job.spec.template.spec;
+    delete podSpec.runtimeClassName;
+
+    const container = podSpec.containers[0];
+    delete container.resources.limits["nvidia.com/gpu"];
+    delete container.resources.requests["nvidia.com/gpu"];
+
+    // UMA GPU allocations share the container's memory budget with CS2. Keep
+    // the existing defaults unless the operator sizes both AMD values.
+    const memoryLimit = process.env.GAME_STREAMER_AMD_MEMORY_LIMIT?.trim();
+    const memoryRequest = process.env.GAME_STREAMER_AMD_MEMORY_REQUEST?.trim();
+    if (memoryLimit || memoryRequest) {
+      const mib = (quantity?: string): number => {
+        const match = quantity?.match(/^([1-9]\d*)(Mi|Gi)$/);
+        return match ? Number(match[1]) * (match[2] === "Gi" ? 1024 : 1) : NaN;
+      };
+      const limitMiB = mib(memoryLimit);
+      const requestMiB = mib(memoryRequest);
+      if (
+        !Number.isSafeInteger(limitMiB) ||
+        !Number.isSafeInteger(requestMiB) ||
+        requestMiB > limitMiB
+      ) {
+        throw new Error(
+          "Set both GAME_STREAMER_AMD_MEMORY_LIMIT and GAME_STREAMER_AMD_MEMORY_REQUEST to positive Mi/Gi quantities, with request <= limit",
+        );
+      }
+      container.resources.limits.memory = memoryLimit;
+      container.resources.requests.memory = memoryRequest;
+    }
+
+    job.metadata.labels = {
+      ...job.metadata.labels,
+      "5stack-gpu-vendor": "amd",
+    };
+    job.spec.template.metadata.labels = {
+      ...job.spec.template.metadata.labels,
+      "5stack-gpu-vendor": "amd",
+    };
+
+    container.env.push(
+      { name: "GS_GPU_VENDOR", value: "amd" },
+      { name: "GS_GPU_PCI_ADDRESS", value: gpu.pciAddress },
+    );
+
+    // The cluster-wide display tier goes last, so it also wins over a
+    // duplicate in extraEnv. Unset or empty leaves the image default, tier A.
+    const tier = process.env.GAME_STREAMER_DISPLAY_TIER?.trim();
+    if (tier === "A" || tier === "C") {
+      container.env.push({ name: "GS_DISPLAY_TIER", value: tier });
+    } else if (tier) {
+      this.logger.warn(
+        `ignoring GAME_STREAMER_DISPLAY_TIER "${tier}": expected A or C`,
+      );
+    }
   }
 }
