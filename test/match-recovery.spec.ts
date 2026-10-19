@@ -365,6 +365,17 @@ describe("match recovery (SQL-driven)", () => {
       });
     });
 
+    it("refuses a round the map doesn't have, and changes nothing", async () => {
+      const { mapId } = await fiveRounds();
+      const before = await state(mapId);
+
+      await expect(reset(mapId, 9)).rejects.toThrow(
+        "there is no round 9 on this map to go back to",
+      );
+
+      expect(await state(mapId)).toEqual(before);
+    });
+
     it("rolls forward again until the next round is played, without counting the replayed round twice", async () => {
       const { match, mapId } = await fiveRounds();
       await reset(mapId, 3);

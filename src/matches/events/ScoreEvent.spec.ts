@@ -1,9 +1,15 @@
 import ScoreEvent from "./ScoreEvent";
 
 describe("ScoreEvent", () => {
-  const hasura = { mutation: jest.fn(async (_mutation: any) => ({})) };
+  let lastPlayed = 6;
+  const hasura = {
+    mutation: jest.fn(async (_mutation: any) => ({})),
+    query: jest.fn(async () => ({
+      match_map_rounds_aggregate: { aggregate: { max: { round: lastPlayed } } },
+    })),
+  };
 
-  const process = async (backupFile: string) => {
+  const process = async (backupFile: string, round = 7) => {
     const event = new ScoreEvent(
       { log: jest.fn() } as never,
       hasura as never,
@@ -13,7 +19,7 @@ describe("ScoreEvent", () => {
     );
     event.setData("match-1", {
       time: "2026-10-19T12:00:00Z",
-      round: 7,
+      round,
       match_map_id: "map-1",
       lineup_1_score: 4,
       lineup_1_money: 21000,
@@ -33,8 +39,12 @@ describe("ScoreEvent", () => {
   const mutations = () =>
     hasura.mutation.mock.calls.map(([mutation]: [any]) => mutation);
 
+  const purged = () =>
+    mutations().some((mutation) => mutation.delete_match_map_rounds);
+
   beforeEach(() => {
     jest.clearAllMocks();
+    lastPlayed = 6;
   });
 
   // A round that is still on the map was played, so its backup is where a
@@ -61,6 +71,23 @@ describe("ScoreEvent", () => {
       },
       _set: { backup_file: "new backup" },
     });
+  });
+
+  it("only throws away what a reset undid once a round past it is played", async () => {
+    await process("", 7);
+    expect(purged()).toBe(true);
+  });
+
+  // Warmup ending reports round 0, so a map restarted from warmup would lose
+  // its undone rounds before anyone played a round.
+  it("keeps what a reset undid when the server reports a round already on the map", async () => {
+    lastPlayed = 0;
+    await process("", 0);
+    expect(purged()).toBe(false);
+
+    lastPlayed = 7;
+    await process("", 7);
+    expect(purged()).toBe(false);
   });
 
   it("has no backup to fill when the server sent none", async () => {

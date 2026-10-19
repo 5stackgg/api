@@ -621,6 +621,17 @@ describe("MatchRecoveryService", () => {
       expect(resets(postgres)).toEqual([]);
     });
 
+    it("passes on the server's refusal and leaves the rounds alone", async () => {
+      const { service, postgres } = setup({
+        serverResponse: "match_state refused: the map is already over\n",
+      });
+
+      await expect(service.restartMatchMap("match-1", VIEWER)).rejects.toThrow(
+        /^the map is already over$/,
+      );
+      expect(resets(postgres)).toEqual([]);
+    });
+
     it("restarts a map still in warmup", async () => {
       const { service, postgres } = setup({
         match: matchRow({ map_status: "Warmup" }),

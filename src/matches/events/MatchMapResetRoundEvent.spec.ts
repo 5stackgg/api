@@ -40,6 +40,15 @@ describe("MatchMapResetRoundEvent", () => {
     expect(calls).toEqual(["reset map-1 5", "restore match-1 5"]);
   });
 
+  it("doesn't load a backup of a round the map no longer has", async () => {
+    matchAssistant.resetMatchMapToRound.mockRejectedValueOnce(
+      new Error("there is no round 14 on this map to go back to"),
+    );
+
+    await expect(process("14")).rejects.toThrow("there is no round 14");
+    expect(matchAssistant.restoreMatchRound).not.toHaveBeenCalled();
+  });
+
   it("leaves a Rush map alone unless it is replayed from the start", async () => {
     matchType = "Rush";
 

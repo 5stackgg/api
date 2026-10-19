@@ -18,7 +18,12 @@ export default class ScoreEvent extends MatchEventProcessor<{
   winning_reason: e_winning_reasons_enum;
 }> {
   public async process() {
-    await this.cleanupData();
+    // What a reset undid stays restorable until a round past the restore point
+    // is played. A round the server reports again, like round 0 when warmup
+    // ends or a resend, must not throw it away.
+    if (this.data.round > (await this.lastPlayedRound())) {
+      await this.cleanupData();
+    }
 
     await this.hasura.mutation({
       insert_match_map_rounds_one: {
@@ -78,6 +83,26 @@ export default class ScoreEvent extends MatchEventProcessor<{
         },
       });
     }
+  }
+
+  private async lastPlayedRound() {
+    const { match_map_rounds_aggregate } = await this.hasura.query({
+      match_map_rounds_aggregate: {
+        __args: {
+          where: {
+            match_map_id: { _eq: this.data.match_map_id },
+            deleted_at: { _is_null: true },
+          },
+        },
+        aggregate: {
+          max: {
+            round: true,
+          },
+        },
+      },
+    });
+
+    return match_map_rounds_aggregate.aggregate?.max?.round ?? 0;
   }
 
   private async cleanupData() {

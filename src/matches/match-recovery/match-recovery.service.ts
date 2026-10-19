@@ -122,6 +122,8 @@ export class MatchRecoveryService {
 
   private static readonly RESTORE_REFUSED = "restore_round refused:";
 
+  private static readonly MATCH_STATE_REFUSED = "match_state refused:";
+
   private static readonly STEAM_ID_BASE = 76561197960265728n;
 
   private static readonly OVERTIME_MAX_ROUNDS = 6;
@@ -263,14 +265,12 @@ export class MatchRecoveryService {
       throw Error("the match server can't be reached");
     }
 
-    const refused = response.indexOf(MatchRecoveryService.RESTORE_REFUSED);
-    if (refused !== -1) {
-      throw Error(
-        response
-          .slice(refused + MatchRecoveryService.RESTORE_REFUSED.length)
-          .trim()
-          .split("\n")[0],
-      );
+    const refusal = this.serverRefusal(
+      response,
+      MatchRecoveryService.RESTORE_REFUSED,
+    );
+    if (refusal) {
+      throw Error(refusal);
     }
 
     this.logger.log(
@@ -371,6 +371,14 @@ export class MatchRecoveryService {
     const response = await this.matchAssistant.restartServerMap(matchId);
     if (response === undefined) {
       throw Error("the match server can't be reached");
+    }
+
+    const refusal = this.serverRefusal(
+      response,
+      MatchRecoveryService.MATCH_STATE_REFUSED,
+    );
+    if (refusal) {
+      throw Error(refusal);
     }
 
     await this.postgres.query("SELECT reset_match_map_to_round($1, 0)", [
@@ -584,6 +592,18 @@ export class MatchRecoveryService {
     }
 
     return this.mapControlBlockedReason(match, viewer, affiliated);
+  }
+
+  private serverRefusal(response: string, prefix: string) {
+    const refused = response.indexOf(prefix);
+    if (refused === -1) {
+      return null;
+    }
+
+    return response
+      .slice(refused + prefix.length)
+      .trim()
+      .split("\n")[0];
   }
 
   private mapControlBlockedReason(
