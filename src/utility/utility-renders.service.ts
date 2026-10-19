@@ -393,7 +393,7 @@ export class UtilityRendersService {
       }>
     >(
       `UPDATE public.utility_lineup_renders
-          SET status = 'cancelled', last_status_at = now()
+          SET status = 'cancelled', error_message = NULL, last_status_at = now()
         WHERE id = $1::uuid
           AND status = ANY($2::text[])
       RETURNING map_name,

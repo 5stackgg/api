@@ -278,6 +278,24 @@ describe("render nodes (SQL-driven)", () => {
       expect(await reason()).toContain("not accepting new matches");
     });
 
+    // A busy node that takes matches next to an idle one that does not: the
+    // idle one is the answer, and it is not busy.
+    it("names the idle GPU node that is not accepting new matches", async () => {
+      const busy = await gpuOnlyNode();
+      const idle = await gpuOnlyNode();
+      await set(idle, "status = 'NotAcceptingNewMatches'");
+      await fx.region();
+      const { matchId, mapId } = await fx.bareMatch();
+      await postgres.query(
+        `INSERT INTO match_demo_sessions
+           (match_map_id, match_id, watcher_steam_id, k8s_job_name, game_server_node_id)
+         VALUES ($1, $2, $3, 'job', $4)`,
+        [mapId, matchId, await fx.player(), busy],
+      );
+
+      expect(await reason()).toContain("not accepting new matches");
+    });
+
     it("names a GPU that is busy", async () => {
       const node = await gpuOnlyNode();
       await fx.region();
@@ -314,9 +332,11 @@ describe("render nodes (SQL-driven)", () => {
         [node, matchId],
       );
 
-      expect(await reason()).toContain("free server slot");
+      expect(await reason()).toBe(
+        "waiting for a free server slot on the GPU node",
+      );
       await expect((practice as any).renderRegion()).rejects.toThrow(
-        "free server slot",
+        "waiting for a free server slot on the GPU node",
       );
     });
   });

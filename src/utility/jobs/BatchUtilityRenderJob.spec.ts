@@ -458,10 +458,7 @@ describe("BatchUtilityRenderJob", () => {
   // Booked when every map had a job of its own. Left running as a second
   // queue worker it booked a second server for the same rows.
   it("hands what is left to the queue's one job once a per-map job holds nothing", async () => {
-    const bull = makeJob(
-      { mapName: "de_mirage" },
-      "utility-render-batch-de_mirage",
-    );
+    const bull = makeJob({ mapName: "de_mirage" }, "utility-render-batch-de_mirage");
 
     await job.process(bull as any);
 
@@ -491,7 +488,9 @@ describe("BatchUtilityRenderJob", () => {
   // in flight forever: nothing films it and its lineup cannot be queued again.
   it("fails a render still held by a pod that no longer exists", async () => {
     const orphan = { ...HANDED, utility_practice_session_id: "session-0" };
-    renders.inFlight.mockResolvedValueOnce([orphan]).mockResolvedValueOnce([]);
+    renders.inFlight
+      .mockResolvedValueOnce([orphan])
+      .mockResolvedValueOnce([]);
     gameStreamer.getNadeRenderPodState.mockResolvedValueOnce("absent");
     const bull = makeJob({});
 
@@ -612,6 +611,58 @@ describe("BatchUtilityRenderJob", () => {
     expect(practice.startForRender).toHaveBeenCalled();
     expect(renders.clearBootProblem).toHaveBeenCalledWith(["render-1"]);
     expect(renders.noteBootProblem).not.toHaveBeenCalled();
+  });
+
+  // One booking serves the whole queue, so the rows of the maps behind the
+  // head are waiting on it too -- and on a pod that is not theirs, not at all.
+  it("tells every row nobody has why, whatever its map", async () => {
+    const inferno = { ...RENDER, id: "render-inferno", map_name: "de_inferno" };
+    const taken = {
+      ...HANDED,
+      id: "render-taken",
+      utility_practice_session_id: "session-0",
+    };
+    renders.inFlight.mockResolvedValue([RENDER, taken, inferno]);
+    gameStreamer.getNadeRenderPodState.mockResolvedValue("running");
+    gameStreamer.freeRenderGpuNodeIds.mockResolvedValueOnce([]);
+    const bull = makeJob({});
+
+    await expect(job.process(bull as any)).rejects.toBeInstanceOf(DelayedError);
+
+    expect(renders.noteBootProblem).toHaveBeenCalledWith(
+      ["render-1", "render-inferno"],
+      expect.any(String),
+    );
+  });
+
+  // A boot that wedged for a while notes the pod's log on the rows; once the
+  // server is up and the rows go to a pod, that note is no longer the story,
+  // and a pod's status posts would otherwise carry it to "done".
+  it("clears a boot note when the rows go to a pod", async () => {
+    const bull = makeJob({
+      mapName: "de_mirage",
+      sessionId: "session-1",
+      bookedAt: Date.now(),
+    });
+
+    await expect(job.process(bull as any)).rejects.toBeInstanceOf(DelayedError);
+
+    expect(gameStreamer.dispatchNadePreviews).toHaveBeenCalled();
+    expect(renders.clearBootProblem).toHaveBeenCalledWith(["render-1"]);
+  });
+
+  it("keeps waiting when it cannot say why", async () => {
+    gameStreamer.freeRenderGpuNodeIds.mockResolvedValueOnce([]);
+    practice.renderWaitReason.mockRejectedValueOnce(new Error("db down"));
+    const bull = makeJob({});
+
+    await expect(job.process(bull as any)).rejects.toBeInstanceOf(DelayedError);
+
+    expect(bull.moveToDelayed).toHaveBeenCalled();
+    expect(renders.noteBootProblem).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("could not note why it is waiting"),
+    );
   });
 
   it("waits for the server to be Ready before spending a GPU", async () => {

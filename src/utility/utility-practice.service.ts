@@ -2657,18 +2657,25 @@ export class UtilityPracticeService {
       return "waiting for a GPU node: none is enabled with Rendering on";
     }
 
-    const online = nodes.filter((node) => node.status === "Online");
-    if (online.length === 0) {
-      return nodes.some((node) => node.status === "NotAcceptingNewMatches")
-        ? "waiting for a GPU node: it is not accepting new matches"
-        : "waiting for a GPU node: every one with Rendering on is offline";
+    const connected = nodes.filter(
+      (node) =>
+        node.status === "Online" || node.status === "NotAcceptingNewMatches",
+    );
+    if (connected.length === 0) {
+      return "waiting for a GPU node: every one with Rendering on is offline or still being set up";
     }
 
-    const free = online.filter((node) => !node.busy && !node.paused);
-    if (free.length === 0) {
-      return online.some((node) => !node.busy)
-        ? "waiting for the match on the GPU node to end: renders pause while one is live"
+    const idle = connected.filter((node) => !node.busy && !node.paused);
+    if (idle.length === 0) {
+      return connected.some((node) => !node.busy)
+        ? 'waiting for the match on the GPU node to end: "Pause highlight renders during active match" (Settings → Application → Highlights) pauses lineup renders too'
         : "waiting for a GPU: every one is busy with a live stream, a demo or another render";
+    }
+
+    // Only a node that takes new matches boots a render's server.
+    const free = idle.filter((node) => node.status === "Online");
+    if (free.length === 0) {
+      return "waiting for a GPU node: the free one is not accepting new matches";
     }
 
     if (free.some((node) => node.installed && !node.updating)) {
