@@ -73,7 +73,7 @@ describe("database page query detail", () => {
     cleanup = "SELECT 1",
   ) =>
     withEntry(statement, cleanup, (queryid) =>
-      controller.analyzeQuery({ queryid, parameters }).catch((error) => {
+      controller.analyzeQuery({ queryid, parameters }).catch((error): null => {
         if (error.message === "query not found") {
           return null;
         }
