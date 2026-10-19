@@ -19,7 +19,9 @@ DECLARE
 BEGIN
     PERFORM pg_advisory_xact_lock(hashtext('ensure_render_server:' || _game_server_node_id));
 
-    SELECT * INTO node FROM game_server_nodes WHERE id = _game_server_node_id;
+    -- Shared, so a node being switched to take matches commits first and is
+    -- read as it ends up: a slot made under it would be booked by matchmaking.
+    SELECT * INTO node FROM game_server_nodes WHERE id = _game_server_node_id FOR SHARE;
 
     IF node.id IS NULL
        OR node.enabled IS NOT TRUE

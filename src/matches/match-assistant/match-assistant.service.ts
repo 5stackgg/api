@@ -1606,7 +1606,9 @@ export class MatchAssistantService {
   // The GPU is checked with the same predicate as the pod's own claim, and the
   // slot with the one the booking takes (pendingDemoUploadExclusion included),
   // so a node listed here is one the booking can actually use. A GPU-only node
-  // with no slot yet counts: the booking makes it (ensure_render_server).
+  // with no slot yet counts: the booking makes it (ensure_render_server). It
+  // must have CS2 installed and not be mid-update, though: a GPU-only node only
+  // gets its server install when a CS2 update ships, and it is tried first.
   public async renderNodes(): Promise<
     Array<{
       id: string;
@@ -1636,6 +1638,8 @@ export class MatchAssistantService {
           AND n.enabled = true
           AND n.gpu_rendering_enabled = true
           AND n.status = 'Online'
+          AND n.build_id IS NOT NULL
+          AND n.update_status IS NULL
           AND n.id NOT IN (SELECT * FROM public.gpu_busy_node_ids())
           AND n.id NOT IN (SELECT * FROM public.gpu_batch_blocked_node_ids())
           AND (

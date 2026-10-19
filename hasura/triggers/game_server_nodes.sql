@@ -18,7 +18,9 @@ BEGIN
         OLD.lan_ip != NEW.lan_ip OR
         OLD.public_ip != NEW.public_ip 
     ) THEN
-        UPDATE servers SET host = host(server_ip) WHERE game_server_node_id = NEW.id AND is_dedicated = false;
+        -- A node with no address for its region keeps the one it had: a
+        -- GPU-only node's render slot is only ever dialled on loopback.
+        UPDATE servers SET host = COALESCE(host(server_ip), host) WHERE game_server_node_id = NEW.id AND is_dedicated = false;
     END IF;
 
     -- A dedicated server's address follows the node at any time: its pod never

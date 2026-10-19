@@ -2718,15 +2718,20 @@ export class UtilityPracticeService {
       return row.value;
     }
 
+    // Only slots a session can be booked on: a node that takes no matches --
+    // a GPU-only node's render slot -- would tip the choice to a region that
+    // has nothing for a player.
     const [row] = await this.postgres.query<Array<{ region: string }>>(
       `SELECT s.region
          FROM public.servers s
          INNER JOIN public.server_regions sr ON sr.value = s.region
+         INNER JOIN public.game_server_nodes n ON n.id = s.game_server_node_id
         WHERE s.enabled = true
           AND s.type = 'Ranked'
           AND s.is_dedicated = false
           AND s.reserved_by_match_id IS NULL
           AND sr.is_lan = false
+          AND n.enabled_for_match_making = true
         GROUP BY s.region
         ORDER BY COUNT(*) DESC
         LIMIT 1`,

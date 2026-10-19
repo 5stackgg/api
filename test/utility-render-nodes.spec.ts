@@ -1,6 +1,7 @@
 import { Logger } from "@nestjs/common";
 import { MatchAssistantService } from "./../src/matches/match-assistant/match-assistant.service";
 import { PostgresService } from "./../src/postgres/postgres.service";
+import { UtilityPracticeService } from "./../src/utility/utility-practice.service";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 
@@ -12,6 +13,7 @@ describe("render nodes (SQL-driven)", () => {
   let postgres: PostgresService;
   let fx: Fixtures;
   let service: MatchAssistantService;
+  let practice: UtilityPracticeService;
   let nodeSeq = 0;
 
   beforeAll(async () => {
@@ -40,6 +42,23 @@ describe("render nodes (SQL-driven)", () => {
       {} as never,
       postgres,
     );
+
+    practice = new UtilityPracticeService(
+      new Logger("UtilityRenderNodesTest"),
+      postgres,
+      {} as never,
+      {} as never,
+      {
+        renderNodes: () => service.renderNodes(),
+        countFreeOnDemandServers: jest.fn(async (): Promise<number> => 10),
+      } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { get: jest.fn() } as never,
+      { getConnection: () => ({}) } as never,
+    );
   }, 600_000);
 
   afterAll(async () => {
@@ -56,8 +75,8 @@ describe("render nodes (SQL-driven)", () => {
     const id = `render-node-${++nodeSeq}`;
     await postgres.query(
       `INSERT INTO game_server_nodes
-         (id, public_ip, lan_ip, start_port_range, end_port_range, region, status, enabled, label, gpu)
-       VALUES ($1, '203.0.113.1', '10.0.0.1', 27015, 27025, $2, 'Online', true, $1, true)`,
+         (id, public_ip, lan_ip, start_port_range, end_port_range, region, status, enabled, label, gpu, build_id)
+       VALUES ($1, '203.0.113.1', '10.0.0.1', 27015, 27025, $2, 'Online', true, $1, true, 1)`,
       [id, region],
     );
     return id;
@@ -67,8 +86,8 @@ describe("render nodes (SQL-driven)", () => {
     const id = `render-node-${++nodeSeq}`;
     await postgres.query(
       `INSERT INTO game_server_nodes
-         (id, public_ip, region, status, enabled, label, gpu, enabled_for_match_making)
-       VALUES ($1, '203.0.113.2', NULL, 'Online', true, $1, true, false)`,
+         (id, public_ip, region, status, enabled, label, gpu, enabled_for_match_making, build_id)
+       VALUES ($1, '203.0.113.2', NULL, 'Online', true, $1, true, false, 1)`,
       [id],
     );
     return id;
@@ -152,5 +171,84 @@ describe("render nodes (SQL-driven)", () => {
     );
 
     expect(await ids()).toEqual([]);
+  });
+  // A GPU-only node only gets its CS2 server install when a CS2 update ships,
+  // and it is tried first: without this a fresh one took every render and
+  // timed each one out on a server that could never boot.
+  it("leaves out a node without CS2 installed, or one updating it", async () => {
+    const fresh = await gpuOnlyNode();
+    await postgres.query(
+      "UPDATE game_server_nodes SET build_id = NULL WHERE id = $1",
+      [fresh],
+    );
+    const updating = await matchNode("RenderRegion");
+    await postgres.query(
+      "UPDATE game_server_nodes SET update_status = 'Downloading' WHERE id = $1",
+      [updating],
+    );
+
+    expect(await ids()).toEqual([]);
+  });
+
+  describe("the region a render's match is booked into", () => {
+    const renderRegion = (): Promise<string> =>
+      (practice as any).renderRegion();
+
+    // Region with the most free servers was the old answer, and LAN regions
+    // were never one: the booking then looked for a GPU where there was none.
+    it("is the GPU node's own region, a LAN one included", async () => {
+      await matchNode("RenderRegion");
+      await matchNode("RenderRegion");
+      const lan = await matchNode("RenderLan");
+      await postgres.query(
+        "UPDATE game_server_nodes SET gpu = false WHERE id <> $1",
+        [lan],
+      );
+
+      expect(await renderRegion()).toBe("RenderLan");
+    });
+
+    // A GPU-only node has no region, and its slot is made in this one: it has
+    // to be a region the install already counts, or single-region installs
+    // gain a second one.
+    it("is a region that already has servers for a GPU-only node", async () => {
+      await postgres.query(
+        `INSERT INTO server_regions (value, description, is_lan)
+         VALUES ('AEmptyRegion', 'AEmptyRegion', false)
+         ON CONFLICT (value) DO NOTHING`,
+      );
+      const matches = await matchNode("RenderRegion");
+      await postgres.query(
+        "UPDATE game_server_nodes SET gpu = false WHERE id = $1",
+        [matches],
+      );
+      await gpuOnlyNode();
+
+      expect(await renderRegion()).toBe("RenderRegion");
+    });
+  });
+
+  // A player's practice session can never be booked on a node that takes no
+  // matches, so the render slot on one must not pick their region.
+  it("leaves a GPU-only node's render slot out of a player's region choice", async () => {
+    await postgres.query(
+      `INSERT INTO server_regions (value, description, is_lan)
+       VALUES ('SlotOnlyRegion', 'SlotOnlyRegion', false)
+       ON CONFLICT (value) DO NOTHING`,
+    );
+    const matches = await matchNode("RenderRegion");
+    await postgres.query(
+      "UPDATE servers SET enabled = false WHERE game_server_node_id = $1 AND port > 27015",
+      [matches],
+    );
+    for (let i = 0; i < 2; i++) {
+      const gpuOnly = await gpuOnlyNode();
+      await postgres.query(
+        "SELECT ensure_render_server($1, 'SlotOnlyRegion')",
+        [gpuOnly],
+      );
+    }
+
+    expect(await (practice as any).resolveRegion(null)).toBe("RenderRegion");
   });
 });

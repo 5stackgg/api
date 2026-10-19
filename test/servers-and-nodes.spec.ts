@@ -1080,6 +1080,30 @@ describe("servers and game server nodes (SQL-driven)", () => {
       expect(servers).toEqual([{ id: slot.id, reserved_by_match_id: matchId }]);
     });
 
+    // The slot's address follows the node's address for its region, which a
+    // GPU-only node with no public IP does not have. Set to NULL, the node's
+    // next report failed on servers.host NOT NULL, and every one after it.
+    it("keeps its address through an IP change the node has no address for", async () => {
+      const nodeId = `test-node-${++nodeSeq}`;
+      await postgres.query(
+        `INSERT INTO game_server_nodes (id, public_ip, lan_ip, region, status, enabled, label, gpu, enabled_for_match_making)
+         VALUES ($1, NULL, '10.0.0.5', NULL, 'Online', true, $1, true, false)`,
+        [nodeId],
+      );
+      await ensureRenderServer(nodeId);
+
+      await postgres.query(
+        "UPDATE game_server_nodes SET lan_ip = '10.0.0.6' WHERE id = $1",
+        [nodeId],
+      );
+
+      const [slot] = await postgres.query<Array<{ host: string }>>(
+        "SELECT host FROM servers WHERE game_server_node_id = $1",
+        [nodeId],
+      );
+      expect(slot.host).toBe("10.0.0.5");
+    });
+
     // Left behind on a node that takes matches, the slot would be booked by
     // matchmaking on a port nobody forwarded.
     it("goes away when the node takes matches again", async () => {
