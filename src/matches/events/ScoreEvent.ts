@@ -51,13 +51,33 @@ export default class ScoreEvent extends MatchEventProcessor<{
               "lineup_1_side",
               "lineup_2_side",
               "winning_side",
-              "backup_file",
             ],
           },
         },
         __typename: true,
       },
     });
+
+    // cleanupData has already removed the rounds a reset undid, so a row still
+    // here was played and its backup is the restore point for that round.
+    if (this.data.backup_file) {
+      await this.hasura.mutation({
+        update_match_map_rounds: {
+          __args: {
+            where: {
+              match_map_id: { _eq: this.data.match_map_id },
+              round: { _eq: this.data.round },
+              _or: [
+                { backup_file: { _is_null: true } },
+                { backup_file: { _eq: "" } },
+              ],
+            },
+            _set: { backup_file: this.data.backup_file },
+          },
+          affected_rows: true,
+        },
+      });
+    }
   }
 
   private async cleanupData() {

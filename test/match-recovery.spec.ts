@@ -65,6 +65,7 @@ describe("match recovery (SQL-driven)", () => {
           return "";
         },
         refreshServerMatch: async (): Promise<void> => undefined,
+        restartServerMap: async (): Promise<string> => "",
       } as never,
     );
 
@@ -283,5 +284,163 @@ describe("match recovery (SQL-driven)", () => {
       [mapId],
     );
     expect(map.status).toBe("Scheduled");
+  });
+
+  describe("putting a map back to a round", () => {
+    // The live map from liveMatch, played on to round 5 with a backup and a
+    // kill in every round, and round 6 under way.
+    const fiveRounds = async () => {
+      const live = await liveMatch();
+      const { match, mapId } = live;
+      await postgres.query(
+        "UPDATE match_map_rounds SET backup_file = $2 WHERE match_map_id = $1",
+        [mapId, backup(157864, "vexa", 4100)],
+      );
+      for (const round of [3, 4, 5]) {
+        await postgres.query(
+          `INSERT INTO match_map_rounds
+             (match_map_id, round, lineup_1_score, lineup_2_score, lineup_1_money, lineup_2_money,
+              "time", lineup_1_timeouts_available, lineup_2_timeouts_available,
+              lineup_1_side, lineup_2_side, winning_side, backup_file)
+           VALUES ($1, $2, $2, 0, 800, 800, now(), $3, 1, 'CT', 'TERRORIST', 'CT', $4)`,
+          [mapId, round, 5 - round, backup(157864, "vexa", 4100)],
+        );
+      }
+      for (const round of [1, 3, 4, 5, 6]) {
+        await kill(match.id, mapId, round);
+      }
+      await postgres.query(
+        "UPDATE match_maps SET lineup_1_timeouts_available = 0, lineup_2_timeouts_available = 1 WHERE id = $1",
+        [mapId],
+      );
+
+      return live;
+    };
+
+    const kill = (matchId: string, mapId: string, round: number) =>
+      fx.kill({ matchId, mapId }, steamId(157864), steamId(235177), {
+        round,
+      });
+
+    const reset = (mapId: string, round: number) =>
+      postgres.query("SELECT reset_match_map_to_round($1, $2)", [mapId, round]);
+
+    const state = async (mapId: string) => {
+      const [rounds] = await postgres.query<
+        Array<{ live: Array<number>; undone: Array<number> }>
+      >(
+        `SELECT COALESCE(array_agg(round ORDER BY round) FILTER (WHERE deleted_at IS NULL), '{}') AS live,
+                COALESCE(array_agg(round ORDER BY round) FILTER (WHERE deleted_at IS NOT NULL), '{}') AS undone
+           FROM match_map_rounds WHERE match_map_id = $1`,
+        [mapId],
+      );
+      const [kills] = await postgres.query<
+        Array<{ live: Array<number>; undone: Array<number> }>
+      >(
+        `SELECT COALESCE(array_agg(round ORDER BY round) FILTER (WHERE deleted_at IS NULL), '{}') AS live,
+                COALESCE(array_agg(round ORDER BY round) FILTER (WHERE deleted_at IS NOT NULL), '{}') AS undone
+           FROM player_kills WHERE match_map_id = $1`,
+        [mapId],
+      );
+      const [timeouts] = await postgres.query<
+        Array<{ lineup_1: number; lineup_2: number }>
+      >(
+        `SELECT lineup_1_timeouts_available AS lineup_1, lineup_2_timeouts_available AS lineup_2
+           FROM match_maps WHERE id = $1`,
+        [mapId],
+      );
+
+      return { rounds, kills, timeouts };
+    };
+
+    it("rolls back to a round and drops the round that was under way", async () => {
+      const { mapId } = await fiveRounds();
+
+      await reset(mapId, 3);
+
+      expect(await state(mapId)).toEqual({
+        rounds: { live: [1, 2, 3], undone: [4, 5] },
+        kills: { live: [1, 2, 3], undone: [4, 5] },
+        timeouts: { lineup_1: 2, lineup_2: 1 },
+      });
+    });
+
+    it("rolls forward again until the next round is played, without counting the replayed round twice", async () => {
+      const { match, mapId } = await fiveRounds();
+      await reset(mapId, 3);
+      await kill(match.id, mapId, 4);
+
+      await reset(mapId, 5);
+
+      expect(await state(mapId)).toEqual({
+        rounds: { live: [1, 2, 3, 4, 5], undone: [] },
+        kills: { live: [1, 2, 3, 4, 5], undone: [] },
+        timeouts: { lineup_1: 0, lineup_2: 1 },
+      });
+    });
+
+    // How a restore to round 3 leaves the map: rounds 4 and 5 are undone, but
+    // kept until round 4 is played again.
+    it("can still go forward to a round an earlier restore undid", async () => {
+      const { match, mapId } = await fiveRounds();
+      await postgres.query(
+        "UPDATE match_map_rounds SET deleted_at = now() WHERE match_map_id = $1 AND round > 3",
+        [mapId],
+      );
+      const sent: Array<number> = [];
+
+      const restore = await service(sent).getRestoreRounds(match.id, admin);
+      await service(sent).restoreRound(match.id, 5, admin);
+
+      expect(restore.live_round).toBe(4);
+      expect(
+        restore.rounds.map((round) => [round.round, round.undone]),
+      ).toEqual([
+        [1, false],
+        [2, false],
+        [3, false],
+        [4, true],
+        [5, true],
+      ]);
+      expect(sent).toEqual([5]);
+    });
+
+    it("restarts the map from warmup with every round still restorable", async () => {
+      const { match, mapId } = await fiveRounds();
+      const sent: Array<number> = [];
+
+      await service(sent).restartMatchMap(match.id, admin);
+
+      expect(await state(mapId)).toEqual({
+        rounds: { live: [], undone: [1, 2, 3, 4, 5] },
+        kills: { live: [], undone: [1, 2, 3, 4, 5] },
+        timeouts: { lineup_1: 3, lineup_2: 3 },
+      });
+
+      const restore = await service(sent).getRestoreRounds(match.id, admin);
+      expect(restore.live_round).toBe(1);
+      expect(restore.restorable).toBe(true);
+      expect(restore.rounds.map((round) => round.undone)).toEqual([
+        true,
+        true,
+        true,
+        true,
+        true,
+      ]);
+
+      await service(sent).restoreRound(match.id, 4, admin);
+      expect(sent).toEqual([4]);
+    });
+
+    it("does the same when the whole match is restarted", async () => {
+      const { match, mapId } = await fiveRounds();
+
+      await service().restartMatch(match.id);
+
+      expect(await state(mapId)).toMatchObject({
+        rounds: { live: [], undone: [1, 2, 3, 4, 5] },
+        kills: { live: [], undone: [1, 2, 3, 4, 5] },
+      });
+    });
   });
 });

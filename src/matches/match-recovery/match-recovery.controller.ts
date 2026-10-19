@@ -34,6 +34,13 @@ export class MatchRecoveryController {
   }
 
   @HasuraAction()
+  public async restartMatchMap(data: { match_id: string; user: User }) {
+    await this.requireOrganizer(data.match_id, data.user);
+
+    return await this.recovery.restartMatchMap(data.match_id, data.user);
+  }
+
+  @HasuraAction()
   public async restartMatch(data: { match_id: string; user: User }) {
     await this.requireOrganizer(data.match_id, data.user);
 

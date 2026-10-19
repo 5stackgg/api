@@ -36,6 +36,7 @@ type RoundRow = {
   lineup_1_timeouts_available: number | null;
   lineup_2_timeouts_available: number | null;
   backup_file: string | null;
+  undone: boolean;
 };
 
 export type RecoveryViewer = {
@@ -77,6 +78,7 @@ export type RestoreRound = {
   next_lineup_1_side: string | null;
   next_lineup_2_side: string | null;
   has_backup: boolean;
+  undone: boolean;
   players: Array<RestorePlayer>;
 };
 
@@ -119,16 +121,6 @@ export class MatchRecoveryService {
   };
 
   private static readonly RESTORE_REFUSED = "restore_round refused:";
-
-  private static readonly STATS_TABLES = [
-    "player_kills",
-    "player_assists",
-    "player_damages",
-    "player_flashes",
-    "player_utility",
-    "player_objectives",
-    "player_unused_utility",
-  ];
 
   private static readonly STEAM_ID_BASE = 76561197960265728n;
 
@@ -202,6 +194,7 @@ export class MatchRecoveryService {
           next?.lineup_2_side ??
           this.sideForRound(match.start_lineup_2_side, row.round, match),
         has_backup: hasBackup,
+        undone: row.undone,
         players:
           hasBackup && !result.economy_hidden
             ? this.backupPlayers(row.backup_file as string, lineupBySteamId)
@@ -209,8 +202,11 @@ export class MatchRecoveryService {
       };
     });
 
+    // Rounds a reset undid stay listed, and restorable, until the next round
+    // is played and ScoreEvent removes them.
     if (inProgress) {
-      result.live_round = (rows.at(-1)?.round ?? 0) + 1;
+      result.live_round =
+        (rows.filter((row) => !row.undone).at(-1)?.round ?? 0) + 1;
       result.restorable = rows.some((row) => !!row.backup_file);
     }
 
@@ -320,28 +316,15 @@ export class MatchRecoveryService {
         `SELECT id FROM match_maps WHERE match_id = $1 AND status = ANY($2)`,
         [matchId, MatchRecoveryService.IN_PROGRESS_MAP_STATUSES],
       );
-      const mapIds = maps.map((map) => map.id);
+      for (const map of maps) {
+        await client.query("SELECT reset_match_map_to_round($1, 0)", [map.id]);
+      }
 
-      if (mapIds.length > 0) {
-        for (const table of [
-          ...MatchRecoveryService.STATS_TABLES,
-          "match_map_rounds",
-        ]) {
-          await client.query(
-            `UPDATE ${table} SET deleted_at = now()
-              WHERE match_map_id = ANY($1) AND deleted_at IS NULL`,
-            [mapIds],
-          );
-        }
-
+      if (maps.length > 0) {
         await client.query(
-          `UPDATE match_maps
-              SET status = 'Scheduled',
-                  started_at = NULL,
-                  lineup_1_timeouts_available = DEFAULT,
-                  lineup_2_timeouts_available = DEFAULT
+          `UPDATE match_maps SET status = 'Scheduled', started_at = NULL
             WHERE id = ANY($1)`,
-          [mapIds],
+          [maps.map((map) => map.id)],
         );
       }
 
@@ -361,6 +344,42 @@ export class MatchRecoveryService {
     }
 
     this.logger.log(`[${matchId}] organizer restarted the match`);
+
+    return { success: true };
+  }
+
+  // Back to warmup on the map being played. Its rounds and stats are only
+  // soft-deleted, so a restore can still bring any of them back until a round
+  // is played again. The server is told first: if it can't be reached, nothing
+  // has been touched.
+  public async restartMatchMap(matchId: string, viewer: RecoveryViewer) {
+    const match = await this.getMatch(matchId);
+
+    const blockedReason = this.mapControlBlockedReason(
+      match,
+      viewer,
+      await this.isTeamAffiliated(match, viewer.steam_id),
+    );
+    if (blockedReason === "not_in_progress") {
+      throw Error("there is no map in progress to restart");
+    }
+
+    if (blockedReason === "team_member") {
+      throw Error("organizers on one of the teams can't restart the map");
+    }
+
+    const response = await this.matchAssistant.restartServerMap(matchId);
+    if (response === undefined) {
+      throw Error("the match server can't be reached");
+    }
+
+    await this.postgres.query("SELECT reset_match_map_to_round($1, 0)", [
+      match.match_map_id,
+    ]);
+
+    this.logger.log(
+      `[${matchId}] organizer restarted map ${match.match_map_id} from warmup`,
+    );
 
     return { success: true };
   }
@@ -564,6 +583,14 @@ export class MatchRecoveryService {
       return "rush";
     }
 
+    return this.mapControlBlockedReason(match, viewer, affiliated);
+  }
+
+  private mapControlBlockedReason(
+    match: MatchRow,
+    viewer: RecoveryViewer,
+    affiliated: boolean,
+  ): string | null {
     if (
       match.status !== "Live" ||
       !MatchRecoveryService.IN_PROGRESS_MAP_STATUSES.includes(
@@ -652,11 +679,10 @@ export class MatchRecoveryService {
       `SELECT round, lineup_1_score, lineup_2_score, lineup_1_side, lineup_2_side,
               winning_side, winning_reason,
               lineup_1_timeouts_available, lineup_2_timeouts_available,
-              backup_file
+              backup_file, deleted_at IS NOT NULL AS undone
          FROM match_map_rounds
         WHERE match_map_id = $1
           AND round > 0
-          AND deleted_at IS NULL
         ORDER BY round`,
       [matchMapId],
     );

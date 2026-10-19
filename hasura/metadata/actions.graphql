@@ -666,6 +666,12 @@ type Mutation {
 }
 
 type Mutation {
+  restartMatchMap(
+    match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   restartService(
     service: String!
   ): SuccessOutput
@@ -1092,6 +1098,7 @@ type MatchRestoreRound {
   next_lineup_1_side: String
   next_lineup_2_side: String
   has_backup: Boolean!
+  undone: Boolean!
   players: [MatchRestorePlayer!]!
 }
 

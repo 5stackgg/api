@@ -156,6 +156,17 @@ export class MatchAssistantService {
     }
   }
 
+  public async resetMatchMapToRound(matchMapId: string, round: number) {
+    await this.postgres.query("SELECT reset_match_map_to_round($1, $2)", [
+      matchMapId,
+      round,
+    ]);
+  }
+
+  public async restartServerMap(matchId: string) {
+    return await this.command(matchId, "match_state Warmup");
+  }
+
   public async requestRoundRestore(matchId: string, round: number) {
     return await this.command(matchId, `restore_round ${round}`);
   }

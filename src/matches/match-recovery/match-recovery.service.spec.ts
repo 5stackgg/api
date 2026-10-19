@@ -114,6 +114,7 @@ const roundRow = (
   lineup_1_timeouts_available: 2,
   lineup_2_timeouts_available: 3,
   backup_file: backup,
+  undone: false,
 });
 
 const ROUNDS = [
@@ -165,6 +166,7 @@ const setup = (
     affiliated?: boolean;
     liveMaps?: Array<{ id: string }>;
     restoreResponse?: string | undefined;
+    serverResponse?: string | undefined;
   } = {},
 ) => {
   const postgres = {
@@ -208,6 +210,10 @@ const setup = (
         "restoreResponse" in options ? options.restoreResponse : "",
     ),
     refreshServerMatch: jest.fn(async (): Promise<void> => undefined),
+    restartServerMap: jest.fn(
+      async (): Promise<string | undefined> =>
+        "serverResponse" in options ? options.serverResponse : "",
+    ),
   };
 
   const service = new MatchRecoveryService(
@@ -393,6 +399,24 @@ describe("MatchRecoveryService", () => {
       });
     });
 
+    it("keeps offering the rounds a reset undid and plays on after the last one left", async () => {
+      const { service } = setup({
+        rounds: [ROUNDS[0], ROUNDS[1], { ...ROUNDS[2], undone: true }],
+      });
+
+      const result = await service.getRestoreRounds("match-1", VIEWER);
+
+      expect(result.live_round).toBe(13);
+      expect(result.rounds.map((round) => [round.round, round.undone])).toEqual(
+        [
+          [11, false],
+          [12, false],
+          [13, true],
+        ],
+      );
+      expect(result.rounds[2].players).toHaveLength(2);
+    });
+
     it("lists a finished map's rounds without offering a restore", async () => {
       const { service } = setup({
         match: matchRow({ status: "Finished", map_status: "Finished" }),
@@ -423,6 +447,19 @@ describe("MatchRecoveryService", () => {
 
     // The server refuses a restore while players are missing, after the api
     // has already marked the later rounds' stats for deletion.
+    it("brings back a round a reset undid", async () => {
+      const { service, matchAssistant } = setup({
+        rounds: [ROUNDS[0], { ...ROUNDS[1], undone: true }],
+      });
+
+      await service.restoreRound("match-1", 12, VIEWER);
+
+      expect(matchAssistant.requestRoundRestore).toHaveBeenCalledWith(
+        "match-1",
+        12,
+      );
+    });
+
     it("waits for missing players instead of sending it", async () => {
       const { service, matchAssistant } = setup({ oskConnected: false });
 
@@ -506,22 +543,13 @@ describe("MatchRecoveryService", () => {
 
       await service.restartMatch("match-1");
 
-      expect(postgres.statements[0]).toBe(
+      expect(postgres.statements).toEqual([
         "UPDATE matches SET status = 'Canceled' WHERE id = $1",
-      );
-      expect(
-        postgres.statements.filter((sql) =>
-          sql.includes("SET deleted_at = now()"),
-        ),
-      ).toHaveLength(8);
-      expect(
-        postgres.statements.some((sql) =>
-          sql.startsWith("UPDATE match_maps SET status = 'Scheduled'"),
-        ),
-      ).toBe(true);
-      expect(postgres.statements.at(-1)).toBe(
+        "SELECT id FROM match_maps WHERE match_id = $1 AND status = ANY($2)",
+        "SELECT reset_match_map_to_round($1, 0)",
+        "UPDATE match_maps SET status = 'Scheduled', started_at = NULL WHERE id = ANY($1)",
         "UPDATE matches SET status = 'WaitingForCheckIn', server_id = NULL, cancels_at = NULL WHERE id = $1",
-      );
+      ]);
       expect(matchAssistant.refreshServerMatch).toHaveBeenCalledWith(
         "server-1",
       );
@@ -556,6 +584,84 @@ describe("MatchRecoveryService", () => {
 
       await expect(service.restartMatch("match-1")).rejects.toThrow(message);
       expect(postgres.transaction).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("restartMatchMap", () => {
+    const resets = (postgres: ReturnType<typeof setup>["postgres"]) =>
+      postgres.query.mock.calls.filter(([sql]) =>
+        sql.includes("reset_match_map_to_round"),
+      );
+
+    it("sends the server back to warmup, then puts the map's rounds back to the start", async () => {
+      const { service, postgres, matchAssistant } = setup();
+
+      await expect(service.restartMatchMap("match-1", VIEWER)).resolves.toEqual(
+        { success: true },
+      );
+
+      expect(matchAssistant.restartServerMap).toHaveBeenCalledWith("match-1");
+      expect(resets(postgres)).toEqual([
+        ["SELECT reset_match_map_to_round($1, 0)", [MAP_ID]],
+      ]);
+      const resetCall = postgres.query.mock.calls.findIndex(([sql]) =>
+        sql.includes("reset_match_map_to_round"),
+      );
+      expect(
+        matchAssistant.restartServerMap.mock.invocationCallOrder[0],
+      ).toBeLessThan(postgres.query.mock.invocationCallOrder[resetCall]);
+    });
+
+    it("leaves the rounds alone when the server can't be reached", async () => {
+      const { service, postgres } = setup({ serverResponse: undefined });
+
+      await expect(service.restartMatchMap("match-1", VIEWER)).rejects.toThrow(
+        "the match server can't be reached",
+      );
+      expect(resets(postgres)).toEqual([]);
+    });
+
+    it("restarts a map still in warmup", async () => {
+      const { service, postgres } = setup({
+        match: matchRow({ map_status: "Warmup" }),
+      });
+
+      await service.restartMatchMap("match-1", VIEWER);
+
+      expect(resets(postgres)).toHaveLength(1);
+    });
+
+    it("restarts a Rush map, which replays from warmup anyway", async () => {
+      const { service, postgres } = setup({
+        match: matchRow({ type: "Rush" }),
+      });
+
+      await service.restartMatchMap("match-1", VIEWER);
+
+      expect(resets(postgres)).toHaveLength(1);
+    });
+
+    it.each([
+      [
+        { match: matchRow({ map_status: "UploadingDemo" }) },
+        "there is no map in progress to restart",
+      ],
+      [
+        { match: matchRow({ status: "Finished" }) },
+        "there is no map in progress to restart",
+      ],
+      [
+        { affiliated: true },
+        "organizers on one of the teams can't restart the map",
+      ],
+    ])("refuses %#", async (options, message) => {
+      const { service, postgres, matchAssistant } = setup(options);
+
+      await expect(service.restartMatchMap("match-1", VIEWER)).rejects.toThrow(
+        message,
+      );
+      expect(matchAssistant.restartServerMap).not.toHaveBeenCalled();
+      expect(resets(postgres)).toEqual([]);
     });
   });
 });
