@@ -417,6 +417,18 @@ describe("MatchRecoveryService", () => {
       expect(result.rounds[2].players).toHaveLength(2);
     });
 
+    it("waits for a map back in warmup to go live before offering a restore", async () => {
+      const { service } = setup({
+        match: matchRow({ map_status: "Warmup" }),
+        rounds: ROUNDS.map((row) => ({ ...row, undone: true })),
+      });
+
+      const result = await service.getRestoreRounds("match-1", VIEWER);
+
+      expect(result.blocked_reason).toBe("not_live_yet");
+      expect(result.rounds).toHaveLength(3);
+    });
+
     it("lists a finished map's rounds without offering a restore", async () => {
       const { service } = setup({
         match: matchRow({ status: "Finished", map_status: "Finished" }),
@@ -517,6 +529,20 @@ describe("MatchRecoveryService", () => {
         "there is no map in progress to restore",
       );
     });
+
+    it.each(["Warmup", "Knife"])(
+      "refuses while the map is in %s",
+      async (mapStatus) => {
+        const { service, matchAssistant } = setup({
+          match: matchRow({ map_status: mapStatus }),
+        });
+
+        await expect(
+          service.restoreRound("match-1", 13, VIEWER),
+        ).rejects.toThrow("the map isn't live yet; restore once it is");
+        expect(matchAssistant.requestRoundRestore).not.toHaveBeenCalled();
+      },
+    );
 
     it("refuses Rush matches", async () => {
       const { service } = setup({ match: matchRow({ type: "Rush" }) });

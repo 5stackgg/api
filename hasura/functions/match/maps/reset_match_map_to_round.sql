@@ -30,7 +30,8 @@ BEGIN
         WHERE match_map_id = _match_map_id
           AND round = _round
     ) THEN
-        RAISE EXCEPTION 'there is no round % on this map to go back to', _round;
+        RAISE EXCEPTION 'there is no round % on this map to go back to', _round
+            USING ERRCODE = 'no_data_found';
     END IF;
 
     SELECT COALESCE(max(round), 0)

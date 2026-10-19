@@ -369,9 +369,10 @@ describe("match recovery (SQL-driven)", () => {
       const { mapId } = await fiveRounds();
       const before = await state(mapId);
 
-      await expect(reset(mapId, 9)).rejects.toThrow(
-        "there is no round 9 on this map to go back to",
-      );
+      await expect(reset(mapId, 9)).rejects.toMatchObject({
+        code: "P0002",
+        message: "there is no round 9 on this map to go back to",
+      });
 
       expect(await state(mapId)).toEqual(before);
     });
@@ -439,6 +440,18 @@ describe("match recovery (SQL-driven)", () => {
         true,
       ]);
 
+      await postgres.query(
+        "UPDATE match_maps SET status = 'Warmup' WHERE id = $1",
+        [mapId],
+      );
+      await expect(
+        service(sent).restoreRound(match.id, 4, admin),
+      ).rejects.toThrow("the map isn't live yet");
+
+      await postgres.query(
+        "UPDATE match_maps SET status = 'Live' WHERE id = $1",
+        [mapId],
+      );
       await service(sent).restoreRound(match.id, 4, admin);
       expect(sent).toEqual([4]);
     });

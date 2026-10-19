@@ -2,8 +2,9 @@ import MatchMapResetRoundEvent from "./MatchMapResetRoundEvent";
 
 describe("MatchMapResetRoundEvent", () => {
   const calls: Array<string> = [];
+  let mapStatus = "Live";
   const hasura = {
-    query: jest.fn(async () => ({ match_maps_by_pk: { status: "Live" } })),
+    query: jest.fn(async () => ({ match_maps_by_pk: { status: mapStatus } })),
   };
   let matchType = "Competitive";
   const matchAssistant = {
@@ -32,6 +33,7 @@ describe("MatchMapResetRoundEvent", () => {
     jest.clearAllMocks();
     calls.length = 0;
     matchType = "Competitive";
+    mapStatus = "Live";
   });
 
   it("puts the map back to the round before the server loads its backup", async () => {
@@ -40,14 +42,39 @@ describe("MatchMapResetRoundEvent", () => {
     expect(calls).toEqual(["reset map-1 5", "restore match-1 5"]);
   });
 
-  it("doesn't load a backup of a round the map no longer has", async () => {
+  // Throwing would leave the event unanswered, and the server would send it
+  // again until round 14 is played and the reset goes through.
+  it("answers a reset to a round the map no longer has without loading it", async () => {
     matchAssistant.resetMatchMapToRound.mockRejectedValueOnce(
-      new Error("there is no round 14 on this map to go back to"),
+      Object.assign(
+        new Error("there is no round 14 on this map to go back to"),
+        { code: "P0002" },
+      ),
     );
 
-    await expect(process("14")).rejects.toThrow("there is no round 14");
+    await expect(process("14")).resolves.toBeUndefined();
     expect(matchAssistant.restoreMatchRound).not.toHaveBeenCalled();
   });
+
+  it("lets any other failure through so the server sends it again", async () => {
+    matchAssistant.resetMatchMapToRound.mockRejectedValueOnce(
+      new Error("connection terminated"),
+    );
+
+    await expect(process("5")).rejects.toThrow("connection terminated");
+    expect(matchAssistant.restoreMatchRound).not.toHaveBeenCalled();
+  });
+
+  it.each(["Warmup", "Knife", "Scheduled", "Finished"])(
+    "leaves a map that is %s alone",
+    async (status) => {
+      mapStatus = status;
+
+      await process("5");
+
+      expect(calls).toEqual([]);
+    },
+  );
 
   it("leaves a Rush map alone unless it is replayed from the start", async () => {
     matchType = "Rush";

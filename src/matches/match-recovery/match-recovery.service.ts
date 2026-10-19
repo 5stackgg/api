@@ -243,6 +243,10 @@ export class MatchRecoveryService {
       );
     }
 
+    if (blockedReason === "not_live_yet") {
+      throw Error("the map isn't live yet; restore once it is");
+    }
+
     const rows = await this.getRounds(match.match_map_id as string);
     if (!rows.some((row) => row.round === round && !!row.backup_file)) {
       throw Error(`round ${round} has no backup to restore`);
@@ -591,7 +595,23 @@ export class MatchRecoveryService {
       return "rush";
     }
 
-    return this.mapControlBlockedReason(match, viewer, affiliated);
+    const blockedReason = this.mapControlBlockedReason(
+      match,
+      viewer,
+      affiliated,
+    );
+    if (blockedReason) {
+      return blockedReason;
+    }
+
+    // CS2 restarts the game when warmup or knife ends, which would wipe a
+    // round loaded before that. A restarted map's rounds stay restorable
+    // until its first round is over.
+    if (match.map_status === "Warmup" || match.map_status === "Knife") {
+      return "not_live_yet";
+    }
+
+    return null;
   }
 
   private serverRefusal(response: string, prefix: string) {
