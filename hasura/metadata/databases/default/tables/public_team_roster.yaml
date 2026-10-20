@@ -130,3 +130,18 @@ event_triggers:
       num_retries: 60
       timeout_sec: 60
     webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
+  # Re-matches an open scrim team whose ranks a roster change just moved.
+  - name: scrim_team_roster_events
+    definition:
+      enable_manual: true
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+      delete:
+        columns: '*'
+    retry_conf:
+      interval_sec: 10
+      num_retries: 60
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

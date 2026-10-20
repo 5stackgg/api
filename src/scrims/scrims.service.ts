@@ -65,11 +65,31 @@ export class ScrimsService {
     return settings?.enabled === true;
   }
 
+  public static readonly FINDER_ENABLED_SETTING = "public.scrim_finder_enabled";
+
   public async isFinderEnabled(): Promise<boolean> {
     const rows = await this.postgres.query<Array<{ value: string }>>(
-      `SELECT value FROM settings WHERE name = 'public.scrim_finder_enabled'`,
+      `SELECT value FROM settings WHERE name = $1`,
+      [ScrimsService.FINDER_ENABLED_SETTING],
     );
     return rows.at(0)?.value !== "false";
+  }
+
+  public async isScrimOpen(teamId: string): Promise<boolean> {
+    const rows = await this.postgres.query<Array<{ team_id: string }>>(
+      `SELECT team_id FROM team_scrim_settings WHERE team_id = $1 AND enabled = true`,
+      [teamId],
+    );
+    return rows.length > 0;
+  }
+
+  public async openRequestExpiries(until: Date): Promise<Array<Date>> {
+    const rows = await this.postgres.query<Array<{ expires_at: Date }>>(
+      `SELECT DISTINCT expires_at FROM team_scrim_requests
+        WHERE status IN ('Pending', 'Countered') AND expires_at <= $1`,
+      [until],
+    );
+    return rows.map(({ expires_at }) => expires_at);
   }
 
   public static rangesOverlap(

@@ -20,6 +20,7 @@ import { TeamCalendarController } from "./team-calendar.controller";
 import { MatchScrims } from "./jobs/MatchScrims";
 import { MatchScrimTeam } from "./jobs/MatchScrimTeam";
 import { ExpireScrimRequests } from "./jobs/ExpireScrimRequests";
+import { RunScrimAlert } from "./jobs/RunScrimAlert";
 import { SuggestTeams } from "./jobs/SuggestTeams";
 
 @Module({
@@ -42,6 +43,7 @@ import { SuggestTeams } from "./jobs/SuggestTeams";
     MatchScrims,
     MatchScrimTeam,
     ExpireScrimRequests,
+    RunScrimAlert,
     SuggestTeams,
     ...getQueuesProcessors("Scrims"),
     loggerFactory(),

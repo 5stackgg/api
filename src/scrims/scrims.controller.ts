@@ -10,9 +10,11 @@ import { ScrimQueues } from "./enums/ScrimQueues";
 import { MatchScrims } from "./jobs/MatchScrims";
 import { MatchScrimTeam } from "./jobs/MatchScrimTeam";
 import { ExpireScrimRequests } from "./jobs/ExpireScrimRequests";
+import { RunScrimAlert } from "./jobs/RunScrimAlert";
 
 type ScrimRow = {
   id?: string;
+  name?: string;
   team_id?: string;
   from_team_id?: string;
   to_team_id?: string;
@@ -31,22 +33,35 @@ export class ScrimsController {
 
   @HasuraEvent({ retry: true })
   public async team_scrim_settings_events(data: HasuraEventData<ScrimRow>) {
-    await MatchScrimTeam.wake(this.queue, data.new.team_id || data.old.team_id);
+    await this.matchTeamNowAndAsWindowsOpen(
+      data.new.team_id || data.old.team_id,
+    );
   }
 
   @HasuraEvent({ retry: true })
   public async team_scrim_availability_events(data: HasuraEventData<ScrimRow>) {
+    await this.matchTeamNowAndAsWindowsOpen(
+      data.new.team_id || data.old.team_id,
+    );
+  }
+
+  // A roster change moves the team's ranks, which decide who it can pair with.
+  @HasuraEvent({ retry: true })
+  public async scrim_team_roster_events(data: HasuraEventData<ScrimRow>) {
     const teamId = data.new.team_id || data.old.team_id;
-    const now = new Date();
 
-    await MatchScrimTeam.wake(this.queue, teamId);
+    if (teamId && (await this.scrims.isScrimOpen(teamId))) {
+      await MatchScrimTeam.wake(this.queue, teamId);
+    }
+  }
 
-    for (const { at } of await this.scrims.scrimWindowOpenings(
-      now,
-      new Date(now.getTime() + MatchScrims.LOOKAHEAD_MS),
-      teamId,
-    )) {
-      await MatchScrimTeam.wake(this.queue, teamId, at);
+  // Off, nothing is matched or armed, so turning it back on starts a full pass.
+  @HasuraEvent({ retry: true })
+  public async scrim_finder_settings(data: HasuraEventData<ScrimRow>) {
+    if (
+      (data.new.name || data.old.name) === ScrimsService.FINDER_ENABLED_SETTING
+    ) {
+      await wakeJobAt(this.queue, MatchScrims.name, Date.now());
     }
   }
 
@@ -76,8 +91,25 @@ export class ScrimsController {
 
   @HasuraEvent({ retry: true })
   public async team_scrim_alert_events(data: HasuraEventData<ScrimRow>) {
-    if (data.op !== "DELETE" && (await this.scrims.isFinderEnabled())) {
-      await this.scrims.runScrimAlerts({ alertId: data.new.id });
+    if (data.op !== "DELETE") {
+      await wakeJobAt(this.queue, RunScrimAlert.name, Date.now(), {
+        key: data.new.id,
+        data: { alertId: data.new.id },
+      });
+    }
+  }
+
+  private async matchTeamNowAndAsWindowsOpen(teamId: string) {
+    const now = new Date();
+
+    await MatchScrimTeam.wake(this.queue, teamId);
+
+    for (const { at } of await this.scrims.scrimWindowOpenings(
+      now,
+      new Date(now.getTime() + MatchScrims.LOOKAHEAD_MS),
+      teamId,
+    )) {
+      await MatchScrimTeam.wake(this.queue, teamId, at);
     }
   }
 

@@ -59,3 +59,17 @@ event_triggers:
       num_retries: 60
       timeout_sec: 60
     webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
+  # A full scrim pass when the finder is switched back on (ScrimsController).
+  - name: scrim_finder_settings
+    definition:
+      enable_manual: true
+      insert:
+        columns: '*'
+      update:
+        columns:
+          - value
+    retry_conf:
+      interval_sec: 10
+      num_retries: 60
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

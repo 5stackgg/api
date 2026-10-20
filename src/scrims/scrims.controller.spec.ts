@@ -9,6 +9,7 @@ describe("ScrimsController events", () => {
     scrimRequestState: jest.Mock;
     isFinderEnabled: jest.Mock;
     runScrimAlerts: jest.Mock;
+    isScrimOpen: jest.Mock;
   };
   let controller: ScrimsController;
 
@@ -27,6 +28,7 @@ describe("ScrimsController events", () => {
       scrimRequestState: jest.fn(),
       isFinderEnabled: jest.fn().mockResolvedValue(true),
       runScrimAlerts: jest.fn(),
+      isScrimOpen: jest.fn().mockResolvedValue(true),
     };
     controller = new ScrimsController(scrims as any, queue as any);
   });
@@ -35,7 +37,11 @@ describe("ScrimsController events", () => {
     jest.useRealTimers();
   });
 
-  it("matches a team against the field as soon as its posting changes", async () => {
+  it("matches a team against the field as soon as its posting changes, and as its windows open", async () => {
+    scrims.scrimWindowOpenings.mockResolvedValue([
+      { teamId: "t1", at: new Date(NOW + 5 * 60 * 1000) },
+    ]);
+
     await controller.team_scrim_settings_events({
       op: "UPDATE",
       old: { team_id: "t1" },
@@ -44,7 +50,43 @@ describe("ScrimsController events", () => {
 
     expect(woken()).toEqual([
       { name: "MatchScrimTeam", data: { teamId: "t1" }, inMs: 2000 },
+      {
+        name: "MatchScrimTeam",
+        data: { teamId: "t1" },
+        inMs: 5 * 60 * 1000 + 2000,
+      },
     ]);
+  });
+
+  it("re-matches an open team whose roster changed, and leaves a closed one", async () => {
+    await controller.scrim_team_roster_events({
+      op: "INSERT",
+      old: {},
+      new: { team_id: "t1" },
+    });
+    scrims.isScrimOpen.mockResolvedValue(false);
+    await controller.scrim_team_roster_events({
+      op: "INSERT",
+      old: {},
+      new: { team_id: "t2" },
+    });
+
+    expect(woken().map(({ data }) => data)).toEqual([{ teamId: "t1" }]);
+  });
+
+  it("runs a full pass when the finder is switched on, and ignores other settings", async () => {
+    await controller.scrim_finder_settings({
+      op: "UPDATE",
+      old: { name: "public.scrim_finder_enabled" },
+      new: { name: "public.scrim_finder_enabled" },
+    });
+    await controller.scrim_finder_settings({
+      op: "UPDATE",
+      old: { name: "public.news_enabled" },
+      new: { name: "public.news_enabled" },
+    });
+
+    expect(woken().map(({ name }) => name)).toEqual(["MatchScrims"]);
   });
 
   it("arms the team for each window that opens before the next hourly pass", async () => {
@@ -133,13 +175,16 @@ describe("ScrimsController events", () => {
     expect(woken().map(({ name }) => name)).toEqual(["ExpireScrimRequests"]);
   });
 
-  it("checks only the alert that changed", async () => {
+  it("checks only the alert that changed, on the matcher queue", async () => {
     await controller.team_scrim_alert_events({
       op: "INSERT",
       old: {},
       new: { id: "a1" },
     });
 
-    expect(scrims.runScrimAlerts).toHaveBeenCalledWith({ alertId: "a1" });
+    expect(scrims.runScrimAlerts).not.toHaveBeenCalled();
+    expect(woken()).toEqual([
+      { name: "RunScrimAlert", data: { alertId: "a1" }, inMs: 2000 },
+    ]);
   });
 });
