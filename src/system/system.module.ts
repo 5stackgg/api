@@ -62,16 +62,22 @@ export class SystemModule {
       return;
     }
 
+    // Every 5 minutes because the registry and GitHub lookups are cached for
+    // 5: checking more often never saw a new release any sooner.
     void scheduleJobs(queue, {
-      [CheckSystemUpdateJob.name]: { pattern: "*/15 * * * *" },
+      [CheckSystemUpdateJob.name]: { pattern: "*/5 * * * *" },
     });
 
-    // Not straight away: a rollout's old pods still answer for a minute or so,
-    // and the check reads every pod's image.
-    void queue.add(
-      CheckSystemUpdateJob.name,
-      {},
-      { delay: 2 * 60 * 1000, removeOnComplete: true, removeOnFail: true },
+    // An update clears from the banner as its old pods go, not on the schedule.
+    this.systemService.watchServicePods(
+      () =>
+        void queue
+          .add(
+            CheckSystemUpdateJob.name,
+            {},
+            { delay: 3000, removeOnComplete: true, removeOnFail: true },
+          )
+          .catch(() => {}),
     );
 
     void this.setupSettings();

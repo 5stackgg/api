@@ -8,6 +8,7 @@ import {
   setHeaderOptions,
   PatchStrategy,
   V1Node,
+  Watch,
 } from "@kubernetes/client-node";
 import { HasuraService } from "src/hasura/hasura.service";
 import { ConfigService } from "@nestjs/config";
@@ -20,8 +21,11 @@ import { GameServersConfig } from "src/configs/types/GameServersConfig";
 
 @Injectable()
 export class SystemService {
+  private kubeConfig: KubeConfig;
   private apiClient: CoreV1Api;
   private appsClient: AppsV1Api;
+
+  private static readonly POD_WATCH_RETRY_MS = 5 * 1000;
 
   private featuresDetected = false;
 
@@ -73,8 +77,42 @@ export class SystemService {
   ) {
     const kc = new KubeConfig();
     kc.loadFromDefault();
+    this.kubeConfig = kc;
     this.apiClient = kc.makeApiClient(CoreV1Api);
     this.appsClient = kc.makeApiClient(AppsV1Api);
+  }
+
+  // An update is a rollout, and the versions read as current only once the
+  // rollout's old pods are gone: getServices reads every pod's image, the
+  // terminating ones included. So each one going is when to check again.
+  public watchServicePods(onPodGone: () => void) {
+    const watch = new Watch(this.kubeConfig);
+
+    const start = () => {
+      let retried = false;
+      const retry = () => {
+        if (retried) {
+          return;
+        }
+        retried = true;
+        setTimeout(start, SystemService.POD_WATCH_RETRY_MS).unref?.();
+      };
+
+      watch
+        .watch(
+          "/api/v1/namespaces/5stack/pods",
+          { labelSelector: `app in (${SystemService.TRACKED_APPS.join(",")})` },
+          (phase) => {
+            if (phase === "DELETED") {
+              onPodGone();
+            }
+          },
+          retry,
+        )
+        .catch(retry);
+    };
+
+    start();
   }
 
   public async getSetting<T extends string | number | boolean>(
