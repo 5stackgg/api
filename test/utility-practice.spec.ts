@@ -1244,6 +1244,31 @@ describe("utility practice sessions (SQL-driven)", () => {
       expect(rconSent).toEqual([]);
     });
 
+    // The in-game wheel shows seven maps a page, so whatever sorts first is
+    // all most players ever see of the list.
+    it("lists Active Duty first in the in-game menu, then Valve's other maps, then workshop maps", async () => {
+      const host = await fx.player();
+      const { serverId } = await readyServer(host, 27726);
+
+      const byName = await postgres.query<
+        Array<{ name: string; active_pool: boolean; workshop: boolean }>
+      >(
+        `SELECT name, active_pool, workshop_map_id IS NOT NULL AS workshop
+           FROM maps
+          WHERE type = 'Competitive' AND enabled = true AND deleted_at IS NULL
+          ORDER BY name`,
+      );
+      const names = (rows: typeof byName) => rows.map((map) => map.name);
+
+      const menu = await makeService({}).mapsForServer(serverId, host);
+
+      expect(menu?.maps).toEqual([
+        ...names(byName.filter((map) => map.active_pool)),
+        ...names(byName.filter((map) => !map.active_pool && !map.workshop)),
+        ...names(byName.filter((map) => !map.active_pool && map.workshop)),
+      ]);
+    });
+
     // Pressing it twice, or landing on the map you are already on, must not
     // put anybody through a load screen for nothing.
     it("does nothing when the server is already on that map", async () => {
