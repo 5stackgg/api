@@ -183,6 +183,10 @@ export class UtilityCalloutsService {
   }
 
   public async calloutsUrl(map: string): Promise<string | null> {
+    if (!MapAssetsService.isSafeKey(map)) {
+      return null;
+    }
+
     const base = process.env.MAP_MESH_CDN;
     if (base) {
       return `${base}/${map}.callouts.json`;
@@ -325,7 +329,7 @@ export class UtilityCalloutsService {
   ): Promise<{ stored: number }> {
     const map = UtilityCalloutsService.normalizeMapName(mapName);
     const clean = UtilityCalloutsService.sanitize(callouts);
-    if (!map || !clean.length) {
+    if (!MapAssetsService.isSafeKey(map) || !clean.length) {
       return { stored: 0 };
     }
 

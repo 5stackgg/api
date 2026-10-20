@@ -218,6 +218,21 @@ describe("UtilityCalloutsService.calloutsUrl", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  // A reported map name reaches this, and MAP_MESH_CDN is joined to it as a
+  // path.
+  it.each(["..\\..\\x?", "de_mirage?raw=1#", "%2e%2e", ".."])(
+    "resolves no URL for %s",
+    async (name) => {
+      process.env.MAP_MESH_CDN = "https://mirror.test/maps/1";
+      await expect(service.calloutsUrl(name)).resolves.toBeNull();
+
+      delete process.env.MAP_MESH_CDN;
+      await expect(service.calloutsUrl(name)).resolves.toBeNull();
+
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
+
   it("reads the key the latest manifest names, deduped into an older build", async () => {
     await expect(service.calloutsUrl("de_mirage")).resolves.toBe(
       "https://demo-dl.5stack.gg/maps/25000000/de_mirage.callouts.json",

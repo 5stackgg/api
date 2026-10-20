@@ -171,6 +171,91 @@ describe("map callouts (SQL-driven)", () => {
     ]);
   });
 
+  // The interleaving the lock is for: the extract is still uncommitted when
+  // the report last looks for it, so only waiting on the lock lets it see it.
+  it("waits for an extract being written before it falls back to its report", async () => {
+    global.fetch = jest.fn().mockRejectedValue(new Error("offline")) as never;
+
+    type Client = {
+      query(sql: string, params?: unknown[]): Promise<unknown>;
+      release(destroy?: boolean): void;
+    };
+    const client = await (
+      postgres as unknown as { pool: { connect(): Promise<Client> } }
+    ).pool.connect();
+
+    try {
+      await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
+        "map_callouts:de_cache",
+      ]);
+      await client.query(
+        `INSERT INTO public.map_callouts (map_name, name, boxes, source)
+         SELECT 'de_cache', entry->>'name', entry->'boxes', 'cdn'
+           FROM jsonb_array_elements($1::jsonb) AS entry`,
+        [JSON.stringify(callouts("AMain", "Highway"))],
+      );
+
+      let settled = false;
+      const reporting = service().report("de_cache", callouts("Jungle"));
+      reporting.then(
+        () => (settled = true),
+        () => (settled = true),
+      );
+
+      const waiting = async () => {
+        const [{ count }] = await postgres.query<Array<{ count: number }>>(
+          `SELECT count(*)::int AS count
+             FROM pg_locks
+            WHERE locktype = 'advisory'
+              AND NOT granted
+              AND database = (
+                SELECT oid FROM pg_database WHERE datname = current_database()
+              )`,
+        );
+        return count > 0;
+      };
+      while (!settled && !(await waiting())) {
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+
+      await client.query("COMMIT");
+      await expect(reporting).resolves.toEqual({ stored: 0 });
+    } finally {
+      client.release(true);
+    }
+
+    expect(await rows("de_cache")).toEqual([
+      { name: "AMain", source: "cdn" },
+      { name: "Highway", source: "cdn" },
+    ]);
+  });
+
+  // The map name comes from a game server, and MAP_MESH_CDN is joined to it as
+  // a path: a crafted one could read any JSON on that host into the table as
+  // the extract.
+  it("neither fetches nor stores a map name that is not a plain file name", async () => {
+    global.fetch = jest.fn(async (url: string) => {
+      fetched.push(url);
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ callouts: callouts("Planted") }),
+      };
+    }) as never;
+
+    for (const name of ["..\\..\\x?", "de_mirage?raw=1#", "%2e%2e"]) {
+      await expect(service().report(name, callouts("Mid"))).resolves.toEqual({
+        stored: 0,
+      });
+    }
+
+    expect(
+      await postgres.query("SELECT map_name, source FROM map_callouts"),
+    ).toEqual([]);
+    expect(fetched).toEqual([]);
+  });
+
   it("leaves the published extract alone", async () => {
     await seedCdn("de_mirage", "Window");
 
