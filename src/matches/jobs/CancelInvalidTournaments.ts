@@ -4,7 +4,7 @@ import { MatchQueues } from "../enums/MatchQueues";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { HasuraService } from "../../hasura/hasura.service";
 
-@UseQueue("Matches", MatchQueues.ScheduledMatches)
+@UseQueue("Matches", MatchQueues.Deadlines)
 export class CancelInvalidTournaments extends WorkerHost {
   constructor(
     private readonly logger: Logger,

@@ -158,3 +158,33 @@ export async function scheduleJobs(
     }
   }
 }
+
+// Runs a job at a deadline instead of on its queue's next schedule. The id is
+// the job and the second it is for, so everything due in the same second shares
+// one run, and a wake-up whose time has passed runs straight away. The extra
+// second keeps a job that reads the clock itself from waking a hair early.
+export async function wakeJobAt(
+  queue: Queue,
+  name: string,
+  at: Date | string | number,
+): Promise<void> {
+  const now = Date.now();
+  const fireAt = Math.max(now, new Date(at).getTime() + 1000);
+
+  if (Number.isNaN(fireAt)) {
+    return;
+  }
+
+  await queue.add(
+    name,
+    {},
+    {
+      jobId: `${name}.at.${Math.floor(fireAt / 1000)}`,
+      delay: fireAt - now,
+      attempts: 3,
+      backoff: { type: "exponential", delay: 5000 },
+      removeOnComplete: true,
+      removeOnFail: true,
+    },
+  );
+}

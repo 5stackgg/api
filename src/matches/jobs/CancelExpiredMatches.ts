@@ -11,10 +11,10 @@ import { DISCORD_COLORS } from "../../notifications/utilities/constants";
 import { MatchAssistantService } from "../match-assistant/match-assistant.service";
 import { ExpectedPlayers } from "../../discord-bot/enums/ExpectedPlayers";
 
-@UseQueue("Matches", MatchQueues.ScheduledMatches)
+@UseQueue("Matches", MatchQueues.Deadlines)
 export class CancelExpiredMatches extends WorkerHost {
   // How far ahead of cancels_at a full lobby is allowed to be force started.
-  private static readonly FORCE_START_LEAD_MS = 60 * 1000;
+  public static readonly FORCE_START_LEAD_MS = 60 * 1000;
 
   private static readonly IN_PLAY_MAP_STATUSES = [
     "Knife",

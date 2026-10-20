@@ -53,6 +53,9 @@ import { SocketsModule } from "../sockets/sockets.module";
 import { CleanAbandonedMatches } from "./jobs/CleanAbandonedMatches";
 import { ReapIdleDemoSessions } from "./jobs/ReapIdleDemoSessions";
 import { ReapOrphanDemoResources } from "./jobs/ReapOrphanDemoResources";
+import { ReconcileDeadlines } from "./jobs/ReconcileDeadlines";
+import { DeadlinesService } from "./deadlines/deadlines.service";
+import { DeadlinesController } from "./deadlines/deadlines.controller";
 import { PollMediaMtxViewers } from "./jobs/PollMediaMtxViewers";
 import { MonitorMatchCameras } from "./jobs/MonitorMatchCameras";
 import { MatchMaking } from "src/matchmaking/matchmaking.module";
@@ -122,6 +125,12 @@ import { MatchRecoveryService } from "./match-recovery/match-recovery.service";
         name: MatchQueues.ScheduledMatches,
       },
       {
+        name: MatchQueues.Deadlines,
+      },
+      {
+        name: MatchQueues.VetoTimeouts,
+      },
+      {
         name: MatchQueues.EloCalculation,
         defaultJobOptions: {
           attempts: 3,
@@ -159,6 +168,14 @@ import { MatchRecoveryService } from "./match-recovery/match-recovery.service";
         adapter: BullMQAdapter,
       },
       {
+        name: MatchQueues.Deadlines,
+        adapter: BullMQAdapter,
+      },
+      {
+        name: MatchQueues.VetoTimeouts,
+        adapter: BullMQAdapter,
+      },
+      {
         name: MatchQueues.EloCalculation,
         adapter: BullMQAdapter,
       },
@@ -177,6 +194,7 @@ import { MatchRecoveryService } from "./match-recovery/match-recovery.service";
     MatchRelayController,
     CameraController,
     MatchRecoveryController,
+    DeadlinesController,
   ],
   exports: [MatchAssistantService, PlayerEloRecomputeService],
   providers: [
@@ -209,6 +227,8 @@ import { MatchRecoveryService } from "./match-recovery/match-recovery.service";
     ReapOrphanDemoResources,
     PollMediaMtxViewers,
     MonitorMatchCameras,
+    DeadlinesService,
+    ReconcileDeadlines,
     EloCalculation,
     RecomputeAllElo,
     PlayerEloRecomputeService,
@@ -225,6 +245,7 @@ export class MatchesModule implements NestModule {
     private readonly logger: Logger,
     @InjectQueue(MatchQueues.MatchServers) matchServersQueue: Queue,
     @InjectQueue(MatchQueues.ScheduledMatches) scheduleMatchQueue: Queue,
+    @InjectQueue(MatchQueues.Deadlines) deadlinesQueue: Queue,
     private readonly postgres: PostgresService,
   ) {
     if (process.env.RUN_MIGRATIONS) {
@@ -232,7 +253,6 @@ export class MatchesModule implements NestModule {
     }
 
     void scheduleJobs(scheduleMatchQueue, {
-      [CheckForScheduledTournamentBrackets.name]: { pattern: "* * * * *" },
       [CheckLeagueSeasonTransitions.name]: { pattern: "*/5 * * * *" },
       [ApplyLeagueDefaultSchedules.name]: { pattern: "0 * * * *" },
       [LeagueWeekReminders.name]: { pattern: "30 * * * *" },
@@ -241,18 +261,7 @@ export class MatchesModule implements NestModule {
       // More often than the reminders above, because the 2h window is far
       // tighter than their day-wide ones.
       [TournamentReminders.name]: { pattern: "*/5 * * * *" },
-      // Every minute, unlike the reminders above: the closing cutoff is a hard
-      // deadline the bracket waits on, so a 5-minute cadence would hold a
-      // tournament past its own start.
-      [ProcessTournamentCheckIn.name]: { pattern: "* * * * *" },
-      [CheckForScheduledMatches.name]: { pattern: "* * * * *" },
-      [CancelExpiredMatches.name]: { pattern: "* * * * *" },
-      [RemoveCancelledMatches.name]: { pattern: "* * * * *" },
-      // Fallback only. The real timer is a per-match delayed job armed from
-      // match_events; this catches vetoes whose job was lost to a Redis flush or
-      // a dropped event. Empty payload means no fencing token, so it sweeps
-      // anything already past its deadline.
-      [AutoPickExpiredVeto.name]: { pattern: "* * * * *" },
+      [RemoveCancelledMatches.name]: { pattern: "*/10 * * * *" },
       [ReapIdleDemoSessions.name]: { pattern: "* * * * *" },
       [ReapOrphanDemoResources.name]: { pattern: "*/10 * * * *" },
       [ReconcileOnDemandServerJobs.name]: { pattern: "*/10 * * * *" },
@@ -263,10 +272,21 @@ export class MatchesModule implements NestModule {
     });
 
     void scheduleJobs(matchServersQueue, {
-      [CheckForTournamentStart.name]: { pattern: "* * * * *" },
       [CleanAbandonedMatches.name]: { pattern: "0 0 * * *" },
-      [CancelInvalidTournaments.name]: { pattern: "* * * * *" },
     });
+
+    // The deadline sweeps are woken at each deadline by the *_deadlines event
+    // triggers (DeadlinesService). This is the backstop for a wake-up that was
+    // never armed, and the boot run catches up on whatever came due while the
+    // api was down.
+    void scheduleJobs(deadlinesQueue, {
+      [ReconcileDeadlines.name]: { pattern: "*/5 * * * *" },
+    });
+    void deadlinesQueue.add(
+      ReconcileDeadlines.name,
+      {},
+      { removeOnComplete: true, removeOnFail: true },
+    );
 
     void this.generatePlayerRatings();
   }

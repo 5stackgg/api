@@ -107,8 +107,6 @@ describe("MatchesController — match_events on-demand servers", () => {
       ),
     };
     matchAssistant = {
-      removeVetoPickTimeout: jest.fn(),
-      scheduleVetoPickTimeout: jest.fn(),
       stopOnDemandServer: jest.fn(),
       releaseOnDemandServer: jest.fn(),
       assignServer: jest.fn(),

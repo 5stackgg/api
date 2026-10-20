@@ -639,3 +639,21 @@ event_triggers:
       num_retries: 6
       timeout_sec: 60
     webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
+  # Wakes the deadline sweeps at each match deadline. Separate from match_events
+  # so it can be retried: it only re-reads the row and arms delayed jobs.
+  - name: match_deadlines
+    definition:
+      enable_manual: true
+      insert:
+        columns: '*'
+      update:
+        columns:
+          - status
+          - scheduled_at
+          - cancels_at
+          - veto_pick_expires_at
+    retry_conf:
+      interval_sec: 10
+      num_retries: 60
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

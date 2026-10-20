@@ -4,8 +4,10 @@ import { MatchQueues } from "../enums/MatchQueues";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { PostgresService } from "../../postgres/postgres.service";
 
-@UseQueue("Matches", MatchQueues.ScheduledMatches)
+@UseQueue("Matches", MatchQueues.Deadlines)
 export class CheckForScheduledTournamentBrackets extends WorkerHost {
+  public static readonly LEAD_MS = 15 * 60 * 1000;
+
   constructor(
     private readonly logger: Logger,
     private readonly postgres: PostgresService,
@@ -14,8 +16,9 @@ export class CheckForScheduledTournamentBrackets extends WorkerHost {
   }
 
   async process(): Promise<number> {
-    const fifteenMinutesAhead = new Date();
-    fifteenMinutesAhead.setMinutes(fifteenMinutesAhead.getMinutes() + 15);
+    const fifteenMinutesAhead = new Date(
+      Date.now() + CheckForScheduledTournamentBrackets.LEAD_MS,
+    );
 
     const rows = await this.postgres.query<{ scheduled_count: number }[]>(
       `

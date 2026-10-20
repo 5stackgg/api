@@ -59,8 +59,9 @@ export class DraftGamesModule {
       return;
     }
 
+    // Woken at each draft's expiry by draft_game_deadlines; this is the backstop.
     void scheduleJobs(queue, {
-      [CleanExpiredDraftGames.name]: { pattern: "* * * * *" },
+      [CleanExpiredDraftGames.name]: { pattern: "*/5 * * * *" },
     });
   }
 }

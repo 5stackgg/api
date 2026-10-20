@@ -1,7 +1,7 @@
 import IORedis, { Redis } from "ioredis";
 import { Queue } from "bullmq";
 import { GenericContainer, StartedTestContainer } from "testcontainers";
-import { scheduleJobs } from "../src/utilities/QueueProcessors";
+import { scheduleJobs, wakeJobAt } from "../src/utilities/QueueProcessors";
 
 /**
  * What a queue ends up scheduled to run is whatever redis holds after every
@@ -117,5 +117,50 @@ describe("job schedulers", () => {
     const [run] = await queue.getJobs(["delayed", "wait"]);
 
     expect(run.name).toBe("Sweep");
+  });
+  describe("waking a job at a deadline", () => {
+    it("holds the job until a second past the deadline", async () => {
+      const deadline = Date.now() + 60_000;
+
+      await wakeJobAt(queue, "CancelExpiredMatches", deadline);
+
+      const [job] = await queue.getDelayed();
+      expect(job.name).toBe("CancelExpiredMatches");
+      expect(job.timestamp + job.opts.delay).toBeGreaterThanOrEqual(
+        deadline + 1000,
+      );
+      expect(job.timestamp + job.opts.delay).toBeLessThan(deadline + 2000);
+    });
+
+    it("runs everything due in the same second once", async () => {
+      const deadline = Math.floor(Date.now() / 1000) * 1000 + 60_000;
+
+      await wakeJobAt(queue, "CancelExpiredMatches", deadline);
+      await wakeJobAt(queue, "CancelExpiredMatches", deadline + 400);
+      await wakeJobAt(queue, "CheckForScheduledMatches", deadline);
+
+      expect((await queue.getDelayed()).map((job) => job.name).sort()).toEqual([
+        "CancelExpiredMatches",
+        "CheckForScheduledMatches",
+      ]);
+    });
+
+    it("runs a deadline that has already passed straight away", async () => {
+      await wakeJobAt(queue, "CancelExpiredMatches", Date.now() - 60_000);
+
+      expect(await queue.getDelayed()).toEqual([]);
+      expect((await queue.getWaiting()).map((job) => job.name)).toEqual([
+        "CancelExpiredMatches",
+      ]);
+    });
+
+    it("can be woken for the same second again once that run is done", async () => {
+      const deadline = Date.now() + 60_000;
+      await wakeJobAt(queue, "CancelExpiredMatches", deadline);
+
+      const [job] = await queue.getDelayed();
+      expect(job.opts.removeOnComplete).toBe(true);
+      expect(job.opts.removeOnFail).toBe(true);
+    });
   });
 });

@@ -1,4 +1,6 @@
+import { DelayedError } from "bullmq";
 import { PostgresService } from "./../src/postgres/postgres.service";
+import { AutoPickExpiredVeto } from "../src/matches/jobs/AutoPickExpiredVeto";
 import { Fixtures } from "./utils/fixtures";
 import {
   bootMigratedDb,
@@ -477,6 +479,60 @@ describe("veto pick timeout (SQL-driven)", () => {
 
       expect(await mapPicks(a.id)).toHaveLength(1);
       expect(await mapPicks(b.id)).toHaveLength(0);
+    });
+  });
+  describe("the per-match timer job", () => {
+    const pickCount = async (id: string) => {
+      const [{ count }] = await postgres.query<Array<{ count: number }>>(
+        "SELECT veto_pick_count($1) AS count",
+        [id],
+      );
+      return count;
+    };
+
+    const timer = async (id: string) => ({
+      data: { matchId: id, pickCount: await pickCount(id) },
+      token: "token",
+      moveToDelayed: jest.fn().mockResolvedValue(undefined),
+    });
+
+    it("waits out the rest of the turn when it wakes before Postgres says the deadline has passed", async () => {
+      const match = await createMapVetoMatch(3, { vetoPickTimeout: 45 });
+      const job = await timer(match.id);
+
+      await expect(
+        new AutoPickExpiredVeto(postgres).process(job as any),
+      ).rejects.toBeInstanceOf(DelayedError);
+
+      const [[until]] = job.moveToDelayed.mock.calls;
+      expect(until - Date.now()).toBeGreaterThan(40_000);
+      expect(until - Date.now()).toBeLessThanOrEqual(46_000);
+      expect(await mapPicks(match.id)).toEqual([]);
+    });
+
+    it("picks and completes once the deadline has passed", async () => {
+      const match = await createMapVetoMatch(3, { vetoPickTimeout: 45 });
+      const job = await timer(match.id);
+      await expire(match.id);
+
+      await expect(
+        new AutoPickExpiredVeto(postgres).process(job as any),
+      ).resolves.toBeUndefined();
+
+      expect(job.moveToDelayed).not.toHaveBeenCalled();
+      expect(await mapPicks(match.id)).toHaveLength(1);
+    });
+
+    it("completes without waiting once its turn has been picked", async () => {
+      const match = await createMapVetoMatch(3, { vetoPickTimeout: 45 });
+      const job = { ...(await timer(match.id)) };
+      job.data.pickCount += 1;
+
+      await expect(
+        new AutoPickExpiredVeto(postgres).process(job as any),
+      ).resolves.toBeUndefined();
+
+      expect(job.moveToDelayed).not.toHaveBeenCalled();
     });
   });
 });

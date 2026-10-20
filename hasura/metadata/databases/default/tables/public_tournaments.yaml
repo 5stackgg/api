@@ -642,3 +642,23 @@ event_triggers:
       num_retries: 3
       timeout_sec: 60
     webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
+  # Wakes the tournament sweeps at start and around check-in. Separate from
+  # tournament_events so it can be retried.
+  - name: tournament_deadlines
+    definition:
+      enable_manual: true
+      insert:
+        columns: '*'
+      update:
+        columns:
+          - status
+          - start
+          - check_in_required
+          - check_in_opens_before_minutes
+          - check_in_closes_before_minutes
+          - check_in_ends_at
+    retry_conf:
+      interval_sec: 10
+      num_retries: 60
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
