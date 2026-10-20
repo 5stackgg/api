@@ -130,7 +130,12 @@ async function bootstrap() {
   await app.listen(5585);
 }
 
-void bootstrap();
+// The queue workers keep the process alive, so a failed boot would otherwise
+// leave an api that never listens until the startup probe gives up.
+bootstrap().catch((error) => {
+  console.error("api is not able to start, exiting", error);
+  process.exit(1);
+});
 
 process.on("unhandledRejection", (reason, p) => {
   console.warn("Unhandled Rejection at: Promise", p, "reason:", reason);

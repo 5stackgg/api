@@ -1,4 +1,5 @@
 import {
+  Logger,
   MiddlewareConsumer,
   Module,
   OnApplicationBootstrap,
@@ -115,6 +116,7 @@ export class GameServerNodeModule implements OnApplicationBootstrap {
     @InjectQueue(GameServerQueues.GameUpdate) queue: Queue,
     private readonly hasura: HasuraService,
     private readonly gameServerNodeService: GameServerNodeService,
+    private readonly logger: Logger,
   ) {
     if (process.env.RUN_MIGRATIONS) {
       return;
@@ -182,24 +184,30 @@ export class GameServerNodeModule implements OnApplicationBootstrap {
     // Clear any open disk-space alerts on boot. If the underlying disk is
     // still over threshold, the next ping re-creates the alert within ~30s;
     // if the node is gone, the stale alert disappears for good.
-    await this.hasura.mutation({
-      update_notifications: {
-        __args: {
-          where: {
-            type: { _eq: "GameNodeStatus" },
-            title: {
-              _in: [
-                "Game Server Node Disk Space Critical",
-                "Game Server Node Low Disk Space",
-              ],
+    try {
+      await this.hasura.mutation({
+        update_notifications: {
+          __args: {
+            where: {
+              type: { _eq: "GameNodeStatus" },
+              title: {
+                _in: [
+                  "Game Server Node Disk Space Critical",
+                  "Game Server Node Low Disk Space",
+                ],
+              },
+              deleted_at: { _is_null: true },
             },
-            deleted_at: { _is_null: true },
+            _set: { deleted_at: new Date().toISOString() },
           },
-          _set: { deleted_at: new Date().toISOString() },
+          __typename: true,
         },
-        __typename: true,
-      },
-    });
+      });
+    } catch (error) {
+      this.logger.warn(
+        `unable to clear disk space alerts on boot: ${(error as Error)?.message}`,
+      );
+    }
 
     // re-attach monitors to running update jobs (e.g. after an API restart)
     // and clear stale statuses; the interval keeps doing so as a safety net
