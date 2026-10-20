@@ -159,19 +159,20 @@ export async function scheduleJobs(
   }
 }
 
-// Runs a job at a deadline instead of on its queue's next schedule. The id is
-// the job and the second it is for, so everything due in the same second shares
-// one run, and a wake-up whose time has passed runs straight away. The extra
-// second keeps a job that reads the clock itself from waking a hair early.
+// Runs a job at a deadline instead of on its queue's next schedule. Everything
+// due in the same second shares one run, at the start of the second after next.
+// That is at least a second past every deadline in it, for a job that reads the
+// clock itself, and always after a run of the job already under way, which a
+// wake-up with the same id would otherwise be dropped as a duplicate of.
 export async function wakeJobAt(
   queue: Queue,
   name: string,
   at: Date | string | number,
 ): Promise<void> {
   const now = Date.now();
-  const fireAt = Math.max(now, new Date(at).getTime() + 1000);
+  const second = Math.floor(Math.max(now, new Date(at).getTime()) / 1000) + 2;
 
-  if (Number.isNaN(fireAt)) {
+  if (Number.isNaN(second)) {
     return;
   }
 
@@ -179,8 +180,8 @@ export async function wakeJobAt(
     name,
     {},
     {
-      jobId: `${name}.at.${Math.floor(fireAt / 1000)}`,
-      delay: fireAt - now,
+      jobId: `${name}.at.${second}`,
+      delay: second * 1000 - now,
       attempts: 3,
       backoff: { type: "exponential", delay: 5000 },
       removeOnComplete: true,

@@ -126,10 +126,10 @@ describe("job schedulers", () => {
 
       const [job] = await queue.getDelayed();
       expect(job.name).toBe("CancelExpiredMatches");
-      expect(job.timestamp + job.opts.delay).toBeGreaterThanOrEqual(
-        deadline + 1000,
+      expect(job.timestamp + job.opts.delay).toBeGreaterThan(deadline + 1000);
+      expect(job.timestamp + job.opts.delay).toBeLessThanOrEqual(
+        deadline + 2000,
       );
-      expect(job.timestamp + job.opts.delay).toBeLessThan(deadline + 2000);
     });
 
     it("runs everything due in the same second once", async () => {
@@ -139,19 +139,36 @@ describe("job schedulers", () => {
       await wakeJobAt(queue, "CancelExpiredMatches", deadline + 400);
       await wakeJobAt(queue, "CheckForScheduledMatches", deadline);
 
-      expect((await queue.getDelayed()).map((job) => job.name).sort()).toEqual([
+      const delayed = await queue.getDelayed();
+      expect(delayed.map((job) => job.name).sort()).toEqual([
         "CancelExpiredMatches",
         "CheckForScheduledMatches",
       ]);
+      for (const job of delayed) {
+        expect(job.timestamp + job.opts.delay).toBeGreaterThan(
+          deadline + 400 + 1000,
+        );
+      }
     });
 
-    it("runs a deadline that has already passed straight away", async () => {
+    it("runs a deadline that has already passed within two seconds", async () => {
+      const now = Date.now();
+      await wakeJobAt(queue, "CancelExpiredMatches", now - 60_000);
+
+      const [job] = await queue.getDelayed();
+      expect(job.name).toBe("CancelExpiredMatches");
+      expect(job.timestamp + job.opts.delay - now).toBeLessThanOrEqual(2000);
+    });
+
+    it("is not dropped as a copy of a run of that job already under way", async () => {
+      const running = `CancelExpiredMatches.at.${Math.floor(Date.now() / 1000)}`;
+      await queue.add("CancelExpiredMatches", {}, { jobId: running });
+
       await wakeJobAt(queue, "CancelExpiredMatches", Date.now() - 60_000);
 
-      expect(await queue.getDelayed()).toEqual([]);
-      expect((await queue.getWaiting()).map((job) => job.name)).toEqual([
-        "CancelExpiredMatches",
-      ]);
+      expect(
+        (await queue.getJobs(["waiting", "delayed"])).map((job) => job.id),
+      ).toHaveLength(2);
     });
 
     it("can be woken for the same second again once that run is done", async () => {

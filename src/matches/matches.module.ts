@@ -246,6 +246,7 @@ export class MatchesModule implements NestModule {
     @InjectQueue(MatchQueues.MatchServers) matchServersQueue: Queue,
     @InjectQueue(MatchQueues.ScheduledMatches) scheduleMatchQueue: Queue,
     @InjectQueue(MatchQueues.Deadlines) deadlinesQueue: Queue,
+    @InjectQueue(MatchQueues.VetoTimeouts) vetoTimeoutsQueue: Queue,
     private readonly postgres: PostgresService,
   ) {
     if (process.env.RUN_MIGRATIONS) {
@@ -287,6 +288,15 @@ export class MatchesModule implements NestModule {
       {},
       { removeOnComplete: true, removeOnFail: true },
     );
+
+    // Every minute, unlike the reconcile: a timer that fires on time but cannot
+    // pick -- a locked row, a failed query -- leaves players on the veto
+    // screen, and only a turn already open when the reconcile ran gets armed.
+    // Empty payload means no fencing token, so it sweeps anything past its
+    // deadline, and the partial index on veto_pick_expires_at keeps it cheap.
+    void scheduleJobs(vetoTimeoutsQueue, {
+      [AutoPickExpiredVeto.name]: { pattern: "* * * * *" },
+    });
 
     void this.generatePlayerRatings();
   }
