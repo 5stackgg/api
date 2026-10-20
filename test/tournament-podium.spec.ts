@@ -110,9 +110,14 @@ describe("tournament podium (SQL-driven)", () => {
 
   const finalRound = (stageId: string) =>
     postgres.query<
-      Array<{ match_number: number; team_1: string; team_2: string }>
+      Array<{
+        match_number: number;
+        match_id: string;
+        team_1: string;
+        team_2: string;
+      }>
     >(
-      `SELECT match_number, tournament_team_id_1 AS team_1, tournament_team_id_2 AS team_2
+      `SELECT match_number, match_id, tournament_team_id_1 AS team_1, tournament_team_id_2 AS team_2
          FROM tournament_brackets
         WHERE tournament_stage_id = $1 AND round = 2 AND path = 'WB'
         ORDER BY match_number`,
@@ -197,6 +202,42 @@ describe("tournament podium (SQL-driven)", () => {
         tournament_team_id,
       })),
     );
+  });
+
+  it("has no podium and hands out no medals when the final was never won", async () => {
+    const t = await cup({ thirdPlaceMatch: false });
+    await tfx.playRound(t.stageIds[0], 1);
+    await tfx.setStatus(t.id, t.organizer, "Finished");
+
+    expect(await podium(t.id)).toEqual([]);
+    expect(await placementMedals(t.id)).toEqual([]);
+  });
+
+  it("has no podium when only the third-place match was played", async () => {
+    const t = await cup({ thirdPlaceMatch: true });
+    await tfx.playRound(t.stageIds[0], 1);
+    const [, decider] = await finalRound(t.stageIds[0]);
+    await tfx.winMatch(decider.match_id);
+    await tfx.setStatus(t.id, t.organizer, "Finished");
+
+    expect(await podium(t.id)).toEqual([]);
+    expect(await placementMedals(t.id)).toEqual([]);
+  });
+
+  it("still puts a won final on the podium when the third-place match was never played", async () => {
+    const t = await cup({ thirdPlaceMatch: true });
+    await tfx.playRound(t.stageIds[0], 1);
+    const [final] = await finalRound(t.stageIds[0]);
+    await tfx.winMatch(final.match_id);
+    await tfx.setStatus(t.id, t.organizer, "Finished");
+
+    const steps = (await podium(t.id))!;
+
+    expect(steps.slice(0, 2).map((step) => step.tournament_team_id)).toEqual([
+      final.team_1,
+      final.team_2,
+    ]);
+    expect(steps.map((step) => step.placement)).toEqual([1, 2, 3, 3]);
   });
 
   it("takes a round robin's podium from its standings, medals included", async () => {

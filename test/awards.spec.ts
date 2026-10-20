@@ -628,6 +628,22 @@ describe("awards (SQL-driven)", () => {
       ]);
     });
 
+    it("hands out no bronze when the tournament finished without a champion", async () => {
+      const t = await tfx.launch(SE4, 4);
+      const [semifinal] = (await tfx.getBrackets(t.stageIds[0])).filter(
+        (bracket) => bracket.round === 1 && bracket.match_id,
+      );
+      await tfx.winMatch(semifinal.match_id!);
+      await tfx.setStatus(t.id, t.organizer, "Finished");
+
+      const placements = await postgres.query<Array<{ placement: number }>>(
+        `SELECT DISTINCT placement FROM award_recipients
+          WHERE tournament_id = $1 AND source = 'tournament'`,
+        [t.id],
+      );
+      expect(placements).toEqual([]);
+    });
+
     it("rebuilds calculated rows on recalc while hand-granted rows survive", async () => {
       const t = await playedOutCup();
       const awardId = await createAward("Organizer's Pick");
