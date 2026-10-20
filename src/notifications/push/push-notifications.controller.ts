@@ -90,7 +90,7 @@ export class PushNotificationsController {
   // The method name must match the trigger name exactly; the registry in
   // HasuraController is keyed by it, and only searches modules' `controllers`,
   // which is why this lives here rather than on the service.
-  @HasuraEvent()
+  @HasuraEvent({ retry: true })
   public async notification_events(
     data: HasuraEventData<{ id: string; type: string; entity_id?: string }>,
   ) {

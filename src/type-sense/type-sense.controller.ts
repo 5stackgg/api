@@ -39,7 +39,7 @@ export class TypeSenseController {
     private readonly playerEloRecompute: PlayerEloRecomputeService,
   ) {}
 
-  @HasuraEvent()
+  @HasuraEvent({ retry: true })
   public async player_elo_events(data: HasuraEventData<player_elo_set_input>) {
     // During a full ELO recompute the per-row events would fan out to one
     // updatePlayer per (player, match). They are suppressed here and the
@@ -53,7 +53,7 @@ export class TypeSenseController {
     );
   }
 
-  @HasuraEvent()
+  @HasuraEvent({ retry: true })
   public async player_events(data: HasuraEventData<players_set_input>) {
     await this.cache.forget(
       HasuraService.PLAYER_ROLE_CACHE_KEY(
@@ -275,7 +275,7 @@ export class TypeSenseController {
   // global search bar. updateUtilityLineup re-asks the visibility filter and
   // deletes when the answer is no, so every one of those is handled by the
   // same call rather than by guessing from the event payload.
-  @HasuraEvent()
+  @HasuraEvent({ retry: true })
   public async utility_lineups_events(
     data: HasuraEventData<{ id?: string | null; visibility?: string | null }>,
   ) {
@@ -301,7 +301,7 @@ export class TypeSenseController {
     await this.typeSense.updateUtilityLineup(lineupId);
   }
 
-  @HasuraEvent()
+  @HasuraEvent({ retry: true })
   public async team_roster_events(
     data: HasuraEventData<team_roster_set_input>,
   ) {

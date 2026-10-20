@@ -183,7 +183,7 @@ export class TournamentsController {
 
   // Fired when a team's roster changes. Re-syncs organizers for every tournament
   // that uses this team as an organisation team so additions/removals propagate.
-  @HasuraEvent()
+  @HasuraEvent({ retry: true })
   public async tournament_org_roster_events(
     data: HasuraEventData<TeamRosterRow>,
   ) {

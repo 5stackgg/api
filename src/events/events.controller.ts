@@ -456,7 +456,7 @@ export class EventsController {
     return { success: true };
   }
 
-  @HasuraEvent()
+  @HasuraEvent({ retry: true })
   public async events(data: HasuraEventData<{ id: string }>) {
     if (data.op === "DELETE" && data.old?.id) {
       await this.eventsService.removeEventMedia(data.old.id);

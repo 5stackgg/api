@@ -139,7 +139,7 @@ export class ChatController {
     return log;
   }
 
-  @HasuraEvent()
+  @HasuraEvent({ retry: true })
   public async chat_lobbies_removed(data: HasuraEventData<lobbies_set_input>) {
     await this.chatService.removeLobby(ChatLobbyType.MatchMaking, data.old.id);
   }

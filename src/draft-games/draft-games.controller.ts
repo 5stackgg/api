@@ -19,7 +19,7 @@ export class DraftGamesController {
     private readonly draftMatchService: DraftMatchService,
   ) {}
 
-  @HasuraEvent()
+  @HasuraEvent({ retry: true })
   public async draft_game_events(data: DraftGameEvent) {
     const draftGameId = (data.new?.id || data.old?.id) as string;
     if (!draftGameId) {
