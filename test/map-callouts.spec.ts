@@ -19,8 +19,42 @@ describe("map callouts (SQL-driven)", () => {
     await db?.stop();
   });
 
+  const originalCdn = process.env.MAP_MESH_CDN;
+  const originalFetch = global.fetch;
+
+  let published: Record<string, ReturnType<typeof callouts>>;
+  let fetched: Array<string>;
+
   beforeEach(async () => {
     await postgres.query("DELETE FROM map_callouts");
+
+    process.env.MAP_MESH_CDN = "https://cdn.test/maps";
+    published = {};
+    fetched = [];
+    global.fetch = jest.fn(async (url: string) => {
+      fetched.push(url);
+      const extract =
+        published[
+          url
+            .replace("https://cdn.test/maps/", "")
+            .replace(".callouts.json", "")
+        ];
+      return {
+        ok: !!extract,
+        status: extract ? 200 : 404,
+        json: async () => ({ callouts: extract }),
+      };
+    }) as never;
+  });
+
+  afterEach(() => {
+    if (originalCdn === undefined) {
+      delete process.env.MAP_MESH_CDN;
+    } else {
+      process.env.MAP_MESH_CDN = originalCdn;
+    }
+    global.fetch = originalFetch;
+    jest.restoreAllMocks();
   });
 
   const service = () =>
@@ -56,6 +90,85 @@ describe("map callouts (SQL-driven)", () => {
 
     expect(result.stored).toBe(2);
     expect((await rows()).map(({ name }) => name)).toEqual(["Palace", "Window"]);
+  });
+
+  // The extract is only pulled on a CS2 build change, so an install that turned
+  // utility on between builds had none -- and a changelevel can hand a
+  // server's first walk the map it is leaving. de_cache was stored with
+  // Mirage's places.
+  it("stores the published extract, not what a server read off the map it was leaving", async () => {
+    published.de_cache = callouts("AMain", "Highway");
+
+    const result = await service().report(
+      "de_cache",
+      callouts("Jungle", "PalaceAlley"),
+    );
+
+    expect(result.stored).toBe(0);
+    expect(await rows("de_cache")).toEqual([
+      { name: "AMain", source: "cdn" },
+      { name: "Highway", source: "cdn" },
+    ]);
+  });
+
+  it("replaces a stale report on the next one once the extract can be read", async () => {
+    await service().report("de_cache", callouts("Jungle", "PalaceAlley"));
+    published.de_cache = callouts("AMain", "Highway");
+
+    await service().report("de_cache", callouts("Jungle", "PalaceAlley"));
+
+    expect(await rows("de_cache")).toEqual([
+      { name: "AMain", source: "cdn" },
+      { name: "Highway", source: "cdn" },
+    ]);
+  });
+
+  it("still stores the report when the CDN does not answer", async () => {
+    global.fetch = jest.fn().mockRejectedValue(new Error("offline")) as never;
+
+    const result = await service().report("de_cache", callouts("AMain"));
+
+    expect(result.stored).toBe(1);
+    expect(await rows("de_cache")).toEqual([
+      { name: "AMain", source: "plugin" },
+    ]);
+  });
+
+  // Every map load reports, and a workshop map is never going to be in the
+  // extract.
+  it("asks the CDN about a map it lacks once, not on every map load", async () => {
+    const now = jest.spyOn(Date, "now").mockReturnValue(1_000_000);
+    const callouts_ = service();
+
+    await callouts_.report("de_thera", callouts("Mid"));
+    await callouts_.report("de_thera", callouts("Mid"));
+    expect(fetched).toEqual(["https://cdn.test/maps/de_thera.callouts.json"]);
+    expect(await rows("de_thera")).toEqual([{ name: "Mid", source: "plugin" }]);
+
+    published.de_thera = callouts("Middle");
+    now.mockReturnValue(1_000_000 + 11 * 60 * 1000);
+    await callouts_.report("de_thera", callouts("Mid"));
+
+    expect(fetched).toHaveLength(2);
+    expect(await rows("de_thera")).toEqual([{ name: "Middle", source: "cdn" }]);
+  });
+
+  // Two servers load the same map: one is still waiting on the CDN when the
+  // other (or a build-change sync) writes the extract, then its own fetch fails
+  // and it falls back to its report.
+  it("never writes a report over an extract that landed while it asked the CDN", async () => {
+    global.fetch = jest.fn(async () => {
+      await seedCdn("de_cache", "AMain", "Highway");
+      throw new Error("timed out");
+    }) as never;
+
+    const result = await service().report("de_cache", callouts("Jungle"));
+
+    expect(result.stored).toBe(0);
+    expect(await rows("de_cache")).toEqual([
+      { name: "AMain", source: "cdn" },
+      { name: "Highway", source: "cdn" },
+    ]);
   });
 
   it("leaves the published extract alone", async () => {
