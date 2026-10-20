@@ -15,7 +15,10 @@ import { GameStreamerModule } from "../game-streamer/game-streamer.module";
 import { RedisModule } from "../../redis/redis.module";
 import { MatchQueues } from "../enums/MatchQueues";
 import { loggerFactory } from "../../utilities/LoggerFactory";
-import { getQueuesProcessors } from "../../utilities/QueueProcessors";
+import {
+  getQueuesProcessors,
+  scheduleJobs,
+} from "../../utilities/QueueProcessors";
 import { CleanClips } from "./jobs/CleanClips";
 import {
   BatchHighlightsRenderJob,
@@ -74,25 +77,10 @@ export class ClipsModule {
       return;
     }
 
-    void clipsQueue.add(
-      CleanClips.name,
-      {},
-      {
-        repeat: {
-          pattern: "0 * * * *",
-        },
-      },
-    );
-
-    void clipsQueue.add(
-      ReconcileQueuedHighlights.name,
-      {},
-      {
-        repeat: {
-          pattern: "*/5 * * * *",
-        },
-      },
-    );
+    void scheduleJobs(clipsQueue, {
+      [CleanClips.name]: { pattern: "0 * * * *" },
+      [ReconcileQueuedHighlights.name]: { pattern: "*/5 * * * *" },
+    });
 
     void clipsQueue.add(
       ShrinkClipThumbnails.name,

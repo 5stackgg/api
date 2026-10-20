@@ -9,7 +9,10 @@ import { PostgresModule } from "../postgres/postgres.module";
 import { DemosModule } from "../demos/demos.module";
 import { SteamMatchHistoryModule } from "../steam-match-history/steam-match-history.module";
 import { loggerFactory } from "../utilities/LoggerFactory";
-import { getQueuesProcessors } from "../utilities/QueueProcessors";
+import {
+  getQueuesProcessors,
+  scheduleJobs,
+} from "../utilities/QueueProcessors";
 import { FaceitController } from "./faceit.controller";
 import { FaceitService } from "./faceit.service";
 import { FaceitMatchImportService } from "./faceit-match-import.service";
@@ -59,14 +62,8 @@ export class FaceitModule {
       return;
     }
 
-    void queue.add(
-      PollAllFaceitMatchHistory.name,
-      {},
-      {
-        repeat: {
-          pattern: "30 * * * *",
-        },
-      },
-    );
+    void scheduleJobs(queue, {
+      [PollAllFaceitMatchHistory.name]: { pattern: "30 * * * *" },
+    });
   }
 }

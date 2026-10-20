@@ -10,7 +10,10 @@ import { RconModule } from "src/rcon/rcon.module";
 import { RedisModule } from "src/redis/redis.module";
 import { PostgresModule } from "src/postgres/postgres.module";
 import { loggerFactory } from "src/utilities/LoggerFactory";
-import { getQueuesProcessors } from "src/utilities/QueueProcessors";
+import {
+  getQueuesProcessors,
+  scheduleJobs,
+} from "src/utilities/QueueProcessors";
 import { ChatController } from "./chat.controller";
 import { NotificationsModule } from "src/notifications/notifications.module";
 import { PlayerBlocksModule } from "src/player-blocks/player-blocks.module";
@@ -79,36 +82,12 @@ export class ChatModule implements OnModuleInit {
       },
     );
 
-    void this.maintenanceQueue.add(
-      PruneDirectMessages.name,
-      {},
-      {
-        repeat: {
-          // Retention is measured in days; sweeping hourly is already far more
-          // often than the boundary it is enforcing moves.
-          pattern: "17 * * * *",
-        },
-      },
-    );
-
-    void this.maintenanceQueue.add(
-      RemoveExpiredChatAttachments.name,
-      {},
-      {
-        repeat: {
-          pattern: "*/10 * * * *",
-        },
-      },
-    );
-
-    void this.maintenanceQueue.add(
-      SweepChatAttachments.name,
-      {},
-      {
-        repeat: {
-          pattern: "41 4 * * *",
-        },
-      },
-    );
+    void scheduleJobs(this.maintenanceQueue, {
+      // Retention is measured in days; sweeping hourly is already far more
+      // often than the boundary it is enforcing moves.
+      [PruneDirectMessages.name]: { pattern: "17 * * * *" },
+      [RemoveExpiredChatAttachments.name]: { pattern: "*/10 * * * *" },
+      [SweepChatAttachments.name]: { pattern: "41 4 * * *" },
+    });
   }
 }

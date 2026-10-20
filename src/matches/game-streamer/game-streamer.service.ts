@@ -1499,7 +1499,9 @@ export class GameStreamerService {
         );
       }
     }
+  }
 
+  public async reapOrphanDemoResources() {
     await this.reapOrphanDemoK8sResources();
     await this.reconcileSteamClaims();
   }

@@ -44,11 +44,15 @@ import { TournamentReminders } from "./jobs/TournamentReminders";
 import { ProcessTournamentCheckIn } from "./jobs/ProcessTournamentCheckIn";
 import { EventReminders } from "./jobs/EventReminders";
 import { EncryptionModule } from "../encryption/encryption.module";
-import { getQueuesProcessors } from "../utilities/QueueProcessors";
+import {
+  getQueuesProcessors,
+  scheduleJobs,
+} from "../utilities/QueueProcessors";
 import { CancelInvalidTournaments } from "./jobs/CancelInvalidTournaments";
 import { SocketsModule } from "../sockets/sockets.module";
 import { CleanAbandonedMatches } from "./jobs/CleanAbandonedMatches";
 import { ReapIdleDemoSessions } from "./jobs/ReapIdleDemoSessions";
+import { ReapOrphanDemoResources } from "./jobs/ReapOrphanDemoResources";
 import { PollMediaMtxViewers } from "./jobs/PollMediaMtxViewers";
 import { MonitorMatchCameras } from "./jobs/MonitorMatchCameras";
 import { MatchMaking } from "src/matchmaking/matchmaking.module";
@@ -202,6 +206,7 @@ import { MatchRecoveryService } from "./match-recovery/match-recovery.service";
     CancelInvalidTournaments,
     CleanAbandonedMatches,
     ReapIdleDemoSessions,
+    ReapOrphanDemoResources,
     PollMediaMtxViewers,
     MonitorMatchCameras,
     EloCalculation,
@@ -226,197 +231,42 @@ export class MatchesModule implements NestModule {
       return;
     }
 
-    void scheduleMatchQueue.add(
-      CheckForScheduledTournamentBrackets.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
-        },
-      },
-    );
+    void scheduleJobs(scheduleMatchQueue, {
+      [CheckForScheduledTournamentBrackets.name]: { pattern: "* * * * *" },
+      [CheckLeagueSeasonTransitions.name]: { pattern: "*/5 * * * *" },
+      [ApplyLeagueDefaultSchedules.name]: { pattern: "0 * * * *" },
+      [LeagueWeekReminders.name]: { pattern: "30 * * * *" },
+      // Hourly: both windows here are days wide, unlike the tournament 2h one.
+      [EventReminders.name]: { pattern: "15 * * * *" },
+      // More often than the reminders above, because the 2h window is far
+      // tighter than their day-wide ones.
+      [TournamentReminders.name]: { pattern: "*/5 * * * *" },
+      // Every minute, unlike the reminders above: the closing cutoff is a hard
+      // deadline the bracket waits on, so a 5-minute cadence would hold a
+      // tournament past its own start.
+      [ProcessTournamentCheckIn.name]: { pattern: "* * * * *" },
+      [CheckForScheduledMatches.name]: { pattern: "* * * * *" },
+      [CancelExpiredMatches.name]: { pattern: "* * * * *" },
+      [RemoveCancelledMatches.name]: { pattern: "* * * * *" },
+      // Fallback only. The real timer is a per-match delayed job armed from
+      // match_events; this catches vetoes whose job was lost to a Redis flush or
+      // a dropped event. Empty payload means no fencing token, so it sweeps
+      // anything already past its deadline.
+      [AutoPickExpiredVeto.name]: { pattern: "* * * * *" },
+      [ReapIdleDemoSessions.name]: { pattern: "* * * * *" },
+      [ReapOrphanDemoResources.name]: { pattern: "*/10 * * * *" },
+      [ReconcileOnDemandServerJobs.name]: { pattern: "*/10 * * * *" },
+      [PollMediaMtxViewers.name]: { every: 30_000 },
+      // Faster than the viewer poll: this one decides whether a live match keeps
+      // playing, and the grace window is only 30s.
+      [MonitorMatchCameras.name]: { every: 10_000 },
+    });
 
-    void scheduleMatchQueue.add(
-      CheckLeagueSeasonTransitions.name,
-      {},
-      {
-        repeat: {
-          pattern: "*/5 * * * *",
-        },
-      },
-    );
-
-    void scheduleMatchQueue.add(
-      ApplyLeagueDefaultSchedules.name,
-      {},
-      {
-        repeat: {
-          pattern: "0 * * * *",
-        },
-      },
-    );
-
-    void scheduleMatchQueue.add(
-      LeagueWeekReminders.name,
-      {},
-      {
-        repeat: {
-          pattern: "30 * * * *",
-        },
-      },
-    );
-
-    // Hourly: both windows here are days wide, unlike the tournament 2h one.
-    void scheduleMatchQueue.add(
-      EventReminders.name,
-      {},
-      {
-        repeat: {
-          pattern: "15 * * * *",
-        },
-      },
-    );
-
-    // More often than the reminders above, because the 2h window is far
-    // tighter than their day-wide ones.
-    void scheduleMatchQueue.add(
-      TournamentReminders.name,
-      {},
-      {
-        repeat: {
-          pattern: "*/5 * * * *",
-        },
-      },
-    );
-
-    // Every minute, unlike the reminders above: the closing cutoff is a hard
-    // deadline the bracket waits on, so a 5-minute cadence would hold a
-    // tournament past its own start.
-    void scheduleMatchQueue.add(
-      ProcessTournamentCheckIn.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
-        },
-      },
-    );
-
-    void scheduleMatchQueue.add(
-      CheckForScheduledMatches.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
-        },
-      },
-    );
-
-    void scheduleMatchQueue.add(
-      CancelExpiredMatches.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
-        },
-      },
-    );
-
-    void scheduleMatchQueue.add(
-      RemoveCancelledMatches.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
-        },
-      },
-    );
-
-    // Fallback only. The real timer is a per-match delayed job armed from
-    // match_events; this catches vetoes whose job was lost to a Redis flush or
-    // a dropped event. Empty payload means no fencing token, so it sweeps
-    // anything already past its deadline.
-    void scheduleMatchQueue.add(
-      AutoPickExpiredVeto.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
-        },
-      },
-    );
-
-    void matchServersQueue.add(
-      CheckForTournamentStart.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
-        },
-      },
-    );
-
-    void matchServersQueue.add(
-      CleanAbandonedMatches.name,
-      {},
-      {
-        repeat: {
-          pattern: "0 0 * * *",
-        },
-      },
-    );
-
-    void matchServersQueue.add(
-      CancelInvalidTournaments.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
-        },
-      },
-    );
-
-    void scheduleMatchQueue.add(
-      ReapIdleDemoSessions.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
-        },
-      },
-    );
-
-    void scheduleMatchQueue.add(
-      ReconcileOnDemandServerJobs.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
-        },
-      },
-    );
-
-    void scheduleMatchQueue.add(
-      PollMediaMtxViewers.name,
-      {},
-      {
-        repeat: {
-          every: 30_000,
-        },
-      },
-    );
-
-    // Faster than the viewer poll: this one decides whether a live match keeps
-    // playing, and the grace window is only 30s.
-    void scheduleMatchQueue.add(
-      MonitorMatchCameras.name,
-      {},
-      {
-        repeat: {
-          every: 10_000,
-        },
-      },
-    );
+    void scheduleJobs(matchServersQueue, {
+      [CheckForTournamentStart.name]: { pattern: "* * * * *" },
+      [CleanAbandonedMatches.name]: { pattern: "0 0 * * *" },
+      [CancelInvalidTournaments.name]: { pattern: "* * * * *" },
+    });
 
     void this.generatePlayerRatings();
   }

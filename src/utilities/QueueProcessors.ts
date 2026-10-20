@@ -1,4 +1,4 @@
-import { Job } from "bullmq";
+import { Job, JobSchedulerTemplateOptions, Queue, RepeatOptions } from "bullmq";
 import { Logger, Provider } from "@nestjs/common";
 import { ModuleRef } from "@nestjs/core";
 import { Processor } from "@nestjs/bullmq";
@@ -135,4 +135,26 @@ export function getQueuesProcessors(module: Modules): Provider[] {
   return Object.values(
     Reflect.getMetadata("processors", QueueProcessors)[module],
   );
+}
+
+// Every schedule a queue has, keyed by job name, so a changed cadence replaces
+// the old one rather than running beside it. Anything not listed is removed,
+// which includes schedules left by the old `repeat` option: BullMQ keys those
+// by a hash of the pattern, so they never match a name.
+export async function scheduleJobs(
+  queue: Queue,
+  schedules: Record<string, Omit<RepeatOptions, "key">>,
+  opts?: JobSchedulerTemplateOptions,
+): Promise<void> {
+  const names = new Set(Object.keys(schedules));
+
+  for (const [name, repeat] of Object.entries(schedules)) {
+    await queue.upsertJobScheduler(name, repeat, { name, opts });
+  }
+
+  for (const scheduler of await queue.getJobSchedulers()) {
+    if (scheduler && !names.has(scheduler.key)) {
+      await queue.removeJobScheduler(scheduler.key);
+    }
+  }
 }

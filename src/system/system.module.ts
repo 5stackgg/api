@@ -5,7 +5,10 @@ import { SystemQueues } from "./enums/SystemQueues";
 import { BullModule, InjectQueue } from "@nestjs/bullmq";
 import { BullBoardModule } from "@bull-board/nestjs";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
-import { getQueuesProcessors } from "src/utilities/QueueProcessors";
+import {
+  getQueuesProcessors,
+  scheduleJobs,
+} from "src/utilities/QueueProcessors";
 import { loggerFactory } from "src/utilities/LoggerFactory";
 import { CheckSystemUpdateJob } from "./jobs/CheckSystemUpdateJob";
 import { Queue } from "bullmq";
@@ -59,15 +62,11 @@ export class SystemModule {
       return;
     }
 
-    void queue.add(
-      CheckSystemUpdateJob.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
-        },
-      },
-    );
+    void scheduleJobs(queue, {
+      [CheckSystemUpdateJob.name]: { pattern: "*/15 * * * *" },
+    });
+
+    void queue.add(CheckSystemUpdateJob.name, {});
 
     void this.setupSettings();
   }

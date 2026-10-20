@@ -18,7 +18,10 @@ import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { GameServerQueues } from "./enums/GameServerQueues";
 import { MarkGameServerNodeOffline } from "./jobs/MarkGameServerNodeOffline";
 import { MarkGameServerNodeOnline } from "./jobs/MarkGameServerNodeOnline";
-import { getQueuesProcessors } from "../utilities/QueueProcessors";
+import {
+  getQueuesProcessors,
+  scheduleJobs,
+} from "../utilities/QueueProcessors";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { MatchServerMiddlewareMiddleware } from "../matches/match-server-middleware/match-server-middleware.middleware";
 import { MarkDedicatedServerOffline } from "./jobs/MarkDedicatedServerOffline";
@@ -35,6 +38,7 @@ import { GamePluginsModule } from "src/game-plugins/game-plugins.module";
 import { BakeShaders } from "./jobs/BakeShaders";
 import { ValidateGamedata } from "./jobs/ValidateGamedata";
 import { CleanupRemovedNodes } from "./jobs/CleanupRemovedNodes";
+import { ReconcileUpdateStatuses } from "./jobs/ReconcileUpdateStatuses";
 import { ReconcileCs2BuildRuns } from "./jobs/ReconcileCs2BuildRuns";
 import { MapAssetsModule } from "src/map-assets/map-assets.module";
 import { PostgresModule } from "src/postgres/postgres.module";
@@ -51,6 +55,7 @@ import { PostgresModule } from "src/postgres/postgres.module";
     BakeShaders,
     ValidateGamedata,
     CleanupRemovedNodes,
+    ReconcileUpdateStatuses,
     ReconcileCs2BuildRuns,
     ...getQueuesProcessors("GameServerNode"),
     loggerFactory(),
@@ -122,45 +127,13 @@ export class GameServerNodeModule implements OnApplicationBootstrap {
       return;
     }
 
-    void queue.add(
-      CheckGameUpdate.name,
-      {},
-      {
-        repeat: {
-          pattern: "*/6 * * * *",
-        },
-      },
-    );
-
-    void queue.add(
-      GetPluginVersions.name,
-      {},
-      {
-        repeat: {
-          pattern: "*/5 * * * *",
-        },
-      },
-    );
-
-    void queue.add(
-      CheckServerPluginVersions.name,
-      {},
-      {
-        repeat: {
-          pattern: "*/5 * * * *",
-        },
-      },
-    );
-
-    void queue.add(
-      CleanupRemovedNodes.name,
-      {},
-      {
-        repeat: {
-          pattern: "*/5 * * * *",
-        },
-      },
-    );
+    void scheduleJobs(queue, {
+      [CheckGameUpdate.name]: { pattern: "*/6 * * * *" },
+      [GetPluginVersions.name]: { pattern: "*/5 * * * *" },
+      [CheckServerPluginVersions.name]: { pattern: "*/5 * * * *" },
+      [CleanupRemovedNodes.name]: { pattern: "*/5 * * * *" },
+      [ReconcileUpdateStatuses.name]: { pattern: "*/10 * * * *" },
+    });
 
     // A burst of restarts pushes the sweep back to the last one.
     void queue
@@ -209,12 +182,9 @@ export class GameServerNodeModule implements OnApplicationBootstrap {
       );
     }
 
-    // re-attach monitors to running update jobs (e.g. after an API restart)
-    // and clear stale statuses; the interval keeps doing so as a safety net
+    // Every pod at boot, unlike the schedule: a monitor lives in the process
+    // that attached it, so each restart has to re-attach its own.
     void this.gameServerNodeService.reconcileUpdateStatuses();
-    setInterval(() => {
-      void this.gameServerNodeService.reconcileUpdateStatuses();
-    }, 60 * 1000);
   }
 
   configure(consumer: MiddlewareConsumer) {

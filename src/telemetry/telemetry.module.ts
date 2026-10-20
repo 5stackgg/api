@@ -10,7 +10,10 @@ import { TelemetryQueues } from "./enums/TelemetryQueues";
 import { SendBasicTelemetry } from "./jobs/SendBasicTelemetry";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
-import { getQueuesProcessors } from "src/utilities/QueueProcessors";
+import {
+  getQueuesProcessors,
+  scheduleJobs,
+} from "src/utilities/QueueProcessors";
 import { RedisModule } from "src/redis/redis.module";
 import { PostgresModule } from "src/postgres/postgres.module";
 import { SystemModule } from "src/system/system.module";
@@ -46,14 +49,8 @@ export class TelemetryModule {
       return;
     }
 
-    void queue.add(
-      SendBasicTelemetry.name,
-      {},
-      {
-        repeat: {
-          pattern: "0 * * * *",
-        },
-      },
-    );
+    void scheduleJobs(queue, {
+      [SendBasicTelemetry.name]: { pattern: "0 * * * *" },
+    });
   }
 }

@@ -11,7 +11,10 @@ import { S3Module } from "../s3/s3.module";
 import { ClipsModule } from "../matches/clips/clips.module";
 import { PostgresModule } from "../postgres/postgres.module";
 import { loggerFactory } from "../utilities/LoggerFactory";
-import { getQueuesProcessors } from "../utilities/QueueProcessors";
+import {
+  getQueuesProcessors,
+  scheduleJobs,
+} from "../utilities/QueueProcessors";
 import { FaceitModule } from "../faceit/faceit.module";
 import { SteamPresenceModule } from "../steam-presence/steam-presence.module";
 import { SteamMatchHistoryController } from "./steam-match-history.controller";
@@ -127,24 +130,12 @@ export class SteamMatchHistoryModule {
       return;
     }
 
-    void queue.add(
-      PollAllSteamMatchHistory.name,
-      {},
-      {
-        repeat: {
-          pattern: "0 * * * *",
-        },
-      },
-    );
+    void scheduleJobs(queue, {
+      [PollAllSteamMatchHistory.name]: { pattern: "0 * * * *" },
+    });
 
-    void reconcileQueue.add(
-      ReconcilePendingMatchImports.name,
-      {},
-      {
-        repeat: {
-          pattern: "*/15 * * * *",
-        },
-      },
-    );
+    void scheduleJobs(reconcileQueue, {
+      [ReconcilePendingMatchImports.name]: { pattern: "*/15 * * * *" },
+    });
   }
 }

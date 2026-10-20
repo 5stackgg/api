@@ -11,7 +11,10 @@ import { MatchmakingLobbyService } from "./matchmaking-lobby.service";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { BullBoardModule } from "@bull-board/nestjs";
 import { BullModule, InjectQueue } from "@nestjs/bullmq";
-import { getQueuesProcessors } from "src/utilities/QueueProcessors";
+import {
+  getQueuesProcessors,
+  scheduleJobs,
+} from "src/utilities/QueueProcessors";
 import { MatchmakingQueues } from "./enums/MatchmakingQueues";
 import { CancelMatchMaking } from "./jobs/CancelMatchMaking";
 import { MatchmakingController } from "./matchmaking.controller";
@@ -60,16 +63,10 @@ export class MatchMaking implements OnModuleInit {
       return;
     }
 
-    void this.queue.add(
-      HealStrandedLobbies.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
-        },
-        removeOnComplete: true,
-        removeOnFail: true,
-      },
+    void scheduleJobs(
+      this.queue,
+      { [HealStrandedLobbies.name]: { pattern: "* * * * *" } },
+      { removeOnComplete: true, removeOnFail: true },
     );
   }
 }

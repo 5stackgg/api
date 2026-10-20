@@ -15,7 +15,10 @@ import { DemosModule } from "../demos/demos.module";
 import { RconModule } from "../rcon/rcon.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { loggerFactory } from "../utilities/LoggerFactory";
-import { getQueuesProcessors } from "../utilities/QueueProcessors";
+import {
+  getQueuesProcessors,
+  scheduleJobs,
+} from "../utilities/QueueProcessors";
 import { UtilityJobs } from "./enums/UtilityJobs";
 import { UtilityQueues } from "./enums/UtilityQueues";
 import { UtilityAnalysisController } from "./utility-analysis.controller";
@@ -52,6 +55,7 @@ import { UtilityController } from "./utility.controller";
 import { MineUtilityMeta } from "./jobs/MineUtilityMeta";
 import { SyncMapCallouts } from "./jobs/SyncMapCallouts";
 import { ReapIdleUtilityPracticeSessions } from "./jobs/ReapIdleUtilityPracticeSessions";
+import { ReconcileUtilitySessions } from "./jobs/ReconcileUtilitySessions";
 import { RunUtilityDriftScan } from "./jobs/RunUtilityDriftScan";
 import {
   BatchUtilityRenderJob,
@@ -138,6 +142,7 @@ import { GameStreamerModule } from "../matches/game-streamer/game-streamer.modul
     UtilitySeedService,
     UtilityPluginKeyGuard,
     ReapIdleUtilityPracticeSessions,
+    ReconcileUtilitySessions,
     MineUtilityMeta,
     SyncMapCallouts,
     RunUtilityDriftScan,
@@ -185,44 +190,20 @@ export class UtilityModule {
       return;
     }
 
-    void utilityPracticeQueue.add(
-      UtilityJobs.ReapIdleUtilityPracticeSessions,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
-        },
-      },
-    );
-
-    void utilityMetaQueue.add(
-      UtilityJobs.MineUtilityMeta,
-      {},
-      {
-        repeat: {
-          pattern: "17 * * * *",
-        },
-      },
-    );
+    void scheduleJobs(utilityPracticeQueue, {
+      [UtilityJobs.ReapIdleUtilityPracticeSessions]: { pattern: "* * * * *" },
+      [UtilityJobs.ReconcileUtilitySessions]: { pattern: "*/10 * * * *" },
+    });
 
     // Callouts are synced when a node finishes updating to a new CS2 build
-    // (MapAssetsService.queueCalloutsSync). The daily schedule that used to be
-    // registered here stays in Redis until removed by its exact pattern.
-    void utilityMetaQueue
-      .removeRepeatable(UtilityJobs.SyncMapCallouts, {
-        pattern: "23 4 * * *",
-      })
-      .catch(() => {});
+    // (MapAssetsService.queueCalloutsSync), not on a schedule.
+    void scheduleJobs(utilityMetaQueue, {
+      [UtilityJobs.MineUtilityMeta]: { pattern: "17 * * * *" },
+    });
 
-    void utilityRendersQueue.add(
-      ReconcileQueuedUtilityRenders.name,
-      {},
-      {
-        repeat: {
-          pattern: "*/5 * * * *",
-        },
-      },
-    );
+    void scheduleJobs(utilityRendersQueue, {
+      [ReconcileQueuedUtilityRenders.name]: { pattern: "*/5 * * * *" },
+    });
 
     // Straight away as well as on the schedule: a restart between the row's
     // INSERT and its dispatch is the case this exists for, and waiting five

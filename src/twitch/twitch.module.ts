@@ -6,7 +6,10 @@ import { Queue } from "bullmq";
 import { PostgresModule } from "../postgres/postgres.module";
 import { RedisModule } from "../redis/redis.module";
 import { loggerFactory } from "../utilities/LoggerFactory";
-import { getQueuesProcessors } from "../utilities/QueueProcessors";
+import {
+  getQueuesProcessors,
+  scheduleJobs,
+} from "../utilities/QueueProcessors";
 import { TwitchQueues } from "./enums/TwitchQueues";
 import { TwitchService } from "./twitch.service";
 import { TwitchAccountsService } from "./twitch-accounts.service";
@@ -48,16 +51,10 @@ export class TwitchModule implements OnModuleInit {
       return;
     }
 
-    void this.queue.add(
-      PollTwitchStreams.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
-        },
-        removeOnComplete: true,
-        removeOnFail: { age: 24 * 3600 },
-      },
+    void scheduleJobs(
+      this.queue,
+      { [PollTwitchStreams.name]: { pattern: "* * * * *" } },
+      { removeOnComplete: true, removeOnFail: { age: 24 * 3600 } },
     );
   }
 }

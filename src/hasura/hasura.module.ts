@@ -11,7 +11,10 @@ import { HasuraQueues } from "./enums/HasuraQueues";
 import { HasuraController } from "./hasura.controller";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { CacheModule } from "../cache/cache.module";
-import { getQueuesProcessors } from "../utilities/QueueProcessors";
+import {
+  getQueuesProcessors,
+  scheduleJobs,
+} from "../utilities/QueueProcessors";
 import { AuthModule } from "src/auth/auth.module";
 
 @Module({
@@ -43,14 +46,8 @@ export class HasuraModule {
       return;
     }
 
-    void queue.add(
-      HasuraMaintenanceJob.name,
-      {},
-      {
-        repeat: {
-          pattern: "0 * * * *",
-        },
-      },
-    );
+    void scheduleJobs(queue, {
+      [HasuraMaintenanceJob.name]: { pattern: "0 * * * *" },
+    });
   }
 }
