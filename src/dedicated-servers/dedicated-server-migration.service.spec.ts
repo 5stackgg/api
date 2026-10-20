@@ -28,7 +28,7 @@ describe("DedicatedServerMigrationService", () => {
   let steps: Array<string>;
   let server: ServerMigrationServer;
   let nodes: Record<string, ServerMigrationNode>;
-  let migration: ServerMigration & { stale?: boolean };
+  let migration: ServerMigration & { stale?: boolean; stale_in_ms?: number };
   let deployed: boolean;
   let pendingDemo: boolean;
   let cacheValues: Map<string, unknown>;
@@ -517,11 +517,12 @@ describe("DedicatedServerMigrationService", () => {
       ]);
     });
 
-    it("leaves a redelivered job to the run that is still working on it", async () => {
+    it("has a redelivered job wait for the run that is still working on it to go quiet", async () => {
       migration.status = "Transferring";
       migration.stale = false;
+      migration.stale_in_ms = 45_000;
 
-      await service.run("migration-1");
+      await expect(service.run("migration-1")).resolves.toBe(46_000);
 
       expect(steps).toEqual([]);
     });

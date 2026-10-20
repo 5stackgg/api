@@ -66,7 +66,13 @@ export class SystemModule {
       [CheckSystemUpdateJob.name]: { pattern: "*/15 * * * *" },
     });
 
-    void queue.add(CheckSystemUpdateJob.name, {});
+    // Not straight away: a rollout's old pods still answer for a minute or so,
+    // and the check reads every pod's image.
+    void queue.add(
+      CheckSystemUpdateJob.name,
+      {},
+      { delay: 2 * 60 * 1000, removeOnComplete: true, removeOnFail: true },
+    );
 
     void this.setupSettings();
   }

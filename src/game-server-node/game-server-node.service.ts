@@ -125,6 +125,12 @@ export class GameServerNodeService {
   // nodes (`${nodeId}:${game}`) with an active update-status monitor loop
   private activeUpdateMonitors = new Set<string>();
 
+  // A k8s error drops the monitor, not the update. It looks again on its own
+  // rather than leaving update_status frozen -- which holds back build_id,
+  // gamedata checks, renders and moves on the node -- until the next reconcile.
+  private static readonly UPDATE_MONITOR_RETRY_MS = 15 * 1000;
+  private static readonly UPDATE_MONITOR_RETRIES = 20;
+
   // keep 1.5 hours of stats; with a ping every 30 seconds, that's 3,600 / 30 = 120 per hour, so 1.5 * 120 = 180 entries.
   private maxOfflineStatsHistory = 60 * 90;
   private maxStatsHistory: number = 180 - 1;
@@ -898,6 +904,7 @@ export class GameServerNodeService {
   public async monitorUpdateStatus(
     gameServerNodeId: string,
     game = "cs2",
+    attempt = 0,
   ): Promise<void> {
     const monitorKey = `${gameServerNodeId}:${game}`;
     if (this.activeUpdateMonitors.has(monitorKey)) {
@@ -973,12 +980,18 @@ export class GameServerNodeService {
         await GameServerNodeService.sleep(2500);
       }
     } catch (error) {
-      // transient k8s error: leave update_status as-is, the periodic
-      // reconciler will re-attach or clean up
       this.logger.warn(
         `[${gameServerNodeId}] unable to monitor update status`,
         error,
       );
+
+      if (attempt < GameServerNodeService.UPDATE_MONITOR_RETRIES) {
+        setTimeout(
+          () =>
+            void this.monitorUpdateStatus(gameServerNodeId, game, attempt + 1),
+          GameServerNodeService.UPDATE_MONITOR_RETRY_MS,
+        ).unref?.();
+      }
     } finally {
       this.activeUpdateMonitors.delete(monitorKey);
     }

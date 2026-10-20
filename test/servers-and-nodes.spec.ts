@@ -1,4 +1,6 @@
+import { Logger } from "@nestjs/common";
 import { PostgresService } from "./../src/postgres/postgres.service";
+import { DedicatedServerMigrationService } from "../src/dedicated-servers/dedicated-server-migration.service";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 
@@ -761,6 +763,29 @@ describe("servers and game server nodes (SQL-driven)", () => {
         "INSERT INTO server_migrations (server_id, status) VALUES ($1, $2)",
         [serverId, status],
       );
+
+    it("tells a redelivered move how long until its first run's heartbeat goes stale", async () => {
+      const serverId = await createDedicatedServer(await createNode());
+      const [{ id }] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO server_migrations (server_id, status, updated_at)
+         VALUES ($1, 'Transferring', now() - interval '90 seconds')
+         RETURNING id`,
+        [serverId],
+      );
+
+      const wait = await new DedicatedServerMigrationService(
+        new Logger("ServerMoves"),
+        postgres,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+      ).run(id);
+
+      expect(wait).toBeGreaterThan(29_000);
+      expect(wait).toBeLessThanOrEqual(31_000);
+    });
 
     it("allows only one move in flight per server", async () => {
       const serverId = await createDedicatedServer(await createNode());

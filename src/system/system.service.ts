@@ -271,16 +271,6 @@ export class SystemService {
     for (const { service, pod } of await this.getOutdated()) {
       void this.restartService(service, pod);
     }
-
-    // The schedule is every 15 minutes, so without these an update that only
-    // restarted other services would read as still pending for that long. An
-    // update that restarts the api is checked again at boot instead.
-    for (const minutes of [2, 5]) {
-      setTimeout(
-        () => void this.setVersions().catch(() => {}),
-        minutes * 60 * 1000,
-      ).unref();
-    }
   }
 
   public async restartService(service: string, pod?: string) {
@@ -318,8 +308,8 @@ export class SystemService {
 
     const value = JSON.stringify(hasUpdates);
 
-    // Runs every minute, and every settings write fires the event trigger that
-    // re-applies the match_options column defaults with ALTER TABLE.
+    // Every settings write fires the event trigger that re-applies the
+    // match_options column defaults with ALTER TABLE.
     if (value === (await this.getSetting(SystemSettingName.Updates, ""))) {
       return;
     }

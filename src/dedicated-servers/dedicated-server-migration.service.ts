@@ -279,7 +279,8 @@ export class DedicatedServerMigrationService {
     );
   }
 
-  public async run(migrationId: string): Promise<void> {
+  // Resolves to how long to wait before trying again, when there is a reason to.
+  public async run(migrationId: string): Promise<number | undefined> {
     const migration = await this.getMigration(migrationId);
 
     if (
@@ -291,10 +292,11 @@ export class DedicatedServerMigrationService {
       return;
     }
 
-    // A job redelivered while its first run still heartbeats is left alone;
-    // once that run goes quiet the sweep recovers it.
+    // A job redelivered while its first run still heartbeats waits for that
+    // run to go quiet, then recovers the move itself. Returning here would
+    // complete the job and leave the server down until the sweep.
     if (migration.status !== "Queued" && !migration.stale) {
-      return;
+      return migration.stale_in_ms + 1000;
     }
 
     const handled = await this.whileHolding(migration, async (abort) => {
@@ -841,12 +843,15 @@ export class DedicatedServerMigrationService {
 
   private async getMigration(
     migrationId: string,
-  ): Promise<(ServerMigration & { stale: boolean }) | undefined> {
+  ): Promise<
+    (ServerMigration & { stale: boolean; stale_in_ms: number }) | undefined
+  > {
     const [migration] = await this.postgres.query<
-      Array<ServerMigration & { stale: boolean }>
+      Array<ServerMigration & { stale: boolean; stale_in_ms: number }>
     >(
       `SELECT id, server_id, from_game_server_node_id, to_game_server_node_id, status, with_files,
-              updated_at < now() - interval '2 minutes' AS stale
+              updated_at < now() - interval '2 minutes' AS stale,
+              GREATEST(0, ceil(extract(epoch FROM updated_at + interval '2 minutes' - now()) * 1000))::int AS stale_in_ms
          FROM server_migrations WHERE id = $1`,
       [migrationId],
     );
