@@ -262,7 +262,9 @@ export class MatchesModule implements NestModule {
       // More often than the reminders above, because the 2h window is far
       // tighter than their day-wide ones.
       [TournamentReminders.name]: { pattern: "*/5 * * * *" },
-      [RemoveCancelledMatches.name]: { pattern: "*/10 * * * *" },
+      // A canceled match is deleted a day after it was canceled; nobody waits
+      // on the hour.
+      [RemoveCancelledMatches.name]: { pattern: "53 * * * *" },
       [ReapIdleDemoSessions.name]: { pattern: "* * * * *" },
       [ReapOrphanDemoResources.name]: { pattern: "*/10 * * * *" },
       [ReconcileOnDemandServerJobs.name]: { pattern: "*/10 * * * *" },
