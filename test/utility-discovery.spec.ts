@@ -544,6 +544,39 @@ describe("utility lineup discovery (SQL-driven)", () => {
     });
   });
 
+  describe("a server lost before it throws", () => {
+    it("counts each loss on the queued discovery it held up", async () => {
+      const steamId = await fx.player();
+      const discoveries = service();
+      const { discovery_id } = await discoveries.start(user(steamId), ask());
+
+      expect(await discoveries.recordBootFailure(discovery_id!)).toBe(1);
+      expect(await discoveries.recordBootFailure(discovery_id!)).toBe(2);
+
+      const [row] = await postgres.query<Array<{ boot_failures: number }>>(
+        "SELECT boot_failures FROM utility_discoveries WHERE id = $1",
+        [discovery_id],
+      );
+      expect(row.boot_failures).toBe(2);
+    });
+
+    it("counts nothing on a discovery that is being thrown or is over", async () => {
+      const discoveries = service();
+      const { discoveryId } = await verifyingDiscovery(discoveries);
+
+      expect(await discoveries.recordBootFailure(discoveryId)).toBe(0);
+
+      await discoveries.finish(discoveryId, "Done", null);
+      expect(await discoveries.recordBootFailure(discoveryId)).toBe(0);
+
+      const [row] = await postgres.query<Array<{ boot_failures: number }>>(
+        "SELECT boot_failures FROM utility_discoveries WHERE id = $1",
+        [discoveryId],
+      );
+      expect(row.boot_failures).toBe(0);
+    });
+  });
+
   describe("the server's report", () => {
     it("applies a verified throw once, from the server throwing it", async () => {
       const discoveries = service();
