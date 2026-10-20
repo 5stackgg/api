@@ -2359,7 +2359,7 @@ export class UtilityPracticeService {
     }
   }
 
-  private async assertRole(user: User): Promise<void> {
+  public async assertRole(user: User): Promise<void> {
     const minRole = ((await this.setting("public.create_matches_role")) ??
       "user") as e_player_roles_enum;
 

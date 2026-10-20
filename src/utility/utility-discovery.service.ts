@@ -156,6 +156,8 @@ export class UtilityDiscoveryService {
       );
     }
 
+    await this.practice.assertRole(user);
+
     if (!(await this.practice.canPracticeOn(request.map))) {
       throw Error("that map is not available for practice");
     }
