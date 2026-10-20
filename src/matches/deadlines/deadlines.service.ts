@@ -216,7 +216,9 @@ export class DeadlinesService {
         // Floored at 0 so an event we picked up late fires immediately rather
         // than being rejected for a negative delay.
         delay: Math.max(0, new Date(expiresAt).getTime() - Date.now()),
-        attempts: 1,
+        // The pick count fences a retry off a turn that has moved on.
+        attempts: 3,
+        backoff: { type: "exponential", delay: 2000 },
         removeOnFail: true,
         removeOnComplete: true,
         jobId: `${DeadlinesService.VetoPickJobPrefix(matchId)}${pick_count}`,

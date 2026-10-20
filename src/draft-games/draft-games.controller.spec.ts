@@ -34,7 +34,7 @@ describe("DraftGamesController draft_game_deadlines", () => {
     expect(queue.add).toHaveBeenCalledWith(
       "CleanExpiredDraftGames",
       {},
-      expect.objectContaining({ delay: 30 * 60 * 1000 + 1000 }),
+      expect.objectContaining({ delay: 30 * 60 * 1000 + 2000 }),
     );
   });
 

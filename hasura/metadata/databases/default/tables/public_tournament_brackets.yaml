@@ -106,6 +106,8 @@ event_triggers:
           - scheduled_at
           - match_id
           - finished
+          - tournament_team_id_1
+          - tournament_team_id_2
     retry_conf:
       interval_sec: 10
       num_retries: 60

@@ -1,3 +1,6 @@
+import { readFileSync } from "fs";
+import { join } from "path";
+import * as yaml from "js-yaml";
 import { DeadlinesController } from "./deadlines.controller";
 
 describe("DeadlinesController", () => {
@@ -86,5 +89,28 @@ describe("DeadlinesController", () => {
 
     expect(deadlines.armTournament).toHaveBeenCalledWith("t");
     expect(deadlines.armBracket).toHaveBeenCalledWith("b");
+  });
+  it("hears about a bracket whose teams are filled in after its time", () => {
+    const table = yaml.load(
+      readFileSync(
+        join(
+          __dirname,
+          "../../../hasura/metadata/databases/default/tables/public_tournament_brackets.yaml",
+        ),
+        "utf8",
+      ),
+    ) as {
+      event_triggers: Array<{
+        name: string;
+        definition: { update: { columns: Array<string> } };
+      }>;
+    };
+    const trigger = table.event_triggers.find(
+      ({ name }) => name === "tournament_bracket_deadlines",
+    );
+
+    expect(trigger.definition.update.columns).toEqual(
+      expect.arrayContaining(["tournament_team_id_1", "tournament_team_id_2"]),
+    );
   });
 });

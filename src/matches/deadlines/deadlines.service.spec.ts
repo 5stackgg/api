@@ -50,7 +50,7 @@ describe("DeadlinesService", () => {
 
     await service.armMatch("m");
 
-    expect(wakes()).toEqual([["CheckForScheduledMatches", 45 * MINUTE + 1000]]);
+    expect(wakes()).toEqual([["CheckForScheduledMatches", 45 * MINUTE + 2000]]);
   });
 
   it("wakes the expiry sweep a minute early to force start a full lobby, and at the deadline", async () => {
@@ -67,12 +67,12 @@ describe("DeadlinesService", () => {
     await service.armMatch("m");
 
     expect(wakes()).toEqual([
-      ["CancelExpiredMatches", 14 * MINUTE + 1000],
-      ["CancelExpiredMatches", 15 * MINUTE + 1000],
+      ["CancelExpiredMatches", 14 * MINUTE + 2000],
+      ["CancelExpiredMatches", 15 * MINUTE + 2000],
     ]);
   });
 
-  it("runs a deadline that has already passed straight away", async () => {
+  it("runs a deadline that has already passed within two seconds", async () => {
     rows = [
       {
         id: "m",
@@ -86,8 +86,8 @@ describe("DeadlinesService", () => {
     await service.armMatch("m");
 
     expect(wakes()).toEqual([
-      ["CancelExpiredMatches", 0],
-      ["CancelExpiredMatches", 0],
+      ["CancelExpiredMatches", 2000],
+      ["CancelExpiredMatches", 2000],
     ]);
     expect(
       new Set(queue.add.mock.calls.map(([, , opts]) => opts.jobId)).size,
@@ -125,7 +125,7 @@ describe("DeadlinesService", () => {
 
     await service.armTournament("t");
 
-    const at = (ms: number) => ms - NOW + 1000;
+    const at = (ms: number) => ms - NOW + 2000;
     expect(wakes()).toEqual([
       ["CancelInvalidTournaments", at(start)],
       ["CheckForScheduledMatches", at(start + 61 * 1000)],
@@ -154,7 +154,7 @@ describe("DeadlinesService", () => {
 
     expect(wakes()).toContainEqual([
       "CheckForScheduledTournamentBrackets",
-      1000,
+      2000,
     ]);
   });
 
@@ -164,7 +164,7 @@ describe("DeadlinesService", () => {
     await service.armBracket("b");
 
     expect(wakes()).toEqual([
-      ["CheckForScheduledTournamentBrackets", 15 * MINUTE + 1000],
+      ["CheckForScheduledTournamentBrackets", 15 * MINUTE + 2000],
     ]);
   });
 

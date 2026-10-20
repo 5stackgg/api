@@ -52,7 +52,7 @@ describe("deadline reconcile (SQL-driven)", () => {
       .sort();
 
   const second = (at: Date, offsetMs = 0) =>
-    Math.floor((at.getTime() + offsetMs + 1000) / 1000);
+    Math.floor((at.getTime() + offsetMs) / 1000) + 2;
 
   const openTournament = async (startsIn: string) => {
     const [options] = await postgres.query<Array<{ id: string }>>(
