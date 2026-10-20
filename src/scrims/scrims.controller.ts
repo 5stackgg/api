@@ -1,11 +1,85 @@
 import { Controller } from "@nestjs/common";
-import { HasuraAction } from "../hasura/hasura.controller";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
+import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
+import { HasuraEventData } from "../hasura/types/HasuraEventData";
 import { User } from "../auth/types/User";
+import { wakeJobAt } from "../utilities/QueueProcessors";
 import { ScrimsService } from "./scrims.service";
+import { ScrimQueues } from "./enums/ScrimQueues";
+import { MatchScrims } from "./jobs/MatchScrims";
+import { MatchScrimTeam } from "./jobs/MatchScrimTeam";
+import { ExpireScrimRequests } from "./jobs/ExpireScrimRequests";
 
+type ScrimRow = {
+  id?: string;
+  team_id?: string;
+  from_team_id?: string;
+  to_team_id?: string;
+  status?: string;
+};
+
+// The *_events handlers only wake jobs on the matcher queue, which runs one at
+// a time, and each job re-reads what it acts on: a retried or late delivery
+// wakes the same work, and two teams never pair against each other at once.
 @Controller("scrims")
 export class ScrimsController {
-  constructor(private readonly scrims: ScrimsService) {}
+  constructor(
+    private readonly scrims: ScrimsService,
+    @InjectQueue(ScrimQueues.ScrimMatcher) private readonly queue: Queue,
+  ) {}
+
+  @HasuraEvent({ retry: true })
+  public async team_scrim_settings_events(data: HasuraEventData<ScrimRow>) {
+    await MatchScrimTeam.wake(this.queue, data.new.team_id || data.old.team_id);
+  }
+
+  @HasuraEvent({ retry: true })
+  public async team_scrim_availability_events(data: HasuraEventData<ScrimRow>) {
+    const teamId = data.new.team_id || data.old.team_id;
+    const now = new Date();
+
+    await MatchScrimTeam.wake(this.queue, teamId);
+
+    for (const { at } of await this.scrims.scrimWindowOpenings(
+      now,
+      new Date(now.getTime() + MatchScrims.LOOKAHEAD_MS),
+      teamId,
+    )) {
+      await MatchScrimTeam.wake(this.queue, teamId, at);
+    }
+  }
+
+  // An open request is what keeps a pair from being proposed again, so the
+  // moment one stops being open both teams are matched again.
+  @HasuraEvent({ retry: true })
+  public async team_scrim_request_events(data: HasuraEventData<ScrimRow>) {
+    const request = await this.scrims.scrimRequestState(
+      data.new.id || data.old.id,
+    );
+
+    if (request?.expires_at && ScrimsService.isRequestOpen(request.status)) {
+      await wakeJobAt(this.queue, ExpireScrimRequests.name, request.expires_at);
+    }
+
+    if (
+      ScrimsService.isPairBlocked(data.old.status) &&
+      !ScrimsService.isPairBlocked(request?.status)
+    ) {
+      for (const teamId of [data.old.from_team_id, data.old.to_team_id]) {
+        if (teamId) {
+          await MatchScrimTeam.wake(this.queue, teamId);
+        }
+      }
+    }
+  }
+
+  @HasuraEvent({ retry: true })
+  public async team_scrim_alert_events(data: HasuraEventData<ScrimRow>) {
+    if (data.op !== "DELETE" && (await this.scrims.isFinderEnabled())) {
+      await this.scrims.runScrimAlerts({ alertId: data.new.id });
+    }
+  }
 
   @HasuraAction()
   public async sendScrimRequest(data: {
