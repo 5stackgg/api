@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Rcon as RconClient } from "rcon-client";
+import { validate as validateUUID } from "uuid";
 import { HasuraService } from "../hasura/hasura.service";
 import { EncryptionService } from "../encryption/encryption.service";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -32,7 +33,14 @@ export class RconService {
 
   // Decided by can_rcon_server, which also hands out the practice console's
   // server id, so the console only ever opens where these commands are let in.
+  // The role is the player's current one, as Hasura's session carries it: the
+  // socket's copy only refreshes on a ping, so a client that stops pinging
+  // keeps a role it has lost.
   public async canAccessServer(serverId: string, user: User): Promise<boolean> {
+    if (!validateUUID(serverId)) {
+      return false;
+    }
+
     const [server] = await this.postgres.query<Array<{ allowed: boolean }>>(
       `SELECT public.can_rcon_server(s, $2::json) AS allowed
          FROM public.servers s
@@ -40,7 +48,9 @@ export class RconService {
       [
         serverId,
         JSON.stringify({
-          "x-hasura-role": user.role,
+          "x-hasura-role": await this.hasuraService.getPlayerRole(
+            user.steam_id,
+          ),
           "x-hasura-user-id": user.steam_id,
         }),
       ],

@@ -11,11 +11,11 @@ LANGUAGE plpgsql
 STABLE
 AS $$
 BEGIN
-    IF is_above_role('administrator', hasura_session) THEN
+    IF public.is_above_role('administrator', hasura_session) THEN
         RETURN true;
     END IF;
 
-    IF is_above_role('moderator', hasura_session) IS NOT TRUE THEN
+    IF public.is_above_role('moderator', hasura_session) IS NOT TRUE THEN
         RETURN false;
     END IF;
 

@@ -6,6 +6,7 @@ import { PostgresService } from "./../src/postgres/postgres.service";
 import { RconService } from "./../src/rcon/rcon.service";
 import { User } from "./../src/auth/types/User";
 import { Fixtures } from "./utils/fixtures";
+import { TournamentFixtures } from "./utils/tournament-fixtures";
 import { HasuraPermissions } from "./utils/hasura-permissions";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 
@@ -17,7 +18,9 @@ describe("practice session console access (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
   let fx: Fixtures;
+  let tfx: TournamentFixtures;
   let poolId: string;
+  let playerRole: jest.Mock;
   let rcon: RconService;
   let permissions: HasuraPermissions;
   let port = 30100;
@@ -26,13 +29,21 @@ describe("practice session console access (SQL-driven)", () => {
     db = await bootMigratedDb("PracticeConsoleAccessTest");
     postgres = db.postgres;
     fx = new Fixtures(postgres, 76561199720000000n);
+    tfx = new TournamentFixtures(postgres, fx);
     await fx.region();
     poolId = (await fx.mapPool(1)).poolId;
     await postgres.query(
       "INSERT INTO game_server_nodes (id, region) VALUES ('console-node', 'TestA')",
     );
+    playerRole = jest.fn(async (steamId: string) => {
+      const [player] = await postgres.query<Array<{ role: string }>>(
+        "SELECT role FROM players WHERE steam_id = $1::bigint",
+        [steamId],
+      );
+      return player?.role;
+    });
     rcon = new RconService(
-      {} as never,
+      { getPlayerRole: playerRole } as never,
       {} as never,
       {} as never,
       new Logger("PracticeConsoleAccessTest"),
@@ -122,12 +133,17 @@ describe("practice session console access (SQL-driven)", () => {
     return { host, matchId, serverId, sessionId: await session(host, matchId) };
   }
 
-  const viewer = (role: string, steamId = fx.nextSteam()): User =>
-    ({ steam_id: steamId, role, name: role }) as User;
+  async function viewer(role: string, steamId?: string): Promise<User> {
+    return {
+      steam_id: steamId ?? (await fx.player(undefined, role)),
+      role,
+      name: role,
+    } as User;
+  }
 
   async function consoleServerId(
     sessionId: string,
-    user: Pick<User, "role" | "steam_id"> | null,
+    user: { role: string; steam_id: string } | null,
   ): Promise<string | null> {
     const [row] = await postgres.query<Array<{ server_id: string | null }>>(
       `SELECT public.utility_practice_server_id(s, $2::json)::text AS server_id
@@ -176,10 +192,12 @@ describe("practice session console access (SQL-driven)", () => {
         ]);
       }
 
-      expect(await consoleServerId(sessionId, viewer("administrator"))).toBe(
-        serverId,
-      );
-      expect(await consoleServerId(sessionId, viewer("admin"))).toBe(serverId);
+      expect(
+        await consoleServerId(sessionId, await viewer("administrator")),
+      ).toBe(serverId);
+      expect(
+        await consoleServerId(sessionId, { role: "admin", steam_id: "0" }),
+      ).toBe(serverId);
     });
 
     it("goes to exactly the viewers RCON lets in, on either kind of server", async () => {
@@ -188,29 +206,49 @@ describe("practice session console access (SQL-driven)", () => {
         const userHosted = await practiceOn(kind, "user");
 
         const cases: Array<[string, typeof moderatorHosted, User, boolean]> = [
-          ["administrator", moderatorHosted, viewer("administrator"), true],
+          [
+            "administrator",
+            moderatorHosted,
+            await viewer("administrator"),
+            true,
+          ],
           [
             "tournament_organizer",
             moderatorHosted,
-            viewer("tournament_organizer"),
+            await viewer("tournament_organizer"),
             true,
           ],
-          ["match_organizer", moderatorHosted, viewer("match_organizer"), true],
+          [
+            "match_organizer",
+            moderatorHosted,
+            await viewer("match_organizer"),
+            true,
+          ],
           [
             "moderator host",
             moderatorHosted,
-            viewer("moderator", moderatorHosted.host),
+            await viewer("moderator", moderatorHosted.host),
             true,
           ],
           [
             "other moderator",
             moderatorHosted,
-            viewer("moderator"),
+            await viewer("moderator"),
             kind === "standing",
           ],
-          ["streamer", moderatorHosted, viewer("streamer"), false],
-          ["verified_user", moderatorHosted, viewer("verified_user"), false],
-          ["user host", userHosted, viewer("user", userHosted.host), false],
+          ["streamer", moderatorHosted, await viewer("streamer"), false],
+          [
+            "verified_user",
+            moderatorHosted,
+            await viewer("verified_user"),
+            false,
+          ],
+          [
+            "user host",
+            userHosted,
+            await viewer("user", userHosted.host),
+            false,
+          ],
         ];
 
         for (const [label, { serverId, sessionId }, user, allowed] of cases) {
@@ -234,18 +272,18 @@ describe("practice session console access (SQL-driven)", () => {
       );
 
       expect(
-        await rcon.canAccessServer(serverId, viewer("moderator", host)),
+        await rcon.canAccessServer(serverId, await viewer("moderator", host)),
       ).toBe(false);
       expect(
-        await consoleServerId(sessionId, viewer("moderator", host)),
+        await consoleServerId(sessionId, await viewer("moderator", host)),
       ).toBeNull();
-      expect(await consoleServerId(sessionId, viewer("administrator"))).toBe(
-        serverId,
-      );
+      expect(
+        await consoleServerId(sessionId, await viewer("administrator")),
+      ).toBe(serverId);
     });
 
     it("is null for a session without a match, without a server, or whose match is gone", async () => {
-      const admin = viewer("administrator");
+      const admin = await viewer("administrator");
 
       const matchless = await session(
         await fx.player(undefined, "moderator"),
@@ -338,10 +376,10 @@ describe("practice session console access (SQL-driven)", () => {
         ["verified_user", false],
         ["user", false],
       ] as const) {
-        expect([role, await rcon.canAccessServer(id, viewer(role))]).toEqual([
+        expect([
           role,
-          allowed,
-        ]);
+          await rcon.canAccessServer(id, await viewer(role)),
+        ]).toEqual([role, allowed]);
       }
     });
 
@@ -351,17 +389,17 @@ describe("practice session console access (SQL-driven)", () => {
       const serverId = await onServer(matchId, "pod");
 
       expect(
-        await rcon.canAccessServer(serverId, viewer("moderator", organizer)),
-      ).toBe(true);
-      expect(await rcon.canAccessServer(serverId, viewer("moderator"))).toBe(
-        false,
-      );
-      expect(
-        await rcon.canAccessServer(serverId, viewer("match_organizer")),
+        await rcon.canAccessServer(
+          serverId,
+          await viewer("moderator", organizer),
+        ),
       ).toBe(true);
       expect(
-        await rcon.canAccessServer(serverId, viewer("user", organizer)),
+        await rcon.canAccessServer(serverId, await viewer("moderator")),
       ).toBe(false);
+      expect(
+        await rcon.canAccessServer(serverId, await viewer("match_organizer")),
+      ).toBe(true);
 
       await postgres.query(
         "UPDATE matches SET status = 'Finished' WHERE id = $1::uuid",
@@ -369,11 +407,84 @@ describe("practice session console access (SQL-driven)", () => {
       );
 
       expect(
-        await rcon.canAccessServer(serverId, viewer("moderator", organizer)),
+        await rcon.canAccessServer(
+          serverId,
+          await viewer("moderator", organizer),
+        ),
       ).toBe(false);
       expect(
-        await rcon.canAccessServer(serverId, viewer("administrator")),
+        await rcon.canAccessServer(serverId, await viewer("administrator")),
       ).toBe(true);
+    });
+
+    it("lets a tournament's organizers onto its match server", async () => {
+      const tournament = await tfx.launch(
+        [{ type: "SingleElimination", order: 1, minTeams: 4, maxTeams: 4 }],
+        4,
+      );
+      const [{ match_id: matchId }] = (
+        await tfx.getBrackets(tournament.stageIds[0])
+      ).filter((bracket) => bracket.match_id);
+      const serverId = await onServer(matchId!, "pod");
+
+      const organizer = await viewer("moderator");
+      const player = await viewer("user");
+      await postgres.query(
+        "INSERT INTO tournament_organizers (tournament_id, steam_id) VALUES ($1, $2), ($1, $3)",
+        [tournament.id, organizer.steam_id, player.steam_id],
+      );
+
+      expect(await rcon.canAccessServer(serverId, organizer)).toBe(true);
+      expect(await rcon.canAccessServer(serverId, player)).toBe(false);
+      expect(
+        await rcon.canAccessServer(serverId, await viewer("moderator")),
+      ).toBe(false);
+    });
+
+    it("goes by the player's current role, not the one the socket signed in with", async () => {
+      const host = await fx.player(undefined, "moderator");
+      const pod = await onServer(await match(host, "practice"), "pod");
+      const [{ id: dedicated }] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO servers
+           (host, label, rcon_password, port, enabled, connected, region, type, is_dedicated)
+         VALUES ('127.0.0.1', 'deathmatch', '\\x00'::bytea, $1, true, true, 'TestA', 'Deathmatch', true)
+         RETURNING id::text AS id`,
+        [++port],
+      );
+      const demoted = await fx.player(undefined, "user");
+      const promoted = await fx.player(undefined, "moderator");
+
+      expect(
+        await rcon.canAccessServer(
+          pod,
+          await viewer("match_organizer", demoted),
+        ),
+      ).toBe(false);
+      expect(
+        await rcon.canAccessServer(
+          dedicated,
+          await viewer("administrator", demoted),
+        ),
+      ).toBe(false);
+      expect(
+        await rcon.canAccessServer(dedicated, await viewer("user", promoted)),
+      ).toBe(true);
+    });
+
+    it("refuses a malformed server id without looking anything up", async () => {
+      const users = [await viewer("administrator"), await viewer("user")];
+      const query = jest.spyOn(postgres, "query");
+      playerRole.mockClear();
+
+      try {
+        for (const user of users) {
+          expect(await rcon.canAccessServer("not-a-uuid", user)).toBe(false);
+        }
+        expect(query).not.toHaveBeenCalled();
+        expect(playerRole).not.toHaveBeenCalled();
+      } finally {
+        query.mockRestore();
+      }
     });
 
     it("refuses a server that does not exist, to an administrator too", async () => {
@@ -382,7 +493,7 @@ describe("practice session console access (SQL-driven)", () => {
           role,
           await rcon.canAccessServer(
             "00000000-0000-0000-0000-000000000000",
-            viewer(role),
+            await viewer(role),
           ),
         ]).toEqual([role, false]);
       }
