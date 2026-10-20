@@ -25,6 +25,16 @@ class HookSpecController {
   public async hook_spec_event(data: Record<string, unknown>) {
     handled.push({ kind: "event", data });
   }
+
+  @HasuraEvent()
+  public async hook_spec_failing_event() {
+    throw new Error("redis went away");
+  }
+
+  @HasuraEvent({ retry: true })
+  public async hook_spec_retried_event() {
+    throw new Error("redis went away");
+  }
 }
 
 const actionBody = {
@@ -92,6 +102,24 @@ describe("HasuraController hooks", () => {
     expect(handled).toEqual([
       { kind: "event", data: { op: "INSERT", old: {}, new: { id: "1" } } },
     ]);
+  });
+
+  it("asks Hasura to send a retryable event again when its handler fails", async () => {
+    const response = await event().send({
+      ...eventBody,
+      trigger: { name: "hook_spec_retried_event" },
+    });
+
+    expect(response.status).toBe(500);
+  });
+
+  it("keeps answering 2xx for a failed event that is not safe to run twice", async () => {
+    const response = await event().send({
+      ...eventBody,
+      trigger: { name: "hook_spec_failing_event" },
+    });
+
+    expect(response.status).toBeLessThan(300);
   });
 
   it("refuses an action posted as a form, as a cross-site page would", async () => {

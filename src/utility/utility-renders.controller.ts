@@ -41,7 +41,7 @@ export class UtilityRendersController {
 
   // Publishing to the shared library is what books the render. Reviewed
   // through Hasura, so the event trigger is the only place that sees it land.
-  @HasuraEvent()
+  @HasuraEvent({ retry: true })
   public async utility_lineup_render_events(
     data: HasuraEventData<{
       id: string;

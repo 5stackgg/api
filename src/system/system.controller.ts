@@ -375,7 +375,7 @@ export class SystemController {
     };
   }
 
-  @HasuraEvent()
+  @HasuraEvent({ retry: true })
   public async settings(data: HasuraEventData<settings_set_input>) {
     if (
       (data.new.name === SystemSettingName.DemoNetworkLimiter ||

@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  InternalServerErrorException,
   Logger,
   Post,
   Req,
@@ -15,6 +16,7 @@ import { HasuraService } from "./hasura.service";
 
 type Handler = {
   target: unknown;
+  retry?: boolean;
   resolved?: HandleResolver;
 };
 
@@ -25,10 +27,16 @@ interface HandleResolver {
 const _events: Record<string, Handler> = {};
 const _actions: Record<string, Handler> = {};
 
-export const HasuraEvent = (): MethodDecorator => {
+// Hasura only re-sends an event it got a non-2xx answer for, so a handler that
+// throws is otherwise never retried. `retry` answers 500 instead: only for
+// handlers that are safe to run twice, and minutes late.
+export const HasuraEvent = (
+  options: { retry?: boolean } = {},
+): MethodDecorator => {
   return (target, propertyKey: string): void => {
     _events[propertyKey] = {
       target,
+      retry: options.retry,
     };
   };
 };
@@ -99,7 +107,8 @@ export class HasuraController {
 
     const { event, trigger } = request.body;
 
-    const resolver = this.getResolver(_events[trigger.name]);
+    const handler = _events[trigger.name];
+    const resolver = this.getResolver(handler);
 
     try {
       return await resolver[trigger.name].bind(resolver, {
@@ -113,6 +122,12 @@ export class HasuraController {
         event,
         trigger,
       });
+
+      if (handler.retry) {
+        throw new InternalServerErrorException(
+          `unable to complete event ${trigger.name}`,
+        );
+      }
     }
   }
 

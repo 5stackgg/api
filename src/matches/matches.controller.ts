@@ -629,7 +629,7 @@ export class MatchesController {
     }
   }
 
-  @HasuraEvent()
+  @HasuraEvent({ retry: true })
   public async match_map_demo_events(
     data: HasuraEventData<match_map_demos_set_input>,
   ) {
