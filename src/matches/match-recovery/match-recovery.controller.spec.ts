@@ -10,6 +10,8 @@ describe("MatchRecoveryController", () => {
       restoreRound: jest.fn(async () => ({ success: true })),
       restartMatch: jest.fn(async () => ({ success: true })),
       restartMatchMap: jest.fn(async () => ({ success: true })),
+      rewindMapVeto: jest.fn(async () => ({ success: true })),
+      extendVetoClock: jest.fn(async () => ({ success: true })),
     };
 
     return {
@@ -36,11 +38,19 @@ describe("MatchRecoveryController", () => {
     await expect(
       controller.restartMatchMap({ match_id: "match-1", user }),
     ).rejects.toThrow("you are not a match organizer");
+    await expect(
+      controller.rewindMapVeto({ match_id: "match-1", step: 3, user }),
+    ).rejects.toThrow("you are not a match organizer");
+    await expect(
+      controller.extendVetoClock({ match_id: "match-1", seconds: 30, user }),
+    ).rejects.toThrow("you are not a match organizer");
 
     expect(recovery.getRestoreRounds).not.toHaveBeenCalled();
     expect(recovery.restoreRound).not.toHaveBeenCalled();
     expect(recovery.restartMatch).not.toHaveBeenCalled();
     expect(recovery.restartMatchMap).not.toHaveBeenCalled();
+    expect(recovery.rewindMapVeto).not.toHaveBeenCalled();
+    expect(recovery.extendVetoClock).not.toHaveBeenCalled();
   });
 
   it("hands organizers' requests to the service", async () => {
@@ -50,10 +60,23 @@ describe("MatchRecoveryController", () => {
     await controller.restoreMatchRound({ match_id: "match-1", round: 4, user });
     await controller.restartMatch({ match_id: "match-1", user });
     await controller.restartMatchMap({ match_id: "match-1", user });
+    await controller.rewindMapVeto({
+      match_id: "match-1",
+      step: 3,
+      expected_picks: 5,
+      user,
+    });
+    await controller.extendVetoClock({
+      match_id: "match-1",
+      seconds: 30,
+      user,
+    });
 
     expect(recovery.getRestoreRounds).toHaveBeenCalledWith("match-1", user);
     expect(recovery.restoreRound).toHaveBeenCalledWith("match-1", 4, user);
     expect(recovery.restartMatch).toHaveBeenCalledWith("match-1");
     expect(recovery.restartMatchMap).toHaveBeenCalledWith("match-1", user);
+    expect(recovery.rewindMapVeto).toHaveBeenCalledWith("match-1", 3, 5);
+    expect(recovery.extendVetoClock).toHaveBeenCalledWith("match-1", 30);
   });
 });

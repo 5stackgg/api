@@ -284,6 +284,39 @@ export class MatchRecoveryService {
     return { success: true };
   }
 
+  // A veto rewound after a server was booted releases it; a dedicated server
+  // keeps running, so it is told to reload and drop the old maps.
+  public async rewindMapVeto(
+    matchId: string,
+    step: number,
+    expectedPicks?: number,
+  ) {
+    const [{ server_id }] = await this.postgres.query<
+      Array<{ server_id: string | null }>
+    >("SELECT rewind_map_veto($1, $2, $3)::text AS server_id", [
+      matchId,
+      step,
+      expectedPicks ?? null,
+    ]);
+
+    if (server_id) {
+      await this.matchAssistant.refreshServerMatch(server_id);
+    }
+
+    this.logger.log(`[${matchId}] organizer rewound the veto to step ${step}`);
+
+    return { success: true };
+  }
+
+  public async extendVetoClock(matchId: string, seconds: number) {
+    await this.postgres.query("SELECT extend_veto_clock($1, $2)", [
+      matchId,
+      seconds,
+    ]);
+
+    return { success: true };
+  }
+
   // Cancel, then reopen check-in: what an organizer does by hand with Cancel
   // and Start, in one step. Leaving Canceled clears a map veto; a map that was
   // still being played is put back to the start, or the next server would

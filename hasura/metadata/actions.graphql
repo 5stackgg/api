@@ -692,6 +692,21 @@ type Mutation {
 }
 
 type Mutation {
+  rewindMapVeto(
+    match_id: uuid!
+    step: Int!
+    expected_picks: Int
+  ): SuccessOutput
+}
+
+type Mutation {
+  extendVetoClock(
+    match_id: uuid!
+    seconds: Int!
+  ): SuccessOutput
+}
+
+type Mutation {
   resumeClipRenderBatch(
     match_map_id: uuid!
   ): SuccessOutput
