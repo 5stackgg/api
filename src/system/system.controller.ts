@@ -149,9 +149,9 @@ export class SystemController {
   public async updateServices() {
     await this.system.updateServices();
 
-    // Checked on a 15-minute schedule, so an update would read as still
-    // pending for that long. Queued rather than timed in this pod, which the
-    // update may well be replacing.
+    // The pod watch re-checks as old pods go, but a plugin's deployment is not
+    // watched. Queued rather than timed in this pod, which the update may well
+    // be replacing.
     for (const minutes of [2, 5]) {
       await this.versionQueue.add(
         CheckSystemUpdateJob.name,

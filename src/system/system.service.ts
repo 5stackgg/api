@@ -87,14 +87,23 @@ export class SystemService {
   // terminating ones included. So each one going is when to check again.
   public watchServicePods(onPodGone: () => void) {
     const watch = new Watch(this.kubeConfig);
+    let failing = false;
 
     const start = () => {
       let retried = false;
-      const retry = () => {
+      const retry = (error?: unknown) => {
         if (retried) {
           return;
         }
         retried = true;
+
+        if (error && !failing) {
+          this.logger.warn(
+            `unable to watch service pods, retrying every ${SystemService.POD_WATCH_RETRY_MS / 1000}s: ${(error as Error)?.message ?? error}`,
+          );
+        }
+        failing = !!error;
+
         setTimeout(start, SystemService.POD_WATCH_RETRY_MS).unref?.();
       };
 
@@ -103,6 +112,8 @@ export class SystemService {
           "/api/v1/namespaces/5stack/pods",
           { labelSelector: `app in (${SystemService.TRACKED_APPS.join(",")})` },
           (phase) => {
+            failing = false;
+
             if (phase === "DELETED") {
               onPodGone();
             }

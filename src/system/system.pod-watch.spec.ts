@@ -38,17 +38,19 @@ import { SystemService } from "./system.service";
 
 describe("SystemService pod watch", () => {
   let gone: jest.Mock;
+  let logger: { warn: jest.Mock; log: jest.Mock };
 
   beforeEach(() => {
     jest.useFakeTimers();
     watches.length = 0;
     failNextWatch = false;
     gone = jest.fn();
+    logger = { warn: jest.fn(), log: jest.fn() };
     new SystemService(
       {} as any,
       {} as any,
       {} as any,
-      { warn: jest.fn(), log: jest.fn() } as any,
+      logger as any,
       {} as any,
     ).watchServicePods(gone);
   });
@@ -83,7 +85,19 @@ describe("SystemService pod watch", () => {
     expect(watches).toHaveLength(2);
   });
 
-  it("keeps trying when the api server cannot be reached", async () => {
+  it("keeps trying when the api server cannot be reached, and says so once", async () => {
+    const refused = new Error("connect ECONNREFUSED");
+
+    watches[0].done(refused);
+    await jest.advanceTimersByTimeAsync(5000);
+    watches[1].done(refused);
+    await jest.advanceTimersByTimeAsync(5000);
+
+    expect(watches).toHaveLength(3);
+    expect(logger.warn).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps trying when the watch cannot even be opened", async () => {
     watches[0].done();
     failNextWatch = true;
 

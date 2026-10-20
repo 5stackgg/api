@@ -53,6 +53,8 @@ import { ChatService } from "src/chat/chat.service";
   controllers: [SystemController],
 })
 export class SystemModule {
+  private static readonly CHECK_WINDOW_MS = 5 * 1000;
+
   constructor(
     @InjectQueue(SystemQueues.Version) queue: Queue,
     private readonly systemService: SystemService,
@@ -68,19 +70,38 @@ export class SystemModule {
       [CheckSystemUpdateJob.name]: { pattern: "*/5 * * * *" },
     });
 
+    // Not straight away: a rollout's old pods still answer for a minute or so,
+    // and the check reads every pod's image.
+    void queue.add(
+      CheckSystemUpdateJob.name,
+      {},
+      { delay: 2 * 60 * 1000, removeOnComplete: true, removeOnFail: true },
+    );
+
     // An update clears from the banner as its old pods go, not on the schedule.
     this.systemService.watchServicePods(
-      () =>
-        void queue
-          .add(
-            CheckSystemUpdateJob.name,
-            {},
-            { delay: 3000, removeOnComplete: true, removeOnFail: true },
-          )
-          .catch(() => {}),
+      () => void SystemModule.checkSoon(queue).catch(() => {}),
     );
 
     void this.setupSettings();
+  }
+
+  // Every pod a rollout deletes in the same few seconds shares one check. The
+  // id is the window after the current one, so a check already running never
+  // swallows a deletion it did not see.
+  public static async checkSoon(queue: Queue, now = Date.now()) {
+    const window = Math.floor(now / SystemModule.CHECK_WINDOW_MS) + 1;
+
+    await queue.add(
+      CheckSystemUpdateJob.name,
+      {},
+      {
+        jobId: `${CheckSystemUpdateJob.name}.pods.${window}`,
+        delay: window * SystemModule.CHECK_WINDOW_MS - now,
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    );
   }
 
   public async setupSettings() {
