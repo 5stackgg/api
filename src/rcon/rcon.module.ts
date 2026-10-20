@@ -8,6 +8,7 @@ import { NotificationsModule } from "../notifications/notifications.module";
 import { TypeSenseModule } from "../type-sense/type-sense.module";
 import { RedisModule } from "../redis/redis.module";
 import { CacheModule } from "../cache/cache.module";
+import { PostgresModule } from "../postgres/postgres.module";
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { CacheModule } from "../cache/cache.module";
     TypeSenseModule,
     RedisModule,
     CacheModule,
+    PostgresModule,
   ],
   exports: [RconService],
   providers: [RconGateway, RconService, loggerFactory()],

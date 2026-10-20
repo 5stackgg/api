@@ -50,6 +50,7 @@ describe("RconService connect failure", () => {
         getConnection: () => ({ pttl: jest.fn(async () => graceRemaining) }),
       } as any,
       {} as any,
+      {} as any,
     );
   });
 
@@ -111,6 +112,7 @@ describe("RconService.listCvars", () => {
     { warn: jest.fn(), log: jest.fn(), error: jest.fn() } as any,
     {} as any,
     { getConnection: () => ({}) } as any,
+    {} as any,
     {} as any,
   );
 

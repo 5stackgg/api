@@ -142,3 +142,26 @@ BEGIN
     RETURN public.get_match_connection_string(_match, hasura_session);
 END;
 $$;
+
+-- The staff console's server. session.match cannot answer it: the matches
+-- select hides practice matches from every role. Given only to viewers
+-- can_rcon_server lets in, since the gateway drops a refused command without a
+-- reply; everyone else gets NULL rather than a permission error, because every
+-- member shares the one session subscription.
+CREATE OR REPLACE FUNCTION public.utility_practice_server_id(
+    session public.utility_practice_sessions,
+    hasura_session json
+) RETURNS uuid
+LANGUAGE plpgsql
+STABLE
+AS $$
+BEGIN
+    RETURN (
+        SELECT s.id
+          FROM public.matches m
+          INNER JOIN public.servers s ON s.id = m.server_id
+         WHERE m.id = session.match_id
+           AND public.can_rcon_server(s, hasura_session)
+    );
+END;
+$$;
