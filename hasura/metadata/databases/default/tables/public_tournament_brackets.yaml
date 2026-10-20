@@ -94,3 +94,20 @@ update_permissions:
             is_organizer:
               _eq: true
     comment: ""
+event_triggers:
+  # Wakes CheckForScheduledTournamentBrackets ahead of the bracket's time.
+  - name: tournament_bracket_deadlines
+    definition:
+      enable_manual: true
+      insert:
+        columns: '*'
+      update:
+        columns:
+          - scheduled_at
+          - match_id
+          - finished
+    retry_conf:
+      interval_sec: 10
+      num_retries: 60
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

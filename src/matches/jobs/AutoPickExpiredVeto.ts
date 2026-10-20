@@ -1,10 +1,10 @@
-import { Job } from "bullmq";
+import { DelayedError, Job } from "bullmq";
 import { WorkerHost } from "@nestjs/bullmq";
 import { MatchQueues } from "../enums/MatchQueues";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { PostgresService } from "../../postgres/postgres.service";
 
-@UseQueue("Matches", MatchQueues.ScheduledMatches)
+@UseQueue("Matches", MatchQueues.VetoTimeouts, { concurrency: 5 })
 export class AutoPickExpiredVeto extends WorkerHost {
   constructor(private readonly postgres: PostgresService) {
     super();
@@ -22,5 +22,27 @@ export class AutoPickExpiredVeto extends WorkerHost {
       "SELECT auto_pick_expired_veto($1::uuid, $2::int);",
       [matchId, pickCount],
     );
+
+    if (!matchId) {
+      return;
+    }
+
+    // The delay was measured on this pod's clock and the deadline is judged on
+    // Postgres's, so a timer can land a moment early and pick nothing. It waits
+    // out the rest rather than completing and leaving the turn to the sweep.
+    const [early] = await this.postgres.query<Array<{ remaining_ms: number }>>(
+      `SELECT ceil(extract(epoch FROM veto_pick_expires_at - now()) * 1000)::int AS remaining_ms
+         FROM matches
+        WHERE id = $1
+          AND status = 'Veto'
+          AND veto_pick_expires_at > now()
+          AND veto_pick_count(id) = $2`,
+      [matchId, pickCount],
+    );
+
+    if (early) {
+      await job.moveToDelayed(Date.now() + early.remaining_ms + 250, job.token);
+      throw new DelayedError();
+    }
   }
 }
