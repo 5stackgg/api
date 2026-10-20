@@ -9,7 +9,7 @@ event_triggers:
         columns: '*'
     retry_conf:
       interval_sec: 10
-      num_retries: 60
+      num_retries: 3
       timeout_sec: 60
     webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
 object_relationships:

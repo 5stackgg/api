@@ -12,6 +12,8 @@ import { CacheService } from "../cache/cache.service";
 import { PostgresService } from "../postgres/postgres.service";
 
 const handled: Array<{ kind: string; data: Record<string, unknown> }> = [];
+let countedRuns = 0;
+let holdCounted: Promise<void> = Promise.resolve();
 
 @Controller()
 class HookSpecController {
@@ -33,7 +35,14 @@ class HookSpecController {
 
   @HasuraEvent({ retry: true })
   public async hook_spec_retried_event() {
+    countedRuns++;
     throw new Error("redis went away");
+  }
+
+  @HasuraEvent({ retry: true })
+  public async hook_spec_counted_event() {
+    countedRuns++;
+    await holdCounted;
   }
 }
 
@@ -53,6 +62,24 @@ describe("HasuraController hooks", () => {
 
   beforeEach(async () => {
     handled.length = 0;
+    countedRuns = 0;
+    holdCounted = Promise.resolve();
+
+    const cached = new Map<string, unknown>();
+    const cache = {
+      has: async (key: string) => cached.has(key),
+      put: async (key: string, value: unknown) => {
+        cached.set(key, value);
+      },
+      acquireLock: async (key: string) => {
+        if (cached.has(key)) {
+          return null;
+        }
+        cached.set(key, "token");
+        return "token";
+      },
+      releaseLock: async (key: string) => cached.delete(key),
+    };
 
     const module = await Test.createTestingModule({
       controllers: [HasuraController, HookSpecController],
@@ -62,7 +89,7 @@ describe("HasuraController hooks", () => {
           provide: Logger,
           useValue: { log: jest.fn(), warn: jest.fn(), error: jest.fn() },
         },
-        { provide: CacheService, useValue: {} },
+        { provide: CacheService, useValue: cache },
         {
           provide: ConfigService,
           useValue: new ConfigService({
@@ -111,6 +138,51 @@ describe("HasuraController hooks", () => {
     });
 
     expect(response.status).toBe(500);
+  });
+
+  const delivery = (name: string, id = "event-1") => ({
+    ...eventBody,
+    id,
+    trigger: { name },
+  });
+
+  it("runs a retried event once when Hasura sends it again after it succeeded", async () => {
+    const first = await event().send(delivery("hook_spec_counted_event"));
+    const again = await event().send(delivery("hook_spec_counted_event"));
+
+    expect(first.status).toBeLessThan(300);
+    expect(again.status).toBeLessThan(300);
+    expect(countedRuns).toBe(1);
+  });
+
+  it("turns away a copy sent while the first attempt is still running", async () => {
+    let release: () => void = () => {};
+    holdCounted = new Promise((resolve) => {
+      release = resolve;
+    });
+
+    const first = event()
+      .send(delivery("hook_spec_counted_event"))
+      .then((r) => r);
+    while (countedRuns === 0) {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+
+    const copy = await event().send(delivery("hook_spec_counted_event"));
+    release();
+
+    expect(copy.status).toBe(409);
+    expect((await first).status).toBeLessThan(300);
+    expect(countedRuns).toBe(1);
+  });
+
+  it("lets a failed event run again on Hasura's next attempt", async () => {
+    const first = await event().send(delivery("hook_spec_retried_event"));
+    const again = await event().send(delivery("hook_spec_retried_event"));
+
+    expect(first.status).toBe(500);
+    expect(again.status).toBe(500);
+    expect(countedRuns).toBe(2);
   });
 
   it("keeps answering 2xx for a failed event that is not safe to run twice", async () => {

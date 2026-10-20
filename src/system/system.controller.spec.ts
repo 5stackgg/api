@@ -1,4 +1,5 @@
 import { SystemController } from "./system.controller";
+import { SystemSettingName } from "./enums/SystemSettingName";
 
 // Name registration is the one place a player writes their own display name
 // without an admin in the loop, so the guards around it are what keep the
@@ -265,6 +266,34 @@ describe("SystemController settings event", () => {
     });
 
     expect(system.syncTwitchSupport).toHaveBeenCalledTimes(1);
+  });
+
+  it("applies the chat TTL the settings table holds now, not the value the event carried", async () => {
+    const chat = { updateChatMessageTTL: jest.fn() };
+    const getSetting = jest.fn().mockResolvedValue(900);
+
+    await new SystemController(
+      { ...system, getSetting } as any,
+      {} as any,
+      {} as any,
+      { updateDemoNetworkLimiters: jest.fn() } as any,
+      {} as any,
+      chat as any,
+      {} as any,
+    ).settings({
+      op: "UPDATE",
+      old: { name: SystemSettingName.ChatTtlMatch, value: "30" },
+      new: { name: SystemSettingName.ChatTtlMatch, value: "60" },
+    });
+
+    expect(getSetting).toHaveBeenCalledWith(
+      SystemSettingName.ChatTtlMatch,
+      expect.any(Number),
+    );
+    expect(chat.updateChatMessageTTL).toHaveBeenCalledWith(
+      expect.anything(),
+      900,
+    );
   });
 
   it("does not react to the Twitch flag it writes", async () => {
