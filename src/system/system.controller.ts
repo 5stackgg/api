@@ -394,10 +394,11 @@ export class SystemController {
           data.op === "DELETE" ||
           data.new.value !== data.old.value)
       ) {
-        const ttl = parseInt(data.new.value, 10);
+        // Read back rather than taken from the event, which a retry can
+        // deliver after a newer change.
         this.chatService.updateChatMessageTTL(
           type,
-          isNaN(ttl) ? fallback : ttl,
+          await this.system.getSetting<number>(setting, fallback),
         );
       }
     }

@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Controller,
   Get,
   InternalServerErrorException,
@@ -13,6 +14,7 @@ import { Request, Response } from "express";
 import { SteamGuard } from "../auth/strategies/SteamGuard";
 import { ApiKeyGuard } from "../auth/strategies/ApiKeyGuard";
 import { HasuraService } from "./hasura.service";
+import { CacheService } from "../cache/cache.service";
 
 type Handler = {
   target: unknown;
@@ -51,10 +53,19 @@ export const HasuraAction = (): MethodDecorator => {
 
 @Controller("hasura")
 export class HasuraController {
+  // Longer than any one attempt should take, so a crashed attempt's claim
+  // does not hold the event back for long.
+  private static readonly EVENT_RUNNING_TTL_SECONDS = 5 * 60;
+
+  // Longer than Hasura can keep re-sending one event: 60 retries, each up to
+  // its 60s timeout plus the 10s interval.
+  private static readonly EVENT_DONE_TTL_SECONDS = 2 * 60 * 60;
+
   constructor(
     private readonly logger: Logger,
     private readonly hasuraService: HasuraService,
     private readonly modulesContainer: ModulesContainer,
+    private readonly cache: CacheService,
   ) {}
 
   @Get()
@@ -105,28 +116,72 @@ export class HasuraController {
   public async events(@Req() request: Request) {
     this.hasuraService.requireJsonHook(request);
 
-    const { event, trigger } = request.body;
+    const { id, event, trigger } = request.body;
 
     const handler = _events[trigger.name];
     const resolver = this.getResolver(handler);
 
-    try {
-      return await resolver[trigger.name].bind(resolver, {
-        op: event.op,
-        old: event.data.old || {},
-        new: event.data.new || {},
-      })();
-    } catch (error) {
-      this.logger.error(`unable to complete event ${trigger.name}`, {
-        error,
-        event,
-        trigger,
-      });
+    const run = async () => {
+      try {
+        await resolver[trigger.name].bind(resolver, {
+          op: event.op,
+          old: event.data.old || {},
+          new: event.data.new || {},
+        })();
+        return true;
+      } catch (error) {
+        this.logger.error(`unable to complete event ${trigger.name}`, {
+          error,
+          event,
+          trigger,
+        });
+        return false;
+      }
+    };
 
-      if (handler.retry) {
+    if (!handler.retry) {
+      await run();
+      return;
+    }
+
+    // Hasura re-sends an event it has no 2xx for, and that includes an attempt
+    // still running past its 60s timeout. Claiming the event by id keeps a
+    // second copy from running alongside the first, and marking it done keeps
+    // one that arrives after a success from running again.
+    const doneKey = `hasura-event:done:${id}`;
+    const runningKey = `hasura-event:running:${id}`;
+
+    if (id && (await this.cache.has(doneKey))) {
+      return;
+    }
+
+    const token = id
+      ? await this.cache.acquireLock(
+          runningKey,
+          HasuraController.EVENT_RUNNING_TTL_SECONDS,
+        )
+      : undefined;
+    if (id && !token) {
+      throw new ConflictException(`event ${trigger.name} is still running`);
+    }
+
+    try {
+      if (!(await run())) {
         throw new InternalServerErrorException(
           `unable to complete event ${trigger.name}`,
         );
+      }
+
+      if (id) {
+        await this.cache.put(
+          doneKey,
+          true,
+          HasuraController.EVENT_DONE_TTL_SECONDS,
+        );
+      }
+    } finally {
+      if (token) {
+        await this.cache.releaseLock(runningKey, token);
       }
     }
   }

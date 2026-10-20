@@ -61,13 +61,22 @@ export class TypeSenseController {
       ),
     );
 
+    // The name as it is now, not as this event had it: a retried or late
+    // event would otherwise put back a name the player has since changed.
     if (data.new.name && data.new.name !== data.old.name) {
-      await this.cache.put(
-        HasuraService.PLAYER_NAME_CACHE_KEY(
-          `${data.new.steam_id || data.old.steam_id}`,
-        ),
-        data.new.name,
-      );
+      const { players_by_pk: player } = await this.hasura.query({
+        players_by_pk: {
+          __args: { steam_id: data.new.steam_id },
+          name: true,
+        },
+      });
+
+      if (player?.name) {
+        await this.cache.put(
+          HasuraService.PLAYER_NAME_CACHE_KEY(`${data.new.steam_id}`),
+          player.name,
+        );
+      }
     }
 
     if (data.op === "DELETE") {
@@ -155,7 +164,10 @@ export class TypeSenseController {
       );
     }
 
-    if (data.new.type === "ban" && !(data.new as { deleted_at?: string }).deleted_at) {
+    if (
+      data.new.type === "ban" &&
+      !(data.new as { deleted_at?: string }).deleted_at
+    ) {
       const { match_lineup_players } = await this.hasura.query({
         match_lineup_players: {
           __args: {
@@ -350,5 +362,4 @@ export class TypeSenseController {
       current_steam_id: status.current_steam_id,
     };
   }
-
 }
