@@ -14,7 +14,11 @@ describe("InvitesController accepting a tournament team invite", () => {
   };
 
   let seat: Array<{ tournament_team_id: string }>;
-  let team: Array<{ member: boolean; inviter_can_invite: boolean }>;
+  let team: Array<{
+    joins_team: boolean;
+    member: boolean;
+    inviter_can_invite: boolean;
+  }>;
 
   const controller = () =>
     new InvitesController(
@@ -37,7 +41,7 @@ describe("InvitesController accepting a tournament team invite", () => {
   beforeEach(() => {
     jest.resetAllMocks();
     seat = [];
-    team = [{ member: false, inviter_can_invite: true }];
+    team = [{ joins_team: true, member: false, inviter_can_invite: true }];
     hasura.query.mockResolvedValue({
       tournament_team_invites_by_pk: {
         steam_id: player.steam_id,
@@ -115,7 +119,7 @@ describe("InvitesController accepting a tournament team invite", () => {
 
   it("only seats a player who is already on the entry's team", async () => {
     backedByTeam();
-    team = [{ member: true, inviter_can_invite: true }];
+    team = [{ joins_team: true, member: true, inviter_can_invite: true }];
 
     await expect(accept()).resolves.toEqual({ success: true });
 
@@ -135,7 +139,17 @@ describe("InvitesController accepting a tournament team invite", () => {
 
   it("only seats the player when the inviter can no longer invite to the team", async () => {
     backedByTeam();
-    team = [{ member: false, inviter_can_invite: false }];
+    team = [{ joins_team: true, member: false, inviter_can_invite: false }];
+
+    await expect(accept()).resolves.toEqual({ success: true });
+
+    expect(mutated("insert_team_roster_one")).toBe(false);
+    expect(mutated("insert_tournament_team_roster_one")).toBe(true);
+  });
+
+  it("only seats a stand-in, whose invite never said it joins the team", async () => {
+    backedByTeam();
+    team = [{ joins_team: false, member: false, inviter_can_invite: true }];
 
     await expect(accept()).resolves.toEqual({ success: true });
 
@@ -190,7 +204,7 @@ describe("InvitesController tournament team invite notifications", () => {
   });
 
   it("tells a player invited onto a permanent team that they join the team too", async () => {
-    const sent = await notify({ joins_team: true });
+    const sent = await notify({ joins_team: true, team_backed: true });
 
     expect(sent.title).toBe("Team Invite");
     expect(sent.message).toBe(
@@ -199,11 +213,24 @@ describe("InvitesController tournament team invite notifications", () => {
   });
 
   it("tells a player invited onto a tournament-only team that it is just for this tournament", async () => {
-    const sent = await notify({ team_name: "Friday Mix", joins_team: false });
+    const sent = await notify({
+      team_name: "Friday Mix",
+      joins_team: false,
+      team_backed: false,
+    });
 
     expect(sent.title).toBe("Tournament Invite");
     expect(sent.message).toBe(
       "<b>sniddyus</b> invited you to play for <b>Friday Mix</b> in <b>VulkanLAN 2026</b>, a team for this tournament only.",
+    );
+  });
+
+  it("tells a stand-in they will not join the permanent team", async () => {
+    const sent = await notify({ joins_team: false, team_backed: true });
+
+    expect(sent.title).toBe("Tournament Invite");
+    expect(sent.message).toBe(
+      "<b>sniddyus</b> invited you to stand in for <b>Ultima Ratio</b> in <b>VulkanLAN 2026</b>. You won't join the team.",
     );
   });
 });

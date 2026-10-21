@@ -94,6 +94,7 @@ DECLARE
     _tournament public.tournaments;
     _organizer boolean;
     _invite boolean := false;
+    _joins_team boolean := false;
 BEGIN
     -- The team row before the roster key, on every path. The maximum lineup is
     -- counted after the insert (check_team_eligibility), so two inserts that
@@ -176,17 +177,21 @@ BEGIN
             MESSAGE = 'You cannot add players to this team';
     END IF;
 
-    IF _team.team_id IS NOT NULL AND NOT EXISTS (
+    -- A team short of players takes the outsider onto the team as well, which
+    -- is the team's own invite right; a full one only seats a stand-in.
+    _joins_team := public.tournament_team_invites_join_team(_team);
+
+    IF _joins_team AND NOT EXISTS (
         SELECT 1 FROM teams t
         WHERE t.id = _team.team_id
           AND public.can_invite_to_team(t, _session)
     ) THEN
         RAISE EXCEPTION USING ERRCODE = '22000',
-            MESSAGE = 'Only players who can invite to this team can add someone from outside it';
+            MESSAGE = 'Only players who can invite to this team can add someone from outside it while it is short of players';
     END IF;
 
-    INSERT INTO tournament_team_invites (tournament_team_id, steam_id, invited_by_player_steam_id)
-        VALUES (NEW.tournament_team_id, NEW.player_steam_id, (_session ->> 'x-hasura-user-id')::bigint);
+    INSERT INTO tournament_team_invites (tournament_team_id, steam_id, invited_by_player_steam_id, joins_team)
+        VALUES (NEW.tournament_team_id, NEW.player_steam_id, (_session ->> 'x-hasura-user-id')::bigint, _joins_team);
 
     RETURN NULL;
 END;

@@ -58,6 +58,11 @@ computed_fields:
         name: can_recruit_tournament_team_player
         schema: public
       session_argument: hasura_session
+  - name: invites_join_team
+    definition:
+      function:
+        name: tournament_team_invites_join_team
+        schema: public
   - name: checked_in
     definition:
       function:
@@ -144,6 +149,7 @@ select_permissions:
         - can_manage
         - can_recruit
         - checked_in
+        - invites_join_team
       filter: {}
       allow_aggregations: true
     comment: ""
