@@ -226,6 +226,54 @@ describe("database page query detail", () => {
     expect(plan.Plan["Actual Rows"]).toBe(2);
   });
 
+  it("lists and analyzes a constant that stood where nothing gives it a type", async () => {
+    const statement = {
+      sql: "SELECT json_build_object('id', id) FROM public.query_detail_probe WHERE id > $1",
+      values: [0],
+      stored:
+        "SELECT json_build_object($2, id) FROM public.query_detail_probe WHERE id > $1",
+    };
+
+    const detail = await detailOf(statement);
+    expect(detail.parameters).toEqual([
+      { __typename: "QueryParameter", number: 1, type: "integer", list: false },
+      { __typename: "QueryParameter", number: 2, type: "text", list: false },
+    ]);
+
+    const analysis = await analysisOf(statement, [
+      { number: 1, values: ["1"] },
+      { number: 2, values: ["id"] },
+    ]);
+    const [plan] = JSON.parse(analysis.explain_plan);
+    expect(plan.Plan["Actual Rows"]).toBe(2);
+  });
+
+  it("runs a squashed IN list next to a constant that stood where nothing gives it a type", async () => {
+    const analysis = await analysisOf(
+      {
+        sql: "SELECT json_build_object('id', id) FROM public.query_detail_probe WHERE id IN (1, 2, 3)",
+        stored:
+          "SELECT json_build_object($1, id) FROM public.query_detail_probe WHERE id IN ($2 /*, ... */)",
+      },
+      [
+        { number: 1, values: ["id"] },
+        { number: 2, values: ["1", "3"] },
+      ],
+    );
+
+    const [plan] = JSON.parse(analysis.explain_plan);
+    expect(plan.Plan["Actual Rows"]).toBe(2);
+  });
+
+  it("asks for the values of a parameterized entry analyzed without any", async () => {
+    await expect(
+      analysisOf({
+        sql: "SELECT id FROM public.query_detail_probe WHERE id > $1",
+        values: [0],
+      }),
+    ).rejects.toThrow("$1 needs a value");
+  });
+
   it("treats a value as data, not SQL", async () => {
     const analysis = await analysisOf(
       {

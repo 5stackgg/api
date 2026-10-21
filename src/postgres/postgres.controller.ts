@@ -324,8 +324,10 @@ export class PostgresController {
       await client.query("SET LOCAL statement_timeout = '25s'");
 
       let statement = row.query;
-      if (values.size > 0) {
-        const types = await this.prepare(client, row.query);
+      const types = /\$\d/.test(row.query)
+        ? await this.prepare(client, row.query)
+        : [];
+      if (types.length > 0) {
         const literals = types.map((_, index) => {
           const [value] = values.get(index + 1) ?? [];
           if (value === undefined) {
@@ -345,7 +347,7 @@ export class PostgresController {
         );
         if (unsquashed !== row.query) {
           await client.query("DEALLOCATE query_detail");
-          await client.query(`PREPARE query_detail AS ${unsquashed}`);
+          await this.prepare(client, unsquashed);
         }
 
         statement = `EXECUTE query_detail(${literals.join(", ")})`;
@@ -389,8 +391,28 @@ export class PostgresController {
     }
   }
 
+  // pg_stat_statements writes constants as parameters too. One that stood
+  // where nothing gives it a type, such as a json_build_object key, was a
+  // string literal that resolved to text, so it is declared text.
   private async prepare(client: PoolClient, sql: string): Promise<string[]> {
-    await client.query(`PREPARE query_detail AS ${sql}`);
+    const declared: Array<string> = [];
+    for (;;) {
+      await client.query("SAVEPOINT query_detail");
+      try {
+        const types = declared.length
+          ? `(${Array.from(declared, (type) => type ?? "unknown").join(", ")})`
+          : "";
+        await client.query(`PREPARE query_detail${types} AS ${sql}`);
+        break;
+      } catch (error) {
+        const [, number] = /\$(\d+)/.exec(error.message) ?? [];
+        if (error.code !== "42P18" || !number || declared[+number - 1]) {
+          throw error;
+        }
+        await client.query("ROLLBACK TO SAVEPOINT query_detail");
+        declared[+number - 1] = "text";
+      }
+    }
     const { rows } = await client.query(
       "SELECT parameter_types::text[] AS types FROM pg_prepared_statements WHERE name = 'query_detail'",
     );
