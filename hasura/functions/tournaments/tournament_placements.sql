@@ -82,7 +82,9 @@ BEGIN
 
     -- Single elimination without a decider: the final orders 1st and 2nd, and
     -- both semifinal losers share 3rd. The standings would split them on round
-    -- ratio, KDR and finally team id, none of which they played for.
+    -- ratio, KDR and finally team id, none of which they played for. Nothing
+    -- until the final has a winner: the semifinal losers alone are a podium
+    -- without a champion, and the standings would crown one the final never did.
     IF EXISTS (
         SELECT 1 FROM public.tournament_stages ts
         WHERE ts.id = _final_stage_id
@@ -108,14 +110,20 @@ BEGIN
               AND tb.path = 'WB'
               AND tb.round IN (fr.round, fr.round - 1)
               AND m.winning_lineup_id IS NOT NULL
+        ),
+        final_match AS (
+            SELECT d.winner, d.loser
+            FROM decided d, final_round fr
+            WHERE d.round = fr.round
+              AND d.match_number = 1
+              AND d.winner IS NOT NULL
         )
-        SELECT 1, d.winner FROM decided d, final_round fr
-         WHERE d.round = fr.round AND d.match_number = 1
+        SELECT 1, f.winner FROM final_match f
         UNION ALL
-        SELECT 2, d.loser FROM decided d, final_round fr
-         WHERE d.round = fr.round AND d.match_number = 1 AND d.loser IS NOT NULL
+        SELECT 2, f.loser FROM final_match f
+         WHERE f.loser IS NOT NULL
         UNION ALL
-        SELECT 3, d.loser FROM decided d, final_round fr
+        SELECT 3, d.loser FROM decided d, final_round fr, final_match f
          WHERE d.round = fr.round - 1 AND d.loser IS NOT NULL
         ORDER BY 1, 2;
         RETURN;
