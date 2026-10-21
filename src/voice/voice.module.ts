@@ -11,7 +11,10 @@ import { MonitorVoiceChannels } from "./jobs/MonitorVoiceChannels";
 import { PostgresModule } from "../postgres/postgres.module";
 import { MediaMtxModule } from "../mediamtx/mediamtx.module";
 import { RedisModule } from "../redis/redis.module";
-import { getQueuesProcessors } from "../utilities/QueueProcessors";
+import {
+  getQueuesProcessors,
+  scheduleJobs,
+} from "../utilities/QueueProcessors";
 import { loggerFactory } from "../utilities/LoggerFactory";
 
 @Module({
@@ -53,14 +56,8 @@ export class VoiceModule {
     // for the same kind of ungraceful drop, and a client that has stopped
     // publishing should disappear from the party in about the time it takes to
     // notice they have gone quiet.
-    void monitorQueue.add(
-      MonitorVoiceChannels.name,
-      {},
-      {
-        repeat: {
-          every: 10_000,
-        },
-      },
-    );
+    void scheduleJobs(monitorQueue, {
+      [MonitorVoiceChannels.name]: { every: 10_000 },
+    });
   }
 }

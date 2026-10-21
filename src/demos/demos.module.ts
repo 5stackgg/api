@@ -15,7 +15,10 @@ import { AuthModule } from "src/auth/auth.module";
 import { HasuraModule } from "src/hasura/hasura.module";
 import { PostgresModule } from "src/postgres/postgres.module";
 import { CacheModule } from "src/cache/cache.module";
-import { getQueuesProcessors } from "src/utilities/QueueProcessors";
+import {
+  getQueuesProcessors,
+  scheduleJobs,
+} from "src/utilities/QueueProcessors";
 import { DemoMetadataService } from "./demo-metadata.service";
 import { DemoParserService } from "./demo-parser.service";
 import { DemoReparseService } from "./demo-reparse.service";
@@ -61,14 +64,8 @@ export class DemosModule {
       return;
     }
 
-    void cleanDemosQueue.add(
-      CleanDemos.name,
-      {},
-      {
-        repeat: {
-          pattern: "0 * * * *",
-        },
-      },
-    );
+    void scheduleJobs(cleanDemosQueue, {
+      [CleanDemos.name]: { pattern: "0 * * * *" },
+    });
   }
 }

@@ -8,7 +8,10 @@ import { CacheModule } from "../cache/cache.module";
 import { PostgresModule } from "../postgres/postgres.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { PluginRuntimeModule } from "../plugin-runtime/plugin-runtime.module";
-import { getQueuesProcessors } from "../utilities/QueueProcessors";
+import {
+  getQueuesProcessors,
+  scheduleJobs,
+} from "../utilities/QueueProcessors";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { GamePluginQueues } from "./enums/GamePluginQueues";
 import { GamePluginsService } from "./game-plugins.service";
@@ -59,16 +62,9 @@ export class GamePluginsModule {
       return;
     }
 
-    void registry.add(
-      SyncGamePluginRegistry.name,
-      {},
-      { repeat: { pattern: "*/30 * * * *" } },
-    );
-
-    void registry.add(
-      CheckGamePluginUpdates.name,
-      {},
-      { repeat: { pattern: "7 * * * *" } },
-    );
+    void scheduleJobs(registry, {
+      [SyncGamePluginRegistry.name]: { pattern: "*/30 * * * *" },
+      [CheckGamePluginUpdates.name]: { pattern: "7 * * * *" },
+    });
   }
 }

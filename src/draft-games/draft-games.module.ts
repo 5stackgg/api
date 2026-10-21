@@ -12,7 +12,10 @@ import { MatchesModule } from "src/matches/matches.module";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { BullBoardModule } from "@bull-board/nestjs";
 import { BullModule } from "@nestjs/bullmq";
-import { getQueuesProcessors } from "src/utilities/QueueProcessors";
+import {
+  getQueuesProcessors,
+  scheduleJobs,
+} from "src/utilities/QueueProcessors";
 import { DraftGameQueues } from "./enums/DraftGameQueues";
 import { DraftGamesController } from "./draft-games.controller";
 import { DraftGameService } from "./draft-game.service";
@@ -56,10 +59,8 @@ export class DraftGamesModule {
       return;
     }
 
-    void queue.add(
-      CleanExpiredDraftGames.name,
-      {},
-      { repeat: { pattern: "* * * * *" } },
-    );
+    void scheduleJobs(queue, {
+      [CleanExpiredDraftGames.name]: { pattern: "* * * * *" },
+    });
   }
 }

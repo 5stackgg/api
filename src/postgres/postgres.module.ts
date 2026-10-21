@@ -7,7 +7,10 @@ import { Queue } from "bullmq";
 import { PostgresQueues } from "./enums/PostgresQueues";
 import { PostgresAnalyzeJob } from "./jobs/PostgresAnalyzeJob";
 import { loggerFactory } from "../utilities/LoggerFactory";
-import { getQueuesProcessors } from "../utilities/QueueProcessors";
+import {
+  getQueuesProcessors,
+  scheduleJobs,
+} from "../utilities/QueueProcessors";
 import { ReindexTables } from "./jobs/ReindexTables";
 import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
 import { RedisModule } from "src/redis/redis.module";
@@ -60,34 +63,10 @@ export class PostgresModule {
       return;
     }
 
-    void queue.add(
-      PostgresAnalyzeJob.name,
-      {},
-      {
-        repeat: {
-          pattern: "0 * * * *",
-        },
-      },
-    );
-
-    void queue.add(
-      ReindexTables.name,
-      {},
-      {
-        repeat: {
-          pattern: "0 0 * * 0",
-        },
-      },
-    );
-
-    void queue.add(
-      GetDatabaseBackups.name,
-      {},
-      {
-        repeat: {
-          pattern: "0 4 * * *",
-        },
-      },
-    );
+    void scheduleJobs(queue, {
+      [PostgresAnalyzeJob.name]: { pattern: "0 * * * *" },
+      [ReindexTables.name]: { pattern: "0 0 * * 0" },
+      [GetDatabaseBackups.name]: { pattern: "0 4 * * *" },
+    });
   }
 }

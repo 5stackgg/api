@@ -6,7 +6,10 @@ import { Queue } from "bullmq";
 import { PostgresModule } from "src/postgres/postgres.module";
 import { RedisModule } from "src/redis/redis.module";
 import { loggerFactory } from "src/utilities/LoggerFactory";
-import { getQueuesProcessors } from "src/utilities/QueueProcessors";
+import {
+  getQueuesProcessors,
+  scheduleJobs,
+} from "src/utilities/QueueProcessors";
 import { ServerRosterQueues } from "./enums/ServerRosterQueues";
 import { ServerRosterService } from "./server-roster.service";
 import { CommunityStatsService } from "./community-stats.service";
@@ -48,24 +51,9 @@ export class ServerRosterModule implements OnModuleInit {
       return;
     }
 
-    void this.queue.add(
-      SweepServerRosters.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
-        },
-      },
-    );
-
-    void this.queue.add(
-      PruneServerPlayerSessions.name,
-      {},
-      {
-        repeat: {
-          pattern: "41 * * * *",
-        },
-      },
-    );
+    void scheduleJobs(this.queue, {
+      [SweepServerRosters.name]: { pattern: "* * * * *" },
+      [PruneServerPlayerSessions.name]: { pattern: "41 * * * *" },
+    });
   }
 }

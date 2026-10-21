@@ -12,7 +12,10 @@ import { BullBoardModule } from "@bull-board/nestjs";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { PingDedicatedServers } from "./jobs/PingDedicatedServers";
 import { Queue } from "bullmq";
-import { getQueuesProcessors } from "src/utilities/QueueProcessors";
+import {
+  getQueuesProcessors,
+  scheduleJobs,
+} from "src/utilities/QueueProcessors";
 import { RconModule } from "src/rcon/rcon.module";
 import { RedisModule } from "src/redis/redis.module";
 import { SystemModule } from "src/system/system.module";
@@ -88,24 +91,12 @@ export class DedicatedServersModule {
       return;
     }
 
-    void queue.add(
-      PingDedicatedServers.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
-        },
-      },
-    );
+    void scheduleJobs(queue, {
+      [PingDedicatedServers.name]: { pattern: "* * * * *" },
+    });
 
-    void maintenanceQueue.add(
-      SweepServerMigrations.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
-        },
-      },
-    );
+    void scheduleJobs(maintenanceQueue, {
+      [SweepServerMigrations.name]: { pattern: "*/10 * * * *" },
+    });
   }
 }

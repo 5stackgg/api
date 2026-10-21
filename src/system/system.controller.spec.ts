@@ -45,6 +45,7 @@ describe("SystemController names", () => {
       {} as any,
       {} as any,
       {} as any,
+      {} as any,
     );
   });
 
@@ -204,6 +205,7 @@ describe("SystemController settings event", () => {
       { updateDemoNetworkLimiters: jest.fn() } as any,
       {} as any,
       { updateChatMessageTTL: jest.fn() } as any,
+      {} as any,
     );
   });
 
@@ -269,5 +271,29 @@ describe("SystemController settings event", () => {
     await changed("public.supports_twitch", "false", "true");
 
     expect(system.syncTwitchSupport).not.toHaveBeenCalled();
+  });
+});
+
+describe("SystemController updates", () => {
+  it("checks versions again from the queue once an update has had time to roll out", async () => {
+    const versionQueue = { add: jest.fn().mockResolvedValue({}) };
+    const system = { updateServices: jest.fn().mockResolvedValue(undefined) };
+
+    await new SystemController(
+      system as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      versionQueue as any,
+    ).updateServices();
+
+    expect(
+      versionQueue.add.mock.calls.map(([name, , opts]) => [name, opts.delay]),
+    ).toEqual([
+      ["CheckSystemUpdateJob", 2 * 60 * 1000],
+      ["CheckSystemUpdateJob", 5 * 60 * 1000],
+    ]);
   });
 });

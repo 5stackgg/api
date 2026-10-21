@@ -400,6 +400,30 @@ describe("GameServerNodeService — CS2 update status", () => {
     expect(statusWrites().at(-1)).toBeNull();
   });
 
+  it("looks again after a k8s error instead of leaving the status frozen", async () => {
+    loggingService.getJob
+      .mockRejectedValueOnce(new Error("503 Service Unavailable"))
+      .mockResolvedValue({
+        metadata: { name: JOB_NAME, uid: "uid-succeeded" },
+        status: { succeeded: 1 },
+      });
+    loggingService.getJobPod.mockResolvedValue(undefined);
+
+    await service.monitorUpdateStatus(NODE_ID);
+
+    expect(postgres.query).not.toHaveBeenCalledWith(
+      expect.stringMatching(/update_failed_at = NULL/),
+      [NODE_ID],
+    );
+
+    await jest.advanceTimersByTimeAsync(15 * 1000);
+
+    expect(postgres.query).toHaveBeenCalledWith(
+      expect.stringMatching(/update_failed_at = NULL,\s+update_error = NULL/),
+      [NODE_ID],
+    );
+  });
+
   it("keeps a succeeded job for its logs and clears a previous failure", async () => {
     loggingService.getJob.mockResolvedValue({
       metadata: { name: JOB_NAME, uid: "uid-succeeded" },

@@ -2,6 +2,7 @@
 // the class names exactly.
 export const UtilityJobs = {
   ReapIdleUtilityPracticeSessions: `ReapIdleUtilityPracticeSessions`,
+  ReconcileUtilitySessions: `ReconcileUtilitySessions`,
   MineUtilityMeta: `MineUtilityMeta`,
   SyncMapCallouts: `SyncMapCallouts`,
   RunUtilityDriftScan: `RunUtilityDriftScan`,

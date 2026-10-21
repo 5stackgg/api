@@ -1,5 +1,5 @@
 import { WorkerHost } from "@nestjs/bullmq";
-import { Job } from "bullmq";
+import { DelayedError, Job } from "bullmq";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { DedicatedServerQueues } from "../enums/DedicatedServerQueues";
 import { DedicatedServerMigrationService } from "../dedicated-server-migration.service";
@@ -13,6 +13,11 @@ export class MigrateDedicatedServer extends WorkerHost {
   }
 
   async process(job: Job<{ migrationId: string }>): Promise<void> {
-    await this.migrations.run(job.data.migrationId);
+    const retryInMs = await this.migrations.run(job.data.migrationId);
+
+    if (retryInMs) {
+      await job.moveToDelayed(Date.now() + retryInMs, job.token);
+      throw new DelayedError();
+    }
   }
 }

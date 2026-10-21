@@ -1,4 +1,6 @@
 import { Controller, Post, Req, Res } from "@nestjs/common";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
 import { Request, Response } from "express";
 import { SystemService } from "./system.service";
 import { HasuraAction } from "src/hasura/hasura.controller";
@@ -16,6 +18,8 @@ import { isRoleAbove } from "src/utilities/isRoleAbove";
 import { PassThrough } from "stream";
 import { ChatService } from "src/chat/chat.service";
 import { SystemSettingName } from "./enums/SystemSettingName";
+import { SystemQueues } from "./enums/SystemQueues";
+import { CheckSystemUpdateJob } from "./jobs/CheckSystemUpdateJob";
 
 @Controller("system")
 export class SystemController {
@@ -26,6 +30,7 @@ export class SystemController {
     private readonly gameServerNodeService: GameServerNodeService,
     private readonly loggingService: LoggingService,
     private readonly chatService: ChatService,
+    @InjectQueue(SystemQueues.Version) private readonly versionQueue: Queue,
   ) {}
 
   @Get("healthz")
@@ -143,6 +148,22 @@ export class SystemController {
   @HasuraAction()
   public async updateServices() {
     await this.system.updateServices();
+
+    // The pod watch re-checks as old pods go, but a plugin's deployment is not
+    // watched. Queued rather than timed in this pod, which the update may well
+    // be replacing.
+    for (const minutes of [2, 5]) {
+      await this.versionQueue.add(
+        CheckSystemUpdateJob.name,
+        {},
+        {
+          jobId: `${CheckSystemUpdateJob.name}.after-update.${minutes}`,
+          delay: minutes * 60 * 1000,
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
+      );
+    }
 
     return {
       success: true,

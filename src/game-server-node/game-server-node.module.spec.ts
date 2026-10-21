@@ -8,6 +8,9 @@ describe("GameServerNodeModule boot", () => {
   const queue = () => ({
     add: jest.fn().mockResolvedValue({}),
     remove: jest.fn().mockResolvedValue(1),
+    upsertJobScheduler: jest.fn().mockResolvedValue({}),
+    getJobSchedulers: jest.fn().mockResolvedValue([]),
+    removeJobScheduler: jest.fn().mockResolvedValue(true),
   });
 
   beforeEach(() => {
@@ -41,8 +44,27 @@ describe("GameServerNodeModule boot", () => {
 
     await expect(module.onApplicationBootstrap()).resolves.toBeUndefined();
     expect(reconcileUpdateStatuses).toHaveBeenCalledTimes(1);
+  });
 
-    jest.advanceTimersByTime(60 * 1000);
-    expect(reconcileUpdateStatuses).toHaveBeenCalledTimes(2);
+  it("reconciles update statuses from the queue, not a timer on every pod", async () => {
+    const reconcileUpdateStatuses = jest.fn().mockResolvedValue(undefined);
+    const updates = queue();
+
+    const module = new GameServerNodeModule(
+      updates as any,
+      { mutation: jest.fn().mockResolvedValue({}) } as any,
+      { reconcileUpdateStatuses } as any,
+      { warn: jest.fn() } as any,
+    );
+
+    await module.onApplicationBootstrap();
+    await jest.advanceTimersByTimeAsync(60 * 60 * 1000);
+
+    expect(reconcileUpdateStatuses).toHaveBeenCalledTimes(1);
+    expect(updates.upsertJobScheduler).toHaveBeenCalledWith(
+      "ReconcileUpdateStatuses",
+      { pattern: "*/10 * * * *" },
+      expect.objectContaining({ name: "ReconcileUpdateStatuses" }),
+    );
   });
 });

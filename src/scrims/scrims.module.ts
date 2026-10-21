@@ -9,7 +9,10 @@ import { PostgresModule } from "../postgres/postgres.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { MatchesModule } from "../matches/matches.module";
 import { loggerFactory } from "../utilities/LoggerFactory";
-import { getQueuesProcessors } from "../utilities/QueueProcessors";
+import {
+  getQueuesProcessors,
+  scheduleJobs,
+} from "../utilities/QueueProcessors";
 import { ScrimQueues } from "./enums/ScrimQueues";
 import { ScrimsService } from "./scrims.service";
 import { ScrimsController } from "./scrims.controller";
@@ -50,24 +53,9 @@ export class ScrimsModule {
       return;
     }
 
-    void scrimMatcherQueue.add(
-      MatchScrims.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
-        },
-      },
-    );
-
-    void scrimMatcherQueue.add(
-      SuggestTeams.name,
-      {},
-      {
-        repeat: {
-          pattern: "0 6 * * *",
-        },
-      },
-    );
+    void scheduleJobs(scrimMatcherQueue, {
+      [MatchScrims.name]: { pattern: "* * * * *" },
+      [SuggestTeams.name]: { pattern: "0 6 * * *" },
+    });
   }
 }

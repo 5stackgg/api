@@ -22,6 +22,7 @@ import MiniSearch from "minisearch";
 import { Queue } from "bullmq";
 import { DiscordBotQueues } from "./enums/DiscordBotQueues";
 import { InjectQueue } from "@nestjs/bullmq";
+import { scheduleJobs } from "../utilities/QueueProcessors";
 import { RemoveArchivedThreads } from "./jobs/RemoveArchivedThreads";
 
 let client: Client;
@@ -151,15 +152,9 @@ export class DiscordBotService {
       return;
     }
 
-    void this.queue.add(
-      RemoveArchivedThreads.name,
-      {},
-      {
-        repeat: {
-          pattern: "0 * * * *",
-        },
-      },
-    );
+    void scheduleJobs(this.queue, {
+      [RemoveArchivedThreads.name]: { pattern: "0 * * * *" },
+    });
 
     const rest = new REST({ version: "10" }).setToken(this.discordConfig.token);
 
