@@ -72,19 +72,22 @@ export class InvitesController {
       Array<{
         steam_id: string;
         team_name: string;
+        joins_team: boolean;
         tournament_name: string;
         tournament_logo: string | null;
         invited_by: string;
       }>
     >(
       `SELECT tti.steam_id::text AS steam_id,
-              tt.name AS team_name,
+              COALESCE(team.name, tt.name) AS team_name,
+              team.id IS NOT NULL AS joins_team,
               tour.name AS tournament_name,
               tour.logo AS tournament_logo,
               COALESCE(p.name, 'Someone') AS invited_by
          FROM public.tournament_team_invites tti
          JOIN public.tournament_teams tt ON tt.id = tti.tournament_team_id
          JOIN public.tournaments tour ON tour.id = tt.tournament_id
+    LEFT JOIN public.teams team ON team.id = tt.team_id
     LEFT JOIN public.players p ON p.steam_id = tti.invited_by_player_steam_id
         WHERE tti.id = $1::uuid`,
       [data.new.id],
@@ -94,10 +97,16 @@ export class InvitesController {
       return;
     }
 
+    const invitedBy = NotificationsService.escapeHtml(invite.invited_by);
+    const team = NotificationsService.escapeHtml(invite.team_name);
+    const tournament = NotificationsService.escapeHtml(invite.tournament_name);
+
     await this.notifyInvited("TournamentTeamInvite", {
       steamIds: [invite.steam_id],
-      title: "Tournament Invite",
-      body: `<b>${NotificationsService.escapeHtml(invite.invited_by)}</b> invited you to play for <b>${NotificationsService.escapeHtml(invite.team_name)}</b> in <b>${NotificationsService.escapeHtml(invite.tournament_name)}</b>.`,
+      title: invite.joins_team ? "Team Invite" : "Tournament Invite",
+      body: invite.joins_team
+        ? `<b>${invitedBy}</b> invited you to join <b>${team}</b> and its lineup for <b>${tournament}</b>.`
+        : `<b>${invitedBy}</b> invited you to play for <b>${team}</b> in <b>${tournament}</b>, a team for this tournament only.`,
       entityId: data.new.id,
       icon: invite.tournament_logo,
     });
@@ -292,6 +301,7 @@ export class InvitesController {
         tournament_team_id: true,
         team: {
           tournament_id: true,
+          team_id: true,
         },
       },
     });
@@ -326,21 +336,54 @@ export class InvitesController {
       throw Error("You are already on a team in this tournament");
     }
 
-    if (!seat) {
+    // An invite onto a team-backed entry is an invite to the team as well.
+    // Both inserts go in one request, which Hasura runs as one transaction, so
+    // a lineup that has filled up does not leave them on the team alone.
+    const teamId = tournament_team_invites_by_pk.team.team_id;
+    const [member] = teamId
+      ? await this.postgres.query<Array<{ team_id: string }>>(
+          `SELECT team_id::text AS team_id
+             FROM team_roster
+            WHERE team_id = $1::uuid AND player_steam_id = $2::bigint`,
+          [teamId, user.steam_id],
+        )
+      : [];
+    const joinTeam = !!teamId && !member;
+
+    if (!seat || joinTeam) {
       try {
         await this.hasura.mutation({
-          insert_tournament_team_roster_one: {
-            __args: {
-              object: {
-                role: "Member",
-                tournament_id: tournament_team_invites_by_pk.team.tournament_id,
-                tournament_team_id:
-                  tournament_team_invites_by_pk.tournament_team_id,
-                player_steam_id: user.steam_id,
-              },
-            },
-            __typename: true,
-          },
+          ...(joinTeam
+            ? {
+                insert_team_roster_one: {
+                  __args: {
+                    object: {
+                      role: "Member",
+                      team_id: teamId,
+                      player_steam_id: user.steam_id,
+                    },
+                  },
+                  __typename: true,
+                },
+              }
+            : {}),
+          ...(!seat
+            ? {
+                insert_tournament_team_roster_one: {
+                  __args: {
+                    object: {
+                      role: "Member",
+                      tournament_id:
+                        tournament_team_invites_by_pk.team.tournament_id,
+                      tournament_team_id:
+                        tournament_team_invites_by_pk.tournament_team_id,
+                      player_steam_id: user.steam_id,
+                    },
+                  },
+                  __typename: true,
+                },
+              }
+            : {}),
         });
       } catch (error) {
         // Two accepts racing past the seat check above.

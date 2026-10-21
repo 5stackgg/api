@@ -146,20 +146,14 @@ BEGIN
         END IF;
 
         _invite := true;
-    -- A team-backed roster takes a player with no invite at all, so somebody
-    -- from outside the team is a force-add rather than a lineup pick.
+    -- A team member is a lineup pick. Anyone else joins a team-backed entry by
+    -- invite, and accepting it puts them on the team as well
+    -- (acceptTournamentTeamInvite); only an organizer places them outright.
     ELSIF NOT EXISTS (
         SELECT 1 FROM team_roster tr
         WHERE tr.team_id = _team.team_id AND tr.player_steam_id = NEW.player_steam_id
     ) THEN
-        -- A free agent signed up to be drafted, not to be put on whichever team
-        -- picks them, so a captain's force-add becomes an invite they answer.
-        _invite := NOT _organizer AND EXISTS (
-            SELECT 1 FROM tournament_free_agents fa
-            WHERE fa.tournament_id = NEW.tournament_id
-              AND fa.player_steam_id = NEW.player_steam_id
-              AND fa.status IN ('registered', 'waitlisted')
-        );
+        _invite := NOT _organizer;
 
         IF NOT _invite THEN
             PERFORM public.assert_session_not_blocked(NEW.player_steam_id, 'tournament_organizer');

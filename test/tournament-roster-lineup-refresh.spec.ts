@@ -221,6 +221,16 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
         ),
     );
 
+  // A captain picks a team-backed entry's lineup from the team; anyone else
+  // they add becomes an invite.
+  const joinTeam = (team: { id: string; owner: string }, steamId: string) =>
+    runAsUser(postgres, team.owner, "admin", (query) =>
+      query(
+        "INSERT INTO team_roster (team_id, player_steam_id) VALUES ($1, $2)",
+        [team.id, steamId],
+      ),
+    );
+
   const addToRoster = async (cup: Cup, steamId?: string, edit: Edit = {}) => {
     const player = steamId ?? (await fx.player());
     await runAsUser(
@@ -609,6 +619,7 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
       actor: cup.team1.owner,
       role: "user",
     });
+    await joinTeam(cup.team2, mover);
     await addToRoster(cup, mover, {
       team: cup.tt2,
       actor: cup.team2.owner,
@@ -658,6 +669,7 @@ describe("tournament roster edits reach unstarted matches (SQL-driven)", () => {
     const opponent = await seated(cup.lineup2);
     const own = await seated(cup.lineup1);
 
+    await joinTeam(cup.team1, standIn);
     await addToRoster(cup, standIn, { actor: cup.team1.owner, role: "user" });
 
     expect(await roster(cup.tt1)).toContain(standIn);
