@@ -271,9 +271,11 @@ BEGIN
     END IF;
 
     IF _activated THEN
+        PERFORM set_config('fivestack.league_roster_mirror', 'true', true);
         INSERT INTO public.tournament_team_roster (tournament_team_id, player_steam_id, tournament_id, role)
         VALUES (_tournament_team_id, NEW.player_steam_id, _tournament_id, 'Member')
         ON CONFLICT DO NOTHING;
+        PERFORM set_config('fivestack.league_roster_mirror', 'false', true);
     ELSE
         DELETE FROM public.tournament_team_roster
         WHERE tournament_team_id = _tournament_team_id

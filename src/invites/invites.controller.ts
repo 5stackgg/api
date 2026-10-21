@@ -338,17 +338,34 @@ export class InvitesController {
 
     // An invite onto a team-backed entry is an invite to the team as well.
     // Both inserts go in one request, which Hasura runs as one transaction, so
-    // a lineup that has filled up does not leave them on the team alone.
+    // a lineup that has filled up does not leave them on the team alone. The
+    // team half needs an inviter who can still invite to the team: invites sent
+    // before that was required, or by someone who has since lost the right,
+    // only seat the player.
     const teamId = tournament_team_invites_by_pk.team.team_id;
-    const [member] = teamId
-      ? await this.postgres.query<Array<{ team_id: string }>>(
-          `SELECT team_id::text AS team_id
-             FROM team_roster
-            WHERE team_id = $1::uuid AND player_steam_id = $2::bigint`,
-          [teamId, user.steam_id],
+    const [team] = teamId
+      ? await this.postgres.query<
+          Array<{ member: boolean; inviter_can_invite: boolean }>
+        >(
+          `SELECT EXISTS (
+                      SELECT 1 FROM team_roster tr
+                       WHERE tr.team_id = t.id AND tr.player_steam_id = $2::bigint
+                  ) AS member,
+                  public.can_invite_to_team(
+                      t,
+                      json_build_object(
+                          'x-hasura-role', 'user',
+                          'x-hasura-user-id', tti.invited_by_player_steam_id::text
+                      )
+                  ) AS inviter_can_invite
+             FROM tournament_team_invites tti
+             JOIN tournament_teams tt ON tt.id = tti.tournament_team_id
+             JOIN teams t ON t.id = tt.team_id
+            WHERE tti.id = $1::uuid`,
+          [invite_id, user.steam_id],
         )
       : [];
-    const joinTeam = !!teamId && !member;
+    const joinTeam = !!team && !team.member && team.inviter_can_invite;
 
     if (!seat || joinTeam) {
       try {

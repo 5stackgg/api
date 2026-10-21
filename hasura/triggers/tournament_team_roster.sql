@@ -149,12 +149,15 @@ BEGIN
     -- A team member is a lineup pick. Anyone else joins a team-backed entry by
     -- invite, and accepting it puts them on the team as well
     -- (acceptTournamentTeamInvite), so only someone who may invite to the team
-    -- can send it. An organizer places them outright.
+    -- can send it. An organizer places them outright, and so do the league
+    -- roster mirror (its own triggers already let outsiders in) and an
+    -- internal write with no role, whose _organizer is NULL.
     ELSIF NOT EXISTS (
         SELECT 1 FROM team_roster tr
         WHERE tr.team_id = _team.team_id AND tr.player_steam_id = NEW.player_steam_id
     ) THEN
-        _invite := NOT _organizer;
+        _invite := COALESCE(NOT _organizer, false)
+            AND current_setting('fivestack.league_roster_mirror', true) IS DISTINCT FROM 'true';
 
         IF NOT _invite THEN
             PERFORM public.assert_session_not_blocked(NEW.player_steam_id, 'tournament_organizer');

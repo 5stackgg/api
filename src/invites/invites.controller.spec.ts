@@ -14,7 +14,7 @@ describe("InvitesController accepting a tournament team invite", () => {
   };
 
   let seat: Array<{ tournament_team_id: string }>;
-  let member: Array<{ team_id: string }>;
+  let team: Array<{ member: boolean; inviter_can_invite: boolean }>;
 
   const controller = () =>
     new InvitesController(
@@ -37,7 +37,7 @@ describe("InvitesController accepting a tournament team invite", () => {
   beforeEach(() => {
     jest.resetAllMocks();
     seat = [];
-    member = [];
+    team = [{ member: false, inviter_can_invite: true }];
     hasura.query.mockResolvedValue({
       tournament_team_invites_by_pk: {
         steam_id: player.steam_id,
@@ -47,7 +47,7 @@ describe("InvitesController accepting a tournament team invite", () => {
     });
     hasura.mutation.mockResolvedValue({});
     postgres.query.mockImplementation(async (sql: string) =>
-      sql.includes("FROM team_roster") ? member : seat,
+      sql.includes("can_invite_to_team") ? team : seat,
     );
   });
 
@@ -115,7 +115,7 @@ describe("InvitesController accepting a tournament team invite", () => {
 
   it("only seats a player who is already on the entry's team", async () => {
     backedByTeam();
-    member = [{ team_id: "team-1" }];
+    team = [{ member: true, inviter_can_invite: true }];
 
     await expect(accept()).resolves.toEqual({ success: true });
 
@@ -131,6 +131,16 @@ describe("InvitesController accepting a tournament team invite", () => {
 
     expect(mutated("insert_team_roster_one")).toBe(true);
     expect(mutated("insert_tournament_team_roster_one")).toBe(false);
+  });
+
+  it("only seats the player when the inviter can no longer invite to the team", async () => {
+    backedByTeam();
+    team = [{ member: false, inviter_can_invite: false }];
+
+    await expect(accept()).resolves.toEqual({ success: true });
+
+    expect(mutated("insert_team_roster_one")).toBe(false);
+    expect(mutated("insert_tournament_team_roster_one")).toBe(true);
   });
 
   it("keeps a player off the team when the lineup cannot take them", async () => {

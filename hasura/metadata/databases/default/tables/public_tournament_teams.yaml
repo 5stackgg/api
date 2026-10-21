@@ -52,6 +52,12 @@ computed_fields:
         name: can_manage_tournament_team
         schema: public
       session_argument: hasura_session
+  - name: can_recruit
+    definition:
+      function:
+        name: can_recruit_tournament_team_player
+        schema: public
+      session_argument: hasura_session
   - name: checked_in
     definition:
       function:
@@ -136,6 +142,7 @@ select_permissions:
         - tournament_id
       computed_fields:
         - can_manage
+        - can_recruit
         - checked_in
       filter: {}
       allow_aggregations: true
