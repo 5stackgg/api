@@ -47,8 +47,7 @@ AS $$
 DECLARE
     _steam_id bigint := nullif(hasura_session ->> 'x-hasura-user-id', '')::bigint;
 BEGIN
-    IF hasura_session ->> 'x-hasura-role'
-        IN ('admin', 'administrator', 'moderator') THEN
+    IF public.is_above_role('moderator', hasura_session) THEN
         RETURN true;
     END IF;
 
@@ -86,8 +85,7 @@ AS $$
 DECLARE
     _steam_id bigint := nullif(hasura_session ->> 'x-hasura-user-id', '')::bigint;
 BEGIN
-    IF hasura_session ->> 'x-hasura-role'
-        IN ('admin', 'administrator', 'moderator') THEN
+    IF public.is_above_role('moderator', hasura_session) THEN
         RETURN true;
     END IF;
 

@@ -29,6 +29,16 @@ array_relationships:
           name: utility_practice_invites
           schema: public
 computed_fields:
+  - name: connected_players
+    definition:
+      function:
+        name: utility_practice_connected_players
+        schema: public
+  - name: max_players
+    definition:
+      function:
+        name: utility_practice_max_players
+        schema: public
   - name: can_view
     definition:
       function:
@@ -81,9 +91,12 @@ select_permissions:
         - empty_since
         - expires_at
         - failure_reason
+        - is_render
         - created_at
         - updated_at
       computed_fields:
+        - connected_players
+        - max_players
         - can_view
         - can_manage
         - is_member
@@ -117,9 +130,12 @@ select_permissions:
         - empty_since
         - expires_at
         - failure_reason
+        - is_render
         - created_at
         - updated_at
       computed_fields:
+        - connected_players
+        - max_players
         - can_view
         - can_manage
         - is_member

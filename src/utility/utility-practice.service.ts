@@ -530,7 +530,7 @@ export class UtilityPracticeService {
 
     if (
       session.host_steam_id !== user.steam_id &&
-      !isRoleAbove(user.role, "administrator")
+      !isRoleAbove(user.role, "moderator")
     ) {
       throw Error("only the host can stop this practice session");
     }

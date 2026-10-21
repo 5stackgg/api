@@ -4,6 +4,7 @@ import { UtilityPlaybooksService } from "./../src/utility/utility-playbooks.serv
 import { UtilityPracticeService } from "./../src/utility/utility-practice.service";
 import { UtilityLoadService } from "./../src/utility/utility-load.service";
 import { Fixtures } from "./utils/fixtures";
+import { HasuraPermissions } from "./utils/hasura-permissions";
 import {
   bootMigratedDb,
   seedRegionWithServer,
@@ -937,6 +938,83 @@ describe("utility practice sessions (SQL-driven)", () => {
           session_id: sessionId,
         }),
       ).rejects.toThrow(/stopping the session/);
+    });
+  });
+
+  // The staff list's Stop and the panel's both land here. Every role from
+  // moderator up is shown Stop on somebody else's server, so every one of them
+  // has to be let through.
+  describe("stopping", () => {
+    async function liveSession(): Promise<{ host: string; sessionId: string }> {
+      const host = await fx.player();
+      const { matchId } = await createPracticeMatch(host);
+      const sessionId = await insertSession(host, {
+        match_id: matchId,
+        status: "Ready",
+      });
+      return { host, sessionId };
+    }
+
+    async function status(sessionId: string): Promise<string> {
+      const [row] = await postgres.query<Array<{ status: string }>>(
+        "SELECT status FROM utility_practice_sessions WHERE id = $1",
+        [sessionId],
+      );
+      return row.status;
+    }
+
+    it.each([
+      "moderator",
+      "match_organizer",
+      "tournament_organizer",
+      "administrator",
+    ])("lets a %s stop somebody else's server", async (role) => {
+      const { sessionId } = await liveSession();
+      const staff = await fx.player(undefined, role);
+      const updateMatchStatus = jest.fn(async (): Promise<void> => undefined);
+      const service = makeService({ matchAssistant: { updateMatchStatus } });
+
+      await expect(
+        service.stop({ steam_id: staff, role } as never, {
+          session_id: sessionId,
+        }),
+      ).resolves.toEqual({ success: true });
+
+      expect(await status(sessionId)).toBe("Ended");
+      expect(updateMatchStatus).toHaveBeenCalledWith(
+        expect.any(String),
+        "Canceled",
+      );
+    });
+
+    it.each(["user", "verified_user", "streamer"])(
+      "refuses a %s who is not the host",
+      async (role) => {
+        const { sessionId } = await liveSession();
+        const other = await fx.player(undefined, role);
+        const service = makeService({});
+
+        await expect(
+          service.stop({ steam_id: other, role } as never, {
+            session_id: sessionId,
+          }),
+        ).rejects.toThrow(/only the host/);
+
+        expect(await status(sessionId)).toBe("Ready");
+      },
+    );
+
+    it("lets the host stop their own server", async () => {
+      const { host, sessionId } = await liveSession();
+      const service = makeService({});
+
+      await expect(
+        service.stop({ steam_id: host, role: "user" } as never, {
+          session_id: sessionId,
+        }),
+      ).resolves.toEqual({ success: true });
+
+      expect(await status(sessionId)).toBe("Ended");
     });
   });
 
@@ -2100,6 +2178,230 @@ describe("utility practice sessions (SQL-driven)", () => {
 
       expect(await member(host)).toBe(true);
       expect(await member(stranger)).toBe(false);
+    });
+  });
+
+  // connected_players is the column the plugin's occupancy report writes and the
+  // reaper's idle clock reads, so what a viewer is shown is what decides when
+  // an empty server is shut down. max_players is what join refuses at.
+  describe("players on the server", () => {
+    const viewer = (userId: string, role = "user") => ({ role, userId });
+
+    async function sessionsAs(
+      as: { role: string; userId: string },
+      where: Record<string, unknown> = {},
+    ): Promise<
+      Array<{
+        id: string;
+        connected_players: number;
+        max_players: number | null;
+      }>
+    > {
+      const params: Array<unknown> = [];
+      const sql = await new HasuraPermissions(postgres).select(
+        "utility_practice_sessions",
+        "s",
+        as,
+        { fields: ["id", "connected_players", "max_players"], where },
+        params,
+      );
+      return await postgres.query(
+        `${sql} ORDER BY s.created_at`,
+        params as Array<string>,
+      );
+    }
+
+    async function liveSession(
+      overrides: Record<string, unknown> = {},
+    ): Promise<{ host: string; lineupId: string; sessionId: string }> {
+      const host = await fx.player();
+      const { matchId, lineupId } = await createPracticeMatch(host);
+      const sessionId = await insertSession(host, {
+        match_id: matchId,
+        status: "Ready",
+        ...overrides,
+      });
+      return { host, lineupId, sessionId };
+    }
+
+    async function connect(lineupId: string, steamIds: Array<string>) {
+      await postgres.query(
+        `UPDATE match_lineup_players
+            SET is_connected = true
+          WHERE match_lineup_id = $1::uuid
+            AND steam_id = ANY ($2::bigint[])`,
+        [lineupId, steamIds],
+      );
+    }
+
+    async function seated(lineupId: string, count: number) {
+      const steamIds: Array<string> = [];
+      for (let i = 0; i < count; i++) {
+        steamIds.push(await fx.lineupPlayer(lineupId));
+      }
+      return steamIds;
+    }
+
+    it("counts nobody before anyone has connected", async () => {
+      const { host, lineupId, sessionId } = await liveSession();
+      await seated(lineupId, 2);
+
+      expect(await sessionsAs(viewer(host))).toEqual([
+        {
+          id: sessionId,
+          connected_players: 0,
+          max_players: 5 + UtilityPracticeService.SUBSTITUTES,
+        },
+      ]);
+    });
+
+    it("counts the players connected, not the ones who joined", async () => {
+      const { host, lineupId, sessionId } = await liveSession();
+      const [first] = await seated(lineupId, 3);
+      await connect(lineupId, [host, first]);
+
+      expect(await sessionsAs(viewer(host))).toEqual([
+        { id: sessionId, connected_players: 2, max_players: 10 },
+      ]);
+    });
+
+    it("reads full once every seat the match holds is connected", async () => {
+      const { host, lineupId, sessionId } = await liveSession();
+      const guests = await seated(lineupId, 9);
+      await connect(lineupId, [host, ...guests]);
+
+      expect(await sessionsAs(viewer(host))).toEqual([
+        { id: sessionId, connected_players: 10, max_players: 10 },
+      ]);
+    });
+
+    it("takes the maximum from the match it runs on", async () => {
+      const { host, sessionId } = await liveSession();
+      await postgres.query(
+        `UPDATE match_options mo
+            SET number_of_substitutes = 2
+           FROM matches m, utility_practice_sessions s
+          WHERE s.id = $1 AND m.id = s.match_id AND mo.id = m.match_options_id`,
+        [sessionId],
+      );
+
+      expect(await sessionsAs(viewer(host))).toEqual([
+        { id: sessionId, connected_players: 0, max_players: 7 },
+      ]);
+    });
+
+    it("has nobody on and no size before there is a server", async () => {
+      const host = await fx.player();
+      const sessionId = await insertSession(host);
+
+      expect(await sessionsAs(viewer(host))).toEqual([
+        { id: sessionId, connected_players: 0, max_players: null },
+      ]);
+    });
+
+    it("gives the counts to everyone who can see the session", async () => {
+      const { host, lineupId, sessionId } = await liveSession();
+      const [member] = await seated(lineupId, 1);
+      await connect(lineupId, [host, member]);
+      const invited = await fx.player();
+      await postgres.query(
+        `INSERT INTO utility_practice_invites
+           (utility_practice_session_id, steam_id, invited_by_steam_id)
+         VALUES ($1, $2, $3)`,
+        [sessionId, invited, host],
+      );
+      const moderator = await fx.player(undefined, "moderator");
+      const administrator = await fx.player(undefined, "administrator");
+      const counts = [{ id: sessionId, connected_players: 2, max_players: 10 }];
+
+      expect(await sessionsAs(viewer(host))).toEqual(counts);
+      expect(await sessionsAs(viewer(member))).toEqual(counts);
+      expect(await sessionsAs(viewer(invited))).toEqual(counts);
+      expect(await sessionsAs(viewer(moderator, "moderator"))).toEqual(counts);
+      expect(await sessionsAs(viewer(administrator, "administrator"))).toEqual(
+        counts,
+      );
+    });
+
+    it("gives an open session's counts to any signed-in player", async () => {
+      const { host, lineupId, sessionId } = await liveSession({
+        is_open: true,
+        access: "Open",
+      });
+      await connect(lineupId, [host]);
+      const stranger = await fx.player();
+
+      expect(await sessionsAs(viewer(stranger))).toEqual([
+        { id: sessionId, connected_players: 1, max_players: 10 },
+      ]);
+    });
+
+    it("tells a stranger nothing about a session they cannot see", async () => {
+      const { host, lineupId } = await liveSession();
+      await connect(lineupId, [host]);
+      const stranger = await fx.player();
+
+      expect(await sessionsAs(viewer(stranger))).toEqual([]);
+    });
+  });
+
+  // Render and discovery pods book practice sessions too, but nobody is on
+  // them and stopping one wastes a render halfway through, so the staff list
+  // asks for is_render = false. It has to be a filter the staff roles may
+  // write, not a column only administrators can name.
+  describe("the staff list of running servers", () => {
+    const live = {
+      status: { _in: ["Starting", "Ready"] },
+      is_render: { _eq: false },
+    };
+
+    async function listAs(role: string): Promise<Array<string>> {
+      const userId = await fx.player(undefined, role);
+      const params: Array<unknown> = [];
+      const sql = await new HasuraPermissions(postgres).select(
+        "utility_practice_sessions",
+        "s",
+        { role, userId },
+        { fields: ["id", "connected_players", "max_players"], where: live },
+        params,
+      );
+      const rows = await postgres.query<Array<{ id: string }>>(
+        `${sql} ORDER BY s.created_at`,
+        params as Array<string>,
+      );
+      return rows.map(({ id }) => id);
+    }
+
+    it.each([
+      "moderator",
+      "match_organizer",
+      "tournament_organizer",
+      "administrator",
+    ])("lists every live server but the pods for a %s", async (role) => {
+      const ready = await insertSession(await fx.player(), { status: "Ready" });
+      const starting = await insertSession(await fx.player(), {
+        status: "Starting",
+        access: "Private",
+      });
+      await insertSession(await fx.player(), { status: "Ended" });
+      await postgres.query(
+        `INSERT INTO utility_practice_sessions (map_name, is_render, status, access)
+           VALUES ('de_mirage', true, 'Ready', 'Private'),
+                  ('de_mirage', true, 'Starting', 'Private')`,
+      );
+      await postgres.query(
+        `INSERT INTO utility_practice_sessions
+             (map_name, is_render, is_discovery, status, access)
+           VALUES ('de_mirage', true, true, 'Ready', 'Private')`,
+      );
+
+      expect(await listAs(role)).toEqual([ready, starting]);
+    });
+
+    it("is not a way for a player to list other people's servers", async () => {
+      await insertSession(await fx.player(), { status: "Ready" });
+
+      expect(await listAs("user")).toEqual([]);
     });
   });
 
