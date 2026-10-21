@@ -401,79 +401,22 @@ describe("SystemService.syncHasura", () => {
   const repo = "ghcr.io/5stackgg/api";
   const old = "sha256:0ld";
   const latest = "sha256:1a7";
-  const originalPodName = process.env.POD_NAME;
   const originalDev = process.env.DEV;
 
-  let hasura: { needsSetup: jest.Mock };
-  let cache: { acquireLock: jest.Mock; releaseLock: jest.Mock };
   let system: SystemService;
   let restart: jest.SpyInstance;
-  let hasuraInit: string;
-  let hasuraStarted: Date | undefined;
-  let deployment: Record<string, unknown>;
-
-  const apiStarted = new Date("2026-10-21T12:00:00Z");
-
-  const pod = (
-    name: string,
-    app: string,
-    imageID: string,
-    startedAt: Date | undefined,
-    init = false,
-    phase = "Running",
-  ) => ({
-    metadata: { name, labels: { app } },
-    spec: {
-      nodeName: "node-1",
-      ...(init
-        ? {
-            initContainers: [{ image: `${repo}:latest` }],
-            containers: [{ image: "hasura/graphql-engine:v2.50.3" }],
-          }
-        : { containers: [{ image: `${repo}:latest` }] }),
-    },
-    status: init
-      ? {
-          phase,
-          initContainerStatuses: [
-            {
-              imageID,
-              state: startedAt ? { terminated: { startedAt } } : {},
-            },
-          ],
-        }
-      : {
-          phase,
-          containerStatuses: [{ imageID, state: { running: { startedAt } } }],
-        },
-  });
-
-  let pods: () => unknown[];
+  let pods: Array<{ app: string; imageID: string }>;
 
   beforeEach(() => {
     delete process.env.DEV;
-    process.env.POD_NAME = "api-5c8d";
-    hasuraInit = `${repo}@${old}`;
-    hasuraStarted = new Date("2026-10-14T09:30:00Z");
-    deployment = {
-      metadata: { generation: 4 },
-      spec: { replicas: 1 },
-      status: {
-        observedGeneration: 4,
-        replicas: 1,
-        updatedReplicas: 1,
-        availableReplicas: 1,
-      },
-    };
+    pods = [
+      { app: "api", imageID: `${repo}@${latest}` },
+      { app: "hasura", imageID: `${repo}@${old}` },
+    ];
 
-    hasura = { needsSetup: jest.fn().mockResolvedValue(true) };
-    cache = {
-      acquireLock: jest.fn().mockResolvedValue("token"),
-      releaseLock: jest.fn().mockResolvedValue(true),
-    };
     system = new SystemService(
-      cache as any,
-      hasura as any,
+      {} as any,
+      {} as any,
       {} as any,
       { warn: jest.fn(), log: jest.fn() } as any,
       {} as any,
@@ -484,131 +427,85 @@ describe("SystemService.syncHasura", () => {
         items: [
           {
             metadata: { name: "node-1" },
-            status: {
-              conditions: [{ type: "Ready", status: "True" }],
-            },
+            status: { conditions: [{ type: "Ready", status: "True" }] },
           },
         ],
       })),
-      listNamespacedPod: jest.fn(async () => ({ items: pods() })),
+      listNamespacedPod: jest.fn(async () => ({
+        items: pods.map(({ app, imageID }, index) => ({
+          metadata: { name: `${app}-${index}`, labels: { app } },
+          spec: {
+            nodeName: "node-1",
+            [app === "hasura" ? "initContainers" : "containers"]: [
+              { image: `${repo}:latest` },
+            ],
+          },
+          status: {
+            [app === "hasura" ? "initContainerStatuses" : "containerStatuses"]:
+              [{ imageID }],
+          },
+        })),
+      })),
     };
-    (system as any).appsClient = {
-      readNamespacedDeployment: jest.fn(async () => deployment),
-    };
-
-    pods = () => [
-      pod("api-5c8d", "api", `${repo}@${latest}`, apiStarted),
-      pod("hasura-7f6b", "hasura", hasuraInit, hasuraStarted, true),
-    ];
 
     restart = jest.spyOn(system, "restartDeployment").mockResolvedValue();
+    jest.spyOn(system, "getLatestDigest").mockResolvedValue(latest);
   });
 
   afterEach(() => {
-    for (const [name, value] of [
-      ["POD_NAME", originalPodName],
-      ["DEV", originalDev],
-    ]) {
-      if (value === undefined) {
-        delete process.env[name];
-      } else {
-        process.env[name] = value;
-      }
+    if (originalDev === undefined) {
+      delete process.env.DEV;
+    } else {
+      process.env.DEV = originalDev;
     }
   });
 
-  const restarted = () => restart.mock.calls.map(([name]) => name);
-
-  // The api container restarted on its own and re-pulled :latest, but hasura's
-  // pod -- whose init container is what migrates -- was never replaced.
-  it("restarts hasura when the api runs a build hasura never migrated", async () => {
+  // The api container restarted on its own and re-pulled :latest, but the
+  // hasura pod -- whose init container migrates -- was never replaced.
+  it("restarts hasura when the api is on the latest build and hasura is not", async () => {
     await system.syncHasura();
 
-    expect(restarted()).toEqual(["hasura"]);
+    expect(restart).toHaveBeenCalledWith("hasura");
   });
 
-  // The node dropped the image hasura's init container ran, so its pod reports
-  // a bare image id and the update check never lists hasura at all.
-  it("restarts hasura when its pod no longer reports a digest", async () => {
-    hasuraInit = "sha256:5e1f";
+  it("leaves hasura alone once it runs the latest build", async () => {
+    pods[1].imageID = `${repo}@${latest}`;
 
     await system.syncHasura();
 
-    expect(restarted()).toEqual(["hasura"]);
+    expect(restart).not.toHaveBeenCalled();
   });
 
-  // The ReplicaSet never deletes a pod kubelet rejected after a reboot, and its
-  // init container never started.
-  it("ignores a hasura pod that will never run again", async () => {
-    const current = pods;
-    pods = () => [
-      ...current(),
-      pod("hasura-2c4e", "hasura", "", undefined, true, "Failed"),
-    ];
+  // An Update restarts both; the new hasura pod is the one migrating.
+  it("leaves a hasura rollout alone while its new pod migrates", async () => {
+    pods.push({ app: "hasura", imageID: `${repo}@${latest}` });
 
     await system.syncHasura();
 
-    expect(restarted()).toEqual(["hasura"]);
+    expect(restart).not.toHaveBeenCalled();
   });
 
-  it("leaves it to a check that is already running", async () => {
-    cache.acquireLock.mockResolvedValue(null);
+  it("leaves a hasura rollout alone while its new pod pulls", async () => {
+    pods.push({ app: "hasura", imageID: "" });
 
     await system.syncHasura();
 
-    expect(hasura.needsSetup).not.toHaveBeenCalled();
-    expect(restarted()).toEqual([]);
+    expect(restart).not.toHaveBeenCalled();
   });
 
-  it("leaves hasura alone when the schema matches this build", async () => {
-    hasura.needsSetup.mockResolvedValue(false);
+  it("waits for the api itself to be on the latest build", async () => {
+    pods.push({ app: "api", imageID: `${repo}@${old}` });
 
     await system.syncHasura();
 
-    expect(restarted()).toEqual([]);
+    expect(restart).not.toHaveBeenCalled();
   });
 
-  // Hasura pulled :latest after this api did, so the schema is ahead of the
-  // api. Restarting hasura would only pull that newer build again -- and this
-  // is also the state every restart leaves behind, so it never repeats.
-  it("leaves hasura alone once it has migrated since this api started", async () => {
-    hasuraStarted = new Date("2026-10-21T12:05:00Z");
+  it("does nothing when the registry cannot be read", async () => {
+    jest.spyOn(system, "getLatestDigest").mockResolvedValue(null);
 
     await system.syncHasura();
 
-    expect(restarted()).toEqual([]);
-  });
-
-  it("does not restart hasura over a build it already ran", async () => {
-    hasuraInit = `${repo}@${latest}`;
-
-    await system.syncHasura();
-
-    expect(restarted()).toEqual([]);
-  });
-
-  // Restarting mid-rollout would kill an init container part way through a
-  // migration, and every api boot during an Update lands in this window.
-  it("does not interrupt a hasura rollout that is still going", async () => {
-    deployment.status = {
-      observedGeneration: 5,
-      replicas: 2,
-      updatedReplicas: 1,
-      availableReplicas: 1,
-    };
-    deployment.metadata = { generation: 5 };
-
-    await system.syncHasura();
-
-    expect(restarted()).toEqual([]);
-  });
-
-  it("never throws when the cluster cannot be read", async () => {
-    (system as any).apiClient.listNamespacedPod = jest.fn(async () => {
-      throw new Error("forbidden");
-    });
-
-    await expect(system.syncHasura()).resolves.toBeUndefined();
-    expect(restarted()).toEqual([]);
+    expect(restart).not.toHaveBeenCalled();
   });
 });
