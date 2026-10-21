@@ -708,7 +708,13 @@ export class ChatService implements OnApplicationBootstrap {
       return;
     }
 
-    const userData = await this.addUserToLobby(type, id, user, false);
+    const userData = await this.addUserToLobby(
+      type,
+      id,
+      user,
+      false,
+      access === "read",
+    );
 
     const [added, count] = await this.addSession(
       type,
@@ -872,6 +878,7 @@ export class ChatService implements OnApplicationBootstrap {
               is_organizer: true,
               is_in_lineup: true,
               status: true,
+              source: true,
             },
           },
           user.steam_id,
@@ -891,9 +898,10 @@ export class ChatService implements OnApplicationBootstrap {
         ) {
           // Staff may follow a match being played, but never write into it:
           // Match Chat is relayed into the game server.
-          return ChatService.MATCH_CHAT_READER_STATUSES.includes(
-            matches_by_pk.status,
-          ) &&
+          return matches_by_pk.source !== "practice" &&
+            ChatService.MATCH_CHAT_READER_STATUSES.includes(
+              matches_by_pk.status,
+            ) &&
             isRoleAbove(
               await this.hasuraService.getPlayerRole(String(user.steam_id)),
               "moderator",
@@ -4286,20 +4294,24 @@ export class ChatService implements OnApplicationBootstrap {
     return new Set(await this.getLobbyMemberSteamIds(type, id));
   }
 
-  // Whoever joined as staff and no longer is gets judged again in full, since a
-  // lineup or organizer seat may still hold them. They are left out of this
-  // delivery, never out of the room: the role cache is cleared by an event
-  // that can arrive late.
+  // Whoever joined as staff, or was let in only to read, and is no longer staff
+  // gets judged again in full, since a lineup or organizer seat may still hold
+  // them. The read grant is kept apart from the saved role: that role is the
+  // database's, while the grant went by the role cache. They are left out of
+  // this delivery, never out of the room: the role cache is cleared by an
+  // event that can arrive late.
   private async matchRoomAudience(
     id: string,
     present: Array<{
       steamId: string;
       inGame?: boolean;
+      reader?: boolean;
       user?: Partial<User>;
     }>,
   ): Promise<Set<string> | null> {
     const staff = present.filter(
-      ({ inGame, user }) => !inGame && isRoleAbove(user?.role, "moderator"),
+      ({ inGame, reader, user }) =>
+        !inGame && (reader || isRoleAbove(user?.role, "moderator")),
     );
 
     if (staff.length === 0) {
@@ -4560,6 +4572,7 @@ export class ChatService implements OnApplicationBootstrap {
     id: string,
     user: User,
     game: boolean,
+    reader = false,
   ) {
     let userData = await this.getUserData(type, id, user.steam_id);
 
@@ -4571,6 +4584,10 @@ export class ChatService implements OnApplicationBootstrap {
 
     if (game) {
       userData.inGame = true;
+    }
+
+    if (reader) {
+      userData.reader = true;
     }
 
     await this.setUserData(type, id, user.steam_id, userData);

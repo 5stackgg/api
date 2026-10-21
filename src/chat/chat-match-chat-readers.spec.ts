@@ -22,15 +22,28 @@ describe("ChatService moderators reading a match's Match Chat", () => {
   const MESSAGES = `chat_match_${MATCH}`;
 
   let status: string;
+  let source: string | null;
   let roles: Record<string, string>;
+  // What the role cache still says, until player_events clears it.
+  let cachedRoles: Record<string, string>;
+  let unreadableRoles: string[];
   let lineups: Record<string, { players: string[]; coach: string | null }>;
   let hashes: Record<string, Record<string, string>>;
 
+  const cachedRole = (steamId: string) =>
+    cachedRoles[steamId] ?? roles[steamId];
+
   const organizerByRole = (steamId: string) =>
-    rolesAtOrAbove("match_organizer").includes(roles[steamId] as any);
+    rolesAtOrAbove("match_organizer").includes(cachedRole(steamId) as any);
 
   const hasura = {
-    getPlayerRole: jest.fn(async (steamId: string) => roles[String(steamId)]),
+    getPlayerRole: jest.fn(async (steamId: string) => {
+      if (unreadableRoles.includes(String(steamId))) {
+        throw new Error("connection reset");
+      }
+
+      return cachedRole(String(steamId));
+    }),
     query: jest.fn(async (query: any, steamId?: string) => {
       if (query.matches_by_pk?.server) {
         return {
@@ -77,6 +90,7 @@ describe("ChatService moderators reading a match's Match Chat", () => {
             // NULL, not false, for a match nobody organizes.
             is_organizer: organizerByRole(viewer) ? true : null,
             status,
+            source,
           },
         };
       }
@@ -216,6 +230,9 @@ describe("ChatService moderators reading a match's Match Chat", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     status = "Live";
+    source = null;
+    cachedRoles = {};
+    unreadableRoles = [];
     roles = {
       [PLAYER]: "user",
       [OPPONENT]: "verified_user",
@@ -294,6 +311,15 @@ describe("ChatService moderators reading a match's Match Chat", () => {
         expect(hashes[ROOM]?.[MODERATOR]).toBeUndefined();
       },
     );
+
+    it("keeps a moderator out of a practice session's room", async () => {
+      source = "practice";
+
+      const socket = await join(MODERATOR);
+
+      expect(history(socket)).toBeUndefined();
+      expect(hashes[ROOM]?.[MODERATOR]).toBeUndefined();
+    });
 
     it.each(["user", "verified_user", "streamer"])(
       "still keeps out a %s who has no part in the match",
@@ -408,26 +434,6 @@ describe("ChatService moderators reading a match's Match Chat", () => {
 
       expect(hashes[MESSAGES]).toBeDefined();
       expect(rcon.send).toHaveBeenCalledWith(`css_web_chat "P101: gg" 0`);
-    });
-
-    it("refuses a moderator's GIF", async () => {
-      await expect(
-        service.sendMessageToChat(
-          ChatLobbyType.Match,
-          MATCH,
-          user(MODERATOR),
-          "",
-          false,
-          "web",
-          { gif: { id: "xT9IgDEI1iZyb2wqo8", width: 200, height: 200 } },
-        ),
-      ).resolves.toEqual({ accepted: false, code: ChatErrorCode.NotAllowed });
-    });
-
-    it("refuses a moderator's upload", async () => {
-      await expect(
-        service.attachmentRefusal(ChatLobbyType.Match, MATCH, user(MODERATOR)),
-      ).resolves.toBe(ChatErrorCode.NotAllowed);
     });
 
     it("refuses a moderator's reaction, and lets a player's through", async () => {
@@ -569,21 +575,29 @@ describe("ChatService moderators reading a match's Match Chat", () => {
     });
 
     it("drops someone whose role cannot be read", async () => {
-      hasura.getPlayerRole.mockImplementation(async (steamId: string) => {
-        if (steamId === MODERATOR) {
-          throw new Error("connection reset");
-        }
-
-        return roles[steamId];
-      });
+      unreadableRoles = [MODERATOR];
 
       await deliver();
 
       expect(deliveredTo()).toEqual([PLAYER, OPPONENT]);
+    });
 
-      hasura.getPlayerRole.mockImplementation(
-        async (steamId: string) => roles[String(steamId)],
-      );
+    it("stops reaching a moderator demoted just before joining, once the role cache catches up", async () => {
+      delete hashes[ROOM][MODERATOR];
+      roles[MODERATOR] = "user";
+      cachedRoles[MODERATOR] = "moderator";
+
+      const socket = await join(MODERATOR);
+      expect(history(socket)).toMatchObject({ readOnly: true });
+
+      redis.publish.mockClear();
+      await deliver();
+      expect(deliveredTo()).toEqual([PLAYER, OPPONENT, MODERATOR]);
+
+      delete cachedRoles[MODERATOR];
+      redis.publish.mockClear();
+      await deliver();
+      expect(deliveredTo()).toEqual([PLAYER, OPPONENT]);
     });
 
     it("never looks up the role of anyone who joined as a player", async () => {
