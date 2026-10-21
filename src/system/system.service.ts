@@ -811,8 +811,9 @@ export class SystemService {
     for (const setting of settings) {
       switch (setting.name) {
         case SystemSettingName.PublicDefaultModels:
-          await this.postgres.query(
-            `ALTER TABLE "public"."match_options" ALTER COLUMN "default_models" SET DEFAULT ${setting.value === "true" ? true : false}`,
+          await this.setMatchOptionsDefault(
+            "default_models",
+            setting.value === "true" ? "true" : "false",
           );
           break;
         case SystemSettingName.VetoPickTimeout: {
@@ -827,8 +828,9 @@ export class SystemService {
             break;
           }
 
-          await this.postgres.query(
-            `ALTER TABLE "public"."match_options" ALTER COLUMN "veto_pick_timeout" SET DEFAULT ${vetoPickTimeout}`,
+          await this.setMatchOptionsDefault(
+            "veto_pick_timeout",
+            String(vetoPickTimeout),
           );
           break;
         }
@@ -836,5 +838,32 @@ export class SystemService {
           break;
       }
     }
+  }
+
+  // Runs on every settings write, and an ALTER waiting on a lock queues every
+  // reader of match_options behind it. So it only runs when the default is
+  // changing, and gives up quickly instead of waiting out the statement timeout.
+  private async setMatchOptionsDefault(
+    column: "default_models" | "veto_pick_timeout",
+    value: string,
+  ) {
+    const [current] = await this.postgres.query<
+      Array<{ column_default: string | null }>
+    >(
+      `SELECT column_default FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'match_options' AND column_name = $1`,
+      [column],
+    );
+
+    if (current?.column_default === value) {
+      return;
+    }
+
+    await this.postgres.transaction(async (client) => {
+      await client.query("SET LOCAL lock_timeout = '5s'");
+      await client.query(
+        `ALTER TABLE "public"."match_options" ALTER COLUMN "${column}" SET DEFAULT ${value}`,
+      );
+    });
   }
 }

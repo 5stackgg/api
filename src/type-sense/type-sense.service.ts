@@ -258,8 +258,7 @@ export class TypeSenseService {
       // Typesense returns fields fully populated with its defaults, so compare
       // against those defaults (not the raw literal) to avoid a perpetual diff
       // that would drop/re-add fields and trigger a full reindex on every boot.
-      const sortChanged =
-        Boolean(existing.sort) !== this.expectedSort(field);
+      const sortChanged = Boolean(existing.sort) !== this.expectedSort(field);
       const indexChanged =
         Boolean(existing.index) !== this.expectedIndex(field);
       const typeChanged = existing.type !== field.type;
@@ -581,8 +580,10 @@ export class TypeSenseService {
       },
     });
 
+    // Deleting a player fires this once per row that cascades away with them,
+    // and the player_events DELETE is what takes them out of the index.
     if (!player) {
-      throw Error("unable to find player");
+      return;
     }
 
     const { match_lineup_players } = await this.hasura.query({
@@ -700,6 +701,12 @@ export class TypeSenseService {
   }
 
   public async removePlayer(steamId: string) {
-    await this.client.collections("players").documents(steamId).delete();
+    try {
+      await this.client.collections("players").documents(steamId).delete();
+    } catch (error) {
+      if ((error as { httpStatus?: number })?.httpStatus !== 404) {
+        throw error;
+      }
+    }
   }
 }
