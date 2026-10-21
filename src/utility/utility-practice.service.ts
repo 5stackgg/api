@@ -1449,17 +1449,7 @@ export class UtilityPracticeService {
             WHERE i.utility_practice_session_id = $1::uuid AND i.steam_id = $2::bigint
          )
          OR public.is_utility_team_member($3::uuid, $2::bigint)
-         OR (
-           $5::boolean
-           AND EXISTS (
-             SELECT 1 FROM public.friends f
-              WHERE f.status = 'Accepted'
-                AND (
-                  (f.player_steam_id = $4::bigint AND f.other_player_steam_id = $2::bigint)
-                  OR (f.other_player_steam_id = $4::bigint AND f.player_steam_id = $2::bigint)
-                )
-           )
-         )
+         OR ($5::boolean AND public.are_friends($4::bigint, $2::bigint))
        ) AS allowed`,
       [session.id, steamId, session.team_id, session.host_steam_id, friends],
     );
