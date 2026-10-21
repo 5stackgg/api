@@ -109,6 +109,55 @@ describe("team-backed tournament entries take outsiders by invite (SQL-driven)",
     expect(await invites(entry)).toEqual([outsider]);
   });
 
+  const addMate = async (teamId: string, owner: string, role = "Member") => {
+    const mate = await fx.player();
+    await runAsUser(postgres, owner, "admin", async (query) => {
+      await query(
+        "INSERT INTO team_roster (team_id, player_steam_id) VALUES ($1, $2)",
+        [teamId, mate],
+      );
+      await query(
+        "UPDATE team_roster SET role = $3 WHERE team_id = $1 AND player_steam_id = $2",
+        [teamId, mate, role],
+      );
+    });
+    return mate;
+  };
+
+  it("refuses an outsider from a team captain who cannot invite to the team", async () => {
+    const { tournament, team, entry } = await enterTeam();
+    const captain = await addMate(team.id, team.owner);
+    await runAsUser(postgres, team.owner, "admin", (query) =>
+      query("UPDATE teams SET captain_steam_id = $2 WHERE id = $1", [
+        team.id,
+        captain,
+      ]),
+    );
+    const outsider = await fx.player();
+
+    await expect(
+      addToLineup(captain, "user", tournament.id, entry, outsider),
+    ).rejects.toThrow(/can invite to this team/);
+
+    expect(await invites(entry)).toEqual([]);
+  });
+
+  it("lets a team member with invite rights bring in an outsider", async () => {
+    const { tournament, team, entry } = await enterTeam();
+    const recruiter = await addMate(team.id, team.owner, "Invite");
+    await runAsUser(postgres, team.owner, "admin", (query) =>
+      query("UPDATE teams SET captain_steam_id = $2 WHERE id = $1", [
+        team.id,
+        recruiter,
+      ]),
+    );
+    const outsider = await fx.player();
+
+    await addToLineup(recruiter, "user", tournament.id, entry, outsider);
+
+    expect(await invites(entry)).toEqual([outsider]);
+  });
+
   it("still puts a team member straight onto the lineup", async () => {
     const { tournament, team, entry } = await enterTeam();
     const mate = await fx.player();

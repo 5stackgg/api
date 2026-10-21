@@ -148,7 +148,8 @@ BEGIN
         _invite := true;
     -- A team member is a lineup pick. Anyone else joins a team-backed entry by
     -- invite, and accepting it puts them on the team as well
-    -- (acceptTournamentTeamInvite); only an organizer places them outright.
+    -- (acceptTournamentTeamInvite), so only someone who may invite to the team
+    -- can send it. An organizer places them outright.
     ELSIF NOT EXISTS (
         SELECT 1 FROM team_roster tr
         WHERE tr.team_id = _team.team_id AND tr.player_steam_id = NEW.player_steam_id
@@ -170,6 +171,15 @@ BEGIN
        OR NOT (_organizer OR public.can_manage_tournament_team(_team, _session)) THEN
         RAISE EXCEPTION USING ERRCODE = '22000',
             MESSAGE = 'You cannot add players to this team';
+    END IF;
+
+    IF _team.team_id IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM teams t
+        WHERE t.id = _team.team_id
+          AND public.can_invite_to_team(t, _session)
+    ) THEN
+        RAISE EXCEPTION USING ERRCODE = '22000',
+            MESSAGE = 'Only players who can invite to this team can add someone from outside it';
     END IF;
 
     INSERT INTO tournament_team_invites (tournament_team_id, steam_id, invited_by_player_steam_id)
