@@ -74,6 +74,20 @@ export class MatchRecoveryController {
     return await this.recovery.extendVetoClock(data.match_id, data.seconds);
   }
 
+  @HasuraAction()
+  public async extendMatchAutoCancel(data: {
+    match_id: string;
+    minutes: number;
+    user: User;
+  }) {
+    await this.requireOrganizer(data.match_id, data.user);
+
+    return await this.recovery.extendMatchAutoCancel(
+      data.match_id,
+      data.minutes,
+    );
+  }
+
   private async requireOrganizer(matchId: string, user: User) {
     if (!(await this.matchAssistant.isOrganizer(matchId, user))) {
       throw Error("you are not a match organizer");
