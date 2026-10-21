@@ -42,12 +42,19 @@ import { PluginCvarsService } from "../game-plugins/plugin-cvars.service";
 import { MapAssetsService } from "../map-assets/map-assets.service";
 import { User } from "../auth/types/User";
 import { timingSafeStringEqual } from "../utilities/timingSafeStringEqual";
+import { Redis } from "ioredis";
+import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
+import { DedicatedServersService } from "../dedicated-servers/dedicated-servers.service";
 
 @Controller("game-server-node")
 export class GameServerNodeController {
   private appConfig: AppConfig;
   private diskWarningCooldowns = new Map<string, number>();
   private static DISK_WARNING_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
+
+  private static readonly MAX_REPORTED_PLAYERS = 128;
+
+  private readonly redis: Redis;
 
   constructor(
     protected readonly logger: Logger,
@@ -70,8 +77,10 @@ export class GameServerNodeController {
     private readonly validateGamedataQueue: Queue,
     protected readonly mapAssets: MapAssetsService,
     protected readonly pluginCvars: PluginCvarsService,
+    redisManager: RedisManagerService,
   ) {
     this.appConfig = this.config.get<AppConfig>("app");
+    this.redis = redisManager.getConnection();
   }
 
   @EventPattern(`ping`)
@@ -1018,6 +1027,29 @@ UNIT
             );
           });
       }
+    }
+
+    // Plugins from before the count never send it, and keep the RCON ping.
+    // mapName is the level loaded, where map can be a workshop id.
+    const { mapName } = request.query;
+    const players = Number(request.query.players);
+    if (
+      server.is_dedicated &&
+      typeof mapName === "string" &&
+      mapName.length > 0 &&
+      request.query.players !== undefined &&
+      Number.isInteger(players) &&
+      players >= 0 &&
+      players <= GameServerNodeController.MAX_REPORTED_PLAYERS
+    ) {
+      await DedicatedServersService.recordPluginReport(
+        this.redis,
+        String(serverId),
+        {
+          players,
+          map: mapName,
+        },
+      );
     }
 
     const jobId = `server-offline.${serverId}`;

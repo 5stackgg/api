@@ -4,6 +4,8 @@ import { GameServerNodeService } from "./../src/game-server-node/game-server-nod
 import { GameServerNodeController } from "./../src/game-server-node/game-server-node.controller";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 
+const redis = {};
+
 // "Accepting new matches" used to live only in status, which the offline job
 // overwrites with Offline: a node told to stop taking matches came back from any
 // outage taking them again, and toggling a node that was down marked it Online.
@@ -107,6 +109,7 @@ describe("node scheduling across an outage (SQL-driven)", () => {
       {} as never,
       {} as never,
       {} as never,
+      { getConnection: () => redis } as never,
     );
   });
 

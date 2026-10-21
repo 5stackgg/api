@@ -9,6 +9,8 @@ describe("PingDedicatedServers", () => {
   let dedicatedServers: {
     pingDedicatedServer: jest.Mock;
     expectRestart: jest.Mock;
+    pluginReportedServers: jest.Mock;
+    refreshPluginCvars: jest.Mock;
   };
   let job: PingDedicatedServers;
 
@@ -20,6 +22,8 @@ describe("PingDedicatedServers", () => {
     dedicatedServers = {
       pingDedicatedServer: jest.fn().mockResolvedValue(undefined),
       expectRestart: jest.fn().mockResolvedValue(undefined),
+      pluginReportedServers: jest.fn().mockResolvedValue(new Set()),
+      refreshPluginCvars: jest.fn().mockResolvedValue(undefined),
     };
     job = new PingDedicatedServers(hasura as any, dedicatedServers as any);
   });
@@ -57,6 +61,26 @@ describe("PingDedicatedServers", () => {
       }),
     );
     expect(dedicatedServers.expectRestart).toHaveBeenCalledWith("server-1");
+  });
+
+  it("leaves a server alone whose plugin reports its own players", async () => {
+    servers = [
+      { id: "server-1", game_server_node: { status: "Online" } },
+      { id: "server-2", game_server_node: null },
+    ];
+    dedicatedServers.pluginReportedServers.mockResolvedValue(
+      new Set(["server-1"]),
+    );
+
+    await job.process();
+
+    expect(dedicatedServers.pingDedicatedServer).toHaveBeenCalledTimes(1);
+    expect(dedicatedServers.pingDedicatedServer).toHaveBeenCalledWith(
+      "server-2",
+    );
+    expect(dedicatedServers.refreshPluginCvars).toHaveBeenCalledWith(
+      "server-1",
+    );
   });
 
   it("pings an external server", async () => {

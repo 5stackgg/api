@@ -4,6 +4,10 @@ import { Test } from "@nestjs/testing";
 import request from "supertest";
 import { HasuraService } from "../hasura/hasura.service";
 import { GameServerNodeController } from "./game-server-node.controller";
+import { DedicatedServersService } from "../dedicated-servers/dedicated-servers.service";
+import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
+
+const redis = {};
 
 describe("GameServerNodeController ping disk alerts", () => {
   let gameServerNodeService: { updateStatus: jest.Mock };
@@ -38,6 +42,7 @@ describe("GameServerNodeController ping disk alerts", () => {
       queue as any,
       {} as any,
       {} as any,
+      { getConnection: () => redis } as any,
     );
   });
 
@@ -132,6 +137,7 @@ describe("GameServerNodeController server ping hibernation", () => {
       queue as any,
       {} as any,
       {} as any,
+      { getConnection: () => redis } as any,
     );
   });
 
@@ -203,6 +209,45 @@ describe("GameServerNodeController server ping hibernation", () => {
 
     expect(hasura.mutation).toHaveBeenCalledWith(setsHibernating(false));
   });
+
+  describe("player counts", () => {
+    let reported: jest.SpyInstance;
+
+    beforeEach(() => {
+      hasura.query.mockResolvedValue({ servers_by_pk: server(false) });
+      reported = jest
+        .spyOn(DedicatedServersService, "recordPluginReport")
+        .mockResolvedValue(undefined);
+    });
+
+    afterEach(() => {
+      reported.mockRestore();
+    });
+
+    it("takes a dedicated server's own player count and level, so RCON can leave it alone", async () => {
+      await ping({ players: "7", mapName: "de_overpass_v2" });
+
+      expect(reported).toHaveBeenCalledWith(redis, "server-1", {
+        players: 7,
+        map: "de_overpass_v2",
+      });
+    });
+
+    it("leaves a plugin that sends no count to the RCON ping", async () => {
+      await ping({});
+
+      expect(reported).not.toHaveBeenCalled();
+    });
+
+    it.each(["-1", "1.5", "lots", "9999"])(
+      "ignores %s as a player count",
+      async (players) => {
+        await ping({ players, mapName: "de_overpass" });
+
+        expect(reported).not.toHaveBeenCalled();
+      },
+    );
+  });
 });
 
 // Asked over HTTP, because the status a refusal turns into is the thing under
@@ -238,6 +283,9 @@ describe("GameServerNodeController setup script", () => {
         }
         if (token === Logger) {
           return { warn: jest.fn(), log: jest.fn(), error: jest.fn() };
+        }
+        if (token === RedisManagerService) {
+          return { getConnection: () => redis };
         }
         return {};
       })
