@@ -663,7 +663,11 @@ describe("awards (SQL-driven)", () => {
         [awardId, t.id, seat.tournament_team_id, seat.player_steam_id],
       );
 
-      await postgres.query("SELECT calculate_tournament_awards($1)", [t.id]);
+      const returned = await postgres.query<Array<{ source: string }>>(
+        "SELECT source FROM recalculate_tournament_awards($1)",
+        [t.id],
+      );
+      expect(returned.filter((row) => row.source === "manual")).toHaveLength(1);
 
       const [counts] = await postgres.query<
         Array<{ calculated: string; manual: string }>
