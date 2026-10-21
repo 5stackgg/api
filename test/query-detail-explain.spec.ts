@@ -248,6 +248,23 @@ describe("database page query detail", () => {
     expect(plan.Plan["Actual Rows"]).toBe(2);
   });
 
+  it("runs a squashed IN list next to a constant that stood where nothing gives it a type", async () => {
+    const analysis = await analysisOf(
+      {
+        sql: "SELECT json_build_object('id', id) FROM public.query_detail_probe WHERE id IN (1, 2, 3)",
+        stored:
+          "SELECT json_build_object($1, id) FROM public.query_detail_probe WHERE id IN ($2 /*, ... */)",
+      },
+      [
+        { number: 1, values: ["id"] },
+        { number: 2, values: ["1", "3"] },
+      ],
+    );
+
+    const [plan] = JSON.parse(analysis.explain_plan);
+    expect(plan.Plan["Actual Rows"]).toBe(2);
+  });
+
   it("asks for the values of a parameterized entry analyzed without any", async () => {
     await expect(
       analysisOf({
