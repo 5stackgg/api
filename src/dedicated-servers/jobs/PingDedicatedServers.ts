@@ -40,8 +40,19 @@ export class PingDedicatedServers extends WorkerHost {
       },
     });
 
+    const reported = await this.dedicatedServersService.pluginReportedServers(
+      servers.map(({ id }) => id),
+    );
+
     await Promise.all(
       servers.map(async (server) => {
+        // RCON status on every server every minute is real load on the game
+        // server. Its plugin already reports that it is up, with its players.
+        if (reported.has(server.id)) {
+          await this.dedicatedServersService.refreshPluginCvars(server.id);
+          return;
+        }
+
         if (server.game_server_node?.status === "Offline") {
           await this.hasura.mutation({
             update_servers_by_pk: {

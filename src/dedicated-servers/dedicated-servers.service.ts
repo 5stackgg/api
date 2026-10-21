@@ -45,6 +45,16 @@ export class DedicatedServersService {
 
   private static readonly UNREACHABLE_KEY = "dedicated-servers:unreachable";
 
+  private static readonly STATS_KEY = "dedicated-servers:stats";
+
+  // A server whose plugin reports its own players is left out of the RCON ping
+  // for as long as the reports keep coming: the plugin ping already says it is
+  // up, and MarkDedicatedServerOffline says when it is not. One whose plugin
+  // goes quiet while the server stays up drops back to being pinged.
+  private static readonly PLUGIN_REPORTED_KEY =
+    "dedicated-servers:plugin-reported";
+  private static readonly PLUGIN_REPORT_TTL_SECONDS = 60;
+
   public static readonly ACTIVE_MIGRATION_STATUSES = [
     "Queued",
     "Stopping",
@@ -681,7 +691,7 @@ export class DedicatedServersService {
         throw error;
       }
     } finally {
-      await this.redis.hdel("dedicated-servers:stats", serverId);
+      await this.redis.hdel(DedicatedServersService.STATS_KEY, serverId);
       await this.redis.hdel(DedicatedServersService.UNREACHABLE_KEY, serverId);
 
       await this.hasura.mutation({
@@ -1046,6 +1056,61 @@ export class DedicatedServersService {
     return players;
   }
 
+  public static async recordPluginReport(
+    redis: Redis,
+    serverId: string,
+    report: { players: number; map: string },
+  ): Promise<void> {
+    await redis.hset(
+      DedicatedServersService.STATS_KEY,
+      serverId,
+      JSON.stringify({
+        clients_human: report.players,
+        map: report.map,
+        last_ping: new Date().toISOString(),
+      }),
+    );
+    await redis.expire(DedicatedServersService.STATS_KEY, 120);
+
+    // One command: a field set without its expiry would keep the server off
+    // the RCON ping for good.
+    await redis.call(
+      "HSETEX",
+      DedicatedServersService.PLUGIN_REPORTED_KEY,
+      "EX",
+      DedicatedServersService.PLUGIN_REPORT_TTL_SECONDS,
+      "FIELDS",
+      1,
+      serverId,
+      "1",
+    );
+
+    await redis.hdel(DedicatedServersService.UNREACHABLE_KEY, serverId);
+  }
+
+  public async pluginReportedServers(
+    serverIds: Array<string>,
+  ): Promise<Set<string>> {
+    if (serverIds.length === 0) {
+      return new Set();
+    }
+
+    const reported = await this.redis.hmget(
+      DedicatedServersService.PLUGIN_REPORTED_KEY,
+      ...serverIds,
+    );
+
+    return new Set(serverIds.filter((_, index) => reported[index] !== null));
+  }
+
+  // All the RCON ping still has to do for a server its plugin reports on: retry
+  // reading the cvars of a plugin that had none to read last time. It only
+  // opens RCON while one is still pending.
+  public async refreshPluginCvars(serverId: string): Promise<void> {
+    await this.readPluginCvars(serverId, false);
+    await this.RconService.disconnect(serverId);
+  }
+
   public async pingDedicatedServer(serverId: string): Promise<void> {
     const { servers_by_pk: server } = await this.hasura.query({
       servers_by_pk: {
@@ -1103,7 +1168,7 @@ export class DedicatedServersService {
     const { clients_human, map } = statusInfo;
 
     await this.redis.hset(
-      "dedicated-servers:stats",
+      DedicatedServersService.STATS_KEY,
       serverId,
       JSON.stringify({
         clients_human,
@@ -1112,7 +1177,7 @@ export class DedicatedServersService {
       }),
     );
 
-    await this.redis.expire("dedicated-servers:stats", 120);
+    await this.redis.expire(DedicatedServersService.STATS_KEY, 120);
 
     // Not connected before this ping means it just came up, possibly with a
     // different plugin set than the last time it was asked.
@@ -1235,7 +1300,7 @@ export class DedicatedServersService {
   > {
     try {
       const allServerData =
-        (await this.redis.hgetall("dedicated-servers:stats")) ?? {};
+        (await this.redis.hgetall(DedicatedServersService.STATS_KEY)) ?? {};
 
       // The Player Management roster is pushed within a second of a join or
       // leave, so it wins over the minute-old RCON count whenever it exists.
