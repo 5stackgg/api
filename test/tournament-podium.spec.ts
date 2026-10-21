@@ -260,4 +260,103 @@ describe("tournament podium (SQL-driven)", () => {
     expect(await podium(t.id)).toEqual([]);
     expect(await placementMedals(t.id)).toEqual([]);
   });
+
+  describe("double elimination", () => {
+    const DE4 = [
+      { type: "DoubleElimination", order: 1, minTeams: 4, maxTeams: 4 },
+    ];
+
+    const grandFinal = async (stageId: string) => {
+      const [bracket] = await postgres.query<
+        Array<{
+          id: string;
+          match_id: string | null;
+          team_1: string | null;
+          team_2: string | null;
+          bye: boolean;
+        }>
+      >(
+        `SELECT id, match_id, tournament_team_id_1 AS team_1,
+                tournament_team_id_2 AS team_2, bye
+           FROM tournament_brackets
+          WHERE tournament_stage_id = $1 AND path = 'WB'
+          ORDER BY round DESC, match_number
+          LIMIT 1`,
+        [stageId],
+      );
+      return bracket;
+    };
+
+    const playToGrandFinal = async (stageId: string) => {
+      const { id } = await grandFinal(stageId);
+      for (;;) {
+        const open = await postgres.query<Array<{ match_id: string }>>(
+          `SELECT match_id FROM tournament_brackets
+            WHERE tournament_stage_id = $1 AND id <> $2
+              AND match_id IS NOT NULL AND finished = false
+            ORDER BY round, match_number`,
+          [stageId, id],
+        );
+        if (open.length === 0) {
+          return;
+        }
+        for (const bracket of open) {
+          await tfx.winMatch(bracket.match_id);
+        }
+      }
+    };
+
+    it("has no podium and hands out no medals when it finished before its grand final", async () => {
+      const t = await tfx.launch(DE4, 4);
+      await playToGrandFinal(t.stageIds[0]);
+      expect((await grandFinal(t.stageIds[0])).match_id).not.toBeNull();
+      await tfx.setStatus(t.id, t.organizer, "Finished");
+
+      expect(await podium(t.id)).toEqual([]);
+      expect(await placementMedals(t.id)).toEqual([]);
+    });
+
+    it("puts the grand final's winner first once it is played", async () => {
+      const t = await tfx.launch(DE4, 4);
+      await playToGrandFinal(t.stageIds[0]);
+      const final = await grandFinal(t.stageIds[0]);
+      await tfx.winMatch(final.match_id!, "lineup_2_id");
+      expect(await tfx.tournamentStatus(t.id)).toBe("Finished");
+
+      const steps = (await podium(t.id))!;
+
+      expect(steps.map((step) => step.placement)).toEqual([1, 2, 3]);
+      expect(steps.slice(0, 2).map((step) => step.tournament_team_id)).toEqual([
+        final.team_2,
+        final.team_1,
+      ]);
+      expect(await placementMedals(t.id)).toEqual(
+        steps.map(({ placement, tournament_team_id }) => ({
+          placement,
+          tournament_team_id,
+        })),
+      );
+    });
+
+    it("counts a grand final its lone finalist reached by a bye", async () => {
+      const t = await tfx.launch(
+        [
+          { type: "RoundRobin", order: 1, minTeams: 4, maxTeams: 4 },
+          { type: "DoubleElimination", order: 2, minTeams: 2, maxTeams: 2 },
+        ],
+        4,
+      );
+      await tfx.playStage(t.stageIds[0]);
+      await playToGrandFinal(t.stageIds[1]);
+      expect(await tfx.tournamentStatus(t.id)).toBe("Finished");
+
+      const final = await grandFinal(t.stageIds[1]);
+      expect(final.bye).toBe(true);
+
+      const steps = (await podium(t.id))!;
+
+      expect(steps.map((step) => step.placement)).toEqual([1, 2]);
+      expect(steps[0].tournament_team_id).toBe(final.team_1 ?? final.team_2);
+    });
+  });
 });
