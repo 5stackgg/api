@@ -121,6 +121,33 @@ BEGIN
         RETURN;
     END IF;
 
+    -- Double elimination is decided by its grand final, the last WB round:
+    -- before it is won, the standings would crown whichever finalist has more
+    -- wins. A grand final with one finalist and no feeder left (no losers
+    -- bracket to send the other) is finished as a bye, which decides it too.
+    IF EXISTS (
+        SELECT 1 FROM public.tournament_stages ts
+        WHERE ts.id = _final_stage_id
+          AND ts.type = 'DoubleElimination'
+    ) AND NOT EXISTS (
+        SELECT 1
+        FROM public.tournament_brackets gf
+        LEFT JOIN public.matches m ON m.id = gf.match_id
+        WHERE gf.tournament_stage_id = _final_stage_id
+          AND gf.path = 'WB'
+          AND gf.round = (
+              SELECT MAX(round) FROM public.tournament_brackets
+              WHERE tournament_stage_id = _final_stage_id AND path = 'WB'
+          )
+          AND (
+              m.winning_lineup_id IS NOT NULL
+              OR (gf.bye AND gf.finished
+                  AND COALESCE(gf.tournament_team_id_1, gf.tournament_team_id_2) IS NOT NULL)
+          )
+    ) THEN
+        RETURN;
+    END IF;
+
     -- Otherwise v_team_stage_results orders the field (DE by elimination round,
     -- RR/Swiss by wins-based tiebreakers).
     RETURN QUERY

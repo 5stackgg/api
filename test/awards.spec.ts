@@ -661,6 +661,42 @@ describe("awards (SQL-driven)", () => {
       expect(Number(counts.calculated)).toBeGreaterThan(0);
       expect(Number(counts.manual)).toBe(1);
     });
+
+    it("hands out no medals and no mvp when a double elimination finished before its grand final", async () => {
+      const t = await tfx.launch(
+        [{ type: "DoubleElimination", order: 1, minTeams: 4, maxTeams: 4 }],
+        4,
+      );
+      const stageId = t.stageIds[0];
+      const [grandFinal] = await postgres.query<Array<{ id: string }>>(
+        `SELECT id FROM tournament_brackets
+          WHERE tournament_stage_id = $1 AND path = 'WB'
+          ORDER BY round DESC LIMIT 1`,
+        [stageId],
+      );
+      for (;;) {
+        const open = (await tfx.getBrackets(stageId)).filter(
+          (bracket) =>
+            bracket.id !== grandFinal.id &&
+            bracket.match_id &&
+            !bracket.finished,
+        );
+        if (open.length === 0) {
+          break;
+        }
+        for (const bracket of open) {
+          await tfx.winMatch(bracket.match_id!);
+        }
+      }
+      await tfx.setStatus(t.id, t.organizer, "Finished");
+
+      const placements = await postgres.query<Array<{ placement: number }>>(
+        `SELECT DISTINCT placement FROM award_recipients
+          WHERE tournament_id = $1 AND source = 'tournament'`,
+        [t.id],
+      );
+      expect(placements).toEqual([]);
+    });
   });
 
   describe("medal leaderboard", () => {
