@@ -322,6 +322,36 @@ export class SystemService {
     }
   }
 
+  // Hasura's init container is what runs migrations, and only when the hasura
+  // pod is replaced. The api re-pulls :latest whenever its container restarts,
+  // so it can end up on a newer build than hasura migrated.
+  public async syncHasura() {
+    if (process.env.DEV) {
+      return;
+    }
+
+    const services = await this.getServices();
+    const api = services.filter(({ service }) => service === "api");
+    const hasura = services.filter(({ service }) => service === "hasura");
+    const latest = await this.getLatestDigest(api.at(0)?.image);
+
+    if (
+      !latest ||
+      hasura.length === 0 ||
+      !api.every(({ versions }) => versions.includes(latest)) ||
+      // A pod with no digest yet is still pulling: a rollout is under way.
+      hasura.some(
+        ({ version, versions }) => !version || versions.includes(latest),
+      )
+    ) {
+      return;
+    }
+
+    this.logger.warn(`hasura is behind api ${latest}, restarting it`);
+
+    await this.restartDeployment("hasura");
+  }
+
   public async restartService(service: string, pod?: string) {
     try {
       await this.restartDeployment(service);
