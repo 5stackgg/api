@@ -83,6 +83,7 @@ DECLARE
     _runner_up_team_id uuid;
     _third_team_id uuid;
     _award_third boolean := false;
+    _final_stage_id uuid;
 BEGIN
     SELECT awards_enabled INTO _awards_enabled
     FROM public.tournaments WHERE id = _tournament_id;
@@ -94,6 +95,19 @@ BEGIN
 
     IF _awards_enabled IS DISTINCT FROM true THEN
         RETURN;
+    END IF;
+
+    -- The placements read the last stage's cached standings, and a bye can
+    -- finish the tournament inside update_tournament_bracket before it
+    -- refreshes them.
+    SELECT id INTO _final_stage_id
+    FROM public.tournament_stages
+    WHERE tournament_id = _tournament_id
+    ORDER BY "order" DESC
+    LIMIT 1;
+
+    IF _final_stage_id IS NOT NULL THEN
+        PERFORM public.recompute_tournament_stage_results(_final_stage_id);
     END IF;
 
     SELECT p.tournament_team_id INTO _winning_team_id

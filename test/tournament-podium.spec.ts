@@ -254,6 +254,64 @@ describe("tournament podium (SQL-driven)", () => {
     );
   });
 
+  // Until a match is played the standings break the tie on team id, so the
+  // team that sorts last winning is the one stale standings would get wrong.
+  it("medals the winner of a two-team double elimination that its grand final's bye finishes", async () => {
+    const t = await tfx.launch(
+      [
+        { type: "RoundRobin", order: 1, minTeams: 4, maxTeams: 4 },
+        { type: "DoubleElimination", order: 2, minTeams: 2, maxTeams: 2 },
+      ],
+      4,
+    );
+    await postgres.query(
+      "UPDATE tournaments SET awards_enabled = true WHERE id = $1",
+      [t.id],
+    );
+    await tfx.playStage(t.stageIds[0]);
+    const [final] = await postgres.query<
+      Array<{
+        match_id: string;
+        winning_lineup: "lineup_1_id" | "lineup_2_id";
+        winner: string;
+        loser: string;
+      }>
+    >(
+      `SELECT match_id,
+              CASE WHEN tournament_team_id_1 > tournament_team_id_2
+                   THEN 'lineup_1_id' ELSE 'lineup_2_id' END AS winning_lineup,
+              GREATEST(tournament_team_id_1, tournament_team_id_2) AS winner,
+              LEAST(tournament_team_id_1, tournament_team_id_2) AS loser
+         FROM tournament_brackets
+        WHERE tournament_stage_id = $1 AND path = 'WB' AND round = 1`,
+      [t.stageIds[1]],
+    );
+
+    await tfx.winMatch(final.match_id, final.winning_lineup);
+    expect(await tfx.tournamentStatus(t.id)).toBe("Finished");
+    const [grandFinal] = await postgres.query<Array<{ bye: boolean }>>(
+      `SELECT bye FROM tournament_brackets
+        WHERE tournament_stage_id = $1 AND path = 'WB' AND round = 2`,
+      [t.stageIds[1]],
+    );
+    expect(grandFinal.bye).toBe(true);
+
+    const steps = (await podium(t.id))!;
+
+    expect(
+      steps.map((step) => [step.placement, step.tournament_team_id]),
+    ).toEqual([
+      [1, final.winner],
+      [2, final.loser],
+    ]);
+    expect(await placementMedals(t.id)).toEqual(
+      steps.map(({ placement, tournament_team_id }) => ({
+        placement,
+        tournament_team_id,
+      })),
+    );
+  });
+
   it("has no podium and hands out no medals when the last stage ran in groups", async () => {
     const t = await roundRobin(2);
 
