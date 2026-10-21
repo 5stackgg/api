@@ -1563,17 +1563,7 @@ export class MatchesController {
       return { success: true, running: true };
     }
 
-    await this.playerEloRecompute.markQueued();
-
-    await this.eloRecomputeQueue.add(
-      RecomputeAllElo.name,
-      {},
-      {
-        jobId: RecomputeAllElo.name,
-        removeOnComplete: true,
-        removeOnFail: true,
-      },
-    );
+    await this.requestEloRecompute();
 
     return { success: true, running: true };
   }
@@ -1597,6 +1587,65 @@ export class MatchesController {
       failed: status.failed,
       current_match_id: status.current_match_id,
     };
+  }
+
+  @HasuraAction()
+  public async voidMatchElo(data: { match_id: string; user: User }) {
+    const { match_id, user } = data;
+    if (!isRoleAbove(user.role, "administrator")) {
+      throw Error("you must be an administrator");
+    }
+
+    const voided = await this.postgres.query<Array<{ id: string }>>(
+      `UPDATE matches
+          SET elo_voided = true,
+              elo_voided_at = now(),
+              elo_voided_by_steam_id = $2
+        WHERE id = $1
+          AND elo_voided = false
+          AND status = ANY($3)
+        RETURNING id`,
+      [match_id, user.steam_id, MatchesController.PLAYED_TERMINAL_STATUSES],
+    );
+
+    if (voided.length === 0) {
+      const [match] = await this.postgres.query<Array<{ elo_voided: boolean }>>(
+        `SELECT elo_voided FROM matches WHERE id = $1`,
+        [match_id],
+      );
+      if (!match) {
+        throw Error("match not found");
+      }
+      if (!match.elo_voided) {
+        throw Error("only a finished match can have its ELO voided");
+      }
+      return { success: true };
+    }
+
+    this.logger.log(`[${match_id}] ELO voided by ${user.steam_id}`);
+
+    await this.requestEloRecompute();
+
+    return { success: true };
+  }
+
+  // Never skipped for a run already going: that run may be past the change.
+  // Each request gets its own job id because BullMQ ignores an add whose id is
+  // still active, and the recompute folds requests a run already covered.
+  private async requestEloRecompute(): Promise<void> {
+    const request = await this.playerEloRecompute.nextRequest();
+    if (!(await this.playerEloRecompute.isRunning())) {
+      await this.playerEloRecompute.markQueued();
+    }
+    await this.eloRecomputeQueue.add(
+      RecomputeAllElo.name,
+      { request },
+      {
+        jobId: PlayerEloRecomputeService.jobId(request),
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    );
   }
 
   @HasuraEvent()

@@ -68,6 +68,10 @@ export class CacheService {
     return await this.connection.get(key);
   }
 
+  public async increment(key: string): Promise<number> {
+    return await this.connection.incr(key);
+  }
+
   public async forget(...keys: Array<string>) {
     if (keys.length === 0) {
       return true;

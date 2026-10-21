@@ -450,6 +450,10 @@ BEGIN
         _elo_change := -1 * get_int_setting('leaver_elo_penalty', 150);
     END IF;
 
+    IF match_record.elo_voided THEN
+        _elo_change := 0;
+    END IF;
+
     -- Return the elo change as JSON with detailed information
     RETURN jsonb_build_object(
         'current_elo', _current_player_elo, -- The current ELO rating of the player (including base ELO)

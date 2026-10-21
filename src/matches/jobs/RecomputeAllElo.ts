@@ -1,4 +1,5 @@
 import { WorkerHost } from "@nestjs/bullmq";
+import { DelayedError, Job } from "bullmq";
 import { MatchQueues } from "../enums/MatchQueues";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { PlayerEloRecomputeService } from "../player-elo-recompute.service";
@@ -9,7 +10,14 @@ export class RecomputeAllElo extends WorkerHost {
     super();
   }
 
-  async process(): Promise<void> {
-    await this.eloRecompute.runRecomputeAll();
+  async process(job: Job<{ request?: number }>): Promise<void> {
+    if (await this.eloRecompute.runRecomputeAll(job.data?.request)) {
+      return;
+    }
+    await job.moveToDelayed(
+      Date.now() + PlayerEloRecomputeService.RETRY_DELAY_MS,
+      job.token,
+    );
+    throw new DelayedError();
   }
 }

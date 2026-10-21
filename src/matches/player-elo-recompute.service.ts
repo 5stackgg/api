@@ -21,6 +21,12 @@ const LOCK_KEY = "elo-recompute:lock";
 // suppressed while the recompute rebuilds every row, then reindexed once.
 const SUPPRESS_KEY = "elo-recompute:suppress-events";
 
+// Every request to recompute takes the next number. A run that finishes covers
+// every request numbered up to the counter it read before touching any match,
+// so a later job for one of those requests has nothing left to do.
+const REQUEST_KEY = "elo-recompute:request";
+const COVERED_KEY = "elo-recompute:covered";
+
 const PERSIST_EVERY = 25;
 // Per-match cap so one hung query can't freeze the whole run.
 const ITEM_TIMEOUT_MS = 60_000;
@@ -43,6 +49,12 @@ export type EloRecomputeStatus = {
 
 @Injectable()
 export class PlayerEloRecomputeService {
+  public static readonly RETRY_DELAY_MS = 15_000;
+
+  public static jobId(request: number): string {
+    return `elo-recompute.${request}`;
+  }
+
   constructor(
     private readonly logger: Logger,
     private readonly postgres: PostgresService,
@@ -54,6 +66,10 @@ export class PlayerEloRecomputeService {
 
   public async isRunning(): Promise<boolean> {
     return (await this.getStatus()).running;
+  }
+
+  public async nextRequest(): Promise<number> {
+    return await this.cache.increment(REQUEST_KEY);
   }
 
   public async requestCancel(): Promise<void> {
@@ -97,7 +113,7 @@ export class PlayerEloRecomputeService {
 
   // Reset progress the moment a run is requested so the UI never shows the
   // previous run's stale totals while the job is still queued. Single-execution
-  // is guaranteed by the concurrency-1 queue + jobId dedup, not by this flag.
+  // is guaranteed by the run's lock, not by this flag.
   public async markQueued(): Promise<void> {
     await this.cache.forget(CANCEL_KEY);
     await this.saveStatus(
@@ -110,18 +126,31 @@ export class PlayerEloRecomputeService {
     );
   }
 
-  public async runRecomputeAll(): Promise<void> {
+  // False means run it again later: another run holds the lock, and it may have
+  // passed the matches this request was made for.
+  public async runRecomputeAll(request?: number): Promise<boolean> {
     // Hard single-execution guarantee: only the lock holder runs. Critical here
     // because the run TRUNCATEs player_elo — two overlapping runs would corrupt
-    // the chronological rebuild. Duplicates (rapid clicks, multiple pods) no-op.
+    // the chronological rebuild.
     const lockToken = await this.cache.acquireLock(
       LOCK_KEY,
       RUNNING_TTL_SECONDS,
     );
     if (!lockToken) {
-      this.logger.warn("[elo-recompute] already running, skipping duplicate");
-      return;
+      this.logger.warn("[elo-recompute] another run holds the lock, retrying");
+      return false;
     }
+
+    if (
+      request !== undefined &&
+      request <= ((await this.cache.get(COVERED_KEY)) ?? 0)
+    ) {
+      await this.settleQueuedStatus();
+      await this.cache.releaseLock(LOCK_KEY, lockToken);
+      return true;
+    }
+
+    const covers: number = (await this.cache.get(REQUEST_KEY)) ?? 0;
 
     await this.cache.forget(CANCEL_KEY);
 
@@ -177,6 +206,10 @@ export class PlayerEloRecomputeService {
           );
         }
       }
+
+      if (!status.canceled) {
+        await this.cache.put(COVERED_KEY, covers);
+      }
     } finally {
       status.running = false;
       status.current_match_id = null;
@@ -205,6 +238,21 @@ export class PlayerEloRecomputeService {
 
       await this.notifyComplete(status);
     }
+
+    return true;
+  }
+
+  // Holding the lock means no run is going, so a running status here is the
+  // queued snapshot of a request an earlier run already covered.
+  private async settleQueuedStatus(): Promise<void> {
+    const status = await this.getStatus();
+    if (!status.running) {
+      return;
+    }
+    await this.saveStatus(
+      { ...status, running: false, finished_at: new Date().toISOString() },
+      FINAL_TTL_SECONDS,
+    );
   }
 
   private async notifyComplete(status: EloRecomputeStatus): Promise<void> {
