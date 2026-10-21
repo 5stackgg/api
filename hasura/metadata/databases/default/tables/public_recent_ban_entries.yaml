@@ -1,0 +1,45 @@
+table:
+  name: recent_ban_entries
+  schema: public
+object_relationships:
+  - name: player
+    using:
+      manual_configuration:
+        column_mapping:
+          steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
+  - name: sanction
+    using:
+      manual_configuration:
+        column_mapping:
+          sanction_id: id
+        insertion_order: null
+        remote_table:
+          name: player_sanctions
+          schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - steam_id
+        - banned_at
+        - banned_at_source
+        - steam_banned_on
+        - vac_ban_count
+        - game_ban_count
+        - sanction_id
+        - sanction_kind
+        - banned_here
+        - first_match_at
+        - last_match_at
+        - last_match_map
+        - matches_played
+        - matches_since_steam_ban
+        - arrived_banned
+        - shared_matches
+      filter: {}
+      allow_aggregations: true
+    comment: Return type of recently_banned_players. Every role inherits this.
