@@ -18,7 +18,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "24.22.1"
       # Cache node_modules itself rather than yarn's download cache: linking
       # and the native builds are most of an install.
       - name: Restore node_modules
@@ -79,7 +79,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "24.22.1"
       # Cache node_modules itself rather than yarn's download cache: linking
       # and the native builds are most of an install, and every shard pays it.
       - name: Restore node_modules
