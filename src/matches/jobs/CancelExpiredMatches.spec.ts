@@ -5,12 +5,14 @@ import { DISCORD_COLORS } from "../../notifications/utilities/constants";
 // forfeit / organizer-attention paths below are asserting against.
 const expiredTournamentMatch = (overrides: Record<string, any> = {}) => ({
   id: "match-1",
+  status: "WaitingForCheckIn",
   server_id: "server-1",
   // Already past the deadline unless a test says otherwise.
   cancels_at: new Date(Date.now() - 1000).toISOString(),
   is_tournament_match: true,
   options: {
     match_mode: "auto",
+    type: "Duel",
   },
   lineup_1: {
     id: "lineup-1",
@@ -55,6 +57,9 @@ describe("CancelExpiredMatches", () => {
   const matchAssistant = {
     sendServerMatchId: jest.fn(),
   };
+  const postgres = {
+    query: jest.fn(),
+  };
 
   let job: CancelExpiredMatches;
   let tournamentMatches: any[];
@@ -82,6 +87,7 @@ describe("CancelExpiredMatches", () => {
     configService.get.mockReturnValue({ webDomain: "https://example.com" });
     rcon.connect.mockResolvedValue(rconClient);
     rconClient.send.mockResolvedValue("");
+    postgres.query.mockResolvedValue([{ stalled_by: null }]);
     job = new CancelExpiredMatches(
       logger as any,
       hasura as any,
@@ -89,6 +95,7 @@ describe("CancelExpiredMatches", () => {
       configService as any,
       rcon as any,
       matchAssistant as any,
+      postgres as any,
     );
   });
 
@@ -223,6 +230,242 @@ describe("CancelExpiredMatches", () => {
     expect(notifications.send).not.toHaveBeenCalled();
   });
 
+  describe("after both sides checked in", () => {
+    const forfeitedTo = () =>
+      hasura.mutation.mock.calls
+        .map(([arg]: [any]) => arg?.update_matches_by_pk?.__args?._set)
+        .find((set: any) => set?.status === "Forfeit")?.winning_lineup_id;
+
+    const checkedIn = (id: string, players: Array<[string, boolean]>) => ({
+      id,
+      is_ready: true,
+      lineup_players: players.map(([steam_id, is_connected]) => ({
+        steam_id,
+        is_connected,
+      })),
+    });
+
+    const vetoMatch = () =>
+      expiredTournamentMatch({
+        status: "Veto",
+        server_id: null,
+        lineup_1: checkedIn("lineup-1", [["1", false]]),
+        lineup_2: checkedIn("lineup-2", [["2", false]]),
+      });
+
+    it("forfeits a stalled veto against the side it waits on", async () => {
+      postgres.query.mockResolvedValue([{ stalled_by: "lineup-1" }]);
+      tournamentMatches = [vetoMatch()];
+
+      await job.process();
+
+      expect(postgres.query).toHaveBeenCalledWith(
+        expect.stringContaining("veto_stalled_by($1)"),
+        ["match-1"],
+      );
+      expect(forfeitedTo()).toBe("lineup-2");
+    });
+
+    it("asks the organizers when the veto has nobody to blame", async () => {
+      tournamentMatches = [vetoMatch()];
+
+      await job.process();
+
+      expect(forfeitedTo()).toBeUndefined();
+      expect(notifications.send).toHaveBeenCalled();
+    });
+
+    it("gives a warmup both sides were short for to the one with more players on", async () => {
+      jest.spyOn(Math, "random").mockReturnValue(0.25);
+      tournamentMatches = [
+        expiredTournamentMatch({
+          status: "Live",
+          match_maps: [{ status: "Warmup" }],
+          options: { match_mode: "auto", type: "Competitive" },
+          lineup_1: checkedIn("lineup-1", [
+            ["1", true],
+            ["2", false],
+            ["3", false],
+            ["4", false],
+            ["5", false],
+          ]),
+          lineup_2: checkedIn("lineup-2", [
+            ["6", true],
+            ["7", true],
+            ["8", true],
+            ["9", true],
+            ["10", false],
+          ]),
+        }),
+      ];
+
+      await job.process();
+
+      expect(forfeitedTo()).toBe("lineup-2");
+    });
+
+    it("leaves a warmup both sides were short for to the organizers in admin mode", async () => {
+      tournamentMatches = [
+        expiredTournamentMatch({
+          status: "Live",
+          match_maps: [{ status: "Warmup" }],
+          options: { match_mode: "admin", type: "Wingman" },
+          lineup_1: checkedIn("lineup-1", [
+            ["1", true],
+            ["2", false],
+          ]),
+          lineup_2: checkedIn("lineup-2", [
+            ["3", false],
+            ["4", false],
+          ]),
+        }),
+      ];
+
+      await job.process();
+
+      expect(forfeitedTo()).toBeUndefined();
+      expect(notifications.send).toHaveBeenCalled();
+    });
+
+    it("asks the organizers when nobody is on the server, which a dead server looks the same as", async () => {
+      tournamentMatches = [
+        expiredTournamentMatch({
+          status: "Live",
+          match_maps: [{ status: "Warmup" }],
+          options: { match_mode: "auto", type: "Wingman" },
+          lineup_1: checkedIn("lineup-1", [
+            ["1", false],
+            ["2", false],
+          ]),
+          lineup_2: checkedIn("lineup-2", [
+            ["3", false],
+            ["4", false],
+          ]),
+        }),
+      ];
+
+      await job.process();
+
+      expect(forfeitedTo()).toBeUndefined();
+      expect(notifications.send).toHaveBeenCalled();
+    });
+
+    it("coin-tosses a warmup both sides were equally short for", async () => {
+      jest.spyOn(Math, "random").mockReturnValue(0.75);
+      tournamentMatches = [
+        expiredTournamentMatch({
+          status: "Live",
+          match_maps: [{ status: "Warmup" }],
+          options: { match_mode: "auto", type: "Wingman" },
+          lineup_1: checkedIn("lineup-1", [
+            ["1", true],
+            ["2", false],
+          ]),
+          lineup_2: checkedIn("lineup-2", [
+            ["3", true],
+            ["4", false],
+          ]),
+        }),
+      ];
+
+      await job.process();
+
+      expect(forfeitedTo()).toBe("lineup-2");
+    });
+
+    it("force starts a warmup whose sides are full though a benched sub stayed away", async () => {
+      tournamentMatches = [
+        expiredTournamentMatch({
+          status: "Live",
+          match_maps: [{ status: "Warmup" }],
+          options: { match_mode: "auto", type: "Wingman" },
+          lineup_1: checkedIn("lineup-1", [
+            ["1", true],
+            ["2", true],
+            ["sub", false],
+          ]),
+          lineup_2: checkedIn("lineup-2", [
+            ["3", true],
+            ["4", true],
+          ]),
+        }),
+      ];
+
+      await job.process();
+
+      expect(rconClient.send).toHaveBeenCalledWith("force_ready");
+      expect(forfeitedTo()).toBeUndefined();
+    });
+
+    it("forfeits a warmup no-show to the side that got a full team on the server", async () => {
+      tournamentMatches = [
+        expiredTournamentMatch({
+          status: "Live",
+          match_maps: [{ status: "Warmup" }],
+          options: { match_mode: "auto", type: "Wingman" },
+          lineup_1: checkedIn("lineup-1", [
+            ["1", true],
+            ["2", false],
+          ]),
+          lineup_2: checkedIn("lineup-2", [
+            ["3", true],
+            ["4", true],
+          ]),
+        }),
+      ];
+
+      await job.process();
+
+      expect(forfeitedTo()).toBe("lineup-2");
+    });
+
+    it("asks the organizers when both sides turned up but the match never started", async () => {
+      rcon.connect.mockResolvedValue(null);
+      tournamentMatches = [
+        expiredTournamentMatch({
+          status: "Live",
+          match_maps: [{ status: "Warmup" }],
+          options: { match_mode: "auto", type: "Wingman" },
+          lineup_1: checkedIn("lineup-1", [
+            ["1", true],
+            ["2", true],
+          ]),
+          lineup_2: checkedIn("lineup-2", [
+            ["3", true],
+            ["4", true],
+          ]),
+        }),
+      ];
+
+      await job.process();
+
+      expect(forfeitedTo()).toBeUndefined();
+      expect(notifications.send).toHaveBeenCalledWith(
+        "MatchSupport",
+        expect.objectContaining({ entity_id: "match-1" }),
+        undefined,
+        DISCORD_COLORS.RED,
+      );
+    });
+
+    it("asks the organizers when no server was ever assigned", async () => {
+      tournamentMatches = [
+        expiredTournamentMatch({
+          status: "Live",
+          server_id: null,
+          options: { match_mode: "auto", type: "Wingman" },
+          lineup_1: checkedIn("lineup-1", [["1", false]]),
+          lineup_2: checkedIn("lineup-2", [["2", false]]),
+        }),
+      ];
+
+      await job.process();
+
+      expect(forfeitedTo()).toBeUndefined();
+      expect(notifications.send).toHaveBeenCalled();
+    });
+  });
+
   it("force starts instead of forfeiting when everyone connected", async () => {
     tournamentMatches = [
       expiredTournamentMatch({
@@ -349,6 +592,7 @@ describe("CancelExpiredMatches", () => {
       tournamentMatches = [
         expiredTournamentMatch({
           is_tournament_match: false,
+          options: { match_mode: "auto", type: "Competitive" },
           lineup_1: {
             id: "lineup-1",
             is_ready: false,
