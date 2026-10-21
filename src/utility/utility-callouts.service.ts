@@ -72,6 +72,13 @@ export class UtilityCalloutsService {
   // re-asked far sooner than one that answered.
   private static readonly EMPTY_CACHE_TTL_MS = 30 * 1000;
 
+  // A map the extract does not carry -- a workshop map, or any map while the
+  // CDN is unreachable -- is asked about this often at most, not on every map
+  // load that reports it.
+  private static readonly NO_EXTRACT_TTL_MS = 10 * 60 * 1000;
+
+  private readonly noExtract = new Map<string, number>();
+
   private readonly cache = new Map<
     string,
     { rows: CalloutRow[]; expires: number }
@@ -152,7 +159,9 @@ export class UtilityCalloutsService {
       if (!url) {
         return 0;
       }
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        signal: AbortSignal.timeout(15_000),
+      });
       if (!response.ok) {
         return 0;
       }
@@ -174,6 +183,10 @@ export class UtilityCalloutsService {
   }
 
   public async calloutsUrl(map: string): Promise<string | null> {
+    if (!MapAssetsService.isSafeKey(map)) {
+      return null;
+    }
+
     const base = process.env.MAP_MESH_CDN;
     if (base) {
       return `${base}/${map}.callouts.json`;
@@ -305,6 +318,10 @@ export class UtilityCalloutsService {
    * wins wherever it exists -- it is deterministic and reviewable, where this
    * is whatever one server happened to report -- so this only ever fills a gap,
    * which in practice means workshop and community maps.
+   *
+   * The extract is only pulled on a CS2 build change, so a map without one may
+   * simply never have been asked: it is asked here before a report is kept. A
+   * server's first walk after a changelevel can read the map it is leaving.
    */
   public async report(
     mapName: string,
@@ -312,7 +329,7 @@ export class UtilityCalloutsService {
   ): Promise<{ stored: number }> {
     const map = UtilityCalloutsService.normalizeMapName(mapName);
     const clean = UtilityCalloutsService.sanitize(callouts);
-    if (!map || !clean.length) {
+    if (!MapAssetsService.isSafeKey(map) || !clean.length) {
       return { stored: 0 };
     }
 
@@ -328,7 +345,20 @@ export class UtilityCalloutsService {
       return { stored: 0 };
     }
 
-    await this.write(map, clean, "plugin");
+    if ((this.noExtract.get(map) ?? 0) <= Date.now()) {
+      if ((await this.sync(map)) > 0) {
+        return { stored: 0 };
+      }
+      this.noExtract.set(
+        map,
+        Date.now() + UtilityCalloutsService.NO_EXTRACT_TTL_MS,
+      );
+    }
+
+    if (!(await this.write(map, clean, "plugin"))) {
+      return { stored: 0 };
+    }
+
     return { stored: clean.length };
   }
 
@@ -486,35 +516,62 @@ export class UtilityCalloutsService {
     map: string,
     callouts: MapCallout[],
     source: "cdn" | "plugin",
-  ): Promise<void> {
-    await this.postgres.query(
-      `INSERT INTO public.map_callouts (map_name, name, boxes, source, updated_at)
-       SELECT $1, entry->>'name', entry->'boxes', $3, now()
-         FROM jsonb_array_elements($2::jsonb) AS entry
-       ON CONFLICT (map_name, name) DO UPDATE
-          SET boxes = EXCLUDED.boxes,
-              source = EXCLUDED.source,
-              updated_at = EXCLUDED.updated_at`,
-      [map, JSON.stringify(callouts), source],
-    );
+  ): Promise<boolean> {
+    // Serialised per map, and a plugin write re-checks for the extract under
+    // the lock: a report spends seconds asking the CDN after it last looked,
+    // and an extract another server or a build-change sync wrote meanwhile
+    // must not be overwritten by the report it falls back to.
+    const written = await this.postgres.transaction(async (client) => {
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
+        `map_callouts:${map}`,
+      ]);
 
-    // A place Valve deleted in a patch has to go, or it keeps naming throws
-    // after the area it named stopped existing.
-    //
-    // NOT scoped to the source being written. The extract wins wherever it
-    // exists, so a name it does not carry must go even if a plugin reported it
-    // first -- otherwise a map a practice server filled in before the extract
-    // landed keeps its mis-read names for ever, mixed in with the real ones.
-    // The reverse never arises: `report` no-ops entirely once any cdn row
-    // exists, so a plugin write can only ever prune plugin rows.
-    await this.postgres.query(
-      `DELETE FROM public.map_callouts
-        WHERE map_name = $1
-          AND name <> ALL($2::text[])`,
-      [map, callouts.map(({ name }) => name)],
-    );
+      if (source === "plugin") {
+        const { rows } = await client.query(
+          `SELECT 1
+             FROM public.map_callouts
+            WHERE map_name = $1
+              AND source = 'cdn'
+            LIMIT 1`,
+          [map],
+        );
+        if (rows.length) {
+          return false;
+        }
+      }
+
+      await client.query(
+        `INSERT INTO public.map_callouts (map_name, name, boxes, source, updated_at)
+         SELECT $1, entry->>'name', entry->'boxes', $3, now()
+           FROM jsonb_array_elements($2::jsonb) AS entry
+         ON CONFLICT (map_name, name) DO UPDATE
+            SET boxes = EXCLUDED.boxes,
+                source = EXCLUDED.source,
+                updated_at = EXCLUDED.updated_at`,
+        [map, JSON.stringify(callouts), source],
+      );
+
+      // A place Valve deleted in a patch has to go, or it keeps naming throws
+      // after the area it named stopped existing.
+      //
+      // NOT scoped to the source being written. The extract wins wherever it
+      // exists, so a name it does not carry must go even if a plugin reported
+      // it first -- otherwise a map a practice server filled in before the
+      // extract landed keeps its mis-read names for ever, mixed in with the
+      // real ones. The reverse never arises: a plugin write gives up above
+      // once any cdn row exists, so it can only ever prune plugin rows.
+      await client.query(
+        `DELETE FROM public.map_callouts
+          WHERE map_name = $1
+            AND name <> ALL($2::text[])`,
+        [map, callouts.map(({ name }) => name)],
+      );
+
+      return true;
+    });
 
     this.cache.delete(map);
+    return written;
   }
 
   private static sanitize(callouts: MapCallout[] | undefined): MapCallout[] {
