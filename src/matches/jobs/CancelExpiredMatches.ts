@@ -10,6 +10,7 @@ import { RconService } from "../../rcon/rcon.service";
 import { DISCORD_COLORS } from "../../notifications/utilities/constants";
 import { MatchAssistantService } from "../match-assistant/match-assistant.service";
 import { ExpectedPlayers } from "../../discord-bot/enums/ExpectedPlayers";
+import { PostgresService } from "../../postgres/postgres.service";
 
 @UseQueue("Matches", MatchQueues.Deadlines)
 export class CancelExpiredMatches extends WorkerHost {
@@ -41,6 +42,7 @@ export class CancelExpiredMatches extends WorkerHost {
     private readonly configService: ConfigService,
     private readonly rcon: RconService,
     private readonly matchAssistant: MatchAssistantService,
+    private readonly postgres: PostgresService,
   ) {
     super();
     this.appConfig = this.configService.get<AppConfig>("app");
@@ -60,7 +62,8 @@ export class CancelExpiredMatches extends WorkerHost {
       // would have started it.
       if (
         this.isAwaitingWarmup(match) &&
-        !this.hasNoShow(match) &&
+        this.hasFullSide(match, match.lineup_1) &&
+        this.hasFullSide(match, match.lineup_2) &&
         (await this.forceStartMatch(match))
       ) {
         handled++;
@@ -198,23 +201,6 @@ export class CancelExpiredMatches extends WorkerHost {
     }
   }
 
-  // A no-show is a rostered player who never connected to the server at all.
-  // Placeholder slots have no steam_id and cannot connect, so they never count.
-  private hasNoShow(
-    match: Awaited<ReturnType<typeof this.getExpiredMatches>>[number],
-  ) {
-    const players = [
-      ...(match.lineup_1.lineup_players ?? []),
-      ...(match.lineup_2.lineup_players ?? []),
-    ].filter((lineupPlayer) => lineupPlayer.steam_id);
-
-    if (players.length === 0) {
-      return true;
-    }
-
-    return players.some((lineupPlayer) => !lineupPlayer.is_connected);
-  }
-
   private async forceStartMatch(
     match: Awaited<ReturnType<typeof this.getExpiredMatches>>[number],
   ): Promise<boolean> {
@@ -313,16 +299,11 @@ export class CancelExpiredMatches extends WorkerHost {
 
     // A side that had a full team connected never needed its substitutes, so
     // a benched sub who stayed away did not no-show.
-    const fullSide = ExpectedPlayers[match.options.type] / 2;
     const noShows = [match.lineup_1, match.lineup_2].flatMap((lineup) => {
-      const lineupPlayers = lineup.lineup_players ?? [];
-      const connected = lineupPlayers.filter(
-        (lineupPlayer) => lineupPlayer.is_connected,
-      ).length;
-      if (connected >= fullSide) {
+      if (this.hasFullSide(match, lineup)) {
         return [];
       }
-      return lineupPlayers.filter(
+      return (lineup.lineup_players ?? []).filter(
         (lineupPlayer) => lineupPlayer.steam_id && !lineupPlayer.is_connected,
       );
     });
@@ -389,19 +370,103 @@ export class CancelExpiredMatches extends WorkerHost {
     }
   }
 
+  private connectedPlayers(
+    lineup: Awaited<
+      ReturnType<typeof this.getExpiredMatches>
+    >[number]["lineup_1"],
+  ) {
+    return (lineup.lineup_players ?? []).filter(
+      (lineupPlayer) => lineupPlayer.is_connected,
+    ).length;
+  }
+
+  // A benched substitute who stays away leaves the side full, so only the
+  // count of connected players matters, never who they are.
+  private hasFullSide(
+    match: Awaited<ReturnType<typeof this.getExpiredMatches>>[number],
+    lineup: Awaited<
+      ReturnType<typeof this.getExpiredMatches>
+    >[number]["lineup_1"],
+  ) {
+    return (
+      this.connectedPlayers(lineup) >= ExpectedPlayers[match.options.type] / 2
+    );
+  }
+
+  // Which sides did their part at the step the match is stuck on. is_ready is
+  // only check-in, which both sides have once the match moves past it: after
+  // that, a stalled veto is down to the side it waits on (veto_stalled_by), and
+  // a warmup that never filled to the side with fewer players on the server.
+  // Both true means nobody is to blame: no server, or nobody on it, which a
+  // server that never came up looks the same as.
+  private async turnedUp(
+    match: Awaited<ReturnType<typeof this.getExpiredMatches>>[number],
+  ): Promise<[boolean, boolean]> {
+    if (match.status === "WaitingForCheckIn") {
+      return [!!match.lineup_1.is_ready, !!match.lineup_2.is_ready];
+    }
+
+    if (match.status === "Veto") {
+      const [{ stalled_by }] = await this.postgres.query<
+        Array<{ stalled_by: string | null }>
+      >("SELECT veto_stalled_by($1)::text AS stalled_by", [match.id]);
+      if (!stalled_by) {
+        return [true, true];
+      }
+      return [
+        match.lineup_1.id !== stalled_by,
+        match.lineup_2.id !== stalled_by,
+      ];
+    }
+
+    if (!match.server_id) {
+      return [true, true];
+    }
+
+    if (
+      this.hasFullSide(match, match.lineup_1) &&
+      this.hasFullSide(match, match.lineup_2)
+    ) {
+      return [true, true];
+    }
+
+    const lineup1 = this.connectedPlayers(match.lineup_1);
+    const lineup2 = this.connectedPlayers(match.lineup_2);
+
+    if (lineup1 === 0 && lineup2 === 0) {
+      return [true, true];
+    }
+
+    // Neither side filled, so in admin mode an organizer weighs who was short.
+    if (
+      match.options?.match_mode === "admin" &&
+      !this.hasFullSide(match, match.lineup_1) &&
+      !this.hasFullSide(match, match.lineup_2)
+    ) {
+      return [false, false];
+    }
+
+    return [lineup1 > lineup2, lineup2 > lineup1];
+  }
+
   private async handleExpiredTournamentMatch(
     match: Awaited<ReturnType<typeof this.getExpiredMatches>>[number],
   ) {
-    const hasReadyLineup = match.lineup_1.is_ready || match.lineup_2.is_ready;
+    const [lineup1, lineup2] = await this.turnedUp(match);
     const isAdminMode = match.options?.match_mode === "admin";
 
-    // Once a map has started, a forfeit would pick the series winner by readiness.
-    if (this.hasStartedMap(match) || (!hasReadyLineup && isAdminMode)) {
+    // Once a map has started, a forfeit would pick the series winner by who
+    // showed up, and when both sides did there is no one to forfeit.
+    if (
+      this.hasStartedMap(match) ||
+      (lineup1 && lineup2) ||
+      (!lineup1 && !lineup2 && isAdminMode)
+    ) {
       await this.requestOrganizerAttention(match.id);
       return;
     }
 
-    await this.forfeitMatch(match);
+    await this.forfeitMatch(match, lineup1, lineup2);
 
     // Same ordering as cancelMatch, and for the same reason: the matches
     // trigger clears cancels_at on the Forfeit/Finished transition and
@@ -414,8 +479,10 @@ export class CancelExpiredMatches extends WorkerHost {
 
   private async forfeitMatch(
     match: Awaited<ReturnType<typeof this.getExpiredMatches>>[number],
+    lineup1: boolean,
+    lineup2: boolean,
   ) {
-    const winningLineupId = this.getWinningLineupId(match);
+    const winningLineupId = this.getWinningLineupId(match, lineup1, lineup2);
     await this.hasura.mutation({
       update_matches_by_pk: {
         __args: {
@@ -434,16 +501,18 @@ export class CancelExpiredMatches extends WorkerHost {
 
   private getWinningLineupId(
     match: Awaited<ReturnType<typeof this.getExpiredMatches>>[number],
+    lineup1: boolean,
+    lineup2: boolean,
   ) {
-    if (match.lineup_1.is_ready) {
+    if (lineup1) {
       return match.lineup_1.id;
     }
 
-    if (match.lineup_2.is_ready) {
+    if (lineup2) {
       return match.lineup_2.id;
     }
 
-    // Neither side checked in. In auto mode there is no one watching the
+    // Neither side did its part. In auto mode there is no one watching the
     // bracket, so coin-toss a winner to keep the tournament moving rather
     // than stalling it (admin mode routes to a human instead).
     return Math.random() < 0.5 ? match.lineup_1.id : match.lineup_2.id;
@@ -530,6 +599,7 @@ export class CancelExpiredMatches extends WorkerHost {
           },
         },
         id: true,
+        status: true,
         cancels_at: true,
         server_id: true,
         is_tournament_match: true,
