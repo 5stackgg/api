@@ -167,10 +167,14 @@ const setup = (
     liveMaps?: Array<{ id: string }>;
     restoreResponse?: string | undefined;
     serverResponse?: string | undefined;
+    releasedServer?: string | null;
   } = {},
 ) => {
   const postgres = {
     query: jest.fn(async (sql: string) => {
+      if (sql.includes("rewind_map_veto")) {
+        return [{ server_id: options.releasedServer ?? null }];
+      }
       if (sql.includes("FROM matches m")) {
         return [options.match ?? matchRow()];
       }
@@ -610,6 +614,36 @@ describe("MatchRecoveryService", () => {
 
       await expect(service.restartMatch("match-1")).rejects.toThrow(message);
       expect(postgres.transaction).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("rewindMapVeto", () => {
+    it("tells the released server to drop the old maps", async () => {
+      const { service, postgres, matchAssistant } = setup({
+        releasedServer: "server-1",
+      });
+
+      await service.rewindMapVeto("match-1", 5, 9);
+
+      expect(postgres.query).toHaveBeenCalledWith(
+        expect.stringContaining("rewind_map_veto($1, $2, $3)"),
+        ["match-1", 5, 9],
+      );
+      expect(matchAssistant.refreshServerMatch).toHaveBeenCalledWith(
+        "server-1",
+      );
+    });
+
+    it("leaves servers alone while the veto is still running", async () => {
+      const { service, postgres, matchAssistant } = setup();
+
+      await service.rewindMapVeto("match-1", 2);
+
+      expect(postgres.query).toHaveBeenCalledWith(
+        expect.stringContaining("rewind_map_veto($1, $2, $3)"),
+        ["match-1", 2, null],
+      );
+      expect(matchAssistant.refreshServerMatch).not.toHaveBeenCalled();
     });
   });
 

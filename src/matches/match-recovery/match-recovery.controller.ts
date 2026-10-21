@@ -47,6 +47,33 @@ export class MatchRecoveryController {
     return await this.recovery.restartMatch(data.match_id);
   }
 
+  @HasuraAction()
+  public async rewindMapVeto(data: {
+    match_id: string;
+    step: number;
+    expected_picks?: number;
+    user: User;
+  }) {
+    await this.requireOrganizer(data.match_id, data.user);
+
+    return await this.recovery.rewindMapVeto(
+      data.match_id,
+      data.step,
+      data.expected_picks,
+    );
+  }
+
+  @HasuraAction()
+  public async extendVetoClock(data: {
+    match_id: string;
+    seconds: number;
+    user: User;
+  }) {
+    await this.requireOrganizer(data.match_id, data.user);
+
+    return await this.recovery.extendVetoClock(data.match_id, data.seconds);
+  }
+
   private async requireOrganizer(matchId: string, user: User) {
     if (!(await this.matchAssistant.isOrganizer(matchId, user))) {
       throw Error("you are not a match organizer");
