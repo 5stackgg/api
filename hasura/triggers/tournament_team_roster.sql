@@ -146,20 +146,18 @@ BEGIN
         END IF;
 
         _invite := true;
-    -- A team-backed roster takes a player with no invite at all, so somebody
-    -- from outside the team is a force-add rather than a lineup pick.
+    -- A team member is a lineup pick. Anyone else joins a team-backed entry by
+    -- invite, and accepting it puts them on the team as well
+    -- (acceptTournamentTeamInvite), so only someone who may invite to the team
+    -- can send it. An organizer places them outright, and so do the league
+    -- roster mirror (its own triggers already let outsiders in) and an
+    -- internal write with no role, whose _organizer is NULL.
     ELSIF NOT EXISTS (
         SELECT 1 FROM team_roster tr
         WHERE tr.team_id = _team.team_id AND tr.player_steam_id = NEW.player_steam_id
     ) THEN
-        -- A free agent signed up to be drafted, not to be put on whichever team
-        -- picks them, so a captain's force-add becomes an invite they answer.
-        _invite := NOT _organizer AND EXISTS (
-            SELECT 1 FROM tournament_free_agents fa
-            WHERE fa.tournament_id = NEW.tournament_id
-              AND fa.player_steam_id = NEW.player_steam_id
-              AND fa.status IN ('registered', 'waitlisted')
-        );
+        _invite := COALESCE(NOT _organizer, false)
+            AND current_setting('fivestack.league_roster_mirror', true) IS DISTINCT FROM 'true';
 
         IF NOT _invite THEN
             PERFORM public.assert_session_not_blocked(NEW.player_steam_id, 'tournament_organizer');
@@ -176,6 +174,15 @@ BEGIN
        OR NOT (_organizer OR public.can_manage_tournament_team(_team, _session)) THEN
         RAISE EXCEPTION USING ERRCODE = '22000',
             MESSAGE = 'You cannot add players to this team';
+    END IF;
+
+    IF _team.team_id IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM teams t
+        WHERE t.id = _team.team_id
+          AND public.can_invite_to_team(t, _session)
+    ) THEN
+        RAISE EXCEPTION USING ERRCODE = '22000',
+            MESSAGE = 'Only players who can invite to this team can add someone from outside it';
     END IF;
 
     INSERT INTO tournament_team_invites (tournament_team_id, steam_id, invited_by_player_steam_id)

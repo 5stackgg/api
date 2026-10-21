@@ -14,6 +14,7 @@ describe("InvitesController accepting a tournament team invite", () => {
   };
 
   let seat: Array<{ tournament_team_id: string }>;
+  let team: Array<{ member: boolean; inviter_can_invite: boolean }>;
 
   const controller = () =>
     new InvitesController(
@@ -36,6 +37,7 @@ describe("InvitesController accepting a tournament team invite", () => {
   beforeEach(() => {
     jest.resetAllMocks();
     seat = [];
+    team = [{ member: false, inviter_can_invite: true }];
     hasura.query.mockResolvedValue({
       tournament_team_invites_by_pk: {
         steam_id: player.steam_id,
@@ -44,8 +46,19 @@ describe("InvitesController accepting a tournament team invite", () => {
       },
     });
     hasura.mutation.mockResolvedValue({});
-    postgres.query.mockImplementation(async () => seat);
+    postgres.query.mockImplementation(async (sql: string) =>
+      sql.includes("can_invite_to_team") ? team : seat,
+    );
   });
+
+  const backedByTeam = () =>
+    hasura.query.mockResolvedValue({
+      tournament_team_invites_by_pk: {
+        steam_id: player.steam_id,
+        tournament_team_id: "inviting-team",
+        team: { tournament_id: "tournament-1", team_id: "team-1" },
+      },
+    });
 
   it("puts a player with no team on the inviting team", async () => {
     await expect(accept()).resolves.toEqual({ success: true });
@@ -80,5 +93,117 @@ describe("InvitesController accepting a tournament team invite", () => {
 
     expect(mutated("insert_tournament_team_roster_one")).toBe(false);
     expect(mutated("delete_tournament_team_invites_by_pk")).toBe(true);
+  });
+
+  it("puts a player on a team-backed entry's team and lineup in one request", async () => {
+    backedByTeam();
+
+    await expect(accept()).resolves.toEqual({ success: true });
+
+    const [joined] = hasura.mutation.mock.calls[0];
+    expect(Object.keys(joined)).toEqual([
+      "insert_team_roster_one",
+      "insert_tournament_team_roster_one",
+    ]);
+    expect(joined.insert_team_roster_one.__args.object).toEqual({
+      role: "Member",
+      team_id: "team-1",
+      player_steam_id: player.steam_id,
+    });
+    expect(mutated("delete_tournament_team_invites_by_pk")).toBe(true);
+  });
+
+  it("only seats a player who is already on the entry's team", async () => {
+    backedByTeam();
+    team = [{ member: true, inviter_can_invite: true }];
+
+    await expect(accept()).resolves.toEqual({ success: true });
+
+    expect(mutated("insert_team_roster_one")).toBe(false);
+    expect(mutated("insert_tournament_team_roster_one")).toBe(true);
+  });
+
+  it("adds a player already seated on the entry to its team", async () => {
+    backedByTeam();
+    seat = [{ tournament_team_id: "inviting-team" }];
+
+    await expect(accept()).resolves.toEqual({ success: true });
+
+    expect(mutated("insert_team_roster_one")).toBe(true);
+    expect(mutated("insert_tournament_team_roster_one")).toBe(false);
+  });
+
+  it("only seats the player when the inviter can no longer invite to the team", async () => {
+    backedByTeam();
+    team = [{ member: false, inviter_can_invite: false }];
+
+    await expect(accept()).resolves.toEqual({ success: true });
+
+    expect(mutated("insert_team_roster_one")).toBe(false);
+    expect(mutated("insert_tournament_team_roster_one")).toBe(true);
+  });
+
+  it("keeps a player off the team when the lineup cannot take them", async () => {
+    backedByTeam();
+    hasura.mutation.mockRejectedValueOnce("Too many players on the team");
+
+    await expect(accept()).rejects.toBe("Too many players on the team");
+
+    expect(hasura.mutation).toHaveBeenCalledTimes(1);
+    expect(Object.keys(hasura.mutation.mock.calls[0][0])).toContain(
+      "insert_team_roster_one",
+    );
+    expect(mutated("delete_tournament_team_invites_by_pk")).toBe(false);
+  });
+});
+
+describe("InvitesController tournament team invite notifications", () => {
+  const logger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
+  const postgres = { query: jest.fn() };
+  const notifications = { notifyPlayers: jest.fn() };
+
+  const notify = async (invite: Record<string, unknown>) => {
+    postgres.query.mockResolvedValue([
+      {
+        steam_id: "76561190000000002",
+        team_name: "Ultima Ratio",
+        tournament_name: "VulkanLAN 2026",
+        tournament_logo: null,
+        invited_by: "sniddyus",
+        ...invite,
+      },
+    ]);
+    await new InvitesController(
+      logger as never,
+      {} as never,
+      postgres as never,
+      notifications as never,
+    ).tournament_team_invite_events({
+      op: "INSERT",
+      new: { id: "invite-1" },
+    } as never);
+    return notifications.notifyPlayers.mock.calls[0][1];
+  };
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it("tells a player invited onto a permanent team that they join the team too", async () => {
+    const sent = await notify({ joins_team: true });
+
+    expect(sent.title).toBe("Team Invite");
+    expect(sent.message).toBe(
+      "<b>sniddyus</b> invited you to join <b>Ultima Ratio</b> and its lineup for <b>VulkanLAN 2026</b>.",
+    );
+  });
+
+  it("tells a player invited onto a tournament-only team that it is just for this tournament", async () => {
+    const sent = await notify({ team_name: "Friday Mix", joins_team: false });
+
+    expect(sent.title).toBe("Tournament Invite");
+    expect(sent.message).toBe(
+      "<b>sniddyus</b> invited you to play for <b>Friday Mix</b> in <b>VulkanLAN 2026</b>, a team for this tournament only.",
+    );
   });
 });
