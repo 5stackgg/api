@@ -38,6 +38,7 @@ import { ChatAttachment } from "./types/ChatAttachment";
 import { ChatGif } from "./types/ChatGif";
 import { ChatMention } from "./types/ChatMention";
 import { ChatMentionCandidate } from "./types/ChatMentionCandidate";
+import { ChatRoomAccess } from "./types/ChatRoomAccess";
 import { ChatRoomMember } from "./types/ChatRoomMember";
 import {
   ChatAttachmentClaim,
@@ -593,6 +594,13 @@ export class ChatService implements OnApplicationBootstrap {
     "Surrendered",
   ];
 
+  private static readonly MATCH_CHAT_READER_STATUSES: e_match_status_enum[] = [
+    "WaitingForCheckIn",
+    "Veto",
+    "WaitingForServer",
+    "Live",
+  ];
+
   // Which setting governs which room's lifetime, and what it falls back to.
   // Read from system/ on boot and whenever a setting changes, so there is one
   // list to keep in step rather than a branch per type in three places.
@@ -694,7 +702,9 @@ export class ChatService implements OnApplicationBootstrap {
       return;
     }
 
-    if (!(await this.canAccessLobby(type, id, user))) {
+    const access = await this.lobbyAccess(type, id, user);
+
+    if (!access) {
       return;
     }
 
@@ -739,6 +749,7 @@ export class ChatService implements OnApplicationBootstrap {
         event: `lobby:${type}:${id}:messages`,
         data: {
           id,
+          ...(access === "read" ? { readOnly: true } : {}),
           ...(await this.historyFor(type, id, String(user.steam_id))),
         },
       }),
@@ -841,6 +852,14 @@ export class ChatService implements OnApplicationBootstrap {
     id: string,
     user: User,
   ): Promise<boolean> {
+    return (await this.lobbyAccess(type, id, user)) !== null;
+  }
+
+  private async lobbyAccess(
+    type: ChatLobbyType,
+    id: string,
+    user: User,
+  ): Promise<ChatRoomAccess | null> {
     switch (type) {
       case ChatLobbyType.Match:
         const { matches_by_pk } = await this.hasuraService.query(
@@ -852,13 +871,14 @@ export class ChatService implements OnApplicationBootstrap {
               is_coach: true,
               is_organizer: true,
               is_in_lineup: true,
+              status: true,
             },
           },
           user.steam_id,
         );
 
         if (!matches_by_pk) {
-          return false;
+          return null;
         }
 
         // Truthiness, not `=== false`: is_match_organizer is NULL rather than
@@ -869,7 +889,17 @@ export class ChatService implements OnApplicationBootstrap {
           !matches_by_pk.is_in_lineup &&
           !matches_by_pk.is_organizer
         ) {
-          return false;
+          // Staff may follow a match being played, but never write into it:
+          // Match Chat is relayed into the game server.
+          return ChatService.MATCH_CHAT_READER_STATUSES.includes(
+            matches_by_pk.status,
+          ) &&
+            isRoleAbove(
+              await this.hasuraService.getPlayerRole(String(user.steam_id)),
+              "moderator",
+            )
+            ? "read"
+            : null;
         }
 
         break;
@@ -877,7 +907,7 @@ export class ChatService implements OnApplicationBootstrap {
         const [matchId, lineupId] = id.split(":");
 
         if (!matchId || !lineupId) {
-          return false;
+          return null;
         }
 
         const { match_lineups_by_pk } = await this.hasuraService.query(
@@ -897,14 +927,14 @@ export class ChatService implements OnApplicationBootstrap {
         // The lineup has to actually be one side of this match, otherwise the
         // room key could be pointed at any lineup in the system.
         if (!match_lineups_by_pk || match_lineups_by_pk.match_id !== matchId) {
-          return false;
+          return null;
         }
 
         if (
           match_lineups_by_pk.is_on_lineup === false &&
           match_lineups_by_pk.coach_steam_id !== user.steam_id
         ) {
-          return false;
+          return null;
         }
 
         break;
@@ -921,7 +951,7 @@ export class ChatService implements OnApplicationBootstrap {
         });
 
         if (lobby_players_by_pk?.status !== "Accepted") {
-          return false;
+          return null;
         }
 
         break;
@@ -980,11 +1010,11 @@ export class ChatService implements OnApplicationBootstrap {
         );
 
         if (tournaments.length === 0) {
-          return false;
+          return null;
         }
 
         if (!(await this.isTournamentChatOpen(id))) {
-          return false;
+          return null;
         }
         break;
       case ChatLobbyType.Draft: {
@@ -1009,14 +1039,14 @@ export class ChatService implements OnApplicationBootstrap {
         });
 
         if (draft_games.length === 0) {
-          return false;
+          return null;
         }
 
         break;
       }
       case ChatLobbyType.Organizer:
         if (!(await this.isOrganizerNow(user.steam_id))) {
-          return false;
+          return null;
         }
 
         break;
@@ -1024,7 +1054,7 @@ export class ChatService implements OnApplicationBootstrap {
       // private to the team, and site staff are deliberately kept out of it.
       case ChatLobbyType.Team:
         if (!(await this.teamChatMembers(id)).has(String(user.steam_id))) {
-          return false;
+          return null;
         }
 
         break;
@@ -1032,14 +1062,14 @@ export class ChatService implements OnApplicationBootstrap {
         const parties = parseDirectRoomId(id);
 
         if (!parties || !parties.includes(String(user.steam_id))) {
-          return false;
+          return null;
         }
 
         // Anything else names the same pair under a room id that nothing
         // keyed on the canonical one -- the block trigger, the rail's filter
         // -- would ever match.
         if (id !== directRoomId(parties[0], parties[1])) {
-          return false;
+          return null;
         }
 
         // Being one of the two parties is not on its own an authorization:
@@ -1056,17 +1086,17 @@ export class ChatService implements OnApplicationBootstrap {
         );
 
         if (!access?.allowed) {
-          return false;
+          return null;
         }
 
         break;
       }
       default:
         this.logger.warn(`Unknown lobby type: ${type}`);
-        return false;
+        return null;
     }
 
-    return true;
+    return "post";
   }
 
   // Hiding is one-directional: what the viewer blocked is left out, what
@@ -1899,7 +1929,7 @@ export class ChatService implements OnApplicationBootstrap {
       return await this.canSendDraftMessage(id, user);
     }
 
-    return await this.canAccessLobby(type, id, user);
+    return (await this.lobbyAccess(type, id, user)) === "post";
   }
 
   // Who of those the sender picked the message tags: members of the room whose
@@ -2579,7 +2609,7 @@ export class ChatService implements OnApplicationBootstrap {
       }
 
       if (!admitted) {
-        if (!(await this.canAccessLobby(type, id, user))) {
+        if ((await this.lobbyAccess(type, id, user)) !== "post") {
           return { edited: false, code: ChatErrorCode.NotAllowed };
         }
 
@@ -4217,6 +4247,10 @@ export class ChatService implements OnApplicationBootstrap {
     id: string,
     present: Array<{ steamId: string }>,
   ): Promise<Set<string> | null> {
+    if (type === ChatLobbyType.Match) {
+      return await this.matchRoomAudience(id, present);
+    }
+
     if (type === ChatLobbyType.Organizer) {
       const lookups = await Promise.allSettled(
         present.map(async ({ steamId }) =>
@@ -4250,6 +4284,69 @@ export class ChatService implements OnApplicationBootstrap {
     }
 
     return new Set(await this.getLobbyMemberSteamIds(type, id));
+  }
+
+  // Whoever joined as staff and no longer is gets judged again in full, since a
+  // lineup or organizer seat may still hold them. They are left out of this
+  // delivery, never out of the room: the role cache is cleared by an event
+  // that can arrive late.
+  private async matchRoomAudience(
+    id: string,
+    present: Array<{
+      steamId: string;
+      inGame?: boolean;
+      user?: Partial<User>;
+    }>,
+  ): Promise<Set<string> | null> {
+    const staff = present.filter(
+      ({ inGame, user }) => !inGame && isRoleAbove(user?.role, "moderator"),
+    );
+
+    if (staff.length === 0) {
+      return null;
+    }
+
+    const lookups = await Promise.allSettled(
+      staff.map(async ({ steamId, user }) => {
+        const role = await this.hasuraService.getPlayerRole(String(steamId));
+
+        return (
+          isRoleAbove(role, "moderator") ||
+          (await this.canAccessLobby(ChatLobbyType.Match, id, {
+            ...user,
+            steam_id: String(steamId),
+            role,
+          } as User))
+        );
+      }),
+    );
+
+    const failed = lookups.filter(
+      (lookup): lookup is PromiseRejectedResult => lookup.status === "rejected",
+    );
+
+    if (failed.length > 0) {
+      this.logger.warn(
+        `unable to read the role of ${failed.length} player(s) in ${ChatLobbyType.Match}:${id}`,
+        failed[0].reason,
+      );
+    }
+
+    const dropped = new Set(
+      staff
+        .filter((_, index) => {
+          const lookup = lookups[index];
+
+          return lookup.status === "rejected" || !lookup.value;
+        })
+        .map(({ steamId }) => String(steamId)),
+    );
+
+    return new Set(
+      present
+        .map(({ steamId }) => String(steamId))
+        .filter((steamId) => !dropped.has(steamId)),
+    );
   }
 
   // A socket keeps the role it signed in with. The cached role is cleared on
