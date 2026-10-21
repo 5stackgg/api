@@ -1,0 +1,3 @@
+-- Which copies were missing their label is not recorded, and a label copied
+-- from the map's own other mode is what the copy should always have had, so
+-- there is nothing to put back.
