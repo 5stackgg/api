@@ -96,6 +96,10 @@ BEGIN
         RETURN;
     END IF;
 
+    -- The placements read the cached standings, and a bye can finish the
+    -- tournament inside update_tournament_bracket before it refreshes them.
+    PERFORM public.recompute_tournament_results(_tournament_id);
+
     SELECT p.tournament_team_id INTO _winning_team_id
     FROM public.tournament_placements(_tournament_id) p
     WHERE p.placement = 1;
