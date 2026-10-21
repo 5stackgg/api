@@ -1,9 +1,13 @@
 import { Logger } from "@nestjs/common";
+import { readFileSync } from "fs";
+import * as yaml from "js-yaml";
+import { join } from "path";
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { UtilityPlaybooksService } from "./../src/utility/utility-playbooks.service";
 import { UtilityPracticeService } from "./../src/utility/utility-practice.service";
 import { UtilityLoadService } from "./../src/utility/utility-load.service";
 import { Fixtures } from "./utils/fixtures";
+import { HasuraPermissions } from "./utils/hasura-permissions";
 import {
   bootMigratedDb,
   seedRegionWithServer,
@@ -84,6 +88,14 @@ describe("utility practice sessions (SQL-driven)", () => {
       Object.values(row) as Array<string>,
     );
     return inserted.id;
+  }
+
+  async function befriend(a: string, b: string, status = "Accepted") {
+    await postgres.query(
+      `INSERT INTO friends (player_steam_id, other_player_steam_id, status)
+       VALUES ($1, $2, $3)`,
+      [a, b, status],
+    );
   }
 
   // A dedicated practice box: already running, already listed in the picker,
@@ -2064,6 +2076,95 @@ describe("utility practice sessions (SQL-driven)", () => {
       expect(await canView(sessionId, null, "guest")).toBe(false);
     });
 
+    // canJoin already lets the host's accepted friends into a Friends session;
+    // without this they could never be shown it to join.
+    it("shows a Friends session to the host's accepted friends, either way round", async () => {
+      const host = await fx.player();
+      const asked = await fx.player();
+      const asking = await fx.player();
+      await befriend(host, asked);
+      await befriend(asking, host);
+      const sessionId = await insertSession(host, { access: "Friends" });
+
+      expect(await canView(sessionId, asked)).toBe(true);
+      expect(await canView(sessionId, asking)).toBe(true);
+    });
+
+    it("keeps a Friends session from a request nobody has accepted", async () => {
+      const host = await fx.player();
+      const requested = await fx.player();
+      const requesting = await fx.player();
+      await befriend(host, requested, "Pending");
+      await befriend(requesting, host, "Pending");
+      const sessionId = await insertSession(host, { access: "Friends" });
+
+      expect(await canView(sessionId, requested)).toBe(false);
+      expect(await canView(sessionId, requesting)).toBe(false);
+    });
+
+    it("keeps a Friends session from a friend either side has blocked", async () => {
+      const host = await fx.player();
+      const blocked = await fx.player();
+      const blocker = await fx.player();
+      await befriend(host, blocked);
+      await befriend(host, blocker);
+      const sessionId = await insertSession(host, { access: "Friends" });
+      await postgres.query(
+        `INSERT INTO player_blocks (blocker_steam_id, blocked_steam_id)
+         VALUES ($1, $2), ($3, $1)`,
+        [host, blocked, blocker],
+      );
+
+      expect(await canView(sessionId, blocked)).toBe(false);
+      expect(await canView(sessionId, blocker)).toBe(false);
+    });
+
+    it.each(["Invite", "Private"])(
+      "keeps an %s session from a friend nobody invited",
+      async (access) => {
+        const host = await fx.player();
+        const friend = await fx.player();
+        await befriend(host, friend);
+        const sessionId = await insertSession(host, { access });
+
+        expect(await canView(sessionId, friend)).toBe(false);
+      },
+    );
+
+    it("gives a friend who can see the session nothing to connect with", async () => {
+      const host = await fx.player();
+      const friend = await fx.player();
+      await befriend(host, friend);
+      const { matchId } = await createPracticeMatch(host);
+      const sessionId = await insertSession(host, {
+        match_id: matchId,
+        status: "Ready",
+        access: "Friends",
+      });
+      await postgres.query(
+        `UPDATE matches
+            SET server_id = (SELECT id FROM servers WHERE region = 'TestA' LIMIT 1)
+          WHERE id = $1`,
+        [matchId],
+      );
+
+      const connection = async (steamId: string) => {
+        const [row] = await postgres.query<
+          Array<{ link: string | null; connect: string | null }>
+        >(
+          `SELECT utility_practice_connection_link(s, $2::json) AS link,
+                  utility_practice_connection_string(s, $2::json) AS connect
+             FROM utility_practice_sessions s WHERE s.id = $1`,
+          [sessionId, session(steamId)],
+        );
+        return row;
+      };
+
+      expect((await connection(host)).link).not.toBeNull();
+      expect(await canView(sessionId, friend)).toBe(true);
+      expect(await connection(friend)).toEqual({ link: null, connect: null });
+    });
+
     // The link only exists for someone the match considers in the lineup, which
     // is exactly what joinUtilityPractice creates -- so a session with no match
     // yet, or a viewer who has not joined, has nothing to connect to.
@@ -2109,6 +2210,138 @@ describe("utility practice sessions (SQL-driven)", () => {
       await expect(
         insertSession(host, { map_name: "de_notamap" }),
       ).rejects.toThrow(/Unknown map/);
+    });
+  });
+
+  // The friends list asks each friend's player row for a server they host,
+  // the way it already asks for their lobby and draft, so it only ever reads
+  // its own friends' sessions and never every session on the site.
+  describe("a friend's practice server in the friends list", () => {
+    const hosted = (
+      yaml.load(
+        readFileSync(
+          join(
+            process.cwd(),
+            "hasura/metadata/databases/default/tables/public_players.yaml",
+          ),
+          "utf8",
+        ),
+      ) as {
+        array_relationships: Array<{
+          name: string;
+          using: { foreign_key_constraint_on: unknown };
+        }>;
+      }
+    ).array_relationships.find(
+      ({ name }) => name === "hosted_practice_sessions",
+    );
+
+    async function joinable(viewer: string): Promise<Array<string>> {
+      const { column } = hosted!.using.foreign_key_constraint_on as {
+        column: string;
+      };
+      const as = { role: "user", userId: viewer };
+      const permissions = new HasuraPermissions(postgres);
+      const params: Array<unknown> = [];
+      const friends = await permissions.where(
+        "v_my_friends",
+        "select",
+        "f",
+        as,
+        params,
+      );
+      const sessions = await permissions.where(
+        "utility_practice_sessions",
+        "select",
+        "s",
+        as,
+        params,
+      );
+      params.push(["Open", "Friends"]);
+
+      const rows = await postgres.query<Array<{ id: string }>>(
+        `SELECT s.id::text AS id
+           FROM v_my_friends f
+           JOIN players p ON p.steam_id = f.steam_id
+           JOIN utility_practice_sessions s ON s."${column}" = p.steam_id
+          WHERE ${friends}
+            AND ${sessions}
+            AND s.status = 'Ready'
+            AND s.access = ANY ($${params.length})
+          ORDER BY s.created_at`,
+        params as Array<string>,
+      );
+      return rows.map(({ id }) => id);
+    }
+
+    it("is reached from the host's player row", () => {
+      expect(hosted?.using.foreign_key_constraint_on).toEqual({
+        column: "host_steam_id",
+        table: { name: "utility_practice_sessions", schema: "public" },
+      });
+    });
+
+    it("lists the Open and Friends servers the viewer's friends host, and nothing else", async () => {
+      const viewer = await fx.player();
+      const friend = async () => {
+        const steamId = await fx.player();
+        await befriend(viewer, steamId);
+        return steamId;
+      };
+
+      const friendsOnly = await insertSession(await friend(), {
+        status: "Ready",
+        access: "Friends",
+      });
+      const open = await insertSession(await friend(), {
+        status: "Ready",
+        is_open: true,
+        access: "Open",
+      });
+      await insertSession(await friend(), {
+        status: "Ready",
+        access: "Private",
+      });
+      await insertSession(await friend(), {
+        status: "Ready",
+        access: "Invite",
+      });
+      await insertSession(await friend(), {
+        status: "Starting",
+        access: "Friends",
+      });
+      await insertSession(await friend(), {
+        status: "Ended",
+        access: "Friends",
+      });
+
+      const pending = await fx.player();
+      await befriend(viewer, pending, "Pending");
+      await insertSession(pending, { status: "Ready", access: "Friends" });
+
+      const guest = await friend();
+      const stranger = await fx.player();
+      const { matchId, lineupId } = await createPracticeMatch(stranger);
+      await fx.lineupPlayer(lineupId, guest);
+      await insertSession(stranger, {
+        match_id: matchId,
+        status: "Ready",
+        is_open: true,
+        access: "Open",
+      });
+
+      expect(await joinable(viewer)).toEqual([friendsOnly, open]);
+    });
+
+    it("shows nobody else's friends' servers", async () => {
+      const viewer = await fx.player();
+      const host = await fx.player();
+      const theirFriend = await fx.player();
+      await befriend(host, theirFriend);
+      await insertSession(host, { status: "Ready", access: "Friends" });
+
+      expect(await joinable(viewer)).toEqual([]);
+      expect(await joinable(theirFriend)).toHaveLength(1);
     });
   });
 

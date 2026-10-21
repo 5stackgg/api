@@ -72,6 +72,11 @@ BEGIN
         RETURN true;
     END IF;
 
+    IF session.access = 'Friends'
+        AND public.are_friends(session.host_steam_id, _steam_id) THEN
+        RETURN true;
+    END IF;
+
     RETURN public.is_utility_team_member(session.team_id, _steam_id);
 END;
 $$;
