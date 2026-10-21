@@ -29,6 +29,22 @@ array_relationships:
           name: utility_practice_invites
           schema: public
 computed_fields:
+  - name: can_stop
+    definition:
+      function:
+        name: can_stop_utility_practice_session
+        schema: public
+      session_argument: hasura_session
+  - name: seated_players
+    definition:
+      function:
+        name: utility_practice_seated_players
+        schema: public
+  - name: is_full
+    definition:
+      function:
+        name: utility_practice_is_full
+        schema: public
   - name: connected_players
     definition:
       function:
@@ -95,8 +111,11 @@ select_permissions:
         - created_at
         - updated_at
       computed_fields:
+        - can_stop
         - connected_players
+        - seated_players
         - max_players
+        - is_full
         - can_view
         - can_manage
         - is_member
@@ -134,8 +153,11 @@ select_permissions:
         - created_at
         - updated_at
       computed_fields:
+        - can_stop
         - connected_players
+        - seated_players
         - max_players
+        - is_full
         - can_view
         - can_manage
         - is_member

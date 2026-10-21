@@ -477,7 +477,7 @@ export class UtilityPracticeService {
 
     const lineupId = await this.hostLineupId(session.match_id);
 
-    if (await this.isLineupFull(session.match_id, lineupId)) {
+    if (await this.isFull(session.id)) {
       throw Error("this practice session is full");
     }
 
@@ -528,10 +528,20 @@ export class UtilityPracticeService {
       throw Error("practice session not found");
     }
 
-    if (
-      session.host_steam_id !== user.steam_id &&
-      !isRoleAbove(user.role, "moderator")
-    ) {
+    const [row] = await this.postgres.query<Array<{ allowed: boolean }>>(
+      `SELECT public.can_stop_utility_practice_session(s, $2::json) AS allowed
+         FROM public.utility_practice_sessions s
+        WHERE s.id = $1::uuid`,
+      [
+        session.id,
+        JSON.stringify({
+          "x-hasura-role": user.role,
+          "x-hasura-user-id": user.steam_id,
+        }),
+      ],
+    );
+
+    if (row?.allowed !== true) {
       throw Error("only the host can stop this practice session");
     }
 
@@ -2100,27 +2110,19 @@ export class UtilityPracticeService {
     return row?.present === true;
   }
 
-  private async isLineupFull(
-    matchId: string,
-    lineupId: string,
-  ): Promise<boolean> {
-    const [row] = await this.postgres.query<
-      Array<{ used: string; max: number }>
-    >(
-      `SELECT (
-         SELECT COUNT(*) FROM public.match_lineup_players
-          WHERE match_lineup_id = $2::uuid
-       ) AS used,
-       public.match_max_players_per_lineup(m) AS max
-       FROM public.matches m WHERE m.id = $1::uuid`,
-      [matchId, lineupId],
+  private async isFull(sessionId: string): Promise<boolean> {
+    const [row] = await this.postgres.query<Array<{ full: boolean }>>(
+      `SELECT public.utility_practice_is_full(s) AS full
+         FROM public.utility_practice_sessions s
+        WHERE s.id = $1::uuid`,
+      [sessionId],
     );
 
     if (!row) {
-      throw Error("practice match not found");
+      throw Error("practice session not found");
     }
 
-    return Number(row.used) >= Number(row.max);
+    return row.full;
   }
 
   private async serverIsConnected(matchId: string): Promise<boolean> {

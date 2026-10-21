@@ -941,9 +941,9 @@ describe("utility practice sessions (SQL-driven)", () => {
     });
   });
 
-  // The staff list's Stop and the panel's both land here. Every role from
-  // moderator up is shown Stop on somebody else's server, so every one of them
-  // has to be let through.
+  // The staff list's Stop and the panel's both land here, and both are shown
+  // from can_stop, so stop() asks the same function. A render is a batch job
+  // with nobody on it: only an administrator may cut one short.
   describe("stopping", () => {
     async function liveSession(): Promise<{ host: string; sessionId: string }> {
       const host = await fx.player();
@@ -1012,6 +1012,49 @@ describe("utility practice sessions (SQL-driven)", () => {
         service.stop({ steam_id: host, role: "user" } as never, {
           session_id: sessionId,
         }),
+      ).resolves.toEqual({ success: true });
+
+      expect(await status(sessionId)).toBe("Ended");
+    });
+
+    async function renderSession(): Promise<string> {
+      const [row] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO utility_practice_sessions (map_name, is_render, status, access)
+         VALUES ('de_mirage', true, 'Ready', 'Private')
+         RETURNING id::text AS id`,
+      );
+      return row.id;
+    }
+
+    it.each(["moderator", "match_organizer", "tournament_organizer"])(
+      "refuses a %s a render that is still filming",
+      async (role) => {
+        const sessionId = await renderSession();
+        const staff = await fx.player(undefined, role);
+        const service = makeService({});
+
+        await expect(
+          service.stop({ steam_id: staff, role } as never, {
+            session_id: sessionId,
+          }),
+        ).rejects.toThrow(/only the host/);
+
+        expect(await status(sessionId)).toBe("Ready");
+      },
+    );
+
+    it("still lets an administrator end a render", async () => {
+      const sessionId = await renderSession();
+      const administrator = await fx.player(undefined, "administrator");
+      const service = makeService({});
+
+      await expect(
+        service.stop(
+          { steam_id: administrator, role: "administrator" } as never,
+          {
+            session_id: sessionId,
+          },
+        ),
       ).resolves.toEqual({ success: true });
 
       expect(await status(sessionId)).toBe("Ended");
@@ -2189,20 +2232,14 @@ describe("utility practice sessions (SQL-driven)", () => {
 
     async function sessionsAs(
       as: { role: string; userId: string },
-      where: Record<string, unknown> = {},
-    ): Promise<
-      Array<{
-        id: string;
-        connected_players: number;
-        max_players: number | null;
-      }>
-    > {
+      fields: Array<string> = ["id", "connected_players", "max_players"],
+    ): Promise<Array<Record<string, unknown>>> {
       const params: Array<unknown> = [];
       const sql = await new HasuraPermissions(postgres).select(
         "utility_practice_sessions",
         "s",
         as,
-        { fields: ["id", "connected_players", "max_players"], where },
+        { fields },
         params,
       );
       return await postgres.query(
@@ -2275,6 +2312,70 @@ describe("utility practice sessions (SQL-driven)", () => {
       ]);
     });
 
+    // join refuses on seats, not on who is connected: a seat is held until
+    // its player leaves, so a server can be full with nobody on it.
+    it("reads full once every seat is taken, whoever is connected", async () => {
+      const { host, lineupId, sessionId } = await liveSession();
+      const guests = await seated(lineupId, 9);
+      await connect(lineupId, guests.slice(0, 2));
+
+      expect(
+        await sessionsAs(viewer(host), [
+          "id",
+          "connected_players",
+          "seated_players",
+          "max_players",
+          "is_full",
+        ]),
+      ).toEqual([
+        {
+          id: sessionId,
+          connected_players: 2,
+          seated_players: 10,
+          max_players: 10,
+          is_full: true,
+        },
+      ]);
+    });
+
+    it.each([
+      [9, false],
+      [10, true],
+    ])(
+      "agrees with join on whether %i seats taken is full",
+      async (seats, full) => {
+        const { host, lineupId, sessionId } = await liveSession({
+          is_open: true,
+          access: "Open",
+        });
+        await seated(lineupId, seats - 1);
+
+        expect(await sessionsAs(viewer(host), ["is_full"])).toEqual([
+          { is_full: full },
+        ]);
+
+        const attempt = makeService({}).join(
+          { steam_id: await fx.player(), role: "user" } as never,
+          { session_id: sessionId },
+        );
+
+        if (full) {
+          await expect(attempt).rejects.toThrow(/full/);
+        } else {
+          await expect(attempt).resolves.toBeTruthy();
+        }
+      },
+    );
+
+    it("is not full before there is a server", async () => {
+      const host = await fx.player();
+      await insertSession(host);
+
+      expect(
+        await sessionsAs(viewer(host), ["seated_players", "is_full"]),
+      ).toEqual([{ seated_players: 0, is_full: false }]);
+    });
+
     it("takes the maximum from the match it runs on", async () => {
       const { host, sessionId } = await liveSession();
       await postgres.query(
@@ -2345,6 +2446,108 @@ describe("utility practice sessions (SQL-driven)", () => {
     });
   });
 
+  // can_manage is what the panel turns into Stop instead of Leave and into the
+  // access, invite, playbook and map controls, all of which the api keeps to
+  // the host. Staff get can_stop on top, never in place of Leave.
+  describe("who drives a server and who may stop it", () => {
+    async function rightsAs(sessionId: string, role: string, userId: string) {
+      const params: Array<unknown> = [];
+      const sql = await new HasuraPermissions(postgres).select(
+        "utility_practice_sessions",
+        "s",
+        { role, userId },
+        {
+          fields: ["can_manage", "can_stop"],
+          where: { id: { _eq: sessionId } },
+        },
+        params,
+      );
+      const [row] = await postgres.query<
+        Array<{ can_manage: boolean; can_stop: boolean }>
+      >(sql, params as Array<string>);
+      return row;
+    }
+
+    async function liveSession(): Promise<{
+      host: string;
+      lineupId: string;
+      sessionId: string;
+    }> {
+      const host = await fx.player();
+      const { matchId, lineupId } = await createPracticeMatch(host);
+      const sessionId = await insertSession(host, {
+        match_id: matchId,
+        status: "Ready",
+        is_open: true,
+        access: "Open",
+      });
+      return { host, lineupId, sessionId };
+    }
+
+    it("keeps driving and stopping to the host among players", async () => {
+      const { host, lineupId, sessionId } = await liveSession();
+      const guest = await fx.lineupPlayer(lineupId);
+      const stranger = await fx.player();
+
+      expect(await rightsAs(sessionId, "user", host)).toEqual({
+        can_manage: true,
+        can_stop: true,
+      });
+      expect(await rightsAs(sessionId, "user", guest)).toEqual({
+        can_manage: false,
+        can_stop: false,
+      });
+      expect(await rightsAs(sessionId, "user", stranger)).toEqual({
+        can_manage: false,
+        can_stop: false,
+      });
+    });
+
+    it.each([
+      "moderator",
+      "match_organizer",
+      "tournament_organizer",
+      "administrator",
+    ])(
+      "lets a %s on somebody else's server stop it without driving it",
+      async (role) => {
+        const { lineupId, sessionId } = await liveSession();
+        const staff = await fx.player(undefined, role);
+        await fx.lineupPlayer(lineupId, staff);
+
+        expect(await rightsAs(sessionId, role, staff)).toEqual({
+          can_manage: false,
+          can_stop: true,
+        });
+      },
+    );
+
+    it.each([
+      ["moderator", false],
+      ["match_organizer", false],
+      ["tournament_organizer", false],
+      ["administrator", true],
+    ])("lets a %s stop a render: %s", async (role, allowed) => {
+      const [render] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO utility_practice_sessions (map_name, is_render, status, access)
+         VALUES ('de_mirage', true, 'Ready', 'Private')
+         RETURNING id::text AS id`,
+      );
+      const staff = await fx.player(undefined, role);
+
+      const [row] = await postgres.query<Array<{ ok: boolean }>>(
+        `SELECT can_stop_utility_practice_session(s, $2::json) AS ok
+           FROM utility_practice_sessions s WHERE s.id = $1`,
+        [
+          render.id,
+          JSON.stringify({ "x-hasura-role": role, "x-hasura-user-id": staff }),
+        ],
+      );
+
+      expect(row.ok).toBe(allowed);
+    });
+  });
+
   // Render and discovery pods book practice sessions too, but nobody is on
   // them and stopping one wastes a render halfway through, so the staff list
   // asks for is_render = false. It has to be a filter the staff roles may
@@ -2362,7 +2565,10 @@ describe("utility practice sessions (SQL-driven)", () => {
         "utility_practice_sessions",
         "s",
         { role, userId },
-        { fields: ["id", "connected_players", "max_players"], where: live },
+        {
+          fields: ["id", "connected_players", "max_players", "can_stop"],
+          where: live,
+        },
         params,
       );
       const rows = await postgres.query<Array<{ id: string }>>(
