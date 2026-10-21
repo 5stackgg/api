@@ -492,4 +492,92 @@ describe("match recovery (SQL-driven)", () => {
       });
     });
   });
+
+  describe("pushing the deadline back", () => {
+    const cancelsAt = async (matchId: string) => {
+      const [row] = await postgres.query<Array<{ cancels_at: Date | null }>>(
+        "SELECT cancels_at FROM matches WHERE id = $1",
+        [matchId],
+      );
+      return row.cancels_at;
+    };
+
+    const setCancelsAt = async (matchId: string, interval: string) => {
+      const [row] = await postgres.query<Array<{ cancels_at: Date }>>(
+        "UPDATE matches SET cancels_at = now() + $2::interval WHERE id = $1 RETURNING cancels_at",
+        [matchId, interval],
+      );
+      return row.cancels_at;
+    };
+
+    it("adds the minutes to a deadline that is still counting down", async () => {
+      const { match } = await liveMatch();
+      const before = await setCancelsAt(match.id, "2 minutes");
+
+      await service().extendMatchAutoCancel(match.id, 15);
+
+      expect((await cancelsAt(match.id))!.getTime() - before.getTime()).toBe(
+        15 * 60_000,
+      );
+    });
+
+    it("refuses a deadline that has already passed", async () => {
+      const { match } = await liveMatch();
+      const passed = await setCancelsAt(match.id, "-1 second");
+
+      await expect(
+        service().extendMatchAutoCancel(match.id, 15),
+      ).rejects.toThrow("The match has no deadline left to push back");
+      expect(await cancelsAt(match.id)).toEqual(passed);
+    });
+
+    it("keeps the new deadline for a match waiting on check-in", async () => {
+      const match = await fx.match({ type: "Duel" });
+      await postgres.query(
+        "UPDATE match_options SET auto_cancellation = true, auto_cancel_duration = 15 WHERE id = $1",
+        [match.options_id],
+      );
+      await postgres.query(
+        "UPDATE matches SET status = 'WaitingForCheckIn' WHERE id = $1",
+        [match.id],
+      );
+      const armed = (await cancelsAt(match.id))!;
+
+      await service().extendMatchAutoCancel(match.id, 30);
+
+      expect((await cancelsAt(match.id))!.getTime() - armed.getTime()).toBe(
+        30 * 60_000,
+      );
+    });
+
+    it("refuses a match with no deadline, one that is over, and silly amounts", async () => {
+      const { match } = await liveMatch();
+
+      await postgres.query(
+        "UPDATE matches SET cancels_at = NULL WHERE id = $1",
+        [match.id],
+      );
+      await expect(
+        service().extendMatchAutoCancel(match.id, 15),
+      ).rejects.toThrow("The match has no deadline left to push back");
+
+      await setCancelsAt(match.id, "5 minutes");
+      await expect(
+        service().extendMatchAutoCancel(match.id, 0),
+      ).rejects.toThrow("Add between 1 and 120 minutes");
+      await expect(
+        service().extendMatchAutoCancel(match.id, 121),
+      ).rejects.toThrow("Add between 1 and 120 minutes");
+
+      await postgres.query(
+        "UPDATE matches SET status = 'Canceled' WHERE id = $1",
+        [match.id],
+      );
+      const canceledAt = await setCancelsAt(match.id, "5 minutes");
+      await expect(
+        service().extendMatchAutoCancel(match.id, 15),
+      ).rejects.toThrow("The match has no deadline left to push back");
+      expect(await cancelsAt(match.id)).toEqual(canceledAt);
+    });
+  });
 });

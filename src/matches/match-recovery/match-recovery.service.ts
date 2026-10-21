@@ -317,6 +317,19 @@ export class MatchRecoveryService {
     return { success: true };
   }
 
+  public async extendMatchAutoCancel(matchId: string, minutes: number) {
+    await this.postgres.query("SELECT extend_match_auto_cancel($1, $2)", [
+      matchId,
+      minutes,
+    ]);
+
+    this.logger.log(
+      `[${matchId}] organizer pushed the deadline back ${minutes} minutes`,
+    );
+
+    return { success: true };
+  }
+
   // Cancel, then reopen check-in: what an organizer does by hand with Cancel
   // and Start, in one step. Leaving Canceled clears a map veto; a map that was
   // still being played is put back to the start, or the next server would

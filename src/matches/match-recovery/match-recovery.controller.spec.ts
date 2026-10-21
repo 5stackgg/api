@@ -12,6 +12,7 @@ describe("MatchRecoveryController", () => {
       restartMatchMap: jest.fn(async () => ({ success: true })),
       rewindMapVeto: jest.fn(async () => ({ success: true })),
       extendVetoClock: jest.fn(async () => ({ success: true })),
+      extendMatchAutoCancel: jest.fn(async () => ({ success: true })),
     };
 
     return {
@@ -44,6 +45,13 @@ describe("MatchRecoveryController", () => {
     await expect(
       controller.extendVetoClock({ match_id: "match-1", seconds: 30, user }),
     ).rejects.toThrow("you are not a match organizer");
+    await expect(
+      controller.extendMatchAutoCancel({
+        match_id: "match-1",
+        minutes: 15,
+        user,
+      }),
+    ).rejects.toThrow("you are not a match organizer");
 
     expect(recovery.getRestoreRounds).not.toHaveBeenCalled();
     expect(recovery.restoreRound).not.toHaveBeenCalled();
@@ -51,6 +59,7 @@ describe("MatchRecoveryController", () => {
     expect(recovery.restartMatchMap).not.toHaveBeenCalled();
     expect(recovery.rewindMapVeto).not.toHaveBeenCalled();
     expect(recovery.extendVetoClock).not.toHaveBeenCalled();
+    expect(recovery.extendMatchAutoCancel).not.toHaveBeenCalled();
   });
 
   it("hands organizers' requests to the service", async () => {
@@ -71,6 +80,11 @@ describe("MatchRecoveryController", () => {
       seconds: 30,
       user,
     });
+    await controller.extendMatchAutoCancel({
+      match_id: "match-1",
+      minutes: 15,
+      user,
+    });
 
     expect(recovery.getRestoreRounds).toHaveBeenCalledWith("match-1", user);
     expect(recovery.restoreRound).toHaveBeenCalledWith("match-1", 4, user);
@@ -78,5 +92,6 @@ describe("MatchRecoveryController", () => {
     expect(recovery.restartMatchMap).toHaveBeenCalledWith("match-1", user);
     expect(recovery.rewindMapVeto).toHaveBeenCalledWith("match-1", 3, 5);
     expect(recovery.extendVetoClock).toHaveBeenCalledWith("match-1", 30);
+    expect(recovery.extendMatchAutoCancel).toHaveBeenCalledWith("match-1", 15);
   });
 });
