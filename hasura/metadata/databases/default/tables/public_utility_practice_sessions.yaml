@@ -59,6 +59,12 @@ computed_fields:
         name: utility_practice_connection_string
         schema: public
       session_argument: hasura_session
+  - name: server_id
+    definition:
+      function:
+        name: utility_practice_server_id
+        schema: public
+      session_argument: hasura_session
 insert_permissions: []
 select_permissions:
   - role: user
@@ -89,6 +95,7 @@ select_permissions:
         - is_member
         - connection_link
         - connection_string
+        - server_id
       filter:
         _and:
           - can_view:
@@ -125,6 +132,7 @@ select_permissions:
         - is_member
         - connection_link
         - connection_string
+        - server_id
       filter: {}
       allow_aggregations: true
     comment: ''

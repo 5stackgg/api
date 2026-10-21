@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Rcon as RconClient } from "rcon-client";
+import { validate as validateUUID } from "uuid";
 import { HasuraService } from "../hasura/hasura.service";
 import { EncryptionService } from "../encryption/encryption.service";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -8,8 +9,8 @@ import { TypeSenseService } from "../type-sense/type-sense.service";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 import { CacheService } from "../cache/cache.service";
 import { User } from "../auth/types/User";
-import { isRoleAbove } from "../utilities/isRoleAbove";
 import { MarkDedicatedServerOffline } from "../game-server-node/jobs/MarkDedicatedServerOffline";
+import { PostgresService } from "../postgres/postgres.service";
 
 @Injectable()
 export class RconService {
@@ -21,6 +22,7 @@ export class RconService {
     private readonly typeSenseService: TypeSenseService,
     private readonly redisManager: RedisManagerService,
     private readonly cache: CacheService,
+    private readonly postgres: PostgresService,
   ) {}
 
   private CONNECTION_TIMEOUT = 3 * 1000;
@@ -29,55 +31,32 @@ export class RconService {
   private connections: Record<string, RconClient> = {};
   private connectTimeouts: Record<string, NodeJS.Timeout> = {};
 
-  // An elevated role is not by itself a licence to drive every server: match
-  // servers are reachable only by that match's organizer, while dedicated
-  // servers stay open to the moderation roles that police public play.
+  // Decided by can_rcon_server, which also hands out the practice console's
+  // server id, so the console only ever opens where these commands are let in.
+  // The role is the player's current one, as Hasura's session carries it: the
+  // socket's copy only refreshes on a ping, so a client that stops pinging
+  // keeps a role it has lost.
   public async canAccessServer(serverId: string, user: User): Promise<boolean> {
-    if (user.role === "administrator") {
-      return true;
-    }
-
-    if (!isRoleAbove(user.role, "moderator")) {
+    if (!validateUUID(serverId)) {
       return false;
     }
 
-    const { servers_by_pk: server } = await this.hasuraService.query({
-      servers_by_pk: {
-        __args: {
-          id: serverId,
-        },
-        is_dedicated: true,
-      },
-    });
-
-    if (!server) {
-      return false;
-    }
-
-    if (server.is_dedicated) {
-      return true;
-    }
-
-    const { matches } = await this.hasuraService.query(
-      {
-        matches: {
-          __args: {
-            where: {
-              server_id: {
-                _eq: serverId,
-              },
-              status: {
-                _nin: ["Canceled", "Finished", "Forfeit", "Surrendered", "Tie"],
-              },
-            },
-          },
-          is_organizer: true,
-        },
-      },
-      user.steam_id,
+    const [server] = await this.postgres.query<Array<{ allowed: boolean }>>(
+      `SELECT public.can_rcon_server(s, $2::json) AS allowed
+         FROM public.servers s
+        WHERE s.id = $1::uuid`,
+      [
+        serverId,
+        JSON.stringify({
+          "x-hasura-role": await this.hasuraService.getPlayerRole(
+            user.steam_id,
+          ),
+          "x-hasura-user-id": user.steam_id,
+        }),
+      ],
     );
 
-    return matches.some((match) => match.is_organizer);
+    return server?.allowed === true;
   }
 
   public async connect(serverId: string): Promise<RconClient | null> {
