@@ -521,15 +521,14 @@ describe("match recovery (SQL-driven)", () => {
       );
     });
 
-    it("counts from now once the deadline has already passed", async () => {
+    it("refuses a deadline that has already passed", async () => {
       const { match } = await liveMatch();
-      await setCancelsAt(match.id, "-1 minute");
+      const passed = await setCancelsAt(match.id, "-1 second");
 
-      await service().extendMatchAutoCancel(match.id, 15);
-
-      expect((await cancelsAt(match.id))!.getTime()).toBeGreaterThan(
-        Date.now() + 14 * 60_000,
-      );
+      await expect(
+        service().extendMatchAutoCancel(match.id, 15),
+      ).rejects.toThrow("The match has no deadline left to push back");
+      expect(await cancelsAt(match.id)).toEqual(passed);
     });
 
     it("keeps the new deadline for a match waiting on check-in", async () => {
@@ -560,7 +559,7 @@ describe("match recovery (SQL-driven)", () => {
       );
       await expect(
         service().extendMatchAutoCancel(match.id, 15),
-      ).rejects.toThrow("The match is not counting down to a deadline");
+      ).rejects.toThrow("The match has no deadline left to push back");
 
       await setCancelsAt(match.id, "5 minutes");
       await expect(
@@ -574,10 +573,10 @@ describe("match recovery (SQL-driven)", () => {
         "UPDATE matches SET status = 'Canceled' WHERE id = $1",
         [match.id],
       );
-      const canceledAt = await cancelsAt(match.id);
+      const canceledAt = await setCancelsAt(match.id, "5 minutes");
       await expect(
         service().extendMatchAutoCancel(match.id, 15),
-      ).rejects.toThrow("The match is not counting down to a deadline");
+      ).rejects.toThrow("The match has no deadline left to push back");
       expect(await cancelsAt(match.id)).toEqual(canceledAt);
     });
   });
