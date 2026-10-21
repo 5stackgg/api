@@ -64,6 +64,8 @@ export class SystemModule {
       return;
     }
 
+    void this.systemService.syncHasura();
+
     // Every 5 minutes because the registry and GitHub lookups are cached for
     // 5: checking more often never saw a new release any sooner.
     void scheduleJobs(queue, {

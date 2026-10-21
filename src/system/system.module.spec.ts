@@ -31,6 +31,7 @@ describe("SystemModule update checks", () => {
         watchServicePods: (callback: () => void) => {
           podGone = callback;
         },
+        syncHasura: jest.fn().mockResolvedValue(undefined),
         getSetting: jest.fn().mockResolvedValue(60),
       } as any,
       { updateChatMessageTTL: jest.fn() } as any,

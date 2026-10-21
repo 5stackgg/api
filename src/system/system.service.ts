@@ -27,6 +27,8 @@ export class SystemService {
 
   private static readonly POD_WATCH_RETRY_MS = 5 * 1000;
 
+  private static readonly SYNC_HASURA_LOCK = "system:sync-hasura";
+
   private featuresDetected = false;
 
   private static TRACKED_APPS = [
@@ -322,6 +324,90 @@ export class SystemService {
     }
   }
 
+  // Hasura's init container is the only thing that migrates, and it runs only
+  // when the hasura pod is replaced. The api container re-pulls :latest
+  // whenever it restarts on its own (liveness, OOM), so it can come up on a
+  // build whose migrations never ran.
+  public async syncHasura() {
+    if (process.env.DEV) {
+      return;
+    }
+
+    // Two restarts in a row would kill the first new pod mid-migration.
+    const token = await this.cache.acquireLock(
+      SystemService.SYNC_HASURA_LOCK,
+      60,
+    );
+
+    if (!token) {
+      return;
+    }
+
+    try {
+      if (!(await this.hasura.needsSetup())) {
+        return;
+      }
+
+      const services = await this.getServices();
+      const self = services.find(({ pod }) => pod === process.env.POD_NAME);
+
+      if (!self?.startedAt) {
+        return;
+      }
+
+      // Both pull :latest as they start, so whichever started later holds the
+      // newer build. Hasura migrating after this api started means the api is
+      // the stale one -- and it is also what stops this restarting hasura more
+      // than once per api start.
+      const hasura = services.filter(
+        ({ service, gone }) => service === "hasura" && !gone,
+      );
+      const behind =
+        hasura.length > 0 &&
+        hasura.every(
+          ({ startedAt, versions }) =>
+            !!startedAt &&
+            startedAt < self.startedAt &&
+            !versions.some((version) => self.versions.includes(version)),
+        );
+
+      // A rollout still running is migrating; one that is stuck would only be
+      // stuck again.
+      if (!behind || !(await this.rolloutComplete("hasura"))) {
+        return;
+      }
+
+      this.logger.warn(
+        `hasura has not migrated api ${self.version ?? self.pod}, restarting it`,
+      );
+
+      await this.restartDeployment("hasura");
+    } catch (error) {
+      this.logger.warn(
+        `unable to check hasura is migrated: ${error?.message ?? error}`,
+      );
+    } finally {
+      await this.cache.releaseLock(SystemService.SYNC_HASURA_LOCK, token);
+    }
+  }
+
+  private async rolloutComplete(name: string) {
+    const { metadata, spec, status } =
+      await this.appsClient.readNamespacedDeployment({
+        name,
+        namespace: "5stack",
+      });
+
+    const updated = status?.updatedReplicas ?? 0;
+
+    return (
+      (status?.observedGeneration ?? 0) >= (metadata?.generation ?? 0) &&
+      updated >= (spec?.replicas ?? 1) &&
+      (status?.replicas ?? 0) <= updated &&
+      (status?.availableReplicas ?? 0) >= updated
+    );
+  }
+
   public async restartService(service: string, pod?: string) {
     try {
       await this.restartDeployment(service);
@@ -554,6 +640,8 @@ export class SystemService {
       image: string;
       version: string;
       versions: string[];
+      startedAt?: Date;
+      gone: boolean;
     }> = [];
 
     for (const { pod, node } of await this.readyPods()) {
@@ -579,6 +667,12 @@ export class SystemService {
         image: spec?.image,
         version: SystemService.imageDigest(status?.imageID),
         versions: SystemService.imageDigests(node, status?.imageID),
+        startedAt:
+          status?.state?.running?.startedAt ??
+          status?.state?.terminated?.startedAt,
+        gone:
+          !!pod.metadata.deletionTimestamp ||
+          ["Failed", "Succeeded"].includes(pod.status?.phase),
       });
     }
 

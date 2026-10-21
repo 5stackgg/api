@@ -25,6 +25,8 @@ import { timingSafeStringEqual } from "../utilities/timingSafeStringEqual";
 
 @Injectable()
 export class HasuraService {
+  private static readonly METADATA_DIGEST_NAME = "hasura/metadata";
+
   private config: HasuraConfig;
   private appConfig: AppConfig;
 
@@ -174,6 +176,17 @@ export class HasuraService {
     await this.apply(triggers);
 
     await this.updateSettings();
+
+    // Only hasura's init container: hasura loads this image's metadata once it
+    // exits, which a dev api running setup() never makes it do.
+    if (process.env.RUN_MIGRATIONS) {
+      const metadata = this.metadataDigest();
+      if (
+        metadata !== (await this.getSetting(HasuraService.METADATA_DIGEST_NAME))
+      ) {
+        await this.setSetting(HasuraService.METADATA_DIGEST_NAME, metadata);
+      }
+    }
 
     if (process.env.LOAD_FIXTURES === "true") {
       const fixturesPath = path.resolve("./hasura/fixtures");
@@ -512,6 +525,52 @@ export class HasuraService {
 
   private digestName(filePath: string) {
     return path.relative(process.cwd(), filePath.replace(".sql", ""));
+  }
+
+  // Whether this image carries schema or metadata the database has not had.
+  // Only hasura's init container runs setup(), so an api that comes up on a
+  // newer build than hasura's has to notice it itself.
+  public async needsSetup() {
+    const applied = await this.getAppliedVersions();
+    const available = await this.getAvailableVersions(
+      path.resolve("./hasura/migrations/default"),
+    );
+
+    if ([...available.keys()].some((version) => !applied.has(version))) {
+      return true;
+    }
+
+    const hashes = new Map(
+      (
+        await this.postgresService.query<Array<{ name: string; hash: string }>>(
+          "SELECT name, hash FROM migration_hashes.hashes",
+        )
+      ).map(({ name, hash }) => [name, hash]),
+    );
+
+    const files = ["enums", "functions", "views", "triggers"].flatMap((dir) =>
+      this.sqlFiles(path.resolve(`./hasura/${dir}`)),
+    );
+
+    return (
+      files.some(
+        (file) =>
+          hashes.get(this.digestName(file)) !==
+          this.calcSqlDigest(fs.readFileSync(file, "utf8")),
+      ) ||
+      hashes.get(HasuraService.METADATA_DIGEST_NAME) !== this.metadataDigest()
+    );
+  }
+
+  private metadataDigest() {
+    const dir = path.resolve("./hasura/metadata");
+
+    return this.calcSqlDigest(
+      this.sqlFiles(dir).flatMap((file) => [
+        path.relative(dir, file),
+        fs.readFileSync(file, "utf8"),
+      ]),
+    );
   }
 
   public async getSetting(name: string) {
