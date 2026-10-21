@@ -1504,7 +1504,7 @@ export class UtilityPracticeService {
           WHERE type = $1
             AND enabled = true
             AND deleted_at IS NULL
-          ORDER BY name`,
+          ORDER BY active_pool DESC, workshop_map_id IS NOT NULL, name`,
         [UtilityPracticeService.MATCH_TYPE],
       ),
     ]);
