@@ -156,6 +156,8 @@ export class UtilityDiscoveryService {
       );
     }
 
+    await this.practice.assertRole(user);
+
     if (!(await this.practice.canPracticeOn(request.map))) {
       throw Error("that map is not available for practice");
     }
@@ -529,6 +531,17 @@ export class UtilityDiscoveryService {
         WHERE id = $1::uuid AND status = 'Verifying'`,
       [id],
     );
+  }
+
+  public async recordBootFailure(id: string): Promise<number> {
+    const [row] = await this.postgres.query<Array<{ boot_failures: number }>>(
+      `UPDATE public.utility_discoveries
+          SET boot_failures = boot_failures + 1
+        WHERE id = $1::uuid AND status = 'Queued'
+    RETURNING boot_failures`,
+      [id],
+    );
+    return row?.boot_failures ?? 0;
   }
 
   public async finish(

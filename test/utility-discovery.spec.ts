@@ -14,6 +14,7 @@ import {
   UtilityDiscoveryService,
 } from "./../src/utility/utility-discovery.service";
 import { UtilityLineupsService } from "./../src/utility/utility-lineups.service";
+import { UtilityPracticeService } from "./../src/utility/utility-practice.service";
 import { Fixtures } from "./utils/fixtures";
 import {
   bootMigratedDb,
@@ -70,7 +71,7 @@ describe("utility lineup discovery (SQL-driven)", () => {
     await postgres.query("DELETE FROM match_options");
     await postgres.query("DELETE FROM players");
     await postgres.query(
-      "DELETE FROM settings WHERE name = 'public.utility_discoveries_per_hour'",
+      "DELETE FROM settings WHERE name IN ('public.utility_discoveries_per_hour', 'public.create_matches_role')",
     );
   });
 
@@ -161,6 +162,22 @@ describe("utility lineup discovery (SQL-driven)", () => {
       new UtilityCalloutsService(new Logger("UtilityDiscoveryTest"), postgres),
     );
 
+    const practice = new UtilityPracticeService(
+      new Logger("UtilityDiscoveryTest"),
+      postgres,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { get: () => ({}) } as never,
+      { getConnection: () => ({}) } as never,
+    );
+    jest.spyOn(practice, "canPracticeOn").mockResolvedValue(true);
+    jest.spyOn(practice, "renderServerId").mockResolvedValue(serverId);
+
     return new UtilityDiscoveryService(
       new Logger("UtilityDiscoveryTest"),
       postgres,
@@ -179,11 +196,7 @@ describe("utility lineup discovery (SQL-driven)", () => {
           error: null as string | null,
         })),
       } as unknown as never,
-      {
-        isEnabled: jest.fn(async () => true),
-        canPracticeOn: jest.fn(async () => true),
-        renderServerId: jest.fn(async () => serverId),
-      } as unknown as never,
+      practice,
       lineups,
       {
         discovery: jest.fn(
@@ -499,6 +512,68 @@ describe("utility lineup discovery (SQL-driven)", () => {
           }),
         ),
       ).rejects.toThrow(/at most 2048/);
+    });
+
+    it("refuses a player below the role that may start practice servers, and books nothing", async () => {
+      await postgres.query(
+        "INSERT INTO settings (name, value) VALUES ('public.create_matches_role', 'verified_user')",
+      );
+      const steamId = await fx.player();
+
+      await expect(service().start(user(steamId), ask())).rejects.toThrow(
+        "you are not allowed to start a practice session",
+      );
+
+      const discoveries = await postgres.query<Array<unknown>>(
+        "SELECT 1 FROM utility_discoveries",
+      );
+      expect(discoveries).toHaveLength(0);
+      expect(queued).toEqual([]);
+    });
+
+    it("lets a player at that role start one", async () => {
+      await postgres.query(
+        "INSERT INTO settings (name, value) VALUES ('public.create_matches_role', 'verified_user')",
+      );
+      const steamId = await fx.player();
+
+      await expect(
+        service().start(user(steamId, "verified_user"), ask()),
+      ).resolves.toMatchObject({ status: "Queued" });
+      expect(queued).toEqual(["RunUtilityDiscovery"]);
+    });
+  });
+
+  describe("a server lost before it throws", () => {
+    it("counts each loss on the queued discovery it held up", async () => {
+      const steamId = await fx.player();
+      const discoveries = service();
+      const { discovery_id } = await discoveries.start(user(steamId), ask());
+
+      expect(await discoveries.recordBootFailure(discovery_id!)).toBe(1);
+      expect(await discoveries.recordBootFailure(discovery_id!)).toBe(2);
+
+      const [row] = await postgres.query<Array<{ boot_failures: number }>>(
+        "SELECT boot_failures FROM utility_discoveries WHERE id = $1",
+        [discovery_id],
+      );
+      expect(row.boot_failures).toBe(2);
+    });
+
+    it("counts nothing on a discovery that is being thrown or is over", async () => {
+      const discoveries = service();
+      const { discoveryId } = await verifyingDiscovery(discoveries);
+
+      expect(await discoveries.recordBootFailure(discoveryId)).toBe(0);
+
+      await discoveries.finish(discoveryId, "Done", null);
+      expect(await discoveries.recordBootFailure(discoveryId)).toBe(0);
+
+      const [row] = await postgres.query<Array<{ boot_failures: number }>>(
+        "SELECT boot_failures FROM utility_discoveries WHERE id = $1",
+        [discoveryId],
+      );
+      expect(row.boot_failures).toBe(0);
     });
   });
 

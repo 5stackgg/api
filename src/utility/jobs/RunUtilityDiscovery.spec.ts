@@ -277,6 +277,132 @@ describe("RunUtilityDiscovery", () => {
     expect(bullJob.data).toEqual({});
   });
 
+  describe("a server that goes away before it throws", () => {
+    let booked: number;
+    let bootFailures: Record<string, number>;
+
+    beforeEach(() => {
+      booked = 0;
+      bootFailures = {};
+      practice.startForRender.mockImplementation(async () => ({
+        id: `session-${++booked}`,
+        status: "Starting",
+      }));
+      practice.session.mockImplementation(async (id: string) => ({
+        id,
+        status: "Failed",
+        failure_reason: "no practice server was available",
+        map_name: "de_mirage",
+        match_id: "match-1",
+      }));
+      discoveries.recordBootFailure = jest.fn(async (id: string) => {
+        if (head?.id !== id || head.status !== "Queued") {
+          return 0;
+        }
+        bootFailures[id] = (bootFailures[id] ?? 0) + 1;
+        return bootFailures[id];
+      });
+    });
+
+    const drain = async (bullJob: any, steps: number) => {
+      for (let i = 0; i < steps; i++) {
+        try {
+          await job.process(bullJob);
+          return;
+        } catch (error) {
+          expect(error).toBeInstanceOf(DelayedError);
+        }
+      }
+    };
+
+    it("fails the discovery after three servers instead of booking forever", async () => {
+      const bullJob = makeJob({});
+
+      await drain(bullJob, 20);
+
+      expect(practice.startForRender).toHaveBeenCalledTimes(3);
+      expect(practice.endRenderSession.mock.calls).toEqual([
+        ["session-1"],
+        ["session-2"],
+        ["session-3"],
+      ]);
+      expect(discoveries.finish).toHaveBeenCalledWith(
+        "discovery-1",
+        "Failed",
+        "the server could not start, try again later",
+      );
+      expect(bullJob.data).toEqual({});
+    });
+
+    it("books the next discovery once it has failed one", async () => {
+      const second = {
+        ...HEAD,
+        id: "discovery-2",
+        map_name: "de_inferno",
+        created_at: new Date(),
+      };
+      discoveries.finish.mockImplementation(async () => {
+        head = head?.id === "discovery-1" ? second : null;
+      });
+      const bullJob = makeJob({});
+
+      await drain(bullJob, 40);
+
+      expect(discoveries.finish.mock.calls).toEqual([
+        [
+          "discovery-1",
+          "Failed",
+          "the server could not start, try again later",
+        ],
+        [
+          "discovery-2",
+          "Failed",
+          "the server could not start, try again later",
+        ],
+      ]);
+      expect(
+        practice.startForRender.mock.calls.map(([options]) => options.mapName),
+      ).toEqual([
+        "de_mirage",
+        "de_mirage",
+        "de_mirage",
+        "de_inferno",
+        "de_inferno",
+        "de_inferno",
+      ]);
+    });
+
+    it("charges a lost server to the discovery waiting for it, not the one it was booked for", async () => {
+      bootFailures["discovery-1"] = 2;
+      head = { ...head!, id: "discovery-2" };
+
+      await step(makeJob({ sessionId: "session-1", bookedAt: Date.now() }));
+
+      expect(discoveries.recordBootFailure).toHaveBeenCalledWith("discovery-2");
+      expect(discoveries.finish).not.toHaveBeenCalled();
+      expect(practice.endRenderSession).toHaveBeenCalledWith("session-1");
+    });
+
+    it("still fails a discovery whose server stops mid-throw straight away", async () => {
+      head = {
+        ...head!,
+        status: "Verifying",
+        utility_practice_session_id: "session-1",
+        started_at: new Date(),
+      };
+
+      await step(makeJob({ sessionId: "session-1", bookedAt: Date.now() }));
+
+      expect(discoveries.finish).toHaveBeenCalledWith(
+        "discovery-1",
+        "Failed",
+        "the server stopped",
+      );
+      expect(discoveries.recordBootFailure).not.toHaveBeenCalled();
+      expect(practice.endRenderSession).toHaveBeenCalledWith("session-1");
+    });
+  });
+
   it("finishes straight away with nothing queued and no server", async () => {
     head = null;
 

@@ -29,6 +29,7 @@ const VERIFY_GRACE_MS = 2 * 60 * 1000;
 // costs a minute or two.
 const WARM_MS = 3 * 60 * 1000;
 const RUN_ATTEMPTS = 3;
+const BOOT_ATTEMPTS = 3;
 
 type JobData = {
   sessionId?: string;
@@ -122,6 +123,17 @@ export class RunUtilityDiscovery extends WorkerHost {
         await this.discoveries.finish(head.id, "Failed", "the server stopped");
       }
       await this.release(job);
+      if (
+        head.status === "Queued" &&
+        (await this.discoveries.recordBootFailure(head.id)) >= BOOT_ATTEMPTS
+      ) {
+        await this.discoveries.finish(
+          head.id,
+          "Failed",
+          "the server could not start, try again later",
+        );
+        return this.delayUntilNext(job, 0);
+      }
       return this.delayUntilNext(job, CHECK_DELAY_MS);
     }
 
