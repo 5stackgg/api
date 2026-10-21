@@ -37,8 +37,17 @@ const REQUEST_TTL_MS = 24 * 60 * 60 * 1000;
 const PLAYTIME_MINUTES = 60;
 const WEEK_MINUTES = 7 * 24 * 60;
 
+type ScrimCandidate = ScrimSettings & {
+  owner_steam_id: string | null;
+  ranks: TeamRanks;
+  availability: Array<AvailabilityWindow>;
+};
+
 @Injectable()
 export class ScrimsService {
+  // A proposal is always for this far ahead of when it is made.
+  public static readonly PROPOSE_LEAD_MS = 15 * 60 * 1000;
+
   private readonly appConfig: AppConfig;
 
   constructor(
@@ -56,11 +65,31 @@ export class ScrimsService {
     return settings?.enabled === true;
   }
 
+  public static readonly FINDER_ENABLED_SETTING = "public.scrim_finder_enabled";
+
   public async isFinderEnabled(): Promise<boolean> {
     const rows = await this.postgres.query<Array<{ value: string }>>(
-      `SELECT value FROM settings WHERE name = 'public.scrim_finder_enabled'`,
+      `SELECT value FROM settings WHERE name = $1`,
+      [ScrimsService.FINDER_ENABLED_SETTING],
     );
     return rows.at(0)?.value !== "false";
+  }
+
+  public async isScrimOpen(teamId: string): Promise<boolean> {
+    const rows = await this.postgres.query<Array<{ team_id: string }>>(
+      `SELECT team_id FROM team_scrim_settings WHERE team_id = $1 AND enabled = true`,
+      [teamId],
+    );
+    return rows.length > 0;
+  }
+
+  public async openRequestExpiries(until: Date): Promise<Array<Date>> {
+    const rows = await this.postgres.query<Array<{ expires_at: Date }>>(
+      `SELECT DISTINCT expires_at FROM team_scrim_requests
+        WHERE status IN ('Pending', 'Countered') AND expires_at <= $1`,
+      [until],
+    );
+    return rows.map(({ expires_at }) => expires_at);
   }
 
   public static rangesOverlap(
@@ -209,7 +238,9 @@ export class ScrimsService {
     return managers.includes(steamId);
   }
 
-  private async getScrimSettings(teamId: string): Promise<ScrimSettings | null> {
+  private async getScrimSettings(
+    teamId: string,
+  ): Promise<ScrimSettings | null> {
     const rows = await this.postgres.query<Array<ScrimSettings>>(
       `SELECT team_id, enabled, regions, elo_min, elo_max
          FROM team_scrim_settings
@@ -427,7 +458,9 @@ export class ScrimsService {
       }));
     } catch (error) {
       if (String(error).includes("uq_scrim_req_open")) {
-        throw Error("there is already an open scrim request between these teams");
+        throw Error(
+          "there is already an open scrim request between these teams",
+        );
       }
       throw error;
     }
@@ -680,6 +713,26 @@ export class ScrimsService {
     );
   }
 
+  public static isRequestOpen(status?: string | null): boolean {
+    return status === "Pending" || status === "Countered";
+  }
+
+  // Statuses that keep a pair from being proposed to each other again.
+  public static isPairBlocked(status?: string | null): boolean {
+    return ScrimsService.isRequestOpen(status) || status === "Matched";
+  }
+
+  public async scrimRequestState(
+    requestId: string,
+  ): Promise<{ status: string; expires_at: Date } | undefined> {
+    const [request] = await this.postgres.query<
+      Array<{ status: string; expires_at: Date }>
+    >("SELECT status, expires_at FROM team_scrim_requests WHERE id = $1", [
+      requestId,
+    ]);
+    return request;
+  }
+
   public async expireStaleRequests(): Promise<number> {
     const expired = await this.postgres.query<
       Array<{ id: string; from_team_id: string; to_team_id: string }>
@@ -862,7 +915,9 @@ export class ScrimsService {
   // Once a request is answered/countered/cancelled, its pending-stage
   // notifications (with stale Accept/Decline buttons) are no longer valid —
   // soft-delete them so only the outcome notification remains.
-  private async clearScrimRequestNotifications(requestId: string): Promise<void> {
+  private async clearScrimRequestNotifications(
+    requestId: string,
+  ): Promise<void> {
     await (this.hasura as any).mutation({
       update_notifications: {
         __args: {
@@ -982,7 +1037,11 @@ export class ScrimsService {
     );
   }
 
-  public async runScrimAlerts(): Promise<void> {
+  // Scoped to the team that just opened up, or the alert that just changed,
+  // when one is given: nothing else can have started matching.
+  public async runScrimAlerts(
+    scope: { teamId?: string; alertId?: string } = {},
+  ): Promise<void> {
     const matches = await this.postgres.query<
       Array<{ alert_id: string; alert_team_id: string }>
     >(
@@ -992,10 +1051,13 @@ export class ScrimsService {
            ON s.enabled = true AND s.team_id <> a.team_id
          LEFT JOIN v_team_ranks r ON r.team_id = s.team_id
         WHERE a.enabled = true
+          AND ($1::uuid IS NULL OR s.team_id = $1::uuid)
+          AND ($2::uuid IS NULL OR a.id = $2::uuid)
           AND (a.last_notified_at IS NULL OR a.last_notified_at < now() - interval '6 hours')
           AND (cardinality(a.regions) = 0 OR a.regions && s.regions)
           AND (a.elo_min IS NULL OR (r.avg_elo IS NOT NULL AND r.avg_elo >= a.elo_min))
           AND (a.elo_max IS NULL OR (r.avg_elo IS NOT NULL AND r.avg_elo <= a.elo_max))`,
+      [scope.teamId ?? null, scope.alertId ?? null],
     );
 
     for (const match of matches) {
@@ -1206,5 +1268,229 @@ export class ScrimsService {
 
   private static toICSDate(date: Date): string {
     return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  }
+  // Every pairing among the given teams and everyone else, or among everyone.
+  // Scoped, it is a team against the field rather than the field against
+  // itself, which is the difference between O(n) and O(n^2) as teams sign up.
+  public async matchTeams(teamIds?: Array<string>): Promise<void> {
+    const candidates = await this.loadScrimCandidates();
+    if (candidates.length < 2) {
+      return;
+    }
+
+    const proposedAt = new Date(Date.now() + ScrimsService.PROPOSE_LEAD_MS);
+    const blocked = await this.loadOpenScrimPairs();
+    const only = teamIds ? new Set(teamIds) : undefined;
+
+    for (let i = 0; i < candidates.length; i++) {
+      for (let j = i + 1; j < candidates.length; j++) {
+        const a = candidates[i];
+        const b = candidates[j];
+
+        if (only && !only.has(a.team_id) && !only.has(b.team_id)) {
+          continue;
+        }
+
+        if (blocked.has(ScrimsService.pairKey(a.team_id, b.team_id))) {
+          continue;
+        }
+
+        const regions = ScrimsService.regionsOverlap(a, b);
+        if (regions.length === 0) {
+          continue;
+        }
+
+        if (!ScrimsService.rangesOverlap(a, b, a.ranks, b.ranks)) {
+          continue;
+        }
+
+        if (
+          !ScrimsService.windowsOverlap(
+            a.availability,
+            b.availability,
+            proposedAt,
+            ScrimsService.matchDurationMinutes(1),
+          )
+        ) {
+          continue;
+        }
+
+        if (!a.owner_steam_id) {
+          continue;
+        }
+
+        try {
+          await this.createScrimRequest({
+            fromTeamId: a.team_id,
+            toTeamId: b.team_id,
+            requestedBySteamId: a.owner_steam_id,
+            proposedScheduledAt: proposedAt,
+            region: regions.at(0),
+            autoGenerated: true,
+          });
+
+          blocked.add(ScrimsService.pairKey(a.team_id, b.team_id));
+        } catch (error) {
+          this.logger.debug(
+            `skipped auto scrim ${a.team_id} vs ${b.team_id}: ${
+              error instanceof Error ? error.message : error
+            }`,
+          );
+        }
+      }
+    }
+  }
+
+  // When each open team next becomes available to propose to: PROPOSE_LEAD_MS
+  // before a window opens, since a proposal is always for that far ahead. Two
+  // teams' availability only ever starts overlapping when one of them opens.
+  public async scrimWindowOpenings(
+    from: Date,
+    until: Date,
+    teamId?: string,
+  ): Promise<Array<{ teamId: string; at: Date }>> {
+    const rows = await this.postgres.query<
+      Array<AvailabilityWindow & { team_id: string }>
+    >(
+      `SELECT a.team_id::text AS team_id, a.starts_at, a.ends_at, a.recurring_weekly
+         FROM team_scrim_availability a
+         JOIN team_scrim_settings s ON s.team_id = a.team_id AND s.enabled = true
+        WHERE $1::uuid IS NULL OR a.team_id = $1::uuid`,
+      [teamId ?? null],
+    );
+
+    const byTeam = new Map<string, Array<AvailabilityWindow>>();
+    for (const { team_id, ...window } of rows) {
+      byTeam.set(team_id, [...(byTeam.get(team_id) ?? []), window]);
+    }
+
+    const lead = ScrimsService.PROPOSE_LEAD_MS;
+    return [...byTeam].flatMap(([id, windows]) =>
+      ScrimsService.windowStartsBetween(
+        windows,
+        new Date(from.getTime() + lead),
+        new Date(until.getTime() + lead),
+      ).map((start) => ({ teamId: id, at: new Date(start.getTime() - lead) })),
+    );
+  }
+
+  // The moments in (from, until] at which these windows start covering a
+  // proposal: a one-off window's start, and the start of each merged weekly
+  // interval, the same intervals windowCovers reads.
+  public static windowStartsBetween(
+    windows: Array<AvailabilityWindow>,
+    from: Date,
+    until: Date,
+  ): Array<Date> {
+    const starts = new Set<number>();
+
+    for (const window of windows) {
+      if (window.recurring_weekly) {
+        continue;
+      }
+      const start = new Date(window.starts_at).getTime();
+      if (start > from.getTime() && start <= until.getTime()) {
+        starts.add(start);
+      }
+    }
+
+    const weekMs = WEEK_MINUTES * 60 * 1000;
+    const weekOf = (date: Date) =>
+      date.getTime() -
+      ScrimsService.minuteOfWeek(date) * 60 * 1000 -
+      date.getUTCSeconds() * 1000 -
+      date.getUTCMilliseconds();
+
+    for (const [startMinute] of ScrimsService.freeIntervals(windows)) {
+      for (
+        let week = weekOf(from) - weekMs;
+        week <= until.getTime();
+        week += weekMs
+      ) {
+        const start = week + startMinute * 60 * 1000;
+        if (start > from.getTime() && start <= until.getTime()) {
+          starts.add(start);
+        }
+      }
+    }
+
+    return [...starts].sort((a, b) => a - b).map((at) => new Date(at));
+  }
+
+  private async loadScrimCandidates(): Promise<Array<ScrimCandidate>> {
+    const settings = await this.postgres.query<
+      Array<
+        ScrimSettings & {
+          owner_steam_id: string | null;
+          avg_elo: number | null;
+          avg_faceit_level: number | null;
+          avg_premier: number | null;
+        }
+      >
+    >(
+      `SELECT s.team_id, s.enabled, s.regions, s.elo_min, s.elo_max,
+              t.owner_steam_id::text AS owner_steam_id,
+              r.avg_elo, r.avg_faceit_level, r.avg_premier
+         FROM team_scrim_settings s
+         JOIN teams t ON t.id = s.team_id
+         LEFT JOIN v_team_ranks r ON r.team_id = s.team_id
+        WHERE s.enabled = true`,
+    );
+
+    if (settings.length === 0) {
+      return [];
+    }
+
+    const teamIds = settings.map((row) => row.team_id);
+    const availabilityRows = await this.postgres.query<
+      Array<AvailabilityWindow & { team_id: string }>
+    >(
+      `SELECT team_id::text AS team_id, starts_at, ends_at, recurring_weekly
+         FROM team_scrim_availability
+        WHERE team_id = ANY($1::uuid[])`,
+      [teamIds],
+    );
+
+    const availabilityByTeam = new Map<string, Array<AvailabilityWindow>>();
+    for (const row of availabilityRows) {
+      if (!availabilityByTeam.has(row.team_id)) {
+        availabilityByTeam.set(row.team_id, []);
+      }
+      availabilityByTeam.get(row.team_id).push({
+        starts_at: row.starts_at,
+        ends_at: row.ends_at,
+        recurring_weekly: row.recurring_weekly,
+      });
+    }
+
+    return settings.map((row) => ({
+      ...row,
+      ranks: {
+        avg_elo: row.avg_elo,
+        avg_faceit_level: row.avg_faceit_level,
+        avg_premier: row.avg_premier,
+      },
+      availability: availabilityByTeam.get(row.team_id) ?? [],
+    }));
+  }
+
+  private async loadOpenScrimPairs(): Promise<Set<string>> {
+    const rows = await this.postgres.query<
+      Array<{ from_team_id: string; to_team_id: string }>
+    >(
+      `SELECT from_team_id::text, to_team_id::text
+         FROM team_scrim_requests
+        WHERE status IN ('Pending', 'Countered', 'Matched')`,
+    );
+
+    const set = new Set<string>();
+    for (const row of rows) {
+      set.add(ScrimsService.pairKey(row.from_team_id, row.to_team_id));
+    }
+    return set;
+  }
+
+  private static pairKey(teamA: string, teamB: string): string {
+    return [teamA, teamB].sort().join(":");
   }
 }

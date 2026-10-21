@@ -86,3 +86,21 @@ delete_permissions:
                   - player_steam_id:
                       _eq: X-Hasura-User-Id
     comment: ""
+event_triggers:
+  # Not last_notified_at: the alert check writes it, and would wake itself.
+  - name: team_scrim_alert_events
+    definition:
+      enable_manual: true
+      insert:
+        columns: '*'
+      update:
+        columns:
+          - enabled
+          - regions
+          - elo_min
+          - elo_max
+    retry_conf:
+      interval_sec: 10
+      num_retries: 60
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

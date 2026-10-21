@@ -53,3 +53,33 @@ describe("TypeSenseController player_sanctions", () => {
     });
   });
 });
+
+describe("TypeSenseController player_events", () => {
+  it("caches the player's name as it is now, not as a late event had it", async () => {
+    const cache = { forget: jest.fn(), put: jest.fn() };
+    const hasura = {
+      query: jest.fn().mockResolvedValue({ players_by_pk: { name: "Carol" } }),
+    };
+
+    await new TypeSenseController(
+      cache as any,
+      hasura as any,
+      { updatePlayer: jest.fn() } as any,
+      {} as any,
+      { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
+      { add: jest.fn(), remove: jest.fn() } as any,
+      { add: jest.fn() } as any,
+      { add: jest.fn() } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    ).player_events({
+      op: "UPDATE",
+      old: { steam_id: "76561198000000001", name: "Alice" },
+      new: { steam_id: "76561198000000001", name: "Bob" },
+    } as any);
+
+    expect(cache.put).toHaveBeenCalledWith(expect.any(String), "Carol");
+    expect(cache.put).not.toHaveBeenCalledWith(expect.any(String), "Bob");
+  });
+});

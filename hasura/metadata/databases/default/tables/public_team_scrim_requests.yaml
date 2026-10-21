@@ -70,3 +70,21 @@ select_permissions:
                           _eq: X-Hasura-User-Id
       allow_aggregations: true
     comment: ""
+event_triggers:
+  # Arms the request's expiry, and re-matches a pair once it is unblocked.
+  - name: team_scrim_request_events
+    definition:
+      enable_manual: true
+      insert:
+        columns: '*'
+      update:
+        columns:
+          - status
+          - expires_at
+      delete:
+        columns: '*'
+    retry_conf:
+      interval_sec: 10
+      num_retries: 60
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

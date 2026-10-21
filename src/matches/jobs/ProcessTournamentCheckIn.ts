@@ -25,12 +25,12 @@ type ClosedTournament = CheckInTournament & {
   organizer_steam_id: string | null;
 };
 
-@UseQueue("Matches", MatchQueues.ScheduledMatches)
+@UseQueue("Matches", MatchQueues.Deadlines)
 export class ProcessTournamentCheckIn extends WorkerHost {
   // The window is at least 5 minutes wide (a CHECK constraint on the
   // tournament), so anything longer than this would fire the reminder at the
   // same moment as the "check-in is open" notice on the tightest setup.
-  private static readonly CLOSING_REMINDER_MINUTES = 5;
+  public static readonly CLOSING_REMINDER_MINUTES = 5;
 
   // CheckInReview belongs to the window as much as RegistrationOpen does:
   // extendTournamentCheckIn leaves the tournament held -- that hold is what

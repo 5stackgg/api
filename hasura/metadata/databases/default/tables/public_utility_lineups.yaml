@@ -626,7 +626,7 @@ event_triggers:
           - visibility
     retry_conf:
       interval_sec: 10
-      num_retries: 6
+      num_retries: 60
       timeout_sec: 60
     webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
   # The search index deliberately ignores the geometry columns; a practice
@@ -689,6 +689,6 @@ event_triggers:
           - favorites
     retry_conf:
       interval_sec: 10
-      num_retries: 6
+      num_retries: 60
       timeout_sec: 60
     webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

@@ -211,3 +211,62 @@ describe("TypeSenseService player role rank", () => {
     );
   });
 });
+
+describe("TypeSenseService for players that are gone", () => {
+  const service = (
+    hasura: { query: jest.Mock },
+    documents: { delete: jest.Mock },
+  ) => {
+    const typeSense = new TypeSenseService(
+      { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
+      { get: jest.fn() } as any,
+      hasura as any,
+      {} as any,
+      { add: jest.fn() } as any,
+      { add: jest.fn() } as any,
+      { query: jest.fn() } as any,
+      {} as any,
+    );
+    (typeSense as any).client = {
+      collections: () => ({ documents: () => documents }),
+    };
+    return typeSense;
+  };
+
+  // Each row that cascades away with a deleted player fires an event that is
+  // now retried, so failing here would fail every one of them for 10 minutes.
+  it("has nothing to update for a player who no longer exists", async () => {
+    const hasura = {
+      query: jest.fn().mockResolvedValue({ players_by_pk: null }),
+    };
+
+    await expect(
+      service(hasura, { delete: jest.fn() }).updatePlayer("76561198000000001"),
+    ).resolves.toBeUndefined();
+    expect(hasura.query).toHaveBeenCalledTimes(1);
+  });
+
+  it("treats a player who was never indexed as already removed", async () => {
+    const notFound = Object.assign(new Error("Not Found"), { httpStatus: 404 });
+
+    await expect(
+      service(
+        { query: jest.fn() },
+        { delete: jest.fn().mockRejectedValue(notFound) },
+      ).removePlayer("76561198000000001"),
+    ).resolves.toBeUndefined();
+  });
+
+  it("still fails when the index itself does", async () => {
+    const down = Object.assign(new Error("Service Unavailable"), {
+      httpStatus: 503,
+    });
+
+    await expect(
+      service(
+        { query: jest.fn() },
+        { delete: jest.fn().mockRejectedValue(down) },
+      ).removePlayer("76561198000000001"),
+    ).rejects.toBe(down);
+  });
+});

@@ -39,7 +39,7 @@ export class TypeSenseController {
     private readonly playerEloRecompute: PlayerEloRecomputeService,
   ) {}
 
-  @HasuraEvent()
+  @HasuraEvent({ retry: true })
   public async player_elo_events(data: HasuraEventData<player_elo_set_input>) {
     // During a full ELO recompute the per-row events would fan out to one
     // updatePlayer per (player, match). They are suppressed here and the
@@ -53,7 +53,7 @@ export class TypeSenseController {
     );
   }
 
-  @HasuraEvent()
+  @HasuraEvent({ retry: true })
   public async player_events(data: HasuraEventData<players_set_input>) {
     await this.cache.forget(
       HasuraService.PLAYER_ROLE_CACHE_KEY(
@@ -61,13 +61,22 @@ export class TypeSenseController {
       ),
     );
 
+    // The name as it is now, not as this event had it: a retried or late
+    // event would otherwise put back a name the player has since changed.
     if (data.new.name && data.new.name !== data.old.name) {
-      await this.cache.put(
-        HasuraService.PLAYER_NAME_CACHE_KEY(
-          `${data.new.steam_id || data.old.steam_id}`,
-        ),
-        data.new.name,
-      );
+      const { players_by_pk: player } = await this.hasura.query({
+        players_by_pk: {
+          __args: { steam_id: data.new.steam_id },
+          name: true,
+        },
+      });
+
+      if (player?.name) {
+        await this.cache.put(
+          HasuraService.PLAYER_NAME_CACHE_KEY(`${data.new.steam_id}`),
+          player.name,
+        );
+      }
     }
 
     if (data.op === "DELETE") {
@@ -155,7 +164,10 @@ export class TypeSenseController {
       );
     }
 
-    if (data.new.type === "ban" && !(data.new as { deleted_at?: string }).deleted_at) {
+    if (
+      data.new.type === "ban" &&
+      !(data.new as { deleted_at?: string }).deleted_at
+    ) {
       const { match_lineup_players } = await this.hasura.query({
         match_lineup_players: {
           __args: {
@@ -275,7 +287,7 @@ export class TypeSenseController {
   // global search bar. updateUtilityLineup re-asks the visibility filter and
   // deletes when the answer is no, so every one of those is handled by the
   // same call rather than by guessing from the event payload.
-  @HasuraEvent()
+  @HasuraEvent({ retry: true })
   public async utility_lineups_events(
     data: HasuraEventData<{ id?: string | null; visibility?: string | null }>,
   ) {
@@ -301,7 +313,7 @@ export class TypeSenseController {
     await this.typeSense.updateUtilityLineup(lineupId);
   }
 
-  @HasuraEvent()
+  @HasuraEvent({ retry: true })
   public async team_roster_events(
     data: HasuraEventData<team_roster_set_input>,
   ) {
@@ -350,5 +362,4 @@ export class TypeSenseController {
       current_steam_id: status.current_steam_id,
     };
   }
-
 }

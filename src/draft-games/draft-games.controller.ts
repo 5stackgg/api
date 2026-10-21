@@ -1,4 +1,9 @@
 import { Controller } from "@nestjs/common";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
+import { wakeJobAt } from "../utilities/QueueProcessors";
+import { DraftGameQueues } from "./enums/DraftGameQueues";
+import { CleanExpiredDraftGames } from "./jobs/CleanExpiredDraftGames";
 import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { User } from "../auth/types/User";
 import { DraftGameService } from "./draft-game.service";
@@ -17,9 +22,10 @@ export class DraftGamesController {
     private readonly draftGameService: DraftGameService,
     private readonly draftService: DraftService,
     private readonly draftMatchService: DraftMatchService,
+    @InjectQueue(DraftGameQueues.DraftGames) private readonly queue: Queue,
   ) {}
 
-  @HasuraEvent()
+  @HasuraEvent({ retry: true })
   public async draft_game_events(data: DraftGameEvent) {
     const draftGameId = (data.new?.id || data.old?.id) as string;
     if (!draftGameId) {
@@ -40,6 +46,19 @@ export class DraftGamesController {
       data.new?.status === "Filled"
     ) {
       await this.draftService.beginDraft(draftGameId);
+    }
+  }
+
+  // The sweep re-checks status and expiry itself, so waking it from the
+  // payload's time is safe even when the payload is stale.
+  @HasuraEvent({ retry: true })
+  public async draft_game_deadlines(data: DraftGameEvent) {
+    if (data.new?.status === "Open" && data.new?.expires_at) {
+      await wakeJobAt(
+        this.queue,
+        CleanExpiredDraftGames.name,
+        data.new.expires_at,
+      );
     }
   }
 

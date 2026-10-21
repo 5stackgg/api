@@ -4,8 +4,10 @@ import { MatchQueues } from "../enums/MatchQueues";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { HasuraService } from "../../hasura/hasura.service";
 
-@UseQueue("Matches", MatchQueues.MatchServers)
+@UseQueue("Matches", MatchQueues.Deadlines)
 export class CheckForTournamentStart extends WorkerHost {
+  public static readonly LEAD_MS = 15 * 60 * 1000;
+
   constructor(
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
@@ -14,8 +16,9 @@ export class CheckForTournamentStart extends WorkerHost {
   }
   async process(): Promise<number> {
     const now = new Date();
-    const fifteenMinutesAhead = new Date(now);
-    fifteenMinutesAhead.setMinutes(fifteenMinutesAhead.getMinutes() + 15);
+    const fifteenMinutesAhead = new Date(
+      now.getTime() + CheckForTournamentStart.LEAD_MS,
+    );
 
     let started = 0;
 

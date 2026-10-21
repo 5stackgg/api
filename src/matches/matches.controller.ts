@@ -115,13 +115,6 @@ export class MatchesController {
   // The event payload carries every matches column, but the generated
   // matches_set_input only regains veto_pick_expires_at once codegen is re-run
   // against the migrated schema.
-  private static vetoPickExpiresAt(row: object): string | null {
-    return (
-      (row as { veto_pick_expires_at?: string | null }).veto_pick_expires_at ??
-      null
-    );
-  }
-
   constructor(
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
@@ -629,7 +622,7 @@ export class MatchesController {
     }
   }
 
-  @HasuraEvent()
+  @HasuraEvent({ retry: true })
   public async match_map_demo_events(
     data: HasuraEventData<match_map_demos_set_input>,
   ) {
@@ -749,22 +742,6 @@ export class MatchesController {
       )
     ) {
       void this.notifications.resolveMatchAlerts(matchId);
-    }
-
-    // Postgres owns the deadline; this mirrors every change to it onto the
-    // delayed job. Entering Veto arms it, each pick re-arms it, and leaving
-    // Veto nulls the column, which is what cancels.
-    if (data.op === "DELETE") {
-      await this.matchAssistant.removeVetoPickTimeout(matchId);
-    } else if (data.op === "UPDATE") {
-      const vetoPickExpiresAt = MatchesController.vetoPickExpiresAt(data.new);
-
-      if (vetoPickExpiresAt !== MatchesController.vetoPickExpiresAt(data.old)) {
-        await this.matchAssistant.scheduleVetoPickTimeout(
-          matchId,
-          vetoPickExpiresAt,
-        );
-      }
     }
 
     if (
