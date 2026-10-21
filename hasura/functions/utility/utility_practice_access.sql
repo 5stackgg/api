@@ -47,8 +47,7 @@ AS $$
 DECLARE
     _steam_id bigint := nullif(hasura_session ->> 'x-hasura-user-id', '')::bigint;
 BEGIN
-    IF hasura_session ->> 'x-hasura-role'
-        IN ('admin', 'administrator', 'moderator') THEN
+    IF public.is_above_role('moderator', hasura_session) THEN
         RETURN true;
     END IF;
 
@@ -81,6 +80,9 @@ BEGIN
 END;
 $$;
 
+-- The host's own controls: Stop in place of Leave, access, invites, playbooks
+-- and the map. Staff stop through can_stop instead, so one who joined a
+-- friend's server is still offered Leave rather than ending it for everyone.
 CREATE OR REPLACE FUNCTION public.can_manage_utility_practice_session(
     session public.utility_practice_sessions,
     hasura_session json
@@ -91,8 +93,32 @@ AS $$
 DECLARE
     _steam_id bigint := nullif(hasura_session ->> 'x-hasura-user-id', '')::bigint;
 BEGIN
-    IF hasura_session ->> 'x-hasura-role'
-        IN ('admin', 'administrator', 'moderator') THEN
+    RETURN _steam_id IS NOT NULL AND session.host_steam_id = _steam_id;
+END;
+$$;
+
+-- Ending a server for everyone on it. Staff stop from the running-servers list
+-- as well as the host, but a render is a batch job nobody is standing on, so
+-- only an administrator may cut one short.
+CREATE OR REPLACE FUNCTION public.can_stop_utility_practice_session(
+    session public.utility_practice_sessions,
+    hasura_session json
+) RETURNS boolean
+LANGUAGE plpgsql
+STABLE
+AS $$
+DECLARE
+    _steam_id bigint := nullif(hasura_session ->> 'x-hasura-user-id', '')::bigint;
+BEGIN
+    IF public.is_above_role('administrator', hasura_session) THEN
+        RETURN true;
+    END IF;
+
+    IF session.is_render THEN
+        RETURN false;
+    END IF;
+
+    IF public.is_above_role('moderator', hasura_session) THEN
         RETURN true;
     END IF;
 

@@ -16,11 +16,23 @@ const TABLES = join(
   "tables",
 );
 
+const INHERITED_ROLES = join(
+  process.cwd(),
+  "hasura",
+  "metadata",
+  "inherited_roles.yaml",
+);
+
 // The SQL specs run without a Hasura engine, so a table permission is compiled
 // here from its metadata into the WHERE clause Hasura would add to the
 // statement. Supports _and / _or / _not, the _eq / _neq / _in / _nin /
 // _is_null operators, X-Hasura-* session values, foreign-key relationships and
 // computed fields that take the session; anything else throws.
+//
+// A role with no permission of its own on a table answers with the roles
+// inherited_roles.yaml builds it from, their filters ORed and their grants
+// unioned. Hasura also nulls a column on rows only a parent without that
+// column admits; every role set here has a single parent, so that never arises.
 export class HasuraPermissions {
   private readonly tables = new Map<string, Record<string, any>>();
   private readonly foreignKeys = new Map<
@@ -28,6 +40,7 @@ export class HasuraPermissions {
     { table: string; column: string }
   >();
   private aliases = 0;
+  private inherited?: Array<{ role_name: string; role_set: string[] }>;
 
   constructor(private readonly postgres: PostgresService) {}
 
@@ -38,17 +51,163 @@ export class HasuraPermissions {
     session: PermissionSession,
     params: Array<unknown>,
   ): Promise<string> {
-    const block = (this.metadata(table)[`${operation}_permissions`] ?? []).find(
-      (entry: { role: string }) => entry.role === session.role,
-    );
+    const blocks = this.blocks(table, operation, session.role);
 
-    if (!block) {
+    if (blocks.length === 0) {
       throw new Error(
         `${table} has no ${operation} permission for ${session.role}`,
       );
     }
 
-    return this.compile(block.permission.filter, table, alias, session, params);
+    const filters: Array<string> = [];
+
+    for (const block of blocks) {
+      filters.push(
+        await this.compile(
+          block.permission.filter,
+          table,
+          alias,
+          session,
+          params,
+        ),
+      );
+    }
+
+    return filters.length === 1 ? filters[0] : `(${filters.join(" OR ")})`;
+  }
+
+  // A select the way the engine runs it for the role: the fields asked for and
+  // the caller's own where may only name columns and computed fields the role
+  // is granted, and the role's filter is ANDed on.
+  async select(
+    table: string,
+    alias: string,
+    session: PermissionSession,
+    query: { fields: Array<string>; where?: BoolExp },
+    params: Array<unknown>,
+  ): Promise<string> {
+    const granted = this.granted(table, session.role);
+
+    for (const field of [...query.fields, ...this.named(query.where ?? {})]) {
+      if (!granted.includes(field)) {
+        throw new Error(`field '${field}' not found in type: '${table}'`);
+      }
+    }
+
+    const fields = query.fields.map(
+      (field) =>
+        `${this.reference(field, table, alias, session, params)} AS "${field}"`,
+    );
+    const filter = await this.where(table, "select", alias, session, params);
+    const where = await this.compile(
+      query.where ?? {},
+      table,
+      alias,
+      session,
+      params,
+    );
+
+    return `SELECT ${fields.join(", ")} FROM public."${table}" ${alias} WHERE ${filter} AND ${where}`;
+  }
+
+  granted(table: string, role: string): Array<string> {
+    const granted = new Set<string>();
+
+    for (const block of this.blocks(table, "select", role)) {
+      if (!Array.isArray(block.permission.columns)) {
+        throw new Error(`unsupported columns ${block.permission.columns}`);
+      }
+
+      for (const field of [
+        ...block.permission.columns,
+        ...(block.permission.computed_fields ?? []),
+      ]) {
+        granted.add(field);
+      }
+    }
+
+    return [...granted];
+  }
+
+  private blocks(
+    table: string,
+    operation: "select" | "update" | "delete",
+    role: string,
+  ): Array<Record<string, any>> {
+    const own = (this.metadata(table)[`${operation}_permissions`] ?? []).find(
+      (entry: { role: string }) => entry.role === role,
+    );
+
+    if (own) {
+      return [own];
+    }
+
+    const inherited = this.inheritedRoles().find(
+      (entry) => entry.role_name === role,
+    );
+
+    return (inherited?.role_set ?? []).flatMap((parent) =>
+      this.blocks(table, operation, parent),
+    );
+  }
+
+  private inheritedRoles(): Array<{ role_name: string; role_set: string[] }> {
+    if (!this.inherited) {
+      this.inherited = yaml.load(
+        readFileSync(INHERITED_ROLES, "utf8"),
+      ) as Array<{ role_name: string; role_set: string[] }>;
+    }
+    return this.inherited;
+  }
+
+  private named(expression: BoolExp): Array<string> {
+    return Object.entries(expression).flatMap(([key, value]) => {
+      if (key === "_and" || key === "_or") {
+        return (value as Array<BoolExp>).flatMap((part) => this.named(part));
+      }
+      if (key === "_not") {
+        return this.named(value);
+      }
+      return [key];
+    });
+  }
+
+  private reference(
+    field: string,
+    table: string,
+    alias: string,
+    session: PermissionSession,
+    params: Array<unknown>,
+  ): string {
+    const computed = (this.metadata(table).computed_fields ?? []).find(
+      (entry: { name: string }) => entry.name === field,
+    );
+
+    if (!computed) {
+      return `${alias}."${field}"`;
+    }
+
+    return this.computedCall(computed, alias, session, params);
+  }
+
+  private computedCall(
+    computed: Record<string, any>,
+    alias: string,
+    session: PermissionSession,
+    params: Array<unknown>,
+  ): string {
+    if (!computed.definition.session_argument) {
+      return `public."${computed.definition.function.name}"(${alias})`;
+    }
+
+    params.push(
+      JSON.stringify({
+        "x-hasura-role": session.role,
+        "x-hasura-user-id": session.userId,
+      }),
+    );
+
+    return `public."${computed.definition.function.name}"(${alias}, $${params.length}::json)`;
   }
 
   private metadata(table: string): Record<string, any> {
@@ -142,18 +301,8 @@ export class HasuraPermissions {
     );
 
     if (computed) {
-      const fn = computed.definition.function.name;
-      params.push(
-        JSON.stringify({
-          "x-hasura-role": session.role,
-          "x-hasura-user-id": session.userId,
-        }),
-      );
-      const sessionArgument = computed.definition.session_argument
-        ? `, $${params.length}::json`
-        : "";
       return this.operators(
-        `public."${fn}"(${alias}${sessionArgument})`,
+        this.computedCall(computed, alias, session, params),
         value,
         session,
         params,
