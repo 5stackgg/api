@@ -884,6 +884,7 @@ UNIT
         hibernating: true,
         enabled: true,
         is_dedicated: true,
+        type: true,
         game_server_node_id: true,
         current_match: {
           current_match_map_id: true,
@@ -1035,6 +1036,7 @@ UNIT
     const players = Number(request.query.players);
     if (
       server.is_dedicated &&
+      server.type !== "Ranked" &&
       typeof mapName === "string" &&
       mapName.length > 0 &&
       request.query.players !== undefined &&

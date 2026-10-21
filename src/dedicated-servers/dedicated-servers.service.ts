@@ -1072,19 +1072,17 @@ export class DedicatedServersService {
     );
     await redis.expire(DedicatedServersService.STATS_KEY, 120);
 
-    await redis.hset(
+    // One command: a field set without its expiry would keep the server off
+    // the RCON ping for good.
+    await redis.call(
+      "HSETEX",
       DedicatedServersService.PLUGIN_REPORTED_KEY,
+      "EX",
+      DedicatedServersService.PLUGIN_REPORT_TTL_SECONDS,
+      "FIELDS",
+      1,
       serverId,
       "1",
-    );
-    await redis.sendCommand(
-      new Redis.Command("HEXPIRE", [
-        DedicatedServersService.PLUGIN_REPORTED_KEY,
-        DedicatedServersService.PLUGIN_REPORT_TTL_SECONDS,
-        "FIELDS",
-        1,
-        serverId,
-      ]),
     );
 
     await redis.hdel(DedicatedServersService.UNREACHABLE_KEY, serverId);
