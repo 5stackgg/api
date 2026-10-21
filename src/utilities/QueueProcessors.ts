@@ -163,11 +163,13 @@ export async function scheduleJobs(
 // due in the same second shares one run, at the start of the second after next.
 // That is at least a second past every deadline in it, for a job that reads the
 // clock itself, and always after a run of the job already under way, which a
-// wake-up with the same id would otherwise be dropped as a duplicate of.
+// wake-up with the same id would otherwise be dropped as a duplicate of. A job
+// run per entity passes its id as `key`, so each entity gets its own run.
 export async function wakeJobAt(
   queue: Queue,
   name: string,
   at: Date | string | number,
+  scope: { key?: string; data?: Record<string, unknown> } = {},
 ): Promise<void> {
   const now = Date.now();
   const second = Math.floor(Math.max(now, new Date(at).getTime()) / 1000) + 2;
@@ -176,16 +178,12 @@ export async function wakeJobAt(
     return;
   }
 
-  await queue.add(
-    name,
-    {},
-    {
-      jobId: `${name}.at.${second}`,
-      delay: second * 1000 - now,
-      attempts: 3,
-      backoff: { type: "exponential", delay: 5000 },
-      removeOnComplete: true,
-      removeOnFail: true,
-    },
-  );
+  await queue.add(name, scope.data ?? {}, {
+    jobId: [name, scope.key, "at", second].filter(Boolean).join("."),
+    delay: second * 1000 - now,
+    attempts: 3,
+    backoff: { type: "exponential", delay: 5000 },
+    removeOnComplete: true,
+    removeOnFail: true,
+  });
 }

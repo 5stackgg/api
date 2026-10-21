@@ -148,3 +148,22 @@ delete_permissions:
     permission:
       filter: {}
     comment: ""
+event_triggers:
+  # Matches the team against the field as soon as its posting changes.
+  - name: team_scrim_settings_events
+    definition:
+      enable_manual: true
+      insert:
+        columns: '*'
+      update:
+        columns:
+          - enabled
+          - regions
+          - elo_min
+          - elo_max
+          - allow_outside_availability
+    retry_conf:
+      interval_sec: 10
+      num_retries: 60
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

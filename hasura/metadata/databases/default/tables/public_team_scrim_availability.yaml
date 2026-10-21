@@ -95,3 +95,19 @@ delete_permissions:
     permission:
       filter: {}
     comment: ""
+event_triggers:
+  # Matches the team now and arms its window openings (ScrimsController).
+  - name: team_scrim_availability_events
+    definition:
+      enable_manual: true
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+      delete:
+        columns: '*'
+    retry_conf:
+      interval_sec: 10
+      num_retries: 60
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
