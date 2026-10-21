@@ -41,6 +41,14 @@ describe("team-backed tournament entries take outsiders by invite (SQL-driven)",
     const tournament = await tfx.createTournament([
       { type: "SingleElimination", order: 1, minTeams: 4, maxTeams: 8 },
     ]);
+    // Five a side, so a team can be short of a lineup with a few players.
+    await postgres.query(
+      `UPDATE match_options
+          SET type = 'Competitive',
+              map_pool_id = (SELECT id FROM map_pools WHERE type = 'Competitive' AND seed = true LIMIT 1)
+        WHERE id = (SELECT match_options_id FROM tournaments WHERE id = $1)`,
+      [tournament.id],
+    );
     await tfx.setStatus(
       tournament.id,
       tournament.organizer,
@@ -159,6 +167,102 @@ describe("team-backed tournament entries take outsiders by invite (SQL-driven)",
     await addToLineup(recruiter, "user", tournament.id, entry, outsider);
 
     expect(await invites(entry)).toEqual([outsider]);
+  });
+
+  const joinsTeam = async (entry: string, player: string) =>
+    (
+      await postgres.query<Array<{ joins_team: boolean }>>(
+        "SELECT joins_team FROM tournament_team_invites WHERE tournament_team_id = $1 AND steam_id = $2",
+        [entry, player],
+      )
+    )[0]?.joins_team;
+
+  const fillTeam = async (teamId: string, owner: string, members: number) => {
+    for (let count = 1; count < members; count++) {
+      await addMate(teamId, owner);
+    }
+  };
+
+  it("says an invite onto a team short of a lineup joins the team", async () => {
+    const { tournament, team, entry } = await enterTeam();
+    await fillTeam(team.id, team.owner, 4);
+    const outsider = await fx.player();
+
+    await addToLineup(team.owner, "user", tournament.id, entry, outsider);
+
+    expect(await joinsTeam(entry, outsider)).toBe(true);
+  });
+
+  it("takes an outsider as a stand-in once the team has a full lineup", async () => {
+    const { tournament, team, entry } = await enterTeam();
+    await fillTeam(team.id, team.owner, 5);
+    const outsider = await fx.player();
+
+    await addToLineup(team.owner, "user", tournament.id, entry, outsider);
+
+    expect(await invites(entry)).toEqual([outsider]);
+    expect(await joinsTeam(entry, outsider)).toBe(false);
+  });
+
+  it("does not count a coach toward a full lineup", async () => {
+    const { tournament, team, entry } = await enterTeam();
+    await fillTeam(team.id, team.owner, 4);
+    const coach = await addMate(team.id, team.owner);
+    await runAsUser(postgres, team.owner, "admin", (query) =>
+      query(
+        "UPDATE team_roster SET coach = true WHERE team_id = $1 AND player_steam_id = $2",
+        [team.id, coach],
+      ),
+    );
+    const outsider = await fx.player();
+
+    await addToLineup(team.owner, "user", tournament.id, entry, outsider);
+
+    expect(await joinsTeam(entry, outsider)).toBe(true);
+  });
+
+  it("lets a captain who cannot invite to the team bring in a stand-in once it is full", async () => {
+    const { tournament, team, entry } = await enterTeam();
+    const captain = await addMate(team.id, team.owner);
+    await runAsUser(postgres, team.owner, "admin", (query) =>
+      query("UPDATE teams SET captain_steam_id = $2 WHERE id = $1", [
+        team.id,
+        captain,
+      ]),
+    );
+    await fillTeam(team.id, team.owner, 4);
+    const outsider = await fx.player();
+
+    await addToLineup(captain, "user", tournament.id, entry, outsider);
+
+    expect(await joinsTeam(entry, outsider)).toBe(false);
+  });
+
+  it("tells a stand-in in the notification that they will not join the team", async () => {
+    const { tournament, team, entry } = await enterTeam();
+    await fillTeam(team.id, team.owner, 5);
+    const outsider = await fx.player();
+    await addToLineup(team.owner, "user", tournament.id, entry, outsider);
+    const [invite] = await postgres.query<Array<{ id: string }>>(
+      "SELECT id FROM tournament_team_invites WHERE tournament_team_id = $1",
+      [entry],
+    );
+    const notifications = { notifyPlayers: jest.fn() };
+
+    await new InvitesController(
+      { warn: jest.fn() } as never,
+      {} as never,
+      postgres,
+      notifications as never,
+    ).tournament_team_invite_events({
+      op: "INSERT",
+      new: { id: invite.id },
+    } as never);
+
+    const sent = notifications.notifyPlayers.mock.calls[0][1];
+    expect(sent.title).toBe("Tournament Invite");
+    expect(sent.message).toContain("invited you to stand in for");
+    expect(sent.message).toContain("You won't join the team.");
   });
 
   it("still puts a team member straight onto the lineup", async () => {
@@ -364,6 +468,10 @@ describe("team-backed tournament entries take outsiders by invite (SQL-driven)",
     expect(await canRecruit(entry, recruiter)).toBe(false);
     expect(await canRecruit(entry, stranger)).toBe(false);
     expect(await canRecruit(adHoc, adHocOwner)).toBe(true);
+
+    // A full team takes stand-ins, which any manager may invite.
+    await fillTeam(team.id, team.owner, 3);
+    expect(await canRecruit(entry, captain)).toBe(true);
   });
 
   it("exposes can_recruit to every role that reads tournament teams", async () => {
@@ -401,6 +509,35 @@ describe("team-backed tournament entries take outsiders by invite (SQL-driven)",
         (permission.computed_fields ?? []).includes("can_recruit"),
       ]),
     ).toEqual([["guest", true]]);
+    expect(
+      table.computed_fields.find(({ name }) => name === "invites_join_team"),
+    ).toEqual({
+      name: "invites_join_team",
+      definition: {
+        function: {
+          name: "tournament_team_invites_join_team",
+          schema: "public",
+        },
+      },
+    });
+    expect(table.select_permissions[0].permission.computed_fields).toContain(
+      "invites_join_team",
+    );
+
+    const invitesTable = yaml.load(
+      readFileSync(
+        join(
+          process.cwd(),
+          "hasura/metadata/databases/default/tables/public_tournament_team_invites.yaml",
+        ),
+        "utf8",
+      ),
+    ) as {
+      select_permissions: Array<{ permission: { columns: Array<string> } }>;
+    };
+    for (const { permission } of invitesTable.select_permissions) {
+      expect(permission.columns).toContain("joins_team");
+    }
 
     const [fn] = await postgres.query<
       Array<{ volatility: string; result: string }>
@@ -464,6 +601,24 @@ describe("team-backed tournament entries take outsiders by invite (SQL-driven)",
         }),
       ).toEqual([
         "insert_team_roster_one",
+        "insert_tournament_team_roster_one",
+        "delete_tournament_team_invites_by_pk",
+      ]);
+    });
+
+    it("only seats a stand-in on a full team", async () => {
+      const { tournament, team, entry } = await enterTeam();
+      await fillTeam(team.id, team.owner, 5);
+      const outsider = await fx.player();
+      await addToLineup(team.owner, "user", tournament.id, entry, outsider);
+
+      expect(
+        await accept(outsider, {
+          tournamentId: tournament.id,
+          entry,
+          teamId: team.id,
+        }),
+      ).toEqual([
         "insert_tournament_team_roster_one",
         "delete_tournament_team_invites_by_pk",
       ]);

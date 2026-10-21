@@ -73,6 +73,7 @@ export class InvitesController {
         steam_id: string;
         team_name: string;
         joins_team: boolean;
+        team_backed: boolean;
         tournament_name: string;
         tournament_logo: string | null;
         invited_by: string;
@@ -80,7 +81,8 @@ export class InvitesController {
     >(
       `SELECT tti.steam_id::text AS steam_id,
               COALESCE(team.name, tt.name) AS team_name,
-              team.id IS NOT NULL AS joins_team,
+              tti.joins_team,
+              team.id IS NOT NULL AS team_backed,
               tour.name AS tournament_name,
               tour.logo AS tournament_logo,
               COALESCE(p.name, 'Someone') AS invited_by
@@ -106,7 +108,9 @@ export class InvitesController {
       title: invite.joins_team ? "Team Invite" : "Tournament Invite",
       body: invite.joins_team
         ? `<b>${invitedBy}</b> invited you to join <b>${team}</b> and its lineup for <b>${tournament}</b>.`
-        : `<b>${invitedBy}</b> invited you to play for <b>${team}</b> in <b>${tournament}</b>, a team for this tournament only.`,
+        : invite.team_backed
+          ? `<b>${invitedBy}</b> invited you to stand in for <b>${team}</b> in <b>${tournament}</b>. You won't join the team.`
+          : `<b>${invitedBy}</b> invited you to play for <b>${team}</b> in <b>${tournament}</b>, a team for this tournament only.`,
       entityId: data.new.id,
       icon: invite.tournament_logo,
     });
@@ -339,15 +343,19 @@ export class InvitesController {
     // An invite onto a team-backed entry is an invite to the team as well.
     // Both inserts go in one request, which Hasura runs as one transaction, so
     // a lineup that has filled up does not leave them on the team alone. The
-    // team half needs an inviter who can still invite to the team: invites sent
-    // before that was required, or by someone who has since lost the right,
-    // only seat the player.
+    // team half needs an invite that said it joins the team (a stand-in's does
+    // not) and an inviter who can still invite to the team.
     const teamId = tournament_team_invites_by_pk.team.team_id;
     const [team] = teamId
       ? await this.postgres.query<
-          Array<{ member: boolean; inviter_can_invite: boolean }>
+          Array<{
+            joins_team: boolean;
+            member: boolean;
+            inviter_can_invite: boolean;
+          }>
         >(
-          `SELECT EXISTS (
+          `SELECT tti.joins_team,
+                  EXISTS (
                       SELECT 1 FROM team_roster tr
                        WHERE tr.team_id = t.id AND tr.player_steam_id = $2::bigint
                   ) AS member,
@@ -365,7 +373,8 @@ export class InvitesController {
           [invite_id, user.steam_id],
         )
       : [];
-    const joinTeam = !!team && !team.member && team.inviter_can_invite;
+    const joinTeam =
+      !!team && team.joins_team && !team.member && team.inviter_can_invite;
 
     if (!seat || joinTeam) {
       try {

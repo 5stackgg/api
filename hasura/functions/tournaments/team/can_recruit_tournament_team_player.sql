@@ -1,6 +1,7 @@
 -- tbi_tournament_team_roster's rule for bringing someone from outside an entry
--- onto it by invite. On a team-backed entry the invite joins them to the team
--- as well, so it also takes the right to invite to that team.
+-- onto it by invite. While a team-backed entry's team is short of players the
+-- invite joins them to the team as well, so it also takes the right to invite
+-- to that team.
 CREATE OR REPLACE FUNCTION public.can_recruit_tournament_team_player(tournament_team public.tournament_teams, hasura_session json) RETURNS BOOLEAN
     LANGUAGE plpgsql STABLE
     AS $$
@@ -9,7 +10,7 @@ BEGIN
         RETURN false;
     END IF;
 
-    IF tournament_team.team_id IS NULL THEN
+    IF NOT public.tournament_team_invites_join_team(tournament_team) THEN
         RETURN true;
     END IF;
 
