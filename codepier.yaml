@@ -1,5 +1,5 @@
 namespaces: [5stack]
-image: node:24
+image: node:24.22.1-bookworm
 deployment: api
 workdir: /opt/5stack
 sync:

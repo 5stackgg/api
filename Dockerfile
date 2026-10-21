@@ -1,4 +1,4 @@
-FROM node:24-alpine AS deps
+FROM node:24.22.1-alpine AS deps
 
 WORKDIR /build
 COPY package*.json ./
@@ -6,7 +6,7 @@ COPY yarn.lock ./
 
 RUN yarn install
 
-FROM node:24-alpine AS builder
+FROM node:24.22.1-alpine AS builder
 
 WORKDIR /build
 COPY --from=deps /build/node_modules ./node_modules
@@ -14,7 +14,7 @@ COPY . .
 
 RUN yarn build
 
-FROM node:24-alpine
+FROM node:24.22.1-alpine
 
 WORKDIR /opt/5stack
 
