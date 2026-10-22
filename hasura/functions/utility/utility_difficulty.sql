@@ -17,8 +17,10 @@
 --
 -- Literals rather than settings: this is evaluated per row through a computed
 -- field, and a settings lookup per row is a query per row.
-CREATE OR REPLACE FUNCTION public.utility_lineup_difficulty(
-    lineup public.utility_lineups
+CREATE OR REPLACE FUNCTION public._utility_lineup_difficulty(
+    _practice_players integer,
+    _practice_attempts integer,
+    _practice_successes integer
 ) RETURNS text
 LANGUAGE plpgsql
 STABLE
@@ -26,13 +28,13 @@ AS $$
 DECLARE
     _rate double precision;
 BEGIN
-    IF COALESCE(lineup.practice_players, 0) < 3
-       OR COALESCE(lineup.practice_attempts, 0) < 30 THEN
+    IF COALESCE(_practice_players, 0) < 3
+       OR COALESCE(_practice_attempts, 0) < 30 THEN
         RETURN 'unmeasured';
     END IF;
 
-    _rate := lineup.practice_successes::double precision
-             / lineup.practice_attempts;
+    _rate := _practice_successes::double precision
+             / _practice_attempts;
 
     IF _rate >= 0.7 THEN
         RETURN 'easy';
@@ -48,4 +50,19 @@ BEGIN
 
     RETURN 'very_hard';
 END;
+$$;
+
+-- A sql wrapper Postgres inlines, so the row is never built (see
+-- utility_access.sql).
+CREATE OR REPLACE FUNCTION public.utility_lineup_difficulty(
+    lineup public.utility_lineups
+) RETURNS text
+LANGUAGE sql
+STABLE
+AS $$
+    SELECT public._utility_lineup_difficulty(
+        lineup.practice_players,
+        lineup.practice_attempts,
+        lineup.practice_successes
+    );
 $$;

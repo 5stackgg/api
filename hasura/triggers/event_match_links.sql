@@ -122,6 +122,20 @@ CREATE TRIGGER tg_mlp_sync_event_match_links
     AFTER INSERT OR DELETE ON public.match_lineup_players
     FOR EACH ROW EXECUTE FUNCTION public.tg_sync_event_match_links_mlp();
 
+-- A match's creation time never changes, so the link takes it once.
+CREATE OR REPLACE FUNCTION public.tbi_event_match_links_match_created_at()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    SELECT m.created_at INTO NEW.match_created_at
+    FROM public.matches m
+    WHERE m.id = NEW.match_id;
+    RETURN NEW;
+END $$;
+DROP TRIGGER IF EXISTS tbi_event_match_links_match_created_at ON public.event_match_links;
+CREATE TRIGGER tbi_event_match_links_match_created_at
+    BEFORE INSERT ON public.event_match_links
+    FOR EACH ROW EXECUTE FUNCTION public.tbi_event_match_links_match_created_at();
+
 -- Full backfill/prune. Runs only when this file's digest changes; keeps the
 -- table exact after upgrades that alter the derivation.
 -- Re-run trigger: v_event_matches now bounds team/player-derived matches to

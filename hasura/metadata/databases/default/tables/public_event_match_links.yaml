@@ -14,6 +14,7 @@ select_permissions:
       columns:
         - created_at
         - event_id
+        - match_created_at
         - match_id
       filter:
         event:
@@ -26,6 +27,7 @@ select_permissions:
       columns:
         - created_at
         - event_id
+        - match_created_at
         - match_id
       filter:
         event:

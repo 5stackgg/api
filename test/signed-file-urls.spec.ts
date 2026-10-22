@@ -403,7 +403,9 @@ describe("signed clip and lineup file links", () => {
         "utility_lineup_preview_thumbnail_url",
         "utility_lineup_preview_stills_url",
         "utility_lineup_smoke_voxels_url",
-        "utility_lineup_file_url",
+        "_utility_lineup_preview_stills_url",
+        "_utility_lineup_versioned_file_url",
+        "_utility_lineup_file_url",
         "file_url_signature",
       ];
 
@@ -457,9 +459,11 @@ describe("signed clip and lineup file links", () => {
         [LINK_FUNCTIONS],
       );
       expect(callers.map(({ name }) => name)).toEqual([
+        "_utility_lineup_file_url",
+        "_utility_lineup_preview_stills_url",
+        "_utility_lineup_versioned_file_url",
         "clip_download_url",
         "clip_thumbnail_download_url",
-        "utility_lineup_file_url",
         "utility_lineup_preview_stills_url",
         "utility_lineup_preview_thumbnail_url",
         "utility_lineup_preview_url",

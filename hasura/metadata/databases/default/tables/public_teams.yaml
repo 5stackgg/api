@@ -106,11 +106,6 @@ computed_fields:
       function:
         name: get_team_matches
         schema: public
-  - name: last_match_at
-    definition:
-      function:
-        name: team_last_match_at
-        schema: public
   - name: role
     definition:
       function:
@@ -136,6 +131,7 @@ select_permissions:
         - created_at
         - id
         - is_organization
+        - last_match_at
         - name
         - owner_steam_id
         - short_name
@@ -144,7 +140,6 @@ select_permissions:
         - can_invite
         - can_manage_scrims
         - can_remove
-        - last_match_at
         - role
       filter: {}
       allow_aggregations: true
