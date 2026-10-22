@@ -129,7 +129,12 @@ export class SteamBansService {
     await this.storeBans(bans);
 
     await this.expireLiftedAutoBans(
-      bans.filter((ban) => ban.NumberOfVACBans === 0).map((ban) => ban.SteamId),
+      bans
+        .filter(
+          (ban) =>
+            ban.NumberOfVACBans === 0 || SteamBansService.predatesCsgo(ban),
+        )
+        .map((ban) => ban.SteamId),
     );
 
     const flagged = bans.filter((ban) => ban.NumberOfVACBans > 0);
@@ -470,9 +475,21 @@ export class SteamBansService {
 
     if (expired.length > 0) {
       this.logger.log(
-        `steam-bans: expired ${expired.length} auto-ban(s) whose Steam ban is no longer present`,
+        `steam-bans: expired ${expired.length} auto-ban(s) whose Steam ban is gone or predates CS:GO`,
       );
     }
+  }
+
+  private static readonly CSGO_CLOSED_BETA = Date.UTC(2011, 10, 30);
+
+  // The same cutoff as public.vac_ban_predates_csgo. The lift decides it here,
+  // not in SQL, so an api that boots before hasura has applied the function
+  // still lifts and bans instead of failing every check.
+  private static predatesCsgo(ban: SteamBan): boolean {
+    return (
+      Date.now() - (ban.DaysSinceLastBan ?? 0) * 86_400_000 <
+      SteamBansService.CSGO_CLOSED_BETA
+    );
   }
 
   private static banReason(ban?: SteamBan): string {

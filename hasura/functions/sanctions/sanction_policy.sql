@@ -165,6 +165,20 @@ AS $$
     SELECT public.sanction_policy_scope(_source) IN ('both', _scope);
 $$;
 
+-- A VAC ban bars only the game it was issued in, and Steam never says which game
+-- that was. One issued before CS:GO's closed beta (2011-11-30) cannot be a CS:GO
+-- ban, which is the only kind CS2 carries over, so it never kept anyone off CS2.
+-- days_since_last_ban dates the newest ban on the account: when that one
+-- predates the beta, so does every other.
+CREATE OR REPLACE FUNCTION public.vac_ban_predates_csgo(_days_since_last_ban integer)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+AS $$
+    SELECT now() - make_interval(days => COALESCE(_days_since_last_ban, 0))
+           < '2011-11-30'::timestamptz;
+$$;
+
 -- Occurrence count and the most recent occurrence, per source, already narrowed
 -- to the source's decay window. Every source answers the same two questions;
 -- only the table they are asked of differs.
@@ -211,6 +225,7 @@ BEGIN
               FROM public.players p
              WHERE p.steam_id = _steam_id
                AND (p.vac_banned OR p.vac_ban_count > 0)
+               AND NOT public.vac_ban_predates_csgo(p.days_since_last_ban)
                AND now() - make_interval(days => COALESCE(p.days_since_last_ban, 0)) > _cutoff;
     END IF;
 
