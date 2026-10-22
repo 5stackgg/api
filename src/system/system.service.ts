@@ -333,7 +333,9 @@ export class SystemService {
     const services = await this.getServices();
     const api = services.filter(({ service }) => service === "api");
     const hasura = services.filter(({ service }) => service === "hasura");
-    const latest = await this.getLatestDigest(api.at(0)?.image);
+    // Not the 5 minute cache: a booting hasura pod pulls :latest itself, and a
+    // push the cache hasn't seen made that pod read as behind on every check.
+    const latest = await this.getLatestDigest(api.at(0)?.image, true);
 
     if (
       !latest ||
@@ -455,7 +457,10 @@ export class SystemService {
   // The digest the given tag currently points at, or null if the registry is
   // unreachable/unauthenticated. Never throws: a plugin pointed at a broken or
   // private registry must not take down the check for api/web.
-  public async getLatestDigest(image: string): Promise<string | null> {
+  public async getLatestDigest(
+    image: string,
+    fresh = false,
+  ): Promise<string | null> {
     const ref = SystemService.parseImageRef(image);
 
     if (!ref) {
@@ -463,10 +468,15 @@ export class SystemService {
     }
 
     const { registry, repository, tag } = ref;
+    const key = this.getServiceCacheKey(`${registry}/${repository}:${tag}`);
 
     try {
+      if (fresh) {
+        await this.cache.forget(key);
+      }
+
       return await this.cache.remember<string>(
-        this.getServiceCacheKey(`${registry}/${repository}:${tag}`),
+        key,
         async () => {
           const token = await this.getRegistryToken(registry, repository);
 
