@@ -72,6 +72,7 @@ function socket(readyState = 1) {
     OPEN: 1,
     terminate: jest.fn(),
     close: jest.fn(),
+    ping: jest.fn(),
     on: jest.fn(),
     send: jest.fn(),
   } as any;
@@ -480,6 +481,26 @@ describe("SocketsService presence", () => {
     expect(matchmaking.cancelOffline).not.toHaveBeenCalled();
   });
 
+  it("puts a player back online when their frozen tab answers a protocol ping", async () => {
+    const { service, redis, matchmaking } = makeService();
+    const client = await connect(service);
+    const pong = client.on.mock.calls.find(
+      ([event]: [string]) => event === "pong",
+    )[1];
+    matchmaking.cancelOffline.mockClear();
+    redis.publish.mockClear();
+    redis.set.mockResolvedValueOnce(null);
+
+    pong();
+    await settle();
+
+    expect(matchmaking.cancelOffline).toHaveBeenCalledWith(USER.steam_id);
+    expect(redis.publish).toHaveBeenCalledWith(
+      "broadcast-message",
+      expect.stringContaining("players-online"),
+    );
+  });
+
   it("leaves the offline job alone on the ping of a player who is online", async () => {
     const { service, matchmaking, redis } = makeService();
     redis.set.mockResolvedValueOnce(JSON.stringify({ lastSeen: 1 }));
@@ -597,6 +618,33 @@ describe("SocketsService offline", () => {
 
     expect(silent.terminate).toHaveBeenCalled();
     expect(pinging.terminate).not.toHaveBeenCalled();
+
+    service.onApplicationShutdown();
+  });
+
+  it("keeps a tab whose page has stopped pinging while the browser still answers for it", async () => {
+    const { service } = makeService();
+    const frozen = await connect(service);
+    const pinging = await connect(service);
+    const pong = frozen.on.mock.calls.find(
+      ([event]: [string]) => event === "pong",
+    )[1];
+    frozen.ping.mockImplementation(() => pong());
+
+    jest.useFakeTimers({
+      now: Date.now(),
+      doNotFake: ["setImmediate", "nextTick"],
+    });
+    service.onModuleInit();
+
+    for (let elapsed = 0; elapsed < 300; elapsed += 10) {
+      await service.heartbeat(USER.steam_id, pinging.id);
+      await jest.advanceTimersByTimeAsync(10 * 1000);
+    }
+
+    expect(frozen.ping).toHaveBeenCalled();
+    expect(frozen.terminate).not.toHaveBeenCalled();
+    expect(pinging.ping).not.toHaveBeenCalled();
 
     service.onApplicationShutdown();
   });
