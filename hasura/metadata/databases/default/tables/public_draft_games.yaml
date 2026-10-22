@@ -215,7 +215,11 @@ delete_permissions:
           - is_organizer:
               _eq: true
           - status:
-              _eq: Open
+              _in:
+                - Open
+                - Filled
+                - SelectingCaptains
+                - Drafting
           - match_id:
               _is_null: true
     comment: ""
