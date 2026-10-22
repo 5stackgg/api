@@ -1,4 +1,7 @@
+import fetch from "node-fetch";
 import { SystemService } from "./system.service";
+
+jest.mock("node-fetch", () => jest.fn());
 
 describe("SystemService.parseImageRef", () => {
   // The first-party services this has always had to handle, plus the shapes a
@@ -397,10 +400,57 @@ describe("SystemService.syncTwitchSupport", () => {
   });
 });
 
+describe("SystemService.getLatestDigest", () => {
+  const image = "ghcr.io/5stackgg/api:latest";
+
+  let system: SystemService;
+  let registry: string;
+
+  beforeEach(() => {
+    const cache = new Map<string, unknown>();
+
+    system = new SystemService(
+      {
+        forget: jest.fn(async (...keys: string[]) => {
+          keys.forEach((key) => cache.delete(key));
+        }),
+        remember: jest.fn(async (key: string, callback: () => unknown) => {
+          if (!cache.has(key)) {
+            cache.set(key, await callback());
+          }
+          return cache.get(key);
+        }),
+      } as any,
+      {} as any,
+      {} as any,
+      { warn: jest.fn(), log: jest.fn() } as any,
+      {} as any,
+    );
+
+    jest.spyOn(system as any, "getRegistryToken").mockResolvedValue(null);
+    jest
+      .mocked(fetch)
+      .mockImplementation(
+        async () => ({ ok: true, headers: { get: () => registry } }) as any,
+      );
+  });
+
+  it("reads past the cache when asked for a fresh digest", async () => {
+    registry = "sha256:0ld";
+    await system.getLatestDigest(image);
+    registry = "sha256:1a7";
+
+    expect(await system.getLatestDigest(image)).toBe("sha256:0ld");
+    expect(await system.getLatestDigest(image, true)).toBe("sha256:1a7");
+    expect(await system.getLatestDigest(image)).toBe("sha256:1a7");
+  });
+});
+
 describe("SystemService.syncHasura", () => {
   const repo = "ghcr.io/5stackgg/api";
   const old = "sha256:0ld";
   const latest = "sha256:1a7";
+  const newer = "sha256:2e3";
   const originalDev = process.env.DEV;
 
   let system: SystemService;
@@ -479,6 +529,20 @@ describe("SystemService.syncHasura", () => {
   // An Update restarts both; the new hasura pod is the one migrating.
   it("leaves a hasura rollout alone while its new pod migrates", async () => {
     pods.push({ app: "hasura", imageID: `${repo}@${latest}` });
+
+    await system.syncHasura();
+
+    expect(restart).not.toHaveBeenCalled();
+  });
+
+  // The cached digest lagged a push. The new hasura pod pulled that push, read
+  // as behind, and each restart deleted it mid-migration, which queued the
+  // next check five seconds later.
+  it("leaves a booting hasura pod that pulled past the cached digest to migrate", async () => {
+    pods.push({ app: "hasura", imageID: `${repo}@${newer}` });
+    jest
+      .spyOn(system, "getLatestDigest")
+      .mockImplementation(async (_image, fresh) => (fresh ? newer : latest));
 
     await system.syncHasura();
 
