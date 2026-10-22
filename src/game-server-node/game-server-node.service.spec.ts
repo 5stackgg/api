@@ -151,6 +151,8 @@ describe("GameServerNodeService build nodes", () => {
     update_status: null,
     gpu: false,
     enabled_for_match_making: true,
+    start_port_range: 30000,
+    end_port_range: 30020,
     ...fields,
   });
 
@@ -163,7 +165,12 @@ describe("GameServerNodeService build nodes", () => {
   it.each([
     [{ enabled: false }, "node-a is disabled"],
     [
-      { gpu: true, enabled_for_match_making: false },
+      {
+        gpu: true,
+        enabled_for_match_making: false,
+        start_port_range: null,
+        end_port_range: null,
+      },
       "node-a is a GPU-only node",
     ],
     [{ status: "Offline" }, "node-a is Offline"],
@@ -183,6 +190,15 @@ describe("GameServerNodeService build nodes", () => {
     expect(
       GameServerNodeService.buildNodeIneligibility(
         node({ gpu: true, enabled_for_match_making: true }),
+        25537370,
+      ),
+    ).toBeNull();
+  });
+
+  it("accepts a GPU node out of matchmaking that keeps its ports", () => {
+    expect(
+      GameServerNodeService.buildNodeIneligibility(
+        node({ gpu: true, enabled_for_match_making: false }),
         25537370,
       ),
     ).toBeNull();

@@ -100,6 +100,8 @@ export type BuildNodeCandidate = {
   update_status: string | null;
   gpu: boolean | null;
   enabled_for_match_making: boolean | null;
+  start_port_range: number | null;
+  end_port_range: number | null;
 };
 
 export type NodeWorkloads = {
@@ -1950,7 +1952,13 @@ export class GameServerNodeService {
     if (!node.enabled) {
       return `${name} is disabled`;
     }
-    if (node.gpu && !node.enabled_for_match_making) {
+    // A GPU node out of matchmaking that keeps its ports hosts dedicated
+    // servers, so it has CS2 like any other.
+    if (
+      node.gpu &&
+      !node.enabled_for_match_making &&
+      (!node.start_port_range || !node.end_port_range)
+    ) {
       return `${name} is a GPU-only node`;
     }
     if (node.status !== "Online") {
@@ -1985,7 +1993,7 @@ export class GameServerNodeService {
   ): Promise<string> {
     const nodes = await this.postgres.query<Array<BuildNodeCandidate>>(
       `SELECT id, label, status, enabled, build_id, update_status, gpu,
-              enabled_for_match_making
+              enabled_for_match_making, start_port_range, end_port_range
          FROM public.game_server_nodes`,
     );
 
