@@ -72528,6 +72528,7 @@ type player_elo {
   deaths: Int
   expected_score: float8
   impact: numeric
+  is_tournament: Boolean!
   k_factor: Int
   kda: float8
   kills: Int
@@ -72621,6 +72622,7 @@ input player_elo_bool_exp {
   deaths: Int_comparison_exp
   expected_score: float8_comparison_exp
   impact: numeric_comparison_exp
+  is_tournament: Boolean_comparison_exp
   k_factor: Int_comparison_exp
   kda: float8_comparison_exp
   kills: Int_comparison_exp
@@ -72692,6 +72694,7 @@ input player_elo_insert_input {
   deaths: Int
   expected_score: float8
   impact: numeric
+  is_tournament: Boolean
   k_factor: Int
   kda: float8
   kills: Int
@@ -72800,6 +72803,7 @@ input player_elo_order_by {
   deaths: order_by
   expected_score: order_by
   impact: order_by
+  is_tournament: order_by
   k_factor: order_by
   kda: order_by
   kills: order_by
@@ -72862,6 +72866,9 @@ enum player_elo_select_column {
   impact
 
   """column name"""
+  is_tournament
+
+  """column name"""
   k_factor
 
   """column name"""
@@ -72921,6 +72928,7 @@ input player_elo_set_input {
   deaths: Int
   expected_score: float8
   impact: numeric
+  is_tournament: Boolean
   k_factor: Int
   kda: float8
   kills: Int
@@ -73036,6 +73044,7 @@ input player_elo_stream_cursor_value_input {
   deaths: Int
   expected_score: float8
   impact: numeric
+  is_tournament: Boolean
   k_factor: Int
   kda: float8
   kills: Int
@@ -73111,6 +73120,9 @@ enum player_elo_update_column {
 
   """column name"""
   impact
+
+  """column name"""
+  is_tournament
 
   """column name"""
   k_factor
@@ -90239,6 +90251,46 @@ type query_root {
   fetch data from the table: "abandoned_matches" using primary key columns
   """
   abandoned_matches_by_pk(id: uuid!): abandoned_matches
+
+  """
+  execute function "active_matches" which returns "matches"
+  """
+  active_matches(
+    """distinct select on columns"""
+    distinct_on: [matches_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [matches_order_by!]
+
+    """filter the rows returned"""
+    where: matches_bool_exp
+  ): [matches!]!
+
+  """
+  execute function "active_matches" and query aggregates on result of table type "matches"
+  """
+  active_matches_aggregate(
+    """distinct select on columns"""
+    distinct_on: [matches_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [matches_order_by!]
+
+    """filter the rows returned"""
+    where: matches_bool_exp
+  ): matches_aggregate!
 
   """Ask which sightlines a playbook's smokes leave open"""
   analyseUtilityPlaybookCoverage(pairs: [UtilitySightlinePairInput!]!, playbook_id: uuid!): UtilityPlaybookCoverageOutput
@@ -109129,6 +109181,46 @@ type subscription_root {
     """filter the rows returned"""
     where: abandoned_matches_bool_exp
   ): [abandoned_matches!]!
+
+  """
+  execute function "active_matches" which returns "matches"
+  """
+  active_matches(
+    """distinct select on columns"""
+    distinct_on: [matches_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [matches_order_by!]
+
+    """filter the rows returned"""
+    where: matches_bool_exp
+  ): [matches!]!
+
+  """
+  execute function "active_matches" and query aggregates on result of table type "matches"
+  """
+  active_matches_aggregate(
+    """distinct select on columns"""
+    distinct_on: [matches_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [matches_order_by!]
+
+    """filter the rows returned"""
+    where: matches_bool_exp
+  ): matches_aggregate!
 
   """
   fetch data from the table: "api_keys"

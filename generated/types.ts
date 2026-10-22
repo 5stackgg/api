@@ -83593,6 +83593,9 @@ export default {
             "impact": [
                 3969
             ],
+            "is_tournament": [
+                6
+            ],
             "k_factor": [
                 44
             ],
@@ -83817,6 +83820,9 @@ export default {
             "impact": [
                 3970
             ],
+            "is_tournament": [
+                7
+            ],
             "k_factor": [
                 45
             ],
@@ -83974,6 +83980,9 @@ export default {
             ],
             "impact": [
                 3969
+            ],
+            "is_tournament": [
+                6
             ],
             "k_factor": [
                 44
@@ -84243,6 +84252,9 @@ export default {
             "impact": [
                 3971
             ],
+            "is_tournament": [
+                3971
+            ],
             "k_factor": [
                 3971
             ],
@@ -84346,6 +84358,9 @@ export default {
             ],
             "impact": [
                 3969
+            ],
+            "is_tournament": [
+                6
             ],
             "k_factor": [
                 44
@@ -84641,6 +84656,9 @@ export default {
             ],
             "impact": [
                 3969
+            ],
+            "is_tournament": [
+                6
             ],
             "k_factor": [
                 44
@@ -197487,6 +197505,50 @@ export default {
                     ]
                 }
             ],
+            "active_matches": [
+                3709,
+                {
+                    "distinct_on": [
+                        3733,
+                        "[matches_select_column!]"
+                    ],
+                    "limit": [
+                        44
+                    ],
+                    "offset": [
+                        44
+                    ],
+                    "order_by": [
+                        3731,
+                        "[matches_order_by!]"
+                    ],
+                    "where": [
+                        3720
+                    ]
+                }
+            ],
+            "active_matches_aggregate": [
+                3710,
+                {
+                    "distinct_on": [
+                        3733,
+                        "[matches_select_column!]"
+                    ],
+                    "limit": [
+                        44
+                    ],
+                    "offset": [
+                        44
+                    ],
+                    "order_by": [
+                        3731,
+                        "[matches_order_by!]"
+                    ],
+                    "where": [
+                        3720
+                    ]
+                }
+            ],
             "analyseUtilityPlaybookCoverage": [
                 159,
                 {
@@ -234079,6 +234141,50 @@ export default {
                     ],
                     "where": [
                         219
+                    ]
+                }
+            ],
+            "active_matches": [
+                3709,
+                {
+                    "distinct_on": [
+                        3733,
+                        "[matches_select_column!]"
+                    ],
+                    "limit": [
+                        44
+                    ],
+                    "offset": [
+                        44
+                    ],
+                    "order_by": [
+                        3731,
+                        "[matches_order_by!]"
+                    ],
+                    "where": [
+                        3720
+                    ]
+                }
+            ],
+            "active_matches_aggregate": [
+                3710,
+                {
+                    "distinct_on": [
+                        3733,
+                        "[matches_select_column!]"
+                    ],
+                    "limit": [
+                        44
+                    ],
+                    "offset": [
+                        44
+                    ],
+                    "order_by": [
+                        3731,
+                        "[matches_order_by!]"
+                    ],
+                    "where": [
+                        3720
                     ]
                 }
             ],

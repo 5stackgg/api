@@ -81,7 +81,8 @@ BEGIN
 END;
 $$;
 
--- Tournament ELO: latest ELO from tournament matches (season_id IS NULL + joined with tournament_brackets)
+-- Tournament ELO: latest ELO from tournament matches (season_id IS NULL and the
+-- match in a bracket, which is_tournament records on the row).
 CREATE OR REPLACE FUNCTION public.get_player_tournament_elo_by_type(player public.players, _type text) RETURNS numeric
     LANGUAGE plpgsql STABLE
     AS $$
@@ -90,10 +91,10 @@ DECLARE
 BEGIN
     SELECT pe.current INTO elo_value
     FROM player_elo pe
-    INNER JOIN tournament_brackets tb ON tb.match_id = pe.match_id
     WHERE pe.steam_id = player.steam_id
     AND pe."type" = _type
     AND pe.season_id IS NULL
+    AND pe.is_tournament
     AND NOT EXISTS (SELECT 1 FROM matches m WHERE m.id = pe.match_id AND m.elo_voided)
     ORDER BY pe.created_at DESC
     LIMIT 1;
