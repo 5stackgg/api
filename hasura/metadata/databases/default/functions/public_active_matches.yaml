@@ -1,0 +1,8 @@
+function:
+  name: active_matches
+  schema: public
+configuration:
+  custom_root_fields: {}
+  exposed_as: query
+permissions:
+  - role: guest
