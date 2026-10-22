@@ -1,10 +1,18 @@
 import { WorkerHost } from "@nestjs/bullmq";
 import { DelayedError, Job } from "bullmq";
 import { MatchQueues } from "../enums/MatchQueues";
-import { UseQueue } from "../../utilities/QueueProcessors";
+import {
+  RESUMABLE_JOB_MAX_STALLS,
+  UseQueue,
+} from "../../utilities/QueueProcessors";
 import { PlayerEloRecomputeService } from "../player-elo-recompute.service";
 
-@UseQueue("Matches", MatchQueues.EloRecompute, { concurrency: 1 })
+// A stalled run is started over rather than failed: giving up leaves player_elo
+// half rebuilt until someone notices.
+@UseQueue("Matches", MatchQueues.EloRecompute, {
+  concurrency: 1,
+  maxStalledCount: RESUMABLE_JOB_MAX_STALLS,
+})
 export class RecomputeAllElo extends WorkerHost {
   constructor(private readonly eloRecompute: PlayerEloRecomputeService) {
     super();

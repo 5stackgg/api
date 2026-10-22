@@ -21,10 +21,11 @@ CREATE OR REPLACE FUNCTION public.get_player_peak_elo_by_type(player public.play
 DECLARE
     peak_value numeric;
 BEGIN
-    SELECT MAX(current) INTO peak_value
-    FROM player_elo
-    WHERE steam_id = player.steam_id
-    AND "type" = _type;
+    SELECT MAX(pe.current) INTO peak_value
+    FROM player_elo pe
+    WHERE pe.steam_id = player.steam_id
+    AND pe."type" = _type
+    AND NOT EXISTS (SELECT 1 FROM matches m WHERE m.id = pe.match_id AND m.elo_voided);
 
     RETURN peak_value;
 END;

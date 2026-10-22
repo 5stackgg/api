@@ -10,11 +10,14 @@ import {
 } from "../../generated";
 import { TypesenseQueues } from "../type-sense/enums/TypesenseQueues";
 import { RefreshAllPlayersJob } from "../type-sense/jobs/RefreshAllPlayers";
+import { MatchQueues } from "./enums/MatchQueues";
 
 // Status + cancel signal live in Redis so any API replica can read progress and
 // request cancellation regardless of which pod is running the job.
 const STATUS_KEY = "elo-recompute:status";
 const CANCEL_KEY = "elo-recompute:cancel";
+// Held by every bulk player_elo rebuild (this one and the season backfill) and
+// waited out by a match's own rating, so none of them interleave.
 const LOCK_KEY = "elo-recompute:lock";
 
 // Cross-pod flag so player_elo events (which fire on any replica) can be
@@ -62,14 +65,47 @@ export class PlayerEloRecomputeService {
     private readonly notifications: NotificationsService,
     @InjectQueue(TypesenseQueues.PlayerReindex)
     private readonly reindexQueue: Queue,
+    @InjectQueue(MatchQueues.EloRecompute)
+    private readonly queue: Queue,
   ) {}
 
   public async isRunning(): Promise<boolean> {
     return (await this.getStatus()).running;
   }
 
-  public async nextRequest(): Promise<number> {
-    return await this.cache.increment(REQUEST_KEY);
+  // Never skipped for a run already going: that run may be past the change.
+  // Each request gets its own job id because BullMQ ignores an add whose id is
+  // still active, and runRecomputeAll folds requests a run already covered.
+  public async requestRecompute(): Promise<void> {
+    const request = await this.cache.increment(REQUEST_KEY);
+    if (!(await this.isRunning())) {
+      await this.markQueued();
+    }
+    await this.queue.add(
+      "RecomputeAllElo",
+      { request },
+      {
+        jobId: PlayerEloRecomputeService.jobId(request),
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    );
+  }
+
+  public async acquireRebuildLock(): Promise<string | null> {
+    return await this.cache.acquireLock(LOCK_KEY, RUNNING_TTL_SECONDS);
+  }
+
+  public async refreshRebuildLock(token: string): Promise<void> {
+    await this.cache.refreshLock(LOCK_KEY, token, RUNNING_TTL_SECONDS);
+  }
+
+  public async releaseRebuildLock(token: string): Promise<void> {
+    await this.cache.releaseLock(LOCK_KEY, token);
+  }
+
+  public async isRebuilding(): Promise<boolean> {
+    return (await this.cache.getRaw(LOCK_KEY)) !== null;
   }
 
   public async requestCancel(): Promise<void> {
@@ -132,12 +168,11 @@ export class PlayerEloRecomputeService {
     // Hard single-execution guarantee: only the lock holder runs. Critical here
     // because the run TRUNCATEs player_elo — two overlapping runs would corrupt
     // the chronological rebuild.
-    const lockToken = await this.cache.acquireLock(
-      LOCK_KEY,
-      RUNNING_TTL_SECONDS,
-    );
+    const lockToken = await this.acquireRebuildLock();
     if (!lockToken) {
-      this.logger.warn("[elo-recompute] another run holds the lock, retrying");
+      this.logger.warn(
+        "[elo-recompute] another rebuild holds the lock, retrying",
+      );
       return false;
     }
 
@@ -146,7 +181,7 @@ export class PlayerEloRecomputeService {
       request <= ((await this.cache.get(COVERED_KEY)) ?? 0)
     ) {
       await this.settleQueuedStatus();
-      await this.cache.releaseLock(LOCK_KEY, lockToken);
+      await this.releaseRebuildLock(lockToken);
       return true;
     }
 
@@ -165,46 +200,53 @@ export class PlayerEloRecomputeService {
     try {
       await this.postgres.query(`TRUNCATE TABLE player_elo`);
 
-      const ids = await this.fetchAllMatchIds();
-      status.total = ids.length;
-      await this.saveStatus(status, RUNNING_TTL_SECONDS);
+      const rebuilt = new Set<string>();
+      let pending = await this.fetchAllMatchIds();
 
       this.logger.log(
-        `[elo-recompute] rebuilding ELO for ${ids.length} matches`,
+        `[elo-recompute] rebuilding ELO for ${pending.length} matches`,
       );
 
-      for (const id of ids) {
-        if (await this.isCancelRequested()) {
-          status.canceled = true;
-          this.logger.warn("[elo-recompute] canceled by request");
-          break;
+      // A match that finished after the list was read is rated here too, so
+      // the run never ends with a finished match missing from what it rebuilt.
+      while (pending.length > 0 && !status.canceled) {
+        status.total += pending.length;
+        await this.saveStatus(status, RUNNING_TTL_SECONDS);
+
+        for (const id of pending) {
+          if (await this.isCancelRequested()) {
+            status.canceled = true;
+            this.logger.warn("[elo-recompute] canceled by request");
+            break;
+          }
+          rebuilt.add(id);
+          status.current_match_id = id;
+          try {
+            // Bounded so a hung query can't wedge the whole run (which would
+            // also block the per-iteration cancel check).
+            await this.withTimeout(
+              this.postgres.query(`SELECT generate_player_elo_for_match($1)`, [
+                id,
+              ]),
+              ITEM_TIMEOUT_MS,
+            );
+          } catch (error) {
+            status.failed += 1;
+            this.logger.warn(
+              `[elo-recompute] match ${id} failed: ${(error as Error)?.message}`,
+            );
+          }
+          status.completed += 1;
+          if (status.completed % PERSIST_EVERY === 0) {
+            await this.saveStatus(status, RUNNING_TTL_SECONDS);
+            await this.cache.put(SUPPRESS_KEY, true, RUNNING_TTL_SECONDS);
+            await this.refreshRebuildLock(lockToken);
+          }
         }
-        status.current_match_id = id;
-        try {
-          // Bounded so a hung query can't wedge the whole run (which would also
-          // block the per-iteration cancel check).
-          await this.withTimeout(
-            this.postgres.query(`SELECT generate_player_elo_for_match($1)`, [
-              id,
-            ]),
-            ITEM_TIMEOUT_MS,
-          );
-        } catch (error) {
-          status.failed += 1;
-          this.logger.warn(
-            `[elo-recompute] match ${id} failed: ${(error as Error)?.message}`,
-          );
-        }
-        status.completed += 1;
-        if (status.completed % PERSIST_EVERY === 0) {
-          await this.saveStatus(status, RUNNING_TTL_SECONDS);
-          await this.cache.put(SUPPRESS_KEY, true, RUNNING_TTL_SECONDS);
-          await this.cache.refreshLock(
-            LOCK_KEY,
-            lockToken,
-            RUNNING_TTL_SECONDS,
-          );
-        }
+
+        pending = (await this.fetchAllMatchIds()).filter(
+          (id) => !rebuilt.has(id),
+        );
       }
 
       if (!status.canceled) {
@@ -217,7 +259,7 @@ export class PlayerEloRecomputeService {
       await this.saveStatus(status, FINAL_TTL_SECONDS);
       await this.cache.forget(CANCEL_KEY);
       await this.cache.forget(SUPPRESS_KEY);
-      await this.cache.releaseLock(LOCK_KEY, lockToken);
+      await this.releaseRebuildLock(lockToken);
 
       // Per-row player_elo events were suppressed during the run, so reindex
       // every player once here to sync search with the rebuilt ELO. Stable

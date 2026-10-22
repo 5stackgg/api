@@ -19,17 +19,17 @@ const controllerWith = (deps: {
   clips?: unknown;
   gameModes?: unknown;
 }) => {
-  const args: any[] = Array.from({ length: 30 }, () => ({}));
+  const args: any[] = Array.from({ length: 29 }, () => ({}));
 
   args[0] = deps.logger ?? {};
   args[1] = deps.hasura ?? {};
   args[2] = deps.postgres ?? {};
   args[3] = { get: jest.fn(() => ({})) };
   args[5] = deps.matchAssistant ?? {};
-  args[21] = deps.gameStreamer ?? {};
-  args[22] = deps.demoMetadata ?? {};
-  args[23] = deps.clips ?? {};
-  args[29] = deps.gameModes ?? {};
+  args[20] = deps.gameStreamer ?? {};
+  args[21] = deps.demoMetadata ?? {};
+  args[22] = deps.clips ?? {};
+  args[28] = deps.gameModes ?? {};
 
   return new (MatchesController as any)(...args) as MatchesController;
 };
@@ -64,7 +64,6 @@ describe("MatchesController", () => {
       {} as any,
       {} as any,
       notifications as any,
-      {} as any,
       {} as any,
       {} as any,
       {} as any,

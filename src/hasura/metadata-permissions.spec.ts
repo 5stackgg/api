@@ -309,13 +309,21 @@ describe("hasura table metadata", () => {
         });
       });
 
-      it("gives a moderator the same columns and computed fields as a user", () => {
+      it("gives a moderator a user's columns and computed fields, plus who voided a match's ELO and when", () => {
         const user = selectBlocks().get("user");
         const moderator = selectBlocks().get("moderator");
+        const staffOnly = ["elo_voided_at", "elo_voided_by_steam_id"];
 
-        expect(stableShape({ ...moderator, filter: user?.filter })).toEqual(
-          stableShape(user),
-        );
+        expect(moderator?.columns).toEqual(expect.arrayContaining(staffOnly));
+        expect(
+          stableShape({
+            ...moderator,
+            filter: user?.filter,
+            columns: moderator?.columns.filter(
+              (column: string) => !staffOnly.includes(column),
+            ),
+          }),
+        ).toEqual(stableShape(user));
       });
     });
   });

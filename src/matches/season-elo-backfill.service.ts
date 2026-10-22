@@ -16,7 +16,6 @@ import { RefreshAllPlayersJob } from "../type-sense/jobs/RefreshAllPlayers";
 // runs on a concurrency-1 queue, so a single global status blob is sufficient.
 const STATUS_KEY = "season-elo-backfill:status";
 const CANCEL_KEY = "season-elo-backfill:cancel";
-const LOCK_KEY = "season-elo-backfill:lock";
 
 const PERSIST_EVERY = 25;
 const ITEM_TIMEOUT_MS = 60_000;
@@ -111,15 +110,12 @@ export class SeasonEloBackfillService {
       return true;
     }
 
-    // Single-execution guarantee mirrors the recompute: the lock holder is the
-    // only writer, so overlapping runs can't corrupt the chronological rebuild.
-    const lockToken = await this.cache.acquireLock(
-      LOCK_KEY,
-      RUNNING_TTL_SECONDS,
-    );
+    // The full recompute's lock: either rebuild deleting player_elo under the
+    // other would corrupt both chronological rebuilds.
+    const lockToken = await this.eloRecompute.acquireRebuildLock();
     if (!lockToken) {
       this.logger.warn(
-        `[season-backfill] another backfill holds the lock, retrying season ${seasonId}`,
+        `[season-backfill] another rebuild holds the lock, retrying season ${seasonId}`,
       );
       return false;
     }
@@ -176,11 +172,7 @@ export class SeasonEloBackfillService {
         if (status.completed % PERSIST_EVERY === 0) {
           await this.saveStatus(status, RUNNING_TTL_SECONDS);
           await this.eloRecompute.setSuppressEvents(true);
-          await this.cache.refreshLock(
-            LOCK_KEY,
-            lockToken,
-            RUNNING_TTL_SECONDS,
-          );
+          await this.eloRecompute.refreshRebuildLock(lockToken);
         }
       }
 
@@ -213,7 +205,7 @@ export class SeasonEloBackfillService {
       // the search index would otherwise keep serving pre-backfill ELO forever.
       // One deduped reindex at the end syncs it without the per-row fan-out.
       await this.eloRecompute.setSuppressEvents(false);
-      await this.cache.releaseLock(LOCK_KEY, lockToken);
+      await this.eloRecompute.releaseRebuildLock(lockToken);
 
       await this.reindexQueue.add(
         RefreshAllPlayersJob.name,

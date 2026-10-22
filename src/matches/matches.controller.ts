@@ -46,7 +46,6 @@ import { SteamMatchHistoryQueues } from "../steam-match-history/enums/SteamMatch
 import { CheckSteamBansForMatch } from "../steam-match-history/jobs/CheckSteamBansForMatch";
 import { MatchImportService } from "../steam-match-history/match-import.service";
 import { EloCalculation } from "./jobs/EloCalculation";
-import { RecomputeAllElo } from "./jobs/RecomputeAllElo";
 import { PlayerEloRecomputeService } from "./player-elo-recompute.service";
 import { BackfillSeasonElo } from "./jobs/BackfillSeasonElo";
 import { SeasonEloBackfillService } from "./season-elo-backfill.service";
@@ -128,7 +127,6 @@ export class MatchesController {
     private readonly notifications: NotificationsService,
     private readonly chatService: ChatService,
     @InjectQueue(MatchQueues.EloCalculation) private eloCalculationQueue: Queue,
-    @InjectQueue(MatchQueues.EloRecompute) private eloRecomputeQueue: Queue,
     private readonly playerEloRecompute: PlayerEloRecomputeService,
     @InjectQueue(MatchQueues.SeasonEloBackfill)
     private seasonEloBackfillQueue: Queue,
@@ -1563,7 +1561,7 @@ export class MatchesController {
       return { success: true, running: true };
     }
 
-    await this.requestEloRecompute();
+    await this.playerEloRecompute.requestRecompute();
 
     return { success: true, running: true };
   }
@@ -1603,49 +1601,73 @@ export class MatchesController {
               elo_voided_by_steam_id = $2
         WHERE id = $1
           AND elo_voided = false
-          AND status = ANY($3)
+          AND status IN ('Finished', 'Forfeit', 'Surrendered')
+          AND source = '5stack'
+          AND counts_toward_ranking
+          AND winning_lineup_id IS NOT NULL
         RETURNING id`,
-      [match_id, user.steam_id, MatchesController.PLAYED_TERMINAL_STATUSES],
+      [match_id, user.steam_id],
     );
 
-    if (voided.length === 0) {
-      const [match] = await this.postgres.query<Array<{ elo_voided: boolean }>>(
-        `SELECT elo_voided FROM matches WHERE id = $1`,
+    if (voided.length > 0) {
+      this.logger.log(`[${match_id}] ELO voided by ${user.steam_id}`);
+    } else {
+      const [match] = await this.postgres.query<
+        Array<{ status: string; elo_voided: boolean }>
+      >(`SELECT status, elo_voided FROM matches WHERE id = $1`, [match_id]);
+      if (!match) {
+        throw Error("match not found");
+      }
+      if (!match.elo_voided) {
+        throw Error(
+          MatchesController.PLAYED_TERMINAL_STATUSES.includes(match.status)
+            ? "this match never counted toward ELO"
+            : "only a finished match can have its ELO voided",
+        );
+      }
+    }
+
+    // Asked for again when it was already voided: the call that voided it may
+    // have failed before its recompute was queued, and a repeat folds into the
+    // same run.
+    await this.playerEloRecompute.requestRecompute();
+
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async restoreMatchElo(data: { match_id: string; user: User }) {
+    const { match_id, user } = data;
+    if (!isRoleAbove(user.role, "administrator")) {
+      throw Error("you must be an administrator");
+    }
+
+    const restored = await this.postgres.query<Array<{ id: string }>>(
+      `UPDATE matches
+          SET elo_voided = false,
+              elo_voided_at = NULL,
+              elo_voided_by_steam_id = NULL
+        WHERE id = $1
+          AND elo_voided
+        RETURNING id`,
+      [match_id],
+    );
+
+    if (restored.length > 0) {
+      this.logger.log(`[${match_id}] ELO restored by ${user.steam_id}`);
+    } else {
+      const [match] = await this.postgres.query<Array<{ id: string }>>(
+        `SELECT id FROM matches WHERE id = $1`,
         [match_id],
       );
       if (!match) {
         throw Error("match not found");
       }
-      if (!match.elo_voided) {
-        throw Error("only a finished match can have its ELO voided");
-      }
-      return { success: true };
     }
 
-    this.logger.log(`[${match_id}] ELO voided by ${user.steam_id}`);
-
-    await this.requestEloRecompute();
+    await this.playerEloRecompute.requestRecompute();
 
     return { success: true };
-  }
-
-  // Never skipped for a run already going: that run may be past the change.
-  // Each request gets its own job id because BullMQ ignores an add whose id is
-  // still active, and the recompute folds requests a run already covered.
-  private async requestEloRecompute(): Promise<void> {
-    const request = await this.playerEloRecompute.nextRequest();
-    if (!(await this.playerEloRecompute.isRunning())) {
-      await this.playerEloRecompute.markQueued();
-    }
-    await this.eloRecomputeQueue.add(
-      RecomputeAllElo.name,
-      { request },
-      {
-        jobId: PlayerEloRecomputeService.jobId(request),
-        removeOnComplete: true,
-        removeOnFail: true,
-      },
-    );
   }
 
   @HasuraEvent()

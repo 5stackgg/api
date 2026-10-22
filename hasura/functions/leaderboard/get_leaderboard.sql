@@ -142,6 +142,8 @@ $$;
 -- ============================================================
 -- ELO leaderboard
 -- value = current ELO, secondary = ELO change, tertiary = win streak
+-- A voided match's rows repeat the rating going in, so they are neither a
+-- rating nor a match played: nobody reaches the board, or a peak, on them.
 -- ============================================================
 -- FACEIT rating and Premier rank.
 --
@@ -273,6 +275,7 @@ BEGIN
         pe.current as raw_current
       FROM player_elo pe
       WHERE 1=1
+        AND NOT EXISTS (SELECT 1 FROM matches vm WHERE vm.id = pe.match_id AND vm.elo_voided)
         AND (_match_type IS NULL OR pe.type = _match_type)
         AND (_season_id IS NULL OR pe.season_id = _season_id)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
@@ -282,6 +285,7 @@ BEGIN
       SELECT pe.steam_id, MAX(pe.current) as peak_current
       FROM player_elo pe
       WHERE 1=1
+        AND NOT EXISTS (SELECT 1 FROM matches vm WHERE vm.id = pe.match_id AND vm.elo_voided)
         AND (_match_type IS NULL OR pe.type = _match_type)
         AND (_season_id IS NULL OR pe.season_id = _season_id)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
@@ -331,6 +335,7 @@ BEGIN
           ) AS reconstructed_current
         FROM player_elo pe
         WHERE _all_time_peak
+          AND NOT EXISTS (SELECT 1 FROM matches vm WHERE vm.id = pe.match_id AND vm.elo_voided)
           AND (_match_type IS NULL OR pe.type = _match_type)
           AND NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pe.match_id)
       ) walk
@@ -342,6 +347,7 @@ BEGIN
         pe.current - pe.change as starting_elo
       FROM player_elo pe
       WHERE 1=1
+        AND NOT EXISTS (SELECT 1 FROM matches vm WHERE vm.id = pe.match_id AND vm.elo_voided)
         AND (_match_type IS NULL OR pe.type = _match_type)
         AND (_season_id IS NULL OR pe.season_id = _season_id)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
@@ -351,6 +357,7 @@ BEGIN
       SELECT pe.steam_id, COUNT(*)::int as matches_played
       FROM player_elo pe
       WHERE 1=1
+        AND NOT EXISTS (SELECT 1 FROM matches vm WHERE vm.id = pe.match_id AND vm.elo_voided)
         AND (_match_type IS NULL OR pe.type = _match_type)
         AND (_season_id IS NULL OR pe.season_id = _season_id)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
@@ -444,6 +451,7 @@ BEGIN
         ) AS is_tournament
       FROM player_elo pe
       WHERE (_match_type IS NULL OR pe.type = _match_type)
+        AND NOT EXISTS (SELECT 1 FROM matches vm WHERE vm.id = pe.match_id AND vm.elo_voided)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
         AND (
           pe.season_id = _season_id
@@ -550,6 +558,7 @@ BEGIN
         pe.current as current_elo
       FROM player_elo pe
       WHERE 1=1
+        AND NOT EXISTS (SELECT 1 FROM matches vm WHERE vm.id = pe.match_id AND vm.elo_voided)
         AND (_match_type IS NULL OR pe.type = _match_type)
         AND (_season_id IS NULL OR pe.season_id = _season_id)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
@@ -559,6 +568,7 @@ BEGIN
       SELECT pe.steam_id, MAX(pe.current) as peak_current
       FROM player_elo pe
       WHERE 1=1
+        AND NOT EXISTS (SELECT 1 FROM matches vm WHERE vm.id = pe.match_id AND vm.elo_voided)
         AND (_match_type IS NULL OR pe.type = _match_type)
         AND (_season_id IS NULL OR pe.season_id = _season_id)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
@@ -579,6 +589,7 @@ BEGIN
         pe.current - pe.change as starting_elo
       FROM player_elo pe
       WHERE 1=1
+        AND NOT EXISTS (SELECT 1 FROM matches vm WHERE vm.id = pe.match_id AND vm.elo_voided)
         AND (_match_type IS NULL OR pe.type = _match_type)
         AND (_season_id IS NULL OR pe.season_id = _season_id)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
@@ -588,6 +599,7 @@ BEGIN
       SELECT pe.steam_id, COUNT(*)::int as matches_played
       FROM player_elo pe
       WHERE 1=1
+        AND NOT EXISTS (SELECT 1 FROM matches vm WHERE vm.id = pe.match_id AND vm.elo_voided)
         AND (_match_type IS NULL OR pe.type = _match_type)
         AND (_season_id IS NULL OR pe.season_id = _season_id)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))

@@ -8,9 +8,6 @@ object_relationships:
   - name: e_region
     using:
       foreign_key_constraint_on: region
-  - name: elo_voided_by
-    using:
-      foreign_key_constraint_on: elo_voided_by_steam_id
   - name: lineup_1
     using:
       foreign_key_constraint_on: lineup_1_id
@@ -385,8 +382,6 @@ select_permissions:
         - ended_at
         - effective_at
         - elo_voided
-        - elo_voided_at
-        - elo_voided_by_steam_id
         - id
         - label
         - lineup_1_id
@@ -527,8 +522,6 @@ select_permissions:
         - ended_at
         - effective_at
         - elo_voided
-        - elo_voided_at
-        - elo_voided_by_steam_id
         - id
         - label
         - lineup_1_id

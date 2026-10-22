@@ -222,7 +222,11 @@ BEGIN
         END,
         started_at = NULL,
         ended_at = NULL,
-        cancels_at = NULL
+        cancels_at = NULL,
+        -- A replayed match is a new result; a reassigned winner is the same one.
+        elo_voided = elo_voided AND _new_winning_lineup_id IS NOT NULL,
+        elo_voided_at = CASE WHEN _new_winning_lineup_id IS NULL THEN NULL ELSE elo_voided_at END,
+        elo_voided_by_steam_id = CASE WHEN _new_winning_lineup_id IS NULL THEN NULL ELSE elo_voided_by_steam_id END
     WHERE id = _match_id;
 
     PERFORM recompute_tournament_stage_results(source_bracket.tournament_stage_id);

@@ -37,11 +37,14 @@ CREATE OR REPLACE FUNCTION public.get_player_elo_by_type(player public.players, 
 DECLARE
     elo_value numeric;
 BEGIN
-    SELECT current INTO elo_value
-    FROM player_elo
-    WHERE steam_id = player.steam_id
-    AND "type" = _type
-    ORDER BY created_at DESC
+    -- A voided match's row only repeats the rating going in, so it is read as
+    -- no row at all: a player whose only matches were voided has no rating.
+    SELECT pe.current INTO elo_value
+    FROM player_elo pe
+    WHERE pe.steam_id = player.steam_id
+    AND pe."type" = _type
+    AND NOT EXISTS (SELECT 1 FROM matches m WHERE m.id = pe.match_id AND m.elo_voided)
+    ORDER BY pe.created_at DESC
     LIMIT 1;
 
     RETURN elo_value;
@@ -59,12 +62,13 @@ DECLARE
     elo_value numeric;
 BEGIN
     IF _season_id IS NOT NULL THEN
-        SELECT current INTO elo_value
-        FROM player_elo
-        WHERE steam_id = player.steam_id
-        AND "type" = _type
-        AND season_id = _season_id
-        ORDER BY created_at DESC
+        SELECT pe.current INTO elo_value
+        FROM player_elo pe
+        WHERE pe.steam_id = player.steam_id
+        AND pe."type" = _type
+        AND pe.season_id = _season_id
+        AND NOT EXISTS (SELECT 1 FROM matches m WHERE m.id = pe.match_id AND m.elo_voided)
+        ORDER BY pe.created_at DESC
         LIMIT 1;
     END IF;
 
@@ -90,6 +94,7 @@ BEGIN
     WHERE pe.steam_id = player.steam_id
     AND pe."type" = _type
     AND pe.season_id IS NULL
+    AND NOT EXISTS (SELECT 1 FROM matches m WHERE m.id = pe.match_id AND m.elo_voided)
     ORDER BY pe.created_at DESC
     LIMIT 1;
 

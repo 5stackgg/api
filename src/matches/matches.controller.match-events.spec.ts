@@ -163,7 +163,6 @@ describe("MatchesController — match_events on-demand servers", () => {
       {} as any,
       {} as any,
       {} as any,
-      {} as any,
       { add: jest.fn(async (): Promise<void> => undefined) } as any,
       scheduledMatchesQueue as any,
       {} as any,

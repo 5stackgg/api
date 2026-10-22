@@ -4,6 +4,7 @@ import IORedis, { Redis } from "ioredis";
 import { GenericContainer, StartedTestContainer } from "testcontainers";
 import { User } from "./../src/auth/types/User";
 import { CacheService } from "./../src/cache/cache.service";
+import { EloCalculation } from "./../src/matches/jobs/EloCalculation";
 import { RecomputeAllElo } from "./../src/matches/jobs/RecomputeAllElo";
 import { MatchesController } from "./../src/matches/matches.controller";
 import { PlayerEloRecomputeService } from "./../src/matches/player-elo-recompute.service";
@@ -18,9 +19,10 @@ import {
   SqlTestDb,
 } from "./utils/sql-test-db";
 
-// An administrator voiding a played match's ELO: the real rating engine, the
-// real full recompute and season rebuild, and a real redis behind the
-// recompute's request bookkeeping. The BullMQ queue is the only stand-in.
+// An administrator voiding a played match's ELO, and restoring it: the real
+// rating engine, the real full recompute and season rebuild, and a real redis
+// behind the recompute's request bookkeeping. The BullMQ queue is the only
+// stand-in.
 describe("ELO void (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
@@ -63,6 +65,31 @@ describe("ELO void (SQL-driven)", () => {
     await db?.stop();
   });
 
+  // Counts full runs, records what a service sent, and lets a test land a
+  // write in the middle of a rebuild, right before it rebuilds a given match.
+  const watch = (sent: Array<string> = []) =>
+    ({
+      query: async (
+        sql: string,
+        params?: Parameters<PostgresService["query"]>[1],
+      ) => {
+        sent.push(sql);
+        if (sql.includes("TRUNCATE TABLE player_elo")) {
+          runs += 1;
+        }
+        if (
+          duringRun &&
+          sql.includes("generate_player_elo_for_match") &&
+          params?.[0] === duringRun.matchId
+        ) {
+          const { then } = duringRun;
+          duringRun = undefined;
+          await then();
+        }
+        return postgres.query(sql, params);
+      },
+    }) as unknown as PostgresService;
+
   beforeEach(async () => {
     await redis.flushall();
     await postgres.query("DELETE FROM matches");
@@ -85,38 +112,20 @@ describe("ELO void (SQL-driven)", () => {
       }),
     };
 
-    // Counts full runs, and lets a test land a write in the middle of one,
-    // right before the run rebuilds a given match.
-    const watched = {
-      query: async (
-        sql: string,
-        params?: Parameters<PostgresService["query"]>[1],
-      ) => {
-        if (sql.includes("TRUNCATE TABLE player_elo")) {
-          runs += 1;
-        }
-        if (
-          duringRun &&
-          sql.includes("generate_player_elo_for_match") &&
-          params?.[0] === duringRun.matchId
-        ) {
-          const { then } = duringRun;
-          duringRun = undefined;
-          await then();
-        }
-        return postgres.query(sql, params);
-      },
-    } as unknown as PostgresService;
-
     recompute = new PlayerEloRecomputeService(
       logger,
-      watched,
+      watch(),
       cache,
       { send: jest.fn() } as any,
       { add: jest.fn() } as any,
+      queue as any,
     );
 
     admin = await fx.player(undefined, "administrator");
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   const controller = () =>
@@ -124,24 +133,49 @@ describe("ELO void (SQL-driven)", () => {
       logger,
       postgres,
       playerEloRecompute: recompute,
-      eloRecomputeQueue: queue,
     }) as MatchesController;
+
+  const asUser = (steamId: string, role: string) =>
+    ({ steam_id: steamId, role, name: "admin" }) as User;
 
   const voidElo = (matchId: string, steamId = admin, role = "administrator") =>
     controller().voidMatchElo({
       match_id: matchId,
-      user: { steam_id: steamId, role, name: "admin" } as User,
+      user: asUser(steamId, role),
     });
+
+  const restoreElo = (
+    matchId: string,
+    steamId = admin,
+    role = "administrator",
+  ) =>
+    controller().restoreMatchElo({
+      match_id: matchId,
+      user: asUser(steamId, role),
+    });
+
+  const backfill = (sent?: Array<string>) =>
+    new SeasonEloBackfillService(
+      logger,
+      watch(sent),
+      cache,
+      { send: jest.fn() } as any,
+      recompute,
+      { add: jest.fn() } as any,
+    );
+
+  const job = <T>(data: T) => ({
+    data,
+    token: "token",
+    attemptsMade: 0,
+    moveToDelayed: jest.fn(),
+  });
 
   // What the RecomputeAllElo worker does with each queued job, in order.
   const work = async () => {
     while (queued.length > 0) {
       const { data } = queued.shift()!;
-      await new RecomputeAllElo(recompute).process({
-        data,
-        token: "token",
-        moveToDelayed: jest.fn(),
-      } as any);
+      await new RecomputeAllElo(recompute).process(job(data) as any);
     }
   };
 
@@ -240,6 +274,50 @@ describe("ELO void (SQL-driven)", () => {
     );
     return row;
   };
+
+  const profileElo = async (steamId: string) => {
+    const [row] = await postgres.query<
+      Array<{
+        elo: Record<string, number | null>;
+        peak: Record<string, number | null>;
+      }>
+    >(
+      `SELECT get_player_elo(p) AS elo, get_player_peak_elo(p) AS peak
+         FROM players p WHERE steam_id = $1`,
+      [steamId],
+    );
+    return row;
+  };
+
+  const leaderboard = async (
+    windowDays: number,
+    excludeTournaments: boolean,
+    seasonId: string | null = null,
+  ) =>
+    Object.fromEntries(
+      (
+        await postgres.query<
+          Array<{
+            player_steam_id: string;
+            value: number;
+            matches_played: number;
+          }>
+        >(
+          `SELECT player_steam_id, value, matches_played
+             FROM get_leaderboard('elo', $1, 'Duel', $2, NULL, $3::uuid)`,
+          [windowDays, excludeTournaments, seasonId],
+        )
+      ).map((row) => [row.player_steam_id, row]),
+    );
+
+  // The three ways onto the ELO board: All Time, a rolling window, and the
+  // tournaments-excluded ladder.
+  const boards = () =>
+    Promise.all([
+      leaderboard(0, false),
+      leaderboard(30, false),
+      leaderboard(0, true),
+    ]);
 
   describe("the rating engine", () => {
     it("rates a voided match as no change for anyone, at the rating each went in with", async () => {
@@ -343,40 +421,99 @@ describe("ELO void (SQL-driven)", () => {
       expect(voided.every((row) => row.type === "Rush")).toBe(true);
       expect(voided.every((row) => row.change === 0)).toBe(true);
 
-      const [profile] = await postgres.query<
-        Array<{ elo: Record<string, number | null> }>
-      >("SELECT get_player_elo(p) AS elo FROM players p WHERE steam_id = $1", [
-        teamA[0],
-      ]);
-      expect(Number(profile.elo.rush)).toBe(5000);
+      const profile = await profileElo(teamA[0]);
+      expect(profile.elo.rush).toBeNull();
+      expect(profile.peak.rush).toBeNull();
     });
 
-    it("leaves a match that was never rated unrated", async () => {
+    it("changes nothing for a match that was never rated, even flagged", async () => {
       const [a, b] = await fx.players(2);
-
       const imported = await duel(a, b);
       await postgres.query(
-        "UPDATE matches SET source = 'faceit' WHERE id = $1",
+        "UPDATE matches SET source = 'faceit', elo_voided = true WHERE id = $1",
         [imported.id],
       );
 
-      const unranked = await duel(a, b);
-      await postgres.query(
-        "UPDATE matches SET counts_toward_ranking = false WHERE id = $1",
-        [unranked.id],
-      );
+      expect(await generate(imported.id)).toBe(0);
+      expect(Object.keys(await rows(imported.id))).toHaveLength(0);
+    });
+  });
 
-      const tie = await duel(a, b);
-      await postgres.query(
-        "UPDATE matches SET winning_lineup_id = NULL, status = 'Tie' WHERE id = $1",
-        [tie.id],
-      );
+  describe("what a voided match is not", () => {
+    it("is nobody's peak", async () => {
+      const [a, b] = await fx.players(2);
+      const cheated = await duel(a, b, { endedDaysAgo: 2 });
+      const next = await duel(a, b, { winner: "b", endedDaysAgo: 1 });
 
-      for (const match of [imported, unranked, tie]) {
-        await voidElo(match.id);
-        expect(await generate(match.id)).toBe(0);
-        expect(Object.keys(await rows(match.id))).toHaveLength(0);
+      await voidElo(cheated.id);
+      await work();
+
+      const lost = (await rows(next.id))[a];
+      expect(lost.change).toBeLessThan(0);
+      expect(Number((await profileElo(a)).peak.duel)).toBe(lost.current);
+      expect((await leaderboard(0, false))[a].value).toBe(lost.current);
+      expect((await leaderboard(0, true))[a].value).toBe(lost.current);
+    });
+
+    it("does not stand in for a lifetime rating at the start of a season", async () => {
+      await fx.enableSeasons();
+      await fx.season("2025-06-01", null);
+      await fx.season("2025-01-01", "2025-06-01");
+      const [a, b] = await fx.players(2);
+
+      const lastSeason = await duel(a, b);
+      await postgres.query(
+        "UPDATE matches SET ended_at = '2025-03-01' WHERE id = $1",
+        [lastSeason.id],
+      );
+      await generate(lastSeason.id);
+      const lifetime = (await rows(lastSeason.id))[a].current;
+      expect(lifetime).toBeGreaterThan(5000);
+
+      const cheated = await duel(a, b);
+      await voidElo(cheated.id);
+      await generate(cheated.id);
+      expect((await rows(cheated.id))[a].current).toBe(5000);
+
+      expect(Number((await profileElo(a)).elo.duel)).toBe(lifetime);
+    });
+
+    it("puts nobody on the ELO board and is not a match played", async () => {
+      const [a, b, c, d] = await fx.players(4);
+      const onlyVoided = await duel(a, b, { endedDaysAgo: 2 });
+      const rated = await duel(c, d, { endedDaysAgo: 2 });
+      const alsoVoided = await duel(c, d, { endedDaysAgo: 1 });
+
+      await voidElo(onlyVoided.id);
+      await voidElo(alsoVoided.id);
+      await work();
+      expect(Object.keys(await rows(rated.id))).toHaveLength(2);
+
+      for (const board of await boards()) {
+        expect(board[a]).toBeUndefined();
+        expect(board[b]).toBeUndefined();
+        expect(board[c].matches_played).toBe(1);
+        expect(board[d].matches_played).toBe(1);
       }
+    });
+
+    it("puts nobody on the active season's board and is not a season match played", async () => {
+      await fx.enableSeasons();
+      const season = await fx.season("2025-01-01", null);
+      const [a, b, c, d] = await fx.players(4);
+      const onlyVoided = await duel(a, b, { endedDaysAgo: 2 });
+      await duel(c, d, { endedDaysAgo: 2 });
+      const alsoVoided = await duel(c, d, { endedDaysAgo: 1 });
+
+      await voidElo(onlyVoided.id);
+      await voidElo(alsoVoided.id);
+      await work();
+
+      const board = await leaderboard(0, false, season);
+      expect(board[a]).toBeUndefined();
+      expect(board[b]).toBeUndefined();
+      expect(board[c].matches_played).toBe(1);
+      expect(board[d].matches_played).toBe(1);
     });
   });
 
@@ -393,16 +530,7 @@ describe("ELO void (SQL-driven)", () => {
       }
 
       await voidElo(cheated.id);
-
-      const backfill = new SeasonEloBackfillService(
-        logger,
-        postgres,
-        cache,
-        { send: jest.fn() } as any,
-        recompute,
-        { add: jest.fn() } as any,
-      );
-      expect(await backfill.runBackfill(season)).toBe(true);
+      expect(await backfill().runBackfill(season)).toBe(true);
 
       const check = async () => {
         const r1 = await rows(first.id);
@@ -425,13 +553,14 @@ describe("ELO void (SQL-driven)", () => {
   });
 
   describe("tournaments", () => {
+    const SE4 = [
+      { type: "SingleElimination", order: 1, minTeams: 4, maxTeams: 8 },
+    ];
+
     it("voids a tournament match on the tournament track and leaves its result, bracket and MVP standing alone", async () => {
       await fx.enableSeasons();
       await fx.season("2025-01-01", null);
-      const t = await tfx.launch(
-        [{ type: "SingleElimination", order: 1, minTeams: 4, maxTeams: 8 }],
-        4,
-      );
+      const t = await tfx.launch(SE4, 4);
       const stageId = t.stageIds[0];
       const semi = (await tfx.getBrackets(stageId)).find(
         (bracket) => bracket.round === 1,
@@ -481,40 +610,77 @@ describe("ELO void (SQL-driven)", () => {
         expect(candidate.matches).toBe(2);
       }
     });
-  });
 
-  describe("voidMatchElo", () => {
-    it.each([
-      "user",
-      "verified_user",
-      "streamer",
-      "moderator",
-      "match_organizer",
-      "tournament_organizer",
-    ])("refuses a %s even when called directly", async (role) => {
-      const [a, b] = await fx.players(2);
-      const match = await duel(a, b);
-      const caller = await fx.player(undefined, role);
-
-      await expect(voidElo(match.id, caller, role)).rejects.toThrow(
-        "you must be an administrator",
+    it("keeps the void when a reset hands the match to the other side, and clears it when the match is replayed", async () => {
+      const t = await tfx.launch(SE4, 4);
+      const stageId = t.stageIds[0];
+      await tfx.playRound(stageId, 1);
+      const semi = (await tfx.getBrackets(stageId)).find(
+        (bracket) => bracket.round === 1,
+      )!;
+      const [match] = await postgres.query<Array<{ lineup_2_id: string }>>(
+        "SELECT lineup_2_id FROM matches WHERE id = $1",
+        [semi.match_id],
       );
 
-      expect((await voidState(match.id)).elo_voided).toBe(false);
-      expect(queue.add).not.toHaveBeenCalled();
-    });
+      await voidElo(semi.match_id!);
+      const voided = await voidState(semi.match_id!);
 
-    it.each(["Finished", "Forfeit", "Tie", "Surrendered"])(
+      await postgres.query(
+        "SELECT * FROM reset_tournament_match($1, $2, 'WaitingForCheckIn', NULL)",
+        [semi.match_id, match.lineup_2_id],
+      );
+      expect(await voidState(semi.match_id!)).toEqual(voided);
+
+      await postgres.query(
+        "SELECT * FROM reset_tournament_match($1, NULL, 'WaitingForCheckIn', NULL)",
+        [semi.match_id],
+      );
+      expect(await voidState(semi.match_id!)).toEqual(
+        expect.objectContaining({
+          elo_voided: false,
+          elo_voided_at: null,
+          elo_voided_by_steam_id: null,
+        }),
+      );
+    });
+  });
+
+  const STAFF_BELOW_ADMIN = [
+    "user",
+    "verified_user",
+    "streamer",
+    "moderator",
+    "match_organizer",
+    "tournament_organizer",
+  ];
+
+  describe("voidMatchElo", () => {
+    it.each(STAFF_BELOW_ADMIN)(
+      "refuses a %s even when called directly",
+      async (role) => {
+        const [a, b] = await fx.players(2);
+        const match = await duel(a, b);
+        const caller = await fx.player(undefined, role);
+
+        await expect(voidElo(match.id, caller, role)).rejects.toThrow(
+          "you must be an administrator",
+        );
+
+        expect((await voidState(match.id)).elo_voided).toBe(false);
+        expect(queue.add).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each(["Finished", "Forfeit", "Surrendered"])(
       "voids a %s match, recording who voided it and when",
       async (status) => {
         const [a, b] = await fx.players(2);
         const match = await duel(a, b);
-        await postgres.query(
-          `UPDATE matches SET status = $2,
-             winning_lineup_id = CASE WHEN $2 = 'Tie' THEN NULL ELSE winning_lineup_id END
-           WHERE id = $1`,
-          [match.id, status],
-        );
+        await postgres.query("UPDATE matches SET status = $2 WHERE id = $1", [
+          match.id,
+          status,
+        ]);
 
         await expect(voidElo(match.id)).resolves.toEqual({ success: true });
 
@@ -562,13 +728,36 @@ describe("ELO void (SQL-driven)", () => {
       expect(queue.add).not.toHaveBeenCalled();
     });
 
+    it.each([
+      ["an imported", "UPDATE matches SET source = 'faceit' WHERE id = $1"],
+      [
+        "an unranked",
+        "UPDATE matches SET counts_toward_ranking = false WHERE id = $1",
+      ],
+      [
+        "a tied",
+        "UPDATE matches SET winning_lineup_id = NULL, status = 'Tie' WHERE id = $1",
+      ],
+    ])("refuses %s match, which never counted toward ELO", async (_, sql) => {
+      const [a, b] = await fx.players(2);
+      const match = await duel(a, b);
+      await postgres.query(sql, [match.id]);
+
+      await expect(voidElo(match.id)).rejects.toThrow(
+        "this match never counted toward ELO",
+      );
+
+      expect((await voidState(match.id)).elo_voided).toBe(false);
+      expect(queue.add).not.toHaveBeenCalled();
+    });
+
     it("refuses a match that does not exist", async () => {
       await expect(
         voidElo("00000000-0000-0000-0000-000000000000"),
       ).rejects.toThrow("match not found");
     });
 
-    it("succeeds again without asking for another recompute", async () => {
+    it("asks for the recompute again when repeated, and both requests fold into one run", async () => {
       const [a, b] = await fx.players(2);
       const match = await duel(a, b);
 
@@ -580,22 +769,175 @@ describe("ELO void (SQL-driven)", () => {
       });
 
       expect(await voidState(match.id)).toEqual(first);
-      expect(queue.add).toHaveBeenCalledTimes(1);
+      expect(queued).toHaveLength(2);
+      await work();
+      expect(runs).toBe(1);
+    });
+
+    it("recovers a void whose recompute request failed when it is repeated", async () => {
+      const [a, b] = await fx.players(2);
+      const match = await duel(a, b);
+      queue.add.mockRejectedValueOnce(new Error("redis went away"));
+
+      await expect(voidElo(match.id)).rejects.toThrow("redis went away");
+      expect((await voidState(match.id)).elo_voided).toBe(true);
+      expect(queued).toHaveLength(0);
+
+      await expect(voidElo(match.id)).resolves.toEqual({ success: true });
+      await work();
+
+      expect(runs).toBe(1);
+      expect((await rows(match.id))[a].change).toBe(0);
+    });
+
+    it("only moves the request counter once the void is committed", async () => {
+      const [a, b] = await fx.players(2);
+      const match = await duel(a, b);
+      const seen: Array<boolean> = [];
+      const increment = cache.increment.bind(cache);
+      jest.spyOn(cache, "increment").mockImplementation(async (key) => {
+        seen.push((await voidState(match.id)).elo_voided);
+        return increment(key);
+      });
+
+      await voidElo(match.id);
+
+      expect(seen).toEqual([true]);
     });
 
     it("lets exactly one of two simultaneous voids through", async () => {
       const [a, b] = await fx.players(2);
       const match = await duel(a, b);
       const other = await fx.player(undefined, "administrator");
+      const log = jest.spyOn(logger, "log");
 
       await expect(
         Promise.all([voidElo(match.id), voidElo(match.id, other)]),
       ).resolves.toEqual([{ success: true }, { success: true }]);
 
-      expect(queue.add).toHaveBeenCalledTimes(1);
+      expect(
+        log.mock.calls.filter(([message]) =>
+          String(message).includes("ELO voided by"),
+        ),
+      ).toHaveLength(1);
       expect([admin, other]).toContain(
         (await voidState(match.id)).elo_voided_by_steam_id,
       );
+      await work();
+      expect(runs).toBe(1);
+    });
+  });
+
+  describe("restoreMatchElo", () => {
+    it.each(STAFF_BELOW_ADMIN)(
+      "refuses a %s even when called directly",
+      async (role) => {
+        const [a, b] = await fx.players(2);
+        const match = await duel(a, b);
+        await voidElo(match.id);
+        queue.add.mockClear();
+        const caller = await fx.player(undefined, role);
+
+        await expect(restoreElo(match.id, caller, role)).rejects.toThrow(
+          "you must be an administrator",
+        );
+
+        expect((await voidState(match.id)).elo_voided).toBe(true);
+        expect(queue.add).not.toHaveBeenCalled();
+      },
+    );
+
+    it("gives a voided match its rating effect back", async () => {
+      const [a, b] = await fx.players(2);
+      const first = await duel(a, b, { endedDaysAgo: 3 });
+      const cheated = await duel(a, b, { endedDaysAgo: 2 });
+      const next = await duel(a, b, { winner: "b", endedDaysAgo: 1 });
+      await voidElo(cheated.id);
+      await work();
+      expect((await rows(cheated.id))[a].change).toBe(0);
+
+      await expect(restoreElo(cheated.id)).resolves.toEqual({
+        success: true,
+      });
+      expect(await voidState(cheated.id)).toEqual(
+        expect.objectContaining({
+          elo_voided: false,
+          elo_voided_at: null,
+          elo_voided_by_steam_id: null,
+        }),
+      );
+      expect(queued).toHaveLength(1);
+      await work();
+
+      const r1 = await rows(first.id);
+      const r2 = await rows(cheated.id);
+      const r3 = await rows(next.id);
+      for (const player of [a, b]) {
+        expect(r2[player].change).not.toBe(0);
+        expect(r2[player].current - r2[player].change).toBe(r1[player].current);
+        expect(r3[player].current - r3[player].change).toBe(r2[player].current);
+      }
+    });
+
+    it("refuses a match that does not exist", async () => {
+      await expect(
+        restoreElo("00000000-0000-0000-0000-000000000000"),
+      ).rejects.toThrow("match not found");
+    });
+
+    it("asks for the recompute again when repeated, and both requests fold into one run", async () => {
+      const [a, b] = await fx.players(2);
+      const match = await duel(a, b);
+      await voidElo(match.id);
+      await work();
+      runs = 0;
+
+      await restoreElo(match.id);
+      await expect(restoreElo(match.id)).resolves.toEqual({ success: true });
+
+      expect(queued).toHaveLength(2);
+      await work();
+      expect(runs).toBe(1);
+      expect((await rows(match.id))[a].change).not.toBe(0);
+    });
+
+    it("only moves the request counter once the restore is committed", async () => {
+      const [a, b] = await fx.players(2);
+      const match = await duel(a, b);
+      await voidElo(match.id);
+      const seen: Array<boolean> = [];
+      const increment = cache.increment.bind(cache);
+      jest.spyOn(cache, "increment").mockImplementation(async (key) => {
+        seen.push((await voidState(match.id)).elo_voided);
+        return increment(key);
+      });
+
+      await restoreElo(match.id);
+
+      expect(seen).toEqual([false]);
+    });
+
+    it("lets exactly one of two simultaneous restores through", async () => {
+      const [a, b] = await fx.players(2);
+      const match = await duel(a, b);
+      await voidElo(match.id);
+      await work();
+      runs = 0;
+      const other = await fx.player(undefined, "administrator");
+      const log = jest.spyOn(logger, "log");
+
+      await expect(
+        Promise.all([restoreElo(match.id), restoreElo(match.id, other)]),
+      ).resolves.toEqual([{ success: true }, { success: true }]);
+
+      expect(
+        log.mock.calls.filter(([message]) =>
+          String(message).includes("ELO restored by"),
+        ),
+      ).toHaveLength(1);
+      expect((await voidState(match.id)).elo_voided).toBe(false);
+      await work();
+      expect(runs).toBe(1);
     });
   });
 
@@ -673,51 +1015,136 @@ describe("ELO void (SQL-driven)", () => {
       const holder = await cache.acquireLock("elo-recompute:lock", 60);
 
       await voidElo(match.id);
-      const job = {
-        data: queued[0].data,
-        token: "token",
-        moveToDelayed: jest.fn(),
-      };
+      const held = job(queued[0].data);
       await expect(
-        new RecomputeAllElo(recompute).process(job as any),
+        new RecomputeAllElo(recompute).process(held as any),
       ).rejects.toBeInstanceOf(DelayedError);
-      expect(job.moveToDelayed).toHaveBeenCalledWith(
+      expect(held.moveToDelayed).toHaveBeenCalledWith(
         expect.any(Number),
         "token",
       );
       expect(runs).toBe(0);
 
       await cache.releaseLock("elo-recompute:lock", holder!);
-      await new RecomputeAllElo(recompute).process(job as any);
+      await new RecomputeAllElo(recompute).process(held as any);
 
       expect(runs).toBe(1);
       expect((await rows(match.id))[a].change).toBe(0);
     });
   });
 
+  describe("a match that finishes during a rebuild", () => {
+    const rate = (matchId: string) =>
+      new EloCalculation(logger, postgres, recompute).process(
+        job({ matchId }) as any,
+      );
+
+    it("is rated from the rebuilt ratings by the run it finished during", async () => {
+      const [a, b] = await fx.players(2);
+      const first = await duel(a, b, { endedDaysAgo: 2 });
+      let late: { id: string } | undefined;
+
+      await controller().recomputePlayerElo();
+      duringRun = {
+        matchId: first.id,
+        then: async () => {
+          late = await duel(a, b, { winner: "b", endedDaysAgo: 0 });
+          await expect(rate(late.id)).rejects.toBeInstanceOf(DelayedError);
+        },
+      };
+      await work();
+
+      expect(runs).toBe(1);
+      const before = await rows(first.id);
+      const after = await rows(late!.id);
+      for (const player of [a, b]) {
+        expect(after[player]).toBeDefined();
+        expect(after[player].current - after[player].change).toBe(
+          before[player].current,
+        );
+      }
+
+      await rate(late!.id);
+      expect(await rows(late!.id)).toEqual(after);
+    });
+
+    it("never lets a season rebuild run inside a full rebuild", async () => {
+      await fx.enableSeasons();
+      const season = await fx.season("2025-01-01", null);
+      const [a, b] = await fx.players(2);
+      const match = await duel(a, b);
+      await generate(match.id);
+      const sent: Array<string> = [];
+      const seasonRebuild = backfill(sent);
+
+      await controller().recomputePlayerElo();
+      duringRun = {
+        matchId: match.id,
+        then: async () => {
+          expect(await seasonRebuild.runBackfill(season)).toBe(false);
+        },
+      };
+      await work();
+
+      expect(runs).toBe(1);
+      expect(sent.some((sql) => sql.includes("DELETE FROM player_elo"))).toBe(
+        false,
+      );
+      expect(await seasonRebuild.runBackfill(season)).toBe(true);
+    });
+
+    it("never lets a full rebuild or a match's own rating run inside a season rebuild", async () => {
+      await fx.enableSeasons();
+      const season = await fx.season("2025-01-01", null);
+      const [a, b] = await fx.players(2);
+      const match = await duel(a, b);
+      await generate(match.id);
+      await controller().recomputePlayerElo();
+      const held = job(queued.shift()!.data);
+
+      duringRun = {
+        matchId: match.id,
+        then: async () => {
+          await expect(
+            new RecomputeAllElo(recompute).process(held as any),
+          ).rejects.toBeInstanceOf(DelayedError);
+          await expect(rate(match.id)).rejects.toBeInstanceOf(DelayedError);
+        },
+      };
+      expect(await backfill().runBackfill(season)).toBe(true);
+      expect(runs).toBe(0);
+
+      await new RecomputeAllElo(recompute).process(held as any);
+      expect(runs).toBe(1);
+    });
+  });
+
   describe("who sees it", () => {
+    const grants = (role: string) =>
+      new HasuraPermissions(postgres).granted("matches", role);
+
+    it.each(["guest", "user", "verified_user", "streamer"])(
+      "shows a %s whether a match's ELO was voided, not who voided it or when",
+      (role) => {
+        expect(grants(role)).toContain("elo_voided");
+        expect(grants(role)).not.toContain("elo_voided_at");
+        expect(grants(role)).not.toContain("elo_voided_by_steam_id");
+      },
+    );
+
     it.each([
-      "guest",
-      "user",
-      "verified_user",
-      "streamer",
       "moderator",
       "match_organizer",
       "tournament_organizer",
       "administrator",
-    ])(
-      "lets a %s read whether a match's ELO was voided, when and by whom",
-      (role) => {
-        expect(
-          new HasuraPermissions(postgres).granted("matches", role),
-        ).toEqual(
-          expect.arrayContaining([
-            "elo_voided",
-            "elo_voided_at",
-            "elo_voided_by_steam_id",
-          ]),
-        );
-      },
-    );
+    ])("shows a %s who voided a match's ELO and when", (role) => {
+      expect(grants(role)).toEqual(
+        expect.arrayContaining([
+          "elo_voided",
+          "elo_voided_at",
+          "elo_voided_by_steam_id",
+        ]),
+      );
+    });
   });
 });
