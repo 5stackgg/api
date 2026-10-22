@@ -128,7 +128,14 @@ export class SteamBansService {
 
     await this.storeBans(bans);
 
-    await this.expireLiftedAutoBans(bans.map((ban) => ban.SteamId));
+    await this.expireLiftedAutoBans(
+      bans
+        .filter(
+          (ban) =>
+            ban.NumberOfVACBans === 0 || SteamBansService.predatesCsgo(ban),
+        )
+        .map((ban) => ban.SteamId),
+    );
 
     const flagged = bans.filter((ban) => ban.NumberOfVACBans > 0);
 
@@ -455,18 +462,14 @@ export class SteamBansService {
     const expired = await this.postgres.query<
       Array<{ player_steam_id: string }>
     >(
-      `UPDATE public.player_sanctions ps
+      `UPDATE public.player_sanctions
           SET remove_sanction_date = now()
-         FROM public.players p
-        WHERE p.steam_id = ps.player_steam_id
-          AND ps.player_steam_id = ANY($1::bigint[])
-          AND ps.type = 'ban'
-          AND ps.sanctioned_by_steam_id IS NULL
-          AND ps.deleted_at IS NULL
-          AND (ps.remove_sanction_date IS NULL OR ps.remove_sanction_date > now())
-          AND (p.vac_ban_count = 0
-               OR public.vac_ban_predates_csgo(p.days_since_last_ban))
-        RETURNING ps.player_steam_id::text AS player_steam_id`,
+        WHERE player_steam_id = ANY($1::bigint[])
+          AND type = 'ban'
+          AND sanctioned_by_steam_id IS NULL
+          AND deleted_at IS NULL
+          AND (remove_sanction_date IS NULL OR remove_sanction_date > now())
+        RETURNING player_steam_id::text AS player_steam_id`,
       [steamIds],
     );
 
@@ -475,6 +478,18 @@ export class SteamBansService {
         `steam-bans: expired ${expired.length} auto-ban(s) whose Steam ban is gone or predates CS:GO`,
       );
     }
+  }
+
+  private static readonly CSGO_CLOSED_BETA = Date.UTC(2011, 10, 30);
+
+  // The same cutoff as public.vac_ban_predates_csgo. The lift decides it here,
+  // not in SQL, so an api that boots before hasura has applied the function
+  // still lifts and bans instead of failing every check.
+  private static predatesCsgo(ban: SteamBan): boolean {
+    return (
+      Date.now() - (ban.DaysSinceLastBan ?? 0) * 86_400_000 <
+      SteamBansService.CSGO_CLOSED_BETA
+    );
   }
 
   private static banReason(ban?: SteamBan): string {

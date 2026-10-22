@@ -27,7 +27,8 @@ describe("steam bans", () => {
     await postgres.query("DELETE FROM player_sanctions");
     await postgres.query("DELETE FROM players");
     await postgres.query(
-      "DELETE FROM settings WHERE name = 'public.sanction_vac_ban_scope'",
+      `DELETE FROM settings
+        WHERE name IN ('public.sanction_vac_ban_scope', 'public.sanction_vac_ban_enabled')`,
     );
   });
 
@@ -47,7 +48,7 @@ describe("steam bans", () => {
       {} as never,
     );
 
-  const steamReports = (steamId: string, lastBanOn: string) => {
+  const steamReports = (steamId: string, lastBanOn: string, vacBans = 1) => {
     global.fetch = jest.fn(
       async () =>
         new Response(
@@ -56,9 +57,9 @@ describe("steam bans", () => {
               {
                 SteamId: steamId,
                 CommunityBanned: false,
-                VACBanned: true,
-                NumberOfVACBans: 1,
-                DaysSinceLastBan: daysSince(lastBanOn),
+                VACBanned: vacBans > 0,
+                NumberOfVACBans: vacBans,
+                DaysSinceLastBan: vacBans > 0 ? daysSince(lastBanOn) : 0,
                 NumberOfGameBans: 0,
                 EconomyBan: "none",
               },
@@ -98,18 +99,55 @@ describe("steam bans", () => {
     },
   );
 
+  const ban = (steamId: string, sanctionedBy: string | null = null) =>
+    postgres.query(
+      `INSERT INTO player_sanctions (player_steam_id, type, sanctioned_by_steam_id, reason)
+       VALUES ($1::bigint, 'ban', $2::bigint, 'banned')`,
+      [steamId, sanctionedBy],
+    );
+
   it("lifts an existing auto-ban whose VAC ban predates CS:GO", async () => {
     const player = await fx.player();
-    await postgres.query(
-      `INSERT INTO player_sanctions (player_steam_id, type, sanctioned_by_steam_id, reason)
-       VALUES ($1::bigint, 'ban', NULL, 'Auto: Steam 1 VAC ban(s), last 7209d ago')`,
-      [player],
-    );
+    await ban(player);
     steamReports(player, "2007-01-25");
 
     await service().checkPlayers([player]);
 
     expect(await activeBans(player)).toBe(0);
+  });
+
+  it("lifts an auto-ban once Steam no longer reports a VAC ban", async () => {
+    const player = await fx.player();
+    await ban(player);
+    steamReports(player, "2024-02-09", 0);
+
+    await service().checkPlayers([player]);
+
+    expect(await activeBans(player)).toBe(0);
+  });
+
+  it("keeps a CS:GO-era auto-ban with enforcement switched off", async () => {
+    const player = await fx.player();
+    await ban(player);
+    await postgres.query(
+      `INSERT INTO settings (name, value) VALUES ('public.sanction_vac_ban_enabled', 'false')`,
+    );
+    steamReports(player, "2015-06-01");
+
+    await service().checkPlayers([player]);
+
+    expect(await activeBans(player)).toBe(1);
+  });
+
+  it("never lifts a staff ban on a player whose VAC ban predates CS:GO", async () => {
+    const staff = await fx.player(undefined, "administrator");
+    const player = await fx.player();
+    await ban(player, staff);
+    steamReports(player, "2007-01-25");
+
+    await service().checkPlayers([player]);
+
+    expect(await activeBans(player)).toBe(1);
   });
 
   it("keeps a pre-CS:GO VAC ban out of a scoped cooldown", async () => {
