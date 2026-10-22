@@ -1,4 +1,7 @@
+import fetch from "node-fetch";
 import { SystemService } from "./system.service";
+
+jest.mock("node-fetch", () => jest.fn());
 
 describe("SystemService.parseImageRef", () => {
   // The first-party services this has always had to handle, plus the shapes a
@@ -397,7 +400,53 @@ describe("SystemService.syncTwitchSupport", () => {
   });
 });
 
-describe("SystemService api and hasura", () => {
+describe("SystemService.getLatestDigest", () => {
+  const image = "ghcr.io/5stackgg/api:latest";
+
+  let system: SystemService;
+  let registry: string;
+
+  beforeEach(() => {
+    const cache = new Map<string, unknown>();
+
+    system = new SystemService(
+      {
+        forget: jest.fn(async (...keys: string[]) => {
+          keys.forEach((key) => cache.delete(key));
+        }),
+        remember: jest.fn(async (key: string, callback: () => unknown) => {
+          if (!cache.has(key)) {
+            cache.set(key, await callback());
+          }
+          return cache.get(key);
+        }),
+      } as any,
+      {} as any,
+      {} as any,
+      { warn: jest.fn(), log: jest.fn() } as any,
+      {} as any,
+    );
+
+    jest.spyOn(system as any, "getRegistryToken").mockResolvedValue(null);
+    jest
+      .mocked(fetch)
+      .mockImplementation(
+        async () => ({ ok: true, headers: { get: () => registry } }) as any,
+      );
+  });
+
+  it("reads past the cache when asked for a fresh digest", async () => {
+    registry = "sha256:0ld";
+    await system.getLatestDigest(image);
+    registry = "sha256:1a7";
+
+    expect(await system.getLatestDigest(image)).toBe("sha256:0ld");
+    expect(await system.getLatestDigest(image, true)).toBe("sha256:1a7");
+    expect(await system.getLatestDigest(image)).toBe("sha256:1a7");
+  });
+});
+
+describe("SystemService.syncHasura", () => {
   const repo = "ghcr.io/5stackgg/api";
   const old = "sha256:0ld";
   const latest = "sha256:1a7";
@@ -407,7 +456,6 @@ describe("SystemService api and hasura", () => {
   let system: SystemService;
   let restart: jest.SpyInstance;
   let pods: Array<{ app: string; imageID: string }>;
-  let images: Array<{ names: string[]; sizeBytes: number }>;
 
   beforeEach(() => {
     delete process.env.DEV;
@@ -415,17 +463,9 @@ describe("SystemService api and hasura", () => {
       { app: "api", imageID: `${repo}@${latest}` },
       { app: "hasura", imageID: `${repo}@${old}` },
     ];
-    images = [];
-
-    const cache = new Map<string, unknown>();
 
     system = new SystemService(
-      {
-        has: jest.fn(async (key: string) => cache.has(key)),
-        put: jest.fn(async (key: string, value: unknown) => {
-          cache.set(key, value);
-        }),
-      } as any,
+      {} as any,
       {} as any,
       {} as any,
       { warn: jest.fn(), log: jest.fn() } as any,
@@ -437,10 +477,7 @@ describe("SystemService api and hasura", () => {
         items: [
           {
             metadata: { name: "node-1" },
-            status: {
-              conditions: [{ type: "Ready", status: "True" }],
-              images,
-            },
+            status: { conditions: [{ type: "Ready", status: "True" }] },
           },
         ],
       })),
@@ -462,7 +499,6 @@ describe("SystemService api and hasura", () => {
     };
 
     restart = jest.spyOn(system, "restartDeployment").mockResolvedValue();
-    jest.spyOn(system as any, "getPluginServices").mockResolvedValue([]);
     jest.spyOn(system, "getLatestDigest").mockResolvedValue(latest);
   });
 
@@ -474,118 +510,66 @@ describe("SystemService api and hasura", () => {
     }
   });
 
-  describe("syncApiAndHasura", () => {
-    // The api container restarted on its own and re-pulled :latest, but the
-    // hasura pod -- whose init container migrates -- was never replaced.
-    it("restarts both when the api pulled a build hasura never migrated", async () => {
-      await system.syncApiAndHasura();
+  // The api container restarted on its own and re-pulled :latest, but the
+  // hasura pod -- whose init container migrates -- was never replaced.
+  it("restarts hasura when the api is on the latest build and hasura is not", async () => {
+    await system.syncHasura();
 
-      expect(restart.mock.calls).toEqual([["hasura"], ["api"]]);
-    });
-
-    it("restarts both when hasura pulled a build the api is not running", async () => {
-      pods[0].imageID = `${repo}@${old}`;
-      pods[1].imageID = `${repo}@${latest}`;
-
-      await system.syncApiAndHasura();
-
-      expect(restart.mock.calls).toEqual([["hasura"], ["api"]]);
-    });
-
-    it("leaves both alone on the same build", async () => {
-      pods[1].imageID = `${repo}@${latest}`;
-
-      await system.syncApiAndHasura();
-
-      expect(restart).not.toHaveBeenCalled();
-    });
-
-    // A no-op rebuild files the new digest under the image already pulled, and
-    // the pod keeps reporting the first one in sorted order.
-    it("counts any digest the node knows the image by", async () => {
-      images.push({
-        names: [`${repo}@${old}`, `${repo}@${latest}`, `${repo}:latest`],
-        sizeBytes: 1,
-      });
-
-      await system.syncApiAndHasura();
-
-      expect(restart).not.toHaveBeenCalled();
-    });
-
-    it("restarts a mismatch once when the restart brings back the same digests", async () => {
-      await system.syncApiAndHasura();
-      await system.syncApiAndHasura();
-
-      expect(restart.mock.calls).toEqual([["hasura"], ["api"]]);
-    });
-
-    it("leaves a hasura rollout alone while its new pod migrates", async () => {
-      pods.push({ app: "hasura", imageID: `${repo}@${latest}` });
-
-      await system.syncApiAndHasura();
-
-      expect(restart).not.toHaveBeenCalled();
-    });
-
-    // The registry digest is cached, so the new hasura pod can pull a build
-    // the cache has not seen yet. Each restart deleted the pod that was
-    // migrating, and that deletion queued the next check five seconds later.
-    it("leaves a hasura pod that pulled past the cached registry digest to migrate", async () => {
-      pods.push({ app: "hasura", imageID: `${repo}@${newer}` });
-
-      await system.syncApiAndHasura();
-
-      expect(restart).not.toHaveBeenCalled();
-    });
-
-    it("leaves a hasura rollout alone while its new pod pulls", async () => {
-      pods.push({ app: "hasura", imageID: "" });
-
-      await system.syncApiAndHasura();
-
-      expect(restart).not.toHaveBeenCalled();
-    });
-
-    it("leaves an api rollout alone", async () => {
-      pods.push({ app: "api", imageID: `${repo}@${old}` });
-
-      await system.syncApiAndHasura();
-
-      expect(restart).not.toHaveBeenCalled();
-    });
+    expect(restart).toHaveBeenCalledWith("hasura");
   });
 
-  describe("getOutdated", () => {
-    it("reports hasura with the api when only the api is behind", async () => {
-      pods[0].imageID = `${repo}@${old}`;
-      pods[1].imageID = `${repo}@${latest}`;
+  it("leaves hasura alone once it runs the latest build", async () => {
+    pods[1].imageID = `${repo}@${latest}`;
 
-      expect(await system.getOutdated()).toEqual([
-        expect.objectContaining({ service: "api", currentVersion: old }),
-        expect.objectContaining({ service: "hasura", currentVersion: latest }),
-      ]);
-    });
+    await system.syncHasura();
 
-    it("reports the api with hasura when only hasura is behind", async () => {
-      expect(await system.getOutdated()).toEqual([
-        expect.objectContaining({ service: "api", currentVersion: latest }),
-        expect.objectContaining({ service: "hasura", currentVersion: old }),
-      ]);
-    });
+    expect(restart).not.toHaveBeenCalled();
+  });
 
-    it("leaves out a current service when api and hasura are behind", async () => {
-      pods.push({ app: "web", imageID: `${repo}@${latest}` });
+  // An Update restarts both; the new hasura pod is the one migrating.
+  it("leaves a hasura rollout alone while its new pod migrates", async () => {
+    pods.push({ app: "hasura", imageID: `${repo}@${latest}` });
 
-      expect(
-        (await system.getOutdated()).map(({ service }) => service),
-      ).toEqual(["api", "hasura"]);
-    });
+    await system.syncHasura();
 
-    it("reports neither once both run the latest build", async () => {
-      pods[1].imageID = `${repo}@${latest}`;
+    expect(restart).not.toHaveBeenCalled();
+  });
 
-      expect(await system.getOutdated()).toEqual([]);
-    });
+  // The cached digest lagged a push. The new hasura pod pulled that push, read
+  // as behind, and each restart deleted it mid-migration, which queued the
+  // next check five seconds later.
+  it("leaves a booting hasura pod that pulled past the cached digest to migrate", async () => {
+    pods.push({ app: "hasura", imageID: `${repo}@${newer}` });
+    jest
+      .spyOn(system, "getLatestDigest")
+      .mockImplementation(async (_image, fresh) => (fresh ? newer : latest));
+
+    await system.syncHasura();
+
+    expect(restart).not.toHaveBeenCalled();
+  });
+
+  it("leaves a hasura rollout alone while its new pod pulls", async () => {
+    pods.push({ app: "hasura", imageID: "" });
+
+    await system.syncHasura();
+
+    expect(restart).not.toHaveBeenCalled();
+  });
+
+  it("waits for the api itself to be on the latest build", async () => {
+    pods.push({ app: "api", imageID: `${repo}@${old}` });
+
+    await system.syncHasura();
+
+    expect(restart).not.toHaveBeenCalled();
+  });
+
+  it("does nothing when the registry cannot be read", async () => {
+    jest.spyOn(system, "getLatestDigest").mockResolvedValue(null);
+
+    await system.syncHasura();
+
+    expect(restart).not.toHaveBeenCalled();
   });
 });
