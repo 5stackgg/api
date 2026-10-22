@@ -72,6 +72,25 @@ export class CacheService {
     return await this.connection.incr(key);
   }
 
+  public async addToSet(key: string, member: string): Promise<void> {
+    await this.connection.sadd(key, member);
+  }
+
+  // Read and emptied in one step, so a member added in between is not lost.
+  private static readonly TAKE_SET_SCRIPT = `
+    local members = redis.call('SMEMBERS', KEYS[1])
+    redis.call('DEL', KEYS[1])
+    return members
+  `;
+
+  public async takeSet(key: string): Promise<Array<string>> {
+    return (await this.connection.eval(
+      CacheService.TAKE_SET_SCRIPT,
+      1,
+      key,
+    )) as Array<string>;
+  }
+
   public async forget(...keys: Array<string>) {
     if (keys.length === 0) {
       return true;

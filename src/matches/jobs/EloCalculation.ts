@@ -20,8 +20,10 @@ export class EloCalculation extends WorkerHost {
     const { matchId } = job.data;
 
     // A rebuild holds player_elo half empty, so a rating read from it now would
-    // start from the wrong place and stay that way.
+    // start from the wrong place and stay that way. The rebuild rates the match
+    // before it lets go; the retry is for one that already let go.
     if (await this.eloRecompute.isRebuilding()) {
+      await this.eloRecompute.deferRating(matchId);
       await job.moveToDelayed(
         Date.now() + PlayerEloRecomputeService.RETRY_DELAY_MS,
         job.token,

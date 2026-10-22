@@ -39,6 +39,7 @@ describe("ELO void (SQL-driven)", () => {
     opts: { jobId: string };
   }>;
   let runs: number;
+  let rebuildSql: Array<string>;
   let duringRun: { matchId: string; then: () => Promise<unknown> } | undefined;
   let admin: string;
 
@@ -105,6 +106,7 @@ describe("ELO void (SQL-driven)", () => {
     cache = new CacheService({ getConnection: () => redis } as any, logger);
     queued = [];
     runs = 0;
+    rebuildSql = [];
     duringRun = undefined;
     queue = {
       add: jest.fn(async (name, data, opts) => {
@@ -114,7 +116,7 @@ describe("ELO void (SQL-driven)", () => {
 
     recompute = new PlayerEloRecomputeService(
       logger,
-      watch(),
+      watch(rebuildSql),
       cache,
       { send: jest.fn() } as any,
       { add: jest.fn() } as any,
@@ -1116,6 +1118,202 @@ describe("ELO void (SQL-driven)", () => {
 
       await new RecomputeAllElo(recompute).process(held as any);
       expect(runs).toBe(1);
+    });
+
+    const finishedMinutesAgo = (matchId: string, minutes: number) =>
+      postgres.query(
+        "UPDATE matches SET ended_at = now() - make_interval(mins => $2) WHERE id = $1",
+        [matchId, minutes],
+      );
+
+    // Two matches by the same players finish while a season rebuild holds the
+    // lock, and their own ratings are woken in the wrong order afterwards.
+    const finishOutOfOrderDuring = async (
+      seasonRebuild: () => Promise<unknown>,
+      during: string,
+      a: string,
+      b: string,
+    ) => {
+      let first: { id: string } | undefined;
+      let second: { id: string } | undefined;
+      duringRun = {
+        matchId: during,
+        then: async () => {
+          first = await duel(a, b);
+          await finishedMinutesAgo(first.id, 2);
+          second = await duel(a, b, { winner: "b" });
+          await finishedMinutesAgo(second.id, 1);
+          await expect(rate(second.id)).rejects.toBeInstanceOf(DelayedError);
+          await expect(rate(first.id)).rejects.toBeInstanceOf(DelayedError);
+        },
+      };
+      await seasonRebuild();
+
+      await rate(second!.id);
+      await rate(first!.id);
+
+      return { first: first!, second: second! };
+    };
+
+    it("is rated in the order it finished by a season rebuild of its own season", async () => {
+      await fx.enableSeasons();
+      const season = await fx.season("2025-01-01", null);
+      const [a, b] = await fx.players(2);
+      const earlier = await duel(a, b, { endedDaysAgo: 3 });
+      await generate(earlier.id);
+
+      const { first, second } = await finishOutOfOrderDuring(
+        async () => expect(await backfill().runBackfill(season)).toBe(true),
+        earlier.id,
+        a,
+        b,
+      );
+
+      const r0 = await rows(earlier.id);
+      const r1 = await rows(first.id);
+      const r2 = await rows(second.id);
+      for (const player of [a, b]) {
+        expect(r1[player].current - r1[player].change).toBe(r0[player].current);
+        expect(r2[player].current - r2[player].change).toBe(r1[player].current);
+      }
+    });
+
+    it("is rated in the order it finished by a season rebuild of another season", async () => {
+      await fx.enableSeasons();
+      await fx.season("2025-06-01", null);
+      const past = await fx.season("2025-01-01", "2025-06-01");
+      const [a, b] = await fx.players(2);
+      const lastSeason = await duel(a, b);
+      await postgres.query(
+        "UPDATE matches SET ended_at = '2025-03-01' WHERE id = $1",
+        [lastSeason.id],
+      );
+      await generate(lastSeason.id);
+
+      const { first, second } = await finishOutOfOrderDuring(
+        async () => expect(await backfill().runBackfill(past)).toBe(true),
+        lastSeason.id,
+        a,
+        b,
+      );
+
+      const r1 = await rows(first.id);
+      const r2 = await rows(second.id);
+      for (const player of [a, b]) {
+        expect(r1[player].current - r1[player].change).toBe(5000);
+        expect(r2[player].current - r2[player].change).toBe(r1[player].current);
+      }
+    });
+  });
+
+  describe("the rebuild lock", () => {
+    const LOCK = "elo-recompute:lock";
+    const generated = () =>
+      rebuildSql.filter((sql) => sql.includes("generate_player_elo_for_match"))
+        .length;
+
+    it("stops a full rebuild that lost its lock before it writes anything more", async () => {
+      const [a, b] = await fx.players(2);
+      const first = await duel(a, b, { endedDaysAgo: 3 });
+      await duel(a, b, { endedDaysAgo: 2 });
+      await duel(a, b, { endedDaysAgo: 1 });
+
+      await controller().recomputePlayerElo();
+      const held = job(queued.shift()!.data);
+      duringRun = {
+        matchId: first.id,
+        then: () => redis.set(LOCK, "another-rebuild"),
+      };
+
+      await expect(
+        new RecomputeAllElo(recompute).process(held as any),
+      ).rejects.toBeInstanceOf(DelayedError);
+      expect(generated()).toBe(1);
+      expect(await redis.get(LOCK)).toBe("another-rebuild");
+
+      await redis.del(LOCK);
+      await new RecomputeAllElo(recompute).process(held as any);
+      expect(generated()).toBe(4);
+    });
+
+    it("stops a season rebuild that lost its lock before it writes anything more", async () => {
+      await fx.enableSeasons();
+      const season = await fx.season("2025-01-01", null);
+      const [a, b] = await fx.players(2);
+      const first = await duel(a, b, { endedDaysAgo: 3 });
+      const second = await duel(a, b, { endedDaysAgo: 2 });
+      for (const match of [first, second]) {
+        await generate(match.id);
+      }
+      duringRun = {
+        matchId: first.id,
+        then: () => redis.set(LOCK, "another-rebuild"),
+      };
+
+      expect(await backfill().runBackfill(season)).toBe(false);
+      expect(generated()).toBe(1);
+      expect(await rows(second.id)).toEqual({});
+      expect(await redis.get(LOCK)).toBe("another-rebuild");
+    });
+  });
+
+  describe("rebuild order", () => {
+    // Created first, finished last: a match scheduled ahead of one that was
+    // played sooner.
+    const createdFirstFinishedLast = async (a: string, b: string) => {
+      const late = await duel(a, b, { winner: "b", endedDaysAgo: 1 });
+      const early = await duel(a, b, { endedDaysAgo: 2 });
+      return { early, late };
+    };
+
+    const expectChained = async (
+      early: string,
+      late: string,
+      players: Array<string>,
+    ) => {
+      const before = await rows(early);
+      const after = await rows(late);
+      for (const player of players) {
+        expect(after[player].current - after[player].change).toBe(
+          before[player].current,
+        );
+      }
+    };
+
+    it("rates the match that finished first first in a full rebuild", async () => {
+      const [a, b] = await fx.players(2);
+      const { early, late } = await createdFirstFinishedLast(a, b);
+
+      await controller().recomputePlayerElo();
+      await work();
+
+      await expectChained(early.id, late.id, [a, b]);
+    });
+
+    it("rates the match that finished first first in a season rebuild", async () => {
+      await fx.enableSeasons();
+      const season = await fx.season("2025-01-01", null);
+      const [a, b] = await fx.players(2);
+      const { early, late } = await createdFirstFinishedLast(a, b);
+
+      expect(await backfill().runBackfill(season)).toBe(true);
+
+      await expectChained(early.id, late.id, [a, b]);
+    });
+
+    it("asks once for the full rebuild a rating formula change needs", async () => {
+      const marker = "player_elo_backfill_series_multiplier_v1";
+      await postgres.query("DELETE FROM settings WHERE name = $1", [marker]);
+
+      await recompute.recomputeOnce(marker);
+      await recompute.recomputeOnce(marker);
+
+      expect(queued).toHaveLength(1);
+      const [setting] = await postgres.query<Array<{ name: string }>>(
+        "SELECT name FROM settings WHERE name = $1",
+        [marker],
+      );
+      expect(setting).toBeDefined();
     });
   });
 

@@ -6,7 +6,10 @@ import {
   e_notification_types_enum,
   e_player_roles_enum,
 } from "../../generated";
-import { PlayerEloRecomputeService } from "./player-elo-recompute.service";
+import {
+  PlayerEloRecomputeService,
+  RebuildLease,
+} from "./player-elo-recompute.service";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { TypesenseQueues } from "../type-sense/enums/TypesenseQueues";
@@ -17,8 +20,6 @@ import { RefreshAllPlayersJob } from "../type-sense/jobs/RefreshAllPlayers";
 const STATUS_KEY = "season-elo-backfill:status";
 const CANCEL_KEY = "season-elo-backfill:cancel";
 
-const PERSIST_EVERY = 25;
-const ITEM_TIMEOUT_MS = 60_000;
 const RUNNING_TTL_SECONDS = 300;
 const FINAL_TTL_SECONDS = 7 * 24 * 3600;
 const CANCEL_TTL_SECONDS = 600;
@@ -90,8 +91,9 @@ export class SeasonEloBackfillService {
     );
   }
 
-  // False means run it again later: another backfill holds the lock, or the
-  // season's dates moved mid-run so the matches it rebuilt are no longer its own.
+  // False means run it again later: another rebuild holds the lock or took it
+  // over, or the season's dates moved mid-run so the matches it rebuilt are no
+  // longer its own.
   public async runBackfill(seasonId: string): Promise<boolean> {
     const window = await this.fetchSeasonWindow(seasonId);
     if (!window) {
@@ -112,14 +114,26 @@ export class SeasonEloBackfillService {
 
     // The full recompute's lock: either rebuild deleting player_elo under the
     // other would corrupt both chronological rebuilds.
-    const lockToken = await this.eloRecompute.acquireRebuildLock();
-    if (!lockToken) {
+    const lease = await this.eloRecompute.acquireRebuildLease();
+    if (!lease) {
       this.logger.warn(
         `[season-backfill] another rebuild holds the lock, retrying season ${seasonId}`,
       );
       return false;
     }
 
+    try {
+      return await this.rebuildSeason(seasonId, window, lease);
+    } finally {
+      await lease.release();
+    }
+  }
+
+  private async rebuildSeason(
+    seasonId: string,
+    window: { starts_at: string; ends_at: string | null },
+    lease: RebuildLease,
+  ): Promise<boolean> {
     await this.cache.forget(CANCEL_KEY);
 
     const status: SeasonEloBackfillStatus = {
@@ -131,6 +145,7 @@ export class SeasonEloBackfillService {
     await this.saveStatus(status, RUNNING_TTL_SECONDS);
     await this.eloRecompute.setSuppressEvents(true);
 
+    let held = true;
     let current = true;
     try {
       // Clean slate for this season only — other seasons' ELO is independent and
@@ -140,44 +155,22 @@ export class SeasonEloBackfillService {
         [seasonId],
       );
 
-      const ids = await this.fetchSeasonMatchIds(seasonId);
-      status.total = ids.length;
-      await this.saveStatus(status, RUNNING_TTL_SECONDS);
-
-      this.logger.log(
-        `[season-backfill] rebuilding ELO for season ${seasonId} across ${ids.length} matches`,
+      held = await this.eloRecompute.rateMatches(
+        lease,
+        status,
+        () => this.fetchSeasonMatchIds(seasonId),
+        {
+          label: "season-backfill",
+          isCanceled: () => this.isCancelRequested(),
+          persist: async () => {
+            await this.saveStatus(status, RUNNING_TTL_SECONDS);
+            await this.eloRecompute.setSuppressEvents(true);
+          },
+        },
       );
 
-      for (const id of ids) {
-        if (await this.isCancelRequested()) {
-          status.canceled = true;
-          this.logger.warn("[season-backfill] canceled by request");
-          break;
-        }
-        status.current_match_id = id;
-        try {
-          await this.withTimeout(
-            this.postgres.query(`SELECT generate_player_elo_for_match($1)`, [
-              id,
-            ]),
-            ITEM_TIMEOUT_MS,
-          );
-        } catch (error) {
-          status.failed += 1;
-          this.logger.warn(
-            `[season-backfill] match ${id} failed: ${(error as Error)?.message}`,
-          );
-        }
-        status.completed += 1;
-        if (status.completed % PERSIST_EVERY === 0) {
-          await this.saveStatus(status, RUNNING_TTL_SECONDS);
-          await this.eloRecompute.setSuppressEvents(true);
-          await this.eloRecompute.refreshRebuildLock(lockToken);
-        }
-      }
-
       // Authoritative rebuild of the season's aggregate stats from source rows.
-      if (!status.canceled) {
+      if (held && !status.canceled) {
         await this.postgres.query(`SELECT rebuild_player_season_stats($1)`, [
           seasonId,
         ]);
@@ -196,35 +189,38 @@ export class SeasonEloBackfillService {
         current = cleared.length > 0;
       }
     } finally {
-      status.running = false;
-      status.current_match_id = null;
-      status.finished_at = new Date().toISOString();
-      await this.saveStatus(status, FINAL_TTL_SECONDS);
-      await this.cache.forget(CANCEL_KEY);
-      // Per-row player_elo search events stay suppressed for the whole run, so
-      // the search index would otherwise keep serving pre-backfill ELO forever.
-      // One deduped reindex at the end syncs it without the per-row fan-out.
-      await this.eloRecompute.setSuppressEvents(false);
-      await this.eloRecompute.releaseRebuildLock(lockToken);
+      // A lost lock leaves the status, suppression and reindex to whichever
+      // rebuild holds it now; this run is retried.
+      if (held) {
+        status.running = false;
+        status.current_match_id = null;
+        status.finished_at = new Date().toISOString();
+        await this.saveStatus(status, FINAL_TTL_SECONDS);
+        await this.cache.forget(CANCEL_KEY);
+        // Per-row player_elo search events stay suppressed for the whole run, so
+        // the search index would otherwise keep serving pre-backfill ELO forever.
+        // One deduped reindex at the end syncs it without the per-row fan-out.
+        await this.eloRecompute.setSuppressEvents(false);
 
-      await this.reindexQueue.add(
-        RefreshAllPlayersJob.name,
-        {},
-        {
-          jobId: RefreshAllPlayersJob.name,
-          removeOnComplete: true,
-          removeOnFail: true,
-        },
-      );
+        await this.reindexQueue.add(
+          RefreshAllPlayersJob.name,
+          {},
+          {
+            jobId: RefreshAllPlayersJob.name,
+            removeOnComplete: true,
+            removeOnFail: true,
+          },
+        );
 
-      this.logger.log(
-        `[season-backfill] finished season ${seasonId}: ${status.completed}/${status.total} processed, ${status.failed} failed${status.canceled ? " (canceled)" : ""}`,
-      );
+        this.logger.log(
+          `[season-backfill] finished season ${seasonId}: ${status.completed}/${status.total} processed, ${status.failed} failed${status.canceled ? " (canceled)" : ""}`,
+        );
 
-      await this.notifyComplete(status);
+        await this.notifyComplete(status);
+      }
     }
 
-    return current;
+    return held && current;
   }
 
   private async notifyComplete(status: SeasonEloBackfillStatus): Promise<void> {
@@ -307,21 +303,6 @@ export class SeasonEloBackfillService {
     return `${seconds}s`;
   }
 
-  private async withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-    let timer: ReturnType<typeof setTimeout>;
-    const timeout = new Promise<never>((_, reject) => {
-      timer = setTimeout(
-        () => reject(new Error(`timed out after ${ms}ms`)),
-        ms,
-      );
-    });
-    try {
-      return await Promise.race([promise, timeout]);
-    } finally {
-      clearTimeout(timer!);
-    }
-  }
-
   private async isCancelRequested(): Promise<boolean> {
     return (await this.cache.get(CANCEL_KEY)) === true;
   }
@@ -359,7 +340,7 @@ export class SeasonEloBackfillService {
         AND NOT EXISTS (
           SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = m.id
         )
-      ORDER BY m.ended_at ASC, m.id ASC
+      ORDER BY m.ended_at ASC, m.created_at ASC, m.id ASC
       `,
       [seasonId],
     );

@@ -159,3 +159,73 @@ describe("RecomputeAllElo", () => {
     ).not.toThrow();
   });
 });
+
+describe("the rebuild lease", () => {
+  let cache: {
+    acquireLock: jest.Mock;
+    refreshLock: jest.Mock;
+    releaseLock: jest.Mock;
+  };
+  let service: PlayerEloRecomputeService;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    cache = {
+      acquireLock: jest.fn().mockResolvedValue("token"),
+      refreshLock: jest.fn().mockResolvedValue(true),
+      releaseLock: jest.fn().mockResolvedValue(true),
+    };
+    service = new PlayerEloRecomputeService(
+      { log: jest.fn(), warn: jest.fn() } as any,
+      {} as any,
+      cache as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    );
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it("renews the lock on a clock, whatever the run is doing", async () => {
+    const lease = (await service.acquireRebuildLease())!;
+
+    await jest.advanceTimersByTimeAsync(
+      PlayerEloRecomputeService.LOCK_RENEW_MS,
+    );
+    expect(cache.refreshLock).toHaveBeenCalledTimes(1);
+    expect(cache.refreshLock).toHaveBeenCalledWith(
+      "elo-recompute:lock",
+      "token",
+      expect.any(Number),
+    );
+    expect(PlayerEloRecomputeService.LOCK_RENEW_MS * 3).toBeLessThan(
+      cache.refreshLock.mock.calls[0][2] * 1000,
+    );
+
+    await lease.release();
+    await jest.advanceTimersByTimeAsync(
+      PlayerEloRecomputeService.LOCK_RENEW_MS * 5,
+    );
+    expect(cache.refreshLock).toHaveBeenCalledTimes(1);
+    expect(cache.releaseLock).toHaveBeenCalledWith(
+      "elo-recompute:lock",
+      "token",
+    );
+  });
+
+  it("treats a renewal that finds the lock gone as final", async () => {
+    const lease = (await service.acquireRebuildLease())!;
+    cache.refreshLock.mockResolvedValueOnce(false);
+
+    await jest.advanceTimersByTimeAsync(
+      PlayerEloRecomputeService.LOCK_RENEW_MS,
+    );
+
+    await expect(lease.renew()).resolves.toBe(false);
+    expect(cache.refreshLock).toHaveBeenCalledTimes(1);
+    await lease.release();
+  });
+});
