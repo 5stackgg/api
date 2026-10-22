@@ -316,6 +316,26 @@ describe("friends list live state", () => {
       }
     }, 120_000);
 
+    it("does not grow with the number of matches being played", async () => {
+      await activeMatches();
+      const player = await withHistory(20);
+      const quiet = await Promise.all(
+        FUNCTIONS.map((sql) => buffersFor(sql, player)),
+      );
+
+      for (let i = 0; i < 4; i++) {
+        await activeMatches();
+      }
+      await postgres.query("VACUUM ANALYZE matches");
+      const busy = await Promise.all(
+        FUNCTIONS.map((sql) => buffersFor(sql, player)),
+      );
+
+      busy.forEach((buffers, i) => {
+        expect(buffers - quiet[i]).toBeLessThanOrEqual(10);
+      });
+    }, 120_000);
+
     // An import-heavy panel: most players appear in one lineup, so the planner
     // rates a lookup on steam_id alone as just as selective as the unique key.
     it("does not grow with history spread among one-off players", async () => {
