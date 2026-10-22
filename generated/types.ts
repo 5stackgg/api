@@ -31779,6 +31779,9 @@ export default {
             "match": [
                 3709
             ],
+            "match_created_at": [
+                6048
+            ],
             "match_id": [
                 7650
             ],
@@ -31892,6 +31895,9 @@ export default {
             "match": [
                 3720
             ],
+            "match_created_at": [
+                6049
+            ],
             "match_id": [
                 7652
             ],
@@ -31913,6 +31919,9 @@ export default {
             "match": [
                 3729
             ],
+            "match_created_at": [
+                6048
+            ],
             "match_id": [
                 7650
             ],
@@ -31927,6 +31936,9 @@ export default {
             "event_id": [
                 7650
             ],
+            "match_created_at": [
+                6048
+            ],
             "match_id": [
                 7650
             ],
@@ -31939,6 +31951,9 @@ export default {
                 3971
             ],
             "event_id": [
+                3971
+            ],
+            "match_created_at": [
                 3971
             ],
             "match_id": [
@@ -31955,6 +31970,9 @@ export default {
             "event_id": [
                 7650
             ],
+            "match_created_at": [
+                6048
+            ],
             "match_id": [
                 7650
             ],
@@ -31967,6 +31985,9 @@ export default {
                 3971
             ],
             "event_id": [
+                3971
+            ],
+            "match_created_at": [
                 3971
             ],
             "match_id": [
@@ -32014,6 +32035,9 @@ export default {
             "match": [
                 3731
             ],
+            "match_created_at": [
+                3971
+            ],
             "match_id": [
                 3971
             ],
@@ -32040,6 +32064,9 @@ export default {
             "event_id": [
                 7650
             ],
+            "match_created_at": [
+                6048
+            ],
             "match_id": [
                 7650
             ],
@@ -32064,6 +32091,9 @@ export default {
             ],
             "event_id": [
                 7650
+            ],
+            "match_created_at": [
+                6048
             ],
             "match_id": [
                 7650
@@ -133145,6 +133175,9 @@ export default {
             "is_organization": [
                 6
             ],
+            "last_match_at": [
+                6048
+            ],
             "match_lineups": [
                 3369
             ],
@@ -133227,6 +133260,9 @@ export default {
             "id": [
                 3971
             ],
+            "last_match_at": [
+                3971
+            ],
             "name": [
                 3971
             ],
@@ -133283,6 +133319,9 @@ export default {
                 3971
             ],
             "id": [
+                3971
+            ],
+            "last_match_at": [
                 3971
             ],
             "name": [
@@ -133444,6 +133483,9 @@ export default {
             "is_organization": [
                 6
             ],
+            "last_match_at": [
+                6048
+            ],
             "name": [
                 110
             ],
@@ -133549,6 +133591,9 @@ export default {
             ],
             "is_organization": [
                 6
+            ],
+            "last_match_at": [
+                6048
             ],
             "name": [
                 110

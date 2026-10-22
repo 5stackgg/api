@@ -8654,6 +8654,7 @@ export interface event_match_links {
     event_id: Scalars['uuid']
     /** An object relationship */
     match: matches
+    match_created_at: (Scalars['timestamptz'] | null)
     match_id: Scalars['uuid']
     __typename: 'event_match_links'
 }
@@ -8684,6 +8685,7 @@ export type event_match_links_constraint = 'event_match_links_pkey'
 export interface event_match_links_max_fields {
     created_at: (Scalars['timestamptz'] | null)
     event_id: (Scalars['uuid'] | null)
+    match_created_at: (Scalars['timestamptz'] | null)
     match_id: (Scalars['uuid'] | null)
     __typename: 'event_match_links_max_fields'
 }
@@ -8693,6 +8695,7 @@ export interface event_match_links_max_fields {
 export interface event_match_links_min_fields {
     created_at: (Scalars['timestamptz'] | null)
     event_id: (Scalars['uuid'] | null)
+    match_created_at: (Scalars['timestamptz'] | null)
     match_id: (Scalars['uuid'] | null)
     __typename: 'event_match_links_min_fields'
 }
@@ -8709,11 +8712,11 @@ export interface event_match_links_mutation_response {
 
 
 /** select columns of table "event_match_links" */
-export type event_match_links_select_column = 'created_at' | 'event_id' | 'match_id'
+export type event_match_links_select_column = 'created_at' | 'event_id' | 'match_created_at' | 'match_id'
 
 
 /** update columns of table "event_match_links" */
-export type event_match_links_update_column = 'created_at' | 'event_id' | 'match_id'
+export type event_match_links_update_column = 'created_at' | 'event_id' | 'match_created_at' | 'match_id'
 
 
 /** columns and relationships of "event_media" */
@@ -37063,7 +37066,6 @@ export interface teams {
     /** An aggregate relationship */
     invites_aggregate: team_invites_aggregate
     is_organization: Scalars['Boolean']
-    /** A computed field, executes function "team_last_match_at" */
     last_match_at: (Scalars['timestamptz'] | null)
     /** An array relationship */
     match_lineups: match_lineups[]
@@ -37143,7 +37145,6 @@ export interface teams_max_fields {
     captain_steam_id: (Scalars['bigint'] | null)
     created_at: (Scalars['timestamptz'] | null)
     id: (Scalars['uuid'] | null)
-    /** A computed field, executes function "team_last_match_at" */
     last_match_at: (Scalars['timestamptz'] | null)
     name: (Scalars['String'] | null)
     owner_steam_id: (Scalars['bigint'] | null)
@@ -37160,7 +37161,6 @@ export interface teams_min_fields {
     captain_steam_id: (Scalars['bigint'] | null)
     created_at: (Scalars['timestamptz'] | null)
     id: (Scalars['uuid'] | null)
-    /** A computed field, executes function "team_last_match_at" */
     last_match_at: (Scalars['timestamptz'] | null)
     name: (Scalars['String'] | null)
     owner_steam_id: (Scalars['bigint'] | null)
@@ -37182,7 +37182,7 @@ export interface teams_mutation_response {
 
 
 /** select columns of table "teams" */
-export type teams_select_column = 'avatar_url' | 'captain_steam_id' | 'created_at' | 'id' | 'is_organization' | 'name' | 'owner_steam_id' | 'short_name'
+export type teams_select_column = 'avatar_url' | 'captain_steam_id' | 'created_at' | 'id' | 'is_organization' | 'last_match_at' | 'name' | 'owner_steam_id' | 'short_name'
 
 
 /** select "teams_aggregate_bool_exp_bool_and_arguments_columns" columns of table "teams" */
@@ -37226,7 +37226,7 @@ export interface teams_sum_fields {
 
 
 /** update columns of table "teams" */
-export type teams_update_column = 'avatar_url' | 'captain_steam_id' | 'created_at' | 'id' | 'is_organization' | 'name' | 'owner_steam_id' | 'short_name'
+export type teams_update_column = 'avatar_url' | 'captain_steam_id' | 'created_at' | 'id' | 'is_organization' | 'last_match_at' | 'name' | 'owner_steam_id' | 'short_name'
 
 
 /** aggregate var_pop on columns */
@@ -65019,6 +65019,7 @@ export interface event_match_linksGenqlSelection{
     event_id?: boolean | number
     /** An object relationship */
     match?: matchesGenqlSelection
+    match_created_at?: boolean | number
     match_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -65059,17 +65060,18 @@ on_conflict?: (event_match_links_on_conflict | null)}
 
 
 /** Boolean expression to filter rows from the table "event_match_links". All fields are combined with a logical 'AND'. */
-export interface event_match_links_bool_exp {_and?: (event_match_links_bool_exp[] | null),_not?: (event_match_links_bool_exp | null),_or?: (event_match_links_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),event?: (events_bool_exp | null),event_id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null)}
+export interface event_match_links_bool_exp {_and?: (event_match_links_bool_exp[] | null),_not?: (event_match_links_bool_exp | null),_or?: (event_match_links_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),event?: (events_bool_exp | null),event_id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_created_at?: (timestamptz_comparison_exp | null),match_id?: (uuid_comparison_exp | null)}
 
 
 /** input type for inserting data into table "event_match_links" */
-export interface event_match_links_insert_input {created_at?: (Scalars['timestamptz'] | null),event?: (events_obj_rel_insert_input | null),event_id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null)}
+export interface event_match_links_insert_input {created_at?: (Scalars['timestamptz'] | null),event?: (events_obj_rel_insert_input | null),event_id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_created_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate max on columns */
 export interface event_match_links_max_fieldsGenqlSelection{
     created_at?: boolean | number
     event_id?: boolean | number
+    match_created_at?: boolean | number
     match_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -65077,13 +65079,14 @@ export interface event_match_links_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "event_match_links" */
-export interface event_match_links_max_order_by {created_at?: (order_by | null),event_id?: (order_by | null),match_id?: (order_by | null)}
+export interface event_match_links_max_order_by {created_at?: (order_by | null),event_id?: (order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface event_match_links_min_fieldsGenqlSelection{
     created_at?: boolean | number
     event_id?: boolean | number
+    match_created_at?: boolean | number
     match_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -65091,7 +65094,7 @@ export interface event_match_links_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "event_match_links" */
-export interface event_match_links_min_order_by {created_at?: (order_by | null),event_id?: (order_by | null),match_id?: (order_by | null)}
+export interface event_match_links_min_order_by {created_at?: (order_by | null),event_id?: (order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "event_match_links" */
@@ -65110,7 +65113,7 @@ export interface event_match_links_on_conflict {constraint: event_match_links_co
 
 
 /** Ordering options when selecting data from "event_match_links". */
-export interface event_match_links_order_by {created_at?: (order_by | null),event?: (events_order_by | null),event_id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null)}
+export interface event_match_links_order_by {created_at?: (order_by | null),event?: (events_order_by | null),event_id?: (order_by | null),match?: (matches_order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null)}
 
 
 /** primary key columns input for table: event_match_links */
@@ -65118,7 +65121,7 @@ export interface event_match_links_pk_columns_input {event_id: Scalars['uuid'],m
 
 
 /** input type for updating data in table "event_match_links" */
-export interface event_match_links_set_input {created_at?: (Scalars['timestamptz'] | null),event_id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null)}
+export interface event_match_links_set_input {created_at?: (Scalars['timestamptz'] | null),event_id?: (Scalars['uuid'] | null),match_created_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null)}
 
 
 /** Streaming cursor of the table "event_match_links" */
@@ -65130,7 +65133,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface event_match_links_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),event_id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null)}
+export interface event_match_links_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),event_id?: (Scalars['uuid'] | null),match_created_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null)}
 
 export interface event_match_links_updates {
 /** sets the columns of the filtered rows to the given values */
@@ -123452,7 +123455,6 @@ export interface teamsGenqlSelection{
     /** filter the rows returned */
     where?: (team_invites_bool_exp | null)} })
     is_organization?: boolean | number
-    /** A computed field, executes function "team_last_match_at" */
     last_match_at?: boolean | number
     /** An array relationship */
     match_lineups?: (match_lineupsGenqlSelection & { __args?: {
@@ -123647,7 +123649,7 @@ export interface teams_inc_input {captain_steam_id?: (Scalars['bigint'] | null),
 
 
 /** input type for inserting data into table "teams" */
-export interface teams_insert_input {avatar_url?: (Scalars['String'] | null),awards?: (award_recipients_arr_rel_insert_input | null),captain?: (players_obj_rel_insert_input | null),captain_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),invites?: (team_invites_arr_rel_insert_input | null),is_organization?: (Scalars['Boolean'] | null),match_lineups?: (match_lineups_arr_rel_insert_input | null),name?: (Scalars['String'] | null),owner?: (players_obj_rel_insert_input | null),owner_steam_id?: (Scalars['bigint'] | null),ranks?: (v_team_ranks_obj_rel_insert_input | null),reputation?: (v_team_reputation_obj_rel_insert_input | null),roster?: (team_roster_arr_rel_insert_input | null),scrim_availability?: (team_scrim_availability_arr_rel_insert_input | null),scrim_settings?: (team_scrim_settings_obj_rel_insert_input | null),short_name?: (Scalars['String'] | null),tournament_teams?: (tournament_teams_arr_rel_insert_input | null)}
+export interface teams_insert_input {avatar_url?: (Scalars['String'] | null),awards?: (award_recipients_arr_rel_insert_input | null),captain?: (players_obj_rel_insert_input | null),captain_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),invites?: (team_invites_arr_rel_insert_input | null),is_organization?: (Scalars['Boolean'] | null),last_match_at?: (Scalars['timestamptz'] | null),match_lineups?: (match_lineups_arr_rel_insert_input | null),name?: (Scalars['String'] | null),owner?: (players_obj_rel_insert_input | null),owner_steam_id?: (Scalars['bigint'] | null),ranks?: (v_team_ranks_obj_rel_insert_input | null),reputation?: (v_team_reputation_obj_rel_insert_input | null),roster?: (team_roster_arr_rel_insert_input | null),scrim_availability?: (team_scrim_availability_arr_rel_insert_input | null),scrim_settings?: (team_scrim_settings_obj_rel_insert_input | null),short_name?: (Scalars['String'] | null),tournament_teams?: (tournament_teams_arr_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
@@ -123656,7 +123658,6 @@ export interface teams_max_fieldsGenqlSelection{
     captain_steam_id?: boolean | number
     created_at?: boolean | number
     id?: boolean | number
-    /** A computed field, executes function "team_last_match_at" */
     last_match_at?: boolean | number
     name?: boolean | number
     owner_steam_id?: boolean | number
@@ -123669,7 +123670,7 @@ export interface teams_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "teams" */
-export interface teams_max_order_by {avatar_url?: (order_by | null),captain_steam_id?: (order_by | null),created_at?: (order_by | null),id?: (order_by | null),name?: (order_by | null),owner_steam_id?: (order_by | null),short_name?: (order_by | null)}
+export interface teams_max_order_by {avatar_url?: (order_by | null),captain_steam_id?: (order_by | null),created_at?: (order_by | null),id?: (order_by | null),last_match_at?: (order_by | null),name?: (order_by | null),owner_steam_id?: (order_by | null),short_name?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -123678,7 +123679,6 @@ export interface teams_min_fieldsGenqlSelection{
     captain_steam_id?: boolean | number
     created_at?: boolean | number
     id?: boolean | number
-    /** A computed field, executes function "team_last_match_at" */
     last_match_at?: boolean | number
     name?: boolean | number
     owner_steam_id?: boolean | number
@@ -123691,7 +123691,7 @@ export interface teams_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "teams" */
-export interface teams_min_order_by {avatar_url?: (order_by | null),captain_steam_id?: (order_by | null),created_at?: (order_by | null),id?: (order_by | null),name?: (order_by | null),owner_steam_id?: (order_by | null),short_name?: (order_by | null)}
+export interface teams_min_order_by {avatar_url?: (order_by | null),captain_steam_id?: (order_by | null),created_at?: (order_by | null),id?: (order_by | null),last_match_at?: (order_by | null),name?: (order_by | null),owner_steam_id?: (order_by | null),short_name?: (order_by | null)}
 
 
 /** response of any mutation on the table "teams" */
@@ -123724,7 +123724,7 @@ export interface teams_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "teams" */
-export interface teams_set_input {avatar_url?: (Scalars['String'] | null),captain_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),is_organization?: (Scalars['Boolean'] | null),name?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),short_name?: (Scalars['String'] | null)}
+export interface teams_set_input {avatar_url?: (Scalars['String'] | null),captain_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),is_organization?: (Scalars['Boolean'] | null),last_match_at?: (Scalars['timestamptz'] | null),name?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),short_name?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -123775,7 +123775,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface teams_stream_cursor_value_input {avatar_url?: (Scalars['String'] | null),captain_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),is_organization?: (Scalars['Boolean'] | null),name?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),short_name?: (Scalars['String'] | null)}
+export interface teams_stream_cursor_value_input {avatar_url?: (Scalars['String'] | null),captain_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),is_organization?: (Scalars['Boolean'] | null),last_match_at?: (Scalars['timestamptz'] | null),name?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),short_name?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -171614,12 +171614,14 @@ export const enumEventMatchLinksConstraint = {
 export const enumEventMatchLinksSelectColumn = {
    created_at: 'created_at' as const,
    event_id: 'event_id' as const,
+   match_created_at: 'match_created_at' as const,
    match_id: 'match_id' as const
 }
 
 export const enumEventMatchLinksUpdateColumn = {
    created_at: 'created_at' as const,
    event_id: 'event_id' as const,
+   match_created_at: 'match_created_at' as const,
    match_id: 'match_id' as const
 }
 
@@ -175550,6 +175552,7 @@ export const enumTeamsSelectColumn = {
    created_at: 'created_at' as const,
    id: 'id' as const,
    is_organization: 'is_organization' as const,
+   last_match_at: 'last_match_at' as const,
    name: 'name' as const,
    owner_steam_id: 'owner_steam_id' as const,
    short_name: 'short_name' as const
@@ -175569,6 +175572,7 @@ export const enumTeamsUpdateColumn = {
    created_at: 'created_at' as const,
    id: 'id' as const,
    is_organization: 'is_organization' as const,
+   last_match_at: 'last_match_at' as const,
    name: 'name' as const,
    owner_steam_id: 'owner_steam_id' as const,
    short_name: 'short_name' as const
