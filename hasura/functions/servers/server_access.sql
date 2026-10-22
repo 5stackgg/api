@@ -75,9 +75,12 @@ AS $$
      WHERE tt.owner_steam_id IS NOT NULL;
 $$;
 
--- Answers for one viewer without expanding the whole allowlist: a role rule on
--- a big deployment covers every registered player.
-CREATE OR REPLACE FUNCTION public.can_connect_to_server(server public.servers, hasura_session json)
+-- Whether a server's own rules let the viewer in: it is open, or its role
+-- floor, player list or a live event names them. Answers for one viewer
+-- without expanding the whole allowlist: a role rule on a big deployment
+-- covers every registered player. Staff's pass is left out, so lists of
+-- servers to play on keep a restricted server off for staff it doesn't name.
+CREATE OR REPLACE FUNCTION public.server_open_to_viewer(server public.servers, hasura_session json)
 RETURNS boolean
 LANGUAGE plpgsql
 STABLE
@@ -86,10 +89,6 @@ DECLARE
     viewer bigint;
 BEGIN
     IF NOT server.access_restricted THEN
-        RETURN true;
-    END IF;
-
-    IF COALESCE(public.is_above_role('moderator', hasura_session), false) THEN
         RETURN true;
     END IF;
 
@@ -119,5 +118,20 @@ BEGIN
            AND public.server_access_event_is_live(e)
            AND public.is_event_member(e, viewer)
     );
+END;
+$$;
+
+-- Staff always get in on top, so a restricted server can still be moderated.
+CREATE OR REPLACE FUNCTION public.can_connect_to_server(server public.servers, hasura_session json)
+RETURNS boolean
+LANGUAGE plpgsql
+STABLE
+AS $$
+BEGIN
+    IF COALESCE(public.is_above_role('moderator', hasura_session), false) THEN
+        RETURN true;
+    END IF;
+
+    RETURN public.server_open_to_viewer(server, hasura_session);
 END;
 $$;

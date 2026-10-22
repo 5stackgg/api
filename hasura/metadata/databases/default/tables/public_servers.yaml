@@ -92,6 +92,12 @@ computed_fields:
         name: get_server_connection_string
         schema: public
       session_argument: hasura_session
+  - name: open_to_viewer
+    definition:
+      function:
+        name: server_open_to_viewer
+        schema: public
+      session_argument: hasura_session
 insert_permissions:
   - role: administrator
     permission:
@@ -154,6 +160,7 @@ select_permissions:
       computed_fields:
         - connection_link
         - connection_string
+        - open_to_viewer
       filter:
         is_dedicated:
           _eq: true
@@ -184,6 +191,7 @@ select_permissions:
       computed_fields:
         - connection_link
         - connection_string
+        - open_to_viewer
       filter:
         _and:
           - type:
@@ -226,6 +234,7 @@ select_permissions:
       computed_fields:
         - connection_link
         - connection_string
+        - open_to_viewer
       filter:
         is_dedicated:
           _eq: true
