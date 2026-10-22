@@ -44,6 +44,11 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
   private static readonly POD_TTL_SECONDS = 20;
   private static readonly POD_HEARTBEAT_MS = 10 * 1000;
 
+  // A tab's own ping slows to once a minute while it is hidden and stops
+  // altogether while the browser freezes the page, but the browser still
+  // answers a protocol ping for it. Only a socket that has gone quiet is asked.
+  private static readonly QUIET_AFTER_MS = 30 * 1000;
+
   private podTimer: NodeJS.Timeout;
 
   // Twice the client's ping interval, so a focus survives a missed heartbeat
@@ -90,9 +95,7 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
       // typeof-reports as "object"); guard before destructuring so a valid but
       // non-object payload can't throw a TypeError here.
       if (parsed === null || typeof parsed !== "object") {
-        this.logger.error(
-          `ignoring non-object pub/sub message on ${channel}`,
-        );
+        this.logger.error(`ignoring non-object pub/sub message on ${channel}`);
         return;
       }
 
@@ -162,13 +165,19 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
       );
     }
 
-    // The server never pings /ws/web itself, so a socket whose peer vanished
-    // without a close would otherwise stay open, and keep its player online,
-    // for good.
-    const silentSince = Date.now() - SocketsService.PRESENCE_TTL_SECONDS * 1000;
+    // A socket whose peer vanished without a close would otherwise stay open,
+    // and keep its player online, for good.
+    const now = Date.now();
+    const silentSince = now - SocketsService.PRESENCE_TTL_SECONDS * 1000;
+    const quietSince = now - SocketsService.QUIET_AFTER_MS;
     for (const client of Array.from(this.clients.values())) {
       if (client.lastSeenAt < silentSince) {
         client.terminate();
+      } else if (
+        client.lastSeenAt < quietSince &&
+        client.readyState === client.OPEN
+      ) {
+        client.ping();
       }
     }
   }
@@ -259,6 +268,8 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
 
     this.clients.set(client.id, client);
     this.indexClient(client);
+
+    client.on("pong", () => void this.answered(client));
 
     const registered = this.register(client);
 
@@ -409,6 +420,26 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
       }
     }
 
+    await this.keepPresence(steamId, clientId);
+  }
+
+  // What keeps a backgrounded tab online: the browser answers for it without
+  // running the page.
+  private async answered(client: FiveStackWebSocketClient) {
+    client.lastSeenAt = Date.now();
+
+    if (!this.clients.has(client.id)) {
+      return;
+    }
+
+    try {
+      await this.keepPresence(client.user.steam_id, client.id);
+    } catch (error) {
+      this.logger.warn(`unable to keep ${client.user.steam_id} online`, error);
+    }
+  }
+
+  private async keepPresence(steamId: string, clientId: string) {
     if (!(await this.updateClient(steamId, clientId))) {
       return;
     }
