@@ -36,6 +36,16 @@ describe("friends list live state", () => {
     return match;
   };
 
+  // Scheduling for real needs full lineups; only the status and time matter.
+  const scheduled = (matchId: string, out: string | null) =>
+    postgres.transaction(async (client) => {
+      await client.query("SET LOCAL session_replication_role = replica");
+      await client.query(
+        "UPDATE matches SET status = 'Scheduled', scheduled_at = now() + $2::interval WHERE id = $1",
+        [matchId, out],
+      );
+    });
+
   const inAnotherMatch = async (steam: string) => {
     const [row] = await postgres.query<Array<{ v: boolean }>>(
       "SELECT is_in_another_match(p) AS v FROM players p WHERE steam_id = $1",
@@ -81,6 +91,68 @@ describe("friends list live state", () => {
       const player = await fx.lineupPlayer(match.lineup_1_id);
 
       expect(await inAnotherMatch(player)).toBe(expected);
+    });
+
+    it.each([
+      ["30 minutes", true],
+      ["2 hours", false],
+    ])(
+      "counts a Scheduled match only within the hour (%s out: %s)",
+      async (out, expected) => {
+        const match = await matchIn();
+        await scheduled(match.id, out);
+        const player = await fx.lineupPlayer(match.lineup_1_id);
+
+        expect(await inAnotherMatch(player)).toBe(expected);
+      },
+    );
+
+    it("does not count a Scheduled match with no time", async () => {
+      const match = await matchIn();
+      await scheduled(match.id, null);
+      const player = await fx.lineupPlayer(match.lineup_1_id);
+
+      expect(await inAnotherMatch(player)).toBe(false);
+    });
+
+    it("does not count a Finished match or a practice session", async () => {
+      const finished = await matchIn("Finished");
+      const done = await fx.lineupPlayer(finished.lineup_1_id);
+      const practice = await matchIn("Live");
+      const practising = await fx.lineupPlayer(practice.lineup_1_id);
+      await postgres.query(
+        "UPDATE matches SET source = 'practice' WHERE id = $1",
+        [practice.id],
+      );
+
+      expect(await inAnotherMatch(done)).toBe(false);
+      expect(await inAnotherMatch(practising)).toBe(false);
+    });
+
+    it("lets go of a Live match whose series is already decided", async () => {
+      const match = await matchIn("Live");
+      const player = await fx.lineupPlayer(match.lineup_1_id);
+      expect(await inAnotherMatch(player)).toBe(true);
+
+      const [map] = await postgres.query<Array<{ id: string }>>(
+        `SELECT id FROM match_maps WHERE match_id = $1 ORDER BY "order" LIMIT 1`,
+        [match.id],
+      );
+      await fx.roundScore(map.id, 13, 6);
+      await fx.finishMap(map.id);
+
+      expect(await inAnotherMatch(player)).toBe(false);
+    });
+
+    it("does not count a coach, who is not a lineup player", async () => {
+      const match = await matchIn("Live");
+      const coach = await fx.player();
+      await postgres.query(
+        "UPDATE match_lineups SET coach_steam_id = $2 WHERE id = $1",
+        [match.lineup_1_id, coach],
+      );
+
+      expect(await inAnotherMatch(coach)).toBe(false);
     });
 
     it("counts the second lineup and nobody outside the match", async () => {
