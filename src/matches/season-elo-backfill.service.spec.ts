@@ -20,9 +20,12 @@ describe("SeasonEloBackfillService.runBackfill", () => {
     get: jest.Mock;
     put: jest.Mock;
     forget: jest.Mock;
-    acquireLock: jest.Mock;
-    refreshLock: jest.Mock;
-    releaseLock: jest.Mock;
+  };
+  let lease: { renew: jest.Mock; keepAlive: jest.Mock; release: jest.Mock };
+  let eloRecompute: {
+    setSuppressEvents: jest.Mock;
+    acquireRebuildLease: jest.Mock;
+    rateMatches: jest.Mock;
   };
   let service: SeasonEloBackfillService;
   let clearedRows: Array<{ id: string }>;
@@ -47,16 +50,23 @@ describe("SeasonEloBackfillService.runBackfill", () => {
       get: jest.fn().mockResolvedValue(undefined),
       put: jest.fn().mockResolvedValue(true),
       forget: jest.fn().mockResolvedValue(true),
-      acquireLock: jest.fn().mockResolvedValue("token"),
-      refreshLock: jest.fn().mockResolvedValue(true),
-      releaseLock: jest.fn().mockResolvedValue(true),
+    };
+    lease = {
+      renew: jest.fn().mockResolvedValue(true),
+      keepAlive: jest.fn(),
+      release: jest.fn().mockResolvedValue(undefined),
+    };
+    eloRecompute = {
+      setSuppressEvents: jest.fn(),
+      acquireRebuildLease: jest.fn().mockResolvedValue(lease),
+      rateMatches: jest.fn().mockResolvedValue(true),
     };
     service = new SeasonEloBackfillService(
       { log: jest.fn(), warn: jest.fn() } as any,
       postgres as any,
       cache as any,
       { send: jest.fn() } as any,
-      { setSuppressEvents: jest.fn() } as any,
+      eloRecompute as any,
       { add: jest.fn() } as any,
     );
   });
@@ -72,10 +82,7 @@ describe("SeasonEloBackfillService.runBackfill", () => {
       WINDOW.starts_at,
       WINDOW.ends_at,
     ]);
-    expect(cache.releaseLock).toHaveBeenCalledWith(
-      "season-elo-backfill:lock",
-      "token",
-    );
+    expect(lease.release).toHaveBeenCalled();
   });
 
   it("asks for a retry when the dates moved mid-run", async () => {
@@ -84,8 +91,20 @@ describe("SeasonEloBackfillService.runBackfill", () => {
     await expect(service.runBackfill("season-1")).resolves.toBe(false);
   });
 
+  it("asks for a retry, and leaves the season flagged, when the run lost its lock", async () => {
+    eloRecompute.rateMatches.mockResolvedValue(false);
+
+    await expect(service.runBackfill("season-1")).resolves.toBe(false);
+    expect(
+      postgres.query.mock.calls.some(([sql]) =>
+        sql.includes("UPDATE seasons SET needs_rebuild"),
+      ),
+    ).toBe(false);
+    expect(lease.release).toHaveBeenCalled();
+  });
+
   it("asks for a retry instead of dropping the run when the lock is held", async () => {
-    cache.acquireLock.mockResolvedValue(null);
+    eloRecompute.acquireRebuildLease.mockResolvedValue(null);
 
     await expect(service.runBackfill("season-1")).resolves.toBe(false);
     expect(
@@ -111,7 +130,7 @@ describe("SeasonEloBackfillService.runBackfill", () => {
 
     await expect(service.runBackfill("season-1")).resolves.toBe(true);
 
-    expect(cache.acquireLock).not.toHaveBeenCalled();
+    expect(eloRecompute.acquireRebuildLease).not.toHaveBeenCalled();
     expect(cache.put).toHaveBeenCalledWith(
       "season-elo-backfill:status",
       expect.objectContaining({ running: false, season_id: "season-1" }),

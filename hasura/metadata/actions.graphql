@@ -497,6 +497,18 @@ type Mutation {
 }
 
 type Mutation {
+  voidMatchElo(
+    match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  restoreMatchElo(
+    match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   backfillSeasonElo(season_id: String!): RecomputeEloStartedOutput
 }
 

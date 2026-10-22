@@ -1,7 +1,6 @@
 import {
   forwardRef,
   MiddlewareConsumer,
-  Logger,
   Module,
   NestModule,
   RequestMethod,
@@ -63,13 +62,11 @@ import { MatchEventsGateway } from "./match-events.gateway";
 import { PostgresModule } from "src/postgres/postgres.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { ChatModule } from "src/chat/chat.module";
-import { HasuraService } from "src/hasura/hasura.service";
 import { EloCalculation } from "./jobs/EloCalculation";
 import { RecomputeAllElo } from "./jobs/RecomputeAllElo";
 import { PlayerEloRecomputeService } from "./player-elo-recompute.service";
 import { BackfillSeasonElo } from "./jobs/BackfillSeasonElo";
 import { SeasonEloBackfillService } from "./season-elo-backfill.service";
-import { PostgresService } from "src/postgres/postgres.service";
 import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
 import { StopMatchBroadcast } from "./jobs/StopMatchBroadcast";
 import { ReconcileOnDemandServerJobs } from "./jobs/ReconcileOnDemandServerJobs";
@@ -241,13 +238,11 @@ import { MatchRecoveryService } from "./match-recovery/match-recovery.service";
 })
 export class MatchesModule implements NestModule {
   constructor(
-    private readonly hasuraService: HasuraService,
-    private readonly logger: Logger,
     @InjectQueue(MatchQueues.MatchServers) matchServersQueue: Queue,
     @InjectQueue(MatchQueues.ScheduledMatches) scheduleMatchQueue: Queue,
     @InjectQueue(MatchQueues.Deadlines) deadlinesQueue: Queue,
     @InjectQueue(MatchQueues.VetoTimeouts) vetoTimeoutsQueue: Queue,
-    private readonly postgres: PostgresService,
+    playerEloRecompute: PlayerEloRecomputeService,
   ) {
     if (process.env.RUN_MIGRATIONS) {
       return;
@@ -300,82 +295,11 @@ export class MatchesModule implements NestModule {
       [AutoPickExpiredVeto.name]: { pattern: "* * * * *" },
     });
 
-    void this.generatePlayerRatings();
-  }
-
-  /**
-   * Runs once per ELO formula change. Keyed off a settings marker so upgrades
-   * that change the ELO math (e.g. best-of series multiplier) re-generate
-   * historical rows. Bump SERIES_MULTIPLIER_BACKFILL_MARKER when the formula
-   * changes again.
-   */
-  async generatePlayerRatings() {
-    const SERIES_MULTIPLIER_BACKFILL_MARKER =
-      "player_elo_backfill_series_multiplier_v1";
-
-    const { settings_by_pk } = await this.hasuraService.query({
-      settings_by_pk: {
-        __args: { name: SERIES_MULTIPLIER_BACKFILL_MARKER },
-        value: true,
-      },
-    });
-
-    if (settings_by_pk) {
-      return;
-    }
-
-    await this.postgres.query(`TRUNCATE TABLE player_elo`);
-
-    const matches = await this.hasuraService.query({
-      matches: {
-        __args: {
-          where: {
-            ended_at: { _is_null: false },
-            winning_lineup_id: { _is_null: false },
-          },
-          order_by: [
-            {
-              created_at: "asc",
-            },
-          ],
-        },
-        id: true,
-        created_at: true,
-        ended_at: true,
-      },
-    });
-
-    for (const match of matches.matches) {
-      try {
-        await this.postgres.query(
-          `
-          SELECT generate_player_elo_for_match($1)
-        `,
-          [match.id],
-        );
-      } catch (error) {
-        this.logger.error(
-          `Failed to generate player ratings for match ${match.id}:`,
-          error,
-        );
-      }
-    }
-
-    await this.hasuraService.mutation({
-      insert_settings_one: {
-        __args: {
-          object: {
-            name: SERIES_MULTIPLIER_BACKFILL_MARKER,
-            value: new Date().toISOString(),
-          },
-          on_conflict: {
-            constraint: "settings_pkey",
-            update_columns: ["value"],
-          },
-        },
-        __typename: true,
-      },
-    });
+    // Bump the marker when the ELO formula changes, so every rating is rebuilt
+    // once under it.
+    void playerEloRecompute.recomputeOnce(
+      "player_elo_backfill_series_multiplier_v1",
+    );
   }
 
   configure(consumer: MiddlewareConsumer) {

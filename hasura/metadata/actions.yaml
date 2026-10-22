@@ -708,6 +708,22 @@ actions:
     permissions:
       - role: administrator
     comment: Return the progress of the ELO recompute run (admin only).
+  - name: voidMatchElo
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Remove a finished match's effect on every player's ELO, keeping its result and stats, then recompute ELO (admin only).
+  - name: restoreMatchElo
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Undo voidMatchElo, giving the match its effect on every player's ELO back, then recompute ELO (admin only).
   - name: backfillSeasonElo
     definition:
       kind: synchronous
