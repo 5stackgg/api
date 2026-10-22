@@ -22838,6 +22838,7 @@ export interface player_elo {
     deaths: (Scalars['Int'] | null)
     expected_score: (Scalars['float8'] | null)
     impact: (Scalars['numeric'] | null)
+    is_tournament: Scalars['Boolean']
     k_factor: (Scalars['Int'] | null)
     kda: (Scalars['float8'] | null)
     kills: (Scalars['Int'] | null)
@@ -22990,7 +22991,7 @@ export interface player_elo_mutation_response {
 
 
 /** select columns of table "player_elo" */
-export type player_elo_select_column = 'actual_score' | 'assists' | 'change' | 'created_at' | 'current' | 'damage' | 'damage_percent' | 'deaths' | 'expected_score' | 'impact' | 'k_factor' | 'kda' | 'kills' | 'map_losses' | 'map_wins' | 'match_id' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'rating_for_expected' | 'season_id' | 'series_multiplier' | 'steam_id' | 'team_avg_kda' | 'type'
+export type player_elo_select_column = 'actual_score' | 'assists' | 'change' | 'created_at' | 'current' | 'damage' | 'damage_percent' | 'deaths' | 'expected_score' | 'impact' | 'is_tournament' | 'k_factor' | 'kda' | 'kills' | 'map_losses' | 'map_wins' | 'match_id' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'rating_for_expected' | 'season_id' | 'series_multiplier' | 'steam_id' | 'team_avg_kda' | 'type'
 
 
 /** aggregate stddev on columns */
@@ -23102,7 +23103,7 @@ export interface player_elo_sum_fields {
 
 
 /** update columns of table "player_elo" */
-export type player_elo_update_column = 'actual_score' | 'assists' | 'change' | 'created_at' | 'current' | 'damage' | 'damage_percent' | 'deaths' | 'expected_score' | 'impact' | 'k_factor' | 'kda' | 'kills' | 'map_losses' | 'map_wins' | 'match_id' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'rating_for_expected' | 'season_id' | 'series_multiplier' | 'steam_id' | 'team_avg_kda' | 'type'
+export type player_elo_update_column = 'actual_score' | 'assists' | 'change' | 'created_at' | 'current' | 'damage' | 'damage_percent' | 'deaths' | 'expected_score' | 'impact' | 'is_tournament' | 'k_factor' | 'kda' | 'kills' | 'map_losses' | 'map_wins' | 'match_id' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'rating_for_expected' | 'season_id' | 'series_multiplier' | 'steam_id' | 'team_avg_kda' | 'type'
 
 
 /** aggregate var_pop on columns */
@@ -29517,6 +29518,10 @@ export interface query_root {
     abandoned_matches_aggregate: abandoned_matches_aggregate
     /** fetch data from the table: "abandoned_matches" using primary key columns */
     abandoned_matches_by_pk: (abandoned_matches | null)
+    /** execute function "active_matches" which returns "matches" */
+    active_matches: matches[]
+    /** execute function "active_matches" and query aggregates on result of table type "matches" */
+    active_matches_aggregate: matches_aggregate
     /** Ask which sightlines a playbook's smokes leave open */
     analyseUtilityPlaybookCoverage: (UtilityPlaybookCoverageOutput | null)
     /** Run EXPLAIN ANALYZE on a pg_stat_statements entry with values for its parameters */
@@ -33479,6 +33484,10 @@ export interface subscription_root {
     abandoned_matches_by_pk: (abandoned_matches | null)
     /** fetch data from the table in a streaming manner: "abandoned_matches" */
     abandoned_matches_stream: abandoned_matches[]
+    /** execute function "active_matches" which returns "matches" */
+    active_matches: matches[]
+    /** execute function "active_matches" and query aggregates on result of table type "matches" */
+    active_matches_aggregate: matches_aggregate
     /** fetch data from the table: "api_keys" */
     api_keys: api_keys[]
     /** fetch aggregated fields from the table: "api_keys" */
@@ -91497,6 +91506,7 @@ export interface player_eloGenqlSelection{
     deaths?: boolean | number
     expected_score?: boolean | number
     impact?: boolean | number
+    is_tournament?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -91579,7 +91589,7 @@ export interface player_elo_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "player_elo". All fields are combined with a logical 'AND'. */
-export interface player_elo_bool_exp {_and?: (player_elo_bool_exp[] | null),_not?: (player_elo_bool_exp | null),_or?: (player_elo_bool_exp[] | null),actual_score?: (float8_comparison_exp | null),assists?: (Int_comparison_exp | null),change?: (numeric_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current?: (numeric_comparison_exp | null),damage?: (Int_comparison_exp | null),damage_percent?: (float8_comparison_exp | null),deaths?: (Int_comparison_exp | null),expected_score?: (float8_comparison_exp | null),impact?: (numeric_comparison_exp | null),k_factor?: (Int_comparison_exp | null),kda?: (float8_comparison_exp | null),kills?: (Int_comparison_exp | null),map_losses?: (Int_comparison_exp | null),map_wins?: (Int_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),opponent_team_elo_avg?: (float8_comparison_exp | null),performance_multiplier?: (float8_comparison_exp | null),player?: (players_bool_exp | null),player_team_elo_avg?: (float8_comparison_exp | null),rating_for_expected?: (float8_comparison_exp | null),season?: (seasons_bool_exp | null),season_id?: (uuid_comparison_exp | null),series_multiplier?: (Int_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_avg_kda?: (float8_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
+export interface player_elo_bool_exp {_and?: (player_elo_bool_exp[] | null),_not?: (player_elo_bool_exp | null),_or?: (player_elo_bool_exp[] | null),actual_score?: (float8_comparison_exp | null),assists?: (Int_comparison_exp | null),change?: (numeric_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current?: (numeric_comparison_exp | null),damage?: (Int_comparison_exp | null),damage_percent?: (float8_comparison_exp | null),deaths?: (Int_comparison_exp | null),expected_score?: (float8_comparison_exp | null),impact?: (numeric_comparison_exp | null),is_tournament?: (Boolean_comparison_exp | null),k_factor?: (Int_comparison_exp | null),kda?: (float8_comparison_exp | null),kills?: (Int_comparison_exp | null),map_losses?: (Int_comparison_exp | null),map_wins?: (Int_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),opponent_team_elo_avg?: (float8_comparison_exp | null),performance_multiplier?: (float8_comparison_exp | null),player?: (players_bool_exp | null),player_team_elo_avg?: (float8_comparison_exp | null),rating_for_expected?: (float8_comparison_exp | null),season?: (seasons_bool_exp | null),season_id?: (uuid_comparison_exp | null),series_multiplier?: (Int_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_avg_kda?: (float8_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "player_elo" */
@@ -91587,7 +91597,7 @@ export interface player_elo_inc_input {actual_score?: (Scalars['float8'] | null)
 
 
 /** input type for inserting data into table "player_elo" */
-export interface player_elo_insert_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),expected_score?: (Scalars['float8'] | null),impact?: (Scalars['numeric'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),map_losses?: (Scalars['Int'] | null),map_wins?: (Scalars['Int'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player?: (players_obj_rel_insert_input | null),player_team_elo_avg?: (Scalars['float8'] | null),rating_for_expected?: (Scalars['float8'] | null),season?: (seasons_obj_rel_insert_input | null),season_id?: (Scalars['uuid'] | null),series_multiplier?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (e_match_types_enum | null)}
+export interface player_elo_insert_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),expected_score?: (Scalars['float8'] | null),impact?: (Scalars['numeric'] | null),is_tournament?: (Scalars['Boolean'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),map_losses?: (Scalars['Int'] | null),map_wins?: (Scalars['Int'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player?: (players_obj_rel_insert_input | null),player_team_elo_avg?: (Scalars['float8'] | null),rating_for_expected?: (Scalars['float8'] | null),season?: (seasons_obj_rel_insert_input | null),season_id?: (Scalars['uuid'] | null),series_multiplier?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate max on columns */
@@ -91668,7 +91678,7 @@ export interface player_elo_on_conflict {constraint: player_elo_constraint,updat
 
 
 /** Ordering options when selecting data from "player_elo". */
-export interface player_elo_order_by {actual_score?: (order_by | null),assists?: (order_by | null),change?: (order_by | null),created_at?: (order_by | null),current?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player?: (players_order_by | null),player_team_elo_avg?: (order_by | null),rating_for_expected?: (order_by | null),season?: (seasons_order_by | null),season_id?: (order_by | null),series_multiplier?: (order_by | null),steam_id?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null)}
+export interface player_elo_order_by {actual_score?: (order_by | null),assists?: (order_by | null),change?: (order_by | null),created_at?: (order_by | null),current?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),is_tournament?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player?: (players_order_by | null),player_team_elo_avg?: (order_by | null),rating_for_expected?: (order_by | null),season?: (seasons_order_by | null),season_id?: (order_by | null),series_multiplier?: (order_by | null),steam_id?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null)}
 
 
 /** primary key columns input for table: player_elo */
@@ -91676,7 +91686,7 @@ export interface player_elo_pk_columns_input {match_id: Scalars['uuid'],steam_id
 
 
 /** input type for updating data in table "player_elo" */
-export interface player_elo_set_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),expected_score?: (Scalars['float8'] | null),impact?: (Scalars['numeric'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),map_losses?: (Scalars['Int'] | null),map_wins?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player_team_elo_avg?: (Scalars['float8'] | null),rating_for_expected?: (Scalars['float8'] | null),season_id?: (Scalars['uuid'] | null),series_multiplier?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (e_match_types_enum | null)}
+export interface player_elo_set_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),expected_score?: (Scalars['float8'] | null),impact?: (Scalars['numeric'] | null),is_tournament?: (Scalars['Boolean'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),map_losses?: (Scalars['Int'] | null),map_wins?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player_team_elo_avg?: (Scalars['float8'] | null),rating_for_expected?: (Scalars['float8'] | null),season_id?: (Scalars['uuid'] | null),series_multiplier?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate stddev on columns */
@@ -91772,7 +91782,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface player_elo_stream_cursor_value_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),expected_score?: (Scalars['float8'] | null),impact?: (Scalars['numeric'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),map_losses?: (Scalars['Int'] | null),map_wins?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player_team_elo_avg?: (Scalars['float8'] | null),rating_for_expected?: (Scalars['float8'] | null),season_id?: (Scalars['uuid'] | null),series_multiplier?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (e_match_types_enum | null)}
+export interface player_elo_stream_cursor_value_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),expected_score?: (Scalars['float8'] | null),impact?: (Scalars['numeric'] | null),is_tournament?: (Scalars['Boolean'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),map_losses?: (Scalars['Int'] | null),map_wins?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player_team_elo_avg?: (Scalars['float8'] | null),rating_for_expected?: (Scalars['float8'] | null),season_id?: (Scalars['uuid'] | null),series_multiplier?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate sum on columns */
@@ -100975,6 +100985,30 @@ export interface query_rootGenqlSelection{
     where?: (abandoned_matches_bool_exp | null)} })
     /** fetch data from the table: "abandoned_matches" using primary key columns */
     abandoned_matches_by_pk?: (abandoned_matchesGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** execute function "active_matches" which returns "matches" */
+    active_matches?: (matchesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (matches_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (matches_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (matches_bool_exp | null)} })
+    /** execute function "active_matches" and query aggregates on result of table type "matches" */
+    active_matches_aggregate?: (matches_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (matches_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (matches_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (matches_bool_exp | null)} })
     /** Ask which sightlines a playbook's smokes leave open */
     analyseUtilityPlaybookCoverage?: (UtilityPlaybookCoverageOutputGenqlSelection & { __args: {pairs: UtilitySightlinePairInput[], playbook_id: Scalars['uuid']} })
     /** Run EXPLAIN ANALYZE on a pg_stat_statements entry with values for its parameters */
@@ -111937,6 +111971,30 @@ export interface subscription_rootGenqlSelection{
     cursor: (abandoned_matches_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (abandoned_matches_bool_exp | null)} })
+    /** execute function "active_matches" which returns "matches" */
+    active_matches?: (matchesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (matches_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (matches_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (matches_bool_exp | null)} })
+    /** execute function "active_matches" and query aggregates on result of table type "matches" */
+    active_matches_aggregate?: (matches_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (matches_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (matches_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (matches_bool_exp | null)} })
     /** fetch data from the table: "api_keys" */
     api_keys?: (api_keysGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -173845,6 +173903,7 @@ export const enumPlayerEloSelectColumn = {
    deaths: 'deaths' as const,
    expected_score: 'expected_score' as const,
    impact: 'impact' as const,
+   is_tournament: 'is_tournament' as const,
    k_factor: 'k_factor' as const,
    kda: 'kda' as const,
    kills: 'kills' as const,
@@ -173873,6 +173932,7 @@ export const enumPlayerEloUpdateColumn = {
    deaths: 'deaths' as const,
    expected_score: 'expected_score' as const,
    impact: 'impact' as const,
+   is_tournament: 'is_tournament' as const,
    k_factor: 'k_factor' as const,
    kda: 'kda' as const,
    kills: 'kills' as const,
