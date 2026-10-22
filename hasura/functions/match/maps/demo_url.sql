@@ -1,6 +1,11 @@
 drop function if exists public.demo_download_url(match_map public.match_maps);
 
-CREATE OR REPLACE FUNCTION public.demo_download_url(match_map_demos public.match_map_demos)
+CREATE OR REPLACE FUNCTION public._demo_download_url(
+    _file text,
+    _created_at timestamptz,
+    _match_id uuid,
+    _match_map_id uuid
+)
     RETURNS text
     LANGUAGE plpgsql STABLE
     AS $$
@@ -9,12 +14,12 @@ CREATE OR REPLACE FUNCTION public.demo_download_url(match_map_demos public.match
         demos_domain text;
         version text;
     BEGIN
-        IF match_map_demos.file ~* '^https?://' THEN
-            RETURN match_map_demos.file;
+        IF _file ~* '^https?://' THEN
+            RETURN _file;
         END IF;
 
         version := COALESCE(
-            EXTRACT(EPOCH FROM match_map_demos.created_at)::bigint::text,
+            EXTRACT(EPOCH FROM _created_at)::bigint::text,
             '0'
         );
 
@@ -23,7 +28,7 @@ CREATE OR REPLACE FUNCTION public.demo_download_url(match_map_demos public.match
         WHERE name = 'cloudflare_worker_url';
 
         IF worker_url IS NOT NULL THEN
-            RETURN CONCAT(worker_url, '/demo?file=', match_map_demos.file, '&v=', version);
+            RETURN CONCAT(worker_url, '/demo?file=', _file, '&v=', version);
         END IF;
 
         SELECT value INTO demos_domain
@@ -36,9 +41,23 @@ CREATE OR REPLACE FUNCTION public.demo_download_url(match_map_demos public.match
 
         RETURN CONCAT(
             demos_domain,
-            '/demos/', match_map_demos.match_id,
-            '/map/', match_map_demos.match_map_id,
+            '/demos/', _match_id,
+            '/map/', _match_map_id,
             '?v=', version
         );
     END;
+$$;
+
+-- Takes the columns rather than the row: a demo row carries its kills, bombs
+-- and players as jsonb, and building the row would unpack all of them.
+CREATE OR REPLACE FUNCTION public.demo_download_url(match_map_demos public.match_map_demos)
+    RETURNS text
+    LANGUAGE sql STABLE
+    AS $$
+    SELECT public._demo_download_url(
+        match_map_demos.file,
+        match_map_demos.created_at,
+        match_map_demos.match_id,
+        match_map_demos.match_map_id
+    );
 $$;

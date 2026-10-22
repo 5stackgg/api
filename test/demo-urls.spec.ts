@@ -140,3 +140,30 @@ describe("demo urls", () => {
     );
   });
 });
+
+describe("demo urls evaluation", () => {
+  let db: SqlTestDb;
+
+  beforeAll(async () => {
+    db = await bootMigratedDb("DemoUrlsPlanTest");
+  }, 600_000);
+
+  afterAll(async () => {
+    await db?.stop();
+  });
+
+  // A demo row carries its kills, bombs and players as jsonb; the links read
+  // only the columns they need, so the row must never be built to ask.
+  it.each(["demo_download_url", "demo_playback_url"])(
+    "%s does not build the demo row",
+    async (fn) => {
+      const plan = await db.postgres.query<Array<{ "QUERY PLAN": string }>>(
+        `EXPLAIN (VERBOSE, COSTS OFF) SELECT public.${fn}(d) FROM match_map_demos d`,
+      );
+      const text = plan.map((row) => row["QUERY PLAN"]).join("\n");
+      expect(text).toContain(`_${fn}(`);
+      expect(text).not.toMatch(new RegExp(`(?<!_)${fn}\\(`));
+      expect(text).not.toMatch(/\bd\.\*|ROW\(/);
+    },
+  );
+});

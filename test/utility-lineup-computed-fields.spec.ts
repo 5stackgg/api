@@ -623,3 +623,41 @@ describe("utility lineup computed fields", () => {
     });
   }
 });
+
+describe("utility lineup computed fields evaluation", () => {
+  let db: SqlTestDb;
+
+  beforeAll(async () => {
+    db = await bootMigratedDb("UtilityLineupComputedFieldsPlanTest");
+  }, 600_000);
+
+  afterAll(async () => {
+    await db?.stop();
+  });
+
+  // A lineup carries its trajectory and run-up as jsonb; every field reads only
+  // the columns it needs, so the row must never be built to answer one.
+  it.each([
+    ["can_view_utility_lineup", true],
+    ["can_edit_utility_lineup", true],
+    ["utility_lineup_my_vote", true],
+    ["utility_lineup_is_favorited", true],
+    ["utility_lineup_difficulty", false],
+    ["utility_lineup_preview_url", false],
+    ["utility_lineup_preview_thumbnail_url", false],
+    ["utility_lineup_preview_stills_url", false],
+    ["utility_lineup_smoke_voxels_url", false],
+  ])("%s does not build the lineup row", async (fn, withSession) => {
+    const plan = await db.postgres.query<Array<{ "QUERY PLAN": string }>>(
+      `EXPLAIN (VERBOSE, COSTS OFF) SELECT public.${fn}(l${
+        withSession
+          ? `, '{"x-hasura-role":"user","x-hasura-user-id":"1"}'::json`
+          : ""
+      }) FROM utility_lineups l WHERE public.can_view_utility_lineup(l, '{}'::json)`,
+    );
+    const text = plan.map((row) => row["QUERY PLAN"]).join("\n");
+    expect(text).not.toMatch(new RegExp(`(?<!_)${fn}\\(`));
+    expect(text).not.toMatch(/(?<!_)can_view_utility_lineup\(/);
+    expect(text).not.toMatch(/\bl\.\*|ROW\(/);
+  });
+});
