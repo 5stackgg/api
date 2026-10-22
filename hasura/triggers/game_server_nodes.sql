@@ -41,6 +41,9 @@ BEGIN
     -- Null-safe: a GPU-only node has neither a region nor ports, and with `=`
     -- every report it sent deleted its render server -- and was refused
     -- outright while a render held it.
+    -- Matchmaking only changes the servers of a node without ports, whose one
+    -- server is the render slot. With ports the pool stays as it is, so the
+    -- switch can be flipped while matches play on it.
     IF TG_OP = 'UPDATE' AND (
         NEW.enabled = true AND
         (
@@ -48,7 +51,10 @@ BEGIN
             OLD.region IS NOT DISTINCT FROM NEW.region AND
             OLD.start_port_range IS NOT DISTINCT FROM NEW.start_port_range AND
             OLD.end_port_range IS NOT DISTINCT FROM NEW.end_port_range AND
-            OLD.enabled_for_match_making = NEW.enabled_for_match_making
+            (
+                OLD.enabled_for_match_making = NEW.enabled_for_match_making OR
+                (NEW.start_port_range IS NOT NULL AND NEW.end_port_range IS NOT NULL)
+            )
         )
     ) THEN
         RETURN NEW;

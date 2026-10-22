@@ -194,4 +194,64 @@ describe("node scheduling across an outage (SQL-driven)", () => {
     expect(await schedule(false)).toEqual({ success: false });
     expect(await status()).toBe("Setup");
   });
+
+  describe("matchmaking switch", () => {
+    const setMatchmaking = (on: boolean) =>
+      postgres.query(
+        `UPDATE game_server_nodes SET enabled_for_match_making = $1
+          WHERE id = 'sched-node'`,
+        [on],
+      );
+
+    const onDemandServers = () =>
+      postgres.query<
+        Array<{ id: string; reserved_by_match_id: string | null }>
+      >(
+        `SELECT id, reserved_by_match_id FROM servers
+          WHERE game_server_node_id = 'sched-node' AND is_dedicated = false
+          ORDER BY port`,
+      );
+
+    it("flips on a node with a match running, keeping its servers", async () => {
+      await postgres.query(
+        `UPDATE game_server_nodes
+            SET public_ip = '203.0.113.2', start_port_range = 30000, end_port_range = 30004
+          WHERE id = 'sched-node'`,
+      );
+      const pool = await onDemandServers();
+      expect(pool).toHaveLength(2);
+
+      // No match row needed: the trigger only asks whether one is reserved.
+      await postgres.transaction(async (client) => {
+        await client.query("SET LOCAL session_replication_role = replica");
+        await client.query(
+          "UPDATE servers SET reserved_by_match_id = gen_random_uuid() WHERE id = $1",
+          [pool[0].id],
+        );
+      });
+
+      await setMatchmaking(false);
+      await setMatchmaking(true);
+
+      const after = await onDemandServers();
+      expect(after.map(({ id }) => id)).toEqual(pool.map(({ id }) => id));
+      expect(after[0].reserved_by_match_id).not.toBeNull();
+    });
+
+    it("still clears the render slot of a node without ports", async () => {
+      await postgres.query(
+        `UPDATE game_server_nodes
+            SET gpu = true, enabled_for_match_making = false, region = NULL
+          WHERE id = 'sched-node'`,
+      );
+      await postgres.query(
+        `SELECT ensure_render_server('sched-node', 'SchedRegion')`,
+      );
+      expect(await onDemandServers()).toHaveLength(1);
+
+      await setMatchmaking(true);
+
+      expect(await onDemandServers()).toHaveLength(0);
+    });
+  });
 });
