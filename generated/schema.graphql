@@ -1782,6 +1782,8 @@ input _map_pool_updates {
   where: _map_pool_bool_exp!
 }
 
+scalar _text
+
 scalar _uuid
 
 """
@@ -6639,6 +6641,23 @@ type custom_pages_var_samp_fields {
 """aggregate variance on columns"""
 type custom_pages_variance_fields {
   nav_order: Float
+}
+
+scalar date
+
+"""
+Boolean expression to compare columns of type "date". All fields are combined with logical 'AND'.
+"""
+input date_comparison_exp {
+  _eq: date
+  _gt: date
+  _gte: date
+  _in: [date!]
+  _is_null: Boolean
+  _lt: date
+  _lte: date
+  _neq: date
+  _nin: [date!]
 }
 
 """
@@ -50516,6 +50535,14 @@ type mutation_root {
   delete_push_subscriptions_by_pk(id: uuid!): push_subscriptions
 
   """
+  delete data from the table: "recent_ban_entries"
+  """
+  delete_recent_ban_entries(
+    """filter the rows which have to be deleted"""
+    where: recent_ban_entries_bool_exp!
+  ): recent_ban_entries_mutation_response
+
+  """
   delete data from the table: "v_role_permissions"
   """
   delete_role_permissions(
@@ -54954,6 +54981,22 @@ type mutation_root {
     """upsert condition"""
     on_conflict: push_subscriptions_on_conflict
   ): push_subscriptions
+
+  """
+  insert data into the table: "recent_ban_entries"
+  """
+  insert_recent_ban_entries(
+    """the rows to be inserted"""
+    objects: [recent_ban_entries_insert_input!]!
+  ): recent_ban_entries_mutation_response
+
+  """
+  insert a single row into the table: "recent_ban_entries"
+  """
+  insert_recent_ban_entries_one(
+    """the row to be inserted"""
+    object: recent_ban_entries_insert_input!
+  ): recent_ban_entries
 
   """
   insert data into the table: "v_role_permissions"
@@ -62763,6 +62806,49 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [push_subscriptions_updates!]!
   ): [push_subscriptions_mutation_response]
+
+  """
+  update data of the table: "recent_ban_entries"
+  """
+  update_recent_ban_entries(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: recent_ban_entries_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: recent_ban_entries_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: recent_ban_entries_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: recent_ban_entries_delete_key_input
+
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: recent_ban_entries_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: recent_ban_entries_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: recent_ban_entries_set_input
+
+    """filter the rows which have to be updated"""
+    where: recent_ban_entries_bool_exp!
+  ): recent_ban_entries_mutation_response
+
+  """
+  update multiples rows of table: "recent_ban_entries"
+  """
+  update_recent_ban_entries_many(
+    """updates to execute, in order"""
+    updates: [recent_ban_entries_updates!]!
+  ): [recent_ban_entries_mutation_response]
 
   """
   update data of the table: "v_role_permissions"
@@ -82252,6 +82338,16 @@ type player_sanctions_mutation_response {
 }
 
 """
+input type for inserting object relation for remote table "player_sanctions"
+"""
+input player_sanctions_obj_rel_insert_input {
+  data: player_sanctions_insert_input!
+
+  """upsert condition"""
+  on_conflict: player_sanctions_on_conflict
+}
+
+"""
 on_conflict condition type for table "player_sanctions"
 """
 input player_sanctions_on_conflict {
@@ -97660,6 +97756,96 @@ type query_root {
   readServerFile(file_path: String!, node_id: String!, server_id: String): FileContentResponse!
 
   """
+  fetch data from the table: "recent_ban_entries"
+  """
+  recent_ban_entries(
+    """distinct select on columns"""
+    distinct_on: [recent_ban_entries_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [recent_ban_entries_order_by!]
+
+    """filter the rows returned"""
+    where: recent_ban_entries_bool_exp
+  ): [recent_ban_entries!]!
+
+  """
+  fetch aggregated fields from the table: "recent_ban_entries"
+  """
+  recent_ban_entries_aggregate(
+    """distinct select on columns"""
+    distinct_on: [recent_ban_entries_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [recent_ban_entries_order_by!]
+
+    """filter the rows returned"""
+    where: recent_ban_entries_bool_exp
+  ): recent_ban_entries_aggregate!
+
+  """
+  execute function "recently_banned_players" which returns "recent_ban_entries"
+  """
+  recently_banned_players(
+    """
+    input parameters for function "recently_banned_players"
+    """
+    args: recently_banned_players_args
+
+    """distinct select on columns"""
+    distinct_on: [recent_ban_entries_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [recent_ban_entries_order_by!]
+
+    """filter the rows returned"""
+    where: recent_ban_entries_bool_exp
+  ): [recent_ban_entries!]!
+
+  """
+  execute function "recently_banned_players" and query aggregates on result of table type "recent_ban_entries"
+  """
+  recently_banned_players_aggregate(
+    """
+    input parameters for function "recently_banned_players_aggregate"
+    """
+    args: recently_banned_players_args
+
+    """distinct select on columns"""
+    distinct_on: [recent_ban_entries_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [recent_ban_entries_order_by!]
+
+    """filter the rows returned"""
+    where: recent_ban_entries_bool_exp
+  ): recent_ban_entries_aggregate!
+
+  """
   fetch data from the table: "v_role_permissions"
   """
   role_permissions(
@@ -101953,6 +102139,442 @@ type query_root {
 
 input recalculate_tournament_awards_args {
   _tournament_id: uuid
+}
+
+"""
+columns and relationships of "recent_ban_entries"
+"""
+type recent_ban_entries {
+  arrived_banned: Boolean!
+  banned_at: timestamptz!
+  banned_at_source: String!
+  banned_here: Boolean!
+  first_match_at: timestamptz
+  game_ban_count: Int!
+  last_match_at: timestamptz
+  last_match_map: String
+  matches_played: Int!
+  matches_since_steam_ban: Int
+
+  """An object relationship"""
+  player: players
+
+  """An object relationship"""
+  sanction: player_sanctions
+  sanction_id: uuid
+  sanction_kind: String
+  shared_matches(
+    """JSON select path"""
+    path: String
+  ): jsonb
+  steam_banned_on: date
+  steam_id: bigint!
+  vac_ban_count: Int!
+}
+
+"""
+aggregated selection of "recent_ban_entries"
+"""
+type recent_ban_entries_aggregate {
+  aggregate: recent_ban_entries_aggregate_fields
+  nodes: [recent_ban_entries!]!
+}
+
+"""
+aggregate fields of "recent_ban_entries"
+"""
+type recent_ban_entries_aggregate_fields {
+  avg: recent_ban_entries_avg_fields
+  count(columns: [recent_ban_entries_select_column!], distinct: Boolean): Int!
+  max: recent_ban_entries_max_fields
+  min: recent_ban_entries_min_fields
+  stddev: recent_ban_entries_stddev_fields
+  stddev_pop: recent_ban_entries_stddev_pop_fields
+  stddev_samp: recent_ban_entries_stddev_samp_fields
+  sum: recent_ban_entries_sum_fields
+  var_pop: recent_ban_entries_var_pop_fields
+  var_samp: recent_ban_entries_var_samp_fields
+  variance: recent_ban_entries_variance_fields
+}
+
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input recent_ban_entries_append_input {
+  shared_matches: jsonb
+}
+
+"""aggregate avg on columns"""
+type recent_ban_entries_avg_fields {
+  game_ban_count: Float
+  matches_played: Float
+  matches_since_steam_ban: Float
+  steam_id: Float
+  vac_ban_count: Float
+}
+
+"""
+Boolean expression to filter rows from the table "recent_ban_entries". All fields are combined with a logical 'AND'.
+"""
+input recent_ban_entries_bool_exp {
+  _and: [recent_ban_entries_bool_exp!]
+  _not: recent_ban_entries_bool_exp
+  _or: [recent_ban_entries_bool_exp!]
+  arrived_banned: Boolean_comparison_exp
+  banned_at: timestamptz_comparison_exp
+  banned_at_source: String_comparison_exp
+  banned_here: Boolean_comparison_exp
+  first_match_at: timestamptz_comparison_exp
+  game_ban_count: Int_comparison_exp
+  last_match_at: timestamptz_comparison_exp
+  last_match_map: String_comparison_exp
+  matches_played: Int_comparison_exp
+  matches_since_steam_ban: Int_comparison_exp
+  player: players_bool_exp
+  sanction: player_sanctions_bool_exp
+  sanction_id: uuid_comparison_exp
+  sanction_kind: String_comparison_exp
+  shared_matches: jsonb_comparison_exp
+  steam_banned_on: date_comparison_exp
+  steam_id: bigint_comparison_exp
+  vac_ban_count: Int_comparison_exp
+}
+
+"""
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input recent_ban_entries_delete_at_path_input {
+  shared_matches: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input recent_ban_entries_delete_elem_input {
+  shared_matches: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input recent_ban_entries_delete_key_input {
+  shared_matches: String
+}
+
+"""
+input type for incrementing numeric columns in table "recent_ban_entries"
+"""
+input recent_ban_entries_inc_input {
+  game_ban_count: Int
+  matches_played: Int
+  matches_since_steam_ban: Int
+  steam_id: bigint
+  vac_ban_count: Int
+}
+
+"""
+input type for inserting data into table "recent_ban_entries"
+"""
+input recent_ban_entries_insert_input {
+  arrived_banned: Boolean
+  banned_at: timestamptz
+  banned_at_source: String
+  banned_here: Boolean
+  first_match_at: timestamptz
+  game_ban_count: Int
+  last_match_at: timestamptz
+  last_match_map: String
+  matches_played: Int
+  matches_since_steam_ban: Int
+  player: players_obj_rel_insert_input
+  sanction: player_sanctions_obj_rel_insert_input
+  sanction_id: uuid
+  sanction_kind: String
+  shared_matches: jsonb
+  steam_banned_on: date
+  steam_id: bigint
+  vac_ban_count: Int
+}
+
+"""aggregate max on columns"""
+type recent_ban_entries_max_fields {
+  banned_at: timestamptz
+  banned_at_source: String
+  first_match_at: timestamptz
+  game_ban_count: Int
+  last_match_at: timestamptz
+  last_match_map: String
+  matches_played: Int
+  matches_since_steam_ban: Int
+  sanction_id: uuid
+  sanction_kind: String
+  steam_banned_on: date
+  steam_id: bigint
+  vac_ban_count: Int
+}
+
+"""aggregate min on columns"""
+type recent_ban_entries_min_fields {
+  banned_at: timestamptz
+  banned_at_source: String
+  first_match_at: timestamptz
+  game_ban_count: Int
+  last_match_at: timestamptz
+  last_match_map: String
+  matches_played: Int
+  matches_since_steam_ban: Int
+  sanction_id: uuid
+  sanction_kind: String
+  steam_banned_on: date
+  steam_id: bigint
+  vac_ban_count: Int
+}
+
+"""
+response of any mutation on the table "recent_ban_entries"
+"""
+type recent_ban_entries_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [recent_ban_entries!]!
+}
+
+"""Ordering options when selecting data from "recent_ban_entries"."""
+input recent_ban_entries_order_by {
+  arrived_banned: order_by
+  banned_at: order_by
+  banned_at_source: order_by
+  banned_here: order_by
+  first_match_at: order_by
+  game_ban_count: order_by
+  last_match_at: order_by
+  last_match_map: order_by
+  matches_played: order_by
+  matches_since_steam_ban: order_by
+  player: players_order_by
+  sanction: player_sanctions_order_by
+  sanction_id: order_by
+  sanction_kind: order_by
+  shared_matches: order_by
+  steam_banned_on: order_by
+  steam_id: order_by
+  vac_ban_count: order_by
+}
+
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input recent_ban_entries_prepend_input {
+  shared_matches: jsonb
+}
+
+"""
+select columns of table "recent_ban_entries"
+"""
+enum recent_ban_entries_select_column {
+  """column name"""
+  arrived_banned
+
+  """column name"""
+  banned_at
+
+  """column name"""
+  banned_at_source
+
+  """column name"""
+  banned_here
+
+  """column name"""
+  first_match_at
+
+  """column name"""
+  game_ban_count
+
+  """column name"""
+  last_match_at
+
+  """column name"""
+  last_match_map
+
+  """column name"""
+  matches_played
+
+  """column name"""
+  matches_since_steam_ban
+
+  """column name"""
+  sanction_id
+
+  """column name"""
+  sanction_kind
+
+  """column name"""
+  shared_matches
+
+  """column name"""
+  steam_banned_on
+
+  """column name"""
+  steam_id
+
+  """column name"""
+  vac_ban_count
+}
+
+"""
+input type for updating data in table "recent_ban_entries"
+"""
+input recent_ban_entries_set_input {
+  arrived_banned: Boolean
+  banned_at: timestamptz
+  banned_at_source: String
+  banned_here: Boolean
+  first_match_at: timestamptz
+  game_ban_count: Int
+  last_match_at: timestamptz
+  last_match_map: String
+  matches_played: Int
+  matches_since_steam_ban: Int
+  sanction_id: uuid
+  sanction_kind: String
+  shared_matches: jsonb
+  steam_banned_on: date
+  steam_id: bigint
+  vac_ban_count: Int
+}
+
+"""aggregate stddev on columns"""
+type recent_ban_entries_stddev_fields {
+  game_ban_count: Float
+  matches_played: Float
+  matches_since_steam_ban: Float
+  steam_id: Float
+  vac_ban_count: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type recent_ban_entries_stddev_pop_fields {
+  game_ban_count: Float
+  matches_played: Float
+  matches_since_steam_ban: Float
+  steam_id: Float
+  vac_ban_count: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type recent_ban_entries_stddev_samp_fields {
+  game_ban_count: Float
+  matches_played: Float
+  matches_since_steam_ban: Float
+  steam_id: Float
+  vac_ban_count: Float
+}
+
+"""
+Streaming cursor of the table "recent_ban_entries"
+"""
+input recent_ban_entries_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: recent_ban_entries_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input recent_ban_entries_stream_cursor_value_input {
+  arrived_banned: Boolean
+  banned_at: timestamptz
+  banned_at_source: String
+  banned_here: Boolean
+  first_match_at: timestamptz
+  game_ban_count: Int
+  last_match_at: timestamptz
+  last_match_map: String
+  matches_played: Int
+  matches_since_steam_ban: Int
+  sanction_id: uuid
+  sanction_kind: String
+  shared_matches: jsonb
+  steam_banned_on: date
+  steam_id: bigint
+  vac_ban_count: Int
+}
+
+"""aggregate sum on columns"""
+type recent_ban_entries_sum_fields {
+  game_ban_count: Int
+  matches_played: Int
+  matches_since_steam_ban: Int
+  steam_id: bigint
+  vac_ban_count: Int
+}
+
+input recent_ban_entries_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: recent_ban_entries_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: recent_ban_entries_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: recent_ban_entries_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: recent_ban_entries_delete_key_input
+
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: recent_ban_entries_inc_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: recent_ban_entries_prepend_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: recent_ban_entries_set_input
+
+  """filter the rows which have to be updated"""
+  where: recent_ban_entries_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type recent_ban_entries_var_pop_fields {
+  game_ban_count: Float
+  matches_played: Float
+  matches_since_steam_ban: Float
+  steam_id: Float
+  vac_ban_count: Float
+}
+
+"""aggregate var_samp on columns"""
+type recent_ban_entries_var_samp_fields {
+  game_ban_count: Float
+  matches_played: Float
+  matches_since_steam_ban: Float
+  steam_id: Float
+  vac_ban_count: Float
+}
+
+"""aggregate variance on columns"""
+type recent_ban_entries_variance_fields {
+  game_ban_count: Float
+  matches_played: Float
+  matches_since_steam_ban: Float
+  steam_id: Float
+  vac_ban_count: Float
+}
+
+input recently_banned_players_args {
+  _kinds: _text
+  _lost_only: Boolean
+  _played_with: String
+  _search: String
+  _status: String
+  _timing: String
+  _window_days: Int
 }
 
 input remove_league_team_from_season_args {
@@ -118239,6 +118861,110 @@ type subscription_root {
     """filter the rows returned"""
     where: push_subscriptions_bool_exp
   ): [push_subscriptions!]!
+
+  """
+  fetch data from the table: "recent_ban_entries"
+  """
+  recent_ban_entries(
+    """distinct select on columns"""
+    distinct_on: [recent_ban_entries_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [recent_ban_entries_order_by!]
+
+    """filter the rows returned"""
+    where: recent_ban_entries_bool_exp
+  ): [recent_ban_entries!]!
+
+  """
+  fetch aggregated fields from the table: "recent_ban_entries"
+  """
+  recent_ban_entries_aggregate(
+    """distinct select on columns"""
+    distinct_on: [recent_ban_entries_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [recent_ban_entries_order_by!]
+
+    """filter the rows returned"""
+    where: recent_ban_entries_bool_exp
+  ): recent_ban_entries_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "recent_ban_entries"
+  """
+  recent_ban_entries_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [recent_ban_entries_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: recent_ban_entries_bool_exp
+  ): [recent_ban_entries!]!
+
+  """
+  execute function "recently_banned_players" which returns "recent_ban_entries"
+  """
+  recently_banned_players(
+    """
+    input parameters for function "recently_banned_players"
+    """
+    args: recently_banned_players_args
+
+    """distinct select on columns"""
+    distinct_on: [recent_ban_entries_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [recent_ban_entries_order_by!]
+
+    """filter the rows returned"""
+    where: recent_ban_entries_bool_exp
+  ): [recent_ban_entries!]!
+
+  """
+  execute function "recently_banned_players" and query aggregates on result of table type "recent_ban_entries"
+  """
+  recently_banned_players_aggregate(
+    """
+    input parameters for function "recently_banned_players_aggregate"
+    """
+    args: recently_banned_players_args
+
+    """distinct select on columns"""
+    distinct_on: [recent_ban_entries_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [recent_ban_entries_order_by!]
+
+    """filter the rows returned"""
+    where: recent_ban_entries_bool_exp
+  ): recent_ban_entries_aggregate!
 
   """
   fetch data from the table: "v_role_permissions"

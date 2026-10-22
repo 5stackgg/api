@@ -8,9 +8,11 @@ export type Scalars = {
     Float: number,
     Int: number,
     String: string,
+    _text: any,
     _uuid: any,
     bigint: any,
     bytea: any,
+    date: any,
     float8: any,
     inet: any,
     json: any,
@@ -17251,6 +17253,8 @@ export interface mutation_root {
     delete_push_subscriptions: (push_subscriptions_mutation_response | null)
     /** delete single row from the table: "push_subscriptions" */
     delete_push_subscriptions_by_pk: (push_subscriptions | null)
+    /** delete data from the table: "recent_ban_entries" */
+    delete_recent_ban_entries: (recent_ban_entries_mutation_response | null)
     /** delete data from the table: "v_role_permissions" */
     delete_role_permissions: (role_permissions_mutation_response | null)
     /** delete data from the table: "seasons" */
@@ -18188,6 +18192,10 @@ export interface mutation_root {
     insert_push_subscriptions: (push_subscriptions_mutation_response | null)
     /** insert a single row into the table: "push_subscriptions" */
     insert_push_subscriptions_one: (push_subscriptions | null)
+    /** insert data into the table: "recent_ban_entries" */
+    insert_recent_ban_entries: (recent_ban_entries_mutation_response | null)
+    /** insert a single row into the table: "recent_ban_entries" */
+    insert_recent_ban_entries_one: (recent_ban_entries | null)
     /** insert data into the table: "v_role_permissions" */
     insert_role_permissions: (role_permissions_mutation_response | null)
     /** insert a single row into the table: "v_role_permissions" */
@@ -19654,6 +19662,10 @@ export interface mutation_root {
     update_push_subscriptions_by_pk: (push_subscriptions | null)
     /** update multiples rows of table: "push_subscriptions" */
     update_push_subscriptions_many: ((push_subscriptions_mutation_response | null)[] | null)
+    /** update data of the table: "recent_ban_entries" */
+    update_recent_ban_entries: (recent_ban_entries_mutation_response | null)
+    /** update multiples rows of table: "recent_ban_entries" */
+    update_recent_ban_entries_many: ((recent_ban_entries_mutation_response | null)[] | null)
     /** update data of the table: "v_role_permissions" */
     update_role_permissions: (role_permissions_mutation_response | null)
     /** update multiples rows of table: "v_role_permissions" */
@@ -30555,6 +30567,14 @@ export interface query_root {
     push_subscriptions_by_pk: (push_subscriptions | null)
     /** Read file content from game server */
     readServerFile: FileContentResponse
+    /** fetch data from the table: "recent_ban_entries" */
+    recent_ban_entries: recent_ban_entries[]
+    /** fetch aggregated fields from the table: "recent_ban_entries" */
+    recent_ban_entries_aggregate: recent_ban_entries_aggregate
+    /** execute function "recently_banned_players" which returns "recent_ban_entries" */
+    recently_banned_players: recent_ban_entries[]
+    /** execute function "recently_banned_players" and query aggregates on result of table type "recent_ban_entries" */
+    recently_banned_players_aggregate: recent_ban_entries_aggregate
     /** fetch data from the table: "v_role_permissions" */
     role_permissions: role_permissions[]
     /** fetch aggregated fields from the table: "v_role_permissions" */
@@ -31108,6 +31128,197 @@ export interface query_root {
     /** Web push setup status for the application settings page; never returns the private key */
     webPushStatus: (WebPushStatusOutput | null)
     __typename: 'query_root'
+}
+
+
+/** columns and relationships of "recent_ban_entries" */
+export interface recent_ban_entries {
+    arrived_banned: Scalars['Boolean']
+    banned_at: Scalars['timestamptz']
+    banned_at_source: Scalars['String']
+    banned_here: Scalars['Boolean']
+    first_match_at: (Scalars['timestamptz'] | null)
+    game_ban_count: Scalars['Int']
+    last_match_at: (Scalars['timestamptz'] | null)
+    last_match_map: (Scalars['String'] | null)
+    matches_played: Scalars['Int']
+    matches_since_steam_ban: (Scalars['Int'] | null)
+    /** An object relationship */
+    player: (players | null)
+    /** An object relationship */
+    sanction: (player_sanctions | null)
+    sanction_id: (Scalars['uuid'] | null)
+    sanction_kind: (Scalars['String'] | null)
+    shared_matches: (Scalars['jsonb'] | null)
+    steam_banned_on: (Scalars['date'] | null)
+    steam_id: Scalars['bigint']
+    vac_ban_count: Scalars['Int']
+    __typename: 'recent_ban_entries'
+}
+
+
+/** aggregated selection of "recent_ban_entries" */
+export interface recent_ban_entries_aggregate {
+    aggregate: (recent_ban_entries_aggregate_fields | null)
+    nodes: recent_ban_entries[]
+    __typename: 'recent_ban_entries_aggregate'
+}
+
+
+/** aggregate fields of "recent_ban_entries" */
+export interface recent_ban_entries_aggregate_fields {
+    avg: (recent_ban_entries_avg_fields | null)
+    count: Scalars['Int']
+    max: (recent_ban_entries_max_fields | null)
+    min: (recent_ban_entries_min_fields | null)
+    stddev: (recent_ban_entries_stddev_fields | null)
+    stddev_pop: (recent_ban_entries_stddev_pop_fields | null)
+    stddev_samp: (recent_ban_entries_stddev_samp_fields | null)
+    sum: (recent_ban_entries_sum_fields | null)
+    var_pop: (recent_ban_entries_var_pop_fields | null)
+    var_samp: (recent_ban_entries_var_samp_fields | null)
+    variance: (recent_ban_entries_variance_fields | null)
+    __typename: 'recent_ban_entries_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface recent_ban_entries_avg_fields {
+    game_ban_count: (Scalars['Float'] | null)
+    matches_played: (Scalars['Float'] | null)
+    matches_since_steam_ban: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    vac_ban_count: (Scalars['Float'] | null)
+    __typename: 'recent_ban_entries_avg_fields'
+}
+
+
+/** aggregate max on columns */
+export interface recent_ban_entries_max_fields {
+    banned_at: (Scalars['timestamptz'] | null)
+    banned_at_source: (Scalars['String'] | null)
+    first_match_at: (Scalars['timestamptz'] | null)
+    game_ban_count: (Scalars['Int'] | null)
+    last_match_at: (Scalars['timestamptz'] | null)
+    last_match_map: (Scalars['String'] | null)
+    matches_played: (Scalars['Int'] | null)
+    matches_since_steam_ban: (Scalars['Int'] | null)
+    sanction_id: (Scalars['uuid'] | null)
+    sanction_kind: (Scalars['String'] | null)
+    steam_banned_on: (Scalars['date'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    vac_ban_count: (Scalars['Int'] | null)
+    __typename: 'recent_ban_entries_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface recent_ban_entries_min_fields {
+    banned_at: (Scalars['timestamptz'] | null)
+    banned_at_source: (Scalars['String'] | null)
+    first_match_at: (Scalars['timestamptz'] | null)
+    game_ban_count: (Scalars['Int'] | null)
+    last_match_at: (Scalars['timestamptz'] | null)
+    last_match_map: (Scalars['String'] | null)
+    matches_played: (Scalars['Int'] | null)
+    matches_since_steam_ban: (Scalars['Int'] | null)
+    sanction_id: (Scalars['uuid'] | null)
+    sanction_kind: (Scalars['String'] | null)
+    steam_banned_on: (Scalars['date'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    vac_ban_count: (Scalars['Int'] | null)
+    __typename: 'recent_ban_entries_min_fields'
+}
+
+
+/** response of any mutation on the table "recent_ban_entries" */
+export interface recent_ban_entries_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: recent_ban_entries[]
+    __typename: 'recent_ban_entries_mutation_response'
+}
+
+
+/** select columns of table "recent_ban_entries" */
+export type recent_ban_entries_select_column = 'arrived_banned' | 'banned_at' | 'banned_at_source' | 'banned_here' | 'first_match_at' | 'game_ban_count' | 'last_match_at' | 'last_match_map' | 'matches_played' | 'matches_since_steam_ban' | 'sanction_id' | 'sanction_kind' | 'shared_matches' | 'steam_banned_on' | 'steam_id' | 'vac_ban_count'
+
+
+/** aggregate stddev on columns */
+export interface recent_ban_entries_stddev_fields {
+    game_ban_count: (Scalars['Float'] | null)
+    matches_played: (Scalars['Float'] | null)
+    matches_since_steam_ban: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    vac_ban_count: (Scalars['Float'] | null)
+    __typename: 'recent_ban_entries_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface recent_ban_entries_stddev_pop_fields {
+    game_ban_count: (Scalars['Float'] | null)
+    matches_played: (Scalars['Float'] | null)
+    matches_since_steam_ban: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    vac_ban_count: (Scalars['Float'] | null)
+    __typename: 'recent_ban_entries_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface recent_ban_entries_stddev_samp_fields {
+    game_ban_count: (Scalars['Float'] | null)
+    matches_played: (Scalars['Float'] | null)
+    matches_since_steam_ban: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    vac_ban_count: (Scalars['Float'] | null)
+    __typename: 'recent_ban_entries_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface recent_ban_entries_sum_fields {
+    game_ban_count: (Scalars['Int'] | null)
+    matches_played: (Scalars['Int'] | null)
+    matches_since_steam_ban: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    vac_ban_count: (Scalars['Int'] | null)
+    __typename: 'recent_ban_entries_sum_fields'
+}
+
+
+/** aggregate var_pop on columns */
+export interface recent_ban_entries_var_pop_fields {
+    game_ban_count: (Scalars['Float'] | null)
+    matches_played: (Scalars['Float'] | null)
+    matches_since_steam_ban: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    vac_ban_count: (Scalars['Float'] | null)
+    __typename: 'recent_ban_entries_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface recent_ban_entries_var_samp_fields {
+    game_ban_count: (Scalars['Float'] | null)
+    matches_played: (Scalars['Float'] | null)
+    matches_since_steam_ban: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    vac_ban_count: (Scalars['Float'] | null)
+    __typename: 'recent_ban_entries_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface recent_ban_entries_variance_fields {
+    game_ban_count: (Scalars['Float'] | null)
+    matches_played: (Scalars['Float'] | null)
+    matches_since_steam_ban: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    vac_ban_count: (Scalars['Float'] | null)
+    __typename: 'recent_ban_entries_variance_fields'
 }
 
 
@@ -34587,6 +34798,16 @@ export interface subscription_root {
     push_subscriptions_by_pk: (push_subscriptions | null)
     /** fetch data from the table in a streaming manner: "push_subscriptions" */
     push_subscriptions_stream: push_subscriptions[]
+    /** fetch data from the table: "recent_ban_entries" */
+    recent_ban_entries: recent_ban_entries[]
+    /** fetch aggregated fields from the table: "recent_ban_entries" */
+    recent_ban_entries_aggregate: recent_ban_entries_aggregate
+    /** fetch data from the table in a streaming manner: "recent_ban_entries" */
+    recent_ban_entries_stream: recent_ban_entries[]
+    /** execute function "recently_banned_players" which returns "recent_ban_entries" */
+    recently_banned_players: recent_ban_entries[]
+    /** execute function "recently_banned_players" and query aggregates on result of table type "recent_ban_entries" */
+    recently_banned_players_aggregate: recent_ban_entries_aggregate
     /** fetch data from the table: "v_role_permissions" */
     role_permissions: role_permissions[]
     /** fetch aggregated fields from the table: "v_role_permissions" */
@@ -56092,6 +56313,10 @@ export interface custom_pages_variance_fieldsGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** Boolean expression to compare columns of type "date". All fields are combined with logical 'AND'. */
+export interface date_comparison_exp {_eq?: (Scalars['date'] | null),_gt?: (Scalars['date'] | null),_gte?: (Scalars['date'] | null),_in?: (Scalars['date'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['date'] | null),_lte?: (Scalars['date'] | null),_neq?: (Scalars['date'] | null),_nin?: (Scalars['date'][] | null)}
 
 
 /** columns and relationships of "db_backups" */
@@ -79475,6 +79700,10 @@ export interface mutation_rootGenqlSelection{
     where: push_subscriptions_bool_exp} })
     /** delete single row from the table: "push_subscriptions" */
     delete_push_subscriptions_by_pk?: (push_subscriptionsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "recent_ban_entries" */
+    delete_recent_ban_entries?: (recent_ban_entries_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: recent_ban_entries_bool_exp} })
     /** delete data from the table: "v_role_permissions" */
     delete_role_permissions?: (role_permissions_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -81828,6 +82057,14 @@ export interface mutation_rootGenqlSelection{
     object: push_subscriptions_insert_input, 
     /** upsert condition */
     on_conflict?: (push_subscriptions_on_conflict | null)} })
+    /** insert data into the table: "recent_ban_entries" */
+    insert_recent_ban_entries?: (recent_ban_entries_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: recent_ban_entries_insert_input[]} })
+    /** insert a single row into the table: "recent_ban_entries" */
+    insert_recent_ban_entries_one?: (recent_ban_entriesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: recent_ban_entries_insert_input} })
     /** insert data into the table: "v_role_permissions" */
     insert_role_permissions?: (role_permissions_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -85912,6 +86149,28 @@ export interface mutation_rootGenqlSelection{
     update_push_subscriptions_many?: (push_subscriptions_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: push_subscriptions_updates[]} })
+    /** update data of the table: "recent_ban_entries" */
+    update_recent_ban_entries?: (recent_ban_entries_mutation_responseGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (recent_ban_entries_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (recent_ban_entries_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (recent_ban_entries_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (recent_ban_entries_delete_key_input | null), 
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (recent_ban_entries_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (recent_ban_entries_prepend_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (recent_ban_entries_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: recent_ban_entries_bool_exp} })
+    /** update multiples rows of table: "recent_ban_entries" */
+    update_recent_ban_entries_many?: (recent_ban_entries_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: recent_ban_entries_updates[]} })
     /** update data of the table: "v_role_permissions" */
     update_role_permissions?: (role_permissions_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -96214,6 +96473,12 @@ export interface player_sanctions_mutation_responseGenqlSelection{
 }
 
 
+/** input type for inserting object relation for remote table "player_sanctions" */
+export interface player_sanctions_obj_rel_insert_input {data: player_sanctions_insert_input,
+/** upsert condition */
+on_conflict?: (player_sanctions_on_conflict | null)}
+
+
 /** on_conflict condition type for table "player_sanctions" */
 export interface player_sanctions_on_conflict {constraint: player_sanctions_constraint,update_columns?: player_sanctions_update_column[],where?: (player_sanctions_bool_exp | null)}
 
@@ -105180,6 +105445,58 @@ export interface query_rootGenqlSelection{
     push_subscriptions_by_pk?: (push_subscriptionsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** Read file content from game server */
     readServerFile?: (FileContentResponseGenqlSelection & { __args: {file_path: Scalars['String'], node_id: Scalars['String'], server_id?: (Scalars['String'] | null)} })
+    /** fetch data from the table: "recent_ban_entries" */
+    recent_ban_entries?: (recent_ban_entriesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (recent_ban_entries_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (recent_ban_entries_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (recent_ban_entries_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "recent_ban_entries" */
+    recent_ban_entries_aggregate?: (recent_ban_entries_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (recent_ban_entries_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (recent_ban_entries_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (recent_ban_entries_bool_exp | null)} })
+    /** execute function "recently_banned_players" which returns "recent_ban_entries" */
+    recently_banned_players?: (recent_ban_entriesGenqlSelection & { __args?: {
+    /** input parameters for function "recently_banned_players" */
+    args?: (recently_banned_players_args | null), 
+    /** distinct select on columns */
+    distinct_on?: (recent_ban_entries_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (recent_ban_entries_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (recent_ban_entries_bool_exp | null)} })
+    /** execute function "recently_banned_players" and query aggregates on result of table type "recent_ban_entries" */
+    recently_banned_players_aggregate?: (recent_ban_entries_aggregateGenqlSelection & { __args?: {
+    /** input parameters for function "recently_banned_players_aggregate" */
+    args?: (recently_banned_players_args | null), 
+    /** distinct select on columns */
+    distinct_on?: (recent_ban_entries_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (recent_ban_entries_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (recent_ban_entries_bool_exp | null)} })
     /** fetch data from the table: "v_role_permissions" */
     role_permissions?: (role_permissionsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -107737,6 +108054,281 @@ export interface query_rootGenqlSelection{
 }
 
 export interface recalculate_tournament_awards_args {_tournament_id?: (Scalars['uuid'] | null)}
+
+
+/** columns and relationships of "recent_ban_entries" */
+export interface recent_ban_entriesGenqlSelection{
+    arrived_banned?: boolean | number
+    banned_at?: boolean | number
+    banned_at_source?: boolean | number
+    banned_here?: boolean | number
+    first_match_at?: boolean | number
+    game_ban_count?: boolean | number
+    last_match_at?: boolean | number
+    last_match_map?: boolean | number
+    matches_played?: boolean | number
+    matches_since_steam_ban?: boolean | number
+    /** An object relationship */
+    player?: playersGenqlSelection
+    /** An object relationship */
+    sanction?: player_sanctionsGenqlSelection
+    sanction_id?: boolean | number
+    sanction_kind?: boolean | number
+    shared_matches?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
+    steam_banned_on?: boolean | number
+    steam_id?: boolean | number
+    vac_ban_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "recent_ban_entries" */
+export interface recent_ban_entries_aggregateGenqlSelection{
+    aggregate?: recent_ban_entries_aggregate_fieldsGenqlSelection
+    nodes?: recent_ban_entriesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "recent_ban_entries" */
+export interface recent_ban_entries_aggregate_fieldsGenqlSelection{
+    avg?: recent_ban_entries_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (recent_ban_entries_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: recent_ban_entries_max_fieldsGenqlSelection
+    min?: recent_ban_entries_min_fieldsGenqlSelection
+    stddev?: recent_ban_entries_stddev_fieldsGenqlSelection
+    stddev_pop?: recent_ban_entries_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: recent_ban_entries_stddev_samp_fieldsGenqlSelection
+    sum?: recent_ban_entries_sum_fieldsGenqlSelection
+    var_pop?: recent_ban_entries_var_pop_fieldsGenqlSelection
+    var_samp?: recent_ban_entries_var_samp_fieldsGenqlSelection
+    variance?: recent_ban_entries_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** append existing jsonb value of filtered columns with new jsonb value */
+export interface recent_ban_entries_append_input {shared_matches?: (Scalars['jsonb'] | null)}
+
+
+/** aggregate avg on columns */
+export interface recent_ban_entries_avg_fieldsGenqlSelection{
+    game_ban_count?: boolean | number
+    matches_played?: boolean | number
+    matches_since_steam_ban?: boolean | number
+    steam_id?: boolean | number
+    vac_ban_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "recent_ban_entries". All fields are combined with a logical 'AND'. */
+export interface recent_ban_entries_bool_exp {_and?: (recent_ban_entries_bool_exp[] | null),_not?: (recent_ban_entries_bool_exp | null),_or?: (recent_ban_entries_bool_exp[] | null),arrived_banned?: (Boolean_comparison_exp | null),banned_at?: (timestamptz_comparison_exp | null),banned_at_source?: (String_comparison_exp | null),banned_here?: (Boolean_comparison_exp | null),first_match_at?: (timestamptz_comparison_exp | null),game_ban_count?: (Int_comparison_exp | null),last_match_at?: (timestamptz_comparison_exp | null),last_match_map?: (String_comparison_exp | null),matches_played?: (Int_comparison_exp | null),matches_since_steam_ban?: (Int_comparison_exp | null),player?: (players_bool_exp | null),sanction?: (player_sanctions_bool_exp | null),sanction_id?: (uuid_comparison_exp | null),sanction_kind?: (String_comparison_exp | null),shared_matches?: (jsonb_comparison_exp | null),steam_banned_on?: (date_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),vac_ban_count?: (Int_comparison_exp | null)}
+
+
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+export interface recent_ban_entries_delete_at_path_input {shared_matches?: (Scalars['String'][] | null)}
+
+
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+export interface recent_ban_entries_delete_elem_input {shared_matches?: (Scalars['Int'] | null)}
+
+
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+export interface recent_ban_entries_delete_key_input {shared_matches?: (Scalars['String'] | null)}
+
+
+/** input type for incrementing numeric columns in table "recent_ban_entries" */
+export interface recent_ban_entries_inc_input {game_ban_count?: (Scalars['Int'] | null),matches_played?: (Scalars['Int'] | null),matches_since_steam_ban?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),vac_ban_count?: (Scalars['Int'] | null)}
+
+
+/** input type for inserting data into table "recent_ban_entries" */
+export interface recent_ban_entries_insert_input {arrived_banned?: (Scalars['Boolean'] | null),banned_at?: (Scalars['timestamptz'] | null),banned_at_source?: (Scalars['String'] | null),banned_here?: (Scalars['Boolean'] | null),first_match_at?: (Scalars['timestamptz'] | null),game_ban_count?: (Scalars['Int'] | null),last_match_at?: (Scalars['timestamptz'] | null),last_match_map?: (Scalars['String'] | null),matches_played?: (Scalars['Int'] | null),matches_since_steam_ban?: (Scalars['Int'] | null),player?: (players_obj_rel_insert_input | null),sanction?: (player_sanctions_obj_rel_insert_input | null),sanction_id?: (Scalars['uuid'] | null),sanction_kind?: (Scalars['String'] | null),shared_matches?: (Scalars['jsonb'] | null),steam_banned_on?: (Scalars['date'] | null),steam_id?: (Scalars['bigint'] | null),vac_ban_count?: (Scalars['Int'] | null)}
+
+
+/** aggregate max on columns */
+export interface recent_ban_entries_max_fieldsGenqlSelection{
+    banned_at?: boolean | number
+    banned_at_source?: boolean | number
+    first_match_at?: boolean | number
+    game_ban_count?: boolean | number
+    last_match_at?: boolean | number
+    last_match_map?: boolean | number
+    matches_played?: boolean | number
+    matches_since_steam_ban?: boolean | number
+    sanction_id?: boolean | number
+    sanction_kind?: boolean | number
+    steam_banned_on?: boolean | number
+    steam_id?: boolean | number
+    vac_ban_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface recent_ban_entries_min_fieldsGenqlSelection{
+    banned_at?: boolean | number
+    banned_at_source?: boolean | number
+    first_match_at?: boolean | number
+    game_ban_count?: boolean | number
+    last_match_at?: boolean | number
+    last_match_map?: boolean | number
+    matches_played?: boolean | number
+    matches_since_steam_ban?: boolean | number
+    sanction_id?: boolean | number
+    sanction_kind?: boolean | number
+    steam_banned_on?: boolean | number
+    steam_id?: boolean | number
+    vac_ban_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "recent_ban_entries" */
+export interface recent_ban_entries_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: recent_ban_entriesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Ordering options when selecting data from "recent_ban_entries". */
+export interface recent_ban_entries_order_by {arrived_banned?: (order_by | null),banned_at?: (order_by | null),banned_at_source?: (order_by | null),banned_here?: (order_by | null),first_match_at?: (order_by | null),game_ban_count?: (order_by | null),last_match_at?: (order_by | null),last_match_map?: (order_by | null),matches_played?: (order_by | null),matches_since_steam_ban?: (order_by | null),player?: (players_order_by | null),sanction?: (player_sanctions_order_by | null),sanction_id?: (order_by | null),sanction_kind?: (order_by | null),shared_matches?: (order_by | null),steam_banned_on?: (order_by | null),steam_id?: (order_by | null),vac_ban_count?: (order_by | null)}
+
+
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+export interface recent_ban_entries_prepend_input {shared_matches?: (Scalars['jsonb'] | null)}
+
+
+/** input type for updating data in table "recent_ban_entries" */
+export interface recent_ban_entries_set_input {arrived_banned?: (Scalars['Boolean'] | null),banned_at?: (Scalars['timestamptz'] | null),banned_at_source?: (Scalars['String'] | null),banned_here?: (Scalars['Boolean'] | null),first_match_at?: (Scalars['timestamptz'] | null),game_ban_count?: (Scalars['Int'] | null),last_match_at?: (Scalars['timestamptz'] | null),last_match_map?: (Scalars['String'] | null),matches_played?: (Scalars['Int'] | null),matches_since_steam_ban?: (Scalars['Int'] | null),sanction_id?: (Scalars['uuid'] | null),sanction_kind?: (Scalars['String'] | null),shared_matches?: (Scalars['jsonb'] | null),steam_banned_on?: (Scalars['date'] | null),steam_id?: (Scalars['bigint'] | null),vac_ban_count?: (Scalars['Int'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface recent_ban_entries_stddev_fieldsGenqlSelection{
+    game_ban_count?: boolean | number
+    matches_played?: boolean | number
+    matches_since_steam_ban?: boolean | number
+    steam_id?: boolean | number
+    vac_ban_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface recent_ban_entries_stddev_pop_fieldsGenqlSelection{
+    game_ban_count?: boolean | number
+    matches_played?: boolean | number
+    matches_since_steam_ban?: boolean | number
+    steam_id?: boolean | number
+    vac_ban_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface recent_ban_entries_stddev_samp_fieldsGenqlSelection{
+    game_ban_count?: boolean | number
+    matches_played?: boolean | number
+    matches_since_steam_ban?: boolean | number
+    steam_id?: boolean | number
+    vac_ban_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "recent_ban_entries" */
+export interface recent_ban_entries_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: recent_ban_entries_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface recent_ban_entries_stream_cursor_value_input {arrived_banned?: (Scalars['Boolean'] | null),banned_at?: (Scalars['timestamptz'] | null),banned_at_source?: (Scalars['String'] | null),banned_here?: (Scalars['Boolean'] | null),first_match_at?: (Scalars['timestamptz'] | null),game_ban_count?: (Scalars['Int'] | null),last_match_at?: (Scalars['timestamptz'] | null),last_match_map?: (Scalars['String'] | null),matches_played?: (Scalars['Int'] | null),matches_since_steam_ban?: (Scalars['Int'] | null),sanction_id?: (Scalars['uuid'] | null),sanction_kind?: (Scalars['String'] | null),shared_matches?: (Scalars['jsonb'] | null),steam_banned_on?: (Scalars['date'] | null),steam_id?: (Scalars['bigint'] | null),vac_ban_count?: (Scalars['Int'] | null)}
+
+
+/** aggregate sum on columns */
+export interface recent_ban_entries_sum_fieldsGenqlSelection{
+    game_ban_count?: boolean | number
+    matches_played?: boolean | number
+    matches_since_steam_ban?: boolean | number
+    steam_id?: boolean | number
+    vac_ban_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface recent_ban_entries_updates {
+/** append existing jsonb value of filtered columns with new jsonb value */
+_append?: (recent_ban_entries_append_input | null),
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+_delete_at_path?: (recent_ban_entries_delete_at_path_input | null),
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+_delete_elem?: (recent_ban_entries_delete_elem_input | null),
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+_delete_key?: (recent_ban_entries_delete_key_input | null),
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (recent_ban_entries_inc_input | null),
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+_prepend?: (recent_ban_entries_prepend_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (recent_ban_entries_set_input | null),
+/** filter the rows which have to be updated */
+where: recent_ban_entries_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface recent_ban_entries_var_pop_fieldsGenqlSelection{
+    game_ban_count?: boolean | number
+    matches_played?: boolean | number
+    matches_since_steam_ban?: boolean | number
+    steam_id?: boolean | number
+    vac_ban_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface recent_ban_entries_var_samp_fieldsGenqlSelection{
+    game_ban_count?: boolean | number
+    matches_played?: boolean | number
+    matches_since_steam_ban?: boolean | number
+    steam_id?: boolean | number
+    vac_ban_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface recent_ban_entries_variance_fieldsGenqlSelection{
+    game_ban_count?: boolean | number
+    matches_played?: boolean | number
+    matches_since_steam_ban?: boolean | number
+    steam_id?: boolean | number
+    vac_ban_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface recently_banned_players_args {_kinds?: (Scalars['_text'] | null),_lost_only?: (Scalars['Boolean'] | null),_played_with?: (Scalars['String'] | null),_search?: (Scalars['String'] | null),_status?: (Scalars['String'] | null),_timing?: (Scalars['String'] | null),_window_days?: (Scalars['Int'] | null)}
 
 export interface remove_league_team_from_season_args {_league_team_season_id?: (Scalars['uuid'] | null)}
 
@@ -117074,6 +117666,66 @@ export interface subscription_rootGenqlSelection{
     cursor: (push_subscriptions_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (push_subscriptions_bool_exp | null)} })
+    /** fetch data from the table: "recent_ban_entries" */
+    recent_ban_entries?: (recent_ban_entriesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (recent_ban_entries_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (recent_ban_entries_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (recent_ban_entries_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "recent_ban_entries" */
+    recent_ban_entries_aggregate?: (recent_ban_entries_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (recent_ban_entries_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (recent_ban_entries_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (recent_ban_entries_bool_exp | null)} })
+    /** fetch data from the table in a streaming manner: "recent_ban_entries" */
+    recent_ban_entries_stream?: (recent_ban_entriesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (recent_ban_entries_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (recent_ban_entries_bool_exp | null)} })
+    /** execute function "recently_banned_players" which returns "recent_ban_entries" */
+    recently_banned_players?: (recent_ban_entriesGenqlSelection & { __args?: {
+    /** input parameters for function "recently_banned_players" */
+    args?: (recently_banned_players_args | null), 
+    /** distinct select on columns */
+    distinct_on?: (recent_ban_entries_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (recent_ban_entries_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (recent_ban_entries_bool_exp | null)} })
+    /** execute function "recently_banned_players" and query aggregates on result of table type "recent_ban_entries" */
+    recently_banned_players_aggregate?: (recent_ban_entries_aggregateGenqlSelection & { __args?: {
+    /** input parameters for function "recently_banned_players_aggregate" */
+    args?: (recently_banned_players_args | null), 
+    /** distinct select on columns */
+    distinct_on?: (recent_ban_entries_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (recent_ban_entries_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (recent_ban_entries_bool_exp | null)} })
     /** fetch data from the table: "v_role_permissions" */
     role_permissions?: (role_permissionsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -158622,6 +159274,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const recent_ban_entries_possibleTypes: string[] = ['recent_ban_entries']
+    export const isrecent_ban_entries = (obj?: { __typename?: any } | null): obj is recent_ban_entries => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isrecent_ban_entries"')
+      return recent_ban_entries_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const recent_ban_entries_aggregate_possibleTypes: string[] = ['recent_ban_entries_aggregate']
+    export const isrecent_ban_entries_aggregate = (obj?: { __typename?: any } | null): obj is recent_ban_entries_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isrecent_ban_entries_aggregate"')
+      return recent_ban_entries_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const recent_ban_entries_aggregate_fields_possibleTypes: string[] = ['recent_ban_entries_aggregate_fields']
+    export const isrecent_ban_entries_aggregate_fields = (obj?: { __typename?: any } | null): obj is recent_ban_entries_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isrecent_ban_entries_aggregate_fields"')
+      return recent_ban_entries_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const recent_ban_entries_avg_fields_possibleTypes: string[] = ['recent_ban_entries_avg_fields']
+    export const isrecent_ban_entries_avg_fields = (obj?: { __typename?: any } | null): obj is recent_ban_entries_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isrecent_ban_entries_avg_fields"')
+      return recent_ban_entries_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const recent_ban_entries_max_fields_possibleTypes: string[] = ['recent_ban_entries_max_fields']
+    export const isrecent_ban_entries_max_fields = (obj?: { __typename?: any } | null): obj is recent_ban_entries_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isrecent_ban_entries_max_fields"')
+      return recent_ban_entries_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const recent_ban_entries_min_fields_possibleTypes: string[] = ['recent_ban_entries_min_fields']
+    export const isrecent_ban_entries_min_fields = (obj?: { __typename?: any } | null): obj is recent_ban_entries_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isrecent_ban_entries_min_fields"')
+      return recent_ban_entries_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const recent_ban_entries_mutation_response_possibleTypes: string[] = ['recent_ban_entries_mutation_response']
+    export const isrecent_ban_entries_mutation_response = (obj?: { __typename?: any } | null): obj is recent_ban_entries_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isrecent_ban_entries_mutation_response"')
+      return recent_ban_entries_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const recent_ban_entries_stddev_fields_possibleTypes: string[] = ['recent_ban_entries_stddev_fields']
+    export const isrecent_ban_entries_stddev_fields = (obj?: { __typename?: any } | null): obj is recent_ban_entries_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isrecent_ban_entries_stddev_fields"')
+      return recent_ban_entries_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const recent_ban_entries_stddev_pop_fields_possibleTypes: string[] = ['recent_ban_entries_stddev_pop_fields']
+    export const isrecent_ban_entries_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is recent_ban_entries_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isrecent_ban_entries_stddev_pop_fields"')
+      return recent_ban_entries_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const recent_ban_entries_stddev_samp_fields_possibleTypes: string[] = ['recent_ban_entries_stddev_samp_fields']
+    export const isrecent_ban_entries_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is recent_ban_entries_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isrecent_ban_entries_stddev_samp_fields"')
+      return recent_ban_entries_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const recent_ban_entries_sum_fields_possibleTypes: string[] = ['recent_ban_entries_sum_fields']
+    export const isrecent_ban_entries_sum_fields = (obj?: { __typename?: any } | null): obj is recent_ban_entries_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isrecent_ban_entries_sum_fields"')
+      return recent_ban_entries_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const recent_ban_entries_var_pop_fields_possibleTypes: string[] = ['recent_ban_entries_var_pop_fields']
+    export const isrecent_ban_entries_var_pop_fields = (obj?: { __typename?: any } | null): obj is recent_ban_entries_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isrecent_ban_entries_var_pop_fields"')
+      return recent_ban_entries_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const recent_ban_entries_var_samp_fields_possibleTypes: string[] = ['recent_ban_entries_var_samp_fields']
+    export const isrecent_ban_entries_var_samp_fields = (obj?: { __typename?: any } | null): obj is recent_ban_entries_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isrecent_ban_entries_var_samp_fields"')
+      return recent_ban_entries_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const recent_ban_entries_variance_fields_possibleTypes: string[] = ['recent_ban_entries_variance_fields']
+    export const isrecent_ban_entries_variance_fields = (obj?: { __typename?: any } | null): obj is recent_ban_entries_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isrecent_ban_entries_variance_fields"')
+      return recent_ban_entries_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const role_permissions_possibleTypes: string[] = ['role_permissions']
     export const isrole_permissions = (obj?: { __typename?: any } | null): obj is role_permissions => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isrole_permissions"')
@@ -173999,6 +174763,25 @@ export const enumPushSubscriptionsUpdateColumn = {
    p256dh: 'p256dh' as const,
    steam_id: 'steam_id' as const,
    user_agent: 'user_agent' as const
+}
+
+export const enumRecentBanEntriesSelectColumn = {
+   arrived_banned: 'arrived_banned' as const,
+   banned_at: 'banned_at' as const,
+   banned_at_source: 'banned_at_source' as const,
+   banned_here: 'banned_here' as const,
+   first_match_at: 'first_match_at' as const,
+   game_ban_count: 'game_ban_count' as const,
+   last_match_at: 'last_match_at' as const,
+   last_match_map: 'last_match_map' as const,
+   matches_played: 'matches_played' as const,
+   matches_since_steam_ban: 'matches_since_steam_ban' as const,
+   sanction_id: 'sanction_id' as const,
+   sanction_kind: 'sanction_kind' as const,
+   shared_matches: 'shared_matches' as const,
+   steam_banned_on: 'steam_banned_on' as const,
+   steam_id: 'steam_id' as const,
+   vac_ban_count: 'vac_ban_count' as const
 }
 
 export const enumRolePermissionsSelectColumn = {
