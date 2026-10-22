@@ -142,10 +142,14 @@ export class SeasonEloBackfillService {
       season_id: seasonId,
       started_at: new Date().toISOString(),
     };
-    await this.saveStatus(status, RUNNING_TTL_SECONDS);
-    await this.eloRecompute.setSuppressEvents(true);
+    const persist = async () => {
+      await this.saveStatus(status, RUNNING_TTL_SECONDS);
+      await this.eloRecompute.setSuppressEvents(true);
+    };
+    await persist();
+    lease.keepAlive(persist);
 
-    let held = true;
+    let finished = false;
     let current = true;
     try {
       // Clean slate for this season only — other seasons' ELO is independent and
@@ -155,25 +159,32 @@ export class SeasonEloBackfillService {
         [seasonId],
       );
 
-      held = await this.eloRecompute.rateMatches(
-        lease,
-        status,
-        () => this.fetchSeasonMatchIds(seasonId),
-        {
-          label: "season-backfill",
-          isCanceled: () => this.isCancelRequested(),
-          persist: async () => {
-            await this.saveStatus(status, RUNNING_TTL_SECONDS);
-            await this.eloRecompute.setSuppressEvents(true);
+      if (
+        !(await this.eloRecompute.rateMatches(
+          lease,
+          status,
+          () => this.fetchSeasonMatchIds(seasonId),
+          {
+            label: "season-backfill",
+            isCanceled: () => this.isCancelRequested(),
+            persist,
           },
-        },
-      );
+        ))
+      ) {
+        return false;
+      }
 
       // Authoritative rebuild of the season's aggregate stats from source rows.
-      if (held && !status.canceled) {
+      if (!status.canceled) {
+        if (!(await lease.renew())) {
+          return false;
+        }
         await this.postgres.query(`SELECT rebuild_player_season_stats($1)`, [
           seasonId,
         ]);
+        if (!(await lease.renew())) {
+          return false;
+        }
         // Only clear the flag for the window that was rebuilt; a date edit made
         // mid-run re-flagged it, and its event deduped onto this still-active job.
         const cleared = await this.postgres.query<Array<{ id: string }>>(
@@ -188,10 +199,14 @@ export class SeasonEloBackfillService {
         );
         current = cleared.length > 0;
       }
+
+      finished = true;
     } finally {
       // A lost lock leaves the status, suppression and reindex to whichever
-      // rebuild holds it now; this run is retried.
-      if (held) {
+      // rebuild holds it now. A run that threw is retried, and tells nobody it
+      // finished.
+      lease.keepAlive();
+      if (await lease.renew()) {
         status.running = false;
         status.current_match_id = null;
         status.finished_at = new Date().toISOString();
@@ -202,25 +217,27 @@ export class SeasonEloBackfillService {
         // One deduped reindex at the end syncs it without the per-row fan-out.
         await this.eloRecompute.setSuppressEvents(false);
 
-        await this.reindexQueue.add(
-          RefreshAllPlayersJob.name,
-          {},
-          {
-            jobId: RefreshAllPlayersJob.name,
-            removeOnComplete: true,
-            removeOnFail: true,
-          },
-        );
+        if (finished) {
+          await this.reindexQueue.add(
+            RefreshAllPlayersJob.name,
+            {},
+            {
+              jobId: RefreshAllPlayersJob.name,
+              removeOnComplete: true,
+              removeOnFail: true,
+            },
+          );
 
-        this.logger.log(
-          `[season-backfill] finished season ${seasonId}: ${status.completed}/${status.total} processed, ${status.failed} failed${status.canceled ? " (canceled)" : ""}`,
-        );
+          this.logger.log(
+            `[season-backfill] finished season ${seasonId}: ${status.completed}/${status.total} processed, ${status.failed} failed${status.canceled ? " (canceled)" : ""}`,
+          );
 
-        await this.notifyComplete(status);
+          await this.notifyComplete(status);
+        }
       }
     }
 
-    return held && current;
+    return current;
   }
 
   private async notifyComplete(status: SeasonEloBackfillStatus): Promise<void> {

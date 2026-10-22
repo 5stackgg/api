@@ -21,7 +21,7 @@ describe("SeasonEloBackfillService.runBackfill", () => {
     put: jest.Mock;
     forget: jest.Mock;
   };
-  let lease: { renew: jest.Mock; release: jest.Mock };
+  let lease: { renew: jest.Mock; keepAlive: jest.Mock; release: jest.Mock };
   let eloRecompute: {
     setSuppressEvents: jest.Mock;
     acquireRebuildLease: jest.Mock;
@@ -53,6 +53,7 @@ describe("SeasonEloBackfillService.runBackfill", () => {
     };
     lease = {
       renew: jest.fn().mockResolvedValue(true),
+      keepAlive: jest.fn(),
       release: jest.fn().mockResolvedValue(undefined),
     };
     eloRecompute = {

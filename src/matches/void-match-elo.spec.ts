@@ -216,6 +216,24 @@ describe("the rebuild lease", () => {
     );
   });
 
+  it("heartbeats on the same clock while it holds the lock, and stops once it loses it", async () => {
+    const lease = (await service.acquireRebuildLease())!;
+    const heartbeat = jest.fn().mockResolvedValue(undefined);
+    lease.keepAlive(heartbeat);
+
+    await jest.advanceTimersByTimeAsync(
+      PlayerEloRecomputeService.LOCK_RENEW_MS,
+    );
+    expect(heartbeat).toHaveBeenCalledTimes(1);
+
+    cache.refreshLock.mockResolvedValueOnce(false);
+    await jest.advanceTimersByTimeAsync(
+      PlayerEloRecomputeService.LOCK_RENEW_MS * 3,
+    );
+    expect(heartbeat).toHaveBeenCalledTimes(1);
+    await lease.release();
+  });
+
   it("treats a renewal that finds the lock gone as final", async () => {
     const lease = (await service.acquireRebuildLease())!;
     cache.refreshLock.mockResolvedValueOnce(false);

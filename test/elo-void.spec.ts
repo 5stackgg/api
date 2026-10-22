@@ -40,6 +40,8 @@ describe("ELO void (SQL-driven)", () => {
   }>;
   let runs: number;
   let rebuildSql: Array<string>;
+  let failOn: ((sql: string) => boolean) | undefined;
+  let notifications: { send: jest.Mock };
   let duringRun: { matchId: string; then: () => Promise<unknown> } | undefined;
   let admin: string;
 
@@ -66,30 +68,66 @@ describe("ELO void (SQL-driven)", () => {
     await db?.stop();
   });
 
-  // Counts full runs, records what a service sent, and lets a test land a
-  // write in the middle of a rebuild, right before it rebuilds a given match.
-  const watch = (sent: Array<string> = []) =>
-    ({
+  // Counts full runs, records what a service sent, lets a test land a write in
+  // the middle of a rebuild right before it rebuilds a given match, and can
+  // make a query fail. Statements a rebuild runs in its own transaction go
+  // through the same checks.
+  const watch = (sent: Array<string> = []) => {
+    const intercept = async (
+      sql: string,
+      params?: Parameters<PostgresService["query"]>[1],
+    ) => {
+      sent.push(sql);
+      if (sql.includes("TRUNCATE TABLE player_elo")) {
+        runs += 1;
+      }
+      if (failOn?.(sql)) {
+        throw new Error("query failed");
+      }
+      if (
+        duringRun &&
+        sql.includes("generate_player_elo_for_match") &&
+        params?.[0] === duringRun.matchId
+      ) {
+        const { then } = duringRun;
+        duringRun = undefined;
+        await then();
+      }
+    };
+
+    return {
       query: async (
         sql: string,
         params?: Parameters<PostgresService["query"]>[1],
       ) => {
-        sent.push(sql);
-        if (sql.includes("TRUNCATE TABLE player_elo")) {
-          runs += 1;
-        }
-        if (
-          duringRun &&
-          sql.includes("generate_player_elo_for_match") &&
-          params?.[0] === duringRun.matchId
-        ) {
-          const { then } = duringRun;
-          duringRun = undefined;
-          await then();
-        }
+        await intercept(sql, params);
         return postgres.query(sql, params);
       },
-    }) as unknown as PostgresService;
+      transaction: <T>(fn: (client: any) => Promise<T>) =>
+        postgres.transaction((client) =>
+          fn({
+            query: async (sql: string, params?: Array<any>) => {
+              await intercept(sql, params);
+              return client.query(sql, params);
+            },
+          }),
+        ),
+    } as unknown as PostgresService;
+  };
+
+  // Timings a test shortens so a clock or a timeout fires within it.
+  const timings = PlayerEloRecomputeService as unknown as Record<
+    string,
+    number
+  >;
+  const TIMINGS = [
+    "LOCK_RENEW_MS",
+    "ITEM_TIMEOUT_MS",
+    "TRUNCATE_LOCK_TIMEOUT_MS",
+  ];
+  const defaultTimings = Object.fromEntries(
+    TIMINGS.map((name) => [name, timings[name]]),
+  );
 
   beforeEach(async () => {
     await redis.flushall();
@@ -107,7 +145,9 @@ describe("ELO void (SQL-driven)", () => {
     queued = [];
     runs = 0;
     rebuildSql = [];
+    failOn = undefined;
     duringRun = undefined;
+    notifications = { send: jest.fn() };
     queue = {
       add: jest.fn(async (name, data, opts) => {
         queued.push({ name, data, opts });
@@ -118,7 +158,7 @@ describe("ELO void (SQL-driven)", () => {
       logger,
       watch(rebuildSql),
       cache,
-      { send: jest.fn() } as any,
+      notifications as any,
       { add: jest.fn() } as any,
       queue as any,
     );
@@ -128,6 +168,7 @@ describe("ELO void (SQL-driven)", () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+    Object.assign(timings, defaultTimings);
   });
 
   const controller = () =>
@@ -1206,6 +1247,24 @@ describe("ELO void (SQL-driven)", () => {
     });
   });
 
+  describe("the deferred ratings", () => {
+    it("are rated even by a rebuild whose own list is empty", async () => {
+      await fx.enableSeasons();
+      await fx.season("2025-06-01", null);
+      const empty = await fx.season("2025-01-01", "2025-06-01");
+      const [a, b] = await fx.players(2);
+      const match = await duel(a, b);
+      await recompute.deferRating(match.id);
+
+      expect(await backfill().runBackfill(empty)).toBe(true);
+
+      expect(Object.keys(await rows(match.id))).toHaveLength(2);
+      expect(await redis.smembers("elo-recompute:deferred-ratings")).toEqual(
+        [],
+      );
+    });
+  });
+
   describe("the rebuild lock", () => {
     const LOCK = "elo-recompute:lock";
     const generated = () =>
@@ -1257,6 +1316,187 @@ describe("ELO void (SQL-driven)", () => {
     });
   });
 
+  describe("a rebuild that loses its lock on its last match", () => {
+    const LOCK = "elo-recompute:lock";
+    const DEFERRED = "elo-recompute:deferred-ratings";
+    const takeOver = (statusKey: string, deferred: string) => async () => {
+      await redis.set(LOCK, "another-rebuild");
+      await redis.sadd(DEFERRED, deferred);
+      await redis.set(statusKey, JSON.stringify({ owner: "another-rebuild" }));
+    };
+
+    it("leaves a full rebuild's successor its deferred ratings and status", async () => {
+      const [a, b] = await fx.players(2);
+      const first = await duel(a, b, { endedDaysAgo: 2 });
+      const last = await duel(a, b, { endedDaysAgo: 1 });
+      await controller().recomputePlayerElo();
+      const held = job(queued.shift()!.data);
+      duringRun = {
+        matchId: last.id,
+        then: takeOver("elo-recompute:status", first.id),
+      };
+
+      await expect(
+        new RecomputeAllElo(recompute).process(held as any),
+      ).rejects.toBeInstanceOf(DelayedError);
+
+      expect(await redis.smembers(DEFERRED)).toEqual([first.id]);
+      expect(JSON.parse((await redis.get("elo-recompute:status"))!)).toEqual({
+        owner: "another-rebuild",
+      });
+      expect(await redis.get("elo-recompute:covered")).toBeNull();
+      expect(notifications.send).not.toHaveBeenCalled();
+    });
+
+    it("leaves a season rebuild's successor its deferred ratings, status and season", async () => {
+      await fx.enableSeasons();
+      const season = await fx.season("2025-01-01", null);
+      const [a, b] = await fx.players(2);
+      const first = await duel(a, b, { endedDaysAgo: 2 });
+      const last = await duel(a, b, { endedDaysAgo: 1 });
+      await postgres.query(
+        "UPDATE seasons SET needs_rebuild = true WHERE id = $1",
+        [season],
+      );
+      const sent: Array<string> = [];
+      duringRun = {
+        matchId: last.id,
+        then: takeOver("season-elo-backfill:status", first.id),
+      };
+
+      expect(await backfill(sent).runBackfill(season)).toBe(false);
+
+      expect(await redis.smembers(DEFERRED)).toEqual([first.id]);
+      expect(
+        JSON.parse((await redis.get("season-elo-backfill:status"))!),
+      ).toEqual({ owner: "another-rebuild" });
+      expect(
+        sent.some((sql) => sql.includes("rebuild_player_season_stats")),
+      ).toBe(false);
+      const [row] = await postgres.query<Array<{ needs_rebuild: boolean }>>(
+        "SELECT needs_rebuild FROM seasons WHERE id = $1",
+        [season],
+      );
+      expect(row.needs_rebuild).toBe(true);
+    });
+  });
+
+  describe("a rebuild that blocks", () => {
+    const pause = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms));
+
+    it.each([
+      ["full", "elo-recompute:status"],
+      ["season", "season-elo-backfill:status"],
+    ])(
+      "keeps a %s rebuild's status and event suppression alive on the lock's clock",
+      async (kind, statusKey) => {
+        timings.LOCK_RENEW_MS = 50;
+        await fx.enableSeasons();
+        const season = await fx.season("2025-01-01", null);
+        const [a, b] = await fx.players(2);
+        const match = await duel(a, b);
+        const alive: Array<number> = [];
+        duringRun = {
+          matchId: match.id,
+          then: async () => {
+            await redis.del(statusKey, "elo-recompute:suppress-events");
+            await pause(400);
+            alive.push(
+              await redis.exists(statusKey, "elo-recompute:suppress-events"),
+            );
+          },
+        };
+
+        if (kind === "full") {
+          await controller().recomputePlayerElo();
+          await work();
+        } else {
+          expect(await backfill().runBackfill(season)).toBe(true);
+        }
+
+        expect(alive).toEqual([2]);
+      },
+    );
+
+    it("gives up on a TRUNCATE stuck behind a reader and retries", async () => {
+      timings.TRUNCATE_LOCK_TIMEOUT_MS = 200;
+      const [a, b] = await fx.players(2);
+      const match = await duel(a, b);
+      await controller().recomputePlayerElo();
+      const held = job(queued.shift()!.data);
+
+      let finishReading!: () => void;
+      let reading!: () => void;
+      const started = new Promise<void>((resolve) => (reading = resolve));
+      const reader = postgres.transaction(async (client) => {
+        await client.query("SELECT count(*) FROM player_elo");
+        reading();
+        await new Promise<void>((resolve) => {
+          finishReading = resolve;
+          setTimeout(resolve, 3000);
+        });
+      });
+      await started;
+
+      await expect(
+        new RecomputeAllElo(recompute).process(held as any),
+      ).rejects.toBeInstanceOf(DelayedError);
+
+      finishReading();
+      await reader;
+      await new RecomputeAllElo(recompute).process(held as any);
+      expect(Object.keys(await rows(match.id))).toHaveLength(2);
+    });
+
+    it("has Postgres cancel a rating that runs past its timeout", async () => {
+      timings.ITEM_TIMEOUT_MS = 300;
+      const [a, b] = await fx.players(2);
+      await duel(a, b, { endedDaysAgo: 2 });
+      const stuck = await duel(a, b, { endedDaysAgo: 1 });
+      await controller().recomputePlayerElo();
+
+      let rollBack!: () => void;
+      let blocker: Promise<unknown> | undefined;
+      duringRun = {
+        matchId: stuck.id,
+        then: async () => {
+          let inserted!: () => void;
+          const ready = new Promise<void>((resolve) => (inserted = resolve));
+          blocker = postgres
+            .transaction(async (client) => {
+              await client.query(
+                `INSERT INTO player_elo (steam_id, match_id, "type", current, change)
+                 VALUES ($1, $2, 'Duel', 5000, 0)`,
+                [a, stuck.id],
+              );
+              inserted();
+              await new Promise<void>((resolve) => {
+                rollBack = resolve;
+                setTimeout(resolve, 3000);
+              });
+              throw new Error("roll back");
+            })
+            .catch((): void => undefined);
+          await ready;
+        },
+      };
+      await work();
+
+      expect((await recompute.getStatus()).failed).toBe(1);
+      const [{ count }] = await postgres.query<Array<{ count: string }>>(
+        `SELECT count(*) FROM pg_stat_activity
+          WHERE state = 'active'
+            AND query LIKE '%generate_player_elo_for_match%'
+            AND pid <> pg_backend_pid()`,
+      );
+      expect(Number(count)).toBe(0);
+
+      rollBack();
+      await blocker;
+    });
+  });
+
   describe("rebuild order", () => {
     // Created first, finished last: a match scheduled ahead of one that was
     // played sooner.
@@ -1301,19 +1541,53 @@ describe("ELO void (SQL-driven)", () => {
       await expectChained(early.id, late.id, [a, b]);
     });
 
-    it("asks once for the full rebuild a rating formula change needs", async () => {
-      const marker = "player_elo_backfill_series_multiplier_v1";
-      await postgres.query("DELETE FROM settings WHERE name = $1", [marker]);
+    const FORMULA = "player_elo_backfill_series_multiplier_v1";
+    const formulaMarker = async () =>
+      (
+        await postgres.query<Array<{ value: string }>>(
+          "SELECT value FROM settings WHERE name = $1",
+          [FORMULA],
+        )
+      )[0]?.value;
 
-      await recompute.recomputeOnce(marker);
-      await recompute.recomputeOnce(marker);
+    it("asks for the rebuild a rating formula change needs until a run covering it finishes", async () => {
+      await postgres.query("DELETE FROM settings WHERE name = $1", [FORMULA]);
 
-      expect(queued).toHaveLength(1);
-      const [setting] = await postgres.query<Array<{ name: string }>>(
-        "SELECT name FROM settings WHERE name = $1",
-        [marker],
-      );
-      expect(setting).toBeDefined();
+      await recompute.recomputeOnce(FORMULA);
+      await recompute.recomputeOnce(FORMULA);
+      expect(queued).toHaveLength(2);
+      expect(await formulaMarker()).toMatch(/^elo-recompute-pending:\d+$/);
+
+      await work();
+      expect(runs).toBe(1);
+      expect(await formulaMarker()).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+
+      await recompute.recomputeOnce(FORMULA);
+      expect(queued).toHaveLength(0);
+    });
+
+    it("keeps that rebuild asked for, and tells nobody it finished, when its run fails", async () => {
+      await postgres.query("DELETE FROM settings WHERE name = $1", [FORMULA]);
+      const [a, b] = await fx.players(2);
+      await duel(a, b);
+
+      await recompute.recomputeOnce(FORMULA);
+      const held = job(queued.shift()!.data);
+      failOn = (sql) =>
+        sql.includes("winning_lineup_id IS NOT NULL") &&
+        sql.includes("ORDER BY ended_at");
+
+      await expect(
+        new RecomputeAllElo(recompute).process(held as any),
+      ).rejects.toThrow("query failed");
+      expect(notifications.send).not.toHaveBeenCalled();
+      expect(await formulaMarker()).toMatch(/^elo-recompute-pending:\d+$/);
+      expect((await recompute.getStatus()).running).toBe(false);
+
+      failOn = undefined;
+      await new RecomputeAllElo(recompute).process(held as any);
+      expect(notifications.send).toHaveBeenCalledTimes(1);
+      expect(await formulaMarker()).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     });
   });
 

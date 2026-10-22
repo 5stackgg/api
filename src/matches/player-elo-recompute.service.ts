@@ -33,16 +33,19 @@ const COVERED_KEY = "elo-recompute:covered";
 const DEFERRED_KEY = "elo-recompute:deferred-ratings";
 
 const PERSIST_EVERY = 25;
-// Per-match cap so one hung query can't freeze the whole run.
-const ITEM_TIMEOUT_MS = 60_000;
 // Heartbeat: while running the status key is refreshed with this TTL, so a
 // hard-crashed run stops reporting "running" instead of muting forever.
 const RUNNING_TTL_SECONDS = 300;
 const FINAL_TTL_SECONDS = 7 * 24 * 3600;
 const CANCEL_TTL_SECONDS = 600;
 
+// A formula rebuild's marker holds this and its request until a run covering
+// that request finishes, then the time it did.
+const FORMULA_PENDING = "elo-recompute-pending:";
+
 export type RebuildLease = {
   renew(): Promise<boolean>;
+  keepAlive(heartbeat?: () => Promise<void>): void;
   release(): Promise<void>;
 };
 
@@ -71,6 +74,13 @@ export class PlayerEloRecomputeService {
 
   public static readonly LOCK_RENEW_MS = 60_000;
 
+  // Postgres cancels a rating that runs this long, so it holds nothing after.
+  public static readonly ITEM_TIMEOUT_MS = 60_000;
+
+  // TRUNCATE waits behind every reader of player_elo and holds new readers
+  // behind it, so it gives up on a reader that does not finish.
+  public static readonly TRUNCATE_LOCK_TIMEOUT_MS = 10_000;
+
   public static jobId(request: number): string {
     return `elo-recompute.${request}`;
   }
@@ -94,7 +104,10 @@ export class PlayerEloRecomputeService {
   // Each request gets its own job id because BullMQ ignores an add whose id is
   // still active, and runRecomputeAll folds requests a run already covered.
   public async requestRecompute(): Promise<void> {
-    const request = await this.cache.increment(REQUEST_KEY);
+    await this.queueRecompute(await this.cache.increment(REQUEST_KEY));
+  }
+
+  private async queueRecompute(request: number): Promise<void> {
     if (!(await this.isRunning())) {
       await this.markQueued();
     }
@@ -110,8 +123,10 @@ export class PlayerEloRecomputeService {
   }
 
   // Renewed on a clock well inside its TTL rather than by progress: one slow
-  // match, or a TRUNCATE queued behind readers, must not let it lapse. A
-  // renewal that finds it gone is final, since another rebuild may hold it now.
+  // match, or a TRUNCATE queued behind readers, must not let it lapse. The
+  // same clock carries the run's heartbeat, so a run blocked on one statement
+  // still shows as running. A renewal that finds the lock gone is final, since
+  // another rebuild may hold it now.
   public async acquireRebuildLease(): Promise<RebuildLease | null> {
     const token = await this.cache.acquireLock(LOCK_KEY, RUNNING_TTL_SECONDS);
     if (!token) {
@@ -119,20 +134,31 @@ export class PlayerEloRecomputeService {
     }
 
     let held = true;
+    let heartbeat: (() => Promise<void>) | undefined;
     const renew = async () => {
       held =
         held &&
         (await this.cache.refreshLock(LOCK_KEY, token, RUNNING_TTL_SECONDS));
       return held;
     };
-    const timer = setInterval(
-      () => void renew(),
-      PlayerEloRecomputeService.LOCK_RENEW_MS,
-    );
+    const timer = setInterval(() => {
+      void (async () => {
+        if ((await renew()) && heartbeat) {
+          await heartbeat();
+        }
+      })().catch((error) =>
+        this.logger.warn(
+          `[elo-rebuild] heartbeat failed: ${(error as Error)?.message}`,
+        ),
+      );
+    }, PlayerEloRecomputeService.LOCK_RENEW_MS);
     timer.unref();
 
     return {
       renew,
+      keepAlive: (beat) => {
+        heartbeat = beat;
+      },
       release: async () => {
         clearInterval(timer);
         await this.cache.releaseLock(LOCK_KEY, token);
@@ -150,30 +176,32 @@ export class PlayerEloRecomputeService {
     await this.cache.addToSet(DEFERRED_KEY, matchId);
   }
 
-  // A change to how ratings are worked out needs every one rebuilt once; the
-  // marker records that the rebuild was asked for.
+  // A change to how ratings are worked out needs every one rebuilt once. Asked
+  // again on every boot until a run covering the request finishes: a run that
+  // failed for good took its request with it.
   public async recomputeOnce(marker: string): Promise<void> {
-    const [asked] = await this.postgres.query<Array<{ name: string }>>(
-      `SELECT name FROM settings WHERE name = $1`,
+    const [setting] = await this.postgres.query<Array<{ value: string }>>(
+      `SELECT value FROM settings WHERE name = $1`,
       [marker],
     );
-    if (asked) {
+    if (setting && !setting.value.startsWith(FORMULA_PENDING)) {
       return;
     }
 
-    await this.requestRecompute();
-
+    const request = await this.cache.increment(REQUEST_KEY);
     await this.postgres.query(
       `INSERT INTO settings (name, value) VALUES ($1, $2)
-       ON CONFLICT (name) DO NOTHING`,
-      [marker, new Date().toISOString()],
+       ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value`,
+      [marker, `${FORMULA_PENDING}${request}`],
     );
+    await this.queueRecompute(request);
   }
 
   // Rates the list in the order ratings chain (ended_at), then whatever it
   // holds now that it did not and every match whose own rating waited on the
-  // lock, until a pass finds nothing new. False once the lock is lost: the
-  // caller must write nothing more.
+  // lock, until a pass finds nothing new. False once the lock is lost: from
+  // then on the caller must write nothing, the lock's new holder's deferred
+  // ratings and status included.
   public async rateMatches(
     lease: RebuildLease,
     progress: RebuildProgress,
@@ -184,6 +212,14 @@ export class PlayerEloRecomputeService {
       persist: () => Promise<void>;
     },
   ): Promise<boolean> {
+    const holding = async () => {
+      if (await lease.renew()) {
+        return true;
+      }
+      this.logger.warn(`[${run.label}] lost the rebuild lock, stopping`);
+      return false;
+    };
+
     const rated = new Set<string>();
     let pending = await list();
 
@@ -191,7 +227,12 @@ export class PlayerEloRecomputeService {
       `[${run.label}] rebuilding ELO for ${pending.length} matches`,
     );
 
-    while (pending.length > 0) {
+    // At least once, so the deferred ratings are taken even when the list is
+    // empty.
+    do {
+      if (!(await holding())) {
+        return false;
+      }
       progress.total += pending.length;
       await run.persist();
 
@@ -199,23 +240,15 @@ export class PlayerEloRecomputeService {
         if (await run.isCanceled()) {
           progress.canceled = true;
           this.logger.warn(`[${run.label}] canceled by request`);
-          return true;
+          return holding();
         }
-        if (!(await lease.renew())) {
-          this.logger.warn(`[${run.label}] lost the rebuild lock, stopping`);
+        if (!(await holding())) {
           return false;
         }
         rated.add(id);
         progress.current_match_id = id;
         try {
-          // Bounded so a hung query can't wedge the whole run (which would
-          // also block the per-iteration cancel check).
-          await this.withTimeout(
-            this.postgres.query(`SELECT generate_player_elo_for_match($1)`, [
-              id,
-            ]),
-            ITEM_TIMEOUT_MS,
-          );
+          await this.rateMatch(id);
         } catch (error) {
           progress.failed += 1;
           this.logger.warn(
@@ -224,18 +257,38 @@ export class PlayerEloRecomputeService {
         }
         progress.completed += 1;
         if (progress.completed % PERSIST_EVERY === 0) {
+          if (!(await holding())) {
+            return false;
+          }
           await run.persist();
         }
       }
 
+      const listed = await list();
+      if (!(await holding())) {
+        return false;
+      }
       pending = await this.inEndedOrder(
-        [...(await list()), ...(await this.cache.takeSet(DEFERRED_KEY))].filter(
+        [...listed, ...(await this.cache.takeSet(DEFERRED_KEY))].filter(
           (id) => !rated.has(id),
         ),
       );
-    }
+    } while (pending.length > 0);
 
-    return true;
+    return holding();
+  }
+
+  // Postgres cancels it at ITEM_TIMEOUT_MS; the client gives up a little later
+  // only for a connection that never answers at all.
+  private async rateMatch(id: string): Promise<void> {
+    const limit = PlayerEloRecomputeService.ITEM_TIMEOUT_MS;
+    await this.withTimeout(
+      this.postgres.transaction(async (client) => {
+        await client.query(`SET LOCAL statement_timeout = ${limit}`);
+        await client.query(`SELECT generate_player_elo_for_match($1)`, [id]);
+      }),
+      limit + 10_000,
+    );
   }
 
   public async requestCancel(): Promise<void> {
@@ -331,34 +384,44 @@ export class PlayerEloRecomputeService {
       running: true,
       started_at: new Date().toISOString(),
     };
-    await this.saveStatus(status, RUNNING_TTL_SECONDS);
-    await this.cache.put(SUPPRESS_KEY, true, RUNNING_TTL_SECONDS);
+    const persist = async () => {
+      await this.saveStatus(status, RUNNING_TTL_SECONDS);
+      await this.cache.put(SUPPRESS_KEY, true, RUNNING_TTL_SECONDS);
+    };
+    await persist();
+    lease.keepAlive(persist);
 
-    let held = true;
+    let finished = false;
     try {
-      await this.postgres.query(`TRUNCATE TABLE player_elo`);
+      if (!(await this.truncateRatings())) {
+        return false;
+      }
 
-      held = await this.rateMatches(
-        lease,
-        status,
-        () => this.fetchAllMatchIds(),
-        {
+      if (
+        !(await this.rateMatches(lease, status, () => this.fetchAllMatchIds(), {
           label: "elo-recompute",
           isCanceled: () => this.isCancelRequested(),
-          persist: async () => {
-            await this.saveStatus(status, RUNNING_TTL_SECONDS);
-            await this.cache.put(SUPPRESS_KEY, true, RUNNING_TTL_SECONDS);
-          },
-        },
-      );
-
-      if (held && !status.canceled) {
-        await this.cache.put(COVERED_KEY, covers);
+          persist,
+        }))
+      ) {
+        return false;
       }
+
+      if (!status.canceled) {
+        if (!(await lease.renew())) {
+          return false;
+        }
+        await this.cache.put(COVERED_KEY, covers);
+        await this.markFormulaRebuildsDone(covers);
+      }
+
+      finished = true;
     } finally {
       // A lost lock leaves the status, suppression and reindex to whichever
-      // rebuild holds it now; this run is retried.
-      if (held) {
+      // rebuild holds it now. A run that threw is retried, and tells nobody it
+      // finished.
+      lease.keepAlive();
+      if (await lease.renew()) {
         status.running = false;
         status.current_match_id = null;
         status.finished_at = new Date().toISOString();
@@ -366,28 +429,59 @@ export class PlayerEloRecomputeService {
         await this.cache.forget(CANCEL_KEY);
         await this.cache.forget(SUPPRESS_KEY);
 
-        // Per-row player_elo events were suppressed during the run, so reindex
-        // every player once here to sync search with the rebuilt ELO. Stable
-        // jobId so it can't stack duplicate reindexes.
-        await this.reindexQueue.add(
-          RefreshAllPlayersJob.name,
-          {},
-          {
-            jobId: RefreshAllPlayersJob.name,
-            removeOnComplete: true,
-            removeOnFail: true,
-          },
-        );
+        if (finished) {
+          // Per-row player_elo events were suppressed during the run, so
+          // reindex every player once here to sync search with the rebuilt ELO.
+          // Stable jobId so it can't stack duplicate reindexes.
+          await this.reindexQueue.add(
+            RefreshAllPlayersJob.name,
+            {},
+            {
+              jobId: RefreshAllPlayersJob.name,
+              removeOnComplete: true,
+              removeOnFail: true,
+            },
+          );
 
-        this.logger.log(
-          `[elo-recompute] finished: ${status.completed}/${status.total} processed, ${status.failed} failed${status.canceled ? " (canceled)" : ""}`,
-        );
+          this.logger.log(
+            `[elo-recompute] finished: ${status.completed}/${status.total} processed, ${status.failed} failed${status.canceled ? " (canceled)" : ""}`,
+          );
 
-        await this.notifyComplete(status);
+          await this.notifyComplete(status);
+        }
       }
     }
 
-    return held;
+    return true;
+  }
+
+  private async truncateRatings(): Promise<boolean> {
+    try {
+      await this.postgres.transaction(async (client) => {
+        await client.query(
+          `SET LOCAL lock_timeout = ${PlayerEloRecomputeService.TRUNCATE_LOCK_TIMEOUT_MS}`,
+        );
+        await client.query(`TRUNCATE TABLE player_elo`);
+      });
+      return true;
+    } catch (error) {
+      if ((error as { code?: string })?.code === "55P03") {
+        this.logger.warn(
+          "[elo-recompute] another query holds player_elo, retrying",
+        );
+        return false;
+      }
+      throw error;
+    }
+  }
+
+  private async markFormulaRebuildsDone(covers: number): Promise<void> {
+    await this.postgres.query(
+      `UPDATE settings SET value = $3
+        WHERE starts_with(value, $2)
+          AND substring(value FROM length($2) + 1)::bigint <= $1`,
+      [covers, FORMULA_PENDING, new Date().toISOString()],
+    );
   }
 
   // Holding the lock means no run is going, so a running status here is the
