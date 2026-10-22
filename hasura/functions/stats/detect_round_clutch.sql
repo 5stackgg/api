@@ -1,4 +1,18 @@
-CREATE OR REPLACE FUNCTION public.detect_round_clutch(p_match_map_id uuid, p_round integer)
+-- Walks one round's kill feed in order, given as [killer, victim] pairs: when
+-- a lineup is down to its last player while the other still has players, that
+-- player is in a clutch. It is won by killing everyone left, saved by taking
+-- the round anyway, and lost otherwise. It takes the feed rather than reading
+-- it so v_match_clutches can read a whole map's kills at once.
+CREATE OR REPLACE FUNCTION public.clutch_from_kills(
+  p_lineup_1_id uuid,
+  p_lineup_2_id uuid,
+  p_lineup_1_players bigint[],
+  p_lineup_2_players bigint[],
+  p_kills bigint[],
+  p_lineup_1_side text,
+  p_lineup_2_side text,
+  p_winning_side text
+)
 RETURNS TABLE (
   match_lineup_id uuid,
   clutcher_steam_id bigint,
@@ -8,13 +22,13 @@ RETURNS TABLE (
   outcome text
 )
 LANGUAGE plpgsql
-STABLE
+IMMUTABLE
 AS $$
 DECLARE
-  v_l1 uuid; v_l2 uuid;
-  v_l1_side text; v_l2_side text; v_winning text;
-  alive1 bigint[]; alive2 bigint[];
-  rec record;
+  alive1 bigint[] := p_lineup_1_players;
+  alive2 bigint[] := p_lineup_2_players;
+  v_killer bigint;
+  v_victim bigint;
   started boolean := false;
   clutch_team integer := NULL;
   v_clutcher bigint := NULL;
@@ -24,39 +38,13 @@ DECLARE
   v_side text;
   v_won boolean;
 BEGIN
-  SELECT m.lineup_1_id, m.lineup_2_id,
-         public.normalize_side(mmr.lineup_1_side),
-         public.normalize_side(mmr.lineup_2_side),
-         public.normalize_side(mmr.winning_side)
-    INTO v_l1, v_l2, v_l1_side, v_l2_side, v_winning
-  FROM public.match_map_rounds mmr
-  JOIN public.match_maps mm ON mm.id = mmr.match_map_id
-  JOIN public.matches m ON m.id = mm.match_id
-  WHERE mmr.match_map_id = p_match_map_id
-    AND mmr.round = p_round
-    AND mmr.deleted_at IS NULL;
+  FOR i IN 1 .. COALESCE(array_length(p_kills, 1), 0) LOOP
+    v_killer := p_kills[i][1];
+    v_victim := p_kills[i][2];
+    alive1 := array_remove(alive1, v_victim);
+    alive2 := array_remove(alive2, v_victim);
 
-  IF v_l1 IS NULL THEN
-    RETURN;
-  END IF;
-
-  SELECT COALESCE(array_agg(mlp.steam_id), '{}') INTO alive1
-  FROM public.match_lineup_players mlp
-  WHERE mlp.match_lineup_id = v_l1 AND mlp.steam_id IS NOT NULL;
-  SELECT COALESCE(array_agg(mlp.steam_id), '{}') INTO alive2
-  FROM public.match_lineup_players mlp
-  WHERE mlp.match_lineup_id = v_l2 AND mlp.steam_id IS NOT NULL;
-
-  FOR rec IN
-    SELECT pk.attacker_steam_id AS killer, pk.attacked_steam_id AS victim
-    FROM public.player_kills pk
-    WHERE pk.match_map_id = p_match_map_id AND pk.round = p_round
-    ORDER BY pk."time"
-  LOOP
-    alive1 := array_remove(alive1, rec.victim);
-    alive2 := array_remove(alive2, rec.victim);
-
-    IF started AND v_clutcher IS NOT NULL AND rec.killer = v_clutcher THEN
+    IF started AND v_clutcher IS NOT NULL AND v_killer = v_clutcher THEN
       v_kills := v_kills + 1;
     END IF;
 
@@ -85,12 +73,12 @@ BEGIN
   END IF;
 
   IF clutch_team = 1 THEN
-    match_lineup_id := v_l1; v_side := v_l1_side;
+    match_lineup_id := p_lineup_1_id; v_side := p_lineup_1_side;
   ELSE
-    match_lineup_id := v_l2; v_side := v_l2_side;
+    match_lineup_id := p_lineup_2_id; v_side := p_lineup_2_side;
   END IF;
 
-  v_won := (v_winning IS NOT NULL AND v_winning = v_side);
+  v_won := (p_winning_side IS NOT NULL AND p_winning_side = v_side);
   IF killed_all THEN
     outcome := 'won';
   ELSIF v_won THEN
@@ -104,5 +92,61 @@ BEGIN
   against_count := v_against;
   kills_in_clutch := v_kills;
   RETURN NEXT;
+END;
+$$;
+
+-- Kills in the same tick go in key order, so the walk never depends on how
+-- they were read.
+CREATE OR REPLACE FUNCTION public.detect_round_clutch(p_match_map_id uuid, p_round integer)
+RETURNS TABLE (
+  match_lineup_id uuid,
+  clutcher_steam_id bigint,
+  side text,
+  against_count integer,
+  kills_in_clutch integer,
+  outcome text
+)
+LANGUAGE plpgsql
+STABLE
+AS $$
+DECLARE
+  v_l1 uuid; v_l2 uuid;
+  v_l1_side text; v_l2_side text; v_winning text;
+  alive1 bigint[]; alive2 bigint[];
+  v_kills bigint[];
+BEGIN
+  SELECT m.lineup_1_id, m.lineup_2_id,
+         public.normalize_side(mmr.lineup_1_side),
+         public.normalize_side(mmr.lineup_2_side),
+         public.normalize_side(mmr.winning_side)
+    INTO v_l1, v_l2, v_l1_side, v_l2_side, v_winning
+  FROM public.match_map_rounds mmr
+  JOIN public.match_maps mm ON mm.id = mmr.match_map_id
+  JOIN public.matches m ON m.id = mm.match_id
+  WHERE mmr.match_map_id = p_match_map_id
+    AND mmr.round = p_round
+    AND mmr.deleted_at IS NULL;
+
+  IF v_l1 IS NULL THEN
+    RETURN;
+  END IF;
+
+  SELECT COALESCE(array_agg(mlp.steam_id), '{}') INTO alive1
+  FROM public.match_lineup_players mlp
+  WHERE mlp.match_lineup_id = v_l1 AND mlp.steam_id IS NOT NULL;
+  SELECT COALESCE(array_agg(mlp.steam_id), '{}') INTO alive2
+  FROM public.match_lineup_players mlp
+  WHERE mlp.match_lineup_id = v_l2 AND mlp.steam_id IS NOT NULL;
+
+  SELECT array_agg(ARRAY[pk.attacker_steam_id, pk.attacked_steam_id]
+                   ORDER BY pk."time", pk.attacker_steam_id, pk.attacked_steam_id)
+    INTO v_kills
+  FROM public.player_kills pk
+  WHERE pk.match_map_id = p_match_map_id AND pk.round = p_round;
+
+  RETURN QUERY
+  SELECT * FROM public.clutch_from_kills(
+    v_l1, v_l2, alive1, alive2, v_kills, v_l1_side, v_l2_side, v_winning
+  );
 END;
 $$;
