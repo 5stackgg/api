@@ -144,6 +144,9 @@ $$;
 -- value = current ELO, secondary = ELO change, tertiary = win streak
 -- A voided match's rows repeat the rating going in, so they are neither a
 -- rating nor a match played: nobody reaches the board, or a peak, on them.
+-- They are dropped with NOT IN, a hashed set of the few voided matches, which
+-- keeps each pass a single read of player_elo; as NOT EXISTS the planner could
+-- walk the whole table in match_id order to merge against matches.
 -- ============================================================
 -- FACEIT rating and Premier rank.
 --
@@ -224,7 +227,10 @@ CREATE OR REPLACE FUNCTION public._leaderboard_elo(
   _match_type TEXT,
   _exclude_tournaments BOOLEAN,
   _season_id UUID DEFAULT NULL,
-  _source TEXT DEFAULT 'overall'
+  _source TEXT DEFAULT 'overall',
+  -- Only player and value: a rank reads nothing else, and the planner drops
+  -- the change, streak and match-count passes once they are not selected.
+  _value_only BOOLEAN DEFAULT FALSE
 )
 RETURNS SETOF public.leaderboard_entries
 LANGUAGE plpgsql STABLE
@@ -275,7 +281,7 @@ BEGIN
         pe.current as raw_current
       FROM player_elo pe
       WHERE 1=1
-        AND NOT EXISTS (SELECT 1 FROM matches vm WHERE vm.id = pe.match_id AND vm.elo_voided)
+        AND pe.match_id NOT IN (SELECT vm.id FROM matches vm WHERE vm.elo_voided)
         AND (_match_type IS NULL OR pe.type = _match_type)
         AND (_season_id IS NULL OR pe.season_id = _season_id)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
@@ -285,7 +291,7 @@ BEGIN
       SELECT pe.steam_id, MAX(pe.current) as peak_current
       FROM player_elo pe
       WHERE 1=1
-        AND NOT EXISTS (SELECT 1 FROM matches vm WHERE vm.id = pe.match_id AND vm.elo_voided)
+        AND pe.match_id NOT IN (SELECT vm.id FROM matches vm WHERE vm.elo_voided)
         AND (_match_type IS NULL OR pe.type = _match_type)
         AND (_season_id IS NULL OR pe.season_id = _season_id)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
@@ -298,7 +304,7 @@ BEGIN
         AND (_match_type IS NULL OR pe.type = _match_type)
         AND (_season_id IS NULL OR pe.season_id = _season_id)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
-        AND EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pe.match_id)
+        AND pe.is_tournament
       GROUP BY pe.steam_id
     ),
     rolling_change AS (
@@ -308,7 +314,7 @@ BEGIN
         AND (_match_type IS NULL OR pe.type = _match_type)
         AND (_season_id IS NULL OR pe.season_id = _season_id)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
-        AND NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pe.match_id)
+        AND NOT pe.is_tournament
       GROUP BY pe.steam_id
     ),
     -- Peak excluding tournaments, reconstructed by re-walking each
@@ -335,9 +341,9 @@ BEGIN
           ) AS reconstructed_current
         FROM player_elo pe
         WHERE _all_time_peak
-          AND NOT EXISTS (SELECT 1 FROM matches vm WHERE vm.id = pe.match_id AND vm.elo_voided)
+          AND pe.match_id NOT IN (SELECT vm.id FROM matches vm WHERE vm.elo_voided)
           AND (_match_type IS NULL OR pe.type = _match_type)
-          AND NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pe.match_id)
+          AND NOT pe.is_tournament
       ) walk
       GROUP BY walk.steam_id
     ),
@@ -347,7 +353,7 @@ BEGIN
         pe.current - pe.change as starting_elo
       FROM player_elo pe
       WHERE 1=1
-        AND NOT EXISTS (SELECT 1 FROM matches vm WHERE vm.id = pe.match_id AND vm.elo_voided)
+        AND pe.match_id NOT IN (SELECT vm.id FROM matches vm WHERE vm.elo_voided)
         AND (_match_type IS NULL OR pe.type = _match_type)
         AND (_season_id IS NULL OR pe.season_id = _season_id)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
@@ -357,11 +363,11 @@ BEGIN
       SELECT pe.steam_id, COUNT(*)::int as matches_played
       FROM player_elo pe
       WHERE 1=1
-        AND NOT EXISTS (SELECT 1 FROM matches vm WHERE vm.id = pe.match_id AND vm.elo_voided)
+        AND pe.match_id NOT IN (SELECT vm.id FROM matches vm WHERE vm.elo_voided)
         AND (_match_type IS NULL OR pe.type = _match_type)
         AND (_season_id IS NULL OR pe.season_id = _season_id)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
-        AND NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pe.match_id)
+        AND NOT pe.is_tournament
         AND (lower(_source) = 'overall' OR public._leaderboard_match_source(pe.match_id) = lower(_source))
       GROUP BY pe.steam_id
     ),
@@ -400,7 +406,7 @@ BEGIN
       GROUP BY sub.steam_id
     )
     SELECT
-      le.steam_id::text          as player_steam_id,
+      pk_e.steam_id::text        as player_steam_id,
       p.name                     as player_name,
       p.avatar_url               as player_avatar_url,
       p.country                  as player_country,
@@ -408,7 +414,9 @@ BEGIN
         THEN COALESCE(pnt.peak_current, 5000)::float
         ELSE (le.raw_current - COALESCE(ta.tourney_total, 0))::float
       END                        as value,
-      CASE WHEN _all_time_peak
+      CASE WHEN _value_only
+        THEN NULL
+        WHEN _all_time_peak
         THEN 0::float
         WHEN lower(_source) <> 'overall'
         THEN COALESCE(sch.total_change, 0)::float
@@ -416,19 +424,21 @@ BEGIN
         THEN COALESCE(rc.total_change, 0)::float
         ELSE ((le.raw_current - COALESCE(ta.tourney_total, 0)) - fe.starting_elo)::float
       END                        as secondary_value,
-      COALESCE(ws.streak, 0)::float as tertiary_value,
-      COALESCE(mc.matches_played, 0)::int as matches_played,
+      CASE WHEN NOT _value_only THEN COALESCE(ws.streak, 0)::float END as tertiary_value,
+      CASE WHEN NOT _value_only THEN COALESCE(mc.matches_played, 0)::int END as matches_played,
       p.custom_avatar_url        as player_custom_avatar_url
-    FROM last_elo_raw le
-    JOIN peak_elo pk_e ON pk_e.steam_id = le.steam_id
-    LEFT JOIN tournament_adj ta ON ta.steam_id = le.steam_id
-    LEFT JOIN rolling_change rc ON rc.steam_id = le.steam_id
-    LEFT JOIN peak_no_tourney pnt ON pnt.steam_id = le.steam_id
-    JOIN first_elo fe ON fe.steam_id = le.steam_id
-    LEFT JOIN match_counts mc ON mc.steam_id = le.steam_id
-    LEFT JOIN win_streak ws ON ws.steam_id = le.steam_id
-    LEFT JOIN source_change sch ON sch.steam_id = le.steam_id
-    JOIN players p ON p.steam_id = le.steam_id
+    -- peak_elo, last_elo_raw and first_elo share one filter and so one set of
+    -- players; driving from peak_elo lets an all-time rank skip the other two.
+    FROM peak_elo pk_e
+    LEFT JOIN last_elo_raw le ON le.steam_id = pk_e.steam_id
+    LEFT JOIN tournament_adj ta ON ta.steam_id = pk_e.steam_id
+    LEFT JOIN rolling_change rc ON rc.steam_id = pk_e.steam_id
+    LEFT JOIN peak_no_tourney pnt ON pnt.steam_id = pk_e.steam_id
+    LEFT JOIN first_elo fe ON fe.steam_id = pk_e.steam_id
+    LEFT JOIN match_counts mc ON mc.steam_id = pk_e.steam_id
+    LEFT JOIN win_streak ws ON ws.steam_id = pk_e.steam_id
+    LEFT JOIN source_change sch ON sch.steam_id = pk_e.steam_id
+    JOIN players p ON p.steam_id = pk_e.steam_id
     WHERE lower(_source) = 'overall' OR COALESCE(mc.matches_played, 0) > 0
     ORDER BY value DESC;
 
@@ -446,20 +456,16 @@ BEGIN
         pe.current,
         pe.change,
         pe.created_at,
-        EXISTS (
-          SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pe.match_id
-        ) AS is_tournament
+        pe.is_tournament
       FROM player_elo pe
       WHERE (_match_type IS NULL OR pe.type = _match_type)
-        AND NOT EXISTS (SELECT 1 FROM matches vm WHERE vm.id = pe.match_id AND vm.elo_voided)
+        AND pe.match_id NOT IN (SELECT vm.id FROM matches vm WHERE vm.elo_voided)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
         AND (
           pe.season_id = _season_id
           OR (
             pe.season_id IS NULL
-            AND EXISTS (
-              SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pe.match_id
-            )
+            AND pe.is_tournament
           )
         )
     ),
@@ -532,12 +538,14 @@ BEGIN
       -- No regular-season row yet (tournament-only so far): start from the
       -- season baseline rather than showing them at zero.
       (COALESCE(sc.current, 5000) + COALESCE(td.total_change, 0))::float as value,
-      CASE WHEN lower(_source) <> 'overall'
+      CASE WHEN _value_only
+        THEN NULL
+        WHEN lower(_source) <> 'overall'
         THEN COALESCE(sch.total_change, 0)::float
         ELSE COALESCE(lc.change, 0)::float
       END                        as secondary_value,
-      COALESCE(ws.streak, 0)::float as tertiary_value,
-      COALESCE(mc.matches_played, 0)::int as matches_played,
+      CASE WHEN NOT _value_only THEN COALESCE(ws.streak, 0)::float END as tertiary_value,
+      CASE WHEN NOT _value_only THEN COALESCE(mc.matches_played, 0)::int END as matches_played,
       p.custom_avatar_url        as player_custom_avatar_url
     FROM ranked_players rp
     LEFT JOIN season_current sc ON sc.steam_id = rp.steam_id
@@ -558,7 +566,7 @@ BEGIN
         pe.current as current_elo
       FROM player_elo pe
       WHERE 1=1
-        AND NOT EXISTS (SELECT 1 FROM matches vm WHERE vm.id = pe.match_id AND vm.elo_voided)
+        AND pe.match_id NOT IN (SELECT vm.id FROM matches vm WHERE vm.elo_voided)
         AND (_match_type IS NULL OR pe.type = _match_type)
         AND (_season_id IS NULL OR pe.season_id = _season_id)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
@@ -568,7 +576,7 @@ BEGIN
       SELECT pe.steam_id, MAX(pe.current) as peak_current
       FROM player_elo pe
       WHERE 1=1
-        AND NOT EXISTS (SELECT 1 FROM matches vm WHERE vm.id = pe.match_id AND vm.elo_voided)
+        AND pe.match_id NOT IN (SELECT vm.id FROM matches vm WHERE vm.elo_voided)
         AND (_match_type IS NULL OR pe.type = _match_type)
         AND (_season_id IS NULL OR pe.season_id = _season_id)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
@@ -589,7 +597,7 @@ BEGIN
         pe.current - pe.change as starting_elo
       FROM player_elo pe
       WHERE 1=1
-        AND NOT EXISTS (SELECT 1 FROM matches vm WHERE vm.id = pe.match_id AND vm.elo_voided)
+        AND pe.match_id NOT IN (SELECT vm.id FROM matches vm WHERE vm.elo_voided)
         AND (_match_type IS NULL OR pe.type = _match_type)
         AND (_season_id IS NULL OR pe.season_id = _season_id)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
@@ -599,7 +607,7 @@ BEGIN
       SELECT pe.steam_id, COUNT(*)::int as matches_played
       FROM player_elo pe
       WHERE 1=1
-        AND NOT EXISTS (SELECT 1 FROM matches vm WHERE vm.id = pe.match_id AND vm.elo_voided)
+        AND pe.match_id NOT IN (SELECT vm.id FROM matches vm WHERE vm.elo_voided)
         AND (_match_type IS NULL OR pe.type = _match_type)
         AND (_season_id IS NULL OR pe.season_id = _season_id)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
@@ -640,7 +648,7 @@ BEGIN
       GROUP BY sub.steam_id
     )
     SELECT
-      le.steam_id::text          as player_steam_id,
+      pk_e.steam_id::text        as player_steam_id,
       p.name                     as player_name,
       p.avatar_url               as player_avatar_url,
       p.country                  as player_country,
@@ -648,7 +656,9 @@ BEGIN
         THEN pk_e.peak_current::float
         ELSE le.current_elo::float
       END                        as value,
-      CASE WHEN _all_time_peak
+      CASE WHEN _value_only
+        THEN NULL
+        WHEN _all_time_peak
         THEN 0::float
         WHEN lower(_source) <> 'overall'
         THEN COALESCE(sch.total_change, 0)::float
@@ -656,17 +666,21 @@ BEGIN
         THEN COALESCE(rc.total_change, 0)::float
         ELSE (le.current_elo - fe.starting_elo)::float
       END                        as secondary_value,
-      COALESCE(ws.streak, 0)::float as tertiary_value,
-      mc.matches_played::int     as matches_played,
+      CASE WHEN NOT _value_only THEN COALESCE(ws.streak, 0)::float END as tertiary_value,
+      CASE WHEN NOT _value_only THEN mc.matches_played::int END as matches_played,
       p.custom_avatar_url        as player_custom_avatar_url
-    FROM last_elo le
-    JOIN peak_elo pk_e ON pk_e.steam_id = le.steam_id
-    LEFT JOIN rolling_change rc ON rc.steam_id = le.steam_id
-    JOIN first_elo fe ON fe.steam_id = le.steam_id
-    JOIN match_counts mc ON mc.steam_id = le.steam_id
-    LEFT JOIN win_streak ws ON ws.steam_id = le.steam_id
-    LEFT JOIN source_change sch ON sch.steam_id = le.steam_id
-    JOIN players p ON p.steam_id = le.steam_id
+    -- peak_elo, last_elo and first_elo share one filter and so one set of
+    -- players, and match_counts holds them all unless a source narrows it,
+    -- which the WHERE applies; driving from peak_elo lets an all-time rank
+    -- skip the rest.
+    FROM peak_elo pk_e
+    LEFT JOIN last_elo le ON le.steam_id = pk_e.steam_id
+    LEFT JOIN rolling_change rc ON rc.steam_id = pk_e.steam_id
+    LEFT JOIN first_elo fe ON fe.steam_id = pk_e.steam_id
+    LEFT JOIN match_counts mc ON mc.steam_id = pk_e.steam_id
+    LEFT JOIN win_streak ws ON ws.steam_id = pk_e.steam_id
+    LEFT JOIN source_change sch ON sch.steam_id = pk_e.steam_id
+    JOIN players p ON p.steam_id = pk_e.steam_id
     WHERE lower(_source) = 'overall' OR COALESCE(mc.matches_played, 0) > 0
     ORDER BY value DESC;
   END IF;
@@ -1063,9 +1077,15 @@ BEGIN
           CASE WHEN _category = 'awards' THEN le.tertiary_value END DESC
       ))::int AS rank,
       (COUNT(*) OVER ())::int AS total
-    -- Pass all 7 args explicitly. A shorter call binds ambiguously if a stale
-    -- overload still exists; exact arity always resolves the 7-arg one.
-    FROM public.get_leaderboard(_category, _window_days, _match_type, _exclude_tournaments, NULL::text, _season_id, _source) le
+    FROM (
+      SELECT * FROM public._leaderboard_elo(_window_days, _match_type, _exclude_tournaments, _season_id, _source, TRUE)
+      WHERE _category = 'elo'
+      UNION ALL
+      -- Pass all 7 args explicitly. A shorter call binds ambiguously if a stale
+      -- overload still exists; exact arity always resolves the 7-arg one.
+      SELECT * FROM public.get_leaderboard(_category, _window_days, _match_type, _exclude_tournaments, NULL::text, _season_id, _source)
+      WHERE _category IS DISTINCT FROM 'elo'
+    ) le
   )
   SELECT r.player_steam_id, r.value, r.rank, r.total
   FROM ranked r
