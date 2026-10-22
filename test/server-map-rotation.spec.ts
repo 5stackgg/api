@@ -279,9 +279,12 @@ describe("dedicated server config (SQL-driven)", () => {
             url.toString().includes(`/${name}/`),
           );
 
-          return new Response(JSON.stringify(responses[method]), {
-            status: 200,
-          });
+          const body = responses[method];
+
+          return new Response(
+            typeof body === "string" ? body : JSON.stringify(body),
+            { status: 200 },
+          );
         });
 
     const item = (id: string, title: string, extra = {}) => ({
@@ -295,12 +298,20 @@ describe("dedicated server config (SQL-driven)", () => {
       ...extra,
     });
 
+    // The parts of a real workshop page the import reads, its Map tag named in
+    // German.
+    const workshopPage = (id: string, title: string, app = "730") => `
+      <meta property="og:image" content="https://images.steamusercontent.com/ugc/1/${id}/?imw=512&amp;&amp;ima=fit">
+      <div class="workshopItemTitle">${title}</div>
+      <span onclick="ShowAddToCollection( '${id}', '${app}' );" id="AddToCollectionBtn"></span>
+      <div class="workshopTags"><span class="workshopTagsTitle">Tags:&nbsp;</span><a href="https://steamcommunity.com/workshop/browse/?appid=730&amp;requiredtags%5B%5D=CS2">CS2</a>, <a href="https://steamcommunity.com/workshop/browse/?appid=730&amp;requiredtags%5B%5D=Map">Karte</a></div>`;
+
     afterEach(() => {
       jest.restoreAllMocks();
     });
 
     it("catalogues every CS2 map in the collection in order, disabled for matches", async () => {
-      steam({
+      const fetch = steam({
         GetCollectionDetails: {
           response: {
             collectiondetails: [
@@ -338,6 +349,11 @@ describe("dedicated server config (SQL-driven)", () => {
         ["91", "91", "Prophunt Dust2"],
         ["92", "92", "Prophunt Mirage"],
       ]);
+      expect(
+        fetch.mock.calls.some(([url]) =>
+          url.toString().includes("/filedetails/"),
+        ),
+      ).toBe(false);
 
       const rows = await postgres.query<
         Array<{ type: string; enabled: boolean; active_pool: boolean }>
@@ -456,6 +472,72 @@ describe("dedicated server config (SQL-driven)", () => {
       expect(row).toEqual({ enabled: false, active_pool: false, pools: 0 });
     });
 
+    // Steam's API answers an unlisted item with result 9, as it does a missing one.
+    it("catalogues an unlisted map from its workshop page", async () => {
+      steam({
+        GetCollectionDetails: {
+          response: { collectiondetails: [{ result: 9 }] },
+        },
+        GetPublishedFileDetails: {
+          response: {
+            publishedfiledetails: [{ publishedfileid: "97", result: 9 }],
+          },
+        },
+        filedetails: workshopPage("97", "de_lbt_mill &amp; co"),
+      });
+
+      const result = await service.importWorkshopCollection(
+        "https://steamcommunity.com/sharedfiles/filedetails/?id=97",
+      );
+
+      expect(
+        result.maps.map((m) => [m.workshop_map_id, m.name, m.label, m.poster]),
+      ).toEqual([
+        [
+          "97",
+          "97",
+          "de_lbt_mill & co",
+          "https://images.steamusercontent.com/ugc/1/97/",
+        ],
+      ]);
+    });
+
+    it("skips an unlisted item from another game", async () => {
+      steam({
+        GetCollectionDetails: {
+          response: { collectiondetails: [{ result: 9 }] },
+        },
+        GetPublishedFileDetails: {
+          response: {
+            publishedfiledetails: [{ publishedfileid: "97", result: 9 }],
+          },
+        },
+        filedetails: workshopPage("97", "Some Mod", "4000"),
+      });
+
+      await expect(service.importWorkshopCollection("97")).rejects.toThrow(
+        /no public or unlisted CS2 workshop maps/,
+      );
+    });
+
+    it("skips an item whose workshop page is Steam's error page", async () => {
+      steam({
+        GetCollectionDetails: {
+          response: { collectiondetails: [{ result: 9 }] },
+        },
+        GetPublishedFileDetails: {
+          response: {
+            publishedfiledetails: [{ publishedfileid: "98", result: 9 }],
+          },
+        },
+        filedetails: "<title>Steam Community :: Error</title>",
+      });
+
+      await expect(service.importWorkshopCollection("98")).rejects.toThrow(
+        /no public or unlisted CS2 workshop maps/,
+      );
+    });
+
     it("says so when nothing in the link is a CS2 map", async () => {
       steam({
         GetCollectionDetails: {
@@ -469,7 +551,7 @@ describe("dedicated server config (SQL-driven)", () => {
       });
 
       await expect(service.importWorkshopCollection("99")).rejects.toThrow(
-        /no public CS2 workshop maps/,
+        /no public or unlisted CS2 workshop maps/,
       );
     });
   });

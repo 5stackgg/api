@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, Logger } from "@nestjs/common";
+import { load } from "cheerio";
 import { PostgresService } from "../postgres/postgres.service";
 import { DedicatedServersService } from "./dedicated-servers.service";
 import { RconService } from "../rcon/rcon.service";
@@ -28,6 +29,7 @@ export type ImportedWorkshopMap = {
 };
 
 const STEAM_API = "https://api.steampowered.com/ISteamRemoteStorage";
+const WORKSHOP_PAGE = "https://steamcommunity.com/sharedfiles/filedetails/";
 
 @Injectable()
 export class DedicatedServerConfigService {
@@ -378,7 +380,7 @@ export class DedicatedServerConfigService {
 
     if (maps.length === 0) {
       throw new BadRequestException(
-        "That link has no public CS2 workshop maps in it",
+        "That link has no public or unlisted CS2 workshop maps in it",
       );
     }
 
@@ -406,6 +408,38 @@ export class DedicatedServerConfigService {
     }
 
     return trimmed.match(/[?&]id=(\d+)/)?.[1] ?? null;
+  }
+
+  public static workshopPageItem(
+    itemId: string,
+    html: string,
+  ): WorkshopItem | null {
+    const $ = load(html);
+    const app = html.match(/ShowAddToCollection\(\s*'(\d+)',\s*'(\d+)'\s*\)/);
+    const title = $(".workshopItemTitle").first().text().trim();
+
+    if (app?.[1] !== itemId || !title) {
+      return null;
+    }
+
+    return {
+      publishedfileid: itemId,
+      result: 1,
+      consumer_app_id: Number(app[2]),
+      title,
+      preview_url: $('meta[property="og:image"]')
+        .attr("content")
+        ?.split("?")[0],
+      // Steam translates the tag names; the browse links carry the tag itself.
+      tags: $(".workshopTags a")
+        .toArray()
+        .flatMap((tag) =>
+          new URL($(tag).attr("href") ?? "", WORKSHOP_PAGE).searchParams.getAll(
+            "requiredtags[]",
+          ),
+        )
+        .map((tag) => ({ tag })),
+    };
   }
 
   private async communityServer(serverId: string): Promise<CommunityServer> {
@@ -505,12 +539,51 @@ export class DedicatedServerConfigService {
       response?: { publishedfiledetails?: Array<WorkshopItem> };
     }>("GetPublishedFileDetails", body);
 
-    return new Map(
+    const details = new Map(
       (data.response?.publishedfiledetails ?? []).map((item) => [
         item.publishedfileid,
         item,
       ]),
     );
+
+    const unlisted = await Promise.all(
+      itemIds
+        .filter((itemId) => details.get(itemId)?.result !== 1)
+        .map((itemId) => this.workshopPage(itemId)),
+    );
+
+    for (const item of unlisted) {
+      if (item) {
+        details.set(item.publishedfileid, item);
+      }
+    }
+
+    return details;
+  }
+
+  // Steam's API answers an unlisted item with result 9, the same as a missing
+  // or private one, but its workshop page is open to anyone with the link.
+  private async workshopPage(itemId: string): Promise<WorkshopItem | null> {
+    try {
+      const response = await fetch(`${WORKSHOP_PAGE}?id=${itemId}`, {
+        signal: AbortSignal.timeout(10_000),
+      });
+
+      if (!response.ok) {
+        return null;
+      }
+
+      return DedicatedServerConfigService.workshopPageItem(
+        itemId,
+        await response.text(),
+      );
+    } catch (error) {
+      this.logger.warn(
+        `unable to read workshop page ${itemId}`,
+        error?.message ?? error,
+      );
+      return null;
+    }
   }
 
   private async steam<T>(
