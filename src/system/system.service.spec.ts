@@ -407,6 +407,7 @@ describe("SystemService api and hasura", () => {
   let system: SystemService;
   let restart: jest.SpyInstance;
   let pods: Array<{ app: string; imageID: string }>;
+  let images: Array<{ names: string[]; sizeBytes: number }>;
 
   beforeEach(() => {
     delete process.env.DEV;
@@ -414,9 +415,17 @@ describe("SystemService api and hasura", () => {
       { app: "api", imageID: `${repo}@${latest}` },
       { app: "hasura", imageID: `${repo}@${old}` },
     ];
+    images = [];
+
+    const cache = new Map<string, unknown>();
 
     system = new SystemService(
-      {} as any,
+      {
+        has: jest.fn(async (key: string) => cache.has(key)),
+        put: jest.fn(async (key: string, value: unknown) => {
+          cache.set(key, value);
+        }),
+      } as any,
       {} as any,
       {} as any,
       { warn: jest.fn(), log: jest.fn() } as any,
@@ -428,7 +437,10 @@ describe("SystemService api and hasura", () => {
         items: [
           {
             metadata: { name: "node-1" },
-            status: { conditions: [{ type: "Ready", status: "True" }] },
+            status: {
+              conditions: [{ type: "Ready", status: "True" }],
+              images,
+            },
           },
         ],
       })),
@@ -488,6 +500,26 @@ describe("SystemService api and hasura", () => {
       expect(restart).not.toHaveBeenCalled();
     });
 
+    // A no-op rebuild files the new digest under the image already pulled, and
+    // the pod keeps reporting the first one in sorted order.
+    it("counts any digest the node knows the image by", async () => {
+      images.push({
+        names: [`${repo}@${old}`, `${repo}@${latest}`, `${repo}:latest`],
+        sizeBytes: 1,
+      });
+
+      await system.syncApiAndHasura();
+
+      expect(restart).not.toHaveBeenCalled();
+    });
+
+    it("restarts a mismatch once when the restart brings back the same digests", async () => {
+      await system.syncApiAndHasura();
+      await system.syncApiAndHasura();
+
+      expect(restart.mock.calls).toEqual([["hasura"], ["api"]]);
+    });
+
     it("leaves a hasura rollout alone while its new pod migrates", async () => {
       pods.push({ app: "hasura", imageID: `${repo}@${latest}` });
 
@@ -540,6 +572,14 @@ describe("SystemService api and hasura", () => {
         expect.objectContaining({ service: "api", currentVersion: latest }),
         expect.objectContaining({ service: "hasura", currentVersion: old }),
       ]);
+    });
+
+    it("leaves out a current service when api and hasura are behind", async () => {
+      pods.push({ app: "web", imageID: `${repo}@${latest}` });
+
+      expect(
+        (await system.getOutdated()).map(({ service }) => service),
+      ).toEqual(["api", "hasura"]);
     });
 
     it("reports neither once both run the latest build", async () => {

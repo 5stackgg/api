@@ -351,12 +351,23 @@ export class SystemService {
       return;
     }
 
+    // A restart that brings back the same two digests changed nothing: across
+    // nodes, a pod whose image its node doesn't list is known only by the
+    // digest containerd reports, which a no-op rebuild never moves.
+    const restarted = `system:api-hasura-restart:${api[0].version}:${hasura[0].version}`;
+
+    if (await this.cache.has(restarted)) {
+      return;
+    }
+
     this.logger.warn(
       `api ${api[0].version} and hasura ${hasura[0].version} run different builds, restarting both`,
     );
 
     await this.restartDeployment("hasura");
     await this.restartDeployment("api");
+
+    await this.cache.put(restarted, true, 24 * 60 * 60);
   }
 
   private static sameBuild(
