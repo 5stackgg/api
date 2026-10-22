@@ -397,10 +397,11 @@ describe("SystemService.syncTwitchSupport", () => {
   });
 });
 
-describe("SystemService.syncHasura", () => {
+describe("SystemService api and hasura", () => {
   const repo = "ghcr.io/5stackgg/api";
   const old = "sha256:0ld";
   const latest = "sha256:1a7";
+  const newer = "sha256:2e3";
   const originalDev = process.env.DEV;
 
   let system: SystemService;
@@ -449,6 +450,7 @@ describe("SystemService.syncHasura", () => {
     };
 
     restart = jest.spyOn(system, "restartDeployment").mockResolvedValue();
+    jest.spyOn(system as any, "getPluginServices").mockResolvedValue([]);
     jest.spyOn(system, "getLatestDigest").mockResolvedValue(latest);
   });
 
@@ -460,52 +462,90 @@ describe("SystemService.syncHasura", () => {
     }
   });
 
-  // The api container restarted on its own and re-pulled :latest, but the
-  // hasura pod -- whose init container migrates -- was never replaced.
-  it("restarts hasura when the api is on the latest build and hasura is not", async () => {
-    await system.syncHasura();
+  describe("syncApiAndHasura", () => {
+    // The api container restarted on its own and re-pulled :latest, but the
+    // hasura pod -- whose init container migrates -- was never replaced.
+    it("restarts both when the api pulled a build hasura never migrated", async () => {
+      await system.syncApiAndHasura();
 
-    expect(restart).toHaveBeenCalledWith("hasura");
+      expect(restart.mock.calls).toEqual([["hasura"], ["api"]]);
+    });
+
+    it("restarts both when hasura pulled a build the api is not running", async () => {
+      pods[0].imageID = `${repo}@${old}`;
+      pods[1].imageID = `${repo}@${latest}`;
+
+      await system.syncApiAndHasura();
+
+      expect(restart.mock.calls).toEqual([["hasura"], ["api"]]);
+    });
+
+    it("leaves both alone on the same build", async () => {
+      pods[1].imageID = `${repo}@${latest}`;
+
+      await system.syncApiAndHasura();
+
+      expect(restart).not.toHaveBeenCalled();
+    });
+
+    it("leaves a hasura rollout alone while its new pod migrates", async () => {
+      pods.push({ app: "hasura", imageID: `${repo}@${latest}` });
+
+      await system.syncApiAndHasura();
+
+      expect(restart).not.toHaveBeenCalled();
+    });
+
+    // The registry digest is cached, so the new hasura pod can pull a build
+    // the cache has not seen yet. Each restart deleted the pod that was
+    // migrating, and that deletion queued the next check five seconds later.
+    it("leaves a hasura pod that pulled past the cached registry digest to migrate", async () => {
+      pods.push({ app: "hasura", imageID: `${repo}@${newer}` });
+
+      await system.syncApiAndHasura();
+
+      expect(restart).not.toHaveBeenCalled();
+    });
+
+    it("leaves a hasura rollout alone while its new pod pulls", async () => {
+      pods.push({ app: "hasura", imageID: "" });
+
+      await system.syncApiAndHasura();
+
+      expect(restart).not.toHaveBeenCalled();
+    });
+
+    it("leaves an api rollout alone", async () => {
+      pods.push({ app: "api", imageID: `${repo}@${old}` });
+
+      await system.syncApiAndHasura();
+
+      expect(restart).not.toHaveBeenCalled();
+    });
   });
 
-  it("leaves hasura alone once it runs the latest build", async () => {
-    pods[1].imageID = `${repo}@${latest}`;
+  describe("getOutdated", () => {
+    it("reports hasura with the api when only the api is behind", async () => {
+      pods[0].imageID = `${repo}@${old}`;
+      pods[1].imageID = `${repo}@${latest}`;
 
-    await system.syncHasura();
+      expect(await system.getOutdated()).toEqual([
+        expect.objectContaining({ service: "api", currentVersion: old }),
+        expect.objectContaining({ service: "hasura", currentVersion: latest }),
+      ]);
+    });
 
-    expect(restart).not.toHaveBeenCalled();
-  });
+    it("reports the api with hasura when only hasura is behind", async () => {
+      expect(await system.getOutdated()).toEqual([
+        expect.objectContaining({ service: "api", currentVersion: latest }),
+        expect.objectContaining({ service: "hasura", currentVersion: old }),
+      ]);
+    });
 
-  // An Update restarts both; the new hasura pod is the one migrating.
-  it("leaves a hasura rollout alone while its new pod migrates", async () => {
-    pods.push({ app: "hasura", imageID: `${repo}@${latest}` });
+    it("reports neither once both run the latest build", async () => {
+      pods[1].imageID = `${repo}@${latest}`;
 
-    await system.syncHasura();
-
-    expect(restart).not.toHaveBeenCalled();
-  });
-
-  it("leaves a hasura rollout alone while its new pod pulls", async () => {
-    pods.push({ app: "hasura", imageID: "" });
-
-    await system.syncHasura();
-
-    expect(restart).not.toHaveBeenCalled();
-  });
-
-  it("waits for the api itself to be on the latest build", async () => {
-    pods.push({ app: "api", imageID: `${repo}@${old}` });
-
-    await system.syncHasura();
-
-    expect(restart).not.toHaveBeenCalled();
-  });
-
-  it("does nothing when the registry cannot be read", async () => {
-    jest.spyOn(system, "getLatestDigest").mockResolvedValue(null);
-
-    await system.syncHasura();
-
-    expect(restart).not.toHaveBeenCalled();
+      expect(await system.getOutdated()).toEqual([]);
+    });
   });
 });

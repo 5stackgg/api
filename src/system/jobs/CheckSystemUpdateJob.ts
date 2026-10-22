@@ -10,7 +10,7 @@ export class CheckSystemUpdateJob extends WorkerHost {
   }
 
   async process(): Promise<void> {
-    await this.system.syncHasura();
+    await this.system.syncApiAndHasura();
     await this.system.setVersions();
   }
 }

@@ -38,6 +38,10 @@ export class SystemService {
     "hasura",
   ];
 
+  // One build: hasura's init container migrates with the api image, and only
+  // when the hasura pod is replaced.
+  private static API_PAIR = ["api", "hasura"];
+
   // Deployment names a plugin is never allowed to claim. A plugin manifest
   // is third-party input, so without this a plugin declaring `deployments:
   // ["api"]` would render an Update button that restarts the panel itself.
@@ -322,10 +326,10 @@ export class SystemService {
     }
   }
 
-  // Hasura's init container is what runs migrations, and only when the hasura
-  // pod is replaced. The api re-pulls :latest whenever its container restarts,
-  // so it can end up on a newer build than hasura migrated.
-  public async syncHasura() {
+  // Either pod can be replaced on its own and re-pull :latest. Compared with
+  // each other, not the registry: its digest is cached for 5 minutes, and a
+  // hasura pod that pulled past it read as behind on every check.
+  public async syncApiAndHasura() {
     if (process.env.DEV) {
       return;
     }
@@ -333,23 +337,33 @@ export class SystemService {
     const services = await this.getServices();
     const api = services.filter(({ service }) => service === "api");
     const hasura = services.filter(({ service }) => service === "hasura");
-    const latest = await this.getLatestDigest(api.at(0)?.image);
 
     if (
-      !latest ||
+      api.length === 0 ||
       hasura.length === 0 ||
-      !api.every(({ versions }) => versions.includes(latest)) ||
-      // A pod with no digest yet is still pulling: a rollout is under way.
-      hasura.some(
-        ({ version, versions }) => !version || versions.includes(latest),
-      )
+      // A pod with no digest yet is still pulling, and pods on two builds are
+      // mid-rollout. Restarting then kills the new hasura pod's migrations.
+      ![api, hasura].every((pods) =>
+        pods.every((pod) => SystemService.sameBuild(pod, pods[0])),
+      ) ||
+      SystemService.sameBuild(api[0], hasura[0])
     ) {
       return;
     }
 
-    this.logger.warn(`hasura is behind api ${latest}, restarting it`);
+    this.logger.warn(
+      `api ${api[0].version} and hasura ${hasura[0].version} run different builds, restarting both`,
+    );
 
     await this.restartDeployment("hasura");
+    await this.restartDeployment("api");
+  }
+
+  private static sameBuild(
+    a: { versions: string[] },
+    b: { versions: string[] },
+  ) {
+    return a.versions.some((version) => b.versions.includes(version));
   }
 
   public async restartService(service: string, pod?: string) {
@@ -414,12 +428,13 @@ export class SystemService {
   // points at. Shared by setVersions (report it) and updateServices (apply it),
   // so the header list and the Update button can never disagree.
   public async getOutdated() {
-    const outdated: Array<{
+    const checked: Array<{
       service: string;
       plugin?: string;
       pod: string;
       currentVersion: string;
       newVersion: string;
+      current: boolean;
     }> = [];
 
     const services: Array<{
@@ -436,20 +451,38 @@ export class SystemService {
 
       // An unreadable registry or pod tells us nothing. Reporting on it would
       // show a phantom update; restarting on it would be an endless rollout.
-      if (!image || !version || !newVersion || versions.includes(newVersion)) {
+      if (!image || !version || !newVersion) {
         continue;
       }
 
-      outdated.push({
+      checked.push({
         service,
         plugin,
         pod,
         currentVersion: version,
         newVersion,
+        current: versions.includes(newVersion),
       });
     }
 
-    return outdated;
+    const pairOutdated = checked.some(
+      ({ service, current }) =>
+        SystemService.API_PAIR.includes(service) && !current,
+    );
+
+    return checked
+      .filter(
+        ({ service, current }) =>
+          !current ||
+          (pairOutdated && SystemService.API_PAIR.includes(service)),
+      )
+      .map(({ service, plugin, pod, currentVersion, newVersion }) => ({
+        service,
+        plugin,
+        pod,
+        currentVersion,
+        newVersion,
+      }));
   }
 
   // The digest the given tag currently points at, or null if the registry is
