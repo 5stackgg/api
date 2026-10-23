@@ -71644,6 +71644,9 @@ export default {
             "invited_by_steam_id": [
                 348
             ],
+            "is_in_another_match": [
+                6
+            ],
             "language": [
                 110
             ],
@@ -72024,6 +72027,9 @@ export default {
             "invited_by_steam_id": [
                 350
             ],
+            "is_in_another_match": [
+                7
+            ],
             "language": [
                 112
             ],
@@ -72210,6 +72216,9 @@ export default {
             ],
             "invited_by_steam_id": [
                 348
+            ],
+            "is_in_another_match": [
+                6
             ],
             "language": [
                 110
@@ -72724,6 +72733,9 @@ export default {
             "invited_by_steam_id": [
                 3971
             ],
+            "is_in_another_match": [
+                3971
+            ],
             "language": [
                 3971
             ],
@@ -72859,6 +72871,9 @@ export default {
             ],
             "invited_by_steam_id": [
                 348
+            ],
+            "is_in_another_match": [
+                6
             ],
             "language": [
                 110
@@ -73181,6 +73196,9 @@ export default {
             ],
             "invited_by_steam_id": [
                 348
+            ],
+            "is_in_another_match": [
+                6
             ],
             "language": [
                 110
@@ -111507,6 +111525,9 @@ export default {
             "is_banned": [
                 6
             ],
+            "is_friend": [
+                6
+            ],
             "is_gagged": [
                 6
             ],
@@ -113061,6 +113082,9 @@ export default {
             "is_banned": [
                 7
             ],
+            "is_friend": [
+                7
+            ],
             "is_gagged": [
                 7
             ],
@@ -114133,6 +114157,9 @@ export default {
                 3971
             ],
             "is_banned": [
+                3971
+            ],
+            "is_friend": [
                 3971
             ],
             "is_gagged": [

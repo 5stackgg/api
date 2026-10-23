@@ -26,8 +26,9 @@ const INHERITED_ROLES = join(
 // The SQL specs run without a Hasura engine, so a table permission is compiled
 // here from its metadata into the WHERE clause Hasura would add to the
 // statement. Supports _and / _or / _not, the _eq / _neq / _in / _nin /
-// _is_null operators, X-Hasura-* session values, foreign-key relationships and
-// computed fields that take the session; anything else throws.
+// _is_null operators, X-Hasura-* session values, foreign-key and manual
+// relationships and computed fields that take the session; anything else
+// throws.
 //
 // A role with no permission of its own on a table answers with the roles
 // inherited_roles.yaml builds it from, their filters ORed and their grants
@@ -272,11 +273,20 @@ export class HasuraPermissions {
 
     if (relationship) {
       const using = relationship.using.foreign_key_constraint_on;
+      const manual = relationship.using.manual_configuration;
       const remoteAlias = `${alias}_${++this.aliases}`;
       let remoteTable: string;
       let join: string;
 
-      if (typeof using === "string") {
+      if (manual) {
+        remoteTable = manual.remote_table.name;
+        join = Object.entries(manual.column_mapping as Record<string, string>)
+          .map(
+            ([local, remote]) =>
+              `${remoteAlias}."${remote}" = ${alias}."${local}"`,
+          )
+          .join(" AND ");
+      } else if (typeof using === "string") {
         const target = await this.references(table, using);
         remoteTable = target.table;
         join = `${remoteAlias}."${target.column}" = ${alias}."${using}"`;

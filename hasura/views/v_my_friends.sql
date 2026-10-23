@@ -28,7 +28,9 @@ SELECT DISTINCT ON (p.steam_id, fr.friend_steam_id)
   fr.invited_by_steam_id,
   get_player_elo(p) AS elo,
   pbf.last_presence_state,
-  pbf.updated_at AS presence_updated_at
+  pbf.updated_at AS presence_updated_at,
+  -- One set for the whole poll, not is_in_another_match(p) per friend.
+  p.steam_id IN (SELECT a.steam_id FROM public.players_in_another_match() a(steam_id)) AS is_in_another_match
 FROM friend_relationships fr
 JOIN players p ON p.steam_id = fr.player_steam_id
 LEFT JOIN player_steam_bot_friend pbf

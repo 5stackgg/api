@@ -1,32 +1,29 @@
+-- Read from player_elo_current, which keeps the same latest unvoided rating
+-- per ladder the per-type functions below look up. Seasons off: the lifetime
+-- ladder alone (pre-seasons behavior). Seasons on: the active season's rating,
+-- else the lifetime one, plus the tournament ladder.
 CREATE OR REPLACE FUNCTION public.get_player_elo(player public.players) RETURNS jsonb
-    LANGUAGE plpgsql STABLE
+    LANGUAGE sql STABLE
     AS $$
-DECLARE
-    _active_season_id UUID;
-BEGIN
-    -- Seasons off: single global ELO ladder per type (pre-seasons behavior)
-    IF NOT seasons_enabled() THEN
-        return jsonb_build_object(
-            'competitive', get_player_elo_by_type(player, 'Competitive'),
-            'wingman', get_player_elo_by_type(player, 'Wingman'),
-            'duel', get_player_elo_by_type(player, 'Duel'),
-            'rush', get_player_elo_by_type(player, 'Rush')
-        );
-    END IF;
-
-    _active_season_id := get_active_season();
-
-    return jsonb_build_object(
-        'competitive', get_player_season_elo_by_type(player, 'Competitive', _active_season_id),
-        'wingman', get_player_season_elo_by_type(player, 'Wingman', _active_season_id),
-        'duel', get_player_season_elo_by_type(player, 'Duel', _active_season_id),
-        'rush', get_player_season_elo_by_type(player, 'Rush', _active_season_id),
-        'tournament_competitive', get_player_tournament_elo_by_type(player, 'Competitive'),
-        'tournament_wingman', get_player_tournament_elo_by_type(player, 'Wingman'),
-        'tournament_duel', get_player_tournament_elo_by_type(player, 'Duel'),
-        'tournament_rush', get_player_tournament_elo_by_type(player, 'Rush')
-    );
-END;
+    SELECT CASE WHEN s.seasons THEN jsonb_build_object(
+            'competitive', COALESCE(sr.competitive, lr.competitive),
+            'wingman', COALESCE(sr.wingman, lr.wingman),
+            'duel', COALESCE(sr.duel, lr.duel),
+            'rush', COALESCE(sr.rush, lr.rush),
+            'tournament_competitive', tr.competitive,
+            'tournament_wingman', tr.wingman,
+            'tournament_duel', tr.duel,
+            'tournament_rush', tr.rush)
+        ELSE jsonb_build_object(
+            'competitive', lr.competitive,
+            'wingman', lr.wingman,
+            'duel', lr.duel,
+            'rush', lr.rush)
+        END
+    FROM (SELECT seasons_enabled() AS seasons, get_active_season() AS season_id) s
+    LEFT JOIN player_elo_current lr ON lr.steam_id = player.steam_id AND lr.ladder = 'lifetime'
+    LEFT JOIN player_elo_current sr ON sr.steam_id = player.steam_id AND sr.ladder = 'season' AND sr.season_id = s.season_id
+    LEFT JOIN player_elo_current tr ON tr.steam_id = player.steam_id AND tr.ladder = 'tournament';
 $$;
 
 drop function if exists public.get_player_elo_by_type;

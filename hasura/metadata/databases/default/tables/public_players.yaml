@@ -338,6 +338,12 @@ computed_fields:
       function:
         name: is_registered
         schema: public
+  - name: is_friend
+    definition:
+      function:
+        name: is_friend
+        schema: public
+      session_argument: hasura_session
   - name: is_gagged
     definition:
       function:

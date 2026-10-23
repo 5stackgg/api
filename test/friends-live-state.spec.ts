@@ -427,4 +427,53 @@ describe("friends list live state", () => {
       expect(growth.filter(({ buffers }) => buffers > 10)).toEqual([]);
     }, 120_000);
   });
+
+  // Last, so every match the cases above left behind is in play: the friends
+  // list reads one set of players in another match per poll, and it must say
+  // what is_in_another_match says of each of them.
+  describe("players_in_another_match", () => {
+    it("answers is_in_another_match for every player", async () => {
+      const rows = await postgres.query<
+        Array<{ steam_id: string; one: boolean; set: boolean }>
+      >(
+        `SELECT p.steam_id::text AS steam_id, is_in_another_match(p) AS one,
+                p.steam_id IN (SELECT players_in_another_match()) AS set
+           FROM players p ORDER BY p.steam_id`,
+      );
+
+      expect(rows.some((r) => r.one)).toBe(true);
+      expect(rows.filter((r) => r.one !== r.set)).toEqual([]);
+    });
+
+    it("answers it again on every friends list row", async () => {
+      const [viewer] = await fx.players(1);
+      const others = await postgres.query<Array<{ steam_id: string }>>(
+        "SELECT steam_id::text AS steam_id FROM players WHERE steam_id <> $1 ORDER BY steam_id",
+        [viewer],
+      );
+      for (const [i, { steam_id }] of others.entries()) {
+        await postgres.query(
+          `INSERT INTO friends (player_steam_id, other_player_steam_id, status)
+           VALUES ($1, $2, $3)`,
+          i % 2
+            ? [viewer, steam_id, "Accepted"]
+            : [steam_id, viewer, "Pending"],
+        );
+      }
+
+      const rows = await postgres.query<
+        Array<{ steam_id: string; listed: boolean; one: boolean }>
+      >(
+        `SELECT f.steam_id::text AS steam_id, f.is_in_another_match AS listed,
+                is_in_another_match(p) AS one
+           FROM v_my_friends f JOIN players p ON p.steam_id = f.steam_id
+          WHERE f.friend_steam_id = $1`,
+        [viewer],
+      );
+
+      expect(rows).toHaveLength(others.length);
+      expect(rows.some((r) => r.one)).toBe(true);
+      expect(rows.filter((r) => r.listed !== r.one)).toEqual([]);
+    });
+  });
 });
