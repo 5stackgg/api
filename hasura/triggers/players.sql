@@ -3,9 +3,28 @@ CREATE OR REPLACE FUNCTION public.tbau_players() RETURNS TRIGGER
     AS $$
 DECLARE
 changing_player_role text;
+changing_player_steam_id text;
+changing_player_current_role text;
 BEGIN
 	IF TG_OP = 'UPDATE' AND NEW.role != OLD.role THEN
 		SELECT current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role' INTO changing_player_role;
+
+		-- A GraphQL socket keeps the role it opened with until its session
+		-- expires, so a demoted player's session can still claim the old one.
+		-- 'admin' is the admin secret, and internal SQL has no session.
+		IF changing_player_role IS NOT NULL AND changing_player_role != 'admin' THEN
+			SELECT current_setting('hasura.user', true)::jsonb ->> 'x-hasura-user-id' INTO changing_player_steam_id;
+
+			IF changing_player_steam_id ~ '^[0-9]{1,18}$' THEN
+				SELECT role INTO changing_player_current_role
+				FROM players
+				WHERE steam_id = changing_player_steam_id::bigint;
+			END IF;
+
+			IF is_role_below(changing_player_role, changing_player_current_role) IS NOT TRUE THEN
+				RAISE EXCEPTION 'Your role has changed, reload and try again' USING ERRCODE = '22000';
+			END IF;
+		END IF;
 
 		IF NOT is_role_below(OLD.role, changing_player_role) THEN
 			RAISE EXCEPTION 'You cannot change the role of a player above your own' USING ERRCODE = '22000';

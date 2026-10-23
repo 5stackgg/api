@@ -226,6 +226,108 @@ describe("map pools, player guards, and clip counters (SQL-driven)", () => {
       );
       expect(row.role).toBe("verified_user");
     });
+
+    const roleOf = async (steamId: string) => {
+      const [row] = await postgres.query<Array<{ role: string }>>(
+        "SELECT role FROM players WHERE steam_id = $1",
+        [steamId],
+      );
+      return row.role;
+    };
+
+    // A GraphQL socket keeps the role it opened with, so a demoted player's
+    // session can still claim the role they lost.
+    it.each(["administrator", "tournament_organizer", "match_organizer"])(
+      "a demoted %s's session cannot restore their role or change anyone's",
+      async (lost) => {
+        const demoted = await fx.player();
+        const other = await fx.player();
+
+        await expect(
+          runAsUser(postgres, demoted, lost, (query) =>
+            query("UPDATE players SET role = $2 WHERE steam_id = $1", [
+              demoted,
+              lost,
+            ]),
+          ),
+        ).rejects.toThrow(/role has changed/i);
+        await expect(
+          runAsUser(postgres, demoted, lost, (query) =>
+            query(
+              "UPDATE players SET role = 'verified_user' WHERE steam_id = $1",
+              [other],
+            ),
+          ),
+        ).rejects.toThrow(/role has changed/i);
+
+        expect(await roleOf(demoted)).toBe("user");
+        expect(await roleOf(other)).toBe("user");
+      },
+    );
+
+    it("refuses a staff session for a player that does not exist", async () => {
+      const target = await fx.player();
+
+      for (const steamId of ["76561199799999999", "0", "not-a-steam-id"]) {
+        await expect(
+          runAsUser(postgres, steamId, "administrator", (query) =>
+            query("UPDATE players SET role = 'moderator' WHERE steam_id = $1", [
+              target,
+            ]),
+          ),
+        ).rejects.toThrow(/role has changed/i);
+      }
+      expect(await roleOf(target)).toBe("user");
+    });
+
+    it("lets a current administrator change roles and step down", async () => {
+      const admin = await fx.player(undefined, "administrator");
+      const target = await fx.player();
+
+      await runAsUser(postgres, admin, "administrator", (query) =>
+        query("UPDATE players SET role = 'administrator' WHERE steam_id = $1", [
+          target,
+        ]),
+      );
+      await runAsUser(postgres, admin, "administrator", (query) =>
+        query("UPDATE players SET role = 'moderator' WHERE steam_id = $1", [
+          admin,
+        ]),
+      );
+
+      expect(await roleOf(target)).toBe("administrator");
+      expect(await roleOf(admin)).toBe("moderator");
+    });
+
+    it("lets a session below the player's current role act as that session", async () => {
+      const admin = await fx.player(undefined, "administrator");
+      const target = await fx.player();
+
+      await runAsUser(postgres, admin, "match_organizer", (query) =>
+        query("UPDATE players SET role = 'verified_user' WHERE steam_id = $1", [
+          target,
+        ]),
+      );
+
+      expect(await roleOf(target)).toBe("verified_user");
+    });
+
+    it("leaves the admin secret and sessionless SQL free to change roles", async () => {
+      const target = await fx.player();
+
+      await runAsUser(postgres, "0", "admin", (query) =>
+        query("UPDATE players SET role = 'administrator' WHERE steam_id = $1", [
+          target,
+        ]),
+      );
+      expect(await roleOf(target)).toBe("administrator");
+
+      await postgres.query(
+        "UPDATE players SET role = 'verified_user' WHERE steam_id = $1",
+        [target],
+      );
+      expect(await roleOf(target)).toBe("verified_user");
+    });
   });
 
   describe("clip summary counters", () => {

@@ -6,20 +6,23 @@ import { HasuraController } from "./hasura.controller";
 import { HasuraService } from "./hasura.service";
 import { CacheService } from "../cache/cache.service";
 import { PostgresService } from "../postgres/postgres.service";
+import type { e_player_roles_enum } from "../../generated";
 
 // Hasura asks GET /hasura who a request or socket belongs to; the session the
 // app's middleware put on the request decides the answer.
 describe("HasuraController auth hook", () => {
   let app: INestApplication;
   let signedIn: { steam_id: string } | undefined;
+  let role: e_player_roles_enum;
 
   beforeEach(async () => {
     signedIn = undefined;
+    role = "user";
     jest
       .spyOn(HasuraService.prototype, "getHasuraHeaders")
       .mockImplementation(async (steamId: string) => ({
         "x-hasura-user-id": steamId,
-        "x-hasura-role": "user",
+        "x-hasura-role": role,
       }));
 
     const module = await Test.createTestingModule({
@@ -76,6 +79,39 @@ describe("HasuraController auth hook", () => {
 
   it("answers a signed-in socket that asks to be anonymous as a guest", async () => {
     signedIn = { steam_id: "76561198000000001" };
+    const response = await hook()
+      .set(HasuraController.ANONYMOUS_HEADER, "1")
+      .expect(200);
+    expect(response.body).toEqual({
+      "x-hasura-user-id": "0",
+      "x-hasura-role": "guest",
+    });
+  });
+
+  it.each<e_player_roles_enum>([
+    "verified_user",
+    "streamer",
+    "moderator",
+    "match_organizer",
+    "tournament_organizer",
+    "administrator",
+  ])(
+    "gives %s sessions a max-age so their sockets ask again",
+    async (staff) => {
+      signedIn = { steam_id: "76561198000000001" };
+      role = staff;
+      const response = await hook().expect(200);
+      expect(response.body).toEqual({
+        "x-hasura-user-id": "76561198000000001",
+        "x-hasura-role": staff,
+        "Cache-Control": "max-age=300",
+      });
+    },
+  );
+
+  it("answers an administrator's anonymous socket as a guest with no lifetime", async () => {
+    signedIn = { steam_id: "76561198000000001" };
+    role = "administrator";
     const response = await hook()
       .set(HasuraController.ANONYMOUS_HEADER, "1")
       .expect(200);

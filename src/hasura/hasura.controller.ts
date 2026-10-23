@@ -58,6 +58,12 @@ export class HasuraController {
   // signed-in viewer. It can only ever lower a session to a guest's.
   public static readonly ANONYMOUS_HEADER = "x-5stack-anonymous";
 
+  // Hasura asks this hook once per socket and keeps that role until the
+  // max-age in the JSON body (it ignores a Cache-Control header), then drops
+  // the socket so it reconnects through here. Community Edition asks again for
+  // every HTTP request; Cloud and Enterprise would cache those for the max-age.
+  private static readonly ELEVATED_SESSION_MAX_AGE_SECONDS = 5 * 60;
+
   // Longer than any one attempt should take, so a crashed attempt's claim
   // does not hold the event back for long.
   private static readonly EVENT_RUNNING_TTL_SECONDS = 5 * 60;
@@ -84,7 +90,16 @@ export class HasuraController {
       };
     }
 
-    return this.hasuraService.getHasuraHeaders(user.steam_id);
+    const session = await this.hasuraService.getHasuraHeaders(user.steam_id);
+
+    if (session["x-hasura-role"] === "user") {
+      return session;
+    }
+
+    return {
+      ...session,
+      "Cache-Control": `max-age=${HasuraController.ELEVATED_SESSION_MAX_AGE_SECONDS}`,
+    };
   }
 
   @Post("actions")

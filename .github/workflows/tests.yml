@@ -68,11 +68,16 @@ jobs:
       TESTCONTAINERS_RYUK_DISABLED: "true"
     steps:
       # The database image is the slowest download in the job (~20s), so it
-      # starts first and pulls while the rest of the setup runs.
+      # starts first and pulls while the rest of the setup runs. The images
+      # must match the ones the suites start (test/utils/sql-test-db.ts,
+      # test/hasura-socket-sessions.spec.ts), or they are pulled again there.
       - name: Start pulling the database images
         run: |
-          (docker pull -q timescale/timescaledb:2.30.2-pg18@sha256:e72689191e1c977892c53d6f2c344dbc4a9657a867dc8cc1899229f9d3672b2e && docker pull -q redis:8.8-alpine) \
-            > "$RUNNER_TEMP/docker-pull.log" 2>&1 &
+          (
+            docker pull -q hasura/graphql-engine:v2.50.5-ce.cli-migrations-v3@sha256:4955dba48e3c1a814cfaaf1951219f23661dcd846c00be04c4fc54949069d34d &
+            docker pull -q timescale/timescaledb:2.31.0-pg18@sha256:0fcff5761363809d1242f2261a3482197b5a5337407f8b97a976fb174206d579 && docker pull -q redis:8.8-alpine
+            wait
+          ) > "$RUNNER_TEMP/docker-pull.log" 2>&1 &
           echo $! > "$RUNNER_TEMP/docker-pull.pid"
       - name: Check out the repo
         uses: actions/checkout@v4

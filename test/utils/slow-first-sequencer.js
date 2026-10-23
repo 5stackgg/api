@@ -15,6 +15,7 @@ const WEIGHTS = {
   "tournament-roster-lineup-refresh.spec.ts": 15,
   "map-veto.spec.ts": 15,
   "tournament-reset.spec.ts": 11,
+  "hasura-socket-sessions.spec.ts": 10,
   "tournament-bracket-match-recreate.spec.ts": 10,
   "fixtures-warm-reapply.spec.ts": 10,
   "chat-redis-actions.spec.ts": 10,
