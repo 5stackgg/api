@@ -987,6 +987,43 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       });
     });
 
+    // The assignment picks a server next, under the lock a woken match would need.
+    it("hands the server it gives back to nobody before picking its next one", async () => {
+      const assignServer = jest
+        .spyOn(service, "assignServer")
+        .mockResolvedValue(undefined);
+      const answer = hasura.query.getMockImplementation()!;
+      hasura.query.mockImplementation(async (request: any) => {
+        if (request.matches?.__args?.where?.status) {
+          return { matches: [{ id: "match-2" }] };
+        }
+        if (request.servers?.__args?.where?.id?._in) {
+          return { servers: [{ id: "server-9", region: "USE" }] };
+        }
+        return answer(request);
+      });
+      hasura.mutation.mockImplementation(async (request: any) => {
+        if (request.update_servers) {
+          return { update_servers: { returning: [{ id: "server-9" }] } };
+        }
+        if (request.update_matches) {
+          return { update_matches: { affected_rows: 1 } };
+        }
+        return {};
+      });
+
+      await expect(
+        (service as any).assignOnDemandServer("match-1", {
+          preserveMatchStatus: true,
+        }),
+      ).resolves.toBe(true);
+
+      expect(assignServer).not.toHaveBeenCalled();
+      expect(
+        queue.add.mock.calls.filter(([name]) => name === "AssignWaitingMatch"),
+      ).toHaveLength(0);
+    });
+
     describe("a match that already holds an on-demand server", () => {
       let bootStatus: string | null;
 

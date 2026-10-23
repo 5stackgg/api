@@ -2053,8 +2053,11 @@ export class MatchAssistantService {
       throw error;
     }
 
-    // A signalled server holds its ports until it exits: its stop check frees it.
-    if (!stopping) {
+    // The assignment removing them takes a server next. A signalled server
+    // holds its ports until it exits: its stop check frees it.
+    if (options.remove) {
+      await this.releaseOnDemandServer(matchId, options.serverId);
+    } else if (!stopping) {
       await this.assignWaitingMatchesTo(
         options.releaseOnlyIfEnded
           ? await this.releaseEndedMatchServer(matchId)
