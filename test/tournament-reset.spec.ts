@@ -275,6 +275,47 @@ describe("tournament match reset (SQL-driven)", () => {
     expect(held.reserved_by_match_id).toBe(semi2.match_id);
   });
 
+  // The same played match, so its stale server_id is just as stale.
+  it("a corrected winner drops the server the match finished on too", async () => {
+    const t = await tfx.launch(SE4, 4);
+    const [semi1, semi2] = (await tfx.getBrackets(t.stageIds[0])).filter(
+      (b) => b.round === 1,
+    );
+    const [server] = await postgres.query<Array<{ id: string }>>(
+      "SELECT id FROM servers WHERE region = 'TestA'",
+    );
+    const holdServer = async (matchId: string) => {
+      await postgres.query(
+        "UPDATE servers SET reserved_by_match_id = $1 WHERE id = $2",
+        [matchId, server.id],
+      );
+      await postgres.query("UPDATE matches SET server_id = $1 WHERE id = $2", [
+        server.id,
+        matchId,
+      ]);
+    };
+
+    await holdServer(semi1.match_id!);
+    await tfx.winMatch(semi1.match_id!);
+    await holdServer(semi2.match_id!);
+
+    const [lineups] = await postgres.query<Array<{ lineup_2_id: string }>>(
+      "SELECT lineup_2_id FROM matches WHERE id = $1",
+      [semi1.match_id],
+    );
+    await resetMatch(semi1.match_id!, lineups.lineup_2_id);
+
+    const [source] = await postgres.query<
+      Array<{ status: string; server_id: string | null }>
+    >("SELECT status, server_id FROM matches WHERE id = $1", [semi1.match_id]);
+    expect(source).toEqual({ status: "Finished", server_id: null });
+
+    const [held] = await postgres.query<
+      Array<{ reserved_by_match_id: string | null }>
+    >("SELECT reserved_by_match_id FROM servers WHERE id = $1", [server.id]);
+    expect(held.reserved_by_match_id).toBe(semi2.match_id);
+  });
+
   // 22 teams in a 32-slot bracket: ten round-1 byes are pruned and their seeds
   // pushed into the round-2 parents. Round-2 match 5 holds the seed-2 bye team
   // in slot 1 with a single surviving round-1 feeder for slot 2.

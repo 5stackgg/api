@@ -366,7 +366,11 @@ describe("MatchAssistantService — on-demand server teardown", () => {
 
   describe("a queued stop that runs late", () => {
     let matchStatus: string;
-    let reservations: Array<{ id: string; reserved_by_match_id: string }>;
+    let reservations: Array<{
+      id: string;
+      reserved_by_match_id: string;
+      is_dedicated?: boolean;
+    }>;
 
     beforeEach(() => {
       matchStatus = "Live";
@@ -390,7 +394,14 @@ describe("MatchAssistantService — on-demand server teardown", () => {
           };
         }
         if (request.servers) {
-          return { servers: reservations };
+          const dedicated = request.servers.__args.where.is_dedicated?._eq;
+          return {
+            servers: reservations.filter(
+              (server) =>
+                dedicated === undefined ||
+                (server.is_dedicated ?? false) === dedicated,
+            ),
+          };
         }
         return {};
       });
@@ -442,6 +453,22 @@ describe("MatchAssistantService — on-demand server teardown", () => {
         );
       },
     );
+
+    it("stops the old on-demand server of a match now on a dedicated one", async () => {
+      reservations = [
+        {
+          id: "dedicated-1",
+          reserved_by_match_id: "match-1",
+          is_dedicated: true,
+        },
+      ];
+      readNamespacedJob.mockResolvedValue(activeJob("uid-1"));
+      listNamespacedPod.mockResolvedValue({ items: [runningPod("uid-1")] });
+
+      await runStop();
+
+      expect(signalled()).toHaveLength(1);
+    });
 
     it("leaves a server booted for the match after it checked", async () => {
       matchStatus = "WaitingForCheckIn";
