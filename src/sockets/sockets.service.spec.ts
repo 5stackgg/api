@@ -329,7 +329,9 @@ describe("SocketsService.sendMessageToSteamId", () => {
     expect(second.send).toHaveBeenCalledWith(
       sent("direct:incoming", { id: 1 }),
     );
-    expect(other.send).not.toHaveBeenCalled();
+    expect(other.send).not.toHaveBeenCalledWith(
+      sent("direct:incoming", { id: 1 }),
+    );
   });
 
   it("matches a steam id published as a number", async () => {
@@ -362,8 +364,12 @@ describe("SocketsService.sendMessageToSteamId", () => {
     await closeListener(second)();
     await publish(redis, USER.steam_id, "matchmaking:details", {});
 
-    expect(first.send).not.toHaveBeenCalled();
-    expect(second.send).not.toHaveBeenCalled();
+    expect(first.send).not.toHaveBeenCalledWith(
+      sent("matchmaking:details", {}),
+    );
+    expect(second.send).not.toHaveBeenCalledWith(
+      sent("matchmaking:details", {}),
+    );
     expect((service as any).clientsBySteamId.size).toBe(0);
   });
 
@@ -490,6 +496,7 @@ describe("SocketsService presence", () => {
     matchmaking.cancelOffline.mockClear();
     redis.publish.mockClear();
     redis.set.mockResolvedValueOnce(null);
+    redis.keys.mockResolvedValue([`players:${USER.steam_id}`]);
 
     pong();
     await settle();
@@ -509,6 +516,71 @@ describe("SocketsService presence", () => {
 
     expect(matchmaking.cancelOffline).not.toHaveBeenCalled();
     expect(redis.publish).not.toHaveBeenCalled();
+  });
+});
+
+describe("SocketsService players online", () => {
+  afterEach(() => {
+    sessionLoad.impl = (_request, next) => next();
+  });
+
+  const settle = () => new Promise((resolve) => setImmediate(resolve));
+  const rosters = (redis: ReturnType<typeof makeService>["redis"]) =>
+    redis.publish.mock.calls
+      .filter(([channel]: [string]) => channel === "broadcast-message")
+      .map(([, message]: [string, string]) => JSON.parse(message))
+      .filter(({ event }: { event: string }) => event === "players-online")
+      .map(({ data }: { data: string[] }) => data);
+
+  it("broadcasts the roster only when it changes", async () => {
+    const { service, redis } = makeService();
+    redis.keys.mockResolvedValue(["players:2", "players:1"]);
+
+    await service.sendPeopleOnline();
+    await service.sendPeopleOnline();
+    redis.keys.mockResolvedValue(["players:1", "players:2"]);
+    await service.sendPeopleOnline();
+    redis.keys.mockResolvedValue(["players:1", "players:2", "players:3"]);
+    await service.sendPeopleOnline();
+
+    expect(rosters(redis)).toEqual([
+      ["1", "2"],
+      ["1", "2", "3"],
+    ]);
+  });
+
+  it("does not resend a roster another pod already broadcast", async () => {
+    const { service, redis } = makeService();
+    const onMessage = redis.on.mock.calls.find(
+      ([event]: [string]) => event === "message",
+    )[1];
+    redis.keys.mockResolvedValue(["players:1"]);
+
+    onMessage(
+      "broadcast-message",
+      JSON.stringify({ event: "players-online", data: ["1"] }),
+    );
+    await service.sendPeopleOnline();
+
+    expect(rosters(redis)).toEqual([]);
+  });
+
+  it("sends a tab that connects the roster without rebroadcasting an unchanged one", async () => {
+    const { service, redis } = makeService();
+    redis.keys.mockResolvedValue([`players:${USER.steam_id}`]);
+    signIn(USER);
+
+    const first = socket();
+    await service.setupSocket(first, {} as any);
+    await settle();
+    const second = socket();
+    await service.setupSocket(second, {} as any);
+    await settle();
+
+    expect(rosters(redis)).toEqual([[USER.steam_id]]);
+    expect(second.send).toHaveBeenCalledWith(
+      JSON.stringify({ event: "players-online", data: [USER.steam_id] }),
+    );
   });
 });
 
@@ -535,7 +607,9 @@ describe("SocketsService offline", () => {
   // cancels has to be queued already.
   it("queues the offline job before anyone can see the player gone", async () => {
     const { service, redis, matchmaking } = makeService();
+    redis.keys.mockResolvedValue([`players:${USER.steam_id}`]);
     const client = await connect(service);
+    redis.keys.mockResolvedValue([]);
 
     await closeListener(client)();
 
