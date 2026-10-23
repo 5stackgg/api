@@ -14,6 +14,8 @@ describe("recently_banned_players (SQL-driven)", () => {
     banned_at: Date;
     banned_at_source: string;
     steam_banned_on: Date | string | null;
+    vac_banned_on: Date | string | null;
+    game_banned_on: Date | string | null;
     vac_ban_count: number;
     game_ban_count: number;
     sanction_id: string | null;
@@ -286,6 +288,67 @@ describe("recently_banned_players (SQL-driven)", () => {
       );
       expect(day(row.steam_banned_on)).toBe(expected);
       expect(await list({ kinds: ["game"], window: 7 })).toEqual([]);
+    });
+
+    const banDates = (steam: string, vacDaysAgo: number, gameDaysAgo: number) =>
+      postgres.query(
+        `UPDATE players
+            SET last_vac_ban_at = now() - make_interval(days => $2),
+                last_game_ban_at = now() - make_interval(days => $3)
+          WHERE steam_id = $1`,
+        [steam, vacDaysAgo, gameDaysAgo],
+      );
+
+    const utcDay = async (daysAgo: number) => {
+      const [{ value }] = await postgres.query<Array<{ value: string }>>(
+        "SELECT ((now() AT TIME ZONE 'UTC')::date - $1::int)::text AS value",
+        [daysAgo],
+      );
+      return value;
+    };
+
+    it("dates each kind of Steam ban on its own", async () => {
+      const both = await fx.player("bothkinds");
+      await steamBan(both, { vac: 1, game: 1, daysAgo: 2 });
+      await banDates(both, 3700, 2);
+
+      expect(ids(await list({ kinds: ["vac"] }))).toEqual([vacAuto]);
+      const [row] = await list({ kinds: ["game"], search: "bothkinds" });
+      expect(day(row.vac_banned_on)).toBe(await utcDay(3700));
+      expect(day(row.game_banned_on)).toBe(await utcDay(2));
+      expect(row.banned_at.toISOString()).toBe(
+        new Date(`${await utcDay(2)}T00:00:00Z`).toISOString(),
+      );
+    });
+
+    it("a recent VAC ban doesn't make an old game ban recent", async () => {
+      const both = await fx.player("bothkinds");
+      await steamBan(both, { vac: 1, game: 1, daysAgo: 1 });
+      await banDates(both, 1, 900);
+
+      expect(ids(await list({ kinds: ["game"] }))).toEqual([gameOnly]);
+      expect(ids(await list({ kinds: ["vac"] }))).toEqual([both, vacAuto]);
+    });
+
+    it("lists a row under the day of the kind asked for", async () => {
+      const both = await fx.player("bothkinds");
+      await steamBan(both, { vac: 1, game: 1, daysAgo: 3 });
+      await banDates(both, 10, 3);
+
+      const [vacOnly] = await list({ kinds: ["vac"], search: "bothkinds" });
+      expect(vacOnly.banned_at.toISOString()).toBe(
+        new Date(`${await utcDay(10)}T00:00:00Z`).toISOString(),
+      );
+      const [anyKind] = await list({ search: "bothkinds" });
+      expect(anyKind.banned_at.toISOString()).toBe(
+        new Date(`${await utcDay(3)}T00:00:00Z`).toISOString(),
+      );
+    });
+
+    it("falls back to the newest Steam ban when a kind has no date of its own", async () => {
+      const [row] = await list({ kinds: ["game"] });
+      expect(day(row.game_banned_on)).toBe(await utcDay(5));
+      expect(row.vac_banned_on).toBeNull();
     });
   });
 

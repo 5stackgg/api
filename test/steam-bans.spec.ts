@@ -286,6 +286,41 @@ describe("steam bans", () => {
     expect(await activeBans(player)).toBe(1);
   });
 
+  it("keeps each kind's date when a ban of the other kind lands", async () => {
+    const player = await fx.player();
+    steamReports(player, "2016-09-01", 0, 1);
+    await service().checkPlayers([player]);
+
+    steamReports(player, "2024-02-09", 1, 1);
+    await service().checkPlayers([player]);
+
+    const [row] = await postgres.query<
+      Array<{ vac: string | null; game: string | null }>
+    >(
+      `SELECT (last_vac_ban_at AT TIME ZONE 'UTC')::date::text AS vac,
+              (last_game_ban_at AT TIME ZONE 'UTC')::date::text AS game
+         FROM players WHERE steam_id = $1::bigint`,
+      [player],
+    );
+    expect(row).toEqual({ vac: "2024-02-09", game: "2016-09-01" });
+  });
+
+  it("dates a new game ban from the check that finds it", async () => {
+    const player = await fx.player();
+    steamReports(player, "2016-09-01", 0, 1);
+    await service().checkPlayers([player]);
+
+    steamReports(player, "2025-01-01", 0, 2);
+    await service().checkPlayers([player]);
+
+    const [row] = await postgres.query<Array<{ game: string | null }>>(
+      `SELECT (last_game_ban_at AT TIME ZONE 'UTC')::date::text AS game
+         FROM players WHERE steam_id = $1::bigint`,
+      [player],
+    );
+    expect(row.game).toBe("2025-01-01");
+  });
+
   it("lifts an auto-ban once Steam no longer reports a VAC ban", async () => {
     const player = await fx.player();
     await ban(player);

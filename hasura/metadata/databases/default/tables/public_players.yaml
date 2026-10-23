@@ -484,6 +484,8 @@ select_permissions:
         - vac_ban_count
         - game_ban_count
         - days_since_last_ban
+        - last_vac_ban_at
+        - last_game_ban_at
       computed_fields:
         - current_lobby_id
         - elo
@@ -538,6 +540,8 @@ select_permissions:
         - vac_ban_count
         - game_ban_count
         - days_since_last_ban
+        - last_vac_ban_at
+        - last_game_ban_at
       computed_fields:
         - current_lobby_id
         - elo
@@ -594,6 +598,8 @@ select_permissions:
         - vac_ban_count
         - game_ban_count
         - days_since_last_ban
+        - last_vac_ban_at
+        - last_game_ban_at
       computed_fields:
         - current_lobby_id
         - elo

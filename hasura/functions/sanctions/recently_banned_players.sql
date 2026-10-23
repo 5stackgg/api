@@ -3,8 +3,10 @@
 --
 -- Steam only says how many whole days ago the LATEST ban of either kind was,
 -- as of when we last asked (steam_bans_checked_at), so a Steam ban is a day,
--- not a moment: steam_banned_on. banned_at puts that day at 00:00 UTC, so a
--- 5Stack ban on the same day sorts as the newer of the two.
+-- not a moment: steam_banned_on. Each kind keeps its own date as well
+-- (players.last_vac_ban_at / last_game_ban_at), so the VAC and game filters
+-- read vac_banned_on and game_banned_on. banned_at puts the day at 00:00 UTC,
+-- so a 5Stack ban on the same day sorts as the newer of the two.
 --
 -- The viewer comes from the Hasura session. With a played-with filter on, only
 -- players who shared a finished match with the viewer are listed, and
@@ -55,19 +57,28 @@ bounds AS (
 steam AS (
     SELECT
         pl.steam_id,
-        (pl.steam_bans_checked_at AT TIME ZONE 'UTC')::date - COALESCE(pl.days_since_last_ban, 0) AS banned_on
+        latest.day AS banned_on,
+        -- A row the api wrote before each kind had its own date falls back
+        -- to the newest ban of either kind.
+        CASE WHEN pl.vac_ban_count > 0
+            THEN COALESCE((pl.last_vac_ban_at AT TIME ZONE 'UTC')::date, latest.day)
+        END AS vac_on,
+        CASE WHEN pl.game_ban_count > 0
+            THEN COALESCE((pl.last_game_ban_at AT TIME ZONE 'UTC')::date, latest.day)
+        END AS game_on
     FROM public.players pl
+    CROSS JOIN LATERAL (
+        SELECT (pl.steam_bans_checked_at AT TIME ZONE 'UTC')::date - COALESCE(pl.days_since_last_ban, 0) AS day
+    ) latest
     WHERE (pl.vac_ban_count > 0 OR pl.game_ban_count > 0)
       AND pl.steam_bans_checked_at IS NOT NULL
 ),
 candidates AS (
     SELECT s.steam_id
     FROM steam s
-    JOIN public.players pl ON pl.steam_id = s.steam_id
     CROSS JOIN bounds b
-    WHERE s.banned_on >= b.since_day
-      AND (('vac' = ANY (b.kinds) AND pl.vac_ban_count > 0)
-        OR ('game' = ANY (b.kinds) AND pl.game_ban_count > 0))
+    WHERE ('vac' = ANY (b.kinds) AND s.vac_on >= b.since_day)
+       OR ('game' = ANY (b.kinds) AND s.game_on >= b.since_day)
     UNION
     SELECT ps.player_steam_id
     FROM public.player_sanctions ps
@@ -84,6 +95,8 @@ details AS (
         pl.vac_ban_count,
         pl.game_ban_count,
         s.banned_on AS steam_banned_on,
+        s.vac_on AS vac_banned_on,
+        s.game_on AS game_banned_on,
         ban.id AS sanction_id,
         ban.kind AS sanction_kind,
         public.is_banned(pl) AS banned_here,
@@ -242,17 +255,23 @@ SELECT
     d.matches_played,
     d.matches_since_steam_ban,
     d.arrived_banned,
-    CASE WHEN b.viewer IS NULL THEN NULL ELSE COALESCE(sj.shared_matches, '[]'::jsonb) END AS shared_matches
+    CASE WHEN b.viewer IS NULL THEN NULL ELSE COALESCE(sj.shared_matches, '[]'::jsonb) END AS shared_matches,
+    d.vac_banned_on,
+    d.game_banned_on
 FROM details d
 CROSS JOIN bounds b
 CROSS JOIN LATERAL (
     -- The newest ban of a requested kind inside the window.
     SELECT e.at, e.src
     FROM (
-        SELECT (d.steam_banned_on::timestamp AT TIME ZONE 'UTC') AS at, 'steam'::text AS src
-        WHERE d.steam_banned_on >= b.since_day
-          AND (('vac' = ANY (b.kinds) AND d.vac_ban_count > 0)
-            OR ('game' = ANY (b.kinds) AND d.game_ban_count > 0))
+        SELECT (st.day::timestamp AT TIME ZONE 'UTC') AS at, 'steam'::text AS src
+        FROM (
+            SELECT GREATEST(
+                CASE WHEN 'vac' = ANY (b.kinds) AND d.vac_banned_on >= b.since_day THEN d.vac_banned_on END,
+                CASE WHEN 'game' = ANY (b.kinds) AND d.game_banned_on >= b.since_day THEN d.game_banned_on END
+            ) AS day
+        ) st
+        WHERE st.day IS NOT NULL
         UNION ALL
         SELECT ps.created_at, '5stack'::text
         FROM public.player_sanctions ps

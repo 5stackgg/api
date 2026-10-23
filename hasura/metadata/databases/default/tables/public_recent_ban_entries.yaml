@@ -40,6 +40,8 @@ select_permissions:
         - matches_since_steam_ban
         - arrived_banned
         - shared_matches
+        - vac_banned_on
+        - game_banned_on
       filter: {}
       allow_aggregations: true
     comment: Return type of recently_banned_players. Every role inherits this.
