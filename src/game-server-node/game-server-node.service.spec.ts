@@ -365,13 +365,22 @@ describe("GameServerNodeService CS2 on GPU-only nodes", () => {
     expect(GameServerNodeService.runsCs2(node(fields))).toBe(runs);
   });
 
-  it("leaves a GPU-only node out of a CS2 release", async () => {
+  it("installs nothing on a GPU-only node in a CS2 release", async () => {
     const hasura = {
       query: jest.fn().mockResolvedValue({
         game_server_nodes: [
-          { id: "match-node", ...node({ enabled_for_match_making: true }) },
-          { id: "render-node", ...node({ gpu_rendering_enabled: true }) },
-          { id: "gpu-only", ...node() },
+          {
+            id: "match-node",
+            build_id: null,
+            ...node({ enabled_for_match_making: true }),
+          },
+          {
+            id: "render-node",
+            build_id: null,
+            ...node({ gpu_rendering_enabled: true }),
+          },
+          { id: "gpu-only", build_id: null, ...node() },
+          { id: "gpu-only-installed", build_id: 25966348, ...node() },
         ],
       }),
     };
@@ -396,6 +405,7 @@ describe("GameServerNodeService CS2 on GPU-only nodes", () => {
     expect(updateCsServer.mock.calls.map(([id]) => id)).toEqual([
       "match-node",
       "render-node",
+      "gpu-only-installed",
     ]);
   });
 });

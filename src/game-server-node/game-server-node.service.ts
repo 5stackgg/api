@@ -107,7 +107,7 @@ export type BuildNodeCandidate = {
 export type Cs2Host = Pick<
   BuildNodeCandidate,
   "gpu" | "enabled_for_match_making" | "start_port_range" | "end_port_range"
-> & { gpu_rendering_enabled?: boolean | null };
+> & { gpu_rendering_enabled: boolean | null };
 
 export type NodeWorkloads = {
   enabled: boolean | null;
@@ -392,8 +392,6 @@ export class GameServerNodeService {
         csgo_build_id: true,
         public_ip: true,
         gpu: true,
-        start_port_range: true,
-        end_port_range: true,
         gpu_info: true,
         cpu_sockets: true,
         cpu_cores_per_socket: true,
@@ -552,11 +550,7 @@ export class GameServerNodeService {
       });
     }
 
-    if (
-      transitionedFromOffline &&
-      game_server_nodes_by_pk.build_id &&
-      GameServerNodeService.runsCs2(game_server_nodes_by_pk)
-    ) {
+    if (transitionedFromOffline && game_server_nodes_by_pk.build_id) {
       await this.updateCsServer(node);
     }
 
@@ -634,6 +628,7 @@ export class GameServerNodeService {
           },
         },
         id: true,
+        build_id: true,
         gpu: true,
         enabled_for_match_making: true,
         start_port_range: true,
@@ -643,7 +638,9 @@ export class GameServerNodeService {
     });
 
     for (const node of game_server_nodes) {
-      if (!GameServerNodeService.runsCs2(node)) {
+      // An install it still has stays current: it may host dedicated servers,
+      // or render again, and nothing else updates it when that changes.
+      if (!node.build_id && !GameServerNodeService.runsCs2(node)) {
         continue;
       }
       await this.updateCsServer(node.id);
@@ -2209,7 +2206,7 @@ export class GameServerNodeService {
 
   // A GPU node out of matchmaking that keeps its ports hosts dedicated
   // servers, so it has CS2 like any other.
-  public static isGpuOnly(node: Cs2Host) {
+  public static isGpuOnly(node: Omit<Cs2Host, "gpu_rendering_enabled">) {
     return Boolean(
       node.gpu &&
       !node.enabled_for_match_making &&
@@ -2218,8 +2215,8 @@ export class GameServerNodeService {
   }
 
   // A GPU-only node boots a CS2 server only to film lineup previews. Its
-  // game-streamer installs its own CS2 client, so with Rendering off nothing
-  // reads the node's server install and updates leave it alone.
+  // game-streamer installs its own CS2 client, so with Rendering off it needs
+  // no server install.
   public static runsCs2(node: Cs2Host) {
     return (
       !GameServerNodeService.isGpuOnly(node) || !!node.gpu_rendering_enabled
