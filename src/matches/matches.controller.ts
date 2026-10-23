@@ -102,6 +102,12 @@ export class MatchesController {
     "Paused",
   ];
 
+  // The server is still recording a map in WaitingForTV, until tv_delay is out.
+  private static readonly RECORDING_MAP_STATUSES: e_match_map_status_enum[] = [
+    ...MatchesController.IN_PLAY_MAP_STATUSES,
+    "WaitingForTV",
+  ];
+
   // A DELETE carries the row in `old` and an UPDATE in `new`, and a voice
   // channel is per lineup rather than per match.
   private static lineupIds(data: HasuraEventData<matches_set_input>) {
@@ -726,6 +732,11 @@ export class MatchesController {
           );
         }
       } else if (wasEnded && !ended) {
+        await this.scheduledMatchesQueue.add(
+          StopOnDemandServer.name,
+          { matchId },
+          MatchesController.stopOnDemandServerJobOptions(),
+        );
         await this.chatService.reopenMatchArchive(matchId);
       }
     }
@@ -1018,6 +1029,20 @@ export class MatchesController {
       return 0;
     }
 
+    const feedEndsIn = await this.tvFeedEndsInSeconds(data, matchId);
+
+    const playout = await this.matchRelayService
+      .playoutSeconds(matchId)
+      .catch(() => 0);
+
+    return feedEndsIn + playout;
+  }
+
+  private async tvFeedEndsInSeconds(
+    data: HasuraEventData<matches_set_input>,
+    matchId: string,
+    inPlayStatuses = MatchesController.IN_PLAY_MAP_STATUSES,
+  ): Promise<number> {
     let feedEndsIn = MatchesController.PLUGIN_TV_STOP_SECONDS;
 
     try {
@@ -1026,7 +1051,7 @@ export class MatchesController {
           __args: {
             where: {
               match_id: { _eq: matchId },
-              status: { _in: MatchesController.IN_PLAY_MAP_STATUSES },
+              status: { _in: inPlayStatuses },
             },
             limit: 1,
           },
@@ -1051,11 +1076,7 @@ export class MatchesController {
       );
     }
 
-    const playout = await this.matchRelayService
-      .playoutSeconds(matchId)
-      .catch(() => 0);
-
-    return feedEndsIn + playout;
+    return feedEndsIn;
   }
 
   private static stopOnDemandServerJobOptions(delaySeconds = 0) {
@@ -1090,16 +1111,11 @@ export class MatchesController {
     let delay = 0;
 
     if (data.op !== "DELETE" && data.new.status !== "Canceled") {
-      const { match_options_by_pk: matchOptions } = await this.hasura.query({
-        match_options_by_pk: {
-          __args: {
-            id: data.new.match_options_id,
-          },
-          tv_delay: true,
-        },
-      });
-
-      delay = matchOptions?.tv_delay || 1;
+      delay = await this.tvFeedEndsInSeconds(
+        data,
+        matchId,
+        MatchesController.RECORDING_MAP_STATUSES,
+      );
     }
 
     this.logger.log(
@@ -2775,9 +2791,13 @@ export class MatchesController {
 
   @HasuraEvent()
   public async server_availability(data: HasuraEventData<servers_set_input>) {
+    // An on-demand server boots a pod per match, and is freed once the last one is gone.
+    const freedOnDemand =
+      !data.new.is_dedicated && !!data.old?.reserved_by_match_id;
+
     if (
       data.new.enabled === false ||
-      data.new.connected === false ||
+      (data.new.connected === false && !freedOnDemand) ||
       data.new.reserved_by_match_id !== null
     ) {
       return;

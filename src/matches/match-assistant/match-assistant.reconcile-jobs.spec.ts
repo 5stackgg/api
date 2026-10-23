@@ -73,6 +73,9 @@ describe("MatchAssistantService — reconciling on-demand server Jobs", () => {
   const deletedJobs = () =>
     deleteNamespacedJob.mock.calls.map(([request]) => request.name);
 
+  const matchLookups = () =>
+    hasura.query.mock.calls.filter(([request]) => request.matches);
+
   beforeEach(() => {
     for (const fn of [
       listNamespacedJob,
@@ -225,7 +228,7 @@ describe("MatchAssistantService — reconciling on-demand server Jobs", () => {
     await service.reconcileOnDemandServerJobs();
 
     expect(deleteNamespacedJob).not.toHaveBeenCalled();
-    expect(hasura.query).not.toHaveBeenCalled();
+    expect(matchLookups()).toHaveLength(0);
   });
 
   it("ignores Jobs that are not match servers", async () => {
@@ -251,7 +254,7 @@ describe("MatchAssistantService — reconciling on-demand server Jobs", () => {
     await service.reconcileOnDemandServerJobs();
 
     expect(deleteNamespacedJob).not.toHaveBeenCalled();
-    expect(hasura.query).not.toHaveBeenCalled();
+    expect(matchLookups()).toHaveLength(0);
   });
 
   it("lists only labelled Jobs once no unlabelled match server Job is left", async () => {
@@ -457,6 +460,81 @@ describe("MatchAssistantService — reconciling on-demand server Jobs", () => {
           }),
         }),
       );
+    });
+  });
+
+  describe("an ended match's on-demand server", () => {
+    let endedReservations: Array<{ id: string; reserved_by_match_id: string }>;
+
+    beforeEach(() => {
+      endedReservations = [{ id: "server-1", reserved_by_match_id: MATCH_ID }];
+      const answer = hasura.query.getMockImplementation()!;
+      hasura.query.mockImplementation(async (request: any) =>
+        request.servers?.__args?.where?.current_match
+          ? { servers: endedReservations }
+          : answer(request),
+      );
+    });
+
+    const serverReleases = () =>
+      hasura.mutation.mock.calls
+        .map(([mutation]) => mutation?.update_servers)
+        .filter(Boolean);
+
+    it("is freed once no Job of its match is left running", async () => {
+      listNamespacedJob.mockResolvedValue({
+        items: [
+          job({
+            status: {
+              active: 0,
+              conditions: [{ type: "Complete", status: "True" }],
+            },
+          }),
+        ],
+      });
+
+      await service.reconcileOnDemandServerJobs();
+
+      expect(serverReleases()).toEqual([
+        {
+          __args: expect.objectContaining({
+            where: {
+              reserved_by_match_id: { _eq: MATCH_ID },
+              id: { _eq: "server-1" },
+              current_match: {
+                status: {
+                  _in: expect.arrayContaining(["Canceled", "Finished"]),
+                },
+              },
+            },
+          }),
+          __typename: true,
+        },
+      ]);
+    });
+
+    it("stays with its match while the match's server is still running", async () => {
+      matches = [
+        match({
+          status: "Finished",
+          server_id: null,
+          ended_at: new Date(NOW - MINUTE).toISOString(),
+        }),
+      ];
+      reservedServers = endedReservations;
+
+      await service.reconcileOnDemandServerJobs();
+
+      expect(deleteNamespacedJob).not.toHaveBeenCalled();
+      expect(serverReleases()).toHaveLength(0);
+    });
+
+    it("stays with its match when the Jobs cannot be listed", async () => {
+      listNamespacedJob.mockRejectedValue(new Error("forbidden"));
+
+      await service.reconcileOnDemandServerJobs();
+
+      expect(serverReleases()).toHaveLength(0);
     });
   });
 

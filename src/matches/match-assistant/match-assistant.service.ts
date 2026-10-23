@@ -68,7 +68,7 @@ export class MatchAssistantService {
     "practice",
   ];
   public static readonly ON_DEMAND_SERVER_BOOT_CHECK_DELAY_MS = 15 * 1000;
-  public static readonly ON_DEMAND_SERVER_STOP_CHECK_DELAY_MS = 2 * 60 * 1000;
+  public static readonly ON_DEMAND_SERVER_STOP_CHECK_DELAY_MS = 15 * 1000;
   private static readonly ON_DEMAND_SERVER_TEARDOWN_TIMEOUT_MS = 15 * 1000;
   // Must outlast the previous Job's teardown, yet expire well inside
   // assignServer's ~55s of retries.
@@ -1967,17 +1967,21 @@ export class MatchAssistantService {
   ) {
     this.logger.log(`[${matchId}] stopping match servers`);
 
+    let stopping = false;
+
     try {
       for (const jobName of options.jobUids?.keys() ??
         (await this.getMatchServerJobIds(matchId))) {
         if (options.remove) {
           await this.removeOnDemandServerJob(matchId, jobName, { wait: true });
-        } else {
+        } else if (
           await this.signalOnDemandServerStop(
             matchId,
             jobName,
             options.jobUids?.get(jobName),
-          );
+          )
+        ) {
+          stopping = true;
         }
       }
     } catch (error) {
@@ -1988,13 +1992,16 @@ export class MatchAssistantService {
       throw error;
     }
 
-    await this.releaseOnDemandServer(
-      matchId,
-      options.serverId,
-      options.releaseOnlyIfEnded
-        ? MatchAssistantService.reservedByEndedMatch()
-        : undefined,
-    );
+    // A signalled server holds its ports until it exits: its stop check frees it.
+    if (!stopping) {
+      await this.releaseOnDemandServer(
+        matchId,
+        options.serverId,
+        options.releaseOnlyIfEnded
+          ? MatchAssistantService.reservedByEndedMatch()
+          : undefined,
+      );
+    }
 
     await this.setServerError(matchId, null);
   }
@@ -2094,26 +2101,29 @@ export class MatchAssistantService {
     const job = await this.readOnDemandServerJob(batch, jobName);
 
     if (
-      !job ||
-      job.metadata?.uid !== jobUid ||
-      MatchAssistantService.isJobFinished(job)
+      job?.metadata?.uid === jobUid &&
+      !MatchAssistantService.isJobFinished(job)
     ) {
-      return;
+      const { matches, servers } = await this.getOnDemandServerJobMatches([
+        matchId,
+      ]);
+
+      if (MatchAssistantService.holdsOnDemandServer(matches.at(0), servers)) {
+        return;
+      }
+
+      this.logger.warn(
+        `[${matchId}] on demand server did not stop after it was signalled, removing it`,
+      );
+
+      await this.removeOnDemandServerJob(matchId, jobName, { uid: jobUid });
     }
 
-    const { matches, servers } = await this.getOnDemandServerJobMatches([
+    await this.releaseOnDemandServer(
       matchId,
-    ]);
-
-    if (MatchAssistantService.holdsOnDemandServer(matches.at(0), servers)) {
-      return;
-    }
-
-    this.logger.warn(
-      `[${matchId}] on demand server did not stop after it was signalled, removing it`,
+      undefined,
+      MatchAssistantService.reservedByEndedMatch(),
     );
-
-    await this.removeOnDemandServerJob(matchId, jobName, { uid: jobUid });
   }
 
   public async reconcileOnDemandServerJobs(): Promise<void> {
@@ -2138,6 +2148,7 @@ export class MatchAssistantService {
 
     const now = Date.now();
     const candidates = new Map<string, V1Job>();
+    const running = new Set<string>();
     let unlabelledServerJobsRemain = false;
 
     for (const job of jobs) {
@@ -2146,6 +2157,8 @@ export class MatchAssistantService {
       if (!matchId || MatchAssistantService.isJobFinished(job)) {
         continue;
       }
+
+      running.add(matchId);
 
       if (job.metadata?.labels?.role !== "match") {
         unlabelledServerJobsRemain = true;
@@ -2166,6 +2179,8 @@ export class MatchAssistantService {
     }
 
     this.unlabelledServerJobsRemain = unlabelledServerJobsRemain;
+
+    await this.releaseStoppedMatchServers(running);
 
     if (candidates.size === 0) {
       return;
@@ -2236,6 +2251,41 @@ export class MatchAssistantService {
     }
 
     await this.cache.forget(...heldKeys);
+  }
+
+  // An ended match keeps its on-demand server until its stop sees the pod gone,
+  // which a stop that kept failing never did.
+  private async releaseStoppedMatchServers(running: Set<string>) {
+    const { servers } = await this.hasura.query({
+      servers: {
+        __args: {
+          where: {
+            is_dedicated: {
+              _eq: false,
+            },
+            ...MatchAssistantService.reservedByEndedMatch(),
+          },
+        },
+        id: true,
+        reserved_by_match_id: true,
+      },
+    });
+
+    for (const server of servers) {
+      if (running.has(server.reserved_by_match_id)) {
+        continue;
+      }
+
+      this.logger.warn(
+        `[${server.reserved_by_match_id}] match ended and its server is gone, freeing on demand server ${server.id}`,
+      );
+
+      await this.releaseOnDemandServer(
+        server.reserved_by_match_id,
+        server.id,
+        MatchAssistantService.reservedByEndedMatch(),
+      );
+    }
   }
 
   private async getOnDemandServerJobMatches(matchIds: Array<string>) {
@@ -2441,7 +2491,7 @@ export class MatchAssistantService {
     matchId: string,
     jobName: string,
     jobUid?: string,
-  ) {
+  ): Promise<boolean> {
     const kc = new KubeConfig();
     kc.loadFromDefault();
 
@@ -2455,7 +2505,7 @@ export class MatchAssistantService {
       MatchAssistantService.isJobFinished(job) ||
       (jobUid && job.metadata?.uid !== jobUid)
     ) {
-      return;
+      return false;
     }
 
     const { items: pods } = await core.listNamespacedPod({
@@ -2469,14 +2519,14 @@ export class MatchAssistantService {
 
     if (running.length === 0) {
       if (pods.some((pod) => pod.status?.phase === "Succeeded")) {
-        return;
+        return false;
       }
 
       // Nothing to signal: a pending pod boots anyway and a failed one is replaced (backoffLimit).
       await this.removeOnDemandServerJob(matchId, jobName, {
         uid: job.metadata?.uid,
       });
-      return;
+      return false;
     }
 
     for (const pod of running) {
@@ -2519,6 +2569,8 @@ export class MatchAssistantService {
         jobId: `match.${matchId}.server-stop-check.${job.metadata?.uid}`,
       },
     );
+
+    return true;
   }
 
   // A uid pins the Job and its pods (409 = already replaced): a reassignment reuses the name.

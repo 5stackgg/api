@@ -239,10 +239,16 @@ BEGIN
             WHERE match_lineup_id IN (NEW.lineup_1_id, NEW.lineup_2_id);
     END IF;
 
+    -- An on-demand server's pod holds its ports past the match end, so the api
+    -- frees that server once the pod is gone. A match played again has no use
+    -- for the one it ended on.
     IF NEW.status IN ('Tie', 'Forfeit', 'Canceled', 'Finished', 'Surrendered') THEN
         select server_id into _server_id from matches where id = NEW.id;
         UPDATE servers SET reserved_by_match_id = null
-         WHERE id = _server_id AND reserved_by_match_id = NEW.id;
+         WHERE id = _server_id AND reserved_by_match_id = NEW.id AND is_dedicated;
+    ELSIF OLD.status IN ('Tie', 'Forfeit', 'Canceled', 'Finished', 'Surrendered') THEN
+        UPDATE servers SET reserved_by_match_id = null
+         WHERE reserved_by_match_id = NEW.id AND NOT is_dedicated;
     END IF;
 
     IF is_tournament_match(NEW)
@@ -320,11 +326,13 @@ BEGIN
     SELECT auto_cancellation, auto_cancel_duration INTO _auto_cancellation, _auto_cancel_duration_override FROM resolve_match_auto_cancel(NEW.id);
     _auto_cancel_duration := COALESCE(_auto_cancel_duration_override, get_int_setting('auto_cancel_duration', 15))::text || ' minutes';
 
-    -- An ended match's server is freed before match_events clears its
-    -- server_id, so by then it can be the next match's.
+    -- An ended match's server can be freed before match_events clears its
+    -- server_id, so by then it can be the next match's. An on-demand one stays
+    -- with the ended match until the api frees it (see tau_matches).
     IF OLD.server_id IS NOT NULL AND (NEW.server_id IS NULL OR OLD.server_id != NEW.server_id) THEN
         UPDATE servers SET reserved_by_match_id = null
-         WHERE id = OLD.server_id AND reserved_by_match_id = OLD.id;
+         WHERE id = OLD.server_id AND reserved_by_match_id = OLD.id
+           AND (is_dedicated OR NEW.status NOT IN ('Tie', 'Forfeit', 'Canceled', 'Finished', 'Surrendered'));
     END IF;
 
     IF (NEW.status = 'WaitingForServer' AND OLD.status = 'WaitingForServer') AND (NEW.region != OLD.region OR NEW.server_id != OLD.server_id) THEN

@@ -362,6 +362,65 @@ describe("MatchAssistantService — on-demand server teardown", () => {
 
       expect(deleteNamespacedJob).not.toHaveBeenCalled();
     });
+
+    const releasedEndedMatchServer = () =>
+      expect(serverReleases()).toEqual([
+        expect.objectContaining({
+          __args: expect.objectContaining({
+            where: {
+              reserved_by_match_id: { _eq: "match-1" },
+              current_match: {
+                status: {
+                  _in: expect.arrayContaining(["Canceled", "Finished"]),
+                },
+              },
+            },
+          }),
+        }),
+      ]);
+
+    it("frees the ended match's server once its own server stopped", async () => {
+      readNamespacedJob.mockResolvedValue({
+        metadata: { name: "m-match-1", uid: "uid-1" },
+        status: { conditions: [{ type: "Complete", status: "True" }] },
+      });
+
+      await service.removeUnstoppedOnDemandServer("match-1", "uid-1");
+
+      releasedEndedMatchServer();
+    });
+
+    it("frees the ended match's server once its Job is gone", async () => {
+      await service.removeUnstoppedOnDemandServer("match-1", "uid-1");
+
+      releasedEndedMatchServer();
+    });
+
+    it("frees the ended match's server after removing a server that ignored the signal", async () => {
+      readNamespacedJob
+        .mockResolvedValueOnce(activeJob("uid-1"))
+        .mockRejectedValue(notFound);
+
+      await service.removeUnstoppedOnDemandServer("match-1", "uid-1");
+
+      expect(deleteNamespacedJob).toHaveBeenCalled();
+      expect(deleteNamespacedJob.mock.invocationCallOrder[0]).toBeLessThan(
+        hasura.mutation.mock.invocationCallOrder.at(-1)!,
+      );
+      releasedEndedMatchServer();
+    });
+
+    it("keeps the server when Kubernetes cannot be read", async () => {
+      readNamespacedJob.mockRejectedValue(
+        Object.assign(new Error("connect ECONNREFUSED"), { code: 500 }),
+      );
+
+      await expect(
+        service.removeUnstoppedOnDemandServer("match-1", "uid-1"),
+      ).rejects.toThrow("connect ECONNREFUSED");
+
+      expect(serverReleases()).toHaveLength(0);
+    });
   });
 
   describe("a queued stop that runs late", () => {
@@ -493,6 +552,33 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       expect(signalled()).toHaveLength(0);
       expect(deleteNamespacedJob).not.toHaveBeenCalled();
       expect(deleteNamespacedPod).not.toHaveBeenCalled();
+    });
+
+    it("keeps an ended match's server while the server it signalled is still running", async () => {
+      matchStatus = "Finished";
+      readNamespacedJob.mockResolvedValue(activeJob("uid-1"));
+      listNamespacedPod.mockResolvedValue({ items: [runningPod("uid-1")] });
+
+      await runStop();
+
+      expect(signalled()).toHaveLength(1);
+      expect(serverReleases()).toHaveLength(0);
+    });
+
+    it("frees an ended match's server straight away when nothing of it is left running", async () => {
+      matchStatus = "Finished";
+      readNamespacedJob
+        .mockResolvedValueOnce(activeJob("uid-1"))
+        .mockResolvedValueOnce(activeJob("uid-1"))
+        .mockRejectedValue(notFound);
+      listNamespacedPod
+        .mockResolvedValueOnce({ items: [creatingPod("uid-1")] })
+        .mockResolvedValue({ items: [] });
+
+      await runStop();
+
+      expect(deleteNamespacedJob).toHaveBeenCalled();
+      expect(serverReleases()).toHaveLength(1);
     });
 
     it("rethrows when Kubernetes cannot be reached, and frees nothing", async () => {

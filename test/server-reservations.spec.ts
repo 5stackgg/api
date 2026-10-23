@@ -2,9 +2,10 @@ import { PostgresService } from "./../src/postgres/postgres.service";
 import { Fixtures, MatchRow } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 
-// A match frees its server when it ends (tau_matches), while match_events only
-// clears its server_id after the rest of its side effects, so by then the server
-// can already be the next match's.
+// A dedicated server is freed when its match ends, an on-demand one once the
+// match's pod is gone (its host ports are the server). match_events clears the
+// ended match's server_id after the rest of its side effects, so by then the
+// server can already be the next match's.
 describe("server reservations (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
@@ -78,18 +79,104 @@ describe("server reservations (SQL-driven)", () => {
     return server.reserved_by_match_id;
   };
 
-  describe.each([
-    ["an on-demand", false],
-    ["a dedicated", true],
-  ])("%s server", (_kind, dedicated) => {
-    it("is freed when the match holding it ends", async () => {
-      const serverId = await serverOf(dedicated);
+  // What the api writes once an ended match's pod is gone.
+  const releaseStopped = (serverId: string) =>
+    postgres.query(
+      "UPDATE servers SET reserved_by_match_id = NULL WHERE id = $1",
+      [serverId],
+    );
+
+  it("a dedicated server is freed when the match holding it ends", async () => {
+    const serverId = await serverOf(true);
+    const match = await liveOn(serverId);
+
+    await finish(match.id);
+
+    expect(await reservedBy(serverId)).toBeNull();
+  });
+
+  describe("an on-demand server, whose pod holds its ports past the match end", () => {
+    it.each([
+      ["Finished", "winning_lineup_id = lineup_1_id"],
+      ["Forfeit", "status = 'Forfeit', winning_lineup_id = lineup_2_id"],
+      [
+        "Surrendered",
+        "status = 'Surrendered', winning_lineup_id = lineup_2_id",
+      ],
+      ["Tie", "status = 'Tie'"],
+      ["Canceled", "status = 'Canceled'"],
+    ])("stays with a match that is %s", async (status, end) => {
+      const serverId = await serverOf(false);
       const match = await liveOn(serverId);
 
+      await postgres.query(`UPDATE matches SET ${end} WHERE id = $1`, [
+        match.id,
+      ]);
+
+      const [ended] = await postgres.query<Array<{ status: string }>>(
+        "SELECT status FROM matches WHERE id = $1",
+        [match.id],
+      );
+      expect(ended.status).toBe(status);
+      expect(await reservedBy(serverId)).toBe(match.id);
+    });
+
+    it("stays with the ended match when its server_id is cleared", async () => {
+      const serverId = await serverOf(false);
+      const match = await liveOn(serverId);
       await finish(match.id);
+
+      await postgres.query(
+        "UPDATE matches SET server_id = NULL WHERE id = $1",
+        [match.id],
+      );
+
+      expect(await reservedBy(serverId)).toBe(match.id);
+    });
+
+    it("stays with the ended match when its winner is changed", async () => {
+      const serverId = await serverOf(false);
+      const match = await liveOn(serverId);
+      await finish(match.id);
+
+      await finish(match.id, "lineup_2_id");
+
+      expect(await reservedBy(serverId)).toBe(match.id);
+    });
+
+    it("is freed when the ended match is played again", async () => {
+      const serverId = await serverOf(false);
+      const match = await liveOn(serverId);
+      await postgres.query(
+        "UPDATE matches SET status = 'Canceled' WHERE id = $1",
+        [match.id],
+      );
+      await postgres.query(
+        "UPDATE matches SET server_id = NULL WHERE id = $1",
+        [match.id],
+      );
+
+      await postgres.query(
+        "UPDATE matches SET status = 'WaitingForCheckIn' WHERE id = $1",
+        [match.id],
+      );
 
       expect(await reservedBy(serverId)).toBeNull();
     });
+  });
+
+  describe.each([
+    ["an on-demand", false],
+    ["a dedicated", true],
+  ])("%s server freed after its match ended", (_kind, dedicated) => {
+    const endOn = async (serverId: string) => {
+      const match = await liveOn(serverId);
+      await finish(match.id);
+      if (!dedicated) {
+        await releaseStopped(serverId);
+      }
+      return match;
+    };
 
     it("is freed when it is taken from the match holding it", async () => {
       const serverId = await serverOf(dedicated);
@@ -105,8 +192,7 @@ describe("server reservations (SQL-driven)", () => {
 
     it("stays with the next match when the ended match's server_id is cleared", async () => {
       const serverId = await serverOf(dedicated);
-      const ended = await liveOn(serverId);
-      await finish(ended.id);
+      const ended = await endOn(serverId);
       const next = await liveOn(serverId);
 
       await postgres.query(
@@ -119,8 +205,7 @@ describe("server reservations (SQL-driven)", () => {
 
     it("stays with the next match when the ended match is written again", async () => {
       const serverId = await serverOf(dedicated);
-      const ended = await liveOn(serverId);
-      await finish(ended.id);
+      const ended = await endOn(serverId);
       const next = await liveOn(serverId);
 
       await finish(ended.id, "lineup_2_id");
