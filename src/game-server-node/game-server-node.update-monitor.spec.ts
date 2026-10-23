@@ -713,11 +713,14 @@ describe("GameServerNodeService — CS2 update status", () => {
     );
   });
 
-  const removableNode = () => {
+  const removableNode = (fields: Record<string, unknown> = {}) => {
     hasura.query.mockResolvedValue({
       game_server_nodes_by_pk: {
         pin_plugin_version: null,
         pin_plugin_runtime: null,
+        enabled_for_match_making: true,
+        accepting_new_matches: false,
+        ...fields,
       },
     });
     jest.spyOn(service as any, "createVolumes").mockResolvedValue(undefined);
@@ -734,7 +737,7 @@ describe("GameServerNodeService — CS2 update status", () => {
     status: { phase },
   });
 
-  it("removes CS2 through its update job, with its depot copy and its build", async () => {
+  it("removes CS2 through its update job, with its depot copy", async () => {
     const monitor = removableNode();
     loggingService.getJob.mockResolvedValue(
       recorded({
@@ -768,9 +771,10 @@ describe("GameServerNodeService — CS2 update status", () => {
         (volume: any) => volume.persistentVolumeClaim.claimName,
       ),
     ).toEqual([`serverfiles-${NODE_ID}-claim`, `steamcmd-${NODE_ID}-claim`]);
+    expect(job.spec.activeDeadlineSeconds).toBe(30 * 60);
     expect(postgres.query).toHaveBeenCalledWith(
       expect.stringMatching(
-        /SET update_status = 'Removing',\s+update_failed_at = NULL,\s+update_error = NULL,\s+build_id = NULL/,
+        /SET update_status = 'Removing',\s+update_failed_at = NULL,\s+update_error = NULL\s+WHERE/,
       ),
       [NODE_ID],
     );
@@ -795,11 +799,36 @@ describe("GameServerNodeService — CS2 update status", () => {
     ).toEqual([`serverfiles-csgo-${NODE_ID}-claim`]);
     expect(postgres.query).toHaveBeenCalledWith(
       expect.stringMatching(
-        /SET csgo_update_status = 'Removing',\s+csgo_update_failed_at = NULL,\s+csgo_update_error = NULL,\s+csgo_build_id = NULL/,
+        /SET csgo_update_status = 'Removing',\s+csgo_update_failed_at = NULL,\s+csgo_update_error = NULL\s+WHERE/,
       ),
       [NODE_ID],
     );
     expect(monitor).toHaveBeenCalledWith(NODE_ID, "csgo");
+  });
+
+  it("refuses to remove CS2 while the node takes matches, but not CS:GO", async () => {
+    removableNode({ accepting_new_matches: true });
+    loggingService.getJob.mockResolvedValue(null);
+
+    await expect(service.removeCsServer(NODE_ID, "cs2")).rejects.toThrow(
+      `Stop ${NODE_ID} accepting matches before removing CS2`,
+    );
+    expect(createNamespacedJob).not.toHaveBeenCalled();
+
+    await service.removeCsServer(NODE_ID, "csgo");
+    expect(createNamespacedJob).toHaveBeenCalledTimes(1);
+  });
+
+  it("removes CS2 from a node out of matchmaking that still accepts", async () => {
+    removableNode({
+      enabled_for_match_making: false,
+      accepting_new_matches: true,
+    });
+    loggingService.getJob.mockResolvedValue(null);
+
+    await service.removeCsServer(NODE_ID, "cs2");
+
+    expect(createNamespacedJob).toHaveBeenCalledTimes(1);
   });
 
   it("refuses to remove a game while its install or update is running", async () => {
@@ -889,7 +918,12 @@ describe("GameServerNodeService — CS2 update status", () => {
     await monitor;
 
     expect(statusWrites()).toEqual(["Removing"]);
-    expect(terminalWrites()).toEqual(["terminal:succeeded"]);
+    expect(postgres.query).toHaveBeenCalledWith(
+      expect.stringMatching(
+        /SET update_status = NULL,\s+build_id = NULL\s+WHERE/,
+      ),
+      [NODE_ID],
+    );
   });
 
   it("reports a failed removal as a removal", async () => {
@@ -907,7 +941,14 @@ describe("GameServerNodeService — CS2 update status", () => {
 
     await service.monitorUpdateStatus(NODE_ID);
 
-    expect(terminalWrites()).toEqual(["terminal:failed"]);
+    const writes = postgres.query.mock.calls.map(([sql]) => sql);
+    expect(writes).toContainEqual(
+      expect.stringMatching(/SET update_status = NULL\s+WHERE/),
+    );
+    expect(writes.some((sql) => /update_failed_at|build_id/.test(sql))).toBe(
+      false,
+    );
+    expect(notifications.send).toHaveBeenCalledTimes(1);
     expect(notifications.send).toHaveBeenCalledWith(
       "GameUpdate",
       expect.objectContaining({

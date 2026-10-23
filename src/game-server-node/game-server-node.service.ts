@@ -198,6 +198,9 @@ export class GameServerNodeService {
   // install or update; this label tells the two apart.
   private static readonly REMOVAL_LABEL = "5stack.gg/removes-game";
 
+  // a node that is offline would otherwise leave its removal Removing for good
+  private static readonly REMOVAL_DEADLINE_S = 30 * 60;
+
   private static isRemoval(job: V1Job) {
     return (
       job.metadata?.labels?.[GameServerNodeService.REMOVAL_LABEL] === "true"
@@ -876,11 +879,25 @@ export class GameServerNodeService {
         },
         pin_plugin_version: true,
         pin_plugin_runtime: true,
+        enabled_for_match_making: true,
+        accepting_new_matches: true,
       },
     });
 
     if (!game_server_nodes_by_pk) {
       throw new Error("Game server not found");
+    }
+
+    // Picking a node for a match never looks at its build, so a node without
+    // CS2 has to be kept from taking matches.
+    if (
+      game === "cs2" &&
+      game_server_nodes_by_pk.enabled_for_match_making &&
+      game_server_nodes_by_pk.accepting_new_matches
+    ) {
+      throw new Error(
+        `Stop ${gameServerNodeId} accepting matches before removing CS2`,
+      );
     }
 
     const jobName = GameServerNodeService.GET_UPDATE_JOB_NAME(
@@ -1033,20 +1050,18 @@ export class GameServerNodeService {
             },
           },
           backoffLimit: 1,
+          activeDeadlineSeconds: GameServerNodeService.REMOVAL_DEADLINE_S,
           ttlSecondsAfterFinished: GameServerNodeService.UPDATE_JOB_TTL_S,
         },
       },
     });
 
-    // The build is cleared now: pings leave it alone while the status is set,
-    // and the next one after the removal finds nothing installed.
     const columns = GameServerNodeService.updateColumns(game);
     await this.postgres.query(
       `UPDATE game_server_nodes
           SET ${columns.status} = 'Removing',
               ${columns.failedAt} = NULL,
-              ${columns.error} = NULL,
-              ${columns.build} = NULL
+              ${columns.error} = NULL
         WHERE id = $1`,
       [gameServerNodeId],
     );
@@ -1471,6 +1486,11 @@ export class GameServerNodeService {
       return;
     }
 
+    if (GameServerNodeService.isRemoval(job)) {
+      await this.recordRemovalResult(gameServerNodeId, game, result);
+      return;
+    }
+
     const columns = GameServerNodeService.updateColumns(game);
 
     if (result === "Succeeded") {
@@ -1494,17 +1514,46 @@ export class GameServerNodeService {
       [gameServerNodeId, await this.updateErrorLines(job)],
     );
 
-    const removal = GameServerNodeService.isRemoval(job);
-    const gameName = game === "csgo" ? "CSGO" : "CS2";
-
-    this.logger.warn(
-      `[${gameServerNodeId}] ${game} ${removal ? "removal" : "update"} job failed`,
-    );
+    this.logger.warn(`[${gameServerNodeId}] ${game} update job failed`);
     void this.notifications.send("GameUpdate", {
-      message: removal
-        ? `Removing ${gameName} failed on node ${gameServerNodeId}. Check the update logs for details.`
-        : `The ${gameName} update failed on node ${gameServerNodeId}. Check the update logs for details.`,
-      title: removal ? "Game Removal Failed" : "Game Update Failed",
+      message: `The ${game === "csgo" ? "CSGO" : "CS2"} update failed on node ${gameServerNodeId}. Check the update logs for details.`,
+      title: "Game Update Failed",
+      role: "administrator",
+    });
+  }
+
+  // The build is cleared only once the files are gone: a ping that read the
+  // node before the removal started would write it back. A failed removal is
+  // not a failed update, which the panel would offer to retry by installing.
+  private async recordRemovalResult(
+    gameServerNodeId: string,
+    game: string,
+    result: "Succeeded" | "Failed",
+  ): Promise<void> {
+    const columns = GameServerNodeService.updateColumns(game);
+
+    if (result === "Succeeded") {
+      await this.postgres.query(
+        `UPDATE game_server_nodes
+            SET ${columns.status} = NULL,
+                ${columns.build} = NULL
+          WHERE id = $1`,
+        [gameServerNodeId],
+      );
+      return;
+    }
+
+    await this.postgres.query(
+      `UPDATE game_server_nodes
+          SET ${columns.status} = NULL
+        WHERE id = $1`,
+      [gameServerNodeId],
+    );
+
+    this.logger.warn(`[${gameServerNodeId}] ${game} removal job failed`);
+    void this.notifications.send("GameUpdate", {
+      message: `Removing ${game === "csgo" ? "CSGO" : "CS2"} failed on node ${gameServerNodeId}. Check the update logs for details.`,
+      title: "Game Removal Failed",
       role: "administrator",
     });
   }
