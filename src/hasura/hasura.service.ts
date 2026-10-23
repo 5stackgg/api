@@ -22,6 +22,7 @@ import crypto from "crypto";
 import { PostgresService } from "../postgres/postgres.service";
 import { AppConfig } from "../configs/types/AppConfig";
 import { timingSafeStringEqual } from "../utilities/timingSafeStringEqual";
+import { isRoleAbove } from "../utilities/isRoleAbove";
 
 @Injectable()
 export class HasuraService {
@@ -120,6 +121,42 @@ export class HasuraService {
       },
       60 * 60,
     );
+  }
+
+  // lan_region_reachable()'s rule, for the writes the api makes as admin on a
+  // player's behalf. Names match without case, as
+  // sanitize_match_options_regions() matches them.
+  public async assertLanRegionsReachable(
+    role: e_player_roles_enum,
+    lanRegions: Array<string>,
+    regions: Array<string>,
+  ) {
+    if (regions.length === 0 || isRoleAbove(role, "match_organizer")) {
+      return;
+    }
+
+    const { server_regions } = await this.query({
+      server_regions: {
+        __args: {
+          where: {
+            is_lan: { _eq: true },
+          },
+        },
+        value: true,
+      },
+    });
+
+    const requested = regions.map((region) => region.toLowerCase());
+
+    if (
+      server_regions.some(
+        (region) =>
+          requested.includes(region.value.toLowerCase()) &&
+          !lanRegions.includes(region.value),
+      )
+    ) {
+      throw Error("You must be on the LAN to play in a LAN region");
+    }
   }
 
   public async getHasuraHeaders(steamId: string) {

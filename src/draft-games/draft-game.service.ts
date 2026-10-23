@@ -117,8 +117,8 @@ export class DraftGameService {
       ]);
     }
 
-    await this.verifyLanRegions(
-      user,
+    await this.hasura.assertLanRegionsReachable(
+      user.role,
       lanRegions,
       DraftGameService.requestedRegions(settings),
     );
@@ -1206,46 +1206,6 @@ export class DraftGameService {
     return regions;
   }
 
-  // The rule assert_lan_regions_reachable() applies to a match insert: below
-  // match_organizer, a LAN region only for a player the LAN probe placed on it.
-  // Lobbies write their match options as admin, so it has to be repeated here.
-  private async verifyLanRegions(
-    user: User,
-    lanRegions: Array<string>,
-    regions: Array<string>,
-  ) {
-    if (regions.length === 0 || isRoleAbove(user.role, "match_organizer")) {
-      return;
-    }
-
-    const { server_regions } = await this.hasura.query({
-      server_regions: {
-        __args: {
-          where: {
-            is_lan: { _eq: true },
-          },
-        },
-        value: true,
-      },
-    });
-
-    // Matched without case: sanitize_match_options_regions() does, so "lan"
-    // still lands the match on "Lan".
-    const requested = regions.map((region) => region.toLowerCase());
-
-    if (
-      server_regions.some(
-        (region) =>
-          requested.includes(region.value.toLowerCase()) &&
-          !lanRegions.includes(region.value),
-      )
-    ) {
-      throw new DraftGameError(
-        "You must be on the LAN to play in a LAN region",
-      );
-    }
-  }
-
   private async verifyTeamAccess(
     user: User,
     teamIds: Array<string | undefined>,
@@ -1310,8 +1270,8 @@ export class DraftGameService {
         );
       }
 
-      await this.verifyLanRegions(
-        user,
+      await this.hasura.assertLanRegionsReachable(
+        user.role,
         lanRegions,
         DraftGameService.requestedRegions(settings).filter(
           (region) => !draftGame.regions?.includes(region),

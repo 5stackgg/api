@@ -2,6 +2,7 @@ import { Logger } from "@nestjs/common";
 import { User } from "../auth/types/User";
 import { DraftGameService } from "./draft-game.service";
 import { DraftGame } from "./types/DraftGame";
+import { HasuraService } from "../hasura/hasura.service";
 
 describe("DraftGameService player blocks", () => {
   const host: User = { name: "Host", role: "user", steam_id: "100" };
@@ -12,7 +13,11 @@ describe("DraftGameService player blocks", () => {
   };
   const target = "300";
 
-  let hasura: { query: jest.Mock; mutation: jest.Mock };
+  let hasura: {
+    query: jest.Mock;
+    mutation: jest.Mock;
+    assertLanRegionsReachable: HasuraService["assertLanRegionsReachable"];
+  };
   let playerBlocks: {
     isBlockedEitherWay: jest.Mock;
     filterUnblocked: jest.Mock;
@@ -42,6 +47,8 @@ describe("DraftGameService player blocks", () => {
         settings_by_pk: null as { value: string } | null,
       })),
       mutation: jest.fn(async () => ({})),
+      assertLanRegionsReachable: (...args) =>
+        HasuraService.prototype.assertLanRegionsReachable.apply(hasura, args),
     };
     playerBlocks = {
       isBlockedEitherWay: jest.fn(async () => true),
