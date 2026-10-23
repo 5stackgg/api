@@ -917,7 +917,7 @@ describe("MatchAssistantService — on-demand server teardown", () => {
     beforeEach(() => {
       assignServer = jest
         .spyOn(service, "assignServer")
-        .mockResolvedValue(undefined);
+        .mockResolvedValue(true);
       waiting = [{ id: "match-a" }, { id: "match-b" }, { id: "match-c" }];
       reservations = [
         {
@@ -1026,6 +1026,36 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       await service.assignWaitingMatch("USE");
 
       expect(assignServer.mock.calls).toEqual([["match-b"]]);
+    });
+
+    it("goes past a match it could not place to the next one", async () => {
+      reservations = [];
+      assignServer.mockImplementation(async (id: string) => id !== "match-a");
+
+      await service.assignWaitingMatch("USE");
+
+      expect(assignServer.mock.calls).toEqual([["match-a"], ["match-b"]]);
+    });
+
+    it("places as many waiting matches as it has servers, each tried once", async () => {
+      reservations = [];
+
+      await expect(service.assignWaitingMatch("USE", 2)).resolves.toBe(2);
+
+      expect(assignServer.mock.calls).toEqual([["match-a"], ["match-b"]]);
+    });
+
+    it("tries each waiting match once when none can be placed", async () => {
+      reservations = [];
+      assignServer.mockResolvedValue(false);
+
+      await expect(service.assignWaitingMatch("USE", 2)).resolves.toBe(0);
+
+      expect(assignServer.mock.calls).toEqual([
+        ["match-a"],
+        ["match-b"],
+        ["match-c"],
+      ]);
     });
 
     it("goes to the oldest waiting match when none is booting", async () => {
@@ -1481,6 +1511,39 @@ describe("MatchAssistantService — on-demand server teardown", () => {
 
         expect(createNamespacedJob).not.toHaveBeenCalled();
       });
+    });
+
+    it("says when it placed the match", async () => {
+      await expect(service.assignServer("match-1")).resolves.toBe(true);
+    });
+
+    it("says when it could not place the match", async () => {
+      hasura.query.mockImplementation(async (request: any) => {
+        if (request.matches_by_pk) {
+          return {
+            matches_by_pk: {
+              id: "match-1",
+              status: "Live",
+              region: "USE",
+              source: "5stack",
+              server_error: null,
+              options: { prefer_dedicated_server: false },
+              match_maps: [
+                {
+                  order: 1,
+                  map: { name: "de_inferno", workshop_map_id: null },
+                },
+              ],
+            },
+          };
+        }
+        if (request.game_server_nodes) {
+          return { game_server_nodes: nodes };
+        }
+        return { matches: [], servers: [] };
+      });
+
+      await expect(service.assignServer("match-1")).resolves.toBe(false);
     });
 
     it("does not look for a server for a match that already ended", async () => {

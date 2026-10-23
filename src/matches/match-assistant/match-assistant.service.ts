@@ -544,7 +544,8 @@ export class MatchAssistantService {
     });
   }
 
-  public async assignServer(matchId: string, tries = 0): Promise<void> {
+  // True once the match has a server; a retry it schedules says nothing here.
+  public async assignServer(matchId: string, tries = 0): Promise<boolean> {
     if (tries === 0) {
       await this.setServerError(matchId, null);
     }
@@ -569,7 +570,7 @@ export class MatchAssistantService {
       MatchAssistantService.TERMINAL_MATCH_STATUSES.includes(match.status)
     ) {
       this.logger.log(`[${matchId}] match has ended, not assigning a server`);
-      return;
+      return false;
     }
 
     const onDemandOnly = MatchAssistantService.ON_DEMAND_ONLY_SOURCES.includes(
@@ -585,7 +586,7 @@ export class MatchAssistantService {
 
         if (assignedDedicated) {
           await this.startMatch(matchId);
-          return;
+          return true;
         }
       } catch (error) {
         this.logger.error(
@@ -598,7 +599,7 @@ export class MatchAssistantService {
     try {
       const isAssignedOnDemand = await this.assignOnDemandServer(matchId);
       if (isAssignedOnDemand) {
-        return;
+        return true;
       }
     } catch (error) {
       this.logger.error(
@@ -611,19 +612,19 @@ export class MatchAssistantService {
             `[${matchId}] max retries reached for server assignment`,
           );
           await this.markWaitingForServer(matchId);
-          return;
+          return false;
         }
         setTimeout(async () => {
           this.logger.log(`[${matchId}] try retry assign server....`);
           await this.assignServer(matchId, ++tries);
         }, tries * 1000);
-        return;
+        return false;
       }
     }
 
     // The fallbacks end in startMatch, which would write Live over a match canceled meanwhile.
     if (await this.hasMatchEnded(matchId)) {
-      return;
+      return false;
     }
 
     // No pod, and no second pool to fall back on. Saying so is what turns the
@@ -635,7 +636,7 @@ export class MatchAssistantService {
         `[${matchId}] practice match, and no on demand server could be booted`,
       );
       await this.markWaitingForServer(match.id);
-      return;
+      return false;
     }
 
     // we already checked above, so we can skip trying to assign again
@@ -644,13 +645,13 @@ export class MatchAssistantService {
         `[${matchId}] unable to assign dedicated server, trying on demand`,
       );
       await this.markWaitingForServer(match.id);
-      return;
+      return false;
     }
 
     try {
       if (await this.assignDedicatedServer(match.id, match.region)) {
         await this.startMatch(matchId);
-        return;
+        return true;
       }
     } catch (error) {
       this.logger.error(
@@ -664,6 +665,8 @@ export class MatchAssistantService {
     );
 
     await this.markWaitingForServer(match.id);
+
+    return false;
   }
 
   /**
@@ -2304,7 +2307,11 @@ export class MatchAssistantService {
     }
   }
 
-  public async assignWaitingMatch(region: string) {
+  public async assignWaitingMatch(region: string, servers = 1) {
+    if (servers < 1) {
+      return 0;
+    }
+
     const { matches } = await this.hasura.query({
       matches: {
         __args: {
@@ -2339,15 +2346,25 @@ export class MatchAssistantService {
       },
     });
 
-    // A match stays WaitingForServer while its own server boots.
+    // Each match is tried once: one stays WaitingForServer while its own server
+    // boots, and one that cannot be placed makes way for the next.
+    let placed = 0;
+
     for (const match of matches) {
+      if (placed >= servers) {
+        break;
+      }
+
       if (await this.isBootingOnDemandServer(match.id)) {
         continue;
       }
 
-      await this.assignServer(match.id);
-      return;
+      if (await this.assignServer(match.id)) {
+        placed++;
+      }
     }
+
+    return placed;
   }
 
   // A SIGUSR1 sent before setup.sh hands PID 1 to server.sh is silently ignored.

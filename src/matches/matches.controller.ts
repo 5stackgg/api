@@ -2856,9 +2856,10 @@ export class MatchesController {
     const totalMatchesToFind =
       game_server_nodes_by_pk.servers_aggregate.aggregate.count;
 
-    for (let assigned = 0; assigned < totalMatchesToFind; assigned++) {
-      await this.matchAssistant.assignWaitingMatch(data.new.region);
-    }
+    await this.matchAssistant.assignWaitingMatch(
+      data.new.region,
+      totalMatchesToFind,
+    );
   }
 
   @HasuraAction()

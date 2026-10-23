@@ -448,10 +448,7 @@ describe("MatchesController — match_events on-demand servers", () => {
       new: { id: "node-1", status: "Online", enabled: true, region: "USE" },
     } as any);
 
-    expect(matchAssistant.assignWaitingMatch.mock.calls).toEqual([
-      ["USE"],
-      ["USE"],
-    ]);
+    expect(matchAssistant.assignWaitingMatch.mock.calls).toEqual([["USE", 2]]);
   });
 
   describe("a server that becomes free", () => {
