@@ -36,6 +36,7 @@ type Modules =
   | "Chat"
   | "Utility"
   | "Voice"
+  | "Sockets"
   | "MapAssets"
   | "ServerRoster"
   | "Twitch";

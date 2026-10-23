@@ -22,6 +22,8 @@ import { ClientProxy } from "@nestjs/microservices";
 import { DemoSessionWatcherService } from "src/matches/game-streamer/demo-session-watcher.service";
 import { presenceFocusKey } from "src/notifications/push/notification-delivery";
 import { HasuraService } from "src/hasura/hasura.service";
+import { PresenceService } from "./presence.service";
+import { latencyTestKey, playerClientsKey, playerKey } from "./presence-keys";
 
 @Injectable()
 export class SocketsService implements OnModuleInit, OnApplicationShutdown {
@@ -68,6 +70,7 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
     private readonly gameServerNodeClient: ClientProxy,
     private readonly demoSessionWatcher: DemoSessionWatcherService,
     private readonly hasura: HasuraService,
+    private readonly presence: PresenceService,
   ) {
     this.redis = this.redisManager.getConnection();
     this.appConfig = this.config.get<AppConfig>("app");
@@ -76,6 +79,7 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
 
     void sub.subscribe("broadcast-message");
     void sub.subscribe("send-message-to-steam-id");
+    void sub.subscribe("lan-message");
     sub.on("message", (channel, message) => {
       let parsed: unknown;
       try {
@@ -100,8 +104,9 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
         return;
       }
 
-      const { steamId, event, data } = parsed as {
+      const { steamId, region, event, data } = parsed as {
         steamId: string;
+        region: string;
         event: string;
         data: unknown;
       };
@@ -115,6 +120,9 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
           break;
         case "send-message-to-steam-id":
           void this.sendMessageToSteamId(steamId, event, data);
+          break;
+        case "lan-message":
+          this.sendMessageToLan(region, event, data);
           break;
       }
     });
@@ -187,11 +195,11 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
   }
 
   public static GET_PLAYER_KEY(steamId: string) {
-    return `players:${steamId}`;
+    return playerKey(steamId);
   }
 
   public static GET_PLAYER_CLIENTS(steamId: string) {
-    return `clients:${steamId}`;
+    return playerClientsKey(steamId);
   }
 
   public static GET_PLAYER_CLIENTS_BY_NODE(steamId: string, nodeId: string) {
@@ -207,7 +215,7 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
   }
 
   public static GET_PLAYER_CLIENT_LATENCY_TEST(sessionId: string) {
-    return `latency-test:${sessionId}`;
+    return latencyTestKey(sessionId);
   }
 
   // What the player is actually looking at, as opposed to whether they hold a
@@ -282,6 +290,7 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
     client.on("close", async () => {
       this.clients.delete(client.id);
       this.unindexClient(client);
+      void this.presence.leaveLan(client);
 
       void this.demoSessionWatcher.clientClosed(client.id);
 
@@ -323,13 +332,16 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
 
       await this.redis.del(SocketsService.GET_PLAYER_KEY(client.user.steam_id));
 
+      await this.presence.wentOffline(client.user.steam_id);
       await this.sendPeopleOnline();
     });
   }
 
   private async register(client: FiveStackWebSocketClient) {
     try {
-      await this.updateClient(client.user.steam_id, client.id);
+      if (await this.updateClient(client.user.steam_id, client.id)) {
+        await this.presence.cameOnline(client.user.steam_id);
+      }
 
       await this.matchmaking.cancelOffline(client.user.steam_id);
     } catch (error) {
@@ -342,6 +354,11 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
 
   private async welcome(client: FiveStackWebSocketClient) {
     try {
+      await this.presence.welcome(client);
+      await this.presence.syncLan(client);
+
+      // The whole roster is for tabs from before the circle and LAN lists, and
+      // goes once they have reloaded.
       if (!(await this.sendPeopleOnline())) {
         client.send(
           JSON.stringify({
@@ -432,6 +449,10 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
     }
 
     await this.keepPresence(steamId, clientId);
+
+    if (client) {
+      await this.presence.syncLan(client);
+    }
   }
 
   // What keeps a backgrounded tab online: the browser answers for it without
@@ -456,6 +477,7 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
     }
 
     await this.matchmaking.cancelOffline(steamId);
+    await this.presence.cameOnline(steamId);
     await this.sendPeopleOnline();
   }
 
@@ -527,6 +549,16 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
       "broadcast-message",
       JSON.stringify({ event, data }),
     );
+  }
+
+  private sendMessageToLan(region: string, event: string, data: unknown) {
+    const message = JSON.stringify({ event, data });
+
+    for (const client of Array.from(this.clients.values())) {
+      if (client.lanRegion === region && client.readyState === client.OPEN) {
+        client.send(message);
+      }
+    }
   }
 
   public async sendMessageToClient(
