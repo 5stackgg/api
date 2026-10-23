@@ -4,6 +4,7 @@
 -- re-applying this file always lands on exactly one get_event_leaderboard.
 DROP FUNCTION IF EXISTS public.get_event_leaderboard(UUID, TEXT, TEXT, INT);
 DROP FUNCTION IF EXISTS public.get_event_leaderboard(UUID, TEXT, TEXT, INT, JSON);
+DROP FUNCTION IF EXISTS public.get_event_leaderboard(UUID, TEXT, TEXT, JSON);
 
 -- LANGUAGE plpgsql (not sql): a "sql"-language body is parsed for relation
 -- references at CREATE time, so this function would fail to create on a
@@ -14,7 +15,6 @@ CREATE OR REPLACE FUNCTION public.get_event_leaderboard(
   _event_id UUID,
   _category TEXT,
   _match_type TEXT DEFAULT NULL,
-  _min_rounds INT DEFAULT 10,
   hasura_session JSON DEFAULT NULL
 )
 RETURNS SETOF public.leaderboard_entries
@@ -23,12 +23,6 @@ AS $$
 BEGIN
   IF _category NOT IN ('rating', 'adr', 'kdr', 'kills', 'wins') THEN
     RAISE EXCEPTION 'get_event_leaderboard: unknown category %', _category;
-  END IF;
-
-  -- An explicit NULL would make the HAVING comparison below silently filter
-  -- every row; treat it as "no minimum" instead of returning an empty board.
-  IF _min_rounds IS NULL THEN
-    _min_rounds := 0;
   END IF;
 
   -- This function is exposed to the guest role and takes an arbitrary event
@@ -53,7 +47,7 @@ BEGIN
     WHERE eml.event_id = _event_id
 ),
 f_matches AS (
-    SELECT em.match_id
+    SELECT em.match_id, m.status IN ('Finished', 'Tie', 'Forfeit', 'Surrendered') AS finished
     FROM e_matches em
     JOIN matches m ON m.id = em.match_id
     LEFT JOIN match_options mo ON mo.id = m.match_options_id
@@ -71,7 +65,7 @@ agg AS (
         SUM(pmms.deaths)::float  AS deaths,
         SUM(pmms.damage)::float  AS damage,
         SUM(pmms.rounds_played)::int AS rounds_played,
-        COUNT(DISTINCT pmms.match_id)::int AS matches_played,
+        (COUNT(DISTINCT pmms.match_id) FILTER (WHERE fm.finished))::int AS matches_played,
         CASE WHEN SUM(h.rounds_played) > 0
              THEN SUM(COALESCE(h.hltv_rating, 0) * h.rounds_played)
                   / SUM(h.rounds_played)
@@ -85,7 +79,9 @@ agg AS (
     WHERE NOT EXISTS (SELECT 1 FROM roster)
        OR pmms.steam_id IN (SELECT steam_id FROM roster)
     GROUP BY pmms.steam_id
-    HAVING SUM(pmms.rounds_played) >= _min_rounds
+    -- Live matches still feed the stats, but a player is listed only once one
+    -- of their matches has finished.
+    HAVING COUNT(DISTINCT pmms.match_id) FILTER (WHERE fm.finished) >= 1
 ),
 wins AS (
     SELECT mlp.steam_id, COUNT(DISTINCT m.id)::float AS wins

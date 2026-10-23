@@ -696,6 +696,10 @@ $$;
 -- ============================================================
 -- K/D Ratio leaderboard
 -- value = K/D ratio, secondary = kills, tertiary = deaths
+--
+-- Here and on the per-round boards below, Matches and the
+-- leaderboard_min_matches gate count finished matches only, while a live or
+-- canceled match still feeds the stats.
 -- ============================================================
 CREATE OR REPLACE FUNCTION public._leaderboard_kdr(
   _window_days INT,
@@ -730,6 +734,7 @@ BEGIN
     SELECT
       pk.attacker_steam_id as steam_id,
       pk.match_id,
+      bool_or(m.status IN ('Finished', 'Tie', 'Forfeit', 'Surrendered')) as finished,
       COUNT(*) as kill_count
     FROM player_kills pk
     JOIN matches m ON m.id = pk.match_id
@@ -748,6 +753,7 @@ BEGIN
     SELECT
       dk.attacked_steam_id as steam_id,
       dk.match_id,
+      bool_or(m2.status IN ('Finished', 'Tie', 'Forfeit', 'Surrendered')) as finished,
       COUNT(*) as death_count
     FROM player_kills dk
     JOIN matches m2 ON m2.id = dk.match_id
@@ -766,7 +772,7 @@ BEGIN
       COALESCE(k.steam_id, d.steam_id) as steam_id,
       COALESCE(SUM(k.kill_count), 0) as kill_count,
       COALESCE(SUM(d.death_count), 0) as death_count,
-      COUNT(*)::int as match_count
+      (COUNT(*) FILTER (WHERE COALESCE(k.finished, d.finished)))::int as match_count
     FROM kills k
     FULL JOIN deaths d ON d.steam_id = k.steam_id AND d.match_id = k.match_id
     GROUP BY COALESCE(k.steam_id, d.steam_id)
@@ -899,6 +905,7 @@ BEGIN
     SELECT
       pk.attacker_steam_id as steam_id,
       pk.match_id,
+      bool_or(m.status IN ('Finished', 'Tie', 'Forfeit', 'Surrendered')) as finished,
       COUNT(*) as kill_count,
       COUNT(*) FILTER (WHERE pk.headshot) as headshot_count
     FROM player_kills pk
@@ -917,7 +924,8 @@ BEGIN
   deaths AS (
     SELECT
       dk.attacked_steam_id as steam_id,
-      dk.match_id
+      dk.match_id,
+      bool_or(m2.status IN ('Finished', 'Tie', 'Forfeit', 'Surrendered')) as finished
     FROM player_kills dk
     JOIN matches m2 ON m2.id = dk.match_id
     JOIN match_options mo2 ON mo2.id = m2.match_options_id
@@ -935,7 +943,7 @@ BEGIN
       COALESCE(k.steam_id, d.steam_id) as steam_id,
       COALESCE(SUM(k.kill_count), 0) as kill_count,
       COALESCE(SUM(k.headshot_count), 0) as headshot_count,
-      COUNT(*)::int as match_count
+      (COUNT(*) FILTER (WHERE COALESCE(k.finished, d.finished)))::int as match_count
     FROM kills k
     FULL JOIN deaths d ON d.steam_id = k.steam_id AND d.match_id = k.match_id
     GROUP BY COALESCE(k.steam_id, d.steam_id)
@@ -1196,7 +1204,7 @@ BEGIN
       SUM(h.dpr * h.rounds_played) / NULLIF(SUM(h.rounds_played), 0)         AS dpr,
       SUM(h.kast_pct * h.rounds_played) / NULLIF(SUM(h.rounds_played), 0)    AS kast,
       SUM(h.rounds_played)                                                   AS rounds,
-      COUNT(DISTINCT h.match_id)::int                                        AS match_count
+      (COUNT(DISTINCT h.match_id) FILTER (WHERE m.status IN ('Finished', 'Tie', 'Forfeit', 'Surrendered')))::int AS match_count
     FROM v_player_match_map_hltv h
     JOIN matches m ON m.id = h.match_id
     JOIN match_options mo ON mo.id = m.match_options_id
@@ -1212,7 +1220,7 @@ BEGIN
       AND (lower(_source) = 'overall' OR public._leaderboard_match_source(h.match_id) = lower(_source))
       AND (_role IS NULL OR r.role = _role)
     GROUP BY h.steam_id
-    HAVING COUNT(DISTINCT h.match_id) >= _min_matches
+    HAVING COUNT(DISTINCT h.match_id) FILTER (WHERE m.status IN ('Finished', 'Tie', 'Forfeit', 'Surrendered')) >= _min_matches
   )
   SELECT
     a.steam_id::text   AS player_steam_id,
@@ -1280,7 +1288,7 @@ BEGIN
       SUM(s.he_damage + s.molotov_damage)                                   AS util_damage,
       SUM(s.he_damage + s.molotov_damage)::numeric / NULLIF(SUM(s.rounds_played), 0) AS udr,
       SUM(s.rounds_played)                                                  AS rounds,
-      COUNT(DISTINCT s.match_id)::int                                       AS match_count
+      (COUNT(DISTINCT s.match_id) FILTER (WHERE m.status IN ('Finished', 'Tie', 'Forfeit', 'Surrendered')))::int AS match_count
     FROM player_match_map_stats s
     JOIN matches m ON m.id = s.match_id
     JOIN match_options mo ON mo.id = m.match_options_id
@@ -1296,7 +1304,7 @@ BEGIN
       AND (lower(_source) = 'overall' OR public._leaderboard_match_source(s.match_id) = lower(_source))
       AND (_role IS NULL OR r.role = _role)
     GROUP BY s.steam_id
-    HAVING COUNT(DISTINCT s.match_id) >= _min_matches
+    HAVING COUNT(DISTINCT s.match_id) FILTER (WHERE m.status IN ('Finished', 'Tie', 'Forfeit', 'Surrendered')) >= _min_matches
   )
   SELECT
     a.steam_id::text          AS player_steam_id,
