@@ -4387,31 +4387,67 @@ export class ChatService implements OnApplicationBootstrap {
       client.id,
     );
 
-    if (removed !== 1) {
-      return;
-    }
+    if (removed === 1 && count === 0) {
+      if (
+        type === ChatLobbyType.Match &&
+        userData.inGame &&
+        (await this.isInMatchServer(id, client.user.steam_id))
+      ) {
+        return;
+      }
 
-    const current = await this.getUserData(type, id, client.user.steam_id);
-
-    if (count === 0 && !current?.inGame) {
       await this.removeUserData(type, id, client.user.steam_id);
       void this.to(type, id, "left", {
         user: {
           ...userData.user,
-          inGame: false,
+          inGame: userData.inGame,
         },
       });
       return;
     }
 
-    if (current?.inGame) {
+    if (removed === 1 && userData.inGame) {
       void this.to(type, id, "joined", {
         user: {
-          ...current.user,
-          inGame: current.inGame,
+          ...userData.user,
+          inGame: userData.inGame,
         },
       });
     }
+  }
+
+  // The game server reports a disconnect only for lineup players, and none at
+  // all once the match is over, so for anyone else the last tab closing is the
+  // only cleanup their lobby entry gets.
+  private async isInMatchServer(matchId: string, steamId: string) {
+    const { match_lineup_players } = await this.hasuraService.query({
+      match_lineup_players: {
+        __args: {
+          where: {
+            steam_id: {
+              _eq: steamId,
+            },
+            is_connected: {
+              _eq: true,
+            },
+            lineup: {
+              match_id: {
+                _eq: matchId,
+              },
+              match: {
+                status: {
+                  _nin: ChatService.MATCH_CHAT_LOG_STATUSES,
+                },
+              },
+            },
+          },
+          limit: 1,
+        },
+        id: true,
+      },
+    });
+
+    return match_lineup_players.length > 0;
   }
 
   // The message is inlined into an rcon command inside quotes, so a quote ends

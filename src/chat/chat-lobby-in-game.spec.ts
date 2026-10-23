@@ -6,10 +6,14 @@ describe("ChatService match lobby while a player is in the game server", () => {
   const MATCH = "33333333-3333-4333-8333-333333333333";
   const PLAYER = "76561190000000101";
   const TEAMMATE = "76561190000000102";
+  const ORGANIZER = "76561190000000201";
+  const LINEUP = [PLAYER, TEAMMATE];
   const ROOM = `chat:match:${MATCH}`;
 
   let hashes: Record<string, Record<string, string>>;
   let sets: Record<string, Set<string>>;
+  let connected: Set<string>;
+  let status: string;
   let beforeSessionRemoved: (() => Promise<void>) | null;
   let tabs: number;
 
@@ -34,10 +38,23 @@ describe("ChatService match lobby while a player is in the game server", () => {
             is_in_lineup: true,
             is_coach: false,
             is_organizer: null,
-            status: "Live",
+            status,
             source: null,
           },
         };
+      }
+
+      if (query.match_lineup_players) {
+        const { where } = query.match_lineup_players.__args;
+        const steamId = String(where.steam_id._eq);
+        const inServer =
+          where.is_connected._eq === true &&
+          where.lineup.match_id._eq === MATCH &&
+          !where.lineup.match.status._nin.includes(status) &&
+          LINEUP.includes(steamId) &&
+          connected.has(steamId);
+
+        return { match_lineup_players: inServer ? [{ id: "mlp" }] : [] };
       }
 
       return {};
@@ -118,11 +135,15 @@ describe("ChatService match lobby while a player is in the game server", () => {
   };
 
   const connectToServer = async (steamId: string) => {
+    if (LINEUP.includes(steamId)) {
+      connected.add(steamId);
+    }
     await service.joinLobbyViaGame(MATCH, steamId);
     await flush();
   };
 
   const disconnectFromServer = async (steamId: string) => {
+    connected.delete(steamId);
     await service.leaveLobbyViaGame(MATCH, steamId);
     await flush();
   };
@@ -165,6 +186,8 @@ describe("ChatService match lobby while a player is in the game server", () => {
     jest.clearAllMocks();
     hashes = {};
     sets = {};
+    connected = new Set();
+    status = "Live";
     beforeSessionRemoved = null;
     tabs = 0;
 
@@ -193,9 +216,7 @@ describe("ChatService match lobby while a player is in the game server", () => {
     await closeTab(tab);
 
     expect(presence(PLAYER)).toEqual({ inGame: true });
-    expect(seenBy(TEAMMATE, PLAYER)).not.toContainEqual(
-      expect.objectContaining({ event: "left" }),
-    );
+    expect(seenBy(TEAMMATE, PLAYER)).toEqual([]);
 
     const fresh = await openTab(TEAMMATE);
     expect(listedFor(fresh, PLAYER)).toMatchObject({ inGame: true });
@@ -251,7 +272,47 @@ describe("ChatService match lobby while a player is in the game server", () => {
     await openTab(TEAMMATE);
     const tab = await openTab(PLAYER);
     await connectToServer(PLAYER);
-    beforeSessionRemoved = () => service.leaveLobbyViaGame(MATCH, PLAYER);
+    beforeSessionRemoved = () => disconnectFromServer(PLAYER);
+
+    await closeTab(tab);
+
+    expect(presence(PLAYER)).toBeNull();
+  });
+
+  it("drops an in-game player who is not on a lineup when they close their tab", async () => {
+    await openTab(TEAMMATE);
+    const tab = await openTab(ORGANIZER);
+    await connectToServer(ORGANIZER);
+    redis.publish.mockClear();
+
+    await closeTab(tab);
+
+    expect(presence(ORGANIZER)).toBeNull();
+    expect(seenBy(TEAMMATE, ORGANIZER)).toEqual([
+      { event: "left", inGame: true },
+    ]);
+  });
+
+  it("drops a lineup player the server reports gone, even if the lobby still says in game", async () => {
+    await openTab(TEAMMATE);
+    const tab = await openTab(PLAYER);
+    await connectToServer(PLAYER);
+    await disconnectFromServer(PLAYER);
+    hashes[ROOM][PLAYER] = JSON.stringify({
+      ...JSON.parse(hashes[ROOM][PLAYER]),
+      inGame: true,
+    });
+
+    await closeTab(tab);
+
+    expect(presence(PLAYER)).toBeNull();
+  });
+
+  it("drops a lineup player once the match is over", async () => {
+    await openTab(TEAMMATE);
+    const tab = await openTab(PLAYER);
+    await connectToServer(PLAYER);
+    status = "Finished";
 
     await closeTab(tab);
 
