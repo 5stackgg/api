@@ -317,6 +317,8 @@ export class MatchAssistantService {
   // has to ask with this exact predicate, or it will promise a slot that the
   // assignment then cannot find.
   public async countFreeOnDemandServers(region?: string | null) {
+    const occupied = await this.occupiedServerExclusion();
+
     const { servers_aggregate } = await this.hasura.query({
       servers_aggregate: {
         __args: {
@@ -333,7 +335,10 @@ export class MatchAssistantService {
             reserved_by_match_id: {
               _is_null: true,
             },
-            ...MatchAssistantService.pendingDemoUploadExclusion(),
+            _and: [
+              occupied,
+              MatchAssistantService.pendingDemoUploadExclusion(),
+            ],
             game_server_node: {
               _and: [
                 {
@@ -1655,7 +1660,9 @@ export class MatchAssistantService {
   // A pod holds its server's host ports until it exits, whether or not the row
   // is still reserved: a match that moved off it frees the row straight away,
   // and a node edit makes new rows for the same ports.
-  private async occupiedServerExclusion(): Promise<servers_bool_exp> {
+  private async getOccupiedPorts(): Promise<
+    Array<{ node: string; port: number }>
+  > {
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const core = kc.makeApiClient(CoreV1Api);
@@ -1666,7 +1673,7 @@ export class MatchAssistantService {
       fieldSelector: MatchAssistantService.UNFINISHED_POD_SELECTOR,
     });
 
-    const occupied = pods
+    return pods
       .filter((pod) => MatchAssistantService.isPodLive(pod))
       .map((pod) => ({
         node:
@@ -1683,6 +1690,10 @@ export class MatchAssistantService {
         ),
       }))
       .filter(({ node, port }) => node && port);
+  }
+
+  private async occupiedServerExclusion(): Promise<servers_bool_exp> {
+    const occupied = await this.getOccupiedPorts();
 
     if (occupied.length === 0) {
       return {};
@@ -1771,6 +1782,8 @@ export class MatchAssistantService {
       supported: boolean;
     }>
   > {
+    const occupied = await this.getOccupiedPorts();
+
     const nodes = await this.postgres.query<
       Array<{
         id: string;
@@ -1807,6 +1820,12 @@ export class MatchAssistantService {
                  AND s.reserved_by_match_id IS NULL
                  AND NOT EXISTS (
                    SELECT 1
+                     FROM unnest($1::text[], $2::int[]) AS held(node, port)
+                    WHERE held.node = s.game_server_node_id
+                      AND held.port = s.port
+                 )
+                 AND NOT EXISTS (
+                   SELECT 1
                      FROM public.matches m
                      JOIN public.match_maps mm ON mm.match_id = m.id
                     WHERE m.server_id = s.id
@@ -1826,6 +1845,7 @@ export class MatchAssistantService {
             )
           )
         ORDER BY n.enabled_for_match_making, n.id`,
+      [occupied.map(({ node }) => node), occupied.map(({ port }) => port)],
     );
 
     const supported = await Promise.all(

@@ -835,6 +835,58 @@ describe("MatchAssistantService — on-demand server teardown", () => {
     });
   });
 
+  describe("counting free on-demand servers", () => {
+    const heldPod = {
+      metadata: { name: "m-match-2-abcde" },
+      spec: {
+        nodeName: "node-1",
+        containers: [
+          {
+            name: "game-server",
+            env: [
+              { name: "SERVER_ID", value: "server-1" },
+              { name: "SERVER_PORT", value: "27015" },
+            ],
+          },
+        ],
+      },
+      status: { phase: "Running" },
+    };
+
+    beforeEach(() => {
+      listNamespacedPod.mockResolvedValue({ items: [heldPod] });
+    });
+
+    it("leaves out a server a match pod still holds, as the hand-out does", async () => {
+      hasura.query.mockResolvedValue({
+        servers_aggregate: { aggregate: { count: 1 } },
+      });
+
+      await service.countFreeOnDemandServers("USE");
+
+      const [[request]] = hasura.query.mock.calls;
+      expect(request.servers_aggregate.__args.where._and).toContainEqual({
+        _not: {
+          _or: [
+            { game_server_node_id: { _eq: "node-1" }, port: { _eq: 27015 } },
+          ],
+        },
+      });
+    });
+
+    it("offers no render node whose free server a match pod still holds", async () => {
+      const postgres = (service as any).postgres.query as jest.Mock;
+      postgres.mockResolvedValue([]);
+
+      await service.renderNodes();
+
+      expect(postgres).toHaveBeenCalledWith(
+        expect.stringContaining("unnest($1::text[], $2::int[])"),
+        [["node-1"], [27015]],
+      );
+    });
+  });
+
   describe("handing a freed server to a waiting match", () => {
     let assignServer: jest.SpyInstance;
     let waiting: Array<{ id: string; source?: string }>;
