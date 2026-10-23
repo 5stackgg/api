@@ -215,4 +215,126 @@ describe("DraftGameService player blocks", () => {
       );
     });
   });
+
+  describe("LAN regions", () => {
+    const lobby = (regions: Array<string>) =>
+      ({
+        type: "Competitive",
+        mode: "Pug",
+        regions,
+        captain_selection: "TopEloTwo",
+        draft_order: "Snake",
+      }) as never;
+
+    beforeEach(() => {
+      hasura.query.mockImplementation(async (query) =>
+        query.server_regions
+          ? {
+              server_regions: ["Lan", "Lan2"]
+                .filter(
+                  (value) =>
+                    !query.server_regions.__args.where.value ||
+                    query.server_regions.__args.where.value._in.includes(value),
+                )
+                .map((value) => ({ value })),
+            }
+          : { settings_by_pk: null },
+      );
+      hasura.mutation.mockResolvedValue({
+        insert_draft_games_one: { id: "draft-2" },
+      });
+      jest
+        .spyOn(service as never, "addLobbyMembersToDraft")
+        .mockResolvedValue(undefined as never);
+    });
+
+    it("refuses a player off the LAN a lobby in a LAN region", async () => {
+      await expect(
+        service.createDraftGame(host, lobby(["Lan"]), []),
+      ).rejects.toThrow("You must be on the LAN to play in a LAN region");
+      expect(hasura.mutation).not.toHaveBeenCalled();
+    });
+
+    it("refuses a LAN region sent in another case", async () => {
+      await expect(
+        service.createDraftGame(host, lobby(["lan"]), ["Lan2"]),
+      ).rejects.toThrow("You must be on the LAN to play in a LAN region");
+    });
+
+    it("refuses a player on a different LAN", async () => {
+      await expect(
+        service.createDraftGame(host, lobby(["Lan"]), ["Lan2"]),
+      ).rejects.toThrow("You must be on the LAN to play in a LAN region");
+    });
+
+    it("refuses a LAN region sent only in the match options", async () => {
+      await expect(
+        service.createDraftGame(
+          host,
+          { ...(lobby([]) as object), options: { regions: ["Lan"] } } as never,
+          [],
+        ),
+      ).rejects.toThrow("You must be on the LAN to play in a LAN region");
+    });
+
+    it.each([
+      ["a lone string", { regions: "Lan" }],
+      ["a lone string in the match options", { options: { regions: "Lan" } }],
+      ["a nested list", { regions: [["Lan"]] }],
+    ])("refuses regions sent as %s", async (_label, regions) => {
+      await expect(
+        service.createDraftGame(
+          host,
+          { ...(lobby([]) as object), ...regions } as never,
+          [],
+        ),
+      ).rejects.toThrow("Invalid regions");
+      expect(hasura.mutation).not.toHaveBeenCalled();
+    });
+
+    it("lets a player the LAN probe placed on the LAN host there", async () => {
+      await expect(
+        service.createDraftGame(host, lobby(["Lan"]), ["Lan"]),
+      ).resolves.toBe("draft-2");
+    });
+
+    it("lets a match organizer off the LAN host there", async () => {
+      await expect(
+        service.createDraftGame(organizer, lobby(["Lan"]), []),
+      ).resolves.toBe("draft-2");
+    });
+
+    it("leaves online regions alone", async () => {
+      await expect(
+        service.createDraftGame(host, lobby(["TestA"]), []),
+      ).resolves.toBe("draft-2");
+    });
+
+    it("refuses moving a lobby onto a LAN the host is not on", async () => {
+      jest.spyOn(service, "getDraftGame").mockResolvedValue({
+        ...draftGame(),
+        regions: ["TestA"],
+      });
+
+      await expect(
+        service.updateDraftSettings(host, "draft-1", lobby(["Lan"]), []),
+      ).rejects.toThrow("You must be on the LAN to play in a LAN region");
+      expect(hasura.mutation).not.toHaveBeenCalled();
+    });
+
+    it("keeps a LAN lobby editable once the host has left the LAN", async () => {
+      jest.spyOn(service, "getDraftGame").mockResolvedValue({
+        ...draftGame(),
+        regions: ["Lan"],
+      });
+
+      await service.updateDraftSettings(host, "draft-1", lobby(["Lan"]), []);
+
+      expect(hasura.mutation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          update_draft_games_by_pk: expect.anything(),
+        }),
+      );
+    });
+  });
 });

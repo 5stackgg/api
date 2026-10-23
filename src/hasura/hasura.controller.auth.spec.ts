@@ -6,6 +6,7 @@ import { HasuraController } from "./hasura.controller";
 import { HasuraService } from "./hasura.service";
 import { CacheService } from "../cache/cache.service";
 import { PostgresService } from "../postgres/postgres.service";
+import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 import type { e_player_roles_enum } from "../../generated";
 
 // Hasura asks GET /hasura who a request or socket belongs to; the session the
@@ -14,10 +15,14 @@ describe("HasuraController auth hook", () => {
   let app: INestApplication;
   let signedIn: { steam_id: string } | undefined;
   let role: e_player_roles_enum;
+  let latencyTests: Record<string, string>;
+  let hgetall: jest.Mock;
 
   beforeEach(async () => {
     signedIn = undefined;
     role = "user";
+    latencyTests = {};
+    hgetall = jest.fn(async () => latencyTests);
     jest
       .spyOn(HasuraService.prototype, "getHasuraHeaders")
       .mockImplementation(async (steamId: string) => ({
@@ -42,12 +47,17 @@ describe("HasuraController auth hook", () => {
           }),
         },
         { provide: PostgresService, useValue: { query: jest.fn() } },
+        {
+          provide: RedisManagerService,
+          useValue: { getConnection: () => ({ hgetall }) },
+        },
       ],
     }).compile();
 
     app = module.createNestApplication({ logger: false });
     app.use((req: any, _res: unknown, next: () => void) => {
       req.user = signedIn;
+      req.session = { id: "session-1" };
       next();
     });
     await app.init();
@@ -118,6 +128,53 @@ describe("HasuraController auth hook", () => {
     expect(response.body).toEqual({
       "x-hasura-user-id": "0",
       "x-hasura-role": "guest",
+    });
+  });
+
+  describe("LAN regions", () => {
+    const probe = (region: string, isLan: boolean) =>
+      JSON.stringify({ region, latency: 1, isLan });
+
+    beforeEach(() => {
+      signedIn = { steam_id: "76561198000000001" };
+      latencyTests = {
+        lan: probe("Lan", true),
+        us_east: probe("US East", false),
+      };
+    });
+
+    it("lists the LAN regions the probe placed the session on", async () => {
+      const response = await hook().expect(200);
+      expect(hgetall).toHaveBeenCalledWith("latency-test:session-1");
+      expect(response.body).toEqual({
+        "x-hasura-user-id": "76561198000000001",
+        "x-hasura-role": "user",
+        [HasuraController.LAN_REGIONS_SESSION_VARIABLE]: JSON.stringify([
+          "Lan",
+        ]),
+      });
+    });
+
+    it("leaves the variable off a session on no LAN", async () => {
+      latencyTests = { us_east: probe("US East", false) };
+      const response = await hook().expect(200);
+      expect(response.body).toEqual({
+        "x-hasura-user-id": "76561198000000001",
+        "x-hasura-role": "user",
+      });
+    });
+
+    it.each<e_player_roles_enum>([
+      "match_organizer",
+      "tournament_organizer",
+      "administrator",
+    ])("does not look a %s session up", async (staff) => {
+      role = staff;
+      const response = await hook().expect(200);
+      expect(hgetall).not.toHaveBeenCalled();
+      expect(
+        response.body[HasuraController.LAN_REGIONS_SESSION_VARIABLE],
+      ).toBeUndefined();
     });
   });
 });

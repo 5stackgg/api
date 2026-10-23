@@ -29,15 +29,13 @@ BEGIN
         FROM servers where enabled = true and type = 'Ranked';
 
     IF NEW.regions IS NOT NULL THEN
+        PERFORM assert_lan_regions_reachable(NEW.regions);
+
         SELECT count(*) INTO lan_count 
         FROM server_regions 
         WHERE value = ANY(NEW.regions) AND is_lan = true;
 
         IF lan_count > 0 THEN
-            IF (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text = 'user' THEN
-                RAISE EXCEPTION 'Cannot assign the Lan region' USING ERRCODE = '22000';
-            END IF;
-
             -- A match is played on the LAN or online, never vetoed between them.
             IF EXISTS (
                 SELECT 1 FROM server_regions
@@ -202,6 +200,15 @@ BEGIN
             WHERE value = ANY(NEW.regions) AND is_lan = false
         ) THEN
         RAISE EXCEPTION 'LAN and online regions cannot be mixed' USING ERRCODE = '22000';
+    END IF;
+
+    -- Only regions this update adds: sanitize_match_options_regions() rewrites
+    -- the list from inside players' sessions, and a LAN match stays editable
+    -- once its organizer has left the LAN.
+    IF NEW.regions IS DISTINCT FROM OLD.regions THEN
+        PERFORM assert_lan_regions_reachable(
+            ARRAY(SELECT unnest(NEW.regions) EXCEPT SELECT unnest(OLD.regions))
+        );
     END IF;
 
     RETURN NEW;

@@ -138,6 +138,6 @@ describe("tournament stage region overrides (SQL-driven)", () => {
            FROM map_pools WHERE type = 'Wingman' AND seed = true`,
         ),
       ),
-    ).rejects.toThrow(/Cannot assign the Lan region/);
+    ).rejects.toThrow(/must be on the LAN/);
   });
 });
