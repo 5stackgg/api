@@ -87,4 +87,19 @@ describe("FaceitBansService.activeCheatingBan", () => {
       FaceitBansService.activeCheatingBan([{ reason: "cheating" }], now),
     ).toBeNull();
   });
+
+  it("keeps a cheating ban with an unreadable end as never ending", () => {
+    expect(
+      FaceitBansService.activeCheatingBan(
+        [
+          {
+            reason: "cheating",
+            starts_at: "2026-01-01T00:00:00Z",
+            ends_at: "not a date",
+          },
+        ],
+        now,
+      ),
+    ).toEqual({ startsAt: new Date("2026-01-01T00:00:00Z"), endsAt: null });
+  });
 });

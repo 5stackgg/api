@@ -29,7 +29,7 @@ describe("faceit bans", () => {
     await postgres.query("DELETE FROM players");
     await postgres.query(
       `DELETE FROM settings
-        WHERE name IN ('public.sanction_faceit_ban_scope', 'public.sanction_faceit_ban_enabled')`,
+        WHERE name LIKE 'public.sanction\\_faceit\\_ban\\_%'`,
     );
   });
 
@@ -52,7 +52,7 @@ describe("faceit bans", () => {
   });
 
   const faceitReports = (
-    bans: Array<FaceitBan> | number,
+    bans: Array<FaceitBan> | number | "no list",
     accounts: Record<string, number> = { cs2: 200 },
   ) => {
     const fetch = jest.fn(async (url: string) => {
@@ -66,6 +66,9 @@ describe("faceit bans", () => {
       }
       if (typeof bans === "number") {
         return new Response("{}", { status: bans });
+      }
+      if (bans === "no list") {
+        return new Response("{}");
       }
       return new Response(JSON.stringify({ items: bans }));
     });
@@ -307,5 +310,81 @@ describe("faceit bans", () => {
       [player],
     );
     expect(row.vac_banned).toBe(true);
+  });
+
+  it("writes the FACEIT ban beside an active VAC ban", async () => {
+    const player = await fx.player();
+    await postgres.query(
+      `INSERT INTO player_sanctions (player_steam_id, type, sanctioned_by_steam_id, reason)
+       VALUES ($1::bigint, 'ban', NULL, 'Auto: Steam 1 VAC ban(s), last 30d ago')`,
+      [player],
+    );
+    faceitReports([cheating(null)]);
+
+    await service().checkPlayer(player);
+
+    expect((await activeBans(player)).map((ban) => ban.reason).sort()).toEqual([
+      "Auto: FACEIT cheating ban",
+      "Auto: Steam 1 VAC ban(s), last 30d ago",
+    ]);
+  });
+
+  it("moves the ban's end when FACEIT makes it permanent", async () => {
+    const player = await fx.player();
+    faceitReports([cheating(days(100))]);
+    await service().checkPlayer(player);
+
+    await recheck(player);
+    faceitReports([cheating(null)]);
+    await service().checkPlayer(player);
+
+    const bans = await activeBans(player);
+    expect(bans).toHaveLength(1);
+    expect(bans[0].remove_sanction_date).toBeNull();
+  });
+
+  it.each([
+    ["the FACEIT account can no longer be found", "no account"],
+    ["the account lookup fails", "lookup fails"],
+    ["FACEIT answers without a ban list", "no list"],
+  ])("keeps the ban when %s", async (_label, failure) => {
+    const player = await fx.player();
+    faceitReports([cheating(null)]);
+    await service().checkPlayer(player);
+
+    await recheck(player);
+    if (failure === "no account") {
+      faceitReports([], {});
+    } else if (failure === "lookup fails") {
+      faceitReports([], { cs2: 503 });
+    } else {
+      faceitReports("no list");
+    }
+    await service().checkPlayer(player);
+
+    expect(await activeBans(player)).toHaveLength(1);
+  });
+
+  it("ends the ban at the policy's ladder when that comes before FACEIT's end", async () => {
+    const player = await fx.player();
+    await postgres.query(
+      "INSERT INTO settings (name, value) VALUES ('public.sanction_faceit_ban_durations', '1440')",
+    );
+    const startsAt = new Date(Date.now() - 3_600_000);
+    faceitReports([
+      {
+        reason: "cheating",
+        starts_at: startsAt.toISOString(),
+        ends_at: days(700),
+      },
+    ]);
+
+    await service().checkPlayer(player);
+
+    const bans = await activeBans(player);
+    expect(bans).toHaveLength(1);
+    expect(bans[0].remove_sanction_date?.toISOString()).toBe(
+      new Date(startsAt.getTime() + 86_400_000).toISOString(),
+    );
   });
 });

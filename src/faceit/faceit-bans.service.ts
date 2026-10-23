@@ -34,7 +34,9 @@ export class FaceitBansService {
   ): FaceitCheatingBan | null {
     const active = bans.flatMap((ban) => {
       const startsAt = new Date(ban.starts_at ?? "");
-      const endsAt = ban.ends_at ? new Date(ban.ends_at) : null;
+      const parsedEnd = ban.ends_at ? new Date(ban.ends_at) : null;
+      const endsAt =
+        parsedEnd && !Number.isNaN(parsedEnd.getTime()) ? parsedEnd : null;
 
       if (
         !/cheat/i.test(ban.reason ?? "") ||
@@ -88,15 +90,22 @@ export class FaceitBansService {
       return;
     }
 
-    let ban: FaceitCheatingBan | null = null;
-
-    if (playerId) {
-      const bans = await this.fetchBans(playerId);
-      if (!bans) {
-        return;
-      }
-      ban = FaceitBansService.activeCheatingBan(bans);
+    if (playerId === null) {
+      await this.postgres.query(
+        `UPDATE public.players
+            SET faceit_bans_checked_at = now()
+          WHERE steam_id = $1::bigint`,
+        [steamId],
+      );
+      return;
     }
+
+    const bans = await this.fetchBans(playerId);
+    if (!bans) {
+      return;
+    }
+
+    const ban = FaceitBansService.activeCheatingBan(bans);
 
     await this.postgres.query(
       `UPDATE public.players
@@ -116,7 +125,9 @@ export class FaceitBansService {
   }
 
   private async applyAutoBan(steamId: string): Promise<void> {
-    const banned = await this.postgres.query<Array<{ steam_id: string }>>(
+    const [result] = await this.postgres.query<
+      Array<{ updated: number; inserted: number }>
+    >(
       `WITH target AS (
          SELECT p.steam_id,
                 -- NULL is a ban with no end, so LEAST keeps whichever of the
@@ -138,20 +149,12 @@ export class FaceitBansService {
                 FROM public.player_sanctions ps
                WHERE ps.player_steam_id = p.steam_id
                  AND ps.type = 'ban'
-                 AND ps.deleted_at IS NULL
-                 AND (ps.remove_sanction_date IS NULL OR ps.remove_sanction_date > now())
-            )
-            AND NOT EXISTS (
-              SELECT 1
-                FROM public.player_sanctions ps
-               WHERE ps.player_steam_id = p.steam_id
-                 AND ps.type = 'ban'
                  AND ps.sanctioned_by_steam_id IS NULL
                  AND ps.reason LIKE 'Auto: FACEIT%'
                  AND ps.deleted_at >= p.faceit_banned_at
             )
        ),
-       reactivated AS (
+       updated AS (
          UPDATE public.player_sanctions ps
             SET remove_sanction_date = t.remove_sanction_date,
                 reason = $2
@@ -161,6 +164,7 @@ export class FaceitBansService {
             AND ps.sanctioned_by_steam_id IS NULL
             AND ps.reason LIKE 'Auto: FACEIT%'
             AND ps.deleted_at IS NULL
+            AND ps.remove_sanction_date IS DISTINCT FROM t.remove_sanction_date
          RETURNING ps.player_steam_id
        ),
        inserted AS (
@@ -168,17 +172,26 @@ export class FaceitBansService {
              (player_steam_id, type, sanctioned_by_steam_id, reason, remove_sanction_date)
          SELECT t.steam_id, 'ban', NULL, $2, t.remove_sanction_date
            FROM target t
-          WHERE NOT EXISTS (SELECT 1 FROM reactivated)
+          WHERE NOT EXISTS (
+            SELECT 1
+              FROM public.player_sanctions ps
+             WHERE ps.player_steam_id = t.steam_id
+               AND ps.type = 'ban'
+               AND ps.sanctioned_by_steam_id IS NULL
+               AND ps.reason LIKE 'Auto: FACEIT%'
+               AND ps.deleted_at IS NULL
+          )
          RETURNING player_steam_id
        )
-       SELECT player_steam_id::text AS steam_id FROM reactivated
-       UNION ALL
-       SELECT player_steam_id::text AS steam_id FROM inserted`,
+       SELECT (SELECT count(*) FROM updated)::int AS updated,
+              (SELECT count(*) FROM inserted)::int AS inserted`,
       [steamId, "Auto: FACEIT cheating ban"],
     );
 
-    if (banned.length > 0) {
-      this.logger.log(`faceit-bans: auto-banned ${steamId} for a cheating ban`);
+    if (result?.inserted || result?.updated) {
+      this.logger.log(
+        `faceit-bans: ${result.inserted ? "auto-banned" : "updated the auto-ban on"} ${steamId} for a cheating ban`,
+      );
     }
   }
 
@@ -240,7 +253,7 @@ export class FaceitBansService {
 
     const data = (await response.json()) as { items?: Array<FaceitBan> };
 
-    return data.items ?? [];
+    return Array.isArray(data.items) ? data.items : null;
   }
 
   private async get(path: string): Promise<Response | null> {
