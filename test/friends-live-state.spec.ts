@@ -447,19 +447,20 @@ describe("friends list live state", () => {
 
     it("answers it again on every friends list row", async () => {
       const [viewer] = await fx.players(1);
-      const others = await postgres.query<Array<{ steam_id: string }>>(
-        "SELECT steam_id::text AS steam_id FROM players WHERE steam_id <> $1 ORDER BY steam_id",
+      // Every other player, half asked and half asking, in one statement.
+      const [{ count }] = await postgres.query<Array<{ count: number }>>(
+        `WITH added AS (
+           INSERT INTO friends (player_steam_id, other_player_steam_id, status)
+           SELECT CASE WHEN n % 2 = 1 THEN $1 ELSE steam_id END,
+                  CASE WHEN n % 2 = 1 THEN steam_id ELSE $1 END,
+                  CASE WHEN n % 2 = 1 THEN 'Accepted' ELSE 'Pending' END
+             FROM (SELECT steam_id, row_number() OVER (ORDER BY steam_id) AS n
+                     FROM players WHERE steam_id <> $1) p
+           RETURNING 1
+         )
+         SELECT count(*)::int AS count FROM added`,
         [viewer],
       );
-      for (const [i, { steam_id }] of others.entries()) {
-        await postgres.query(
-          `INSERT INTO friends (player_steam_id, other_player_steam_id, status)
-           VALUES ($1, $2, $3)`,
-          i % 2
-            ? [viewer, steam_id, "Accepted"]
-            : [steam_id, viewer, "Pending"],
-        );
-      }
 
       const rows = await postgres.query<
         Array<{ steam_id: string; listed: boolean; one: boolean }>
@@ -471,7 +472,7 @@ describe("friends list live state", () => {
         [viewer],
       );
 
-      expect(rows).toHaveLength(others.length);
+      expect(rows).toHaveLength(count);
       expect(rows.some((r) => r.one)).toBe(true);
       expect(rows.filter((r) => r.listed !== r.one)).toEqual([]);
     });
