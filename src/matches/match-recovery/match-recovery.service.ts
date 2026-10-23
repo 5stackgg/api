@@ -442,6 +442,30 @@ export class MatchRecoveryService {
     return { success: true };
   }
 
+  // The plugin takes a console pause as an admin's technical pause: both teams
+  // resume it from chat, or an organizer resumes it at once.
+  public async setMatchPaused(matchId: string, paused: boolean) {
+    const match = await this.getMatch(matchId);
+
+    const statuses = paused ? ["Live", "Overtime"] : ["Paused"];
+    if (match.status !== "Live" || !statuses.includes(match.map_status ?? "")) {
+      throw Error(
+        paused ? "there is no live map to pause" : "the map isn't paused",
+      );
+    }
+
+    const response = await this.matchAssistant.setServerPaused(matchId, paused);
+    if (response === undefined) {
+      throw Error("the match server can't be reached");
+    }
+
+    this.logger.log(
+      `[${matchId}] organizer ${paused ? "paused" : "resumed"} map ${match.match_map_id}`,
+    );
+
+    return { success: true };
+  }
+
   public parseKeyValues(text: string): KeyValues {
     const tokens = this.tokenize(text);
     let index = 0;

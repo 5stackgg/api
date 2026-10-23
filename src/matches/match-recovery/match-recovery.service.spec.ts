@@ -218,6 +218,10 @@ const setup = (
       async (): Promise<string | undefined> =>
         "serverResponse" in options ? options.serverResponse : "",
     ),
+    setServerPaused: jest.fn(
+      async (): Promise<string | undefined> =>
+        "serverResponse" in options ? options.serverResponse : "",
+    ),
   };
 
   const service = new MatchRecoveryService(
@@ -733,6 +737,82 @@ describe("MatchRecoveryService", () => {
       );
       expect(matchAssistant.restartServerMap).not.toHaveBeenCalled();
       expect(resets(postgres)).toEqual([]);
+    });
+  });
+
+  describe("setMatchPaused", () => {
+    it.each(["Live", "Overtime"])(
+      "pauses a map that is %s",
+      async (mapStatus) => {
+        const { service, matchAssistant } = setup({
+          match: matchRow({ map_status: mapStatus }),
+        });
+
+        await expect(service.setMatchPaused("match-1", true)).resolves.toEqual({
+          success: true,
+        });
+        expect(matchAssistant.setServerPaused).toHaveBeenCalledWith(
+          "match-1",
+          true,
+        );
+      },
+    );
+
+    it("resumes a paused map", async () => {
+      const { service, matchAssistant } = setup({
+        match: matchRow({ map_status: "Paused" }),
+      });
+
+      await expect(service.setMatchPaused("match-1", false)).resolves.toEqual({
+        success: true,
+      });
+      expect(matchAssistant.setServerPaused).toHaveBeenCalledWith(
+        "match-1",
+        false,
+      );
+    });
+
+    // Players can already call a pause from chat, so unlike a restore there is
+    // no vote for an organizer on one of the teams to skip.
+    it("lets an organizer on one of the teams pause", async () => {
+      const { service, matchAssistant } = setup({ affiliated: true });
+
+      await service.setMatchPaused("match-1", true);
+
+      expect(matchAssistant.setServerPaused).toHaveBeenCalledWith(
+        "match-1",
+        true,
+      );
+    });
+
+    it.each([
+      [true, { map_status: "Paused" }, "there is no live map to pause"],
+      [true, { map_status: "Warmup" }, "there is no live map to pause"],
+      [true, { map_status: "Knife" }, "there is no live map to pause"],
+      [true, { status: "Finished" }, "there is no live map to pause"],
+      [false, { map_status: "Live" }, "the map isn't paused"],
+      [
+        false,
+        { status: "Canceled", map_status: "Paused" },
+        "the map isn't paused",
+      ],
+    ])("refuses paused=%s on %o", async (paused, overrides, message) => {
+      const { service, matchAssistant } = setup({
+        match: matchRow(overrides),
+      });
+
+      await expect(service.setMatchPaused("match-1", paused)).rejects.toThrow(
+        message,
+      );
+      expect(matchAssistant.setServerPaused).not.toHaveBeenCalled();
+    });
+
+    it("says so when the server can't be reached", async () => {
+      const { service } = setup({ serverResponse: undefined });
+
+      await expect(service.setMatchPaused("match-1", true)).rejects.toThrow(
+        "the match server can't be reached",
+      );
     });
   });
 });

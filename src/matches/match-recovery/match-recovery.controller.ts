@@ -41,6 +41,21 @@ export class MatchRecoveryController {
   }
 
   @HasuraAction()
+  public async setMatchPaused(data: {
+    match_id: string;
+    paused: boolean;
+    user: User;
+  }) {
+    await this.requireOrganizer(data.match_id, data.user);
+
+    if (typeof data.paused !== "boolean") {
+      throw Error("paused must be true or false");
+    }
+
+    return await this.recovery.setMatchPaused(data.match_id, data.paused);
+  }
+
+  @HasuraAction()
   public async restartMatch(data: { match_id: string; user: User }) {
     await this.requireOrganizer(data.match_id, data.user);
 

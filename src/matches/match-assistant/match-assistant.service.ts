@@ -167,6 +167,32 @@ export class MatchAssistantService {
     return await this.command(matchId, "match_state Warmup");
   }
 
+  // The plugins prefix their match commands, css_ on CounterStrikeSharp and
+  // sw_ on SwiftlyS2. A server that has not reported its runtime yet runs the
+  // deployment's.
+  public async setServerPaused(matchId: string, paused: boolean) {
+    const { matches_by_pk } = await this.hasura.query({
+      matches_by_pk: {
+        __args: {
+          id: matchId,
+        },
+        server: {
+          plugin_runtime: true,
+        },
+      },
+    });
+
+    const runtime =
+      matches_by_pk?.server?.plugin_runtime ??
+      (await this.pluginRuntimeService.getPluginRuntime());
+    const prefix = runtime === "counterstrikesharp" ? "css" : "sw";
+
+    return await this.command(
+      matchId,
+      `${prefix}_${paused ? "pause" : "resume"}`,
+    );
+  }
+
   public async requestRoundRestore(matchId: string, round: number) {
     return await this.command(matchId, `restore_round ${round}`);
   }
