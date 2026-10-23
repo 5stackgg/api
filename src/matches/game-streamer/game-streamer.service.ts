@@ -856,7 +856,7 @@ export class GameStreamerService {
     }
     const { nodeId, steamAccount } = claim;
 
-    await this.deleteJob(jobName);
+    await this.deleteJob(jobName, { keepClaim: true });
 
     const env: V1EnvVar[] = [
       { name: "MATCH_MAP_ID", value: matchMapId },
@@ -1709,7 +1709,7 @@ export class GameStreamerService {
 
     const jobName = GameStreamerService.GetLiveJobId(matchId);
 
-    await this.deleteJob(jobName);
+    await this.deleteJob(jobName, { keepClaim: true });
 
     const kc = new KubeConfig();
     kc.loadFromDefault();
@@ -2357,11 +2357,40 @@ export class GameStreamerService {
       60 * 60,
     );
 
-    const { nodeId, steamAccount } = await this.claimGpuForBatchHighlights(
+    const jobName = GameStreamerService.GetBatchHighlightsJobName(
       matchMapId,
       resolvedDemoId,
     );
-    const jobName = GameStreamerService.GetBatchHighlightsJobName(
+
+    const existing = await this.getBatchHighlightsPodState(
+      matchMapId,
+      resolvedDemoId,
+    );
+    if (existing === "running") {
+      throw new NoGpuAvailableError(
+        `batch-highlights pod ${jobName} is already running for match_map ${matchMapId} demo ${resolvedDemoId} — wait for it to finish or kill it before re-dispatching`,
+      );
+    }
+    if (existing !== "absent") {
+      this.logger.warn(
+        `[batch-highlights ${matchMapId} demo ${resolvedDemoId}] reaping stale ${existing} Job ${jobName} before re-dispatch`,
+      );
+      await this.killBatchHighlightsPod(matchMapId, resolvedDemoId);
+      const deadline = Date.now() + 15_000;
+      while (Date.now() < deadline) {
+        if (
+          (await this.getBatchHighlightsPodState(
+            matchMapId,
+            resolvedDemoId,
+          )) === "absent"
+        ) {
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 500));
+      }
+    }
+
+    const { nodeId, steamAccount } = await this.claimGpuForBatchHighlights(
       matchMapId,
       resolvedDemoId,
     );
@@ -2428,34 +2457,6 @@ export class GameStreamerService {
     this.logger.log(
       `[batch-highlights ${matchMapId}] dispatching ${jobs.length} job(s) to pod ${jobName} on node ${nodeId}`,
     );
-
-    const existing = await this.getBatchHighlightsPodState(
-      matchMapId,
-      resolvedDemoId,
-    );
-    if (existing === "running") {
-      throw new Error(
-        `batch-highlights pod ${jobName} is already running for match_map ${matchMapId} demo ${resolvedDemoId} — wait for it to finish or kill it before re-dispatching`,
-      );
-    }
-    if (existing !== "absent") {
-      this.logger.warn(
-        `[batch-highlights ${matchMapId} demo ${resolvedDemoId}] reaping stale ${existing} Job ${jobName} before re-dispatch`,
-      );
-      await this.killBatchHighlightsPod(matchMapId, resolvedDemoId);
-      const deadline = Date.now() + 15_000;
-      while (Date.now() < deadline) {
-        if (
-          (await this.getBatchHighlightsPodState(
-            matchMapId,
-            resolvedDemoId,
-          )) === "absent"
-        ) {
-          break;
-        }
-        await new Promise((r) => setTimeout(r, 500));
-      }
-    }
 
     try {
       await batch.createNamespacedJob({
@@ -3047,9 +3048,11 @@ export class GameStreamerService {
     }
   }
 
-  private async deleteJob(jobName: string) {
+  private async deleteJob(jobName: string, { keepClaim = false } = {}) {
     // Single teardown chokepoint for every game-streamer job — release here.
-    await this.steamAccounts.release(jobName);
+    if (!keepClaim) {
+      await this.steamAccounts.release(jobName);
+    }
 
     const kc = new KubeConfig();
     kc.loadFromDefault();
