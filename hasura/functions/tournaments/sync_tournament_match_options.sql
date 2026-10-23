@@ -45,6 +45,14 @@ BEGIN
         WHERE t.match_options_id = _new.id
           AND ts.match_options_id IS NOT NULL
         UNION
+        SELECT tb.match_options_id
+        FROM tournament_brackets tb
+        INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
+        INNER JOIN tournaments t ON t.id = ts.tournament_id
+        WHERE COALESCE(ts.match_options_id, t.match_options_id) = _new.id
+          AND tb.match_options_id IS NOT NULL
+          AND tb.match_id IS NULL
+        UNION
         SELECT m.match_options_id
         FROM tournament_brackets tb
         INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id

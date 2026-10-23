@@ -4,6 +4,7 @@ CREATE OR REPLACE FUNCTION public.tau_tournament_brackets() RETURNS TRIGGER
 DECLARE
     stage_type text;
     stage_has_matches boolean;
+    inherited_options_id uuid;
     tournament_status text;
     tournament_id uuid;
     should_refresh_eta boolean;
@@ -35,14 +36,26 @@ BEGIN
               AND tb.match_id IS NOT NULL
         ) INTO stage_has_matches;
 
-        IF stage_has_matches THEN
-            RAISE EXCEPTION 'Unable to modify match options for a bracket that has already started' USING ERRCODE = '22000';
+        SELECT COALESCE(ts.match_options_id, t.match_options_id)
+        INTO inherited_options_id
+        FROM tournament_stages ts
+        INNER JOIN tournaments t ON t.id = ts.tournament_id
+        WHERE ts.id = NEW.tournament_stage_id;
+
+        -- A started stage still lets a bracket be hosted differently, never played differently.
+        IF stage_has_matches AND NOT match_options_same_rules(
+            COALESCE(OLD.match_options_id, inherited_options_id),
+            COALESCE(NEW.match_options_id, inherited_options_id)
+        ) THEN
+            RAISE EXCEPTION 'Match rules are locked once a tournament stage has matches' USING ERRCODE = '22000';
         END IF;
 
         -- Options for one known pairing would be rules no other match plays.
         IF NEW.tournament_team_id_1 IS NOT NULL OR NEW.tournament_team_id_2 IS NOT NULL THEN
             RAISE EXCEPTION 'Unable to modify match options for a bracket whose teams are known' USING ERRCODE = '22000';
         END IF;
+
+        PERFORM cleanup_orphaned_match_options(OLD.match_options_id);
      END IF;
 
      -- Keep linked match schedule in sync with bracket schedule updates.
