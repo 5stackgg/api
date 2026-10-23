@@ -165,5 +165,5 @@ CREATE TRIGGER z_tbiu_servers_last_changed
         'access_min_role', 'access_restricted', 'connect_password', 'enabled',
         'featured', 'game', 'game_mode_id', 'game_server_node_id', 'host',
         'is_dedicated', 'label', 'map_rotation_shuffle', 'max_players', 'port',
-        'rcon_password', 'region', 'tv_port', 'type'
+        'rcon_password', 'region', 'tv_enabled', 'tv_port', 'type'
     );

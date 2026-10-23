@@ -56,6 +56,63 @@ BEGIN
 END;
 $$;
 
+-- The pod switches GOTV on in the config CS2 execs after the Valve mode's
+-- own. A match runs it on Ranked, the practice plugin turns it off, a CS:GO
+-- server never gets that config written, and Rush execs none.
+CREATE OR REPLACE FUNCTION public.server_runs_tv(server public.servers) RETURNS boolean
+    LANGUAGE plpgsql STABLE
+    AS $$
+BEGIN
+    RETURN COALESCE(
+        server.tv_enabled
+        AND server.tv_port IS NOT NULL
+        AND server.type NOT IN ('Ranked', 'Practice')
+        AND server.game IS DISTINCT FROM 'csgo'
+        AND NOT EXISTS (
+            SELECT 1 FROM public.game_modes gm
+             WHERE gm.id = server.game_mode_id
+               AND gm.valve_mode = 'rush'
+        ),
+        false
+    );
+END;
+$$;
+
+-- GOTV goes to whoever may join, behind the same password: the pod sets
+-- tv_password to the connect password. Like a match's, it is host:tv_port
+-- even on a Steam relay region.
+CREATE OR REPLACE FUNCTION public.get_server_tv_connection_string(server public.servers, hasura_session json) RETURNS text
+    LANGUAGE plpgsql STABLE
+    AS $$
+DECLARE
+    connection_string text;
+BEGIN
+    IF NOT server_runs_tv(server) OR get_server_connection_string(server, hasura_session) IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    connection_string := CONCAT('connect ', server.host, ':', server.tv_port);
+
+    IF NULLIF(server.connect_password, '') IS NULL THEN
+        RETURN connection_string;
+    END IF;
+
+    RETURN CONCAT(connection_string, '; password ', server.connect_password);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_server_tv_connection_link(server public.servers, hasura_session json) RETURNS text
+    LANGUAGE plpgsql STABLE
+    AS $$
+BEGIN
+    IF NOT server_runs_tv(server) OR get_server_connection_link(server, hasura_session) IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN CONCAT('steam://run/', CASE WHEN server.game = 'csgo' THEN '4465480' ELSE '730' END, '//+connect ', server.host, ':', server.tv_port);
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION public.get_server_host(server public.servers) RETURNS text
 LANGUAGE plpgsql STABLE
 AS $$
