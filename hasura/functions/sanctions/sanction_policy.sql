@@ -175,7 +175,7 @@ RETURNS boolean
 LANGUAGE sql
 STABLE
 AS $$
-    SELECT _last_ban_at < '2023-03-22'::timestamptz;
+    SELECT _last_ban_at < '2023-03-22 00:00:00+00'::timestamptz;
 $$;
 
 DROP FUNCTION IF EXISTS public.vac_ban_predates_csgo(integer);

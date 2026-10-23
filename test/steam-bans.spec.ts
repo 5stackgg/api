@@ -192,6 +192,98 @@ describe("steam bans", () => {
     await service().checkPlayers([player]);
 
     expect(await activeBans(player)).toBe(0);
+    const [row] = await postgres.query<Array<{ vac_banned: boolean }>>(
+      `SELECT vac_banned FROM players WHERE steam_id = $1::bigint`,
+      [player],
+    );
+    expect(row.vac_banned).toBe(false);
+  });
+
+  it.each([["2025-02-20"], [null]])(
+    "corrects a stored VAC date of %s from Steam's next reading",
+    async (stored) => {
+      const player = await fx.player();
+      await postgres.query(
+        `UPDATE players
+            SET vac_banned = true, vac_ban_count = 1, last_vac_ban_at = $2::timestamptz
+          WHERE steam_id = $1::bigint`,
+        [player, stored],
+      );
+      await ban(player);
+      steamReports(player, "2021-05-01");
+
+      await service().checkPlayers([player]);
+
+      expect(await activeBans(player)).toBe(0);
+    },
+  );
+
+  it("keeps the VAC date when Valve reverses one of the VAC bans", async () => {
+    const player = await fx.player();
+    await ban(player);
+    steamReports(player, "2016-09-01", 2);
+    await service().checkPlayers([player]);
+    steamReports(player, today(), 2, 1);
+    await service().checkPlayers([player]);
+
+    steamReports(player, today(), 1, 1);
+    await service().checkPlayers([player]);
+
+    expect(await activeBans(player)).toBe(0);
+  });
+
+  it("gives the VAC ban's own age in the reason", async () => {
+    const player = await fx.player();
+    steamReports(player, "2024-02-09");
+    await service().checkPlayers([player]);
+    await postgres.query(
+      `UPDATE player_sanctions SET remove_sanction_date = now() - interval '1 day'
+        WHERE player_steam_id = $1::bigint`,
+      [player],
+    );
+
+    steamReports(player, today(), 1, 1);
+    await service().checkPlayers([player]);
+
+    const [row] = await postgres.query<Array<{ reason: string }>>(
+      `SELECT reason FROM player_sanctions
+        WHERE player_steam_id = $1::bigint
+          AND (remove_sanction_date IS NULL OR remove_sanction_date > now())`,
+      [player],
+    );
+    expect(row.reason).toBe(
+      `Auto: Steam 1 VAC ban(s), last ${daysSince("2024-02-09")}d ago`,
+    );
+  });
+
+  it("leaves an expired staff ban whose issuer is gone as it was", async () => {
+    const player = await fx.player();
+    await postgres.query(
+      `INSERT INTO player_sanctions
+          (player_steam_id, type, sanctioned_by_steam_id, reason, remove_sanction_date)
+       VALUES ($1::bigint, 'ban', NULL, 'griefing', '2025-01-01')`,
+      [player],
+    );
+    steamReports(player, "2024-02-09");
+
+    await service().checkPlayers([player]);
+
+    const rows = await postgres.query<
+      Array<{ reason: string; remove_sanction_date: Date | null }>
+    >(
+      `SELECT reason, remove_sanction_date FROM player_sanctions
+        WHERE player_steam_id = $1::bigint
+        ORDER BY created_at`,
+      [player],
+    );
+    expect(rows.map((r) => r.reason)).toEqual([
+      "griefing",
+      `Auto: Steam 1 VAC ban(s), last ${daysSince("2024-02-09")}d ago`,
+    ]);
+    expect(rows[0].remove_sanction_date?.toISOString()).toBe(
+      "2025-01-01T00:00:00.000Z",
+    );
+    expect(await activeBans(player)).toBe(1);
   });
 
   it("lifts an auto-ban once Steam no longer reports a VAC ban", async () => {

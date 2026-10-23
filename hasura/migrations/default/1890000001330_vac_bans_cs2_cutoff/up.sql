@@ -24,4 +24,4 @@ UPDATE public.player_sanctions ps
    AND ps.deleted_at IS NULL
    AND (ps.remove_sanction_date IS NULL OR ps.remove_sanction_date > now())
    AND p.vac_ban_count > 0
-   AND p.last_vac_ban_at < '2023-03-22'::timestamptz;
+   AND p.last_vac_ban_at < '2023-03-22 00:00:00+00'::timestamptz;
