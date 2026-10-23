@@ -223,6 +223,7 @@ BEGIN
         started_at = NULL,
         ended_at = NULL,
         cancels_at = NULL,
+        server_id = NULL,
         -- A replayed match is a new result; a reassigned winner is the same one.
         elo_voided = elo_voided AND _new_winning_lineup_id IS NOT NULL,
         elo_voided_at = CASE WHEN _new_winning_lineup_id IS NULL THEN NULL ELSE elo_voided_at END,

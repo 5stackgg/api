@@ -366,13 +366,41 @@ describe("MatchAssistantService — on-demand server teardown", () => {
 
   describe("a queued stop that runs late", () => {
     let matchStatus: string;
+    let reservations: Array<{
+      id: string;
+      reserved_by_match_id: string;
+      is_dedicated?: boolean;
+    }>;
 
     beforeEach(() => {
       matchStatus = "Live";
+      reservations = [];
       hasura.query.mockImplementation(async (request: any) => {
         if (request.matches_by_pk) {
           return {
             matches_by_pk: { status: matchStatus, server_error: null },
+          };
+        }
+        if (request.matches) {
+          return {
+            matches: [
+              {
+                id: "match-1",
+                status: matchStatus,
+                server_id: reservations.at(0)?.id ?? null,
+                options: { tv_delay: 0 },
+              },
+            ],
+          };
+        }
+        if (request.servers) {
+          const dedicated = request.servers.__args.where.is_dedicated?._eq;
+          return {
+            servers: reservations.filter(
+              (server) =>
+                dedicated === undefined ||
+                (server.is_dedicated ?? false) === dedicated,
+            ),
           };
         }
         return {};
@@ -384,7 +412,11 @@ describe("MatchAssistantService — on-demand server teardown", () => {
         data: { matchId: "match-1" },
       } as any);
 
+    const signalled = () =>
+      exec.mock.calls.filter(([, , , command]) => command.includes("-SIGUSR1"));
+
     it("leaves the server of a match that was started again alone", async () => {
+      reservations = [{ id: "server-2", reserved_by_match_id: "match-1" }];
       readNamespacedJob
         .mockResolvedValueOnce(activeJob("uid-2"))
         .mockRejectedValue(notFound);
@@ -395,6 +427,82 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       await runStop();
 
       expect(deleteNamespacedJob).not.toHaveBeenCalled();
+      expect(serverReleases()).toHaveLength(0);
+    });
+
+    it.each([
+      "Scheduled",
+      "WaitingForCheckIn",
+      "Veto",
+      "WaitingForServer",
+      "Live",
+    ])(
+      "stops the old server of a match back in %s that holds no server",
+      async (status) => {
+        matchStatus = status;
+        readNamespacedJob.mockResolvedValue(activeJob("uid-1"));
+        listNamespacedPod.mockResolvedValue({ items: [runningPod("uid-1")] });
+
+        await runStop();
+
+        expect(signalled()).toHaveLength(1);
+        expect(scheduledMatchesQueue.add).toHaveBeenCalledWith(
+          "StopOnDemandServer",
+          { matchId: "match-1", jobName: "m-match-1", jobUid: "uid-1" },
+          expect.anything(),
+        );
+      },
+    );
+
+    it("stops the old on-demand server of a match now on a dedicated one", async () => {
+      reservations = [
+        {
+          id: "dedicated-1",
+          reserved_by_match_id: "match-1",
+          is_dedicated: true,
+        },
+      ];
+      readNamespacedJob.mockResolvedValue(activeJob("uid-1"));
+      listNamespacedPod.mockResolvedValue({ items: [runningPod("uid-1")] });
+
+      await runStop();
+
+      expect(signalled()).toHaveLength(1);
+    });
+
+    it("leaves a server booted for the match after it checked", async () => {
+      matchStatus = "WaitingForCheckIn";
+      let rebooted = false;
+      const answer = hasura.query.getMockImplementation()!;
+      hasura.query.mockImplementation(async (request: any) => {
+        const result = await answer(request);
+        if (request.servers) {
+          rebooted = true;
+        }
+        return result;
+      });
+      readNamespacedJob.mockImplementation(async () =>
+        activeJob(rebooted ? "uid-2" : "uid-1"),
+      );
+      listNamespacedPod.mockImplementation(async () => ({
+        items: [rebooted ? creatingPod("uid-2") : runningPod("uid-1")],
+      }));
+
+      await runStop();
+
+      expect(signalled()).toHaveLength(0);
+      expect(deleteNamespacedJob).not.toHaveBeenCalled();
+      expect(deleteNamespacedPod).not.toHaveBeenCalled();
+    });
+
+    it("rethrows when Kubernetes cannot be reached, and frees nothing", async () => {
+      matchStatus = "Finished";
+      readNamespacedJob.mockRejectedValue(
+        Object.assign(new Error("connect ECONNREFUSED"), { code: 500 }),
+      );
+
+      await expect(runStop()).rejects.toThrow("connect ECONNREFUSED");
+
       expect(serverReleases()).toHaveLength(0);
     });
 
