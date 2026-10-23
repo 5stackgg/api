@@ -449,7 +449,7 @@ describe("sanction role hierarchy (SQL-driven)", () => {
     const user = await playerWithRole("user");
     const [{ id }] = await sanction(user, administrator);
 
-    for (const steamId of ["76561196399999999", "0"]) {
+    for (const steamId of ["76561196399999999", "0", "not-a-steam-id"]) {
       await expect(
         runAsUser(postgres, steamId, "administrator", (query) =>
           query(
