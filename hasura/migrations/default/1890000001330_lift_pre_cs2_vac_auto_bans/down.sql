@@ -1,0 +1,2 @@
+-- Nothing to put back: the next Steam check under the old cutoff re-activates
+-- each lifted auto-ban.

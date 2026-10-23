@@ -132,7 +132,7 @@ export class SteamBansService {
       bans
         .filter(
           (ban) =>
-            ban.NumberOfVACBans === 0 || SteamBansService.predatesCsgo(ban),
+            ban.NumberOfVACBans === 0 || SteamBansService.predatesCs2(ban),
         )
         .map((ban) => ban.SteamId),
     );
@@ -475,20 +475,20 @@ export class SteamBansService {
 
     if (expired.length > 0) {
       this.logger.log(
-        `steam-bans: expired ${expired.length} auto-ban(s) whose Steam ban is gone or predates CS:GO`,
+        `steam-bans: expired ${expired.length} auto-ban(s) whose Steam ban is gone or predates CS2`,
       );
     }
   }
 
-  private static readonly CSGO_CLOSED_BETA = Date.UTC(2011, 10, 30);
+  private static readonly CS2_LIMITED_TEST = Date.UTC(2023, 2, 22);
 
-  // The same cutoff as public.vac_ban_predates_csgo. The lift decides it here,
+  // The same cutoff as public.vac_ban_predates_cs2. The lift decides it here,
   // not in SQL, so an api that boots before hasura has applied the function
   // still lifts and bans instead of failing every check.
-  private static predatesCsgo(ban: SteamBan): boolean {
+  private static predatesCs2(ban: SteamBan): boolean {
     return (
       Date.now() - (ban.DaysSinceLastBan ?? 0) * 86_400_000 <
-      SteamBansService.CSGO_CLOSED_BETA
+      SteamBansService.CS2_LIMITED_TEST
     );
   }
 
