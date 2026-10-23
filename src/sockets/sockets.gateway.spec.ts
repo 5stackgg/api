@@ -19,7 +19,7 @@ describe("SocketsGateway ping", () => {
 
   beforeEach(() => {
     sockets = { heartbeat: jest.fn().mockResolvedValue(undefined) };
-    gateway = new SocketsGateway(sockets as any);
+    gateway = new SocketsGateway(sockets as any, {} as any);
   });
 
   afterEach(() => {

@@ -71,7 +71,7 @@ function harness() {
     },
   });
 
-  const socketsGateway = new SocketsGateway(sockets);
+  const socketsGateway = new SocketsGateway(sockets, dependency("presence"));
   const gateways = {
     sockets: socketsGateway,
     chat: new ChatGateway(dependency("chat")),
@@ -128,6 +128,12 @@ const handlers: Array<
   [string, (g: Gateways, client: any) => Promise<unknown>]
 > = [
   ["ping", (g, c) => g.sockets.handleMessage(c)],
+  ["friends-online", (g, c) => g.sockets.handleFriendsOnline(c)],
+  [
+    "players-online:check",
+    (g, c) =>
+      g.sockets.handleOnlineCheck({ requestId: "r-1", steamIds: ["1"] }, c),
+  ],
   [
     "presence",
     (g, c) => g.sockets.handlePresence({ visible: true, focus: "x" }, c),

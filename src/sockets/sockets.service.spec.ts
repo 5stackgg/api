@@ -44,6 +44,14 @@ function makeService() {
   const demoSessionWatcher = { clientClosed: jest.fn() };
   const hasura = { getPlayerRole: jest.fn().mockResolvedValue("user") };
 
+  const presence = {
+    cameOnline: jest.fn().mockResolvedValue(undefined),
+    wentOffline: jest.fn().mockResolvedValue(undefined),
+    welcome: jest.fn().mockResolvedValue(undefined),
+    syncLan: jest.fn().mockResolvedValue(undefined),
+    leaveLan: jest.fn().mockResolvedValue(undefined),
+  };
+
   const service = new SocketsService(
     logger as any,
     { get: () => ({ name: "5stack", encSecret: "secret" }) } as any,
@@ -53,6 +61,7 @@ function makeService() {
     { emit: jest.fn() } as any,
     demoSessionWatcher as any,
     hasura as any,
+    presence as any,
   );
 
   return {
@@ -63,6 +72,7 @@ function makeService() {
     logger,
     demoSessionWatcher,
     hasura,
+    presence,
   };
 }
 
@@ -721,5 +731,92 @@ describe("SocketsService offline", () => {
     expect(pinging.ping).not.toHaveBeenCalled();
 
     service.onApplicationShutdown();
+  });
+});
+
+describe("SocketsService presence", () => {
+  afterEach(() => {
+    sessionLoad.impl = (_request, next) => next();
+  });
+
+  const settle = () => new Promise((resolve) => setImmediate(resolve));
+  const closeListener = (client: any) =>
+    client.on.mock.calls.find(([event]: [string]) => event === "close")[1];
+
+  async function connect(service: SocketsService): Promise<any> {
+    const client = socket();
+    signIn(USER);
+    await service.setupSocket(client, {} as any);
+    await settle();
+    return client;
+  }
+
+  it("marks a player online with their first tab and welcomes every tab", async () => {
+    const { service, redis, presence } = makeService();
+    redis.set.mockResolvedValueOnce(null);
+
+    const first = await connect(service);
+    const second = await connect(service);
+
+    expect(presence.cameOnline).toHaveBeenCalledTimes(1);
+    expect(presence.cameOnline).toHaveBeenCalledWith(USER.steam_id);
+    expect(presence.welcome.mock.calls.map(([client]) => client)).toEqual([
+      first,
+      second,
+    ]);
+    expect(presence.syncLan.mock.calls.map(([client]) => client)).toEqual([
+      first,
+      second,
+    ]);
+  });
+
+  it("takes a closing tab off its LAN and the player offline with their last tab", async () => {
+    const { service, presence } = makeService();
+    const client = await connect(service);
+
+    await closeListener(client)();
+
+    expect(presence.leaveLan).toHaveBeenCalledWith(client);
+    expect(presence.wentOffline).toHaveBeenCalledWith(USER.steam_id);
+  });
+
+  it("checks a tab's LAN again on every ping", async () => {
+    const { service, presence } = makeService();
+    const client = await connect(service);
+    presence.syncLan.mockClear();
+
+    await service.heartbeat(USER.steam_id, client.id);
+
+    expect(presence.syncLan).toHaveBeenCalledWith(client);
+  });
+
+  it("delivers a LAN's news only to tabs on that LAN", async () => {
+    const { service, redis } = makeService();
+    const onMessage = redis.on.mock.calls.find(
+      ([event]: [string]) => event === "message",
+    )[1];
+    const there = await connect(service);
+    const elsewhere = await connect(service);
+    there.lanRegion = "Vulkan LAN";
+    elsewhere.lanRegion = "Haag LAN";
+    there.send.mockClear();
+    elsewhere.send.mockClear();
+
+    onMessage(
+      "lan-message",
+      JSON.stringify({
+        region: "Vulkan LAN",
+        event: "lan-presence",
+        data: { region: "Vulkan LAN", joined: [], left: ["1"] },
+      }),
+    );
+
+    expect(there.send).toHaveBeenCalledWith(
+      JSON.stringify({
+        event: "lan-presence",
+        data: { region: "Vulkan LAN", joined: [], left: ["1"] },
+      }),
+    );
+    expect(elsewhere.send).not.toHaveBeenCalled();
   });
 });

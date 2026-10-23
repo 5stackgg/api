@@ -8,12 +8,16 @@ import {
 import { Request } from "express";
 import { FiveStackWebSocketClient } from "./types/FiveStackWebSocketClient";
 import { SocketsService } from "./sockets.service";
+import { PresenceService } from "./presence.service";
 
 @WebSocketGateway({
   path: "/ws/web",
 })
 export class SocketsGateway implements OnGatewayConnection {
-  constructor(private readonly sockets: SocketsService) {}
+  constructor(
+    private readonly sockets: SocketsService,
+    private readonly presence: PresenceService,
+  ) {}
 
   @SubscribeMessage("ping")
   public async handleMessage(
@@ -66,6 +70,33 @@ export class SocketsGateway implements OnGatewayConnection {
       client.id,
       data?.visible && typeof data.focus === "string" ? data.focus : null,
     );
+  }
+
+  @SubscribeMessage("friends-online")
+  public async handleFriendsOnline(
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+  ): Promise<void> {
+    await client.authentication;
+
+    if (!client.user) {
+      return;
+    }
+
+    await this.presence.sendFriendsOnline(client);
+  }
+
+  @SubscribeMessage("players-online:check")
+  public async handleOnlineCheck(
+    @MessageBody() data: { requestId?: unknown; steamIds?: unknown },
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+  ): Promise<void> {
+    await client.authentication;
+
+    if (!client.user) {
+      return;
+    }
+
+    await this.presence.check(client, data);
   }
 
   // Nest binds every /ws/web gateway's message handlers without waiting for

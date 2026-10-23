@@ -10,4 +10,7 @@ export type FiveStackWebSocketClient = WebSocket.WebSocket & {
   signalPeers: Map<string, Promise<string | undefined>>;
   lastSeenAt: number;
   authentication?: Promise<void>;
+  lanRegion?: string | null;
+  lanClosed?: boolean;
+  lanQueue?: Promise<void>;
 };
