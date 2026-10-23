@@ -1839,6 +1839,13 @@ END $$;
 
 SET session_replication_role = DEFAULT;
 
+-- The ratings above went in without their triggers.
+UPDATE player_elo pe
+SET is_tournament = true
+WHERE NOT pe.is_tournament
+  AND EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pe.match_id);
+SELECT refresh_player_elo_current(ARRAY(SELECT DISTINCT steam_id FROM player_elo));
+
 -- ============================================================
 -- Game Server Nodes (one per seeded region)
 -- Inserted AFTER triggers are re-enabled so the

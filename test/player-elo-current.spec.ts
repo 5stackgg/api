@@ -214,6 +214,45 @@ describe("player elo after writes", () => {
         await expectReadsMatch("re-rated after the rebuild");
       });
 
+      it("counts a rating another transaction is still writing", async () => {
+        const older = await match();
+        const newer = await match();
+        await rate(older, ago(30), season);
+
+        let commit!: () => void;
+        let written!: () => void;
+        const writing = new Promise<void>((resolve) => (written = resolve));
+        const rating = postgres.transaction(async (client) => {
+          await client.query(
+            `INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at, season_id)
+             VALUES ($1, $2, 'Competitive', 1999, 0, $3, $4)`,
+            [players[0], newer, ago(1), season],
+          );
+          written();
+          await new Promise<void>((resolve) => (commit = resolve));
+        });
+        await writing;
+
+        const voiding = postgres.query(
+          "UPDATE matches SET elo_voided = true WHERE id = $1",
+          [older],
+        );
+        while (
+          (
+            await postgres.query<Array<{ n: number }>>(
+              `SELECT count(*)::int AS n FROM pg_stat_activity
+                WHERE wait_event_type = 'Lock' AND query LIKE 'UPDATE matches SET elo_voided%'`,
+            )
+          )[0].n === 0
+        ) {
+          await new Promise((resolve) => setTimeout(resolve, 20));
+        }
+        commit();
+        await Promise.all([rating, voiding]);
+
+        await expectReadsMatch("written alongside a void");
+      });
+
       it("reads every ladder for a mix of histories", async () => {
         let n = 0;
         for (let k = 0; k < 24; k++) {
