@@ -4,5 +4,5 @@ LANGUAGE sql
 STABLE
 AS $$
     SELECT match.server_id IS NOT NULL
-       AND is_server_available(match.server_id, match.id);
+       AND is_server_available(match_id => match.id, match_server_id => match.server_id);
 $$;
