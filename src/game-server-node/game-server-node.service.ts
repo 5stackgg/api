@@ -896,7 +896,7 @@ export class GameServerNodeService {
       game_server_nodes_by_pk.accepting_new_matches
     ) {
       throw new Error(
-        `Stop ${gameServerNodeId} accepting matches before removing CS2`,
+        `Turn off Matchmaking or Accepting matches on ${gameServerNodeId} before removing CS2`,
       );
     }
 

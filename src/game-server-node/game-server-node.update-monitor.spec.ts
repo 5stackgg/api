@@ -811,7 +811,7 @@ describe("GameServerNodeService — CS2 update status", () => {
     loggingService.getJob.mockResolvedValue(null);
 
     await expect(service.removeCsServer(NODE_ID, "cs2")).rejects.toThrow(
-      `Stop ${NODE_ID} accepting matches before removing CS2`,
+      `Turn off Matchmaking or Accepting matches on ${NODE_ID} before removing CS2`,
     );
     expect(createNamespacedJob).not.toHaveBeenCalled();
 
