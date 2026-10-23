@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { createHmac } from "crypto";
+import { createHmac, randomBytes } from "crypto";
 import {
   BatchV1Api,
   CoreV1Api,
@@ -397,15 +397,15 @@ export class GameStreamerService {
     };
   }
 
-  public static GetLiveJobId(matchId: string) {
-    return `gs-live-${matchId}`;
+  // A switched pod keeps the name it started under, so a new stream for that
+  // match must not take the name again.
+  private static NewLiveJobName(matchId: string) {
+    return `gs-live-${matchId}-${randomBytes(3).toString("hex")}`;
   }
 
-  public static GetLiveServiceName(matchId: string) {
-    return `gs-live-${matchId}`;
-  }
-
-  private async resolveLiveServiceName(matchId: string): Promise<string> {
+  private async resolveLiveServiceName(
+    matchId: string,
+  ): Promise<string | null> {
     const { match_streams } = await this.hasura.query({
       match_streams: {
         __args: {
@@ -421,11 +421,14 @@ export class GameStreamerService {
     const saved = (
       match_streams?.[0] as { k8s_service_name?: string | null } | undefined
     )?.k8s_service_name;
-    return saved || GameStreamerService.GetLiveServiceName(matchId);
+    return saved || null;
   }
 
   private async getSpecServerTarget(matchId: string, action: string) {
     const svc = await this.resolveLiveServiceName(matchId);
+    if (!svc) {
+      throw new Error("no live stream is running for this match");
+    }
     return {
       url: `http://${svc}.${this.namespace}.svc.cluster.local:1350/spec/${action}`,
       headers: this.specServerHeaders(svc),
@@ -621,6 +624,9 @@ export class GameStreamerService {
     } | null;
   }> {
     const svc = await this.resolveLiveServiceName(matchId);
+    if (!svc) {
+      return { gsi: null };
+    }
     const url = `http://${svc}.${this.namespace}.svc.cluster.local:1350/demo/state`;
     let res: Response;
     try {
@@ -1503,7 +1509,71 @@ export class GameStreamerService {
 
   public async reapOrphanDemoResources() {
     await this.reapOrphanDemoK8sResources();
+    await this.reapOrphanLiveJobs();
     await this.reconcileSteamClaims();
+  }
+
+  private async reapOrphanLiveJobs(graceMs = 120_000): Promise<void> {
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const batch = kc.makeApiClient(BatchV1Api);
+
+    let jobs: V1Job[];
+    try {
+      jobs = (
+        await batch.listNamespacedJob({
+          namespace: this.namespace,
+          labelSelector: "app=game-streamer,role=live",
+        })
+      ).items;
+    } catch (error) {
+      this.logger.error(
+        `[live-reaper] listJobs failed: ${(error as Error)?.message}`,
+      );
+      return;
+    }
+
+    // A start names its job on the stream row before creating it, so a job no
+    // row names is left over.
+    const settledBefore = Date.now() - graceMs;
+    const names = jobs
+      .filter(
+        (job) =>
+          new Date(job.metadata?.creationTimestamp ?? 0).getTime() <=
+          settledBefore,
+      )
+      .map((job) => job.metadata?.name)
+      .filter((name): name is string => !!name);
+    if (names.length === 0) {
+      return;
+    }
+
+    const { match_streams } = await this.hasura.query({
+      match_streams: {
+        __args: {
+          where: { k8s_service_name: { _in: names } },
+        },
+        k8s_service_name: true,
+      },
+    });
+    const named = new Set(
+      (match_streams ?? []).map((stream) => stream.k8s_service_name),
+    );
+
+    for (const name of names) {
+      if (named.has(name)) {
+        continue;
+      }
+      this.logger.warn(`[live-reaper] no stream row names ${name} — removing`);
+      try {
+        await this.deleteJob(name);
+        await this.deleteLiveService(name);
+      } catch (error) {
+        this.logger.error(
+          `[live-reaper] removing ${name} failed: ${(error as Error)?.message}`,
+        );
+      }
+    }
   }
 
   private async reconcileSteamClaims(): Promise<void> {
@@ -1676,15 +1746,6 @@ export class GameStreamerService {
 
     const usePlaycast = await this.readUsePlaycast();
 
-    const claim = await this.claimGpuForLive(matchId, mode);
-    if (claim === null) {
-      this.logger.log(
-        `[${matchId}] no GPU free — match_streams row inserted as pending`,
-      );
-      return { status: "pending" };
-    }
-    const { nodeId, steamAccount } = claim;
-
     const connectEnv = await this.buildConnectEnv(
       matchId,
       match.server,
@@ -1693,37 +1754,49 @@ export class GameStreamerService {
       mode,
     );
 
-    const reporterEnv: V1EnvVar[] = [
-      { name: "MATCH_PASSWORD", value: match.password },
-      ...(await this.resolveHudEnv()),
-      { name: "LIVE_VIDEO_CODEC", value: await this.resolveLiveVideoCodec() },
-      { name: "CLIP_VIDEO_CODEC", value: await this.resolveClipVideoCodec() },
-      {
-        name: "CLIP_BAKE_BRANDING",
-        value: await this.resolveClipBakeBranding(),
-      },
-      // (shader pre-caching is pod-default on; skipped per-match at runtime)
-    ];
+    const jobName = GameStreamerService.NewLiveJobName(matchId);
 
-    const nodeCs2Env = await this.buildNodeCs2OptionsEnv(nodeId);
-
-    const jobName = GameStreamerService.GetLiveJobId(matchId);
-
-    await this.deleteJob(jobName, { keepClaim: true });
-
-    const kc = new KubeConfig();
-    kc.loadFromDefault();
-    const batch = kc.makeApiClient(BatchV1Api);
-
-    const connectTarget =
-      connectEnv.find((e) => e.name === "CONNECT_ADDR")?.value ??
-      connectEnv.find((e) => e.name === "CONNECT_TV_ADDR")?.value ??
-      connectEnv.find((e) => e.name === "PLAYCAST_URL")?.value;
-    this.logger.log(
-      `[${matchId}] starting ${mode} stream on node ${nodeId} -> ${connectTarget}`,
-    );
+    const claim = await this.claimGpuForLive(matchId, mode, jobName);
+    if (claim === null) {
+      this.logger.log(
+        `[${matchId}] no GPU free — match_streams row inserted as pending`,
+      );
+      return { status: "pending" };
+    }
+    const { nodeId, steamAccount, previousJobName } = claim;
 
     try {
+      if (previousJobName) {
+        await this.deleteJob(previousJobName);
+        await this.deleteLiveService(previousJobName);
+      }
+
+      const reporterEnv: V1EnvVar[] = [
+        { name: "MATCH_PASSWORD", value: match.password },
+        ...(await this.resolveHudEnv()),
+        { name: "LIVE_VIDEO_CODEC", value: await this.resolveLiveVideoCodec() },
+        { name: "CLIP_VIDEO_CODEC", value: await this.resolveClipVideoCodec() },
+        {
+          name: "CLIP_BAKE_BRANDING",
+          value: await this.resolveClipBakeBranding(),
+        },
+        // (shader pre-caching is pod-default on; skipped per-match at runtime)
+      ];
+
+      const nodeCs2Env = await this.buildNodeCs2OptionsEnv(nodeId);
+
+      const kc = new KubeConfig();
+      kc.loadFromDefault();
+      const batch = kc.makeApiClient(BatchV1Api);
+
+      const connectTarget =
+        connectEnv.find((e) => e.name === "CONNECT_ADDR")?.value ??
+        connectEnv.find((e) => e.name === "CONNECT_TV_ADDR")?.value ??
+        connectEnv.find((e) => e.name === "PLAYCAST_URL")?.value;
+      this.logger.log(
+        `[${matchId}] starting ${mode} stream on node ${nodeId} -> ${connectTarget}`,
+      );
+
       await batch.createNamespacedJob({
         namespace: this.namespace,
         body: this.buildJobSpec(
@@ -1737,11 +1810,25 @@ export class GameStreamerService {
         ),
       });
     } catch (error) {
-      await this.unregisterStreamRow(matchId);
+      await this.deleteJob(jobName).catch((teardownError) =>
+        this.logger.error(
+          `[${matchId}] teardown of ${jobName} failed: ${(teardownError as Error)?.message}`,
+        ),
+      );
+      await this.unregisterStreamRow(matchId, jobName);
       throw error;
     }
 
-    await this.createLiveService(matchId);
+    await this.createLiveService(matchId, jobName);
+
+    if ((await this.resolveLiveServiceName(matchId)) !== jobName) {
+      this.logger.warn(
+        `[${matchId}] another start took the stream over — removing ${jobName}`,
+      );
+      await this.deleteJob(jobName);
+      await this.deleteLiveService(jobName);
+      await this.unregisterStreamRow(matchId, jobName);
+    }
 
     return { status: "booting" };
   }
@@ -1915,21 +2002,27 @@ export class GameStreamerService {
     this.logger.log(`[${matchId}] stopping live stream`);
 
     let kubeError: unknown = null;
-    try {
-      await this.deleteJob(jobName);
-    } catch (error) {
-      kubeError = error;
-      this.logger.error(
-        `[${matchId}] deleteJob failed: ${(error as Error)?.message}`,
-      );
-    }
+    if (jobName) {
+      try {
+        await this.deleteJob(jobName);
+      } catch (error) {
+        kubeError = error;
+        this.logger.error(
+          `[${matchId}] deleteJob failed: ${(error as Error)?.message}`,
+        );
+      }
 
-    try {
-      await this.deleteLiveService(matchId);
-    } catch (error) {
-      this.logger.error(
-        `[${matchId}] deleteLiveService failed: ${(error as Error)?.message}`,
-      );
+      try {
+        await this.deleteLiveService(jobName);
+      } catch (error) {
+        this.logger.error(
+          `[${matchId}] deleteLiveService failed: ${(error as Error)?.message}`,
+        );
+      }
+    } else {
+      // Deleting a match takes its stream row with it, so its pod is only
+      // found as a live job no row names.
+      await this.reapOrphanLiveJobs(0);
     }
 
     try {
@@ -2780,20 +2873,27 @@ export class GameStreamerService {
   private async claimGpuForLive(
     matchId: string,
     mode: "live" | "tv",
-  ): Promise<GpuClaim | null> {
+    jobName: string,
+  ): Promise<(GpuClaim & { previousJobName: string | null }) | null> {
     const link = `${this.appConfig.gameStreamDomain}/${matchId}/`;
     const nowIso = new Date().toISOString();
     const bootingHistory = JSON.stringify([{ status: "booting", at: nowIso }]);
     const pendingHistory = JSON.stringify([{ status: "pending", at: nowIso }]);
 
     return this.postgres.transaction(async (client) => {
-      await client.query(
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
+        `live-stream:${matchId}`,
+      ]);
+
+      const { rows: previous } = await client.query(
         `DELETE FROM match_streams
-          WHERE match_id = $1 AND is_game_streamer = true`,
+          WHERE match_id = $1 AND is_game_streamer = true
+          RETURNING k8s_service_name`,
         [matchId],
       );
+      const previousJobName =
+        (previous[0]?.k8s_service_name as string | null | undefined) ?? null;
 
-      const serviceName = GameStreamerService.GetLiveServiceName(matchId);
       const result = await client.query(
         `WITH chosen AS (SELECT claim_free_gpu_node() AS id)
          INSERT INTO match_streams
@@ -2805,16 +2905,19 @@ export class GameStreamerService {
            FROM chosen
           WHERE chosen.id IS NOT NULL
          RETURNING id, game_server_node_id`,
-        [matchId, GAME_STREAMER_TITLE, link, mode, bootingHistory, serviceName],
+        [matchId, GAME_STREAMER_TITLE, link, mode, bootingHistory, jobName],
       );
 
       const nodeId = result.rows[0]?.game_server_node_id as string | undefined;
       if (nodeId) {
+        if (previousJobName) {
+          await this.steamAccounts.release(previousJobName, client);
+        }
         const steamAccount = await this.steamAccounts.claim(
-          { nodeId, jobName: serviceName, purpose: "live" },
+          { nodeId, jobName, purpose: "live" },
           client,
         );
-        return { nodeId, steamAccount };
+        return { nodeId, steamAccount, previousJobName };
       }
 
       const { rows: gpuRows } = await client.query(
@@ -2833,7 +2936,14 @@ export class GameStreamerService {
             mode, status, status_history, last_status_at, k8s_service_name)
          VALUES ($1, $2, $3, 0, true, false,
                  $4, 'pending', $5::jsonb, now(), $6)`,
-        [matchId, GAME_STREAMER_TITLE, link, mode, pendingHistory, serviceName],
+        [
+          matchId,
+          GAME_STREAMER_TITLE,
+          link,
+          mode,
+          pendingHistory,
+          previousJobName,
+        ],
       );
       return null;
     });
@@ -2995,19 +3105,18 @@ export class GameStreamerService {
     ];
   }
 
-  private async createLiveService(matchId: string) {
-    const serviceName = GameStreamerService.GetLiveServiceName(matchId);
+  private async createLiveService(matchId: string, jobName: string) {
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const core = kc.makeApiClient(CoreV1Api);
 
-    await this.deleteLiveService(matchId);
+    await this.deleteLiveService(jobName);
 
     const body: V1Service = {
       apiVersion: "v1",
       kind: "Service",
       metadata: {
-        name: serviceName,
+        name: jobName,
         labels: {
           app: "game-streamer",
           role: "live",
@@ -3019,7 +3128,7 @@ export class GameStreamerService {
         selector: {
           app: "game-streamer",
           role: "live",
-          "match-id": matchId,
+          "job-name": jobName,
         },
         ports: [{ name: "spec", port: 1350, targetPort: "spec" }],
       },
@@ -3031,8 +3140,7 @@ export class GameStreamerService {
     });
   }
 
-  private async deleteLiveService(matchId: string) {
-    const serviceName = await this.resolveLiveServiceName(matchId);
+  private async deleteLiveService(serviceName: string) {
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const core = kc.makeApiClient(CoreV1Api);
@@ -3524,13 +3632,14 @@ export class GameStreamerService {
     });
   }
 
-  private async unregisterStreamRow(matchId: string) {
+  private async unregisterStreamRow(matchId: string, jobName?: string) {
     await this.hasura.mutation({
       delete_match_streams: {
         __args: {
           where: {
             match_id: { _eq: matchId },
             is_game_streamer: { _eq: true },
+            ...(jobName ? { k8s_service_name: { _eq: jobName } } : {}),
           },
         },
         affected_rows: true,

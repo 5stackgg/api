@@ -109,19 +109,22 @@ describe("GameStreamerService — spec-server token", () => {
 
       expect(fetchMock.mock.calls[0][0]).toContain("gs-live-match-a.");
       expect(sentHeaders().Authorization).toBe(
-        `Bearer ${podToken(GameStreamerService.GetLiveJobId("match-a"))}`,
+        `Bearer ${podToken("gs-live-match-a")}`,
       );
       expect(sentHeaders()["Content-Type"]).toBe("application/json");
     });
 
     it("carry the token when reading the live spec state", async () => {
-      hasura.query.mockResolvedValue({ match_streams: [] });
+      hasura.query.mockResolvedValue({
+        match_streams: [{ k8s_service_name: "gs-live-match-1-a1b2c3" }],
+      });
 
       await service.getLiveSpecState("match-1");
 
+      expect(fetchMock.mock.calls[0][0]).toContain("gs-live-match-1-a1b2c3.");
       expect(fetchMock.mock.calls[0][0]).toContain("/demo/state");
       expect(sentHeaders().Authorization).toBe(
-        `Bearer ${podToken(GameStreamerService.GetLiveJobId("match-1"))}`,
+        `Bearer ${podToken("gs-live-match-1-a1b2c3")}`,
       );
     });
 
@@ -159,7 +162,7 @@ describe("GameStreamerService — spec-server token", () => {
 
       expect(fetchMock.mock.calls[0][0]).toContain("/spec/switch-match");
       expect(sentHeaders().Authorization).toBe(
-        `Bearer ${podToken(GameStreamerService.GetLiveJobId("match-a"))}`,
+        `Bearer ${podToken("gs-live-match-a")}`,
       );
     });
   });
