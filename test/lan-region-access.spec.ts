@@ -467,6 +467,42 @@ describe("LAN region access (SQL-driven)", () => {
     });
   });
 
+  describe("when one region has every match server", () => {
+    const rankedOnlyIn = (region: string) =>
+      postgres.query(
+        "UPDATE servers SET type = CASE WHEN region = $1 THEN 'Ranked' ELSE 'Casual' END",
+        [region],
+      );
+
+    afterEach(async () => {
+      await postgres.query("UPDATE servers SET type = 'Ranked'");
+    });
+
+    it("leaves a LAN's other servers out of the match's regions", async () => {
+      await rankedOnlyIn("TestA");
+      const [options] = (await createOptions("user", ["TestA"])) as Array<{
+        id: string;
+      }>;
+      const [row] = await postgres.query<Array<{ regions: Array<string> }>>(
+        "SELECT regions FROM match_options WHERE id = $1",
+        [options.id],
+      );
+      expect(row.regions).toEqual(["TestA"]);
+    });
+
+    it("refuses a user off the LAN when that region is a LAN", async () => {
+      await rankedOnlyIn("Lan");
+      await expect(createOptions("user", [])).rejects.toThrow(
+        /must be on the LAN/,
+      );
+    });
+
+    it("lets a user the probe placed on that LAN create a match", async () => {
+      await rankedOnlyIn("Lan");
+      await expect(createOptions("user", [], ["Lan"])).resolves.toHaveLength(1);
+    });
+  });
+
   it("leaves the api's own inserts alone", async () => {
     await expect(
       postgres.query(

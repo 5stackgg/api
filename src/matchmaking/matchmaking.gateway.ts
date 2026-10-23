@@ -165,34 +165,7 @@ export class MatchmakingGateway {
         },
       });
 
-      const { game_server_nodes_aggregate } = await this.hasura.query({
-        game_server_nodes_aggregate: {
-          __args: {
-            where: {
-              enabled: {
-                _eq: true,
-              },
-              status: {
-                _eq: "Online",
-              },
-            },
-          },
-          aggregate: {
-            count: true,
-          },
-        },
-      });
-
       const latencyResults = await this.getLatencyResults(client);
-
-      let checkLatency = false;
-      if (game_server_nodes_aggregate.aggregate.count !== 0) {
-        checkLatency = true;
-        if (Object.keys(latencyResults).length === 0) {
-          // TODO - they dont have latency checks, since we dont have a TURN server there is no relaible way to check latency
-          checkLatency = false;
-        }
-      }
 
       // TODO - rather adding all regions at once we should add them when expanding the search
       let regions = [];
@@ -209,11 +182,9 @@ export class MatchmakingGateway {
         const latency =
           latencyResults[region.toLocaleLowerCase().replace(" ", "_")];
 
-        if (
-          checkLatency == false ||
-          !server_region.is_lan ||
-          latency?.isLan === true
-        ) {
+        // A LAN region only for a session the LAN probe placed on it, even
+        // when nothing could be probed: that is no reason to trust a claim.
+        if (!server_region.is_lan || latency?.isLan === true) {
           if (latency && latency.latency > maxAcceptableLatency) {
             pingTooHigh = true;
             continue;
