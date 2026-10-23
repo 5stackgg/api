@@ -128,14 +128,7 @@ export class SteamBansService {
 
     await this.storeBans(bans);
 
-    await this.expireLiftedAutoBans(
-      bans
-        .filter(
-          (ban) =>
-            ban.NumberOfVACBans === 0 || SteamBansService.predatesCs2(ban),
-        )
-        .map((ban) => ban.SteamId),
-    );
+    await this.expireLiftedAutoBans(bans.map((ban) => ban.SteamId));
 
     const flagged = bans.filter((ban) => ban.NumberOfVACBans > 0);
 
@@ -336,6 +329,17 @@ export class SteamBansService {
                 ) THEN p.vac_banned
                 ELSE v.vac_banned
               END,
+              -- DaysSinceLastBan dates the newest ban of either kind, so a
+              -- game ban would make an old VAC ban look new. The VAC date is
+              -- kept for as long as the VAC count holds; when the count moves
+              -- it is the newest ban of either kind, which is the VAC ban
+              -- itself or later than it.
+              last_vac_ban_at = CASE
+                WHEN v.vac_ban_count = 0 THEN NULL
+                WHEN v.vac_ban_count = p.vac_ban_count
+                     AND p.last_vac_ban_at IS NOT NULL THEN p.last_vac_ban_at
+                ELSE now() - make_interval(days => v.days_since_last_ban)
+              END,
               vac_ban_count = v.vac_ban_count,
               game_ban_count = v.game_ban_count,
               days_since_last_ban = v.days_since_last_ban,
@@ -362,7 +366,6 @@ export class SteamBansService {
     }
 
     const flaggedIds = bans.map((ban) => ban.SteamId);
-    const flaggedDays = bans.map((ban) => ban.DaysSinceLastBan ?? 0);
 
     const needsBan = await this.postgres.query<
       Array<{ steam_id: string; remove_sanction_date: Date | null }>
@@ -373,9 +376,8 @@ export class SteamBansService {
                 'infinity'::timestamptz
               ) AS remove_sanction_date
          FROM public.players p
-         JOIN UNNEST($1::bigint[], $2::int[]) AS f(steam_id, days_since_last_ban)
-           ON p.steam_id = f.steam_id
-        WHERE p.role <> 'administrator'
+        WHERE p.steam_id = ANY($1::bigint[])
+          AND p.role <> 'administrator'
           AND NOT EXISTS (
             SELECT 1
               FROM public.player_sanctions ps
@@ -391,14 +393,14 @@ export class SteamBansService {
                AND ps.type = 'ban'
                AND ps.sanctioned_by_steam_id IS NULL
                AND ps.deleted_at IS NOT NULL
-               AND ps.deleted_at::date >= (now() - (f.days_since_last_ban || ' days')::interval)::date
+               AND ps.deleted_at::date >= p.last_vac_ban_at::date
           )
           -- The policy decides whether this ban happens at all: NULL here means
           -- the vac_ban source is off, or its threshold or decay window says
           -- this account has not earned one. With the shipped defaults it is
           -- never NULL for a flagged account.
           AND public.player_source_sanction_expiry('vac_ban', p.steam_id) IS NOT NULL`,
-      [flaggedIds, flaggedDays],
+      [flaggedIds],
     );
 
     if (needsBan.length === 0) {
@@ -462,16 +464,19 @@ export class SteamBansService {
     const expired = await this.postgres.query<
       Array<{ player_steam_id: string }>
     >(
-      `UPDATE public.player_sanctions
+      `UPDATE public.player_sanctions ps
           SET remove_sanction_date = now()
-        WHERE player_steam_id = ANY($1::bigint[])
-          AND type = 'ban'
-          AND sanctioned_by_steam_id IS NULL
-          AND reason LIKE 'Auto: Steam%'
-          AND deleted_at IS NULL
-          AND (remove_sanction_date IS NULL OR remove_sanction_date > now())
-        RETURNING player_steam_id::text AS player_steam_id`,
-      [steamIds],
+         FROM public.players p
+        WHERE p.steam_id = ps.player_steam_id
+          AND p.steam_id = ANY($1::bigint[])
+          AND (p.vac_ban_count = 0 OR p.last_vac_ban_at < $2::timestamptz)
+          AND ps.type = 'ban'
+          AND ps.sanctioned_by_steam_id IS NULL
+          AND ps.reason LIKE 'Auto: Steam%'
+          AND ps.deleted_at IS NULL
+          AND (ps.remove_sanction_date IS NULL OR ps.remove_sanction_date > now())
+        RETURNING ps.player_steam_id::text AS player_steam_id`,
+      [steamIds, SteamBansService.CS2_LIMITED_TEST],
     );
 
     if (expired.length > 0) {
@@ -481,20 +486,10 @@ export class SteamBansService {
     }
   }
 
-  private static readonly CS2_LIMITED_TEST = Date.UTC(2023, 2, 22);
-
-  // A day short of public.vac_ban_predates_cs2's cutoff: DaysSinceLastBan is
-  // whole days, so a ban from the eve of CS2 dates to either side of the cutoff
-  // depending on the hour it is checked, and lifting on the same line would
-  // lift and re-ban it in turn. The lift decides it here, not in SQL, so an api
-  // that boots before hasura has applied the function still lifts and bans
-  // instead of failing every check.
-  private static predatesCs2(ban: SteamBan): boolean {
-    return (
-      Date.now() - (ban.DaysSinceLastBan ?? 0) * 86_400_000 <
-      SteamBansService.CS2_LIMITED_TEST - 86_400_000
-    );
-  }
+  // The same cutoff as public.vac_ban_predates_cs2, passed in rather than
+  // called so an api that boots before hasura has applied the function still
+  // lifts and bans instead of failing every check.
+  private static readonly CS2_LIMITED_TEST = new Date(Date.UTC(2023, 2, 22));
 
   private static banReason(ban?: SteamBan): string {
     if (!ban || ban.NumberOfVACBans === 0) {

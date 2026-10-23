@@ -40,6 +40,8 @@ describe("steam bans", () => {
   const daysSince = (date: string) =>
     Math.floor((Date.now() - Date.parse(`${date}T00:00:00Z`)) / 86_400_000);
 
+  const today = () => new Date().toISOString().slice(0, 10);
+
   const service = () =>
     new SteamBansService(
       new Logger("SteamBansTest"),
@@ -49,7 +51,12 @@ describe("steam bans", () => {
       {} as never,
     );
 
-  const steamReports = (steamId: string, lastBanOn: string, vacBans = 1) => {
+  const steamReports = (
+    steamId: string,
+    lastBanOn: string,
+    vacBans = 1,
+    gameBans = 0,
+  ) => {
     global.fetch = jest.fn(
       async () =>
         new Response(
@@ -60,8 +67,9 @@ describe("steam bans", () => {
                 CommunityBanned: false,
                 VACBanned: vacBans > 0,
                 NumberOfVACBans: vacBans,
-                DaysSinceLastBan: vacBans > 0 ? daysSince(lastBanOn) : 0,
-                NumberOfGameBans: 0,
+                DaysSinceLastBan:
+                  vacBans + gameBans > 0 ? daysSince(lastBanOn) : 0,
+                NumberOfGameBans: gameBans,
                 EconomyBan: "none",
               },
             ],
@@ -123,8 +131,8 @@ describe("steam bans", () => {
   });
 
   it.each([
-    ["2023-03-20", 0],
-    ["2023-03-21", 1],
+    ["2023-03-21", 0],
+    ["2023-03-22", 1],
   ])(
     "an existing auto-ban for a VAC ban last issued on %s leaves %i active",
     async (lastBanOn, expected) => {
@@ -137,6 +145,54 @@ describe("steam bans", () => {
       expect(await activeBans(player)).toBe(expected);
     },
   );
+
+  it("keeps a pre-CS2 VAC ban lifted when a game ban lands later", async () => {
+    const player = await fx.player();
+    await ban(player);
+    steamReports(player, "2016-09-01");
+    await service().checkPlayers([player]);
+
+    steamReports(player, today(), 1, 1);
+    await service().checkPlayers([player]);
+
+    expect(await activeBans(player)).toBe(0);
+  });
+
+  it("bans a player who first shows up with both kinds when the newest is from CS2", async () => {
+    const player = await fx.player();
+    steamReports(player, "2024-02-09", 1, 1);
+
+    await service().checkPlayers([player]);
+
+    expect(await activeBans(player)).toBe(1);
+  });
+
+  it("dates a new VAC ban from the check that finds it", async () => {
+    const player = await fx.player();
+    steamReports(player, "2016-09-01");
+    await service().checkPlayers([player]);
+    expect(await activeBans(player)).toBe(0);
+
+    steamReports(player, "2025-01-01", 2);
+    await service().checkPlayers([player]);
+
+    expect(await activeBans(player)).toBe(1);
+  });
+
+  it("keeps a removed auto-ban removed when a game ban lands later", async () => {
+    const player = await fx.player();
+    steamReports(player, "2024-02-09");
+    await service().checkPlayers([player]);
+    await postgres.query(
+      `UPDATE player_sanctions SET deleted_at = '2025-06-01' WHERE player_steam_id = $1::bigint`,
+      [player],
+    );
+
+    steamReports(player, today(), 1, 1);
+    await service().checkPlayers([player]);
+
+    expect(await activeBans(player)).toBe(0);
+  });
 
   it("lifts an auto-ban once Steam no longer reports a VAC ban", async () => {
     const player = await fx.player();
@@ -224,7 +280,7 @@ describe("steam bans", () => {
     const up = readFileSync(
       join(
         __dirname,
-        "../hasura/migrations/default/1890000001330_lift_pre_cs2_vac_auto_bans/up.sql",
+        "../hasura/migrations/default/1890000001330_vac_bans_cs2_cutoff/up.sql",
       ),
       "utf8",
     );

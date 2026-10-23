@@ -218,14 +218,17 @@ BEGIN
     ELSIF _source = 'vac_ban' THEN
         -- Steam is the record here, not a table of ours: the occurrence count
         -- is how many VAC bans the account carries and the occurrence time is
-        -- days_since_last_ban counted back from when Steam was asked, both
-        -- refreshed by SteamBansService before it decides anything.
+        -- last_vac_ban_at, both refreshed by SteamBansService before it decides
+        -- anything.
         RETURN QUERY
             SELECT GREATEST(p.vac_ban_count, 1), b.last_ban_at
               FROM public.players p
               CROSS JOIN LATERAL (
-                SELECT COALESCE(p.steam_bans_checked_at, now())
-                       - make_interval(days => COALESCE(p.days_since_last_ban, 0)) AS last_ban_at
+                SELECT COALESCE(
+                         p.last_vac_ban_at,
+                         COALESCE(p.steam_bans_checked_at, now())
+                           - make_interval(days => COALESCE(p.days_since_last_ban, 0))
+                       ) AS last_ban_at
               ) b
              WHERE p.steam_id = _steam_id
                AND (p.vac_banned OR p.vac_ban_count > 0)
