@@ -166,6 +166,7 @@ export class ScrimsController {
     user: User;
     request_id: string;
     accept: boolean;
+    lanRegions: () => Promise<Array<string>>;
   }) {
     const { user, request_id, accept } = data;
 
@@ -173,6 +174,8 @@ export class ScrimsController {
       requestId: request_id,
       steamId: user.steam_id,
       accept,
+      role: user.role,
+      lanRegions: data.lanRegions,
     });
 
     return {

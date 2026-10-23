@@ -64,15 +64,15 @@ describe("MatchmakingGateway.joinQueue", () => {
         }
         if (payload.server_regions) {
           return {
-            server_regions: REGIONS.map((value) => ({
-              value,
-              is_lan: false,
-              status: "Online",
-            })),
+            server_regions: [
+              ...REGIONS.map((value) => ({
+                value,
+                is_lan: false,
+                status: "Online",
+              })),
+              { value: "lan", is_lan: true, status: "Online" },
+            ],
           };
-        }
-        if (payload.game_server_nodes_aggregate) {
-          return { game_server_nodes_aggregate: { aggregate: { count: 0 } } };
         }
         if (payload.players_by_pk) {
           const player = PLAYERS.find(
@@ -194,6 +194,26 @@ describe("MatchmakingGateway.joinQueue", () => {
     ]);
     expect(errors()).toEqual([]);
     expect(matchmake.matchmake).toHaveBeenCalledWith("Competitive", "us-east");
+  });
+
+  it("keeps a session with no LAN probe out of a LAN queue", async () => {
+    await gateway.joinQueue({ type: "Competitive", regions: ["lan"] }, client);
+
+    expect(matchmake.matchmake).not.toHaveBeenCalled();
+    expect(errors()).toHaveLength(1);
+  });
+
+  it("queues a session the LAN probe placed on the LAN", async () => {
+    await redis.hset(
+      `latency-test:session-${CAPTAIN.steam_id}`,
+      "lan",
+      JSON.stringify({ region: "lan", latency: 1, isLan: true }),
+    );
+
+    await gateway.joinQueue({ type: "Competitive", regions: ["lan"] }, client);
+
+    expect(errors()).toEqual([]);
+    expect(matchmake.matchmake).toHaveBeenCalledWith("Competitive", "lan");
   });
 
   it("refuses a lobby that is in a ready check", async () => {

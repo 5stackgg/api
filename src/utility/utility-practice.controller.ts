@@ -1,5 +1,6 @@
 import { Controller } from "@nestjs/common";
 import { HasuraAction } from "../hasura/hasura.controller";
+import { HasuraService } from "../hasura/hasura.service";
 import { User } from "../auth/types/User";
 import { UtilityPracticeService } from "./utility-practice.service";
 import { UtilityLineupsService } from "./utility-lineups.service";
@@ -18,6 +19,7 @@ export class UtilityPracticeController {
     private readonly solver: UtilitySolverService,
     private readonly repairs: UtilityRepairService,
     private readonly load: UtilityLoadService,
+    private readonly hasura: HasuraService,
   ) {}
 
   /**
@@ -109,9 +111,18 @@ export class UtilityPracticeController {
     team_id?: string;
     is_open?: boolean;
     access?: string;
+    lanRegions: () => Promise<Array<string>>;
   }) {
     const { user, map_name, region, collection_id, team_id, is_open, access } =
       data;
+
+    if (region) {
+      await this.hasura.assertLanRegionsReachable(
+        user.role,
+        await data.lanRegions(),
+        [region],
+      );
+    }
 
     const session = await this.practice.start(user, {
       map_name,
@@ -173,7 +184,10 @@ export class UtilityPracticeController {
   }
 
   @HasuraAction()
-  public async utilitySolverCalibration(data: { user: User; session_id: string }) {
+  public async utilitySolverCalibration(data: {
+    user: User;
+    session_id: string;
+  }) {
     return await this.solver.calibration(data.user, data.session_id);
   }
 

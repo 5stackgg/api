@@ -144,4 +144,67 @@ describe("ScrimsService matching", () => {
       expect(await run(["3"])).toEqual(["1-3", "2-3", "3-4"]);
     });
   });
+
+  describe("LAN regions", () => {
+    const lanRegions = ["Lan", "Lan2"];
+    const listing = (regions: Array<string>) => ({ regions }) as any;
+    const offLan = { role: "user" as const, lanRegions: [] as Array<string> };
+
+    it("leaves a LAN out when one team lists any region", () => {
+      expect(
+        ScrimsService.regionsOverlap(
+          listing([]),
+          listing(["Lan", "US East"]),
+          lanRegions,
+        ),
+      ).toEqual(["US East"]);
+      expect(
+        ScrimsService.regionsOverlap(listing(["Lan"]), listing([]), lanRegions),
+      ).toEqual([]);
+    });
+
+    it("keeps a LAN both teams name", () => {
+      expect(
+        ScrimsService.regionsOverlap(
+          listing(["Lan", "US East"]),
+          listing(["US East", "Lan"]),
+          lanRegions,
+        ),
+      ).toEqual(["Lan", "US East"]);
+    });
+
+    it("puts the scrim on the LAN for a manager the probe placed on it", () => {
+      expect(
+        ScrimsService.scrimRegion(["Lan", "US East"], lanRegions, {
+          role: "user",
+          lanRegions: ["Lan"],
+        }),
+      ).toBe("Lan");
+    });
+
+    it("falls back to an online region the teams share for a manager off the LAN", () => {
+      expect(
+        ScrimsService.scrimRegion(["lan", "US East"], lanRegions, offLan),
+      ).toBe("US East");
+    });
+
+    it("refuses a manager off the LAN when the teams share only a LAN", () => {
+      expect(() =>
+        ScrimsService.scrimRegion(["Lan"], lanRegions, offLan),
+      ).toThrow("You must be on the LAN to play in a LAN region");
+    });
+
+    it("lets a match organizer off the LAN keep the LAN", () => {
+      expect(
+        ScrimsService.scrimRegion(["Lan"], lanRegions, {
+          role: "match_organizer",
+          lanRegions: [],
+        }),
+      ).toBe("Lan");
+    });
+
+    it("leaves a scrim with no shared region to any region", () => {
+      expect(ScrimsService.scrimRegion([], lanRegions, offLan)).toBeUndefined();
+    });
+  });
 });
