@@ -1096,6 +1096,17 @@ export class MatchAssistantService {
           );
         }
 
+        let occupiedServerIds: Array<string>;
+        try {
+          occupiedServerIds = await this.getOccupiedServerIds();
+        } catch (error) {
+          this.logger.error(
+            `[${matchId}] unable to list the servers match pods still run on`,
+            error?.response?.body?.message || error,
+          );
+          throw new FailedToCreateOnDemandServer();
+        }
+
         const { servers } = await this.hasura.query({
           servers: {
             __args: {
@@ -1127,6 +1138,9 @@ export class MatchAssistantService {
                 reserved_by_match_id: {
                   _is_null: true,
                 },
+                ...(occupiedServerIds.length > 0
+                  ? { id: { _nin: occupiedServerIds } }
+                  : {}),
                 ...MatchAssistantService.pendingDemoUploadExclusion(),
                 game_server_node: renderNodeIds
                   ? { id: { _in: renderNodeIds } }
@@ -1572,6 +1586,29 @@ export class MatchAssistantService {
       );
       throw new FailedToCreateOnDemandServer();
     });
+  }
+
+  // A pod holds its server's host ports until it exits, whether or not the row
+  // is still reserved: a match that moved off it frees the row straight away.
+  private async getOccupiedServerIds(): Promise<Array<string>> {
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const core = kc.makeApiClient(CoreV1Api);
+
+    const { items: pods } = await core.listNamespacedPod({
+      namespace: this.namespace,
+      labelSelector: MatchAssistantService.MATCH_SERVER_JOB_SELECTOR,
+    });
+
+    return pods
+      .filter((pod) => MatchAssistantService.isPodLive(pod))
+      .map(
+        (pod) =>
+          pod.spec?.containers
+            ?.at(0)
+            ?.env?.find((env) => env.name === "SERVER_ID")?.value,
+      )
+      .filter((serverId): serverId is string => !!serverId);
   }
 
   public async hasMatchEnded(matchId: string): Promise<boolean> {
@@ -2429,6 +2466,10 @@ export class MatchAssistantService {
     return (pod.status.containerStatuses ?? []).some(
       (status) => status.name === container && !!status.state?.running,
     );
+  }
+
+  private static isPodLive(pod: V1Pod) {
+    return !["Succeeded", "Failed"].includes(pod.status?.phase);
   }
 
   private static isNotFound(error: { code?: number | string }) {

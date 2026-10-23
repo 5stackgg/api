@@ -315,7 +315,9 @@ describe("MatchAssistantService", () => {
         .mockResolvedValue(undefined);
       const { KubeConfig } = jest.requireMock("@kubernetes/client-node");
       KubeConfig.prototype.loadFromDefault = jest.fn();
-      KubeConfig.prototype.makeApiClient = jest.fn(() => ({}));
+      KubeConfig.prototype.makeApiClient = jest.fn(() => ({
+        listNamespacedPod: jest.fn(async () => ({ items: [] })),
+      }));
 
       expect(await (service as any).assignOnDemandServer("match-1")).toBe(
         false,

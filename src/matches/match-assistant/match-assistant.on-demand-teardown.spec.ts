@@ -757,6 +757,89 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       });
     });
 
+    describe("a server another match's pod is still on", () => {
+      const otherMatchPod = (phase: string, deleting = false) => ({
+        metadata: {
+          name: "m-match-2-abcde",
+          ...(deleting ? { deletionTimestamp: new Date() } : {}),
+        },
+        spec: {
+          containers: [
+            {
+              name: "game-server",
+              env: [{ name: "SERVER_ID", value: "server-1" }],
+            },
+          ],
+        },
+        status: { phase },
+      });
+
+      let matchPods: Array<unknown>;
+
+      beforeEach(() => {
+        matchPods = [];
+        const answer = hasura.query.getMockImplementation()!;
+        hasura.query.mockImplementation(async (request: any) =>
+          request.servers?.__args?.where?.id?._nin?.includes("server-1")
+            ? { servers: [] }
+            : answer(request),
+        );
+        listNamespacedPod.mockImplementation(async (request: any) => {
+          if (request.labelSelector === "app=game-server,role=match") {
+            return { items: matchPods };
+          }
+          return { items: [] };
+        });
+      });
+
+      it("is not handed out while that pod runs", async () => {
+        matchPods = [otherMatchPod("Running")];
+
+        await expect(
+          (service as any).assignOnDemandServer("match-1"),
+        ).resolves.toBe(false);
+
+        expect(createNamespacedJob).not.toHaveBeenCalled();
+      });
+
+      it("is not handed out while that pod is still terminating", async () => {
+        matchPods = [otherMatchPod("Running", true)];
+
+        await expect(
+          (service as any).assignOnDemandServer("match-1"),
+        ).resolves.toBe(false);
+
+        expect(createNamespacedJob).not.toHaveBeenCalled();
+      });
+
+      it("is handed out once that pod has exited", async () => {
+        matchPods = [otherMatchPod("Succeeded")];
+
+        await expect(
+          (service as any).assignOnDemandServer("match-1"),
+        ).resolves.toBe(true);
+
+        expect(createNamespacedJob).toHaveBeenCalled();
+      });
+
+      it("is not handed out when the pods cannot be listed", async () => {
+        listNamespacedPod.mockImplementation(async (request: any) => {
+          if (request.labelSelector === "app=game-server,role=match") {
+            throw Object.assign(new Error("connect ECONNREFUSED"), {
+              code: 500,
+            });
+          }
+          return { items: [] };
+        });
+
+        await expect(
+          (service as any).assignOnDemandServer("match-1"),
+        ).rejects.toBeInstanceOf(FailedToCreateOnDemandServer);
+
+        expect(createNamespacedJob).not.toHaveBeenCalled();
+      });
+    });
+
     it("does not look for a server for a match that already ended", async () => {
       matchStatus = "Canceled";
 
