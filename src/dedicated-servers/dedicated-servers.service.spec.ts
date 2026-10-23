@@ -749,6 +749,39 @@ describe("DedicatedServersService.withServerCfg", () => {
       "cfg/gamemode_casual_server.cfg": "invsim_ws_enabled 1\n",
     });
   });
+
+  it("turns GOTV on for a server with no mode", () => {
+    const resolved = DedicatedServersService.withServerCfg(
+      null,
+      "Casual" as never,
+      [],
+      [],
+      DedicatedServersService.tvCfg(null),
+    );
+
+    expect(files(resolved)).toEqual({
+      "cfg/gamemode_casual_server.cfg": 'tv_enable 1\ntv_password ""\n',
+    });
+    expect(resolved?.enabledPlugins).toBe("");
+    expect(resolved?.valveMode).toBeNull();
+  });
+
+  it("runs GOTV ahead of every other layer so they can tune it", () => {
+    expect(
+      files(
+        DedicatedServersService.withServerCfg(
+          mode(),
+          "Custom" as never,
+          [{ slug: "inventory", cfg: "invsim_ws_enabled 1" }],
+          [],
+          DedicatedServersService.tvCfg("hunter2"),
+        ),
+      ),
+    ).toEqual({
+      "cfg/gamemode_deathmatch_server.cfg":
+        'tv_enable 1\ntv_password "hunter2"\ninvsim_ws_enabled 1\nmp_teammates_are_enemies 1\n',
+    });
+  });
 });
 
 describe("DedicatedServersService.setupDedicatedServer", () => {
@@ -777,7 +810,11 @@ describe("DedicatedServersService.setupDedicatedServer", () => {
     pluginRuntime: Record<string, jest.Mock>;
   };
 
-  const deploy = async (type: string, game = "cs2") => {
+  const deploy = async (
+    type: string,
+    game = "cs2",
+    { tvEnabled = false, connectPassword = null as string | null } = {},
+  ) => {
     const createNamespacedDeployment = jest.fn().mockResolvedValue({});
     const mutation = jest.fn().mockResolvedValue({});
     const pluginRuntime = {
@@ -816,7 +853,7 @@ describe("DedicatedServersService.setupDedicatedServer", () => {
             max_players: 10,
             api_password: "api",
             rcon_password: "rcon",
-            connect_password: null,
+            connect_password: connectPassword,
             game_server_node: { id: "node-1" },
             server_region: { steam_relay: false },
           },
@@ -831,7 +868,9 @@ describe("DedicatedServersService.setupDedicatedServer", () => {
       gameModes as never,
       { forServer: jest.fn().mockResolvedValue({ maps: [] }) } as never,
       null as never,
-      null as never,
+      {
+        query: jest.fn().mockResolvedValue([{ runs_tv: tvEnabled }]),
+      } as never,
       null as never,
     );
 
@@ -879,6 +918,54 @@ describe("DedicatedServersService.setupDedicatedServer", () => {
 
   it("leaves them to the match on a Ranked server", async () => {
     expect(await setup("Ranked")).toEqual({});
+  });
+
+  const withTv = async (
+    type: string,
+    connectPassword: string | null = null,
+  ) => {
+    const env = await deploy(type, "cs2", { tvEnabled: true, connectPassword });
+    const pluginConfigs = env.find((entry) => entry.name === "PLUGIN_CONFIGS");
+    const params = env
+      .find((entry) => entry.name === "EXTRA_GAME_PARAMS")
+      .value.split(" ");
+
+    return {
+      cfg: JSON.stringify(
+        pluginConfigs
+          ? JSON.parse(Buffer.from(pluginConfigs.value, "base64").toString())
+          : {},
+      ),
+      maxPlayers: params[params.indexOf("-maxplayers") + 1],
+    };
+  };
+
+  it("switches GOTV on behind the connect password, with a slot of its own", async () => {
+    const { cfg, maxPlayers } = await withTv("Casual", "hunter2");
+
+    expect(
+      JSON.parse(cfg)["cfg/gamemode_casual_server.cfg"].startsWith(
+        'tv_enable 1\ntv_password "hunter2"\n',
+      ),
+    ).toBe(true);
+    expect(maxPlayers).toBe("11");
+  });
+
+  it("leaves GOTV off until the server asks for it", async () => {
+    const params = await launchParams("Casual");
+
+    expect(JSON.stringify(await setup("Casual"))).not.toContain("tv_enable");
+    expect(params[params.indexOf("-maxplayers") + 1]).toBe("10");
+  });
+
+  it.each([
+    ["Ranked", "16"],
+    ["Practice", "10"],
+  ])("leaves GOTV on a %s server to its plugin", async (type, slots) => {
+    const { cfg, maxPlayers } = await withTv(type);
+
+    expect(cfg).not.toContain("tv_enable");
+    expect(maxPlayers).toBe(slots);
   });
 
   const launchParams = async (type: string, game?: string) =>

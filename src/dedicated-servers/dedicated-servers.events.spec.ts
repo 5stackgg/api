@@ -28,6 +28,14 @@ describe("what restarts a dedicated server", () => {
     expect(columns).toContain("region");
   });
 
+  it("a connect password change does: the pod only gets it at launch, as sv_password and tv_password", () => {
+    expect(columns).toContain("connect_password");
+  });
+
+  it("switching GOTV does: the pod's config is what turns it on", () => {
+    expect(columns).toContain("tv_enabled");
+  });
+
   it("an address change does not: the pod never reads it, and the node's heartbeat writes it with a match in play", () => {
     expect(columns).not.toContain("host");
   });

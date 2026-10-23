@@ -261,6 +261,8 @@ export class DedicatedServersService {
       // plugin's cvars itself.
       const community = server.type !== "Ranked" && server.type !== "Practice";
 
+      const tv = community && (await this.runsTv(serverId));
+
       const gameMode = DedicatedServersService.withServerCfg(
         resolvedMode,
         server.type,
@@ -270,6 +272,7 @@ export class DedicatedServersService {
         community
           ? await this.gameModesService.serverCfgLayers(serverId, resolvedMode)
           : [],
+        tv ? DedicatedServersService.tvCfg(server.connect_password) : "",
       );
 
       const gameModeEnvironment =
@@ -386,7 +389,8 @@ export class DedicatedServersService {
                           server.game === "csgo"
                             ? null
                             : "-disable_workshop_command_filtering",
-                          `-maxplayers ${server.type === "Ranked" ? 16 : server.max_players}`,
+                          // GOTV takes a player slot of its own.
+                          `-maxplayers ${server.type === "Ranked" ? 16 : server.max_players + (tv ? 1 : 0)}`,
                           `+map ${startMap && !startMap.workshop_map_id ? startMap.name : "de_dust2"}`,
                           ...DedicatedServersService.launchMode(
                             server.type,
@@ -597,6 +601,16 @@ export class DedicatedServersService {
     return rows.length > 0;
   }
 
+  // server_runs_tv() is also what decides whether the panel links GOTV.
+  private async runsTv(serverId: string): Promise<boolean> {
+    const [row] = await this.postgres.query<Array<{ runs_tv: boolean }>>(
+      `SELECT public.server_runs_tv(s) AS runs_tv FROM servers s WHERE s.id = $1`,
+      [serverId],
+    );
+
+    return !!row?.runs_tv;
+  }
+
   // Deleting the deployment returns before its pod has exited, and a server
   // still shutting down is still writing to its files.
   public async waitForDedicatedServerStopped(
@@ -781,11 +795,13 @@ export class DedicatedServersService {
   // loading plugin's, then the mode's -- ride in as the server config CS2
   // execs after the Valve mode's own, on every map load, which is also what
   // keeps them across a rotation. The server's own plugin cvars run last.
+  // GOTV runs first, so any of them can still tune it.
   public static withServerCfg(
     mode: ResolvedGameMode | null,
     type: e_server_types_enum,
     pluginCfgs: Array<{ slug: string; cfg: string }> = [],
     serverCfgs: Array<{ slug: string; cfg: string }> = [],
+    tvCfg = "",
   ): ResolvedGameMode | null {
     const serverCfg = DedicatedServersService.valveModeFor(
       type,
@@ -793,6 +809,7 @@ export class DedicatedServersService {
     ).serverCfg;
 
     const cfg = [
+      tvCfg,
       ...pluginCfgs.map((layer) => layer.cfg),
       mode?.cfg ?? "",
       ...serverCfgs.map((layer) => layer.cfg),
@@ -801,21 +818,41 @@ export class DedicatedServersService {
       .map((block) => (block.endsWith("\n") ? block : `${block}\n`))
       .join("");
 
-    if (!mode || !cfg || !serverCfg) {
+    if (!cfg || !serverCfg) {
       return mode;
     }
 
-    const files: Record<string, string> = mode.pluginConfigs
+    const files: Record<string, string> = mode?.pluginConfigs
       ? JSON.parse(Buffer.from(mode.pluginConfigs, "base64").toString())
       : {};
 
     files[`cfg/${serverCfg}.cfg`] = cfg;
 
     return {
-      ...mode,
+      ...(mode ?? DedicatedServersService.NO_MODE),
       pluginConfigs: Buffer.from(JSON.stringify(files)).toString("base64"),
     };
   }
+
+  // A community server's server.cfg ships with tv_enable 0 and runs on every
+  // map load, so GOTV is switched on in the config CS2 execs after it.
+  public static tvCfg(connectPassword: string | null): string {
+    return `tv_enable 1\ntv_password "${connectPassword ?? ""}"\n`;
+  }
+
+  private static readonly NO_MODE: ResolvedGameMode = {
+    id: "",
+    slug: "",
+    name: "",
+    cfg: null,
+    extraGameParams: null,
+    valveMode: null,
+    enabledPlugins: "",
+    pluginConfigs: null,
+    missingRequired: [],
+    disableServerGuidelines: false,
+    workshopAddons: [],
+  };
 
   private async getServerStatusInfo(
     serverId: string,

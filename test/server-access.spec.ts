@@ -323,6 +323,108 @@ describe("server access (SQL-driven)", () => {
     });
   });
 
+  describe("the GOTV the panel shows", () => {
+    const tvFor = async (
+      session: Record<string, string>,
+    ): Promise<{ string: string | null; link: string | null }> => {
+      const [row] = await postgres.query<
+        Array<{ string: string | null; link: string | null }>
+      >(
+        `SELECT get_server_tv_connection_string(s, $2::json) AS string,
+                get_server_tv_connection_link(s, $2::json) AS link
+           FROM servers s WHERE s.id = $1`,
+        [serverId, JSON.stringify(session)],
+      );
+
+      return row;
+    };
+
+    const update = async (set: string) => {
+      await postgres.query(`UPDATE servers SET ${set} WHERE id = $1`, [
+        serverId,
+      ]);
+    };
+
+    it("is off until the server turns it on", async () => {
+      expect(await tvFor(guest)).toEqual({ string: null, link: null });
+    });
+
+    it("points at the TV port", async () => {
+      await update("tv_enabled = true");
+
+      expect(await tvFor(guest)).toEqual({
+        string: "connect 10.0.0.1:27020",
+        link: "steam://run/730//+connect 10.0.0.1:27020",
+      });
+    });
+
+    it("asks for the connect password, so it has no link", async () => {
+      await update("tv_enabled = true, connect_password = 'hunter2'");
+
+      expect(await tvFor(user(PICKED))).toEqual({
+        string: "connect 10.0.0.1:27020; password hunter2",
+        link: null,
+      });
+    });
+
+    it("goes only to who the server lets in", async () => {
+      await update("tv_enabled = true");
+      await restrict({ steamIds: [PICKED] });
+
+      expect(await tvFor(user(STRANGER))).toEqual({ string: null, link: null });
+      expect((await tvFor(user(PICKED))).string).toEqual(
+        "connect 10.0.0.1:27020",
+      );
+    });
+
+    it.each(["Ranked", "Practice"])(
+      "is never offered on a %s server",
+      async (type) => {
+        await update(`tv_enabled = true, type = '${type}'`);
+
+        expect(await tvFor(user(MODERATOR, "moderator"))).toEqual({
+          string: null,
+          link: null,
+        });
+      },
+    );
+
+    // Neither gets the config GOTV is switched on in, so a link would point
+    // at a port nothing listens on.
+    it("is never offered on a CS:GO server", async () => {
+      await update("tv_enabled = true, game = 'csgo'");
+
+      expect(await tvFor(guest)).toEqual({ string: null, link: null });
+    });
+
+    it("is never offered on a Rush mode", async () => {
+      const [mode] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO game_modes (slug, name, valve_mode)
+         VALUES ('gotv-rush', 'Rush', 'rush') RETURNING id`,
+      );
+
+      try {
+        await update(
+          `tv_enabled = true, type = 'Custom', game_mode_id = '${mode.id}'`,
+        );
+
+        expect(await tvFor(guest)).toEqual({ string: null, link: null });
+      } finally {
+        await postgres.query(
+          `UPDATE servers SET game_mode_id = NULL WHERE game_mode_id = $1`,
+          [mode.id],
+        );
+        await postgres.query(`DELETE FROM game_modes WHERE id = $1`, [mode.id]);
+      }
+    });
+
+    it("is gone while the server is offline", async () => {
+      await update("tv_enabled = true, connected = false");
+
+      expect(await tvFor(guest)).toEqual({ string: null, link: null });
+    });
+  });
+
   describe("saving", () => {
     it("replaces the rules and tells the plugin to resync", async () => {
       await restrict({ steamIds: [PICKED, STRANGER] });
