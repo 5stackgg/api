@@ -242,7 +242,8 @@ export class SteamGcService
   public async resolveShareCode(
     shareCode: string,
   ): Promise<ResolvedMatch | null> {
-    const matchId = decodeShareCode(shareCode).matchId.toString();
+    const decoded = decodeShareCode(shareCode);
+    const matchId = decoded.matchId.toString();
 
     if (this.idleTimer) {
       clearTimeout(this.idleTimer);
@@ -293,7 +294,11 @@ export class SteamGcService
         this.inFlight.add(fail);
         cs.on("matchList", onMatchList);
         try {
-          cs.requestGame(shareCode);
+          cs.requestGame({
+            matchId,
+            outcomeId: decoded.outcomeId.toString(),
+            token: String(decoded.tokenId),
+          });
         } catch (err) {
           settle();
           this.logger.error(

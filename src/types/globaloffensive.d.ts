@@ -5,7 +5,11 @@ declare module "globaloffensive" {
   class GlobalOffensive extends EventEmitter {
     constructor(steamUser: SteamUser);
     haveGCSession: boolean;
-    requestGame(shareCode: string): void;
+    requestGame(
+      shareCodeOrDetails:
+        | string
+        | { matchId: string; outcomeId: string; token: string },
+    ): void;
   }
 
   export = GlobalOffensive;
