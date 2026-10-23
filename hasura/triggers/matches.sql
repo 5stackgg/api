@@ -586,3 +586,42 @@ CREATE TRIGGER tbiu_matches_claim_match_options
     BEFORE INSERT OR UPDATE OF match_options_id ON public.matches
     FOR EACH ROW
     EXECUTE FUNCTION public.tbiu_claim_match_options();
+
+-- A match's region and server are its own choice too, so a LAN one follows
+-- the match_options rule. The match's option regions were checked when they
+-- were chosen, which also lets through every region the veto and the api's
+-- own server placement land on.
+CREATE OR REPLACE FUNCTION public.tbiu_matches_lan_region() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    _chosen text[] := ARRAY[]::text[];
+BEGIN
+    IF NEW.region IS NOT NULL
+        AND (TG_OP = 'INSERT' OR NEW.region IS DISTINCT FROM OLD.region) THEN
+        _chosen := _chosen || NEW.region;
+    END IF;
+
+    IF NEW.server_id IS NOT NULL
+        AND (TG_OP = 'INSERT' OR NEW.server_id IS DISTINCT FROM OLD.server_id) THEN
+        _chosen := _chosen || ARRAY(SELECT region FROM servers WHERE id = NEW.server_id);
+    END IF;
+
+    PERFORM assert_lan_regions_reachable(ARRAY(
+        SELECT chosen FROM unnest(_chosen) AS chosen
+        WHERE lower(chosen) NOT IN (
+            SELECT lower(region)
+            FROM match_options mo, unnest(mo.regions) AS region
+            WHERE mo.id = NEW.match_options_id
+        )
+    ));
+
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tbiu_matches_lan_region ON public.matches;
+CREATE TRIGGER tbiu_matches_lan_region
+    BEFORE INSERT OR UPDATE OF region, server_id ON public.matches
+    FOR EACH ROW
+    EXECUTE FUNCTION public.tbiu_matches_lan_region();
