@@ -4387,22 +4387,28 @@ export class ChatService implements OnApplicationBootstrap {
       client.id,
     );
 
-    if (removed === 1 && count === 0) {
+    if (removed !== 1) {
+      return;
+    }
+
+    const current = await this.getUserData(type, id, client.user.steam_id);
+
+    if (count === 0 && !current?.inGame) {
       await this.removeUserData(type, id, client.user.steam_id);
       void this.to(type, id, "left", {
         user: {
           ...userData.user,
-          inGame: userData.inGame,
+          inGame: false,
         },
       });
       return;
     }
 
-    if (removed === 1 && userData.inGame) {
+    if (current?.inGame) {
       void this.to(type, id, "joined", {
         user: {
-          ...userData.user,
-          inGame: userData.inGame,
+          ...current.user,
+          inGame: current.inGame,
         },
       });
     }
