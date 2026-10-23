@@ -867,4 +867,117 @@ describe("sanctions policy (SQL-driven)", () => {
       expect(await meets()).toBe(true);
     });
   });
+
+  // The gate a tournament roster asks for every player on it, every poll: it
+  // must keep answering what the per-source helpers say, and read each
+  // source's scope once instead of a lookup per source.
+  describe("the expiry gate across every scope setting", () => {
+    const SCOPES = ["matchmaking", "tournaments", "both", "garbage", null];
+
+    // What player_sanction_expiry has always answered, from the per-source
+    // helpers it was written on.
+    const reference = async (steamId: string, scope: string) => {
+      const [row] = await postgres.query<Array<{ expiry: Date | null }>>(
+        `SELECT max(public.player_source_sanction_expiry(src.value, $1::bigint)) AS expiry
+           FROM e_sanction_sources src
+          WHERE COALESCE(public.sanction_policy_covers(src.value, $2), false)
+            AND COALESCE(NOT (src.writes_platform_ban
+                              AND public.sanction_policy_scope(src.value) = 'both'), true)`,
+        [steamId, scope],
+      );
+      return row.expiry;
+    };
+
+    const sanctioned = async () => {
+      const abandoner = await fx.player();
+      for (let i = 0; i < 3; i++) await abandon(abandoner, `${i} hours`);
+      const noShower = await fx.player();
+      for (let i = 0; i < 3; i++) await noShow(noShower, `${i} days`);
+      const vacBanned = await fx.player();
+      await postgres.query(
+        `UPDATE players SET vac_banned = true, vac_ban_count = 1, days_since_last_ban = 3
+          WHERE steam_id = $1::bigint`,
+        [vacBanned],
+      );
+      const faceitBanned = await fx.player();
+      await postgres.query(
+        `UPDATE players SET faceit_banned_at = now() - interval '1 day',
+                            faceit_ban_ends_at = now() + interval '9 days'
+          WHERE steam_id = $1::bigint`,
+        [faceitBanned],
+      );
+      const everything = await fx.player();
+      for (let i = 0; i < 3; i++) await abandon(everything, `${i} hours`);
+      for (let i = 0; i < 3; i++) await noShow(everything, `${i} days`);
+      await postgres.query(
+        `UPDATE players SET vac_banned = true, vac_ban_count = 2, days_since_last_ban = 1,
+                            faceit_banned_at = now() - interval '2 days'
+          WHERE steam_id = $1::bigint`,
+        [everything],
+      );
+      return [
+        abandoner,
+        noShower,
+        vacBanned,
+        faceitBanned,
+        everything,
+        await fx.player(),
+      ];
+    };
+
+    it("answers what every covering source's own expiry says", async () => {
+      const players = await sanctioned();
+      const sources = (
+        await postgres.query<Array<{ value: string }>>(
+          "SELECT value FROM e_sanction_sources ORDER BY value",
+        )
+      ).map((r) => r.value);
+      let sanctionedAnswers = 0;
+
+      // Each source takes every scope, a garbage value and a missing row.
+      for (let round = 0; round < SCOPES.length; round++) {
+        for (const [i, source] of sources.entries()) {
+          const scope = SCOPES[(round + i) % SCOPES.length];
+          const name = `public.sanction_${source}_scope`;
+          if (scope === null) {
+            await postgres.query("DELETE FROM settings WHERE name = $1", [
+              name,
+            ]);
+          } else {
+            await setSetting(name, scope);
+          }
+        }
+        for (const player of players) {
+          for (const scope of ["matchmaking", "tournaments"] as const) {
+            const expected = await reference(player, scope);
+            expect({
+              round,
+              player,
+              scope,
+              expiry: await expiry(player, scope),
+            }).toEqual({ round, player, scope, expiry: expected });
+            if (expected) sanctionedAnswers++;
+          }
+        }
+      }
+      expect(sanctionedAnswers).toBeGreaterThan(10);
+    });
+
+    it("reads each source's scope once, not through a lookup per source", async () => {
+      const [player] = await sanctioned();
+      const calls = await postgres.transaction(async (client) => {
+        await client.query("SET LOCAL track_functions = 'all'");
+        await client.query(
+          "SELECT public.player_sanction_expiry($1::bigint, 'tournaments')",
+          [player],
+        );
+        const { rows } = await client.query(
+          `SELECT funcname, calls::int AS calls FROM pg_stat_xact_user_functions
+            WHERE funcname IN ('sanction_policy_scope', 'sanction_policy_covers')`,
+        );
+        return rows;
+      });
+      expect(calls).toEqual([]);
+    });
+  });
 });

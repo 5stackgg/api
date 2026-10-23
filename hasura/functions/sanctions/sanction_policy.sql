@@ -139,22 +139,32 @@ $$;
 -- Joined against the scope enum so a value that is not one of the three falls
 -- back to the shipped scope instead of matching nothing and quietly disabling
 -- the source everywhere.
+-- Every source's scope in one read, for callers that walk all of them.
+CREATE OR REPLACE FUNCTION public.sanction_policy_scopes()
+RETURNS TABLE (source text, writes_platform_ban boolean, scope text)
+LANGUAGE sql
+STABLE
+AS $$
+    SELECT src.value,
+           src.writes_platform_ban,
+           COALESCE(
+               (
+                   SELECT sc.value
+                     FROM public.settings s
+                     JOIN public.e_sanction_scopes sc ON sc.value = s.value
+                    WHERE s.name = 'public.sanction_' || src.value || '_scope'
+               ),
+               src.default_scope
+           )
+    FROM public.e_sanction_sources src;
+$$;
+
 CREATE OR REPLACE FUNCTION public.sanction_policy_scope(_source text)
 RETURNS text
 LANGUAGE sql
 STABLE
 AS $$
-    SELECT COALESCE(
-        (
-            SELECT sc.value
-              FROM public.settings s
-              JOIN public.e_sanction_scopes sc ON sc.value = s.value
-             WHERE s.name = 'public.sanction_' || _source || '_scope'
-        ),
-        src.default_scope
-    )
-    FROM public.e_sanction_sources src
-    WHERE src.value = _source;
+    SELECT s.scope FROM public.sanction_policy_scopes() s WHERE s.source = _source;
 $$;
 
 CREATE OR REPLACE FUNCTION public.sanction_policy_covers(_source text, _scope text)
@@ -362,10 +372,12 @@ BEGIN
         RETURN NULL;
     END IF;
 
+    -- Scopes read once here rather than through sanction_policy_covers per
+    -- source: a tournament roster asks this for every player on every poll.
     FOR _source IN
-        SELECT value, writes_platform_ban FROM public.e_sanction_sources
+        SELECT * FROM public.sanction_policy_scopes()
     LOOP
-        IF NOT COALESCE(public.sanction_policy_covers(_source.value, _scope), false) THEN
+        IF NOT COALESCE(_source.scope IN ('both', _scope), false) THEN
             CONTINUE;
         END IF;
 
@@ -374,12 +386,11 @@ BEGIN
         -- it again here would put an end date on the matchmaking cooldown field
         -- for a ban that has none -- and would show a cooldown where, before any
         -- of this was configurable, there was none to show.
-        IF _source.writes_platform_ban
-           AND public.sanction_policy_scope(_source.value) = 'both' THEN
+        IF _source.writes_platform_ban AND _source.scope = 'both' THEN
             CONTINUE;
         END IF;
 
-        _expiry := public.player_source_sanction_expiry(_source.value, _steam_id);
+        _expiry := public.player_source_sanction_expiry(_source.source, _steam_id);
 
         IF _expiry IS NOT NULL AND (_latest IS NULL OR _expiry > _latest) THEN
             _latest := _expiry;
