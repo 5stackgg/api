@@ -717,6 +717,7 @@ export class MatchesController {
 
       if (ended && !wasEnded) {
         await this.chatService.anchorMatchArchive(matchId);
+        await this.chatService.endMatchLobby(matchId);
       } else if (wasEnded && !ended) {
         await this.chatService.reopenMatchArchive(matchId);
       }

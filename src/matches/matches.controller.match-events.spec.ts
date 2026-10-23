@@ -140,6 +140,7 @@ describe("MatchesController — match_events on-demand servers", () => {
       removeMatchArchive: jest.fn(),
       anchorMatchArchive: jest.fn(),
       reopenMatchArchive: jest.fn(),
+      endMatchLobby: jest.fn(),
     };
 
     controller = new MatchesController(
@@ -205,6 +206,19 @@ describe("MatchesController — match_events on-demand servers", () => {
       },
     );
 
+    it.each(["Finished", "Tie", "Canceled", "Forfeit", "Surrendered"])(
+      "ends the match lobby's in-game state once the match is %s",
+      async (ended) => {
+        await controller.match_events({
+          op: "UPDATE",
+          old: row({ status: "Live" }),
+          new: row({ status: ended }),
+        } as any);
+
+        expect(chat.endMatchLobby).toHaveBeenCalledWith("match-1");
+      },
+    );
+
     it("is not anchored again by a later update of an ended match", async () => {
       await controller.match_events({
         op: "UPDATE",
@@ -213,6 +227,7 @@ describe("MatchesController — match_events on-demand servers", () => {
       } as any);
 
       expect(chat.anchorMatchArchive).not.toHaveBeenCalled();
+      expect(chat.endMatchLobby).not.toHaveBeenCalled();
     });
 
     it("slides again even when the match's voice channels cannot be made", async () => {

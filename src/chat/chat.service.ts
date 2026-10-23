@@ -586,7 +586,7 @@ export class ChatService implements OnApplicationBootstrap {
     return 1
   `;
 
-  private static readonly MATCH_CHAT_LOG_STATUSES: e_match_status_enum[] = [
+  private static readonly TERMINAL_MATCH_STATUSES: e_match_status_enum[] = [
     "Finished",
     "Tie",
     "Canceled",
@@ -4420,34 +4420,42 @@ export class ChatService implements OnApplicationBootstrap {
   // all once the match is over, so for anyone else the last tab closing is the
   // only cleanup their lobby entry gets.
   private async isInMatchServer(matchId: string, steamId: string) {
-    const { match_lineup_players } = await this.hasuraService.query({
-      match_lineup_players: {
-        __args: {
-          where: {
-            steam_id: {
-              _eq: steamId,
-            },
-            is_connected: {
-              _eq: true,
-            },
-            lineup: {
-              match_id: {
-                _eq: matchId,
+    try {
+      const { match_lineup_players } = await this.hasuraService.query({
+        match_lineup_players: {
+          __args: {
+            where: {
+              steam_id: {
+                _eq: steamId,
               },
-              match: {
-                status: {
-                  _nin: ChatService.MATCH_CHAT_LOG_STATUSES,
+              is_connected: {
+                _eq: true,
+              },
+              lineup: {
+                match_id: {
+                  _eq: matchId,
+                },
+                match: {
+                  status: {
+                    _nin: ChatService.TERMINAL_MATCH_STATUSES,
+                  },
                 },
               },
             },
+            limit: 1,
           },
-          limit: 1,
+          id: true,
         },
-        id: true,
-      },
-    });
+      });
 
-    return match_lineup_players.length > 0;
+      return match_lineup_players.length > 0;
+    } catch (error) {
+      this.logger.warn(
+        `[${matchId}] unable to check whether ${steamId} is in the server, dropping them from the lobby`,
+        (error as Error)?.message,
+      );
+      return false;
+    }
   }
 
   // The message is inlined into an rcon command inside quotes, so a quote ends
@@ -4607,6 +4615,44 @@ export class ChatService implements OnApplicationBootstrap {
         steam_id: steamId,
       },
     });
+  }
+
+  // The server stops reporting anyone once the match is over, so whoever it
+  // last reported in game would stay that way.
+  public async endMatchLobby(matchId: string) {
+    const users = await this.getAllUsersInLobby(ChatLobbyType.Match, matchId);
+
+    for (const { steamId, ...userData } of users) {
+      const sessions = await this.redis.scard(
+        this.sessionsKey(ChatLobbyType.Match, matchId, steamId),
+      );
+
+      if (sessions === 0) {
+        await this.removeUserData(ChatLobbyType.Match, matchId, steamId);
+        void this.to(ChatLobbyType.Match, matchId, "left", {
+          user: {
+            ...userData.user,
+            inGame: false,
+          },
+        });
+        continue;
+      }
+
+      if (!userData.inGame) {
+        continue;
+      }
+
+      await this.setUserData(ChatLobbyType.Match, matchId, steamId, {
+        ...userData,
+        inGame: false,
+      });
+      void this.to(ChatLobbyType.Match, matchId, "joined", {
+        user: {
+          ...userData.user,
+          inGame: false,
+        },
+      });
+    }
   }
 
   private async addUserToLobby(
@@ -4784,7 +4830,7 @@ export class ChatService implements OnApplicationBootstrap {
       [matchId, viewer],
     );
 
-    if (!match || !ChatService.MATCH_CHAT_LOG_STATUSES.includes(match.status)) {
+    if (!match || !ChatService.TERMINAL_MATCH_STATUSES.includes(match.status)) {
       return null;
     }
 

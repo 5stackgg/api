@@ -14,6 +14,7 @@ describe("ChatService match lobby while a player is in the game server", () => {
   let sets: Record<string, Set<string>>;
   let connected: Set<string>;
   let status: string;
+  let lineupCheckFails: boolean;
   let beforeSessionRemoved: (() => Promise<void>) | null;
   let tabs: number;
 
@@ -45,6 +46,10 @@ describe("ChatService match lobby while a player is in the game server", () => {
       }
 
       if (query.match_lineup_players) {
+        if (lineupCheckFails) {
+          throw new Error("hasura unavailable");
+        }
+
         const { where } = query.match_lineup_players.__args;
         const steamId = String(where.steam_id._eq);
         const inServer =
@@ -188,6 +193,7 @@ describe("ChatService match lobby while a player is in the game server", () => {
     sets = {};
     connected = new Set();
     status = "Live";
+    lineupCheckFails = false;
     beforeSessionRemoved = null;
     tabs = 0;
 
@@ -341,5 +347,63 @@ describe("ChatService match lobby while a player is in the game server", () => {
     await closeTab(tab);
 
     expect(presence(PLAYER)).toEqual({ inGame: true });
+  });
+
+  it("drops the entry as before when the lineup check fails", async () => {
+    await openTab(TEAMMATE);
+    const tab = await openTab(PLAYER);
+    await connectToServer(PLAYER);
+    lineupCheckFails = true;
+    redis.publish.mockClear();
+
+    await expect(closeTab(tab)).resolves.toBeUndefined();
+
+    expect(presence(PLAYER)).toBeNull();
+    expect(seenBy(TEAMMATE, PLAYER)).toEqual([{ event: "left", inGame: true }]);
+  });
+
+  describe("once the match ends", () => {
+    it("drops entries with no tab open", async () => {
+      await openTab(TEAMMATE);
+      const tab = await openTab(PLAYER);
+      await connectToServer(PLAYER);
+      await closeTab(tab);
+      redis.publish.mockClear();
+
+      await service.endMatchLobby(MATCH);
+      await flush();
+
+      expect(presence(PLAYER)).toBeNull();
+      expect(seenBy(TEAMMATE, PLAYER)).toEqual([
+        { event: "left", inGame: false },
+      ]);
+    });
+
+    it("keeps entries with a tab open, no longer in game", async () => {
+      await openTab(PLAYER);
+      await openTab(TEAMMATE);
+      await connectToServer(TEAMMATE);
+      redis.publish.mockClear();
+
+      await service.endMatchLobby(MATCH);
+      await flush();
+
+      expect(presence(TEAMMATE)).toEqual({ inGame: false });
+      expect(seenBy(PLAYER, TEAMMATE)).toEqual([
+        { event: "joined", inGame: false },
+      ]);
+    });
+
+    it("leaves entries with a tab open that were not in game alone", async () => {
+      await openTab(PLAYER);
+      await openTab(TEAMMATE);
+      redis.publish.mockClear();
+
+      await service.endMatchLobby(MATCH);
+      await flush();
+
+      expect(presence(TEAMMATE)).toEqual({ inGame: false });
+      expect(seenBy(PLAYER, TEAMMATE)).toEqual([]);
+    });
   });
 });
