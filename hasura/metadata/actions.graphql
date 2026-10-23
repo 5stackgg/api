@@ -2578,6 +2578,12 @@ type UtilityDriftScanOutput {
 }
 
 type Mutation {
+  deleteUtilityLineup(
+    utility_lineup_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   forkUtilityLineup(
     utility_lineup_id: uuid!
     name: String

@@ -1331,7 +1331,11 @@ export class UtilityLineupsService {
     return configured;
   }
 
-  public async deleteLineup(lineupId: string, steamId: string): Promise<void> {
+  public async deleteLineup(
+    lineupId: string,
+    steamId: string,
+    actorIsModerator = false,
+  ): Promise<void> {
     const [row] = await this.postgres.query<
       Array<{ id: string; author_steam_id: string }>
     >(
@@ -1344,16 +1348,20 @@ export class UtilityLineupsService {
       throw Error("lineup not found");
     }
 
-    if (row.author_steam_id !== steamId) {
+    if (!actorIsModerator && row.author_steam_id !== steamId) {
       throw Error("you did not author this lineup");
     }
 
-    await this.artifacts.removeTrajectories(lineupId);
-    await this.artifacts.removePreview(lineupId);
-    await this.postgres.query(
-      "DELETE FROM public.utility_lineups WHERE id = $1::uuid",
-      [lineupId],
-    );
+    // Deleted first so a refused delete never reaches S3, committed last so a
+    // failed sweep keeps the row its files are found by.
+    await this.postgres.transaction(async (client) => {
+      await client.query(
+        "DELETE FROM public.utility_lineups WHERE id = $1::uuid",
+        [lineupId],
+      );
+      await this.artifacts.removeTrajectories(lineupId);
+      await this.artifacts.removePreview(lineupId);
+    });
   }
 
   // Promotes a lineup the plugin already recorded inside this session. The

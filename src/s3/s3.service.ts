@@ -362,6 +362,7 @@ export class S3Service implements OnModuleDestroy {
     prefix: string,
     bucket: string,
     strict: boolean,
+    exact = false,
   ): Promise<number> {
     const client = this.raw();
 
@@ -386,7 +387,7 @@ export class S3Service implements OnModuleDestroy {
         ...(listed.Versions ?? []),
         ...(listed.DeleteMarkers ?? []),
       ]
-        .filter((entry) => !!entry.Key)
+        .filter((entry) => !!entry.Key && (!exact || entry.Key === prefix))
         .map((entry) => ({
           Key: entry.Key,
           ...(entry.VersionId && entry.VersionId !== "null"
@@ -460,29 +461,26 @@ export class S3Service implements OnModuleDestroy {
     return prefixes;
   }
 
+  // Every version of each key, as removePrefix does, but never a key that only
+  // starts with it. Answers with the keys that are gone, so a caller can keep
+  // track of one the store refused.
   public async removeKeys(
     keys: string[],
     bucket: string = this.bucket,
-  ): Promise<number> {
-    const client = await this.files(bucket);
+  ): Promise<string[]> {
+    const removed: string[] = [];
 
-    let removed = 0;
-    for (let i = 0; i < keys.length; i += 1000) {
-      const batch = keys.slice(i, i + 1000);
-
-      // The bulk delete resolves even when individual keys fail, collecting
-      // them in `errors` -- counting the batch instead of what came back
-      // reports a clean sweep over objects that are still there.
-      const result = await client.delete(batch);
-
-      removed += result.deleted.length;
-
-      for (const failure of result.errors ?? []) {
+    for (const key of keys) {
+      try {
+        await this.sweepPrefix(key, bucket, true, true);
+        removed.push(key);
+      } catch (error) {
         this.logger.error(
-          `unable to remove ${failure.key}: ${failure.error.message}`,
+          `unable to remove ${key}: ${(error as Error)?.message}`,
         );
       }
     }
+
     return removed;
   }
 

@@ -596,27 +596,6 @@ update_permissions:
       filter: {}
       check: {}
     comment: ''
-delete_permissions:
-  - role: user
-    permission:
-      filter:
-        author_steam_id:
-          _eq: X-Hasura-User-Id
-    comment: ''
-  - role: match_organizer
-    permission:
-      filter:
-        author_steam_id:
-          _eq: X-Hasura-User-Id
-    comment: ''
-  - role: moderator
-    permission:
-      filter: {}
-    comment: ''
-  - role: administrator
-    permission:
-      filter: {}
-    comment: ''
 event_triggers:
   - name: utility_lineup_render_events
     definition:

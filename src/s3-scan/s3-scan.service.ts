@@ -15,8 +15,9 @@ const SCAN_RESULT_KEY = "scans/orphaned-objects.latest.json";
 // Only objects under these prefixes are ever treated as deletable orphans.
 // Anything else (including the db-backup bucket, which is a separate bucket) is
 // reported as "other" and never marked for deletion.
-const ORPHAN_PREFIXES = ["demos/", "clips/"];
+const ORPHAN_PREFIXES = ["demos/", "clips/", "utility/"];
 const IGNORE_PREFIXES = ["scans/"];
+const UTILITY_CLIP_PREFIX = "clips/utility/";
 
 const ORPHAN_SAMPLE_LIMIT = 250;
 
@@ -52,6 +53,14 @@ export type DeleteOrphansResult = {
   remaining_orphans: number;
 };
 
+type TrackedKeys = {
+  keys: Set<string>;
+  // `<lineup>/<render>` for every render row. A render's files sit under
+  // clips/utility/<lineup>/<render> before any column names them, and the
+  // row's own delete is what sweeps them.
+  renders: Set<string>;
+};
+
 export type BackfillResult = {
   demos_updated: number;
   clips_updated: number;
@@ -82,9 +91,9 @@ export class S3ScanService {
     this.scanning = true;
     const startedAt = Date.now();
     try {
-      const known = await this.loadKnownKeys();
+      const tracked = await this.loadTracked();
       this.logger.log(
-        `[s3-scan] loaded ${known.size} tracked keys from database`,
+        `[s3-scan] loaded ${tracked.keys.size} tracked keys and ${tracked.renders.size} utility renders from database`,
       );
 
       let totalObjects = 0;
@@ -120,13 +129,16 @@ export class S3ScanService {
           continue;
         }
 
-        if (known.has(key)) {
+        if (S3ScanService.isTracked(key, tracked)) {
           trackedObjects++;
           trackedBytes += size;
           if (key.startsWith("demos/")) {
             demoObjects++;
             demoBytes += size;
-          } else if (key.startsWith("clips/")) {
+          } else if (
+            key.startsWith("clips/") &&
+            !key.startsWith(UTILITY_CLIP_PREFIX)
+          ) {
             clipObjects++;
             clipBytes += size;
           }
@@ -226,12 +238,12 @@ export class S3ScanService {
 
     // Safety net: never delete outside the allowed prefixes, and re-verify
     // against the live DB in case a key was registered since the scan.
-    const known = await this.loadKnownKeys();
+    const tracked = await this.loadTracked();
     targets = new Set(
       [...targets].filter(
         (key) =>
           ORPHAN_PREFIXES.some((prefix) => key.startsWith(prefix)) &&
-          !known.has(key),
+          !S3ScanService.isTracked(key, tracked),
       ),
     );
 
@@ -244,13 +256,14 @@ export class S3ScanService {
       };
     }
 
-    const bytesFreed = targetKeys.reduce(
+    const removed = new Set(await this.s3.removeKeys(targetKeys));
+    const deleted = removed.size;
+    const bytesFreed = [...removed].reduce(
       (sum, key) => sum + (orphanSizes.get(key) ?? 0),
       0,
     );
-    const deleted = await this.s3.removeKeys(targetKeys);
 
-    result.orphans = result.orphans.filter((o) => !targets.has(o.key));
+    result.orphans = result.orphans.filter((o) => !removed.has(o.key));
     result.orphan_objects = result.orphans.length;
     result.orphan_bytes = result.orphans.reduce((sum, o) => sum + o.size, 0);
     await this.persistResult(result);
@@ -371,7 +384,7 @@ export class S3ScanService {
     }
   }
 
-  private async loadKnownKeys(): Promise<Set<string>> {
+  private async loadTracked(): Promise<TrackedKeys> {
     const rows = await this.postgres.query<Array<{ key: string }>>(
       `SELECT file AS key FROM public.match_map_demos WHERE file IS NOT NULL
        UNION
@@ -379,7 +392,16 @@ export class S3ScanService {
        UNION
        SELECT file FROM public.match_clips WHERE file IS NOT NULL
        UNION
-       SELECT thumbnail_url FROM public.match_clips WHERE thumbnail_url IS NOT NULL`,
+       SELECT thumbnail_url FROM public.match_clips WHERE thumbnail_url IS NOT NULL
+       UNION
+       SELECT unnest(ARRAY[preview_file, preview_thumbnail, smoke_voxels_file, trajectory_file])
+         FROM public.utility_lineups
+       UNION
+       SELECT still.value
+         FROM public.utility_lineups l
+        CROSS JOIN LATERAL jsonb_each_text(
+          CASE WHEN jsonb_typeof(l.preview_stills) = 'object' THEN l.preview_stills END
+        ) AS still`,
     );
 
     const keys = new Set<string>();
@@ -389,7 +411,30 @@ export class S3ScanService {
         keys.add(row.key);
       }
     }
-    return keys;
+
+    const renders = await this.postgres.query<Array<{ render: string }>>(
+      `SELECT utility_lineup_id::text || '/' || id::text AS render
+         FROM public.utility_lineup_renders`,
+    );
+
+    return {
+      keys,
+      renders: new Set(renders.map((row) => row.render)),
+    };
+  }
+
+  private static isTracked(key: string, tracked: TrackedKeys): boolean {
+    if (tracked.keys.has(key)) {
+      return true;
+    }
+
+    if (!key.startsWith(UTILITY_CLIP_PREFIX)) {
+      return false;
+    }
+
+    const [lineupId, file] = key.slice(UTILITY_CLIP_PREFIX.length).split("/");
+
+    return !!file && tracked.renders.has(`${lineupId}/${file.split(".")[0]}`);
   }
 
   private async persistResult(result: OrphanScanResult): Promise<void> {
