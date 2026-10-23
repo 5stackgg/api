@@ -55,11 +55,15 @@ export class TypeSenseController {
 
   @HasuraEvent({ retry: true })
   public async player_events(data: HasuraEventData<players_set_input>) {
-    await this.cache.forget(
+    const forgotRole = await this.cache.forget(
       HasuraService.PLAYER_ROLE_CACHE_KEY(
         `${data.new.steam_id || data.old.steam_id}`,
       ),
     );
+
+    if (!forgotRole && data.new.role !== data.old.role) {
+      throw Error("unable to forget the player's cached role");
+    }
 
     // The name as it is now, not as this event had it: a retried or late
     // event would otherwise put back a name the player has since changed.

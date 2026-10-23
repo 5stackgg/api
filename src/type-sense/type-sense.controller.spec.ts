@@ -82,4 +82,64 @@ describe("TypeSenseController player_events", () => {
     expect(cache.put).toHaveBeenCalledWith(expect.any(String), "Carol");
     expect(cache.put).not.toHaveBeenCalledWith(expect.any(String), "Bob");
   });
+
+  const STEAM_ID = "76561198000000001";
+
+  const failingForget = () => {
+    const typeSense = { updatePlayer: jest.fn(), removePlayer: jest.fn() };
+    const controller = new TypeSenseController(
+      { forget: jest.fn().mockResolvedValue(false), put: jest.fn() } as any,
+      { query: jest.fn() } as any,
+      typeSense as any,
+      {} as any,
+      { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
+      { add: jest.fn(), remove: jest.fn() } as any,
+      { add: jest.fn() } as any,
+      { add: jest.fn() } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    );
+    return { controller, typeSense };
+  };
+
+  // The hook hands out the cached role for up to an hour, and every reconnect
+  // of a staff socket asks it again.
+  it.each([
+    [
+      "a role change",
+      {
+        op: "UPDATE",
+        old: { steam_id: STEAM_ID, role: "administrator" },
+        new: { steam_id: STEAM_ID, role: "user" },
+      },
+    ],
+    [
+      "a deleted player",
+      { op: "DELETE", old: { steam_id: STEAM_ID, role: "moderator" }, new: {} },
+    ],
+  ])(
+    "fails %s whose cached role it could not forget, so Hasura retries it",
+    async (_label, event) => {
+      const { controller, typeSense } = failingForget();
+
+      await expect(controller.player_events(event as any)).rejects.toThrow(
+        /cached role/,
+      );
+      expect(typeSense.updatePlayer).not.toHaveBeenCalled();
+      expect(typeSense.removePlayer).not.toHaveBeenCalled();
+    },
+  );
+
+  it("does not fail an update that left the role alone", async () => {
+    const { controller, typeSense } = failingForget();
+
+    await controller.player_events({
+      op: "UPDATE",
+      old: { steam_id: STEAM_ID, role: "user", country: "US" },
+      new: { steam_id: STEAM_ID, role: "user", country: "CA" },
+    } as any);
+
+    expect(typeSense.updatePlayer).toHaveBeenCalledWith(STEAM_ID);
+  });
 });
