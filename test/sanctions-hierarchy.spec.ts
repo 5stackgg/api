@@ -375,4 +375,104 @@ describe("sanction role hierarchy (SQL-driven)", () => {
     ]);
     expect(row.remove_sanction_date).not.toBeNull();
   });
+
+  const sanctionRow = async (id: string) =>
+    (
+      await postgres.query<
+        Array<{ deleted_at: Date | null; remove_sanction_date: Date | null }>
+      >(
+        "SELECT deleted_at, remove_sanction_date FROM player_sanctions WHERE id = $1",
+        [id],
+      )
+    )[0];
+
+  // A GraphQL socket keeps the role it opened with until its session expires,
+  // so the player an administrator just demoted and banned still holds a
+  // session with the role they lost.
+  it.each([
+    ["moderator", "remove_sanction_date = '2000-01-01'"],
+    ["moderator", "deleted_at = now()"],
+    ["administrator", "remove_sanction_date = '2000-01-01'"],
+    ["administrator", "deleted_at = now()"],
+  ])(
+    "refuses a demoted %s's session writing %s on their own ban",
+    async (lost, assignment) => {
+      const administrator = await playerWithRole("administrator");
+      const demoted = await playerWithRole("user");
+      const [{ id }] = await sanction(demoted, administrator);
+
+      await expect(
+        runAsUser(postgres, demoted, lost, (query) =>
+          query(`UPDATE player_sanctions SET ${assignment} WHERE id = $1`, [
+            id,
+          ]),
+        ),
+      ).rejects.toThrow(/role has changed/);
+
+      expect(await sanctionRow(id)).toEqual({
+        deleted_at: null,
+        remove_sanction_date: null,
+      });
+    },
+  );
+
+  it("refuses a demoted moderator's session acting on anyone else's sanction", async () => {
+    const administrator = await playerWithRole("administrator");
+    const demoted = await playerWithRole("user");
+    const user = await playerWithRole("user");
+    const verified = await playerWithRole("verified_user");
+    const [{ id }] = await sanction(user, administrator);
+
+    await expect(
+      runAsUser(postgres, demoted, "moderator", (query) =>
+        query(
+          "UPDATE player_sanctions SET remove_sanction_date = now() WHERE id = $1",
+          [id],
+        ),
+      ),
+    ).rejects.toThrow(/role has changed/);
+    await expect(
+      runAsUser(postgres, demoted, "moderator", (query) =>
+        sanction(verified, null, "ban", query),
+      ),
+    ).rejects.toThrow(/role has changed/);
+
+    expect(await sanctionRow(id)).toEqual({
+      deleted_at: null,
+      remove_sanction_date: null,
+    });
+    expect(await sanctionsOn(verified)).toBe("0");
+  });
+
+  it("refuses a staff session for a player that does not exist", async () => {
+    const administrator = await playerWithRole("administrator");
+    const user = await playerWithRole("user");
+    const [{ id }] = await sanction(user, administrator);
+
+    for (const steamId of ["76561196399999999", "0", "not-a-steam-id"]) {
+      await expect(
+        runAsUser(postgres, steamId, "administrator", (query) =>
+          query(
+            "UPDATE player_sanctions SET deleted_at = now() WHERE id = $1",
+            [id],
+          ),
+        ),
+      ).rejects.toThrow(/role has changed/);
+    }
+    expect(await deletedAt(id)).toBeNull();
+  });
+
+  it("lets a session below the player's current role act as that session", async () => {
+    const administrator = await playerWithRole("administrator");
+    const user = await playerWithRole("user");
+    const [{ id }] = await sanction(user, administrator);
+
+    await runAsUser(postgres, administrator, "moderator", (query) =>
+      query("UPDATE player_sanctions SET deleted_at = now() WHERE id = $1", [
+        id,
+      ]),
+    );
+
+    expect(await deletedAt(id)).not.toBeNull();
+  });
 });

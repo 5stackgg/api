@@ -19,12 +19,13 @@ $$;
 DROP TRIGGER IF EXISTS tau_player_sanctions ON public.player_sanctions;
 CREATE TRIGGER tau_player_sanctions AFTER UPDATE ON public.player_sanctions FOR EACH ROW EXECUTE FUNCTION public.tau_player_sanctions();
 
--- A Hasura user session acts with its own role, and the api lifts a sanction
--- inside its actor's session; otherwise an insert acts as its sanctioner, and
--- one with no sanctioner is the system's own ban. An update is only checked
--- when it changes the sanction itself (its type, its end or its removal), so
--- the FK cascade that clears a deleted sanctioner passes, and so does an
--- update with no session at all: the system lifting or expiring a sanction.
+-- A Hasura user session acts with its own role while its player still holds
+-- it, and the api lifts a sanction inside its actor's session; otherwise an
+-- insert acts as its sanctioner, and one with no sanctioner is the system's own
+-- ban. An update is only checked when it changes the sanction itself (its type,
+-- its end or its removal), so the FK cascade that clears a deleted sanctioner
+-- passes, and so does an update with no session at all: the system lifting or
+-- expiring a sanction.
 CREATE OR REPLACE FUNCTION public.tbiu_player_sanctions() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
@@ -44,6 +45,10 @@ BEGIN
     END IF;
 
     IF _session_role IS NOT NULL AND _session_role <> 'admin' THEN
+        IF NOT public.session_role_is_current() THEN
+            RAISE EXCEPTION 'Your role has changed, reload and try again'
+                USING ERRCODE = '22000';
+        END IF;
         _actor_role := _session_role;
     ELSIF TG_OP = 'INSERT' AND NEW.sanctioned_by_steam_id IS NOT NULL THEN
         SELECT role::text INTO _actor_role
