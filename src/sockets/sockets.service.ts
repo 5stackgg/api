@@ -27,6 +27,7 @@ import { HasuraService } from "src/hasura/hasura.service";
 export class SocketsService implements OnModuleInit, OnApplicationShutdown {
   private redis: Redis;
   private appConfig: AppConfig;
+  private lastPeopleOnline?: string;
   private nodeId: string = process.env.POD_NAME;
 
   private clients: Map<string, FiveStackWebSocketClient> = new Map();
@@ -107,6 +108,9 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
 
       switch (channel) {
         case "broadcast-message":
+          if (event === "players-online") {
+            this.lastPeopleOnline = JSON.stringify(data);
+          }
           void this.broadcastMessage(event, data);
           break;
         case "send-message-to-steam-id":
@@ -338,7 +342,14 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
 
   private async welcome(client: FiveStackWebSocketClient) {
     try {
-      await this.sendPeopleOnline();
+      if (!(await this.sendPeopleOnline())) {
+        client.send(
+          JSON.stringify({
+            event: "players-online",
+            data: await this.peopleOnline(),
+          }),
+        );
+      }
       await this.matchmaking.sendRegionStats(client.user);
       await this.matchmakingLobbyService.sendQueueDetailsToPlayer(
         client.user.steam_id,
@@ -577,17 +588,31 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
     }
   }
 
-  public async sendPeopleOnline() {
+  private async peopleOnline() {
     const players = await this.redis.keys("players:*");
+
+    return players.map((player) => player.slice(8)).sort();
+  }
+
+  // Every open tab looks up the players a roster brings, so a roster no
+  // different from the last one any pod broadcast is not sent again.
+  public async sendPeopleOnline() {
+    const data = await this.peopleOnline();
+    const roster = JSON.stringify(data);
+
+    if (roster === this.lastPeopleOnline) {
+      return false;
+    }
 
     await this.redis.publish(
       `broadcast-message`,
       JSON.stringify({
         event: `players-online`,
-        data: players.map((player) => {
-          return player.slice(8);
-        }),
+        data,
       }),
     );
+    this.lastPeopleOnline = roster;
+
+    return true;
   }
 }
