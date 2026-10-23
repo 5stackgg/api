@@ -1,5 +1,7 @@
 import session from "express-session";
-import { NestFactory } from "@nestjs/core";
+import { INestApplication } from "@nestjs/common";
+import { DiscoveryService, NestFactory } from "@nestjs/core";
+import { WorkerHost } from "@nestjs/bullmq";
 import { Transport } from "@nestjs/microservices";
 import { AppModule } from "./app.module";
 import RedisStore from "connect-redis";
@@ -21,6 +23,58 @@ import { registerBodyParsers } from "./body-parsers";
 require("events").EventEmitter.defaultMaxListeners = Number(
   process.env.NODE_MAX_LISTENERS || "100",
 );
+
+// Inside the 30 seconds the pod gets between SIGTERM and SIGKILL.
+export const SHUTDOWN_DEADLINE_MS = 20_000;
+
+// node is PID 1 in the container, where SIGTERM does nothing unless something
+// handles it, so every deploy waited out the grace period and was killed.
+// The queue workers finish their jobs first: Nest closes them last of all,
+// after the Redis connections, S3 clients and Steam sessions those jobs use.
+export function closeOnShutdownSignals(app: INestApplication) {
+  let closing = false;
+
+  const shutdown = async (signal: NodeJS.Signals) => {
+    if (closing) {
+      return;
+    }
+    closing = true;
+
+    setTimeout(() => {
+      console.warn(
+        `api did not shut down within ${SHUTDOWN_DEADLINE_MS}ms of ${signal}, exiting`,
+      );
+      process.exit(1);
+    }, SHUTDOWN_DEADLINE_MS).unref();
+
+    let code = 0;
+    try {
+      // Job classes extend WorkerHost too; only the queue processors have a
+      // worker.
+      const workers = app
+        .get(DiscoveryService)
+        .getProviders()
+        .map(({ instance }) => instance)
+        .filter((instance) => instance instanceof WorkerHost)
+        .flatMap((host: WorkerHost) => {
+          try {
+            return [host.worker];
+          } catch {
+            return [];
+          }
+        });
+      await Promise.all(workers.map((worker) => worker.close()));
+      await app.close();
+    } catch (error) {
+      console.error("api did not shut down cleanly", error);
+      code = 1;
+    }
+    process.exit(code);
+  };
+
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
+}
 
 async function bootstrap() {
   // TODO - handle clustering, but need to move web sockets to redis
@@ -59,6 +113,8 @@ async function bootstrap() {
       process.exit(0);
     }
   }
+
+  closeOnShutdownSignals(app);
 
   const configService = app.get(ConfigService);
   const redisManagerService = app.get(RedisManagerService);
@@ -130,13 +186,15 @@ async function bootstrap() {
   await app.listen(5585);
 }
 
-// The queue workers keep the process alive, so a failed boot would otherwise
-// leave an api that never listens until the startup probe gives up.
-bootstrap().catch((error) => {
-  console.error("api is not able to start, exiting", error);
-  process.exit(1);
-});
+if (require.main === module) {
+  // The queue workers keep the process alive, so a failed boot would otherwise
+  // leave an api that never listens until the startup probe gives up.
+  bootstrap().catch((error) => {
+    console.error("api is not able to start, exiting", error);
+    process.exit(1);
+  });
 
-process.on("unhandledRejection", (reason, p) => {
-  console.warn("Unhandled Rejection at: Promise", p, "reason:", reason);
-});
+  process.on("unhandledRejection", (reason, p) => {
+    console.warn("Unhandled Rejection at: Promise", p, "reason:", reason);
+  });
+}
