@@ -6138,6 +6138,10 @@ input clone_league_season_args {
   _league_season_id: uuid
 }
 
+input clone_tournament_bracket_options_args {
+  _bracket_id: uuid
+}
+
 """ordering argument of a cursor"""
 enum cursor_ordering {
   """ascending ordering of the cursor"""
@@ -6162,6 +6166,7 @@ type custom_pages {
   id: uuid!
   is_default: Boolean!
   manifest_url: String
+  nav_featured: Boolean!
   nav_group: String
   nav_order: Int!
   plugin_slug: String
@@ -6224,6 +6229,7 @@ input custom_pages_bool_exp {
   id: uuid_comparison_exp
   is_default: Boolean_comparison_exp
   manifest_url: String_comparison_exp
+  nav_featured: Boolean_comparison_exp
   nav_group: String_comparison_exp
   nav_order: Int_comparison_exp
   plugin_slug: String_comparison_exp
@@ -6301,6 +6307,7 @@ input custom_pages_insert_input {
   id: uuid
   is_default: Boolean
   manifest_url: String
+  nav_featured: Boolean
   nav_group: String
   nav_order: Int
   plugin_slug: String
@@ -6379,6 +6386,7 @@ input custom_pages_order_by {
   id: order_by
   is_default: order_by
   manifest_url: order_by
+  nav_featured: order_by
   nav_group: order_by
   nav_order: order_by
   plugin_slug: order_by
@@ -6430,6 +6438,9 @@ enum custom_pages_select_column {
   manifest_url
 
   """column name"""
+  nav_featured
+
+  """column name"""
   nav_group
 
   """column name"""
@@ -6472,6 +6483,7 @@ input custom_pages_set_input {
   id: uuid
   is_default: Boolean
   manifest_url: String
+  nav_featured: Boolean
   nav_group: String
   nav_order: Int
   plugin_slug: String
@@ -6520,6 +6532,7 @@ input custom_pages_stream_cursor_value_input {
   id: uuid
   is_default: Boolean
   manifest_url: String
+  nav_featured: Boolean
   nav_group: String
   nav_order: Int
   plugin_slug: String
@@ -6564,6 +6577,9 @@ enum custom_pages_update_column {
 
   """column name"""
   manifest_url
+
+  """column name"""
+  nav_featured
 
   """column name"""
   nav_group
@@ -16570,7 +16586,6 @@ input e_sanction_scopes_updates {
 columns and relationships of "e_sanction_sources"
 """
 type e_sanction_sources {
-  """Comma separated ban durations in minutes, indexed by occurrence count"""
   default_durations: String!
   default_enabled: Boolean!
   default_scope: String!
@@ -16581,8 +16596,6 @@ type e_sanction_sources {
   """An object relationship"""
   e_sanction_scope: e_sanction_scopes!
   value: String!
-
-  """Source issues a player_sanctions ban row instead of a scoped cooldown"""
   writes_platform_ban: Boolean!
 }
 
@@ -16657,7 +16670,6 @@ input e_sanction_sources_inc_input {
 input type for inserting data into table "e_sanction_sources"
 """
 input e_sanction_sources_insert_input {
-  """Comma separated ban durations in minutes, indexed by occurrence count"""
   default_durations: String
   default_enabled: Boolean
   default_scope: String
@@ -16666,14 +16678,11 @@ input e_sanction_sources_insert_input {
   description: String
   e_sanction_scope: e_sanction_scopes_obj_rel_insert_input
   value: String
-
-  """Source issues a player_sanctions ban row instead of a scoped cooldown"""
   writes_platform_ban: Boolean
 }
 
 """aggregate max on columns"""
 type e_sanction_sources_max_fields {
-  """Comma separated ban durations in minutes, indexed by occurrence count"""
   default_durations: String
   default_scope: String
   default_threshold: Int
@@ -16684,7 +16693,6 @@ type e_sanction_sources_max_fields {
 
 """aggregate min on columns"""
 type e_sanction_sources_min_fields {
-  """Comma separated ban durations in minutes, indexed by occurrence count"""
   default_durations: String
   default_scope: String
   default_threshold: Int
@@ -16764,7 +16772,6 @@ enum e_sanction_sources_select_column {
 input type for updating data in table "e_sanction_sources"
 """
 input e_sanction_sources_set_input {
-  """Comma separated ban durations in minutes, indexed by occurrence count"""
   default_durations: String
   default_enabled: Boolean
   default_scope: String
@@ -16772,8 +16779,6 @@ input e_sanction_sources_set_input {
   default_window_days: Int
   description: String
   value: String
-
-  """Source issues a player_sanctions ban row instead of a scoped cooldown"""
   writes_platform_ban: Boolean
 }
 
@@ -16808,7 +16813,6 @@ input e_sanction_sources_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input e_sanction_sources_stream_cursor_value_input {
-  """Comma separated ban durations in minutes, indexed by occurrence count"""
   default_durations: String
   default_enabled: Boolean
   default_scope: String
@@ -16816,8 +16820,6 @@ input e_sanction_sources_stream_cursor_value_input {
   default_window_days: Int
   description: String
   value: String
-
-  """Source issues a player_sanctions ban row instead of a scoped cooldown"""
   writes_platform_ban: Boolean
 }
 
@@ -39628,7 +39630,9 @@ input match_demo_sessions_variance_order_by {
   watcher_steam_id: order_by
 }
 
-"""relational table for assigning a players to a match and lineup"""
+"""
+columns and relationships of "match_lineup_players"
+"""
 type match_lineup_players {
   captain: Boolean!
   checked_in: Boolean!
@@ -40124,7 +40128,9 @@ input match_lineup_players_variance_order_by {
   steam_id: order_by
 }
 
-"""relational table for assigning a team to a match and lineup"""
+"""
+columns and relationships of "match_lineups"
+"""
 type match_lineups {
   """
   A computed field, executes function "can_pick_map_veto"
@@ -46388,6 +46394,9 @@ type matches {
     """filter the rows returned"""
     where: v_player_elo_bool_exp
   ): v_player_elo_aggregate!
+  elo_voided: Boolean!
+  elo_voided_at: timestamptz
+  elo_voided_by_steam_id: bigint
   ended_at: timestamptz
 
   """An array relationship"""
@@ -47135,6 +47144,8 @@ input matches_arr_rel_insert_input {
 
 """aggregate avg on columns"""
 type matches_avg_fields {
+  elo_voided_by_steam_id: Float
+
   """
   A computed field, executes function "match_max_players_per_lineup"
   """
@@ -47151,6 +47162,7 @@ type matches_avg_fields {
 order by avg() on columns of table "matches"
 """
 input matches_avg_order_by {
+  elo_voided_by_steam_id: order_by
   organizer_steam_id: order_by
 }
 
@@ -47186,6 +47198,9 @@ input matches_bool_exp {
   effective_at: timestamptz_comparison_exp
   elo_changes: v_player_elo_bool_exp
   elo_changes_aggregate: v_player_elo_aggregate_bool_exp
+  elo_voided: Boolean_comparison_exp
+  elo_voided_at: timestamptz_comparison_exp
+  elo_voided_by_steam_id: bigint_comparison_exp
   ended_at: timestamptz_comparison_exp
   event_links: event_match_links_bool_exp
   event_links_aggregate: event_match_links_aggregate_bool_exp
@@ -47296,6 +47311,7 @@ enum matches_constraint {
 input type for incrementing numeric columns in table "matches"
 """
 input matches_inc_input {
+  elo_voided_by_steam_id: bigint
   organizer_steam_id: bigint
 }
 
@@ -47312,6 +47328,9 @@ input matches_insert_input {
   e_match_status: e_match_status_obj_rel_insert_input
   e_region: server_regions_obj_rel_insert_input
   elo_changes: v_player_elo_arr_rel_insert_input
+  elo_voided: Boolean
+  elo_voided_at: timestamptz
+  elo_voided_by_steam_id: bigint
   ended_at: timestamptz
   event_links: event_match_links_arr_rel_insert_input
   external_id: String
@@ -47373,6 +47392,8 @@ type matches_max_fields {
   """
   current_match_map_id: uuid
   effective_at: timestamptz
+  elo_voided_at: timestamptz
+  elo_voided_by_steam_id: bigint
   ended_at: timestamptz
   external_id: String
   id: uuid
@@ -47450,6 +47471,8 @@ input matches_max_order_by {
   cancels_at: order_by
   created_at: order_by
   effective_at: order_by
+  elo_voided_at: order_by
+  elo_voided_by_steam_id: order_by
   ended_at: order_by
   external_id: order_by
   id: order_by
@@ -47490,6 +47513,8 @@ type matches_min_fields {
   """
   current_match_map_id: uuid
   effective_at: timestamptz
+  elo_voided_at: timestamptz
+  elo_voided_by_steam_id: bigint
   ended_at: timestamptz
   external_id: String
   id: uuid
@@ -47567,6 +47592,8 @@ input matches_min_order_by {
   cancels_at: order_by
   created_at: order_by
   effective_at: order_by
+  elo_voided_at: order_by
+  elo_voided_by_steam_id: order_by
   ended_at: order_by
   external_id: order_by
   id: order_by
@@ -47640,6 +47667,9 @@ input matches_order_by {
   e_region: server_regions_order_by
   effective_at: order_by
   elo_changes_aggregate: v_player_elo_aggregate_order_by
+  elo_voided: order_by
+  elo_voided_at: order_by
+  elo_voided_by_steam_id: order_by
   ended_at: order_by
   event_links_aggregate: event_match_links_aggregate_order_by
   external_id: order_by
@@ -47724,6 +47754,15 @@ enum matches_select_column {
   effective_at
 
   """column name"""
+  elo_voided
+
+  """column name"""
+  elo_voided_at
+
+  """column name"""
+  elo_voided_by_steam_id
+
+  """column name"""
   ended_at
 
   """column name"""
@@ -47787,6 +47826,9 @@ select "matches_aggregate_bool_exp_bool_and_arguments_columns" columns of table 
 enum matches_select_column_matches_aggregate_bool_exp_bool_and_arguments_columns {
   """column name"""
   counts_toward_ranking
+
+  """column name"""
+  elo_voided
 }
 
 """
@@ -47795,6 +47837,9 @@ select "matches_aggregate_bool_exp_bool_or_arguments_columns" columns of table "
 enum matches_select_column_matches_aggregate_bool_exp_bool_or_arguments_columns {
   """column name"""
   counts_toward_ranking
+
+  """column name"""
+  elo_voided
 }
 
 """
@@ -47804,6 +47849,9 @@ input matches_set_input {
   cancels_at: timestamptz
   counts_toward_ranking: Boolean
   created_at: timestamptz
+  elo_voided: Boolean
+  elo_voided_at: timestamptz
+  elo_voided_by_steam_id: bigint
   ended_at: timestamptz
   external_id: String
   id: uuid
@@ -47827,6 +47875,8 @@ input matches_set_input {
 
 """aggregate stddev on columns"""
 type matches_stddev_fields {
+  elo_voided_by_steam_id: Float
+
   """
   A computed field, executes function "match_max_players_per_lineup"
   """
@@ -47843,11 +47893,14 @@ type matches_stddev_fields {
 order by stddev() on columns of table "matches"
 """
 input matches_stddev_order_by {
+  elo_voided_by_steam_id: order_by
   organizer_steam_id: order_by
 }
 
 """aggregate stddev_pop on columns"""
 type matches_stddev_pop_fields {
+  elo_voided_by_steam_id: Float
+
   """
   A computed field, executes function "match_max_players_per_lineup"
   """
@@ -47864,11 +47917,14 @@ type matches_stddev_pop_fields {
 order by stddev_pop() on columns of table "matches"
 """
 input matches_stddev_pop_order_by {
+  elo_voided_by_steam_id: order_by
   organizer_steam_id: order_by
 }
 
 """aggregate stddev_samp on columns"""
 type matches_stddev_samp_fields {
+  elo_voided_by_steam_id: Float
+
   """
   A computed field, executes function "match_max_players_per_lineup"
   """
@@ -47885,6 +47941,7 @@ type matches_stddev_samp_fields {
 order by stddev_samp() on columns of table "matches"
 """
 input matches_stddev_samp_order_by {
+  elo_voided_by_steam_id: order_by
   organizer_steam_id: order_by
 }
 
@@ -47905,6 +47962,9 @@ input matches_stream_cursor_value_input {
   counts_toward_ranking: Boolean
   created_at: timestamptz
   effective_at: timestamptz
+  elo_voided: Boolean
+  elo_voided_at: timestamptz
+  elo_voided_by_steam_id: bigint
   ended_at: timestamptz
   external_id: String
   id: uuid
@@ -47928,6 +47988,8 @@ input matches_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type matches_sum_fields {
+  elo_voided_by_steam_id: bigint
+
   """
   A computed field, executes function "match_max_players_per_lineup"
   """
@@ -47944,6 +48006,7 @@ type matches_sum_fields {
 order by sum() on columns of table "matches"
 """
 input matches_sum_order_by {
+  elo_voided_by_steam_id: order_by
   organizer_steam_id: order_by
 }
 
@@ -47959,6 +48022,15 @@ enum matches_update_column {
 
   """column name"""
   created_at
+
+  """column name"""
+  elo_voided
+
+  """column name"""
+  elo_voided_at
+
+  """column name"""
+  elo_voided_by_steam_id
 
   """column name"""
   ended_at
@@ -48031,6 +48103,8 @@ input matches_updates {
 
 """aggregate var_pop on columns"""
 type matches_var_pop_fields {
+  elo_voided_by_steam_id: Float
+
   """
   A computed field, executes function "match_max_players_per_lineup"
   """
@@ -48047,11 +48121,14 @@ type matches_var_pop_fields {
 order by var_pop() on columns of table "matches"
 """
 input matches_var_pop_order_by {
+  elo_voided_by_steam_id: order_by
   organizer_steam_id: order_by
 }
 
 """aggregate var_samp on columns"""
 type matches_var_samp_fields {
+  elo_voided_by_steam_id: Float
+
   """
   A computed field, executes function "match_max_players_per_lineup"
   """
@@ -48068,11 +48145,14 @@ type matches_var_samp_fields {
 order by var_samp() on columns of table "matches"
 """
 input matches_var_samp_order_by {
+  elo_voided_by_steam_id: order_by
   organizer_steam_id: order_by
 }
 
 """aggregate variance on columns"""
 type matches_variance_fields {
+  elo_voided_by_steam_id: Float
+
   """
   A computed field, executes function "match_max_players_per_lineup"
   """
@@ -48089,6 +48169,7 @@ type matches_variance_fields {
 order by variance() on columns of table "matches"
 """
 input matches_variance_order_by {
+  elo_voided_by_steam_id: order_by
   organizer_steam_id: order_by
 }
 
@@ -48410,6 +48491,31 @@ type mutation_root {
     where: league_seasons_bool_exp
   ): [league_seasons!]!
 
+  """
+  execute VOLATILE function "clone_tournament_bracket_options" which returns "tournament_brackets"
+  """
+  clone_tournament_bracket_options(
+    """
+    input parameters for function "clone_tournament_bracket_options"
+    """
+    args: clone_tournament_bracket_options_args!
+
+    """distinct select on columns"""
+    distinct_on: [tournament_brackets_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_brackets_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_brackets_bool_exp
+  ): [tournament_brackets!]!
+
   """Organizer proceeds without the teams that missed check-in"""
   continueTournamentCheckIn(tournament_id: uuid!): SuccessOutput
 
@@ -48465,6 +48571,9 @@ type mutation_root {
 
   """Delete a tournament and clean up demo files"""
   deleteTournament(tournament_id: uuid!): SuccessOutput
+
+  """Delete a utility lineup and every file it has in S3"""
+  deleteUtilityLineup(utility_lineup_id: uuid!): SuccessOutput
 
   """Delete a render and its preview clip"""
   deleteUtilityLineupRender(render_id: uuid!): SuccessOutput
@@ -56678,6 +56787,7 @@ type mutation_root {
 
   """Re-mine one batch of demos after a miner change"""
   remineUtilityMeta: UtilityRemineOutput
+  removeCs(game: String!, game_server_node_id: String!): SuccessOutput
 
   """Remove dev fixture data (dev only)"""
   removeFixtures: SuccessOutput
@@ -56812,6 +56922,11 @@ type mutation_root {
     """filter the rows returned"""
     where: league_seasons_bool_exp
   ): [league_seasons!]!
+
+  """
+  Undo voidMatchElo, giving the match its effect on every player's ELO back, then recompute ELO (admin only).
+  """
+  restoreMatchElo(match_id: uuid!): SuccessOutput
   restoreMatchRound(match_id: uuid!, round: Int!): SuccessOutput
 
   """Clear paused flag and re-enqueue remaining queued clip_render_jobs."""
@@ -56877,6 +56992,7 @@ type mutation_root {
 
   """setMapWinner"""
   setMapWinner(match_id: uuid!, match_map_id: uuid!, winning_lineup_id: uuid!): SuccessOutput
+  setMatchPaused(match_id: uuid!, paused: Boolean!): SuccessOutput
 
   """setMatchWinner"""
   setMatchWinner(match_id: uuid!, winning_lineup_id: uuid!): SuccessOutput
@@ -65484,6 +65600,11 @@ type mutation_root {
   Validate CS2 gamedata for the current build on a chosen or automatically picked node (5stack.gg only)
   """
   validateGamedata(game_server_node_id: String): SuccessOutput
+
+  """
+  Remove a finished match's effect on every player's ELO, keeping its result and stats, then recompute ELO (admin only).
+  """
+  voidMatchElo(match_id: uuid!): SuccessOutput
 
   """
   Spawn a per-user game-streamer pod to play back a finished match's demo
@@ -86755,6 +86876,9 @@ type players {
     """filter the rows returned"""
     where: v_player_elo_bool_exp
   ): v_player_elo_aggregate!
+  faceit_ban_ends_at: timestamptz
+  faceit_banned_at: timestamptz
+  faceit_bans_checked_at: timestamptz
   faceit_elo: Int
   faceit_nickname: String
   faceit_player_id: String
@@ -87096,8 +87220,10 @@ type players {
     where: player_kills_by_weapon_bool_exp
   ): player_kills_by_weapon_aggregate!
   language: String
+  last_game_ban_at: timestamptz
   last_read_news_at: timestamptz
   last_sign_in_at: timestamptz
+  last_vac_ban_at: timestamptz
 
   """
   A computed field, executes function "get_player_live_lineup"
@@ -88167,6 +88293,9 @@ input players_bool_exp {
   elo: jsonb_comparison_exp
   elo_history: v_player_elo_bool_exp
   elo_history_aggregate: v_player_elo_aggregate_bool_exp
+  faceit_ban_ends_at: timestamptz_comparison_exp
+  faceit_banned_at: timestamptz_comparison_exp
+  faceit_bans_checked_at: timestamptz_comparison_exp
   faceit_elo: Int_comparison_exp
   faceit_nickname: String_comparison_exp
   faceit_player_id: String_comparison_exp
@@ -88200,8 +88329,10 @@ input players_bool_exp {
   kills_by_weapons: player_kills_by_weapon_bool_exp
   kills_by_weapons_aggregate: player_kills_by_weapon_aggregate_bool_exp
   language: String_comparison_exp
+  last_game_ban_at: timestamptz_comparison_exp
   last_read_news_at: timestamptz_comparison_exp
   last_sign_in_at: timestamptz_comparison_exp
+  last_vac_ban_at: timestamptz_comparison_exp
   live_lineup: match_lineup_players_bool_exp
   lobby_players: lobby_players_bool_exp
   lobby_players_aggregate: lobby_players_aggregate_bool_exp
@@ -88334,6 +88465,9 @@ input players_insert_input {
   discord_id: String
   draft_game_players: draft_game_players_arr_rel_insert_input
   elo_history: v_player_elo_arr_rel_insert_input
+  faceit_ban_ends_at: timestamptz
+  faceit_banned_at: timestamptz
+  faceit_bans_checked_at: timestamptz
   faceit_elo: Int
   faceit_nickname: String
   faceit_player_id: String
@@ -88350,8 +88484,10 @@ input players_insert_input {
   kills: player_kills_arr_rel_insert_input
   kills_by_weapons: player_kills_by_weapon_arr_rel_insert_input
   language: String
+  last_game_ban_at: timestamptz
   last_read_news_at: timestamptz
   last_sign_in_at: timestamptz
+  last_vac_ban_at: timestamptz
   lobby_players: lobby_players_arr_rel_insert_input
   match_map_hltv: v_player_match_map_hltv_arr_rel_insert_input
   match_map_stats: player_match_map_stats_arr_rel_insert_input
@@ -88409,6 +88545,9 @@ type players_max_fields {
   custom_avatar_url: String
   days_since_last_ban: Int
   discord_id: String
+  faceit_ban_ends_at: timestamptz
+  faceit_banned_at: timestamptz
+  faceit_bans_checked_at: timestamptz
   faceit_elo: Int
   faceit_nickname: String
   faceit_player_id: String
@@ -88417,8 +88556,10 @@ type players_max_fields {
   faceit_url: String
   game_ban_count: Int
   language: String
+  last_game_ban_at: timestamptz
   last_read_news_at: timestamptz
   last_sign_in_at: timestamptz
+  last_vac_ban_at: timestamptz
 
   """
   A computed field, executes function "get_total_player_losses"
@@ -88505,6 +88646,9 @@ input players_max_order_by {
   custom_avatar_url: order_by
   days_since_last_ban: order_by
   discord_id: order_by
+  faceit_ban_ends_at: order_by
+  faceit_banned_at: order_by
+  faceit_bans_checked_at: order_by
   faceit_elo: order_by
   faceit_nickname: order_by
   faceit_player_id: order_by
@@ -88513,8 +88657,10 @@ input players_max_order_by {
   faceit_url: order_by
   game_ban_count: order_by
   language: order_by
+  last_game_ban_at: order_by
   last_read_news_at: order_by
   last_sign_in_at: order_by
+  last_vac_ban_at: order_by
   name: order_by
   notification_timezone: order_by
   premier_rank: order_by
@@ -88544,6 +88690,9 @@ type players_min_fields {
   custom_avatar_url: String
   days_since_last_ban: Int
   discord_id: String
+  faceit_ban_ends_at: timestamptz
+  faceit_banned_at: timestamptz
+  faceit_bans_checked_at: timestamptz
   faceit_elo: Int
   faceit_nickname: String
   faceit_player_id: String
@@ -88552,8 +88701,10 @@ type players_min_fields {
   faceit_url: String
   game_ban_count: Int
   language: String
+  last_game_ban_at: timestamptz
   last_read_news_at: timestamptz
   last_sign_in_at: timestamptz
+  last_vac_ban_at: timestamptz
 
   """
   A computed field, executes function "get_total_player_losses"
@@ -88640,6 +88791,9 @@ input players_min_order_by {
   custom_avatar_url: order_by
   days_since_last_ban: order_by
   discord_id: order_by
+  faceit_ban_ends_at: order_by
+  faceit_banned_at: order_by
+  faceit_bans_checked_at: order_by
   faceit_elo: order_by
   faceit_nickname: order_by
   faceit_player_id: order_by
@@ -88648,8 +88802,10 @@ input players_min_order_by {
   faceit_url: order_by
   game_ban_count: order_by
   language: order_by
+  last_game_ban_at: order_by
   last_read_news_at: order_by
   last_sign_in_at: order_by
+  last_vac_ban_at: order_by
   name: order_by
   notification_timezone: order_by
   premier_rank: order_by
@@ -88714,6 +88870,9 @@ input players_order_by {
   draft_game_players_aggregate: draft_game_players_aggregate_order_by
   elo: order_by
   elo_history_aggregate: v_player_elo_aggregate_order_by
+  faceit_ban_ends_at: order_by
+  faceit_banned_at: order_by
+  faceit_bans_checked_at: order_by
   faceit_elo: order_by
   faceit_nickname: order_by
   faceit_player_id: order_by
@@ -88739,8 +88898,10 @@ input players_order_by {
   kills_aggregate: player_kills_aggregate_order_by
   kills_by_weapons_aggregate: player_kills_by_weapon_aggregate_order_by
   language: order_by
+  last_game_ban_at: order_by
   last_read_news_at: order_by
   last_sign_in_at: order_by
+  last_vac_ban_at: order_by
   live_lineup_aggregate: match_lineup_players_aggregate_order_by
   lobby_players_aggregate: lobby_players_aggregate_order_by
   losses: order_by
@@ -88828,6 +88989,15 @@ enum players_select_column {
   discord_id
 
   """column name"""
+  faceit_ban_ends_at
+
+  """column name"""
+  faceit_banned_at
+
+  """column name"""
+  faceit_bans_checked_at
+
+  """column name"""
   faceit_elo
 
   """column name"""
@@ -88852,10 +89022,16 @@ enum players_select_column {
   language
 
   """column name"""
+  last_game_ban_at
+
+  """column name"""
   last_read_news_at
 
   """column name"""
   last_sign_in_at
+
+  """column name"""
+  last_vac_ban_at
 
   """column name"""
   name
@@ -88914,6 +89090,9 @@ input players_set_input {
   custom_avatar_url: String
   days_since_last_ban: Int
   discord_id: String
+  faceit_ban_ends_at: timestamptz
+  faceit_banned_at: timestamptz
+  faceit_bans_checked_at: timestamptz
   faceit_elo: Int
   faceit_nickname: String
   faceit_player_id: String
@@ -88922,8 +89101,10 @@ input players_set_input {
   faceit_url: String
   game_ban_count: Int
   language: String
+  last_game_ban_at: timestamptz
   last_read_news_at: timestamptz
   last_sign_in_at: timestamptz
+  last_vac_ban_at: timestamptz
   name: String
   name_registered: Boolean
   notification_timezone: String
@@ -89198,6 +89379,9 @@ input players_stream_cursor_value_input {
   custom_avatar_url: String
   days_since_last_ban: Int
   discord_id: String
+  faceit_ban_ends_at: timestamptz
+  faceit_banned_at: timestamptz
+  faceit_bans_checked_at: timestamptz
   faceit_elo: Int
   faceit_nickname: String
   faceit_player_id: String
@@ -89206,8 +89390,10 @@ input players_stream_cursor_value_input {
   faceit_url: String
   game_ban_count: Int
   language: String
+  last_game_ban_at: timestamptz
   last_read_news_at: timestamptz
   last_sign_in_at: timestamptz
+  last_vac_ban_at: timestamptz
   name: String
   name_registered: Boolean
   notification_timezone: String
@@ -89330,6 +89516,15 @@ enum players_update_column {
   discord_id
 
   """column name"""
+  faceit_ban_ends_at
+
+  """column name"""
+  faceit_banned_at
+
+  """column name"""
+  faceit_bans_checked_at
+
+  """column name"""
   faceit_elo
 
   """column name"""
@@ -89354,10 +89549,16 @@ enum players_update_column {
   language
 
   """column name"""
+  last_game_ban_at
+
+  """column name"""
   last_read_news_at
 
   """column name"""
   last_sign_in_at
+
+  """column name"""
+  last_vac_ban_at
 
   """column name"""
   name
@@ -102281,6 +102482,7 @@ type recent_ban_entries {
   banned_here: Boolean!
   first_match_at: timestamptz
   game_ban_count: Int!
+  game_banned_on: date
   last_match_at: timestamptz
   last_match_map: String
   matches_played: Int!
@@ -102300,6 +102502,7 @@ type recent_ban_entries {
   steam_banned_on: date
   steam_id: bigint!
   vac_ban_count: Int!
+  vac_banned_on: date
 }
 
 """
@@ -102354,6 +102557,7 @@ input recent_ban_entries_bool_exp {
   banned_here: Boolean_comparison_exp
   first_match_at: timestamptz_comparison_exp
   game_ban_count: Int_comparison_exp
+  game_banned_on: date_comparison_exp
   last_match_at: timestamptz_comparison_exp
   last_match_map: String_comparison_exp
   matches_played: Int_comparison_exp
@@ -102366,6 +102570,7 @@ input recent_ban_entries_bool_exp {
   steam_banned_on: date_comparison_exp
   steam_id: bigint_comparison_exp
   vac_ban_count: Int_comparison_exp
+  vac_banned_on: date_comparison_exp
 }
 
 """
@@ -102410,6 +102615,7 @@ input recent_ban_entries_insert_input {
   banned_here: Boolean
   first_match_at: timestamptz
   game_ban_count: Int
+  game_banned_on: date
   last_match_at: timestamptz
   last_match_map: String
   matches_played: Int
@@ -102422,6 +102628,7 @@ input recent_ban_entries_insert_input {
   steam_banned_on: date
   steam_id: bigint
   vac_ban_count: Int
+  vac_banned_on: date
 }
 
 """aggregate max on columns"""
@@ -102430,6 +102637,7 @@ type recent_ban_entries_max_fields {
   banned_at_source: String
   first_match_at: timestamptz
   game_ban_count: Int
+  game_banned_on: date
   last_match_at: timestamptz
   last_match_map: String
   matches_played: Int
@@ -102439,6 +102647,7 @@ type recent_ban_entries_max_fields {
   steam_banned_on: date
   steam_id: bigint
   vac_ban_count: Int
+  vac_banned_on: date
 }
 
 """aggregate min on columns"""
@@ -102447,6 +102656,7 @@ type recent_ban_entries_min_fields {
   banned_at_source: String
   first_match_at: timestamptz
   game_ban_count: Int
+  game_banned_on: date
   last_match_at: timestamptz
   last_match_map: String
   matches_played: Int
@@ -102456,6 +102666,7 @@ type recent_ban_entries_min_fields {
   steam_banned_on: date
   steam_id: bigint
   vac_ban_count: Int
+  vac_banned_on: date
 }
 
 """
@@ -102477,6 +102688,7 @@ input recent_ban_entries_order_by {
   banned_here: order_by
   first_match_at: order_by
   game_ban_count: order_by
+  game_banned_on: order_by
   last_match_at: order_by
   last_match_map: order_by
   matches_played: order_by
@@ -102489,6 +102701,7 @@ input recent_ban_entries_order_by {
   steam_banned_on: order_by
   steam_id: order_by
   vac_ban_count: order_by
+  vac_banned_on: order_by
 }
 
 """prepend existing jsonb value of filtered columns with new jsonb value"""
@@ -102519,6 +102732,9 @@ enum recent_ban_entries_select_column {
   game_ban_count
 
   """column name"""
+  game_banned_on
+
+  """column name"""
   last_match_at
 
   """column name"""
@@ -102547,6 +102763,9 @@ enum recent_ban_entries_select_column {
 
   """column name"""
   vac_ban_count
+
+  """column name"""
+  vac_banned_on
 }
 
 """
@@ -102559,6 +102778,7 @@ input recent_ban_entries_set_input {
   banned_here: Boolean
   first_match_at: timestamptz
   game_ban_count: Int
+  game_banned_on: date
   last_match_at: timestamptz
   last_match_map: String
   matches_played: Int
@@ -102569,6 +102789,7 @@ input recent_ban_entries_set_input {
   steam_banned_on: date
   steam_id: bigint
   vac_ban_count: Int
+  vac_banned_on: date
 }
 
 """aggregate stddev on columns"""
@@ -102617,6 +102838,7 @@ input recent_ban_entries_stream_cursor_value_input {
   banned_here: Boolean
   first_match_at: timestamptz
   game_ban_count: Int
+  game_banned_on: date
   last_match_at: timestamptz
   last_match_map: String
   matches_played: Int
@@ -102627,6 +102849,7 @@ input recent_ban_entries_stream_cursor_value_input {
   steam_banned_on: date
   steam_id: bigint
   vac_ban_count: Int
+  vac_banned_on: date
 }
 
 """aggregate sum on columns"""
@@ -107132,6 +107355,11 @@ type servers {
     where: server_migrations_bool_exp
   ): server_migrations_aggregate!
   offline_at: timestamptz
+
+  """
+  A computed field, executes function "server_open_to_viewer"
+  """
+  open_to_viewer: Boolean
   player_management_runtime: String
   player_management_seen_at: timestamptz
   player_management_version: String
@@ -107219,6 +107447,17 @@ type servers {
   """An object relationship"""
   server_region: server_regions
   steam_relay: String
+
+  """
+  A computed field, executes function "get_server_tv_connection_link"
+  """
+  tv_connection_link: String
+
+  """
+  A computed field, executes function "get_server_tv_connection_string"
+  """
+  tv_connection_string: String
+  tv_enabled: Boolean!
   tv_port: Int
   type: e_server_types_enum!
   updated_at: timestamptz
@@ -107372,6 +107611,7 @@ input servers_bool_exp {
   migrations: server_migrations_bool_exp
   migrations_aggregate: server_migrations_aggregate_bool_exp
   offline_at: timestamptz_comparison_exp
+  open_to_viewer: Boolean_comparison_exp
   player_management_runtime: String_comparison_exp
   player_management_seen_at: timestamptz_comparison_exp
   player_management_version: String_comparison_exp
@@ -107389,6 +107629,9 @@ input servers_bool_exp {
   reserved_by_match_id: uuid_comparison_exp
   server_region: server_regions_bool_exp
   steam_relay: String_comparison_exp
+  tv_connection_link: String_comparison_exp
+  tv_connection_string: String_comparison_exp
+  tv_enabled: Boolean_comparison_exp
   tv_port: Int_comparison_exp
   type: e_server_types_enum_comparison_exp
   updated_at: timestamptz_comparison_exp
@@ -107491,6 +107734,7 @@ input servers_insert_input {
   reserved_by_match_id: uuid
   server_region: server_regions_obj_rel_insert_input
   steam_relay: String
+  tv_enabled: Boolean
   tv_port: Int
   type: e_server_types_enum
   updated_at: timestamptz
@@ -107531,6 +107775,16 @@ type servers_max_fields {
   region: String
   reserved_by_match_id: uuid
   steam_relay: String
+
+  """
+  A computed field, executes function "get_server_tv_connection_link"
+  """
+  tv_connection_link: String
+
+  """
+  A computed field, executes function "get_server_tv_connection_string"
+  """
+  tv_connection_string: String
   tv_port: Int
   updated_at: timestamptz
 }
@@ -107601,6 +107855,16 @@ type servers_min_fields {
   region: String
   reserved_by_match_id: uuid
   steam_relay: String
+
+  """
+  A computed field, executes function "get_server_tv_connection_link"
+  """
+  tv_connection_link: String
+
+  """
+  A computed field, executes function "get_server_tv_connection_string"
+  """
+  tv_connection_string: String
   tv_port: Int
   updated_at: timestamptz
 }
@@ -107702,6 +107966,7 @@ input servers_order_by {
   max_players: order_by
   migrations_aggregate: server_migrations_aggregate_order_by
   offline_at: order_by
+  open_to_viewer: order_by
   player_management_runtime: order_by
   player_management_seen_at: order_by
   player_management_version: order_by
@@ -107717,6 +107982,9 @@ input servers_order_by {
   reserved_by_match_id: order_by
   server_region: server_regions_order_by
   steam_relay: order_by
+  tv_connection_link: order_by
+  tv_connection_string: order_by
+  tv_enabled: order_by
   tv_port: order_by
   type: order_by
   updated_at: order_by
@@ -107842,6 +108110,9 @@ enum servers_select_column {
   steam_relay
 
   """column name"""
+  tv_enabled
+
+  """column name"""
   tv_port
 
   """column name"""
@@ -107878,6 +108149,9 @@ enum servers_select_column_servers_aggregate_bool_exp_bool_and_arguments_columns
 
   """column name"""
   rcon_status
+
+  """column name"""
+  tv_enabled
 }
 
 """
@@ -107907,6 +108181,9 @@ enum servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_columns 
 
   """column name"""
   rcon_status
+
+  """column name"""
+  tv_enabled
 }
 
 """
@@ -107948,6 +108225,7 @@ input servers_set_input {
   region: String
   reserved_by_match_id: uuid
   steam_relay: String
+  tv_enabled: Boolean
   tv_port: Int
   type: e_server_types_enum
   updated_at: timestamptz
@@ -108055,6 +108333,7 @@ input servers_stream_cursor_value_input {
   region: String
   reserved_by_match_id: uuid
   steam_relay: String
+  tv_enabled: Boolean
   tv_port: Int
   type: e_server_types_enum
   updated_at: timestamptz
@@ -108186,6 +108465,9 @@ enum servers_update_column {
 
   """column name"""
   steam_relay
+
+  """column name"""
+  tv_enabled
 
   """column name"""
   tv_port
@@ -127556,10 +127838,6 @@ type team_scrim_requests {
   """An object relationship"""
   match_options: match_options
   match_options_id: uuid
-
-  """
-  Terminal match status captured by tbd_match_cancel_scrim before the match row is deleted, so v_team_reputation survives canceled-match GC.
-  """
   match_outcome: String
 
   """An array relationship"""
@@ -127778,10 +128056,6 @@ input team_scrim_requests_insert_input {
   match_id: uuid
   match_options: match_options_obj_rel_insert_input
   match_options_id: uuid
-
-  """
-  Terminal match status captured by tbd_match_cancel_scrim before the match row is deleted, so v_team_reputation survives canceled-match GC.
-  """
   match_outcome: String
   proposals: team_scrim_request_proposals_arr_rel_insert_input
   proposed_scheduled_at: timestamptz
@@ -127805,10 +128079,6 @@ type team_scrim_requests_max_fields {
   id: uuid
   match_id: uuid
   match_options_id: uuid
-
-  """
-  Terminal match status captured by tbd_match_cancel_scrim before the match row is deleted, so v_team_reputation survives canceled-match GC.
-  """
   match_outcome: String
   proposed_scheduled_at: timestamptz
   region: String
@@ -127829,10 +128099,6 @@ input team_scrim_requests_max_order_by {
   id: order_by
   match_id: order_by
   match_options_id: order_by
-
-  """
-  Terminal match status captured by tbd_match_cancel_scrim before the match row is deleted, so v_team_reputation survives canceled-match GC.
-  """
   match_outcome: order_by
   proposed_scheduled_at: order_by
   region: order_by
@@ -127851,10 +128117,6 @@ type team_scrim_requests_min_fields {
   id: uuid
   match_id: uuid
   match_options_id: uuid
-
-  """
-  Terminal match status captured by tbd_match_cancel_scrim before the match row is deleted, so v_team_reputation survives canceled-match GC.
-  """
   match_outcome: String
   proposed_scheduled_at: timestamptz
   region: String
@@ -127875,10 +128137,6 @@ input team_scrim_requests_min_order_by {
   id: order_by
   match_id: order_by
   match_options_id: order_by
-
-  """
-  Terminal match status captured by tbd_match_cancel_scrim before the match row is deleted, so v_team_reputation survives canceled-match GC.
-  """
   match_outcome: order_by
   proposed_scheduled_at: order_by
   region: order_by
@@ -128063,10 +128321,6 @@ input team_scrim_requests_set_input {
   id: uuid
   match_id: uuid
   match_options_id: uuid
-
-  """
-  Terminal match status captured by tbd_match_cancel_scrim before the match row is deleted, so v_team_reputation survives canceled-match GC.
-  """
   match_outcome: String
   proposed_scheduled_at: timestamptz
   region: String
@@ -128137,10 +128391,6 @@ input team_scrim_requests_stream_cursor_value_input {
   id: uuid
   match_id: uuid
   match_options_id: uuid
-
-  """
-  Terminal match status captured by tbd_match_cancel_scrim before the match row is deleted, so v_team_reputation survives canceled-match GC.
-  """
   match_outcome: String
   proposed_scheduled_at: timestamptz
   region: String
@@ -131280,8 +131530,6 @@ columns and relationships of "tournament_free_agents"
 """
 type tournament_free_agents {
   checked_in_at: timestamptz
-
-  """Registration priority: decides who makes the cut"""
   created_at: timestamptz!
 
   """An object relationship"""
@@ -131424,8 +131672,6 @@ input type for inserting data into table "tournament_free_agents"
 """
 input tournament_free_agents_insert_input {
   checked_in_at: timestamptz
-
-  """Registration priority: decides who makes the cut"""
   created_at: timestamptz
   e_tournament_free_agent_status: e_tournament_free_agent_statuses_obj_rel_insert_input
   id: uuid
@@ -131441,8 +131687,6 @@ input tournament_free_agents_insert_input {
 """aggregate max on columns"""
 type tournament_free_agents_max_fields {
   checked_in_at: timestamptz
-
-  """Registration priority: decides who makes the cut"""
   created_at: timestamptz
   id: uuid
   player_steam_id: bigint
@@ -131455,8 +131699,6 @@ order by max() on columns of table "tournament_free_agents"
 """
 input tournament_free_agents_max_order_by {
   checked_in_at: order_by
-
-  """Registration priority: decides who makes the cut"""
   created_at: order_by
   id: order_by
   player_steam_id: order_by
@@ -131467,8 +131709,6 @@ input tournament_free_agents_max_order_by {
 """aggregate min on columns"""
 type tournament_free_agents_min_fields {
   checked_in_at: timestamptz
-
-  """Registration priority: decides who makes the cut"""
   created_at: timestamptz
   id: uuid
   player_steam_id: bigint
@@ -131481,8 +131721,6 @@ order by min() on columns of table "tournament_free_agents"
 """
 input tournament_free_agents_min_order_by {
   checked_in_at: order_by
-
-  """Registration priority: decides who makes the cut"""
   created_at: order_by
   id: order_by
   player_steam_id: order_by
@@ -131561,8 +131799,6 @@ input type for updating data in table "tournament_free_agents"
 """
 input tournament_free_agents_set_input {
   checked_in_at: timestamptz
-
-  """Registration priority: decides who makes the cut"""
   created_at: timestamptz
   id: uuid
   player_steam_id: bigint
@@ -131621,8 +131857,6 @@ input tournament_free_agents_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input tournament_free_agents_stream_cursor_value_input {
   checked_in_at: timestamptz
-
-  """Registration priority: decides who makes the cut"""
   created_at: timestamptz
   id: uuid
   player_steam_id: bigint
@@ -137744,8 +137978,6 @@ type tournament_teams {
   A computed field, executes function "tournament_team_invites_join_team"
   """
   invites_join_team: Boolean
-
-  """Created by draft_tournament_free_agent_teams rather than registered"""
   is_drafted: Boolean!
   name: String
   owner_steam_id: bigint!
@@ -137978,8 +138210,6 @@ input tournament_teams_insert_input {
   free_agents: tournament_free_agents_arr_rel_insert_input
   id: uuid
   invites: tournament_team_invites_arr_rel_insert_input
-
-  """Created by draft_tournament_free_agent_teams rather than registered"""
   is_drafted: Boolean
   name: String
   owner_steam_id: bigint
@@ -138186,8 +138416,6 @@ input tournament_teams_set_input {
   created_at: timestamptz
   eligible_at: timestamptz
   id: uuid
-
-  """Created by draft_tournament_free_agent_teams rather than registered"""
   is_drafted: Boolean
   name: String
   owner_steam_id: bigint
@@ -138263,8 +138491,6 @@ input tournament_teams_stream_cursor_value_input {
   created_at: timestamptz
   eligible_at: timestamptz
   id: uuid
-
-  """Created by draft_tournament_free_agent_teams rather than registered"""
   is_drafted: Boolean
   name: String
   owner_steam_id: bigint
@@ -138557,15 +138783,9 @@ type tournaments {
     """filter the rows returned"""
     where: tournament_categories_bool_exp
   ): tournament_categories_aggregate!
-
-  """The check_in_ends_at the close pass has already acted on"""
   check_in_closed_for: timestamptz
   check_in_closes_before_minutes: Int!
-
-  """The check_in_ends_at the closing reminder was sent for"""
   check_in_closing_notified_for: timestamptz
-
-  """When the check-in window closes; NULL until it opens"""
   check_in_ends_at: timestamptz
 
   """
@@ -138574,10 +138794,6 @@ type tournaments {
   check_in_open: Boolean
   check_in_opens_before_minutes: Int!
   check_in_required: Boolean!
-
-  """
-  Who confirms a team: Captains, every rostered Player, or the organizer (Admin)
-  """
   check_in_setting: e_check_in_settings_enum!
 
   """
@@ -139009,10 +139225,6 @@ type tournaments {
   ): tournament_stages_aggregate!
   start: timestamptz!
   status: e_tournament_status_enum!
-
-  """
-  Whether teams may roster and field substitutes beyond the starting lineup
-  """
   substitutes_enabled: Boolean!
 
   """An array relationship"""
@@ -139399,22 +139611,12 @@ input tournaments_insert_input {
   awards_enabled: Boolean
   banner: String
   categories: tournament_categories_arr_rel_insert_input
-
-  """The check_in_ends_at the close pass has already acted on"""
   check_in_closed_for: timestamptz
   check_in_closes_before_minutes: Int
-
-  """The check_in_ends_at the closing reminder was sent for"""
   check_in_closing_notified_for: timestamptz
-
-  """When the check-in window closes; NULL until it opens"""
   check_in_ends_at: timestamptz
   check_in_opens_before_minutes: Int
   check_in_required: Boolean
-
-  """
-  Who confirms a team: Captains, every rostered Player, or the organizer (Admin)
-  """
   check_in_setting: e_check_in_settings_enum
   created_at: timestamptz
   description: String
@@ -139467,10 +139669,6 @@ input tournaments_insert_input {
   stages: tournament_stages_arr_rel_insert_input
   start: timestamptz
   status: e_tournament_status_enum
-
-  """
-  Whether teams may roster and field substitutes beyond the starting lineup
-  """
   substitutes_enabled: Boolean
   teams: tournament_teams_arr_rel_insert_input
 }
@@ -139478,15 +139676,9 @@ input tournaments_insert_input {
 """aggregate max on columns"""
 type tournaments_max_fields {
   banner: String
-
-  """The check_in_ends_at the close pass has already acted on"""
   check_in_closed_for: timestamptz
   check_in_closes_before_minutes: Int
-
-  """The check_in_ends_at the closing reminder was sent for"""
   check_in_closing_notified_for: timestamptz
-
-  """When the check-in window closes; NULL until it opens"""
   check_in_ends_at: timestamptz
   check_in_opens_before_minutes: Int
   created_at: timestamptz
@@ -139535,15 +139727,9 @@ order by max() on columns of table "tournaments"
 """
 input tournaments_max_order_by {
   banner: order_by
-
-  """The check_in_ends_at the close pass has already acted on"""
   check_in_closed_for: order_by
   check_in_closes_before_minutes: order_by
-
-  """The check_in_ends_at the closing reminder was sent for"""
   check_in_closing_notified_for: order_by
-
-  """When the check-in window closes; NULL until it opens"""
   check_in_ends_at: order_by
   check_in_opens_before_minutes: order_by
   created_at: order_by
@@ -139570,15 +139756,9 @@ input tournaments_max_order_by {
 """aggregate min on columns"""
 type tournaments_min_fields {
   banner: String
-
-  """The check_in_ends_at the close pass has already acted on"""
   check_in_closed_for: timestamptz
   check_in_closes_before_minutes: Int
-
-  """The check_in_ends_at the closing reminder was sent for"""
   check_in_closing_notified_for: timestamptz
-
-  """When the check-in window closes; NULL until it opens"""
   check_in_ends_at: timestamptz
   check_in_opens_before_minutes: Int
   created_at: timestamptz
@@ -139627,15 +139807,9 @@ order by min() on columns of table "tournaments"
 """
 input tournaments_min_order_by {
   banner: order_by
-
-  """The check_in_ends_at the close pass has already acted on"""
   check_in_closed_for: order_by
   check_in_closes_before_minutes: order_by
-
-  """The check_in_ends_at the closing reminder was sent for"""
   check_in_closing_notified_for: order_by
-
-  """When the check-in window closes; NULL until it opens"""
   check_in_ends_at: order_by
   check_in_opens_before_minutes: order_by
   created_at: order_by
@@ -140173,22 +140347,12 @@ input tournaments_set_input {
   auto_start: Boolean
   awards_enabled: Boolean
   banner: String
-
-  """The check_in_ends_at the close pass has already acted on"""
   check_in_closed_for: timestamptz
   check_in_closes_before_minutes: Int
-
-  """The check_in_ends_at the closing reminder was sent for"""
   check_in_closing_notified_for: timestamptz
-
-  """When the check-in window closes; NULL until it opens"""
   check_in_ends_at: timestamptz
   check_in_opens_before_minutes: Int
   check_in_required: Boolean
-
-  """
-  Who confirms a team: Captains, every rostered Player, or the organizer (Admin)
-  """
   check_in_setting: e_check_in_settings_enum
   created_at: timestamptz
   description: String
@@ -140229,10 +140393,6 @@ input tournaments_set_input {
   scheduling_mode: String
   start: timestamptz
   status: e_tournament_status_enum
-
-  """
-  Whether teams may roster and field substitutes beyond the starting lineup
-  """
   substitutes_enabled: Boolean
 }
 
@@ -140384,22 +140544,12 @@ input tournaments_stream_cursor_value_input {
   auto_start: Boolean
   awards_enabled: Boolean
   banner: String
-
-  """The check_in_ends_at the close pass has already acted on"""
   check_in_closed_for: timestamptz
   check_in_closes_before_minutes: Int
-
-  """The check_in_ends_at the closing reminder was sent for"""
   check_in_closing_notified_for: timestamptz
-
-  """When the check-in window closes; NULL until it opens"""
   check_in_ends_at: timestamptz
   check_in_opens_before_minutes: Int
   check_in_required: Boolean
-
-  """
-  Who confirms a team: Captains, every rostered Player, or the organizer (Admin)
-  """
   check_in_setting: e_check_in_settings_enum
   created_at: timestamptz
   description: String
@@ -140440,10 +140590,6 @@ input tournaments_stream_cursor_value_input {
   scheduling_mode: String
   start: timestamptz
   status: e_tournament_status_enum
-
-  """
-  Whether teams may roster and field substitutes beyond the starting lineup
-  """
   substitutes_enabled: Boolean
 }
 
