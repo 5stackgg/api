@@ -186,6 +186,18 @@ describe("SteamGcService.resolveShareCode", () => {
     });
   });
 
+  it("takes the reply for a share code that has CSGO inside it", async () => {
+    const { request, session } = build();
+
+    const { pending } = await request("CSGO-dDTOM-tT9ur-wEavE-uqERi-LCSGO");
+    session().cs.emit("matchList", [reply("3354591961205914320")]);
+    await jest.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS);
+
+    await expect(pending).resolves.toMatchObject({
+      demoUrl: "http://replay/3354591961205914320.dem.bz2",
+    });
+  });
+
   it("returns null when the GC answers without the match", async () => {
     const { request, session } = build();
 

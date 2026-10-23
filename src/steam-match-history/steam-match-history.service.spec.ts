@@ -1,8 +1,8 @@
 import { PollSteamMatchHistoryForUser } from "./jobs/PollSteamMatchHistoryForUser";
 import { SteamMatchHistoryService } from "./steam-match-history.service";
 
-const SHARE_CODE = "CSGO-fhdrj-2EkxQ-8Tqrn-bmDBE-3VeuA";
-const VALVE_MATCH_ID = "3299746880671809554";
+const SHARE_CODE = "CSGO-GADqf-jjyJ8-cSP2r-smZRo-TO2xK";
+const VALVE_MATCH_ID = "3230642215713767580";
 const STEAM_ID = "76561197960500905";
 
 type QueryCall = { sql: string; params: unknown[] };

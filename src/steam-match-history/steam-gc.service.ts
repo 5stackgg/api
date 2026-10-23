@@ -7,8 +7,8 @@ import {
 import { ConfigService } from "@nestjs/config";
 import SteamUser from "steam-user";
 import GlobalOffensive from "globaloffensive";
-import { ShareCode } from "globaloffensive-sharecode";
 import { CacheService } from "../cache/cache.service";
+import { decodeShareCode } from "./shareCode";
 
 const CS2_APP_ID = 730;
 const REFRESH_TOKEN_CACHE_KEY = "steam-gc:refresh-token";
@@ -242,6 +242,8 @@ export class SteamGcService
   public async resolveShareCode(
     shareCode: string,
   ): Promise<ResolvedMatch | null> {
+    const matchId = decodeShareCode(shareCode).matchId.toString();
+
     if (this.idleTimer) {
       clearTimeout(this.idleTimer);
       this.idleTimer = undefined;
@@ -253,9 +255,6 @@ export class SteamGcService
     if (!cs) {
       throw new SteamGcConnectionError("steam-gc not connected");
     }
-
-    const decoded = new ShareCode(shareCode).decode();
-    const matchId = decoded ? decoded.matchId : null;
 
     try {
       const matches = await new Promise<unknown>((resolve, reject) => {

@@ -8,8 +8,8 @@ import {
   SqlTestDb,
 } from "./utils/sql-test-db";
 
-const SHARE_CODE = "CSGO-fhdrj-2EkxQ-8Tqrn-bmDBE-3VeuA";
-const VALVE_MATCH_ID = "3299746880671809554";
+const SHARE_CODE = "CSGO-GADqf-jjyJ8-cSP2r-smZRo-TO2xK";
+const VALVE_MATCH_ID = "3230642215713767580";
 
 describe("import a Valve match from a pasted share code", () => {
   let db: SqlTestDb;
@@ -163,7 +163,7 @@ describe("import a Valve match from a pasted share code", () => {
 
   it("retries a failed import with the code just pasted, not the one that failed", async () => {
     const [first, second] = await fx.players(2);
-    await seedPending("Failed", first, "CSGO-ehdrj-2EkxQ-8Tqrn-bmDBE-3VeuA");
+    await seedPending("Failed", first, "CSGO-HADqf-jjyJ8-cSP2r-smZRo-TO2xK");
     const { service } = build();
 
     await expect(service.importShareCode(second, SHARE_CODE)).resolves.toEqual({
@@ -238,7 +238,7 @@ describe("import a Valve match from a pasted share code", () => {
   it("looks up where each share code's import stands", async () => {
     const player = await fx.player();
     const { service } = build();
-    const OTHER = "CSGO-bB99d-EEBtm-RzCYc-GjD8g-ofYCA";
+    const OTHER = "CSGO-vGqmL-vb2x2-nTQtU-e9dco-qWHzN";
 
     await expect(
       service.lookupShareCodes([SHARE_CODE, OTHER, "not a code"]),
