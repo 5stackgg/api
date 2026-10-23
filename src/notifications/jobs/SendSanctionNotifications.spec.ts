@@ -25,6 +25,7 @@ describe("SendSanctionNotifications", () => {
       notifyWarnedPlayer: step("warned player"),
       notifyAdminsOfBan: step("admins"),
       notifyMatchPlayersOfSanction: step("co-players"),
+      isRedundantAutoBan: jest.fn(async () => false),
     };
     logger = { error: jest.fn() };
     job = new SendSanctionNotifications(notifications as any, logger as any);
@@ -63,5 +64,13 @@ describe("SendSanctionNotifications", () => {
       ban,
     );
     expect(logger.error).toHaveBeenCalledTimes(2);
+  });
+
+  it("says nothing for an automatic ban on a player who is already banned", async () => {
+    notifications.isRedundantAutoBan.mockResolvedValue(true);
+
+    await job.process({ data: ban } as any);
+
+    expect(order).toEqual([]);
   });
 });

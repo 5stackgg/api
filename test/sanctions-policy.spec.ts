@@ -199,6 +199,11 @@ describe("sanctions policy (SQL-driven)", () => {
         "public.sanction_vac_ban_window_days": "0",
         "public.sanction_vac_ban_durations": "0",
         "public.sanction_vac_ban_scope": "both",
+        "public.sanction_faceit_ban_enabled": "true",
+        "public.sanction_faceit_ban_threshold": "1",
+        "public.sanction_faceit_ban_window_days": "0",
+        "public.sanction_faceit_ban_durations": "0",
+        "public.sanction_faceit_ban_scope": "both",
         "public.sanction_tournament_no_show_enabled": "true",
         "public.sanction_tournament_no_show_threshold": "3",
         "public.sanction_tournament_no_show_window_days": "30",
@@ -225,6 +230,7 @@ describe("sanctions policy (SQL-driven)", () => {
       );
 
       expect(rows.map((row) => row.value)).toEqual([
+        "faceit_ban",
         "match_abandon",
         "tournament_no_show",
         "vac_ban",

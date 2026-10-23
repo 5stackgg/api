@@ -12,6 +12,8 @@ import { Queue } from "bullmq";
 import { RedisManagerService } from "../../redis/redis-manager/redis-manager.service";
 import { SteamMatchHistoryQueues } from "../../steam-match-history/enums/SteamMatchHistoryQueues";
 import { SteamBansService } from "../../steam-match-history/steam-bans.service";
+import { FaceitQueues } from "../../faceit/enums/FaceitQueues";
+import { FaceitBansService } from "../../faceit/faceit-bans.service";
 import { e_player_roles_enum } from "../../../generated";
 
 interface SteamProfile {
@@ -47,6 +49,8 @@ export class SteamStrategy extends PassportStrategy(_SteamStrategy) {
     private readonly pollQueue: Queue,
     @InjectQueue(SteamMatchHistoryQueues.CheckSteamBans)
     private readonly steamBansQueue: Queue,
+    @InjectQueue(FaceitQueues.CheckFaceitBans)
+    private readonly faceitBansQueue: Queue,
     private readonly redisManager: RedisManagerService,
     private readonly logger: Logger,
   ) {
@@ -139,5 +143,13 @@ export class SteamStrategy extends PassportStrategy(_SteamStrategy) {
         `on-login steam-bans enqueue failed for ${steamId}: ${(err as Error)?.message ?? err}`,
       );
     });
+
+    void FaceitBansService.enqueueChecks(this.faceitBansQueue, [steamId]).catch(
+      (err) => {
+        this.logger.error(
+          `on-login faceit-bans enqueue failed for ${steamId}: ${(err as Error)?.message ?? err}`,
+        );
+      },
+    );
   }
 }

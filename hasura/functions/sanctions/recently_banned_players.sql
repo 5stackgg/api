@@ -1,5 +1,6 @@
 -- The /bans list: everyone banned recently, on Steam (VAC or game ban) or here
--- (by staff, or automatically by the vac_ban rule), one row per player.
+-- (by staff, or automatically by the vac_ban or faceit_ban rule), one row per
+-- player.
 --
 -- Steam only says how many whole days ago the LATEST ban of either kind was,
 -- as of when we last asked (steam_bans_checked_at), so a Steam ban is a day,

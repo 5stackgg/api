@@ -6,6 +6,7 @@ insert into e_sanction_sources
 values
     ('match_abandon', 'A player left or never connected to a match they were rostered for', true, 1, 7, '10,60,120,240,480,960,1920', 'matchmaking', false),
     ('vac_ban', 'Steam reports a VAC or game ban on the player''s account', true, 1, 0, '0', 'both', true),
+    ('faceit_ban', 'FACEIT reports an active cheating ban on the player''s account', true, 1, 0, '0', 'both', true),
     ('tournament_no_show', 'A team missed a required tournament check-in', true, 3, 30, '10080', 'tournaments', false)
 on conflict(value) do update set
     "description" = EXCLUDED."description",

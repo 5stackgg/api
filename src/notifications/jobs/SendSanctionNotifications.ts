@@ -25,6 +25,13 @@ export class SendSanctionNotifications extends WorkerHost {
   // failing must not cost the others; the co-player fan-out is the largest and
   // goes last.
   async process(job: Job<SanctionNotification>): Promise<void> {
+    const redundant = await this.notifications
+      .isRedundantAutoBan(job.data.sanctionId)
+      .catch(() => false);
+    if (redundant) {
+      return;
+    }
+
     const steps: Array<
       [string, (data: SanctionNotification) => Promise<void>]
     > = [

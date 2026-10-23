@@ -5,6 +5,7 @@ import { UseQueue } from "src/utilities/QueueProcessors";
 import { FaceitQueues } from "../enums/FaceitQueues";
 import { FaceitMatchImportService } from "../faceit-match-import.service";
 import { FaceitService } from "../faceit.service";
+import { FaceitBansService } from "../faceit-bans.service";
 
 @UseQueue("Faceit", FaceitQueues.PollAllFaceitMatchHistory)
 export class PollAllFaceitMatchHistory extends WorkerHost {
@@ -12,6 +13,7 @@ export class PollAllFaceitMatchHistory extends WorkerHost {
     private readonly logger: Logger,
     private readonly faceit: FaceitService,
     private readonly faceitImport: FaceitMatchImportService,
+    private readonly faceitBans: FaceitBansService,
   ) {
     super();
   }
@@ -34,6 +36,14 @@ export class PollAllFaceitMatchHistory extends WorkerHost {
         `faceit rating refresh pass failed: ${
           (error as Error)?.message ?? String(error)
         }`,
+      );
+    }
+
+    try {
+      await this.faceitBans.queueStaleChecks();
+    } catch (error) {
+      this.logger.warn(
+        `faceit ban sweep failed: ${(error as Error)?.message ?? String(error)}`,
       );
     }
 

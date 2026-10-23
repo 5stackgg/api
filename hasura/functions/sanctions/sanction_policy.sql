@@ -234,6 +234,13 @@ BEGIN
                AND (p.vac_banned OR p.vac_ban_count > 0)
                AND NOT public.vac_ban_predates_cs2(b.last_ban_at)
                AND b.last_ban_at > _cutoff;
+    ELSIF _source = 'faceit_ban' THEN
+        RETURN QUERY
+            SELECT 1, p.faceit_banned_at
+              FROM public.players p
+             WHERE p.steam_id = _steam_id
+               AND p.faceit_banned_at > _cutoff
+               AND (p.faceit_ban_ends_at IS NULL OR p.faceit_ban_ends_at > now());
     END IF;
 
     RETURN;
@@ -313,6 +320,7 @@ STABLE
 AS $$
 DECLARE
     _occurrences record;
+    _expiry timestamptz;
 BEGIN
     SELECT * INTO _occurrences FROM public.sanction_occurrences(_source, _steam_id);
 
@@ -320,11 +328,21 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    RETURN public.sanction_expiry(
+    _expiry := public.sanction_expiry(
         _source,
         _occurrences.occurrence_count,
         _occurrences.last_occurred_at
     );
+
+    -- A FACEIT ban is never held here past the end FACEIT gave it.
+    IF _source = 'faceit_ban' AND _expiry IS NOT NULL THEN
+        SELECT LEAST(_expiry, COALESCE(p.faceit_ban_ends_at, 'infinity'::timestamptz))
+          INTO _expiry
+          FROM public.players p
+         WHERE p.steam_id = _steam_id;
+    END IF;
+
+    RETURN _expiry;
 END;
 $$;
 
