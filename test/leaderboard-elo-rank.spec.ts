@@ -84,6 +84,7 @@ describe("ELO leaderboard and rank", () => {
     fx = new Fixtures(postgres, 76561199760000000n);
     tfx = new TournamentFixtures(postgres, fx);
     await fx.region();
+    await fx.setting("leaderboard_min_matches", "1");
     const tournament = await tfx.createTournament([
       { type: "SingleElimination", order: 1, minTeams: 4, maxTeams: 8 },
     ]);

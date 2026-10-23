@@ -43,9 +43,7 @@ describe("awards (SQL-driven)", () => {
     // seasons carries an exclusion constraint against overlapping ranges, so
     // leftovers from one test collide with the next one's open-ended season.
     await postgres.query("DELETE FROM seasons");
-    await postgres.query(
-      "DELETE FROM settings WHERE name = 'leaderboard_min_matches'",
-    );
+    await fx.setting("leaderboard_min_matches", "1");
   });
 
   const SE4 = [
@@ -1137,9 +1135,7 @@ describe("awards (SQL-driven)", () => {
         { steam: players[2], elo: 1200, impact: 1.0, matches: 3 },
         { steam: players[3], elo: 1100, impact: 1.0, matches: 3 },
       ]);
-      await postgres.query(
-        "INSERT INTO settings (name, value) VALUES ('leaderboard_min_matches', '3')",
-      );
+      await fx.setting("leaderboard_min_matches", "3");
 
       await postgres.query("UPDATE seasons SET ends_at = now() WHERE id = $1", [
         season.id,

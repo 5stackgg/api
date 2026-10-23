@@ -36,9 +36,9 @@ describe("read-side views and aggregations (SQL-driven)", () => {
     await postgres.query("DELETE FROM players");
     await postgres.query("DELETE FROM seasons");
     await postgres.query(
-      `DELETE FROM settings WHERE name IN
-         ('public.seasons_enabled', 'leaderboard_min_matches', 'leaderboard_min_rounds')`,
+      "DELETE FROM settings WHERE name = 'public.seasons_enabled'",
     );
+    await fx.setting("leaderboard_min_matches", "1");
   });
 
   const T = (minutesAgo: number) =>
@@ -999,13 +999,6 @@ describe("read-side views and aggregations (SQL-driven)", () => {
     });
 
     it("leaderboard_min_matches keeps players below it off every match board", async () => {
-      const setting = (name: string, value: string) =>
-        postgres.query(
-          `INSERT INTO settings (name, value) VALUES ($1, $2)
-           ON CONFLICT (name) DO UPDATE SET value = $2`,
-          [name, value],
-        );
-      await setting("leaderboard_min_rounds", "0");
       await fx.enableSeasons(true);
       const seasonId = await fx.season(T(60 * 24 * 7));
 
@@ -1041,7 +1034,7 @@ describe("read-side views and aggregations (SQL-driven)", () => {
         expect(await players(ladder)).toContain(rookieA);
       }
 
-      await setting("leaderboard_min_matches", "2");
+      await fx.setting("leaderboard_min_matches", "2");
 
       for (const ladder of ladders) {
         expect(await players(ladder)).toEqual([regular]);
@@ -1056,6 +1049,14 @@ describe("read-side views and aggregations (SQL-driven)", () => {
       const [regularRank] = await rank(regular);
       expect(Number(regularRank.rank)).toBe(1);
       expect(Number(regularRank.total)).toBe(1);
+
+      await postgres.query(
+        "DELETE FROM settings WHERE name = 'leaderboard_min_matches'",
+      );
+
+      for (const ladder of ladders) {
+        expect(await players(ladder)).toEqual([]);
+      }
     });
 
     it("get_player_leaderboard_rank locates a player inside the ladder", async () => {

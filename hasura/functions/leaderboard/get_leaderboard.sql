@@ -241,9 +241,9 @@ DECLARE
   _all_time_peak boolean;
   _is_rolling_window boolean;
   _is_active_season boolean;
-  -- Every filter below checks it as `_min_matches <= 1 OR ...`: at the default
-  -- that folds away, so a value-only rank can still skip match_counts.
-  _min_matches int := get_int_setting('leaderboard_min_matches', 1);
+  -- Every filter below checks it as `_min_matches <= 1 OR ...`: set to 1 that
+  -- folds away, so a value-only rank can still skip match_counts.
+  _min_matches int := get_int_setting('leaderboard_min_matches', 3);
 BEGIN
   IF _season_id IS NOT NULL THEN
     SELECT s.starts_at, COALESCE(s.ends_at, now())
@@ -710,7 +710,7 @@ AS $$
 DECLARE
   _from timestamptz;
   _to timestamptz;
-  _min_matches int := get_int_setting('leaderboard_min_matches', 1);
+  _min_matches int := get_int_setting('leaderboard_min_matches', 3);
 BEGIN
   IF _season_id IS NOT NULL THEN
     SELECT s.starts_at, COALESCE(s.ends_at, now())
@@ -809,7 +809,7 @@ AS $$
 DECLARE
   _from timestamptz;
   _to timestamptz;
-  _min_matches int := get_int_setting('leaderboard_min_matches', 1);
+  _min_matches int := get_int_setting('leaderboard_min_matches', 3);
 BEGIN
   IF _season_id IS NOT NULL THEN
     SELECT s.starts_at, COALESCE(s.ends_at, now())
@@ -879,7 +879,7 @@ AS $$
 DECLARE
   _from timestamptz;
   _to timestamptz;
-  _min_matches int := get_int_setting('leaderboard_min_matches', 1);
+  _min_matches int := get_int_setting('leaderboard_min_matches', 3);
 BEGIN
   IF _season_id IS NOT NULL THEN
     SELECT s.starts_at, COALESCE(s.ends_at, now())
@@ -1155,12 +1155,6 @@ $$;
 -- ============================================================
 -- HLTV-stat leaderboards (rating / ADR / KPR / KAST), rounds-weighted
 -- value = _metric, secondary = complementary stat, tertiary = rounds played
---
--- Minimum-rounds floor comes from the leaderboard_min_rounds setting. The old
--- hard-coded 50 was sized for 5v5 and emptied this board entirely for Duel,
--- Wingman and early-season data; dropping it outright let a single 20-3 map
--- outrank every regular, since the value is a rounds-weighted average. The
--- default sits at roughly one competitive map. Set it to 0 to disable.
 -- ============================================================
 CREATE OR REPLACE FUNCTION public._leaderboard_hltv_metric(
   _metric TEXT,
@@ -1177,7 +1171,7 @@ AS $$
 DECLARE
   _from timestamptz;
   _to timestamptz;
-  _min_matches int := get_int_setting('leaderboard_min_matches', 1);
+  _min_matches int := get_int_setting('leaderboard_min_matches', 3);
 BEGIN
   IF _season_id IS NOT NULL THEN
     SELECT s.starts_at, COALESCE(s.ends_at, now())
@@ -1218,8 +1212,7 @@ BEGIN
       AND (lower(_source) = 'overall' OR public._leaderboard_match_source(h.match_id) = lower(_source))
       AND (_role IS NULL OR r.role = _role)
     GROUP BY h.steam_id
-    HAVING SUM(h.rounds_played) >= get_int_setting('leaderboard_min_rounds', 20)
-       AND COUNT(DISTINCT h.match_id) >= _min_matches
+    HAVING COUNT(DISTINCT h.match_id) >= _min_matches
   )
   SELECT
     a.steam_id::text   AS player_steam_id,
@@ -1265,7 +1258,7 @@ AS $$
 DECLARE
   _from timestamptz;
   _to timestamptz;
-  _min_matches int := get_int_setting('leaderboard_min_matches', 1);
+  _min_matches int := get_int_setting('leaderboard_min_matches', 3);
 BEGIN
   IF _season_id IS NOT NULL THEN
     SELECT s.starts_at, COALESCE(s.ends_at, now())
@@ -1303,8 +1296,7 @@ BEGIN
       AND (lower(_source) = 'overall' OR public._leaderboard_match_source(s.match_id) = lower(_source))
       AND (_role IS NULL OR r.role = _role)
     GROUP BY s.steam_id
-    HAVING SUM(s.rounds_played) >= get_int_setting('leaderboard_min_rounds', 20)
-       AND COUNT(DISTINCT s.match_id) >= _min_matches
+    HAVING COUNT(DISTINCT s.match_id) >= _min_matches
   )
   SELECT
     a.steam_id::text          AS player_steam_id,

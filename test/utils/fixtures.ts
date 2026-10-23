@@ -262,6 +262,14 @@ export class Fixtures {
     );
   }
 
+  async setting(name: string, value: string): Promise<void> {
+    await this.postgres.query(
+      `INSERT INTO settings (name, value) VALUES ($1, $2)
+       ON CONFLICT (name) DO UPDATE SET value = $2`,
+      [name, value],
+    );
+  }
+
   async kill(
     ctx: { matchId: string; mapId: string },
     attacker: string,
