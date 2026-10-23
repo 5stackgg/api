@@ -319,9 +319,10 @@ export class SteamBansService {
       `WITH v AS (
          SELECT s.*,
                 -- DaysSinceLastBan dates the newest ban of either kind, so a
-                -- game ban would make an old VAC ban look new. Every reading is
-                -- no earlier than the newest VAC ban, so the VAC date only moves
-                -- earlier, unless a VAC ban has arrived since the last check.
+                -- game ban would make an old VAC ban look new, and the other
+                -- way round. Every reading is no earlier than the newest ban of
+                -- each kind, so each kind's date only moves earlier, unless a
+                -- ban of that kind has arrived since the last check.
                 CASE
                   WHEN s.vac_ban_count = 0 THEN NULL
                   WHEN s.vac_ban_count > cur.vac_ban_count
@@ -331,7 +332,17 @@ export class SteamBansService {
                     cur.last_vac_ban_at,
                     now() - make_interval(days => s.days_since_last_ban)
                   )
-                END AS last_vac_ban_at
+                END AS last_vac_ban_at,
+                CASE
+                  WHEN s.game_ban_count = 0 THEN NULL
+                  WHEN s.game_ban_count > cur.game_ban_count
+                       OR cur.last_game_ban_at IS NULL
+                    THEN now() - make_interval(days => s.days_since_last_ban)
+                  ELSE LEAST(
+                    cur.last_game_ban_at,
+                    now() - make_interval(days => s.days_since_last_ban)
+                  )
+                END AS last_game_ban_at
            FROM UNNEST($1::bigint[], $2::boolean[], $3::int[], $4::int[], $5::int[])
                 AS s(steam_id, vac_banned, vac_ban_count, game_ban_count, days_since_last_ban)
            JOIN public.players cur ON cur.steam_id = s.steam_id
@@ -350,6 +361,7 @@ export class SteamBansService {
                 ELSE v.vac_banned
               END,
               last_vac_ban_at = v.last_vac_ban_at,
+              last_game_ban_at = v.last_game_ban_at,
               vac_ban_count = v.vac_ban_count,
               game_ban_count = v.game_ban_count,
               days_since_last_ban = v.days_since_last_ban,
