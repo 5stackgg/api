@@ -16,7 +16,7 @@ import { PostgresService } from "../../src/postgres/postgres.service";
 // TimescaleDB, and setup() calls pg_stat_statements_reset() after migrating,
 // which requires pg_stat_statements in shared_preload_libraries.
 const IMAGE =
-  "timescale/timescaledb:2.30.2-pg18@sha256:e72689191e1c977892c53d6f2c344dbc4a9657a867dc8cc1899229f9d3672b2e";
+  "timescale/timescaledb:2.31.0-pg18@sha256:0fcff5761363809d1242f2261a3482197b5a5337407f8b97a976fb174206d579";
 const TEMPLATE_DB = "hasura";
 
 // Serializes CREATE DATABASE ... TEMPLATE across parallel jest workers; the
