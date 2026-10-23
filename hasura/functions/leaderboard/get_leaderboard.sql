@@ -726,26 +726,50 @@ BEGIN
   END IF;
 
   RETURN QUERY
-  WITH totals AS (
+  WITH kills AS (
     SELECT
-      side.steam_id,
-      COUNT(*) FILTER (WHERE side.is_attacker AND pk.attacker_steam_id != pk.attacked_steam_id) as kill_count,
-      COUNT(*) FILTER (WHERE NOT side.is_attacker) as death_count,
-      COUNT(DISTINCT pk.match_id)::int as match_count
+      pk.attacker_steam_id as steam_id,
+      pk.match_id,
+      COUNT(*) as kill_count
     FROM player_kills pk
     JOIN matches m ON m.id = pk.match_id
     JOIN match_options mo ON mo.id = m.match_options_id
-    CROSS JOIN LATERAL (
-      VALUES (pk.attacker_steam_id, true), (pk.attacked_steam_id, false)
-    ) side(steam_id, is_attacker)
-    WHERE side.steam_id IS NOT NULL
+    WHERE pk.attacker_steam_id IS NOT NULL
+      AND pk.attacker_steam_id != pk.attacked_steam_id
       AND m.source = '5stack'
       AND m.counts_toward_ranking = true
       AND ((_from IS NULL OR pk.time >= _from) AND (_to IS NULL OR pk.time < _to))
       AND (_match_type IS NULL OR mo.type = _match_type)
       AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pk.match_id))
       AND (lower(_source) = 'overall' OR public._leaderboard_match_source(pk.match_id) = lower(_source))
-    GROUP BY side.steam_id
+    GROUP BY pk.attacker_steam_id, pk.match_id
+  ),
+  deaths AS (
+    SELECT
+      dk.attacked_steam_id as steam_id,
+      dk.match_id,
+      COUNT(*) as death_count
+    FROM player_kills dk
+    JOIN matches m2 ON m2.id = dk.match_id
+    JOIN match_options mo2 ON mo2.id = m2.match_options_id
+    WHERE 1=1
+      AND m2.source = '5stack'
+      AND m2.counts_toward_ranking = true
+      AND ((_from IS NULL OR dk.time >= _from) AND (_to IS NULL OR dk.time < _to))
+      AND (_match_type IS NULL OR mo2.type = _match_type)
+      AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = dk.match_id))
+      AND (lower(_source) = 'overall' OR public._leaderboard_match_source(dk.match_id) = lower(_source))
+    GROUP BY dk.attacked_steam_id, dk.match_id
+  ),
+  totals AS (
+    SELECT
+      COALESCE(k.steam_id, d.steam_id) as steam_id,
+      COALESCE(SUM(k.kill_count), 0) as kill_count,
+      COALESCE(SUM(d.death_count), 0) as death_count,
+      COUNT(*)::int as match_count
+    FROM kills k
+    FULL JOIN deaths d ON d.steam_id = k.steam_id AND d.match_id = k.match_id
+    GROUP BY COALESCE(k.steam_id, d.steam_id)
   )
   SELECT
     t.steam_id::text           as player_steam_id,
@@ -871,26 +895,50 @@ BEGIN
   END IF;
 
   RETURN QUERY
-  WITH totals AS (
+  WITH kills AS (
     SELECT
-      side.steam_id,
-      COUNT(*) FILTER (WHERE side.is_attacker AND pk.attacker_steam_id != pk.attacked_steam_id) as kill_count,
-      COUNT(*) FILTER (WHERE side.is_attacker AND pk.attacker_steam_id != pk.attacked_steam_id AND pk.headshot) as headshot_count,
-      COUNT(DISTINCT pk.match_id)::int as match_count
+      pk.attacker_steam_id as steam_id,
+      pk.match_id,
+      COUNT(*) as kill_count,
+      COUNT(*) FILTER (WHERE pk.headshot) as headshot_count
     FROM player_kills pk
     JOIN matches m ON m.id = pk.match_id
     JOIN match_options mo ON mo.id = m.match_options_id
-    CROSS JOIN LATERAL (
-      VALUES (pk.attacker_steam_id, true), (pk.attacked_steam_id, false)
-    ) side(steam_id, is_attacker)
-    WHERE side.steam_id IS NOT NULL
+    WHERE pk.attacker_steam_id IS NOT NULL
+      AND pk.attacker_steam_id != pk.attacked_steam_id
       AND m.source = '5stack'
       AND m.counts_toward_ranking = true
       AND ((_from IS NULL OR pk.time >= _from) AND (_to IS NULL OR pk.time < _to))
       AND (_match_type IS NULL OR mo.type = _match_type)
       AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pk.match_id))
       AND (lower(_source) = 'overall' OR public._leaderboard_match_source(pk.match_id) = lower(_source))
-    GROUP BY side.steam_id
+    GROUP BY pk.attacker_steam_id, pk.match_id
+  ),
+  deaths AS (
+    SELECT
+      dk.attacked_steam_id as steam_id,
+      dk.match_id
+    FROM player_kills dk
+    JOIN matches m2 ON m2.id = dk.match_id
+    JOIN match_options mo2 ON mo2.id = m2.match_options_id
+    WHERE 1=1
+      AND m2.source = '5stack'
+      AND m2.counts_toward_ranking = true
+      AND ((_from IS NULL OR dk.time >= _from) AND (_to IS NULL OR dk.time < _to))
+      AND (_match_type IS NULL OR mo2.type = _match_type)
+      AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = dk.match_id))
+      AND (lower(_source) = 'overall' OR public._leaderboard_match_source(dk.match_id) = lower(_source))
+    GROUP BY dk.attacked_steam_id, dk.match_id
+  ),
+  totals AS (
+    SELECT
+      COALESCE(k.steam_id, d.steam_id) as steam_id,
+      COALESCE(SUM(k.kill_count), 0) as kill_count,
+      COALESCE(SUM(k.headshot_count), 0) as headshot_count,
+      COUNT(*)::int as match_count
+    FROM kills k
+    FULL JOIN deaths d ON d.steam_id = k.steam_id AND d.match_id = k.match_id
+    GROUP BY COALESCE(k.steam_id, d.steam_id)
   )
   SELECT
     t.steam_id::text           as player_steam_id,

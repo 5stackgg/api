@@ -43,6 +43,9 @@ describe("awards (SQL-driven)", () => {
     // seasons carries an exclusion constraint against overlapping ranges, so
     // leftovers from one test collide with the next one's open-ended season.
     await postgres.query("DELETE FROM seasons");
+    await postgres.query(
+      "DELETE FROM settings WHERE name = 'leaderboard_min_matches'",
+    );
   });
 
   const SE4 = [
@@ -1120,6 +1123,36 @@ describe("awards (SQL-driven)", () => {
       expect(String(rows[0].player_steam_id)).toBe(String(players[3]));
       expect(String(rows[1].player_steam_id)).toBe(String(players[0]));
       expect(String(rows[3].player_steam_id)).toBe(String(players[2]));
+    });
+
+    it("leaves players below leaderboard_min_matches off the podium", async () => {
+      const [season] = await postgres.query<Array<{ id: string }>>(
+        "INSERT INTO seasons (starts_at) VALUES (now()) RETURNING id",
+      );
+      const players = await fx.players(4);
+
+      await seedSeasonElo(season.id, [
+        { steam: players[0], elo: 1400, impact: 1.0 },
+        { steam: players[1], elo: 1300, impact: 1.0, matches: 3 },
+        { steam: players[2], elo: 1200, impact: 1.0, matches: 3 },
+        { steam: players[3], elo: 1100, impact: 1.0, matches: 3 },
+      ]);
+      await postgres.query(
+        "INSERT INTO settings (name, value) VALUES ('leaderboard_min_matches', '3')",
+      );
+
+      await postgres.query("SELECT calculate_season_awards($1)", [season.id]);
+
+      const rows = await postgres.query<Array<{ player_steam_id: string }>>(
+        `SELECT ar.player_steam_id
+           FROM award_recipients ar
+          WHERE ar.season_id = $1 AND ar.source = 'season' AND ar.placement > 0
+          ORDER BY ar.placement`,
+        [season.id],
+      );
+      expect(rows.map((r) => String(r.player_steam_id))).toEqual(
+        players.slice(1).map(String),
+      );
     });
 
     it("picks the mvp from competitive matches only", async () => {

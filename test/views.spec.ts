@@ -1006,6 +1006,8 @@ describe("read-side views and aggregations (SQL-driven)", () => {
           [name, value],
         );
       await setting("leaderboard_min_rounds", "0");
+      await fx.enableSeasons(true);
+      const seasonId = await fx.season(T(60 * 24 * 7));
 
       const [regular, rookieA, rookieB] = await fx.players(3);
       await ratedDuel(regular, rookieA);
@@ -1019,27 +1021,30 @@ describe("read-side views and aggregations (SQL-driven)", () => {
       await fx.round(first.ctx.mapId, 2);
       await fx.round(second.ctx.mapId, 1);
 
-      const boards = [
-        ["elo", "Duel"],
-        ["best_win_rate", "Duel"],
-        ["best_kdr", "Competitive"],
-        ["highest_hs_pct", "Competitive"],
-        ["best_rating", "Competitive"],
-        ["best_udr", "Competitive"],
+      const ladders = [
+        () => leaderboard("elo", 30, "Duel"),
+        () => leaderboard("best_win_rate", 30, "Duel"),
+        () => leaderboard("best_kdr", 30, "Competitive"),
+        () => leaderboard("highest_hs_pct", 30, "Competitive"),
+        () => leaderboard("best_rating", 30, "Competitive"),
+        () => leaderboard("best_udr", 30, "Competitive"),
+        () =>
+          postgres.query<Array<LeaderboardRow>>(
+            "SELECT * FROM get_leaderboard('elo', 30, 'Duel', true)",
+          ),
+        () => seasonLeaderboard(seasonId, "Duel"),
       ];
-      const players = async (category: string, type: string) =>
-        (await leaderboard(category, 30, type))
-          .map((r) => r.player_steam_id)
-          .sort();
+      const players = async (ladder: () => Promise<Array<LeaderboardRow>>) =>
+        (await ladder()).map((r) => r.player_steam_id).sort();
 
-      for (const [category, type] of boards) {
-        expect(await players(category, type)).toContain(rookieA);
+      for (const ladder of ladders) {
+        expect(await players(ladder)).toContain(rookieA);
       }
 
       await setting("leaderboard_min_matches", "2");
 
-      for (const [category, type] of boards) {
-        expect(await players(category, type)).toEqual([regular]);
+      for (const ladder of ladders) {
+        expect(await players(ladder)).toEqual([regular]);
       }
 
       const rank = (steamId: string) =>
