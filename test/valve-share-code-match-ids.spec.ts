@@ -4,6 +4,7 @@ import { PostgresService } from "./../src/postgres/postgres.service";
 import { SteamMatchHistoryService } from "../src/steam-match-history/steam-match-history.service";
 import { ParseImportedDemo } from "../src/steam-match-history/jobs/ParseImportedDemo";
 import { ResolveMatchMetadata } from "../src/steam-match-history/jobs/ResolveMatchMetadata";
+import { ReconcilePendingMatchImports } from "../src/steam-match-history/jobs/ReconcilePendingMatchImports";
 import { Fixtures } from "./utils/fixtures";
 import {
   bootMigratedDb,
@@ -17,6 +18,8 @@ const OLD_ID = "10336746529758569196";
 
 const SAME_MATCH_SHARE_CODE = "CSGO-oR5b2-uAOEH-p8MAs-smZRo-TO2xK";
 const SAME_MATCH_OLD_ID = "10408804123796497132";
+
+const NOT_VALVE_SHARE_CODE = "CSGO-GADqg-jjyJ8-cSP2r-smZRo-TO2xK";
 
 const CODES = [
   { shareCode: SHARE_CODE, valveMatchId: VALVE_MATCH_ID, oldId: OLD_ID },
@@ -130,7 +133,13 @@ describe("Valve match ids recomputed from stored share codes", () => {
       )
     ).at(0)?.external_id;
 
-  const service = () => {
+  const resolveQueue = () => ({
+    remove: jest.fn(async (): Promise<void> => undefined),
+    add: jest.fn(async (): Promise<void> => undefined),
+    getJob: jest.fn(async (): Promise<undefined> => undefined),
+  });
+
+  const service = (queue = resolveQueue()) => {
     const locks = new Set<string>();
     return new SteamMatchHistoryService(
       { get: () => "steam-api-key" } as never,
@@ -146,10 +155,7 @@ describe("Valve match ids recomputed from stored share codes", () => {
         },
       } as never,
       { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as never,
-      {
-        remove: jest.fn(async (): Promise<void> => undefined),
-        add: jest.fn(async (): Promise<void> => undefined),
-      } as never,
+      queue as never,
       { isAvailable: () => true } as never,
       { add: jest.fn(async (): Promise<void> => undefined) } as never,
     );
@@ -209,17 +215,19 @@ describe("Valve match ids recomputed from stored share codes", () => {
     }
   });
 
-  it("still refuses the share code of a match imported before the fix", async () => {
+  it("refuses another share code of a match imported before the fix", async () => {
     const player = await fx.player();
     const matchId = await seedMatch("valve", OLD_ID, SHARE_CODE);
 
     await postgres.query(up);
 
     await expect(
-      service().importShareCode(player, SHARE_CODE),
+      service().importShareCode(player, SAME_MATCH_SHARE_CODE),
     ).resolves.toEqual({ ok: false, error: "match already imported" });
-    await expect(service().lookupShareCodes([SHARE_CODE])).resolves.toEqual({
-      [SHARE_CODE]: { state: "imported", match_id: matchId },
+    await expect(
+      service().lookupShareCodes([SAME_MATCH_SHARE_CODE]),
+    ).resolves.toEqual({
+      [SAME_MATCH_SHARE_CODE]: { state: "imported", match_id: matchId },
     });
     await expect(pending()).resolves.toEqual([]);
   });
@@ -250,6 +258,7 @@ describe("Valve match ids recomputed from stored share codes", () => {
     const uploaded = await seedMatch("valve", "uploaded-demo", SHARE_CODE);
     const withoutCode = await seedMatch("valve", OLD_ID, null);
     const faceit = await seedMatch("faceit", OLD_ID, SHARE_CODE);
+    const fiveStack = await seedMatch("5stack", OLD_ID, SHARE_CODE);
     await seedPending(
       CODES[1].valveMatchId,
       CODES[1].shareCode,
@@ -262,6 +271,7 @@ describe("Valve match ids recomputed from stored share codes", () => {
     await expect(externalId(uploaded)).resolves.toBe("uploaded-demo");
     await expect(externalId(withoutCode)).resolves.toBe(OLD_ID);
     await expect(externalId(faceit)).resolves.toBe(OLD_ID);
+    await expect(externalId(fiveStack)).resolves.toBe(OLD_ID);
     await expect(pending()).resolves.toEqual([
       {
         valve_match_id: CODES[1].valveMatchId,
@@ -269,6 +279,24 @@ describe("Valve match ids recomputed from stored share codes", () => {
         status: "Parsing",
       },
     ]);
+  });
+
+  it("leaves a code that is not in Valve's alphabet alone", async () => {
+    const player = await fx.player();
+    const matchId = await seedMatch("valve", OLD_ID, NOT_VALVE_SHARE_CODE);
+    await seedPending(OLD_ID, NOT_VALVE_SHARE_CODE, [player]);
+
+    await postgres.query(up);
+
+    await expect(externalId(matchId)).resolves.toBe(OLD_ID);
+    await expect(pending()).resolves.toEqual([
+      {
+        valve_match_id: OLD_ID,
+        share_code: NOT_VALVE_SHARE_CODE,
+        status: "Queued",
+      },
+    ]);
+    await expect(requesters(OLD_ID)).resolves.toEqual([player]);
   });
 
   it("gives Valve's match id to only the first of two imports of one match", async () => {
@@ -299,10 +327,10 @@ describe("Valve match ids recomputed from stored share codes", () => {
     await expect(externalId(before)).resolves.toBe(OLD_ID);
   });
 
-  it("re-keys only the first of two pending imports of one match", async () => {
-    const [first, second] = await fx.players(2);
-    await seedPending(OLD_ID, SHARE_CODE, [first]);
-    await seedPending(SAME_MATCH_OLD_ID, SAME_MATCH_SHARE_CODE, [second]);
+  it("folds the second of two pending imports of one match into the first", async () => {
+    const [first, second, both] = await fx.players(3);
+    await seedPending(OLD_ID, SHARE_CODE, [first, both]);
+    await seedPending(SAME_MATCH_OLD_ID, SAME_MATCH_SHARE_CODE, [second, both]);
 
     await postgres.query(up);
 
@@ -312,17 +340,14 @@ describe("Valve match ids recomputed from stored share codes", () => {
         share_code: SHARE_CODE,
         status: "Queued",
       },
-      {
-        valve_match_id: SAME_MATCH_OLD_ID,
-        share_code: SAME_MATCH_SHARE_CODE,
-        status: "Queued",
-      },
     ]);
-    await expect(requesters(VALVE_MATCH_ID)).resolves.toEqual([first]);
-    await expect(requesters(SAME_MATCH_OLD_ID)).resolves.toEqual([second]);
+    await expect(requesters(VALVE_MATCH_ID)).resolves.toEqual(
+      [first, second, both].sort(),
+    );
+    await expect(requesters(SAME_MATCH_OLD_ID)).resolves.toEqual([]);
   });
 
-  it("leaves a pending import alone when another already holds its Valve match id", async () => {
+  it("folds a pending import into the one that already holds its Valve match id", async () => {
     const [first, second] = await fx.players(2);
     await seedPending(VALVE_MATCH_ID, SAME_MATCH_SHARE_CODE, [first]);
     await seedPending(OLD_ID, SHARE_CODE, [second]);
@@ -330,13 +355,15 @@ describe("Valve match ids recomputed from stored share codes", () => {
     await postgres.query(up);
 
     await expect(pending()).resolves.toEqual([
-      { valve_match_id: OLD_ID, share_code: SHARE_CODE, status: "Queued" },
       {
         valve_match_id: VALVE_MATCH_ID,
         share_code: SAME_MATCH_SHARE_CODE,
         status: "Queued",
       },
     ]);
+    await expect(requesters(VALVE_MATCH_ID)).resolves.toEqual(
+      [first, second].sort(),
+    );
   });
 
   it("imports a demo queued before the fix under Valve's match id", async () => {
@@ -389,7 +416,7 @@ describe("Valve match ids recomputed from stored share codes", () => {
     await expect(pending()).resolves.toEqual([]);
   });
 
-  it("lets a resolve job queued before the fix skip the re-keyed import", async () => {
+  it("queues the resolve again for an import whose job was queued before the fix", async () => {
     const player = await fx.player();
     await seedPending(OLD_ID, SHARE_CODE, [player]);
     await postgres.query(up);
@@ -408,6 +435,27 @@ describe("Valve match ids recomputed from stored share codes", () => {
     } as never);
 
     expect(resolveShareCode).not.toHaveBeenCalled();
+
+    await postgres.transaction(async (client) => {
+      await client.query("SET LOCAL session_replication_role = replica");
+      await client.query(
+        "UPDATE pending_match_imports SET updated_at = now() - interval '1 hour'",
+      );
+    });
+    const queue = resolveQueue();
+    await new ReconcilePendingMatchImports(
+      { log: jest.fn(), warn: jest.fn() } as never,
+      postgres,
+      queue as never,
+      { getJob: async (): Promise<undefined> => undefined } as never,
+      service(queue),
+    ).process();
+
+    expect(queue.add).toHaveBeenCalledWith(
+      "ResolveMatchMetadata",
+      { valve_match_id: VALVE_MATCH_ID },
+      expect.objectContaining({ jobId: `resolve-${VALVE_MATCH_ID}` }),
+    );
     await expect(pending()).resolves.toEqual([
       {
         valve_match_id: VALVE_MATCH_ID,

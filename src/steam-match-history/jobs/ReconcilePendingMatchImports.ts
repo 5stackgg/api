@@ -4,10 +4,13 @@ import { Job, Queue } from "bullmq";
 import { UseQueue } from "src/utilities/QueueProcessors";
 import { PostgresService } from "../../postgres/postgres.service";
 import { SteamMatchHistoryQueues } from "../enums/SteamMatchHistoryQueues";
+import { SteamMatchHistoryService } from "../steam-match-history.service";
 
 // A pending import only leaves Queued/Parsing from inside its own job, so a job
 // that stalls out, is lost, or finishes without deciding strands the row, and
 // only Failed rows can be retried. This fails any row whose jobs are all done.
+// A row with no job at all was re-keyed after its job was queued, so its
+// resolve is queued again instead.
 @UseQueue(
   "SteamMatchHistory",
   SteamMatchHistoryQueues.ReconcilePendingMatchImports,
@@ -30,6 +33,7 @@ export class ReconcilePendingMatchImports extends WorkerHost {
     private readonly resolveQueue: Queue,
     @InjectQueue(SteamMatchHistoryQueues.ParseImportedDemo)
     private readonly parseQueue: Queue,
+    private readonly steamMatchHistory: SteamMatchHistoryService,
   ) {
     super();
   }
@@ -50,6 +54,14 @@ export class ReconcilePendingMatchImports extends WorkerHost {
           this.parseQueue.getJob(`parse-${valve_match_id}`),
         ])
       ).filter((job): job is Job => !!job);
+
+      if (jobs.length === 0) {
+        await this.steamMatchHistory.enqueueResolve(valve_match_id);
+        this.logger.warn(
+          `reconcile-pending-match-imports queued the resolve again for valve_match_id=${valve_match_id}: it had no job`,
+        );
+        continue;
+      }
 
       const states = await Promise.all(jobs.map((job) => job.getState()));
       if (

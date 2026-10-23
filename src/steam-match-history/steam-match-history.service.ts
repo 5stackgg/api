@@ -675,7 +675,7 @@ export class SteamMatchHistoryService {
   // queues. We keep removeOnComplete off so completed jobs stay in
   // Redis as a processed-count history; the explicit remove is the
   // cleanest way to re-enqueue without losing that signal.
-  private async enqueueResolve(valveMatchId: string): Promise<void> {
+  public async enqueueResolve(valveMatchId: string): Promise<void> {
     const jobId = `resolve-${valveMatchId}`;
     await this.resolveQueue.remove(jobId).catch(() => {});
     await this.resolveQueue.add(

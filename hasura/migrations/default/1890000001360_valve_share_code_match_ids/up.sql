@@ -1,7 +1,8 @@
 -- Share codes were decoded in base 58 with a "g" that Valve's alphabet does not
 -- have, so every Valve import stored a match id that isn't Valve's. Only ids
--- that decoder wrote are recomputed. An id another row already holds is left
--- as it was, since both are then the same Valve match.
+-- that decoder wrote are recomputed. When another row of the same Valve match
+-- already holds the id, a pending import is folded into it, requesters and
+-- all, and a match keeps its old id. Running this again changes nothing.
 CREATE FUNCTION pg_temp.share_code_match_id(share_code text, alphabet text)
 RETURNS numeric
 LANGUAGE plpgsql
@@ -67,6 +68,30 @@ UPDATE public.pending_match_imports p
    SET valve_match_id = claimed.valve_match_id
   FROM claimed
  WHERE p.valve_match_id = claimed.old_match_id;
+
+WITH folded AS (
+    SELECT p.valve_match_id AS old_match_id, ids.valve_match_id
+      FROM public.pending_match_imports p
+      JOIN share_code_match_ids ids ON ids.share_code = p.share_code
+     WHERE p.valve_match_id = ids.old_match_id
+       AND ids.valve_match_id <> ids.old_match_id
+       AND EXISTS (
+           SELECT 1 FROM public.pending_match_imports kept
+             JOIN share_code_match_ids kept_ids ON kept_ids.share_code = kept.share_code
+            WHERE kept.valve_match_id = ids.valve_match_id
+              AND kept_ids.valve_match_id = ids.valve_match_id
+       )
+), moved AS (
+    INSERT INTO public.pending_match_import_players (valve_match_id, steam_id, created_at)
+    SELECT folded.valve_match_id, requester.steam_id, requester.created_at
+      FROM folded
+      JOIN public.pending_match_import_players requester
+        ON requester.valve_match_id = folded.old_match_id
+    ON CONFLICT DO NOTHING
+)
+DELETE FROM public.pending_match_imports p
+ USING folded
+ WHERE p.valve_match_id = folded.old_match_id;
 
 WITH claimed AS (
     SELECT DISTINCT ON (ids.valve_match_id) m.id, ids.valve_match_id::text AS external_id
