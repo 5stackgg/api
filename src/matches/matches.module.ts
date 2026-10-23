@@ -70,6 +70,7 @@ import { SeasonEloBackfillService } from "./season-elo-backfill.service";
 import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
 import { StopMatchBroadcast } from "./jobs/StopMatchBroadcast";
 import { ReconcileOnDemandServerJobs } from "./jobs/ReconcileOnDemandServerJobs";
+import { AssignWaitingMatch } from "./jobs/AssignWaitingMatch";
 import { MatchRelayController } from "./match-relay/match-relay.controller";
 import { MatchRelayService } from "./match-relay/match-relay.service";
 import { MatchRelayAuthMiddleware } from "./match-relay/match-relay-auth-middleware";
@@ -203,6 +204,7 @@ import { MatchRecoveryService } from "./match-recovery/match-recovery.service";
     MatchRecoveryService,
     CheckOnDemandServerJob,
     CheckOnDemandServerJobEvents,
+    AssignWaitingMatch,
     CancelExpiredMatches,
     AutoPickExpiredVeto,
     CheckForTournamentStart,

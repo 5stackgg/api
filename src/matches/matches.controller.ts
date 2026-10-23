@@ -92,6 +92,10 @@ export class MatchesController {
   // Finished (delayChangeMap(5) in the game-server plugin).
   private static readonly PLUGIN_TV_STOP_SECONDS = 5;
 
+  // The server outlives the TV feed by this much, so the plugin's own tv_stop
+  // is done before the server is.
+  private static readonly SERVER_STOP_MARGIN_SECONDS = 5;
+
   // A map still in one of these when the match ends was cut short from outside
   // the plugin (an organizer forfeit, tie or winner), so the TV feed is still a
   // whole tv_delay behind.
@@ -100,6 +104,12 @@ export class MatchesController {
     "Live",
     "Overtime",
     "Paused",
+  ];
+
+  // The server is still recording a map in WaitingForTV, until tv_delay is out.
+  private static readonly RECORDING_MAP_STATUSES: e_match_map_status_enum[] = [
+    ...MatchesController.IN_PLAY_MAP_STATUSES,
+    "WaitingForTV",
   ];
 
   // A DELETE carries the row in `old` and an UPDATE in `new`, and a voice
@@ -726,6 +736,11 @@ export class MatchesController {
           );
         }
       } else if (wasEnded && !ended) {
+        await this.scheduledMatchesQueue.add(
+          StopOnDemandServer.name,
+          { matchId },
+          MatchesController.stopOnDemandServerJobOptions(),
+        );
         await this.chatService.reopenMatchArchive(matchId);
       }
     }
@@ -933,7 +948,8 @@ export class MatchesController {
     await this.discordMatchOverview.updateMatchOverview(matchId);
   }
 
-  // An UPDATE reads only `new`: the server_id-nulling write re-fires with the server still in `old`.
+  // An UPDATE reads `old` only on the write that ends the match: the
+  // server_id-nulling write after it re-fires with the server still in `old`.
   private static endedMatchServerId(
     data: HasuraEventData<matches_set_input>,
   ): string | null {
@@ -941,11 +957,19 @@ export class MatchesController {
       return (data.old.server_id as string) ?? null;
     }
 
-    if (MatchesController.TERMINAL_STATUSES.includes(data.new.status)) {
-      return (data.new.server_id as string) ?? null;
+    if (!MatchesController.TERMINAL_STATUSES.includes(data.new.status)) {
+      return null;
     }
 
-    return null;
+    if (data.new.server_id) {
+      return data.new.server_id as string;
+    }
+
+    if (MatchesController.TERMINAL_STATUSES.includes(data.old.status)) {
+      return null;
+    }
+
+    return (data.old.server_id as string) ?? null;
   }
 
   private async endMatchBroadcast(
@@ -1021,28 +1045,7 @@ export class MatchesController {
     let feedEndsIn = MatchesController.PLUGIN_TV_STOP_SECONDS;
 
     try {
-      const { match_maps, match_options_by_pk } = await this.hasura.query({
-        match_maps: {
-          __args: {
-            where: {
-              match_id: { _eq: matchId },
-              status: { _in: MatchesController.IN_PLAY_MAP_STATUSES },
-            },
-            limit: 1,
-          },
-          id: true,
-        },
-        match_options_by_pk: {
-          __args: {
-            id: data.new.match_options_id,
-          },
-          tv_delay: true,
-        },
-      });
-
-      if (match_maps.length > 0) {
-        feedEndsIn = match_options_by_pk?.tv_delay ?? 0;
-      }
+      feedEndsIn = await this.tvFeedEndsInSeconds(data, matchId);
     } catch (error) {
       this.logger.error(
         `[${matchId}] failed to check how far behind the TV feed is: ${
@@ -1056,6 +1059,35 @@ export class MatchesController {
       .catch(() => 0);
 
     return feedEndsIn + playout;
+  }
+
+  private async tvFeedEndsInSeconds(
+    data: HasuraEventData<matches_set_input>,
+    matchId: string,
+    inPlayStatuses = MatchesController.IN_PLAY_MAP_STATUSES,
+  ): Promise<number> {
+    const { match_maps, match_options_by_pk } = await this.hasura.query({
+      match_maps: {
+        __args: {
+          where: {
+            match_id: { _eq: matchId },
+            status: { _in: inPlayStatuses },
+          },
+          limit: 1,
+        },
+        id: true,
+      },
+      match_options_by_pk: {
+        __args: {
+          id: data.new.match_options_id,
+        },
+        tv_delay: true,
+      },
+    });
+
+    return match_maps.length > 0
+      ? (match_options_by_pk?.tv_delay ?? 0)
+      : MatchesController.PLUGIN_TV_STOP_SECONDS;
   }
 
   private static stopOnDemandServerJobOptions(delaySeconds = 0) {
@@ -1090,16 +1122,12 @@ export class MatchesController {
     let delay = 0;
 
     if (data.op !== "DELETE" && data.new.status !== "Canceled") {
-      const { match_options_by_pk: matchOptions } = await this.hasura.query({
-        match_options_by_pk: {
-          __args: {
-            id: data.new.match_options_id,
-          },
-          tv_delay: true,
-        },
-      });
-
-      delay = matchOptions?.tv_delay || 1;
+      delay =
+        (await this.tvFeedEndsInSeconds(
+          data,
+          matchId,
+          MatchesController.RECORDING_MAP_STATUSES,
+        )) + MatchesController.SERVER_STOP_MARGIN_SECONDS;
     }
 
     this.logger.log(
@@ -1108,7 +1136,7 @@ export class MatchesController {
 
     await this.scheduledMatchesQueue.add(
       StopOnDemandServer.name,
-      { matchId },
+      { matchId, serverId },
       MatchesController.stopOnDemandServerJobOptions(delay),
     );
   }
@@ -1213,7 +1241,7 @@ export class MatchesController {
       if (serverId) {
         await this.scheduledMatchesQueue.add(
           StopOnDemandServer.name,
-          { matchId },
+          { matchId, serverId },
           MatchesController.stopOnDemandServerJobOptions(),
         );
       }
@@ -2783,44 +2811,7 @@ export class MatchesController {
       return;
     }
 
-    const { matches } = await this.hasura.query({
-      matches: {
-        __args: {
-          where: {
-            status: {
-              _eq: "WaitingForServer",
-            },
-            _or: [
-              {
-                region: {
-                  _is_null: true,
-                },
-              },
-              {
-                region: {
-                  _eq: data.new.region,
-                },
-              },
-            ],
-          },
-          limit: 1,
-          order_by: [
-            {
-              created_at: "asc",
-            },
-          ],
-        },
-        id: true,
-      },
-    });
-
-    const match = matches.at(0);
-
-    if (!match) {
-      return;
-    }
-
-    await this.matchAssistant.assignServer(match.id);
+    await this.matchAssistant.assignWaitingMatch(data.new.region);
   }
 
   @HasuraEvent()
@@ -2865,40 +2856,10 @@ export class MatchesController {
     const totalMatchesToFind =
       game_server_nodes_by_pk.servers_aggregate.aggregate.count;
 
-    const { matches } = await this.hasura.query({
-      matches: {
-        __args: {
-          where: {
-            status: {
-              _eq: "WaitingForServer",
-            },
-            _or: [
-              {
-                region: {
-                  _is_null: true,
-                },
-              },
-              {
-                region: {
-                  _eq: data.new.region,
-                },
-              },
-            ],
-          },
-          limit: totalMatchesToFind,
-          order_by: [
-            {
-              created_at: "asc",
-            },
-          ],
-        },
-        id: true,
-      },
-    });
-
-    for (const match of matches) {
-      await this.matchAssistant.assignServer(match.id);
-    }
+    await this.matchAssistant.assignWaitingMatch(
+      data.new.region,
+      totalMatchesToFind,
+    );
   }
 
   @HasuraAction()

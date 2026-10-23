@@ -68,7 +68,9 @@ export class MatchAssistantService {
     "practice",
   ];
   public static readonly ON_DEMAND_SERVER_BOOT_CHECK_DELAY_MS = 15 * 1000;
-  public static readonly ON_DEMAND_SERVER_STOP_CHECK_DELAY_MS = 2 * 60 * 1000;
+  public static readonly ON_DEMAND_SERVER_STOP_CHECK_DELAY_MS = 3 * 1000;
+  private static readonly ON_DEMAND_SERVER_STOP_TIMEOUT_MS = 2 * 60 * 1000;
+  private static readonly ON_DEMAND_SERVER_PING_TIMEOUT_MS = 10 * 60 * 1000;
   private static readonly ON_DEMAND_SERVER_TEARDOWN_TIMEOUT_MS = 15 * 1000;
   // Must outlast the previous Job's teardown, yet expire well inside
   // assignServer's ~55s of retries.
@@ -78,6 +80,9 @@ export class MatchAssistantService {
   private static readonly ORPHANED_JOB_ENDED_GRACE_MS = 10 * 60 * 1000;
   private static readonly MATCH_SERVER_JOB_SELECTOR =
     "app=game-server,role=match";
+  // A terminating pod is still Running.
+  private static readonly UNFINISHED_POD_SELECTOR =
+    "status.phase!=Succeeded,status.phase!=Failed";
   private static readonly MATCH_SERVER_JOB_NAME =
     /^m-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
   private static readonly UUID =
@@ -344,6 +349,8 @@ export class MatchAssistantService {
   // has to ask with this exact predicate, or it will promise a slot that the
   // assignment then cannot find.
   public async countFreeOnDemandServers(region?: string | null) {
+    const occupied = await this.occupiedServerExclusion();
+
     const { servers_aggregate } = await this.hasura.query({
       servers_aggregate: {
         __args: {
@@ -360,7 +367,10 @@ export class MatchAssistantService {
             reserved_by_match_id: {
               _is_null: true,
             },
-            ...MatchAssistantService.pendingDemoUploadExclusion(),
+            _and: [
+              occupied,
+              MatchAssistantService.pendingDemoUploadExclusion(),
+            ],
             game_server_node: {
               _and: [
                 {
@@ -540,7 +550,8 @@ export class MatchAssistantService {
    * between the two would win the read and lose the row.
    *
    * Excluding WaitingForServer itself is what keeps the assignment path from
-   * firing the status webhook twice when the step that failed already said so.
+   * firing the status webhook twice when the step that failed already said so,
+   * and a match with a server is one another attempt has placed meanwhile.
    */
   private async markWaitingForServer(matchId: string): Promise<void> {
     await this.hasura.mutation({
@@ -556,6 +567,9 @@ export class MatchAssistantService {
                 "WaitingForServer",
               ],
             },
+            server_id: {
+              _is_null: true,
+            },
           },
           _set: {
             status: "WaitingForServer",
@@ -566,7 +580,12 @@ export class MatchAssistantService {
     });
   }
 
-  public async assignServer(matchId: string, tries = 0): Promise<void> {
+  // Retrying: it failed to boot one and will try again by itself. Failed: it
+  // hit an error of its own rather than finding nothing free.
+  public async assignServer(
+    matchId: string,
+    tries = 0,
+  ): Promise<"placed" | "retrying" | "unplaced" | "failed"> {
     if (tries === 0) {
       await this.setServerError(matchId, null);
     }
@@ -591,7 +610,7 @@ export class MatchAssistantService {
       MatchAssistantService.TERMINAL_MATCH_STATUSES.includes(match.status)
     ) {
       this.logger.log(`[${matchId}] match has ended, not assigning a server`);
-      return;
+      return "unplaced";
     }
 
     const onDemandOnly = MatchAssistantService.ON_DEMAND_ONLY_SOURCES.includes(
@@ -607,7 +626,7 @@ export class MatchAssistantService {
 
         if (assignedDedicated) {
           await this.startMatch(matchId);
-          return;
+          return "placed";
         }
       } catch (error) {
         this.logger.error(
@@ -617,10 +636,12 @@ export class MatchAssistantService {
       }
     }
 
+    let failed = false;
+
     try {
       const isAssignedOnDemand = await this.assignOnDemandServer(matchId);
       if (isAssignedOnDemand) {
-        return;
+        return "placed";
       }
     } catch (error) {
       this.logger.error(
@@ -633,19 +654,21 @@ export class MatchAssistantService {
             `[${matchId}] max retries reached for server assignment`,
           );
           await this.markWaitingForServer(matchId);
-          return;
+          return "unplaced";
         }
         setTimeout(async () => {
           this.logger.log(`[${matchId}] try retry assign server....`);
           await this.assignServer(matchId, ++tries);
         }, tries * 1000);
-        return;
+        return "retrying";
       }
+
+      failed = true;
     }
 
     // The fallbacks end in startMatch, which would write Live over a match canceled meanwhile.
     if (await this.hasMatchEnded(matchId)) {
-      return;
+      return "unplaced";
     }
 
     // No pod, and no second pool to fall back on. Saying so is what turns the
@@ -657,7 +680,7 @@ export class MatchAssistantService {
         `[${matchId}] practice match, and no on demand server could be booted`,
       );
       await this.markWaitingForServer(match.id);
-      return;
+      return failed ? "failed" : "unplaced";
     }
 
     // we already checked above, so we can skip trying to assign again
@@ -666,13 +689,13 @@ export class MatchAssistantService {
         `[${matchId}] unable to assign dedicated server, trying on demand`,
       );
       await this.markWaitingForServer(match.id);
-      return;
+      return failed ? "failed" : "unplaced";
     }
 
     try {
       if (await this.assignDedicatedServer(match.id, match.region)) {
         await this.startMatch(matchId);
-        return;
+        return "placed";
       }
     } catch (error) {
       this.logger.error(
@@ -686,6 +709,8 @@ export class MatchAssistantService {
     );
 
     await this.markWaitingForServer(match.id);
+
+    return failed ? "failed" : "unplaced";
   }
 
   /**
@@ -1019,9 +1044,18 @@ export class MatchAssistantService {
     const isRender = isPractice && (await this.isRenderPracticeMatch(matchId));
     const needsGpu =
       isRender && !(await this.isDiscoveryPracticeMatch(matchId));
-    const renderNodeIds = needsGpu
-      ? await this.renderNodeIdsFor(match.region)
-      : null;
+    let renderNodeIds: Array<string> | null = null;
+    if (needsGpu) {
+      try {
+        renderNodeIds = await this.renderNodeIdsFor(match.region);
+      } catch (error) {
+        this.logger.error(
+          `[${matchId}] unable to find a node free to render on`,
+          error?.response?.body?.message || error,
+        );
+        throw new FailedToCreateOnDemandServer();
+      }
+    }
 
     if (renderNodeIds?.length === 0) {
       this.logger.warn(
@@ -1080,6 +1114,7 @@ export class MatchAssistantService {
     const map = match.match_maps.at(0).map;
 
     let locked = false;
+    let removedServerIds: Array<string> = [];
 
     const assigned = this.cache.lock(
       `get-on-demand-server:${match.region}`,
@@ -1094,6 +1129,19 @@ export class MatchAssistantService {
           return false;
         }
 
+        // Every server freed in the region wakes the oldest waiting match,
+        // which stays WaitingForServer while its own server boots.
+        if (
+          !options?.preserveMatchStatus &&
+          (await this.isBootingOnDemandServer(matchId))
+        ) {
+          this.logger.log(
+            `[${matchId}] match already has an on demand server, leaving it`,
+          );
+          await this.rearmBootCheck(matchId);
+          return true;
+        }
+
         this.logger.log(`[${matchId}] assigning on demand server`);
 
         // Always tear down any existing k8s job for this match before creating
@@ -1102,7 +1150,9 @@ export class MatchAssistantService {
         // assignment, (c) delete propagation is slow — the wait-until-gone loop
         // inside stopOnDemandServer(remove=true) ensures the name is free.
         try {
-          await this.stopOnDemandServer(matchId, { remove: true });
+          removedServerIds = await this.stopOnDemandServer(matchId, {
+            remove: true,
+          });
         } catch (error) {
           this.logger.error(
             `[${matchId}] unable to remove the previous on demand server`,
@@ -1126,6 +1176,17 @@ export class MatchAssistantService {
             "SELECT public.ensure_render_server(id, $2) FROM unnest($1::text[]) AS id",
             [renderNodeIds, match.region],
           );
+        }
+
+        let occupied: servers_bool_exp;
+        try {
+          occupied = await this.occupiedServerExclusion();
+        } catch (error) {
+          this.logger.error(
+            `[${matchId}] unable to list the servers match pods still run on`,
+            error?.response?.body?.message || error,
+          );
+          throw new FailedToCreateOnDemandServer();
         }
 
         const { servers } = await this.hasura.query({
@@ -1159,7 +1220,10 @@ export class MatchAssistantService {
                 reserved_by_match_id: {
                   _is_null: true,
                 },
-                ...MatchAssistantService.pendingDemoUploadExclusion(),
+                _and: [
+                  occupied,
+                  MatchAssistantService.pendingDemoUploadExclusion(),
+                ],
                 game_server_node: renderNodeIds
                   ? { id: { _in: renderNodeIds } }
                   : {
@@ -1594,16 +1658,124 @@ export class MatchAssistantService {
     );
 
     // cache.lock throws a plain Error after ~1s of contention; assignServer's retries handle it.
-    return assigned.catch((error) => {
-      if (locked) {
-        throw error;
+    try {
+      return await assigned.catch((error) => {
+        if (locked) {
+          throw error;
+        }
+
+        this.logger.warn(
+          `[${matchId}] on demand server pool is busy, retrying: ${error?.message}`,
+        );
+        throw new FailedToCreateOnDemandServer();
+      });
+    } finally {
+      // Out of the lock: the match may have taken another server than the one it gave back.
+      await this.assignWaitingMatchesTo(removedServerIds).catch((error) => {
+        this.logger.error(
+          `[${matchId}] unable to hand the server it gave back to a waiting match: ${error?.message}`,
+        );
+      });
+    }
+  }
+
+  // Only while its Job runs: one removed from outside leaves the row booting
+  // for good, and a server that never pinged in ten minutes is not going to.
+  // Kubernetes that cannot be read counts as booting, so nothing is torn down blind.
+  private async isBootingOnDemandServer(matchId: string) {
+    const { matches, servers } = await this.getOnDemandServerJobMatches([
+      matchId,
+    ]);
+    const match = matches.at(0);
+    const booting = servers.filter((server) => server.boot_status !== "Failed");
+
+    if (!MatchAssistantService.holdsOnDemandServer(match, booting)) {
+      return false;
+    }
+
+    const waitingForPing =
+      booting.find((server) => server.id === match.server_id)?.boot_status ===
+      "WaitingForPing";
+
+    try {
+      const kc = new KubeConfig();
+      kc.loadFromDefault();
+      const batch = kc.makeApiClient(BatchV1Api);
+
+      for (const jobName of await this.getMatchServerJobIds(matchId)) {
+        const job = await this.readOnDemandServerJob(batch, jobName);
+
+        if (!job || MatchAssistantService.isJobFinished(job)) {
+          continue;
+        }
+
+        return (
+          !waitingForPing ||
+          Date.now() -
+            new Date(job.metadata?.creationTimestamp ?? Date.now()).getTime() <
+            MatchAssistantService.ON_DEMAND_SERVER_PING_TIMEOUT_MS
+        );
       }
 
+      return false;
+    } catch (error) {
       this.logger.warn(
-        `[${matchId}] on demand server pool is busy, retrying: ${error?.message}`,
+        `[${matchId}] unable to read its on demand server Job, leaving it booting: ${error?.message}`,
       );
-      throw new FailedToCreateOnDemandServer();
+      return true;
+    }
+  }
+
+  // A pod holds its server's host ports until it exits, whether or not the row
+  // is still reserved: a match that moved off it frees the row straight away,
+  // and a node edit makes new rows for the same ports.
+  private async getOccupiedPorts(): Promise<
+    Array<{ node: string; port: number }>
+  > {
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const core = kc.makeApiClient(CoreV1Api);
+
+    const { items: pods } = await core.listNamespacedPod({
+      namespace: this.namespace,
+      labelSelector: MatchAssistantService.MATCH_SERVER_JOB_SELECTOR,
+      fieldSelector: MatchAssistantService.UNFINISHED_POD_SELECTOR,
     });
+
+    return pods
+      .filter((pod) => MatchAssistantService.isPodLive(pod))
+      .map((pod) => ({
+        node:
+          pod.spec?.affinity?.nodeAffinity?.requiredDuringSchedulingIgnoredDuringExecution?.nodeSelectorTerms
+            ?.at(0)
+            ?.matchExpressions?.find(
+              (expression) => expression.key === "kubernetes.io/hostname",
+            )
+            ?.values?.at(0) ?? pod.spec?.nodeName,
+        port: Number(
+          pod.spec?.containers
+            ?.at(0)
+            ?.env?.find((env) => env.name === "SERVER_PORT")?.value,
+        ),
+      }))
+      .filter(({ node, port }) => node && port);
+  }
+
+  private async occupiedServerExclusion(): Promise<servers_bool_exp> {
+    const occupied = await this.getOccupiedPorts();
+
+    if (occupied.length === 0) {
+      return {};
+    }
+
+    return {
+      _not: {
+        _or: occupied.map(({ node, port }) => ({
+          game_server_node_id: { _eq: node },
+          port: { _eq: port },
+        })),
+      },
+    };
   }
 
   public async hasMatchEnded(matchId: string): Promise<boolean> {
@@ -1679,6 +1851,8 @@ export class MatchAssistantService {
       supported: boolean;
     }>
   > {
+    const occupied = await this.getOccupiedPorts();
+
     const nodes = await this.postgres.query<
       Array<{
         id: string;
@@ -1715,6 +1889,12 @@ export class MatchAssistantService {
                  AND s.reserved_by_match_id IS NULL
                  AND NOT EXISTS (
                    SELECT 1
+                     FROM unnest($1::text[], $2::int[]) AS held(node, port)
+                    WHERE held.node = s.game_server_node_id
+                      AND held.port = s.port
+                 )
+                 AND NOT EXISTS (
+                   SELECT 1
                      FROM public.matches m
                      JOIN public.match_maps mm ON mm.match_id = m.id
                     WHERE m.server_id = s.id
@@ -1734,6 +1914,7 @@ export class MatchAssistantService {
             )
           )
         ORDER BY n.enabled_for_match_making, n.id`,
+      [occupied.map(({ node }) => node), occupied.map(({ port }) => port)],
     );
 
     const supported = await Promise.all(
@@ -1972,6 +2153,16 @@ export class MatchAssistantService {
     });
   }
 
+  // Its boot check is what starts the match, so a caller leaving a match
+  // booting re-arms it: the jobId keeps one that is still queued.
+  private async rearmBootCheck(matchId: string) {
+    await this.delayCheckOnDemandServer(matchId).catch((error) => {
+      this.logger.error(
+        `[${matchId}] unable to re-arm the boot check of its on demand server: ${error?.message}`,
+      );
+    });
+  }
+
   public async delayCheckOnDemandServer(matchId: string) {
     await this.queue.add(
       MatchJobs.CheckOnDemandServerJob,
@@ -1995,21 +2186,26 @@ export class MatchAssistantService {
       serverId?: string;
       releaseOnlyIfEnded?: boolean;
       jobUids?: Map<string, string>;
+      endedServerId?: string;
     } = {},
-  ) {
+  ): Promise<Array<string>> {
     this.logger.log(`[${matchId}] stopping match servers`);
+
+    let stopping = false;
 
     try {
       for (const jobName of options.jobUids?.keys() ??
         (await this.getMatchServerJobIds(matchId))) {
         if (options.remove) {
           await this.removeOnDemandServerJob(matchId, jobName, { wait: true });
-        } else {
+        } else if (
           await this.signalOnDemandServerStop(
             matchId,
             jobName,
             options.jobUids?.get(jobName),
-          );
+          )
+        ) {
+          stopping = true;
         }
       }
     } catch (error) {
@@ -2020,20 +2216,35 @@ export class MatchAssistantService {
       throw error;
     }
 
-    await this.releaseOnDemandServer(
-      matchId,
-      options.serverId,
-      options.releaseOnlyIfEnded
-        ? MatchAssistantService.reservedByEndedMatch()
-        : undefined,
-    );
+    // The assignment removing them hands out what it freed once it has picked
+    // its own. A signalled server holds its ports until it exits: its stop
+    // check frees it.
+    if (options.remove) {
+      const removed = await this.releaseOnDemandServer(
+        matchId,
+        options.serverId,
+      );
+      await this.setServerError(matchId, null);
+      return removed;
+    }
+
+    if (!stopping) {
+      await this.assignWaitingMatchesTo([
+        ...(options.releaseOnlyIfEnded
+          ? await this.releaseEndedMatchServer(matchId)
+          : await this.releaseOnDemandServer(matchId, options.serverId)),
+        ...(options.endedServerId ? [options.endedServerId] : []),
+      ]);
+    }
 
     await this.setServerError(matchId, null);
+
+    return [];
   }
 
   // The queued stop can run after a restart, when the Job under this name is
   // the new server's, so it signals only the Jobs it read before the check.
-  public async stopEndedMatchServer(matchId: string) {
+  public async stopEndedMatchServer(matchId: string, serverId?: string) {
     const jobUids = await this.getMatchServerJobUids(matchId);
 
     if (await this.holdsAnOnDemandServer(matchId)) {
@@ -2046,6 +2257,7 @@ export class MatchAssistantService {
     await this.stopOnDemandServer(matchId, {
       jobUids,
       releaseOnlyIfEnded: true,
+      endedServerId: serverId,
     });
   }
 
@@ -2083,8 +2295,8 @@ export class MatchAssistantService {
     matchId: string,
     serverId?: string,
     condition?: servers_bool_exp,
-  ) {
-    await this.hasura.mutation({
+  ): Promise<Array<string>> {
+    const { update_servers } = await this.hasura.mutation({
       update_servers: {
         __args: {
           where: {
@@ -2107,45 +2319,281 @@ export class MatchAssistantService {
             reserved_by_match_id: null,
           },
         },
-        __typename: true,
+        returning: {
+          id: true,
+        },
       },
     });
+
+    return (update_servers?.returning ?? []).map((server) => server.id);
+  }
+
+  // An on-demand server is freed by the api once its pod is gone, and that write
+  // wakes nobody: server_availability waits on a server that is up.
+  private async assignWaitingMatchesTo(serverIds: Array<string>) {
+    if (serverIds.length === 0) {
+      return;
+    }
+
+    const { servers } = await this.hasura.query({
+      servers: {
+        __args: {
+          where: {
+            id: {
+              _in: serverIds,
+            },
+            enabled: {
+              _eq: true,
+            },
+            reserved_by_match_id: {
+              _is_null: true,
+            },
+            game_server_node: {
+              status: {
+                _eq: "Online",
+              },
+              enabled: {
+                _eq: true,
+              },
+              enabled_for_match_making: {
+                _eq: true,
+              },
+            },
+            ...MatchAssistantService.pendingDemoUploadExclusion(),
+          },
+        },
+        region: true,
+      },
+    });
+
+    for (const server of servers) {
+      await this.queueAssignWaitingMatch(server.region);
+    }
+  }
+
+  private async queueAssignWaitingMatch(region: string) {
+    await this.queue.add(
+      MatchJobs.AssignWaitingMatch,
+      { region },
+      {
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 5 * 1000,
+        },
+        removeOnFail: true,
+        removeOnComplete: true,
+      },
+    );
+  }
+
+  // Under every hand-off that never ran: a retry chain that died with the api,
+  // a pod that outlived the teardown wait, a demo upload hold that ran out.
+  private async assignStrandedWaitingMatches() {
+    const { matches } = await this.hasura.query({
+      matches: {
+        __args: {
+          where: {
+            status: {
+              _eq: "WaitingForServer",
+            },
+            source: {
+              _neq: "practice",
+            },
+          },
+        },
+        region: true,
+      },
+    });
+
+    for (const region of new Set(
+      matches.map((match) => match.region).filter(Boolean),
+    )) {
+      if ((await this.countFreeOnDemandServers(region)) > 0) {
+        await this.queueAssignWaitingMatch(region);
+      }
+    }
+  }
+
+  public async assignWaitingMatch(region: string, servers = 1) {
+    if (servers < 1) {
+      return 0;
+    }
+
+    const { matches } = await this.hasura.query({
+      matches: {
+        __args: {
+          where: {
+            status: {
+              _eq: "WaitingForServer",
+            },
+            // A practice match waits for a server only once its session failed.
+            source: {
+              _neq: "practice",
+            },
+            _or: [
+              {
+                region: {
+                  _is_null: true,
+                },
+              },
+              {
+                region: {
+                  _eq: region,
+                },
+              },
+            ],
+          },
+          order_by: [
+            {
+              created_at: "asc",
+            },
+          ],
+        },
+        id: true,
+      },
+    });
+
+    // Oldest first, each tried once: one stays WaitingForServer while its own
+    // server boots. One retrying takes a server with it, and one that finds
+    // nothing free means none is, unless it has ended since. One that fails on
+    // its own is skipped.
+    let placed = 0;
+
+    for (const match of matches) {
+      if (placed >= servers) {
+        break;
+      }
+
+      if (await this.isBootingOnDemandServer(match.id)) {
+        await this.rearmBootCheck(match.id);
+        continue;
+      }
+
+      const assigned = await this.assignServer(match.id).catch((error) => {
+        this.logger.error(
+          `[${match.id}] unable to hand the waiting match a server: ${error?.message}`,
+        );
+        return "failed" as const;
+      });
+
+      if (assigned === "failed") {
+        continue;
+      }
+
+      if (assigned === "unplaced") {
+        if (await this.hasMatchEnded(match.id)) {
+          continue;
+        }
+
+        break;
+      }
+
+      placed++;
+    }
+
+    return placed;
   }
 
   // A SIGUSR1 sent before setup.sh hands PID 1 to server.sh is silently ignored.
-  // A check queued without a job name predates u- jobs, so it signalled an m- one.
+  // A check queued without a job name predates u- jobs, so it signalled an m- one,
+  // and one without signalledAt was queued two minutes out.
+  // False while the server is still exiting, for the caller to check again.
   public async removeUnstoppedOnDemandServer(
     matchId: string,
     jobUid: string,
     jobName = MatchAssistantService.GetMatchServerJobId(matchId),
-  ) {
+    signalledAt?: number,
+    serverId?: string,
+  ): Promise<boolean> {
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const batch = kc.makeApiClient(BatchV1Api);
+    const core = kc.makeApiClient(CoreV1Api);
 
     const job = await this.readOnDemandServerJob(batch, jobName);
 
     if (
-      !job ||
-      job.metadata?.uid !== jobUid ||
-      MatchAssistantService.isJobFinished(job)
+      job?.metadata?.uid === jobUid &&
+      !MatchAssistantService.isJobFinished(job)
     ) {
-      return;
+      const { matches, servers } = await this.getOnDemandServerJobMatches([
+        matchId,
+      ]);
+
+      if (MatchAssistantService.holdsOnDemandServer(matches.at(0), servers)) {
+        return true;
+      }
+
+      const { items: pods } = await core.listNamespacedPod({
+        namespace: this.namespace,
+        labelSelector: `job-name=${jobName}`,
+      });
+
+      if (
+        pods.some(
+          (pod) =>
+            MatchAssistantService.isOwnedBy(pod, jobUid) &&
+            MatchAssistantService.isPodLive(pod),
+        )
+      ) {
+        if (
+          signalledAt &&
+          Date.now() - signalledAt <
+            MatchAssistantService.ON_DEMAND_SERVER_STOP_TIMEOUT_MS
+        ) {
+          return false;
+        }
+
+        this.logger.warn(
+          `[${matchId}] on demand server did not stop after it was signalled, removing it`,
+        );
+
+        await this.removeOnDemandServerJob(matchId, jobName, { uid: jobUid });
+      }
     }
 
-    const { matches, servers } = await this.getOnDemandServerJobMatches([
-      matchId,
+    await this.assignWaitingMatchesTo([
+      ...(await this.releaseEndedMatchServer(matchId)),
+      ...(serverId ? [serverId] : []),
     ]);
 
-    if (MatchAssistantService.holdsOnDemandServer(matches.at(0), servers)) {
-      return;
+    return true;
+  }
+
+  // A match played again freed the server it ended on (tau_matches), so one it
+  // reserves now is a newer Job's. A pod holds the ports until it is gone, not
+  // its Job: one deleted in the background can still be terminating.
+  private async releaseEndedMatchServer(
+    matchId: string,
+    serverId?: string,
+  ): Promise<Array<string>> {
+    if (!(await this.hasMatchEnded(matchId))) {
+      return [];
     }
 
-    this.logger.warn(
-      `[${matchId}] on demand server did not stop after it was signalled, removing it`,
-    );
+    if ((await this.getLiveServerPods(matchId)).length > 0) {
+      return [];
+    }
 
-    await this.removeOnDemandServerJob(matchId, jobName, { uid: jobUid });
+    return await this.releaseOnDemandServer(
+      matchId,
+      serverId,
+      MatchAssistantService.reservedByEndedMatch(),
+    );
+  }
+
+  private async getLiveServerPods(matchId: string): Promise<Array<V1Pod>> {
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const core = kc.makeApiClient(CoreV1Api);
+
+    const { items: pods } = await core.listNamespacedPod({
+      namespace: this.namespace,
+      labelSelector: `job-name in (${(await this.getMatchServerJobIds(matchId)).join(",")})`,
+    });
+
+    return pods.filter((pod) => MatchAssistantService.isPodLive(pod));
   }
 
   public async reconcileOnDemandServerJobs(): Promise<void> {
@@ -2199,6 +2647,22 @@ export class MatchAssistantService {
 
     this.unlabelledServerJobsRemain = unlabelledServerJobsRemain;
 
+    try {
+      await this.releaseStoppedMatchServers();
+    } catch (error) {
+      this.logger.error(
+        `[match-server-reaper] freeing the servers of ended matches failed: ${error?.message}`,
+      );
+    }
+
+    try {
+      await this.assignStrandedWaitingMatches();
+    } catch (error) {
+      this.logger.error(
+        `[match-server-reaper] handing free servers to waiting matches failed: ${error?.message}`,
+      );
+    }
+
     if (candidates.size === 0) {
       return;
     }
@@ -2250,10 +2714,12 @@ export class MatchAssistantService {
         if (removed) {
           for (const server of servers) {
             if (server.reserved_by_match_id === matchId) {
-              await this.releaseOnDemandServer(
-                matchId,
-                server.id,
-                MatchAssistantService.reservationNotHeld(matchId),
+              await this.assignWaitingMatchesTo(
+                await this.releaseOnDemandServer(
+                  matchId,
+                  server.id,
+                  MatchAssistantService.reservationNotHeld(matchId),
+                ),
               );
             }
           }
@@ -2268,6 +2734,39 @@ export class MatchAssistantService {
     }
 
     await this.cache.forget(...heldKeys);
+  }
+
+  // An ended match keeps its on-demand server until its stop sees the pod gone,
+  // which a stop that kept failing never did.
+  private async releaseStoppedMatchServers() {
+    const { servers } = await this.hasura.query({
+      servers: {
+        __args: {
+          where: {
+            is_dedicated: {
+              _eq: false,
+            },
+            ...MatchAssistantService.reservedByEndedMatch(),
+          },
+        },
+        id: true,
+        reserved_by_match_id: true,
+      },
+    });
+
+    for (const server of servers) {
+      const released = await this.releaseEndedMatchServer(
+        server.reserved_by_match_id,
+        server.id,
+      );
+
+      if (released.length > 0) {
+        this.logger.warn(
+          `[${server.reserved_by_match_id}] match ended and its server is gone, freed on demand server ${server.id}`,
+        );
+        await this.assignWaitingMatchesTo(released);
+      }
+    }
   }
 
   private async getOnDemandServerJobMatches(matchIds: Array<string>) {
@@ -2305,6 +2804,7 @@ export class MatchAssistantService {
         },
         id: true,
         reserved_by_match_id: true,
+        boot_status: true,
       },
     });
 
@@ -2413,6 +2913,10 @@ export class MatchAssistantService {
     );
   }
 
+  private static isPodLive(pod: V1Pod) {
+    return !["Succeeded", "Failed"].includes(pod.status?.phase);
+  }
+
   private static isNotFound(error: { code?: number | string }) {
     return error?.code?.toString() === "404";
   }
@@ -2473,7 +2977,7 @@ export class MatchAssistantService {
     matchId: string,
     jobName: string,
     jobUid?: string,
-  ) {
+  ): Promise<boolean> {
     const kc = new KubeConfig();
     kc.loadFromDefault();
 
@@ -2487,7 +2991,7 @@ export class MatchAssistantService {
       MatchAssistantService.isJobFinished(job) ||
       (jobUid && job.metadata?.uid !== jobUid)
     ) {
-      return;
+      return false;
     }
 
     const { items: pods } = await core.listNamespacedPod({
@@ -2501,14 +3005,14 @@ export class MatchAssistantService {
 
     if (running.length === 0) {
       if (pods.some((pod) => pod.status?.phase === "Succeeded")) {
-        return;
+        return false;
       }
 
       // Nothing to signal: a pending pod boots anyway and a failed one is replaced (backoffLimit).
       await this.removeOnDemandServerJob(matchId, jobName, {
         uid: job.metadata?.uid,
       });
-      return;
+      return false;
     }
 
     for (const pod of running) {
@@ -2538,6 +3042,10 @@ export class MatchAssistantService {
         matchId,
         jobName,
         jobUid: job.metadata?.uid,
+        signalledAt: Date.now(),
+        serverId: job.spec?.template?.spec?.containers
+          ?.at(0)
+          ?.env?.find((env) => env.name === "SERVER_ID")?.value,
       },
       {
         delay: MatchAssistantService.ON_DEMAND_SERVER_STOP_CHECK_DELAY_MS,
@@ -2551,6 +3059,8 @@ export class MatchAssistantService {
         jobId: `match.${matchId}.server-stop-check.${job.metadata?.uid}`,
       },
     );
+
+    return true;
   }
 
   // A uid pins the Job and its pods (409 = already replaced): a reassignment reuses the name.

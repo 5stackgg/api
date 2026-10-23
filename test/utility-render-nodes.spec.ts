@@ -15,6 +15,7 @@ describe("render nodes (SQL-driven)", () => {
   let service: MatchAssistantService;
   let practice: UtilityPracticeService;
   let nodeSeq = 0;
+  let occupied: Array<{ node: string; port: number }>;
 
   beforeAll(async () => {
     db = await bootMigratedDb("UtilityRenderNodesTest");
@@ -66,6 +67,11 @@ describe("render nodes (SQL-driven)", () => {
   });
 
   beforeEach(async () => {
+    // No cluster here: the match pods holding ports are given by the test.
+    occupied = [];
+    jest
+      .spyOn(service as any, "getOccupiedPorts")
+      .mockImplementation(async () => occupied);
     await postgres.query("DELETE FROM match_demo_sessions");
     await postgres.query("DELETE FROM servers");
     await postgres.query("DELETE FROM game_server_nodes");
@@ -94,6 +100,22 @@ describe("render nodes (SQL-driven)", () => {
   };
 
   const ids = async () => (await service.renderNodes()).map((node) => node.id);
+
+  it("leaves out a node whose only free server a match pod still holds", async () => {
+    const id = `render-node-${++nodeSeq}`;
+    await postgres.query(
+      `INSERT INTO game_server_nodes
+         (id, public_ip, lan_ip, start_port_range, end_port_range, region, status, enabled, label, gpu, build_id)
+       VALUES ($1, '203.0.113.1', '10.0.0.1', 27015, 27016, 'RenderRegion', 'Online', true, $1, true, 1)`,
+      [id],
+    );
+
+    occupied = [{ node: id, port: 27017 }];
+    expect(await ids()).toEqual([id]);
+
+    occupied = [{ node: id, port: 27015 }];
+    expect(await ids()).toEqual([]);
+  });
 
   it("lists a GPU-only node's slot first, then GPU nodes in any region, LAN included", async () => {
     const lan = await matchNode("ZRenderLan");

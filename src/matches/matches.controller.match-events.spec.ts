@@ -112,6 +112,7 @@ describe("MatchesController — match_events on-demand servers", () => {
       stopOnDemandServer: jest.fn(),
       releaseOnDemandServer: jest.fn(),
       assignServer: jest.fn(),
+      assignWaitingMatch: jest.fn(),
       reserveDedicatedServer: jest.fn(),
     };
     scheduledMatchesQueue = { add: jest.fn() };
@@ -297,7 +298,7 @@ describe("MatchesController — match_events on-demand servers", () => {
 
     const [[, data, options]] = stopJobs();
 
-    expect(data).toEqual({ matchId: "match-1" });
+    expect(data).toEqual({ matchId: "match-1", serverId: "server-1" });
     expect(options?.delay ?? 0).toBe(0);
     expect(options?.attempts).toBeGreaterThan(1);
   });
@@ -317,8 +318,191 @@ describe("MatchesController — match_events on-demand servers", () => {
 
     expect(stopJobs()).toHaveLength(1);
     expect(stopJobs()[0][2]).toEqual(
-      expect.objectContaining({ delay: 30 * 1000 }),
+      expect.objectContaining({ delay: 10 * 1000 }),
     );
+  });
+
+  it("retries the event when it cannot tell how far behind the TV feed is", async () => {
+    const answer = hasura.query.getMockImplementation()!;
+    hasura.query.mockImplementation(async (request: any) => {
+      if (request.match_maps) {
+        throw new Error("hasura unavailable");
+      }
+      return answer(request);
+    });
+
+    await expect(
+      controller.match_events({
+        op: "UPDATE",
+        old: row({ status: "Live" }),
+        new: row({ status: "Finished" }),
+      } as any),
+    ).rejects.toThrow("hasura unavailable");
+
+    expect(stopJobs()).toHaveLength(0);
+  });
+
+  it("still ends the broadcast when it cannot tell how far behind the TV feed is", async () => {
+    const answer = hasura.query.getMockImplementation()!;
+    hasura.query.mockImplementation(async (request: any) => {
+      if (request.match_maps) {
+        throw new Error("hasura unavailable");
+      }
+      return answer(request);
+    });
+
+    await controller
+      .match_events({
+        op: "UPDATE",
+        old: row({ status: "Live", server_id: "dedicated-1" }),
+        new: row({ status: "Finished", server_id: "dedicated-1" }),
+      } as any)
+      .catch((): void => undefined);
+
+    expect(broadcastStopJobs()[0][2].delay).toBe(5 * 1000);
+  });
+
+  // The plugin waits out tv_delay before it finishes the map, then stops the TV
+  // 5s later, and the server outlives that by as much again.
+  it("stops a finished match's server once the plugin has stopped the TV", async () => {
+    await controller.match_events({
+      op: "UPDATE",
+      old: row({ status: "Live" }),
+      new: row({ status: "Finished" }),
+    } as any);
+
+    expect(stopJobs()[0][2]).toEqual(
+      expect.objectContaining({ delay: 10 * 1000 }),
+    );
+  });
+
+  it("waits out tv_delay before stopping the server of a match ended mid-map", async () => {
+    inPlayMaps = [{ id: "map-1" }];
+
+    await controller.match_events({
+      op: "UPDATE",
+      old: row({ status: "Live" }),
+      new: row({ status: "Forfeit" }),
+    } as any);
+
+    expect(stopJobs()[0][2]).toEqual(
+      expect.objectContaining({ delay: 35 * 1000 }),
+    );
+  });
+
+  it("waits out tv_delay before stopping a server still recording the map", async () => {
+    const answer = hasura.query.getMockImplementation()!;
+    hasura.query.mockImplementation(async (request: any) =>
+      request.match_maps
+        ? {
+            match_maps: request.match_maps.__args.where.status._in.includes(
+              "WaitingForTV",
+            )
+              ? [{ id: "map-1" }]
+              : [],
+            match_options_by_pk: { tv_delay: 30 },
+          }
+        : answer(request),
+    );
+
+    await controller.match_events({
+      op: "UPDATE",
+      old: row({ status: "Live" }),
+      new: row({ status: "Forfeit" }),
+    } as any);
+
+    expect(stopJobs()[0][2]).toEqual(
+      expect.objectContaining({ delay: 35 * 1000 }),
+    );
+    expect(broadcastStopJobs()[0][2].delay).toBe(5 * 1000);
+  });
+
+  it("stops the server an ended match ended on as soon as it is played again", async () => {
+    await controller.match_events({
+      op: "UPDATE",
+      old: row({ status: "Canceled", server_id: null }),
+      new: row({ status: "WaitingForCheckIn", server_id: null }),
+    } as any);
+
+    expect(stopJobs()).toHaveLength(1);
+    expect(stopJobs()[0][1]).toEqual({ matchId: "match-1" });
+    expect(stopJobs()[0][2]?.delay ?? 0).toBe(0);
+  });
+
+  it("hands a node that comes online to as many waiting matches as it has free servers", async () => {
+    const answer = hasura.query.getMockImplementation()!;
+    hasura.query.mockImplementation(async (request: any) =>
+      request.game_server_nodes_by_pk
+        ? {
+            game_server_nodes_by_pk: {
+              gpu: false,
+              servers_aggregate: { aggregate: { count: 2 } },
+            },
+          }
+        : answer(request),
+    );
+
+    await controller.node_server_availability({
+      op: "UPDATE",
+      old: { id: "node-1", status: "Offline" },
+      new: { id: "node-1", status: "Online", enabled: true, region: "USE" },
+    } as any);
+
+    expect(matchAssistant.assignWaitingMatch.mock.calls).toEqual([["USE", 2]]);
+  });
+
+  describe("a server that becomes free", () => {
+    const freed = (overrides: Record<string, unknown> = {}) =>
+      controller.server_availability({
+        op: "UPDATE",
+        old: { id: "server-1", reserved_by_match_id: "match-1" },
+        new: {
+          id: "server-1",
+          region: "USE",
+          enabled: true,
+          connected: true,
+          is_dedicated: true,
+          reserved_by_match_id: null,
+          ...overrides,
+        },
+      } as any);
+
+    it("goes to the oldest waiting match in its region", async () => {
+      await freed();
+
+      expect(matchAssistant.assignWaitingMatch).toHaveBeenCalledWith("USE");
+    });
+
+    it("is not handed out when it is a dedicated server that is not up", async () => {
+      await freed({ connected: false });
+
+      expect(matchAssistant.assignWaitingMatch).not.toHaveBeenCalled();
+    });
+
+    // The api hands out one it freed itself; nobody is woken when an assignment gives one back.
+    it("is not handed out when the api frees an on-demand one", async () => {
+      await freed({ connected: false, is_dedicated: false });
+
+      expect(matchAssistant.assignWaitingMatch).not.toHaveBeenCalled();
+      expect(matchAssistant.assignServer).not.toHaveBeenCalled();
+    });
+
+    it("is not handed out when a new on-demand server is added", async () => {
+      await controller.server_availability({
+        op: "INSERT",
+        old: null,
+        new: {
+          id: "server-4",
+          region: "USE",
+          enabled: true,
+          connected: false,
+          is_dedicated: false,
+          reserved_by_match_id: null,
+        },
+      } as any);
+
+      expect(matchAssistant.assignWaitingMatch).not.toHaveBeenCalled();
+    });
   });
 
   it("stops a canceled match's server straight away", async () => {
@@ -352,6 +536,16 @@ describe("MatchesController — match_events on-demand servers", () => {
     } as any);
 
     expect(stopJobs()).toHaveLength(0);
+  });
+
+  it("stops the server of a match ended and taken off it in one write", async () => {
+    await controller.match_events({
+      op: "UPDATE",
+      old: row({ status: "Live" }),
+      new: row({ status: "Canceled", server_id: null }),
+    } as any);
+
+    expect(stopJobs()).toHaveLength(1);
   });
 
   it("does not stop again when its own server_id write re-fires the event", async () => {
