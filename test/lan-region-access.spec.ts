@@ -271,6 +271,69 @@ describe("LAN region access (SQL-driven)", () => {
     });
   });
 
+  describe("team scrim regions", () => {
+    const saveListing = (
+      role: string,
+      teamId: string,
+      regions: Array<string>,
+      lanRegions?: Array<string>,
+    ) =>
+      asPlayer(
+        role,
+        lanRegions,
+        `INSERT INTO team_scrim_settings (team_id, regions, notes)
+         VALUES ($1, $2, 'saved')
+         ON CONFLICT (team_id) DO UPDATE
+         SET regions = EXCLUDED.regions, notes = EXCLUDED.notes
+         RETURNING regions`,
+        [teamId, regions],
+      );
+
+    const listedTeam = async (regions: Array<string>) => {
+      const team = await fx.team();
+      await postgres.query(
+        "INSERT INTO team_scrim_settings (team_id, regions) VALUES ($1, $2)",
+        [team.id, regions],
+      );
+      return team.id;
+    };
+
+    it("refuses a manager off the LAN listing a LAN region", async () => {
+      const team = await fx.team();
+      await expect(saveListing("user", team.id, ["Lan"])).rejects.toThrow(
+        /must be on the LAN/,
+      );
+    });
+
+    it("lets a manager the probe placed on the LAN list it", async () => {
+      const team = await fx.team();
+      await expect(
+        saveListing("user", team.id, ["Lan"], ["Lan"]),
+      ).resolves.toEqual([{ regions: ["Lan"] }]);
+    });
+
+    it("keeps a listed LAN region when a manager off the LAN saves again", async () => {
+      const teamId = await listedTeam(["Lan"]);
+      await expect(saveListing("user", teamId, ["Lan"])).resolves.toEqual([
+        { regions: ["Lan"] },
+      ]);
+    });
+
+    it("refuses a manager off the LAN adding another LAN region", async () => {
+      const teamId = await listedTeam(["Lan"]);
+      await expect(
+        saveListing("user", teamId, ["Lan", "Lan2"]),
+      ).rejects.toThrow(/must be on the LAN/);
+    });
+
+    it("lets a match_organizer off the LAN list it", async () => {
+      const team = await fx.team();
+      await expect(
+        saveListing("match_organizer", team.id, ["Lan"]),
+      ).resolves.toEqual([{ regions: ["Lan"] }]);
+    });
+  });
+
   it("leaves the api's own inserts alone", async () => {
     await expect(
       postgres.query(
