@@ -367,6 +367,21 @@ export class GameServerNodeController {
   }
 
   @HasuraAction()
+  public async removeCs(data: {
+    game_server_node_id: string;
+    game: "cs2" | "csgo";
+  }) {
+    await this.gameServerNodeService.removeCsServer(
+      data.game_server_node_id,
+      data.game,
+    );
+
+    return {
+      success: true,
+    };
+  }
+
+  @HasuraAction()
   public async validateGamedata(data: {
     user: User;
     game_server_node_id?: string | null;

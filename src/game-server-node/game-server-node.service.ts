@@ -177,19 +177,32 @@ export class GameServerNodeService {
   // the last log lines kept with a failed update, enough to say why it failed
   private static readonly UPDATE_ERROR_LINES = 3;
 
-  // CS2 and CS:GO each have their own update status, failure time and error.
+  // CS2 and CS:GO each have their own build, update status, failure time and
+  // error.
   private static readonly UPDATE_COLUMNS = {
     cs2: {
+      build: "build_id",
       status: "update_status",
       failedAt: "update_failed_at",
       error: "update_error",
     },
     csgo: {
+      build: "csgo_build_id",
       status: "csgo_update_status",
       failedAt: "csgo_update_failed_at",
       error: "csgo_update_error",
     },
   } as const;
+
+  // A removal runs under its game's update job name, so it never overlaps an
+  // install or update; this label tells the two apart.
+  private static readonly REMOVAL_LABEL = "5stack.gg/removes-game";
+
+  private static isRemoval(job: V1Job) {
+    return (
+      job.metadata?.labels?.[GameServerNodeService.REMOVAL_LABEL] === "true"
+    );
+  }
 
   private static updateColumns(game: string) {
     return game === "csgo"
@@ -682,21 +695,7 @@ export class GameServerNodeService {
     }
 
     if (existingJob) {
-      await this.batchApi
-        .deleteNamespacedJob({
-          name: jobName,
-          namespace: this.namespace,
-          body: {
-            propagationPolicy: "Background",
-            gracePeriodSeconds: 0,
-            preconditions: { uid: existingJob.metadata.uid },
-          },
-        })
-        .catch((error) => {
-          if (error.code?.toString() !== "404") {
-            throw error;
-          }
-        });
+      await this.deleteFinishedUpdateJob(jobName, existingJob);
     }
 
     const sanitizedGameServerNodeId = gameServerNodeId.replaceAll(".", "-");
@@ -864,6 +863,215 @@ export class GameServerNodeService {
     }
   }
 
+  public async removeCsServer(gameServerNodeId: string, game: string) {
+    if (game !== "cs2" && game !== "csgo") {
+      throw new Error(`Unknown game ${game}`);
+    }
+    const gameName = game === "csgo" ? "CS:GO" : "CS2";
+
+    const { game_server_nodes_by_pk } = await this.hasura.query({
+      game_server_nodes_by_pk: {
+        __args: {
+          id: gameServerNodeId,
+        },
+        pin_plugin_version: true,
+        pin_plugin_runtime: true,
+      },
+    });
+
+    if (!game_server_nodes_by_pk) {
+      throw new Error("Game server not found");
+    }
+
+    const jobName = GameServerNodeService.GET_UPDATE_JOB_NAME(
+      gameServerNodeId,
+      game,
+    );
+    const existingJob = await this.loggingService.getJob(jobName);
+
+    if (existingJob && !GameServerNodeService.updateJobResult(existingJob)) {
+      throw new Error(
+        `Wait for the running ${gameName} job on ${gameServerNodeId} to finish`,
+      );
+    }
+
+    const sanitizedGameServerNodeId = gameServerNodeId.replaceAll(".", "-");
+    const serverfilesVolumeName =
+      game === "csgo"
+        ? `serverfiles-csgo-${sanitizedGameServerNodeId}`
+        : `serverfiles-${sanitizedGameServerNodeId}`;
+    const steamcmdVolumeName = `steamcmd-${sanitizedGameServerNodeId}`;
+
+    // Every pod that reads the install mounts its claim: matches, dedicated
+    // servers, the gamedata validator and map-asset builds.
+    const { items: pods } = await this.coreApi.listNamespacedPod({
+      namespace: this.namespace,
+    });
+    const using = pods
+      .filter(
+        (pod) =>
+          pod.status?.phase !== "Succeeded" &&
+          pod.status?.phase !== "Failed" &&
+          pod.spec?.volumes?.some(
+            (volume) =>
+              volume.persistentVolumeClaim?.claimName ===
+              `${serverfilesVolumeName}-claim`,
+          ),
+      )
+      .map((pod) => pod.metadata?.name);
+
+    if (using.length > 0) {
+      throw new Error(
+        `${gameName} is in use on ${gameServerNodeId}: ${using.join(", ")}`,
+      );
+    }
+
+    if (existingJob) {
+      await this.deleteFinishedUpdateJob(jobName, existingJob);
+    }
+
+    // a job on a claim that doesn't exist would wait forever
+    await this.createVolumes(gameServerNodeId, game);
+
+    const image = await this.pluginRuntimeService.resolveGameServerPluginImage(
+      game_server_nodes_by_pk,
+    );
+
+    this.logger.log(`Removing ${gameName} from node ${gameServerNodeId}`);
+
+    await this.batchApi.createNamespacedJob({
+      namespace: this.namespace,
+      body: {
+        apiVersion: "batch/v1",
+        kind: "Job",
+        metadata: {
+          name: jobName,
+          labels: {
+            [GameServerNodeService.REMOVAL_LABEL]: "true",
+          },
+        },
+        spec: {
+          template: {
+            metadata: {
+              labels: {
+                app: "update-cs-server",
+              },
+            },
+            spec: {
+              affinity: {
+                nodeAffinity: {
+                  requiredDuringSchedulingIgnoredDuringExecution: {
+                    nodeSelectorTerms: [
+                      {
+                        matchExpressions: [
+                          {
+                            key: "kubernetes.io/hostname",
+                            operator: "In",
+                            values: [gameServerNodeId],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              },
+              restartPolicy: "Never",
+              containers: [
+                {
+                  name: "update-cs-server",
+                  image,
+                  command: [
+                    "/bin/bash",
+                    "-c",
+                    [
+                      "set -e",
+                      `echo "---Removing ${gameName}---"`,
+                      "find /serverdata/serverfiles -mindepth 1 -delete",
+                      // only a pinned CS2 install keeps a depot copy in steamcmd
+                      ...(game === "cs2"
+                        ? [
+                            "rm -rf /serverdata/steamcmd/linux32/steamapps/content/app_730",
+                          ]
+                        : []),
+                      `echo "---Removed ${gameName}---"`,
+                    ].join("\n"),
+                  ],
+                  volumeMounts: [
+                    {
+                      name: serverfilesVolumeName,
+                      mountPath: "/serverdata/serverfiles",
+                    },
+                    ...(game === "cs2"
+                      ? [
+                          {
+                            name: steamcmdVolumeName,
+                            mountPath: "/serverdata/steamcmd",
+                          },
+                        ]
+                      : []),
+                  ],
+                },
+              ],
+              volumes: [
+                {
+                  name: serverfilesVolumeName,
+                  persistentVolumeClaim: {
+                    claimName: `${serverfilesVolumeName}-claim`,
+                  },
+                },
+                ...(game === "cs2"
+                  ? [
+                      {
+                        name: steamcmdVolumeName,
+                        persistentVolumeClaim: {
+                          claimName: `${steamcmdVolumeName}-claim`,
+                        },
+                      },
+                    ]
+                  : []),
+              ],
+            },
+          },
+          backoffLimit: 1,
+          ttlSecondsAfterFinished: GameServerNodeService.UPDATE_JOB_TTL_S,
+        },
+      },
+    });
+
+    // The build is cleared now: pings leave it alone while the status is set,
+    // and the next one after the removal finds nothing installed.
+    const columns = GameServerNodeService.updateColumns(game);
+    await this.postgres.query(
+      `UPDATE game_server_nodes
+          SET ${columns.status} = 'Removing',
+              ${columns.failedAt} = NULL,
+              ${columns.error} = NULL,
+              ${columns.build} = NULL
+        WHERE id = $1`,
+      [gameServerNodeId],
+    );
+
+    void this.monitorUpdateStatus(gameServerNodeId, game);
+  }
+
+  private async deleteFinishedUpdateJob(jobName: string, job: V1Job) {
+    await this.batchApi
+      .deleteNamespacedJob({
+        name: jobName,
+        namespace: this.namespace,
+        body: {
+          propagationPolicy: "Background",
+          gracePeriodSeconds: 0,
+          preconditions: { uid: job.metadata.uid },
+        },
+      })
+      .catch((error) => {
+        if (error.code?.toString() !== "404") {
+          throw error;
+        }
+      });
+  }
+
   private async createVolumes(gameServerNodeId: string, game = "cs2") {
     if (game === "csgo") {
       await this.createVolume(
@@ -971,7 +1179,9 @@ export class GameServerNodeService {
         }
 
         if (pod?.status?.phase !== "Running") {
-          await writeStatus("Initializing");
+          await writeStatus(
+            GameServerNodeService.isRemoval(job) ? "Removing" : "Initializing",
+          );
           await GameServerNodeService.sleep(5000);
           continue;
         }
@@ -1284,10 +1494,17 @@ export class GameServerNodeService {
       [gameServerNodeId, await this.updateErrorLines(job)],
     );
 
-    this.logger.warn(`[${gameServerNodeId}] ${game} update job failed`);
+    const removal = GameServerNodeService.isRemoval(job);
+    const gameName = game === "csgo" ? "CSGO" : "CS2";
+
+    this.logger.warn(
+      `[${gameServerNodeId}] ${game} ${removal ? "removal" : "update"} job failed`,
+    );
     void this.notifications.send("GameUpdate", {
-      message: `The ${game === "csgo" ? "CSGO" : "CS2"} update failed on node ${gameServerNodeId}. Check the update logs for details.`,
-      title: "Game Update Failed",
+      message: removal
+        ? `Removing ${gameName} failed on node ${gameServerNodeId}. Check the update logs for details.`
+        : `The ${gameName} update failed on node ${gameServerNodeId}. Check the update logs for details.`,
+      title: removal ? "Game Removal Failed" : "Game Update Failed",
       role: "administrator",
     });
   }

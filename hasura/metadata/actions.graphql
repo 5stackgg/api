@@ -963,6 +963,13 @@ type Mutation {
 }
 
 type Mutation {
+  removeCs(
+    game_server_node_id: String!
+    game: String!
+  ): SuccessOutput
+}
+
+type Mutation {
   updateServices: SuccessOutput
 }
 

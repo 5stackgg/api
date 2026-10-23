@@ -1,6 +1,7 @@
 const createNamespacedJob = jest.fn();
 const deleteNamespacedJob = jest.fn();
 const readNamespacedPodLog = jest.fn();
+const listNamespacedPod = jest.fn();
 
 jest.mock("@kubernetes/client-node", () => ({
   BatchV1Api: class BatchV1Api {
@@ -9,6 +10,7 @@ jest.mock("@kubernetes/client-node", () => ({
   },
   CoreV1Api: class CoreV1Api {
     readNamespacedPodLog = readNamespacedPodLog;
+    listNamespacedPod = listNamespacedPod;
   },
   KubeConfig: class KubeConfig {
     loadFromDefault() {}
@@ -93,6 +95,7 @@ describe("GameServerNodeService — CS2 update status", () => {
     createNamespacedJob.mockReset().mockResolvedValue({});
     deleteNamespacedJob.mockReset().mockResolvedValue({});
     readNamespacedPodLog.mockReset().mockResolvedValue("");
+    listNamespacedPod.mockReset().mockResolvedValue({ items: [] });
     redisKeys = new Set();
     nodeRows = [];
     events = [];
@@ -707,6 +710,210 @@ describe("GameServerNodeService — CS2 update status", () => {
         /SET csgo_update_status = 'Initializing',\s+csgo_update_failed_at = NULL,\s+csgo_update_error = NULL/,
       ),
       [NODE_ID],
+    );
+  });
+
+  const removableNode = () => {
+    hasura.query.mockResolvedValue({
+      game_server_nodes_by_pk: {
+        pin_plugin_version: null,
+        pin_plugin_runtime: null,
+      },
+    });
+    jest.spyOn(service as any, "createVolumes").mockResolvedValue(undefined);
+    return jest
+      .spyOn(service, "monitorUpdateStatus")
+      .mockResolvedValue(undefined);
+  };
+
+  const claimPod = (name: string, phase: string, claimName: string) => ({
+    metadata: { name },
+    spec: {
+      volumes: [{ name: "files", persistentVolumeClaim: { claimName } }],
+    },
+    status: { phase },
+  });
+
+  it("removes CS2 through its update job, with its depot copy and its build", async () => {
+    const monitor = removableNode();
+    loggingService.getJob.mockResolvedValue(
+      recorded({
+        metadata: { name: JOB_NAME, uid: "uid-done" },
+        status: { succeeded: 1 },
+      }),
+    );
+
+    await service.removeCsServer(NODE_ID, "cs2");
+
+    expect(deleteNamespacedJob).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: JOB_NAME,
+        body: expect.objectContaining({ preconditions: { uid: "uid-done" } }),
+      }),
+    );
+    const job = createNamespacedJob.mock.calls[0][0].body;
+    expect(job.metadata).toEqual({
+      name: JOB_NAME,
+      labels: { "5stack.gg/removes-game": "true" },
+    });
+    const script = job.spec.template.spec.containers[0].command.at(-1);
+    expect(script).toContain(
+      "find /serverdata/serverfiles -mindepth 1 -delete",
+    );
+    expect(script).toContain(
+      "rm -rf /serverdata/steamcmd/linux32/steamapps/content/app_730",
+    );
+    expect(
+      job.spec.template.spec.volumes.map(
+        (volume: any) => volume.persistentVolumeClaim.claimName,
+      ),
+    ).toEqual([`serverfiles-${NODE_ID}-claim`, `steamcmd-${NODE_ID}-claim`]);
+    expect(postgres.query).toHaveBeenCalledWith(
+      expect.stringMatching(
+        /SET update_status = 'Removing',\s+update_failed_at = NULL,\s+update_error = NULL,\s+build_id = NULL/,
+      ),
+      [NODE_ID],
+    );
+    expect(monitor).toHaveBeenCalledWith(NODE_ID, "cs2");
+  });
+
+  it("removes CS:GO from its own volume and columns", async () => {
+    const monitor = removableNode();
+    loggingService.getJob.mockResolvedValue(null);
+
+    await service.removeCsServer(NODE_ID, "csgo");
+
+    const job = createNamespacedJob.mock.calls[0][0].body;
+    expect(job.metadata.name).toBe(CSGO_JOB_NAME);
+    expect(job.spec.template.spec.containers[0].command.at(-1)).not.toContain(
+      "steamcmd",
+    );
+    expect(
+      job.spec.template.spec.volumes.map(
+        (volume: any) => volume.persistentVolumeClaim.claimName,
+      ),
+    ).toEqual([`serverfiles-csgo-${NODE_ID}-claim`]);
+    expect(postgres.query).toHaveBeenCalledWith(
+      expect.stringMatching(
+        /SET csgo_update_status = 'Removing',\s+csgo_update_failed_at = NULL,\s+csgo_update_error = NULL,\s+csgo_build_id = NULL/,
+      ),
+      [NODE_ID],
+    );
+    expect(monitor).toHaveBeenCalledWith(NODE_ID, "csgo");
+  });
+
+  it("refuses to remove a game while its install or update is running", async () => {
+    removableNode();
+    loggingService.getJob.mockResolvedValue(runningJob);
+
+    await expect(service.removeCsServer(NODE_ID, "cs2")).rejects.toThrow(
+      "Wait for the running CS2 job",
+    );
+
+    expect(deleteNamespacedJob).not.toHaveBeenCalled();
+    expect(createNamespacedJob).not.toHaveBeenCalled();
+    expect(postgres.query).not.toHaveBeenCalled();
+  });
+
+  it("refuses to remove a game while a live pod uses its files", async () => {
+    removableNode();
+    loggingService.getJob.mockResolvedValue(null);
+    const finished = claimPod(
+      "update-cs-server-done",
+      "Succeeded",
+      `serverfiles-${NODE_ID}-claim`,
+    );
+    const csgoServer = claimPod(
+      "csgo-server",
+      "Running",
+      `serverfiles-csgo-${NODE_ID}-claim`,
+    );
+    listNamespacedPod.mockResolvedValue({
+      items: [
+        claimPod("m-match", "Running", `serverfiles-${NODE_ID}-claim`),
+        claimPod("m-queued", "Pending", `serverfiles-${NODE_ID}-claim`),
+        finished,
+        csgoServer,
+      ],
+    });
+
+    await expect(service.removeCsServer(NODE_ID, "cs2")).rejects.toThrow(
+      `CS2 is in use on ${NODE_ID}: m-match, m-queued`,
+    );
+    expect(createNamespacedJob).not.toHaveBeenCalled();
+    expect(postgres.query).not.toHaveBeenCalled();
+
+    listNamespacedPod.mockResolvedValue({ items: [finished, csgoServer] });
+
+    await service.removeCsServer(NODE_ID, "cs2");
+
+    expect(createNamespacedJob).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses to remove a game it doesn't know", async () => {
+    removableNode();
+
+    await expect(service.removeCsServer(NODE_ID, "cs3")).rejects.toThrow(
+      "Unknown game cs3",
+    );
+    expect(createNamespacedJob).not.toHaveBeenCalled();
+  });
+
+  it("shows a removal as Removing while its pod starts and runs", async () => {
+    const removalJob = {
+      ...runningJob,
+      metadata: {
+        ...runningJob.metadata,
+        labels: { "5stack.gg/removes-game": "true" },
+      },
+    };
+    loggingService.getJob
+      .mockResolvedValueOnce(removalJob)
+      .mockResolvedValueOnce(removalJob)
+      .mockResolvedValue({
+        ...removalJob,
+        status: { succeeded: 1 },
+      });
+    loggingService.getJobPod
+      .mockResolvedValueOnce({ ...runningPod, status: { phase: "Pending" } })
+      .mockResolvedValue(runningPod);
+    loggingService.getLogsForPod.mockImplementation(
+      async (_pod: unknown, stream: PassThrough) => {
+        stream.write(logLine("---Removing CS2---"));
+        stream.end();
+      },
+    );
+
+    const monitor = service.monitorUpdateStatus(NODE_ID);
+    await jest.advanceTimersByTimeAsync(30 * 1000);
+    await monitor;
+
+    expect(statusWrites()).toEqual(["Removing"]);
+    expect(terminalWrites()).toEqual(["terminal:succeeded"]);
+  });
+
+  it("reports a failed removal as a removal", async () => {
+    loggingService.getJob.mockResolvedValue({
+      ...failedJob,
+      metadata: {
+        ...failedJob.metadata,
+        labels: { "5stack.gg/removes-game": "true" },
+      },
+    });
+    loggingService.getJobPod.mockResolvedValue({
+      ...runningPod,
+      status: { phase: "Failed" },
+    });
+
+    await service.monitorUpdateStatus(NODE_ID);
+
+    expect(terminalWrites()).toEqual(["terminal:failed"]);
+    expect(notifications.send).toHaveBeenCalledWith(
+      "GameUpdate",
+      expect.objectContaining({
+        title: "Game Removal Failed",
+        message: expect.stringContaining("Removing CS2 failed"),
+      }),
     );
   });
 });
