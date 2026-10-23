@@ -127,16 +127,26 @@ describe("GameStreamerService — steam account claims", () => {
   });
 
   it("keeps the live stream's account claimed while its pod runs on it", async () => {
-    hasura.query.mockResolvedValue(LIVE_MATCH);
+    hasura.query.mockImplementation(async (selector: Record<string, any>) =>
+      selector.match_streams
+        ? {
+            match_streams: [
+              {
+                k8s_service_name:
+                  createNamespacedJob.mock.calls[0]?.[0].body.metadata.name,
+              },
+            ],
+          }
+        : LIVE_MATCH,
+    );
 
     await expect(service.startLive("match-1", "live")).resolves.toEqual({
       status: "booting",
     });
 
     expect(steamUserOfLaunchedPod()).toBe("pool-1");
-    expect(claims.get(GameStreamerService.GetLiveJobId("match-1"))).toBe(
-      "pool-1",
-    );
+    const jobName = createNamespacedJob.mock.calls[0][0].body.metadata.name;
+    expect(claims.get(jobName)).toBe("pool-1");
   });
 
   it("leaves a running stream alone when its restart has to wait for a GPU", async () => {
@@ -144,7 +154,7 @@ describe("GameStreamerService — steam account claims", () => {
     claimClient.query.mockImplementation(async (sql: string) =>
       sql.includes("count(*)") ? { rows: [{ n: 1 }] } : { rows: [] },
     );
-    const jobName = GameStreamerService.GetLiveJobId("match-1");
+    const jobName = "gs-live-match-1";
     claims.set(jobName, "pool-1");
 
     await expect(service.startLive("match-1", "live")).resolves.toEqual({

@@ -67,11 +67,13 @@ export class SteamAccountService {
     return client ? run(client) : this.postgres.transaction(run);
   }
 
-  async release(jobName: string): Promise<void> {
-    await this.postgres.query(
-      `DELETE FROM steam_account_claims WHERE k8s_job_name = $1`,
-      [jobName],
-    );
+  async release(jobName: string, client?: PoolClient): Promise<void> {
+    const sql = `DELETE FROM steam_account_claims WHERE k8s_job_name = $1`;
+    if (client) {
+      await client.query(sql, [jobName]);
+      return;
+    }
+    await this.postgres.query(sql, [jobName]);
   }
 
   // Drop claims whose job is no longer running (crash-safety net).
