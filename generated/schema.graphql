@@ -65518,6 +65518,7 @@ type my_friends {
   friend_steam_id: bigint
   game_ban_count: Int
   invited_by_steam_id: bigint
+  is_in_another_match: Boolean
   language: String
   last_presence_state(
     """JSON select path"""
@@ -65681,6 +65682,7 @@ input my_friends_bool_exp {
   friend_steam_id: bigint_comparison_exp
   game_ban_count: Int_comparison_exp
   invited_by_steam_id: bigint_comparison_exp
+  is_in_another_match: Boolean_comparison_exp
   language: String_comparison_exp
   last_presence_state: jsonb_comparison_exp
   last_read_news_at: timestamptz_comparison_exp
@@ -65765,6 +65767,7 @@ input my_friends_insert_input {
   friend_steam_id: bigint
   game_ban_count: Int
   invited_by_steam_id: bigint
+  is_in_another_match: Boolean
   language: String
   last_presence_state: jsonb
   last_read_news_at: timestamptz
@@ -65959,6 +65962,7 @@ input my_friends_order_by {
   friend_steam_id: order_by
   game_ban_count: order_by
   invited_by_steam_id: order_by
+  is_in_another_match: order_by
   language: order_by
   last_presence_state: order_by
   last_read_news_at: order_by
@@ -66045,6 +66049,9 @@ enum my_friends_select_column {
   invited_by_steam_id
 
   """column name"""
+  is_in_another_match
+
+  """column name"""
   language
 
   """column name"""
@@ -66116,6 +66123,9 @@ enum my_friends_select_column_my_friends_aggregate_bool_exp_bool_and_arguments_c
   allow_message_requests
 
   """column name"""
+  is_in_another_match
+
+  """column name"""
   name_registered
 
   """column name"""
@@ -66131,6 +66141,9 @@ select "my_friends_aggregate_bool_exp_bool_or_arguments_columns" columns of tabl
 enum my_friends_select_column_my_friends_aggregate_bool_exp_bool_or_arguments_columns {
   """column name"""
   allow_message_requests
+
+  """column name"""
+  is_in_another_match
 
   """column name"""
   name_registered
@@ -66163,6 +66176,7 @@ input my_friends_set_input {
   friend_steam_id: bigint
   game_ban_count: Int
   invited_by_steam_id: bigint
+  is_in_another_match: Boolean
   language: String
   last_presence_state: jsonb
   last_read_news_at: timestamptz
@@ -66300,6 +66314,7 @@ input my_friends_stream_cursor_value_input {
   friend_steam_id: bigint
   game_ban_count: Int
   invited_by_steam_id: bigint
+  is_in_another_match: Boolean
   language: String
   last_presence_state: jsonb
   last_read_news_at: timestamptz
@@ -86975,6 +86990,11 @@ type players {
   is_banned: Boolean
 
   """
+  A computed field, executes function "is_friend"
+  """
+  is_friend: Boolean
+
+  """
   A computed field, executes function "is_gagged"
   """
   is_gagged: Boolean
@@ -88168,6 +88188,7 @@ input players_bool_exp {
   invited_players_aggregate: team_invites_aggregate_bool_exp
   is_admin_sanctioned: Boolean_comparison_exp
   is_banned: Boolean_comparison_exp
+  is_friend: Boolean_comparison_exp
   is_gagged: Boolean_comparison_exp
   is_in_another_match: Boolean_comparison_exp
   is_in_draft: Boolean_comparison_exp
@@ -88708,6 +88729,7 @@ input players_order_by {
   invited_players_aggregate: team_invites_aggregate_order_by
   is_admin_sanctioned: order_by
   is_banned: order_by
+  is_friend: order_by
   is_gagged: order_by
   is_in_another_match: order_by
   is_in_draft: order_by
