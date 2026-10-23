@@ -931,7 +931,9 @@ describe("MatchAssistantService — on-demand server teardown", () => {
 
   describe("handing a freed server to a waiting match", () => {
     let assignOnDemandServer: jest.SpyInstance;
-    let outcomes: Record<string, boolean | "retry">;
+    let outcomes: Record<string, boolean | "retry" | "broken">;
+    let ended: Array<string>;
+    let unreadable: Array<string>;
     let waiting: Array<{ id: string; source?: string }>;
     let reservations: Array<{
       id: string;
@@ -946,12 +948,17 @@ describe("MatchAssistantService — on-demand server teardown", () => {
     beforeEach(() => {
       jest.useFakeTimers({ doNotFake: ["Date"] });
       outcomes = {};
+      ended = [];
+      unreadable = [];
       assignOnDemandServer = jest
         .spyOn(service as any, "assignOnDemandServer")
         .mockImplementation(async (matchId: string) => {
           const outcome = outcomes[matchId] ?? true;
           if (outcome === "retry") {
             throw new FailedToCreateOnDemandServer();
+          }
+          if (outcome === "broken") {
+            throw new TypeError("Cannot read properties of undefined");
           }
           return outcome;
         });
@@ -1012,10 +1019,14 @@ describe("MatchAssistantService — on-demand server teardown", () => {
           };
         }
         if (request.matches_by_pk) {
+          const id = request.matches_by_pk.__args.id;
+          if (unreadable.includes(id)) {
+            throw new Error("hasura unavailable");
+          }
           return {
             matches_by_pk: {
-              id: request.matches_by_pk.__args.id,
-              status: "WaitingForServer",
+              id,
+              status: ended.includes(id) ? "Canceled" : "WaitingForServer",
               region: "USE",
               source: "5stack",
               server_error: null,
@@ -1118,6 +1129,33 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       await expect(service.assignWaitingMatch("USE", 2)).resolves.toBe(0);
 
       expect(attempts()).toEqual(["match-a"]);
+    });
+
+    it("goes past a match that ended since it was found waiting", async () => {
+      reservations = [];
+      ended = ["match-a"];
+
+      await expect(service.assignWaitingMatch("USE")).resolves.toBe(1);
+
+      expect(attempts()).toEqual(["match-b"]);
+    });
+
+    it("goes past a match whose own data breaks its assignment", async () => {
+      reservations = [];
+      outcomes = { "match-a": "broken" };
+
+      await expect(service.assignWaitingMatch("USE")).resolves.toBe(1);
+
+      expect(attempts()).toEqual(["match-a", "match-b"]);
+    });
+
+    it("goes past a match whose assignment throws", async () => {
+      reservations = [];
+      unreadable = ["match-a"];
+
+      await expect(service.assignWaitingMatch("USE")).resolves.toBe(1);
+
+      expect(attempts()).toEqual(["match-b"]);
     });
 
     it("places as many waiting matches as it has servers, each tried once", async () => {

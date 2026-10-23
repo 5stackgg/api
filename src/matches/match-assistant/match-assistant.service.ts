@@ -548,11 +548,12 @@ export class MatchAssistantService {
     });
   }
 
-  // Retrying: it failed to boot one and will try again by itself.
+  // Retrying: it failed to boot one and will try again by itself. Failed: it
+  // hit an error of its own rather than finding nothing free.
   public async assignServer(
     matchId: string,
     tries = 0,
-  ): Promise<"placed" | "retrying" | "unplaced"> {
+  ): Promise<"placed" | "retrying" | "unplaced" | "failed"> {
     if (tries === 0) {
       await this.setServerError(matchId, null);
     }
@@ -603,6 +604,8 @@ export class MatchAssistantService {
       }
     }
 
+    let failed = false;
+
     try {
       const isAssignedOnDemand = await this.assignOnDemandServer(matchId);
       if (isAssignedOnDemand) {
@@ -627,6 +630,8 @@ export class MatchAssistantService {
         }, tries * 1000);
         return "retrying";
       }
+
+      failed = true;
     }
 
     // The fallbacks end in startMatch, which would write Live over a match canceled meanwhile.
@@ -643,7 +648,7 @@ export class MatchAssistantService {
         `[${matchId}] practice match, and no on demand server could be booted`,
       );
       await this.markWaitingForServer(match.id);
-      return "unplaced";
+      return failed ? "failed" : "unplaced";
     }
 
     // we already checked above, so we can skip trying to assign again
@@ -652,7 +657,7 @@ export class MatchAssistantService {
         `[${matchId}] unable to assign dedicated server, trying on demand`,
       );
       await this.markWaitingForServer(match.id);
-      return "unplaced";
+      return failed ? "failed" : "unplaced";
     }
 
     try {
@@ -673,7 +678,7 @@ export class MatchAssistantService {
 
     await this.markWaitingForServer(match.id);
 
-    return "unplaced";
+    return failed ? "failed" : "unplaced";
   }
 
   /**
@@ -2387,7 +2392,8 @@ export class MatchAssistantService {
 
     // Oldest first, each tried once: one stays WaitingForServer while its own
     // server boots. One retrying takes a server with it, and one that finds
-    // nothing free means none is.
+    // nothing free means none is, unless it has ended since. One that fails on
+    // its own is skipped.
     let placed = 0;
 
     for (const match of matches) {
@@ -2400,7 +2406,22 @@ export class MatchAssistantService {
         continue;
       }
 
-      if ((await this.assignServer(match.id)) === "unplaced") {
+      const assigned = await this.assignServer(match.id).catch((error) => {
+        this.logger.error(
+          `[${match.id}] unable to hand the waiting match a server: ${error?.message}`,
+        );
+        return "failed" as const;
+      });
+
+      if (assigned === "failed") {
+        continue;
+      }
+
+      if (assigned === "unplaced") {
+        if (await this.hasMatchEnded(match.id)) {
+          continue;
+        }
+
         break;
       }
 
