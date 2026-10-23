@@ -1,5 +1,6 @@
 import {
   BuildNodeCandidate,
+  Cs2Host,
   GameServerNodeService,
   GamedataValidationEntry,
   GamedataValidationResult,
@@ -337,5 +338,64 @@ describe("GameServerNodeService.isInService", () => {
         }),
       ),
     ).toBe(true);
+  });
+});
+
+describe("GameServerNodeService CS2 on GPU-only nodes", () => {
+  const node = (fields: Partial<Cs2Host> = {}): Cs2Host => ({
+    gpu: true,
+    enabled_for_match_making: false,
+    start_port_range: null,
+    end_port_range: null,
+    gpu_rendering_enabled: false,
+    ...fields,
+  });
+
+  it.each([
+    ["a match node", { gpu: false, enabled_for_match_making: true }, true],
+    ["a GPU node that hosts matches", { enabled_for_match_making: true }, true],
+    [
+      "a GPU node out of matchmaking that keeps its ports",
+      { start_port_range: 30000, end_port_range: 30020 },
+      true,
+    ],
+    ["a GPU-only node that renders", { gpu_rendering_enabled: true }, true],
+    ["a GPU-only node that doesn't render", {}, false],
+  ])("%s runs CS2: %s", (_name, fields, runs) => {
+    expect(GameServerNodeService.runsCs2(node(fields))).toBe(runs);
+  });
+
+  it("leaves a GPU-only node out of a CS2 release", async () => {
+    const hasura = {
+      query: jest.fn().mockResolvedValue({
+        game_server_nodes: [
+          { id: "match-node", ...node({ enabled_for_match_making: true }) },
+          { id: "render-node", ...node({ gpu_rendering_enabled: true }) },
+          { id: "gpu-only", ...node() },
+        ],
+      }),
+    };
+    const service = new GameServerNodeService(
+      { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
+      { get: () => ({ namespace: "5stack" }) } as any,
+      hasura as any,
+      { getConnection: () => ({}) } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    );
+    const updateCsServer = jest
+      .spyOn(service, "updateCsServer")
+      .mockResolvedValue(undefined);
+
+    await service.updateCs();
+
+    expect(updateCsServer.mock.calls.map(([id]) => id)).toEqual([
+      "match-node",
+      "render-node",
+    ]);
   });
 });

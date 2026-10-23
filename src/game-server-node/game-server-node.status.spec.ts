@@ -66,6 +66,9 @@ describe("GameServerNodeService.updateStatus", () => {
     update_status: null,
     enabled: true,
     enabled_for_match_making: true,
+    start_port_range: 30000,
+    end_port_range: 30020,
+    gpu_rendering_enabled: false,
     servers: [],
     ...overrides,
   });
@@ -173,6 +176,42 @@ describe("GameServerNodeService.updateStatus", () => {
     });
     await heartbeat({ rootDisk: disk(40, 80) });
     expect(written("build_id")).toEqual(["untouched"]);
+  });
+
+  describe("coming back online", () => {
+    let updateCsServer: jest.SpyInstance;
+
+    beforeEach(() => {
+      postgres.query.mockImplementation(async (sql: string) =>
+        /status IN \('Offline', 'Setup'\)/.test(sql) ? [{ id: NODE_ID }] : [],
+      );
+      updateCsServer = jest
+        .spyOn(service, "updateCsServer")
+        .mockResolvedValue(undefined);
+    });
+
+    it("brings the node's CS2 up to date", async () => {
+      hasura.query.mockResolvedValue({
+        game_server_nodes_by_pk: stored({ status: "Offline", build_id: BUILD }),
+      });
+      await heartbeat({ csBuild: BUILD });
+      expect(updateCsServer).toHaveBeenCalledWith(NODE_ID);
+    });
+
+    it("leaves CS2 alone on a GPU-only node that doesn't render", async () => {
+      hasura.query.mockResolvedValue({
+        game_server_nodes_by_pk: stored({
+          status: "Offline",
+          build_id: BUILD,
+          gpu: true,
+          enabled_for_match_making: false,
+          start_port_range: null,
+          end_port_range: null,
+        }),
+      });
+      await heartbeat({ csBuild: BUILD });
+      expect(updateCsServer).not.toHaveBeenCalled();
+    });
   });
 
   it("writes nothing for a node that has never had CS2", async () => {
