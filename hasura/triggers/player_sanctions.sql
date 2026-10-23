@@ -69,3 +69,59 @@ $$;
 
 DROP TRIGGER IF EXISTS tbiu_player_sanctions ON public.player_sanctions;
 CREATE TRIGGER tbiu_player_sanctions BEFORE INSERT OR UPDATE ON public.player_sanctions FOR EACH ROW EXECUTE FUNCTION public.tbiu_player_sanctions();
+
+-- Keeps players.ban_ends_at, gag_ends_at and mute_ends_at (migration
+-- 1890000001380) equal to what each player's sanctions say. Per statement, so a
+-- bulk change refreshes each player once.
+CREATE OR REPLACE FUNCTION public.taiudt_player_sanction_ends()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF TG_OP = 'TRUNCATE' THEN
+        PERFORM public.refresh_player_sanction_ends(NULL);
+    ELSIF TG_OP = 'INSERT' THEN
+        PERFORM public.refresh_player_sanction_ends(ARRAY(SELECT DISTINCT player_steam_id FROM new_rows));
+    ELSIF TG_OP = 'DELETE' THEN
+        PERFORM public.refresh_player_sanction_ends(ARRAY(SELECT DISTINCT player_steam_id FROM old_rows));
+    ELSE
+        PERFORM public.refresh_player_sanction_ends(ARRAY(
+            SELECT DISTINCT changed.player_steam_id
+            FROM (
+                (SELECT player_steam_id, type, remove_sanction_date, deleted_at FROM new_rows
+                 EXCEPT
+                 SELECT player_steam_id, type, remove_sanction_date, deleted_at FROM old_rows)
+                UNION
+                (SELECT player_steam_id, type, remove_sanction_date, deleted_at FROM old_rows
+                 EXCEPT
+                 SELECT player_steam_id, type, remove_sanction_date, deleted_at FROM new_rows)
+            ) changed
+        ));
+    END IF;
+
+    RETURN NULL;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tai_player_sanction_ends ON public.player_sanctions;
+CREATE TRIGGER tai_player_sanction_ends
+    AFTER INSERT ON public.player_sanctions
+    REFERENCING NEW TABLE AS new_rows
+    FOR EACH STATEMENT EXECUTE FUNCTION public.taiudt_player_sanction_ends();
+
+DROP TRIGGER IF EXISTS tau_player_sanction_ends ON public.player_sanctions;
+CREATE TRIGGER tau_player_sanction_ends
+    AFTER UPDATE ON public.player_sanctions
+    REFERENCING OLD TABLE AS old_rows NEW TABLE AS new_rows
+    FOR EACH STATEMENT EXECUTE FUNCTION public.taiudt_player_sanction_ends();
+
+DROP TRIGGER IF EXISTS tad_player_sanction_ends ON public.player_sanctions;
+CREATE TRIGGER tad_player_sanction_ends
+    AFTER DELETE ON public.player_sanctions
+    REFERENCING OLD TABLE AS old_rows
+    FOR EACH STATEMENT EXECUTE FUNCTION public.taiudt_player_sanction_ends();
+
+DROP TRIGGER IF EXISTS tat_player_sanction_ends ON public.player_sanctions;
+CREATE TRIGGER tat_player_sanction_ends
+    AFTER TRUNCATE ON public.player_sanctions
+    FOR EACH STATEMENT EXECUTE FUNCTION public.taiudt_player_sanction_ends();

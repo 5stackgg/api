@@ -1,14 +1,10 @@
+-- players.ban_ends_at is kept by hasura/triggers/player_sanctions.sql: the
+-- latest end of a ban that hasn't been removed, infinity for one with no end,
+-- -infinity for none. One expression, so it inlines as a column read.
 CREATE OR REPLACE FUNCTION public.is_banned(player public.players)
 RETURNS boolean
 LANGUAGE sql
 STABLE
 AS $$
-    SELECT EXISTS (
-        SELECT 1
-        FROM player_sanctions ps
-        WHERE ps.player_steam_id = player.steam_id
-        AND ps.type = 'ban'
-        AND ps.deleted_at IS NULL
-        AND (ps.remove_sanction_date IS NULL OR ps.remove_sanction_date > now())
-    );
+    SELECT player.ban_ends_at > now();
 $$;
