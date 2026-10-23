@@ -1,5 +1,6 @@
--- The active matches the session's player is in a lineup of or organizes: the
--- rows every signed-in player's "my matches" subscription filters. Found from
+-- The active matches the session's player is in a lineup of, coaches or
+-- organizes: the rows every signed-in player's "my matches" subscription
+-- filters, and what the watch page marks as the viewer's own. Found from
 -- the player's own lineups through partial indexes of active matches, so a poll
 -- costs the player's own matches rather than an is_in_lineup call for every
 -- active match on the site. Returning matches rows keeps each role's matches
@@ -29,5 +30,9 @@ AS $$
           JOIN matches x ON x.lineup_2_id = mlp.match_lineup_id
           WHERE mlp.steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint
             AND x.status IN ('Live', 'Veto', 'WaitingForCheckIn', 'WaitingForServer', 'Scheduled', 'PickingPlayers')
+          UNION ALL
+          SELECT ml.match_id
+          FROM match_lineups ml
+          WHERE ml.coach_steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint
       )
 $$;

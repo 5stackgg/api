@@ -3,8 +3,9 @@ import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 
 // my_active_matches() roots every signed-in player's "my matches"
-// subscription, so it must hand back exactly the active matches that player is
-// in a lineup of or organizes, and a poll must cost the player's own matches,
+// subscription and the watch page's own-match flags, so it must hand back
+// exactly the active matches that player is in a lineup of, coaches or
+// organizes, and a poll must cost the player's own matches,
 // not every active match on the site.
 describe("my_active_matches", () => {
   let db: SqlTestDb;
@@ -23,9 +24,9 @@ describe("my_active_matches", () => {
         "SELECT value FROM e_match_status ORDER BY value",
       )
     ).map((r) => r.value);
-    const [first, second, organizer, both, idle, stranger] =
-      await fx.players(6);
-    players = { first, second, organizer, both, idle, stranger };
+    const [first, second, organizer, both, coach, idle, stranger] =
+      await fx.players(7);
+    players = { first, second, organizer, both, coach, idle, stranger };
   }, 600_000);
 
   afterAll(async () => {
@@ -68,21 +69,22 @@ describe("my_active_matches", () => {
     ).map((r) => r.id);
   }
 
-  // What the subscription read before: every active match, kept where the
-  // player is in a lineup or organizes it.
+  // Every active match, kept where the player is in a lineup, coaches or
+  // organizes it.
   async function before(steamId: string) {
     return (
       await postgres.query<Array<{ id: string }>>(
         `SELECT m.id FROM active_matches() m
-          WHERE is_in_lineup(m, $1::json) OR m.organizer_steam_id = $2
+          WHERE is_in_lineup(m, $1::json) OR is_coach(m, $1::json)
+             OR m.organizer_steam_id = $2
           ORDER BY m.id`,
         [session(steamId), steamId],
       )
     ).map((r) => r.id);
   }
 
-  it("hands each player the active matches they play in or organize", async () => {
-    const { first, second, organizer, both } = players;
+  it("hands each player the active matches they play in, coach or organize", async () => {
+    const { first, second, organizer, both, coach } = players;
     for (const status of statuses) {
       for (let i = 0; i < 2; i++) {
         const { matchId } = await fx.bareMatch();
@@ -92,6 +94,10 @@ describe("my_active_matches", () => {
         await postgres.query(
           "UPDATE matches SET organizer_steam_id = $2 WHERE id = $1",
           [matchId, i ? organizer : both],
+        );
+        await postgres.query(
+          "UPDATE match_lineups SET coach_steam_id = $2 WHERE id = $1",
+          [i ? lineup_2_id : lineup_1_id, coach],
         );
         await setStatus([matchId], status);
       }
@@ -105,6 +111,7 @@ describe("my_active_matches", () => {
     }
     expect((await mine(first)).length).toBeGreaterThan(0);
     expect((await mine(organizer)).length).toBeGreaterThan(0);
+    expect((await mine(coach)).length).toBeGreaterThan(0);
   });
 
   describe("cost", () => {
