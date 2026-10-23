@@ -175,4 +175,54 @@ describe("event <-> tournament match links (SQL-driven)", () => {
     expect(scheduled.length).toBeGreaterThan(0);
     expect(await linkedMatchIds(eventId)).toEqual(scheduled);
   });
+
+  it("event and tournament boards list a player once one of their matches has finished", async () => {
+    const eventId = await createEvent(new Date().toISOString(), null);
+    const tournament = await tfx.launch(
+      [{ type: "SingleElimination", order: 1, minTeams: 4, maxTeams: 8 }],
+      4,
+    );
+    await attach(eventId, tournament.id);
+
+    const [finished, live] = await bracketMatchIds(tournament.stageIds[0]);
+    const playAKill = async (matchId: string) => {
+      const [map] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO match_maps (match_id, map_id, "order")
+         SELECT $1, id, 1 FROM maps ORDER BY name LIMIT 1 RETURNING id`,
+        [matchId],
+      );
+      const lineups = await postgres.query<Array<{ steam_id: string }>>(
+        `SELECT mlp.steam_id FROM match_lineup_players mlp
+           JOIN matches m ON mlp.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
+          WHERE m.id = $1
+          ORDER BY mlp.match_lineup_id = m.lineup_1_id DESC`,
+        [matchId],
+      );
+      const attacker = String(lineups[0].steam_id);
+      const victim = String(lineups[lineups.length - 1].steam_id);
+      await fx.kill({ matchId, mapId: map.id }, attacker, victim);
+      await fx.round(map.id, 1);
+      return attacker;
+    };
+    const finishedPlayer = await playAKill(finished);
+    const livePlayer = await playAKill(live);
+    await tfx.winMatch(finished);
+
+    const eventBoard = await postgres.query<
+      Array<{ player_steam_id: string; matches_played: number }>
+    >("SELECT * FROM get_event_leaderboard($1, 'kills')", [eventId]);
+    const tournamentBoard = await postgres.query<
+      Array<{ player_steam_id: string; matches_played: number }>
+    >("SELECT * FROM get_tournament_leaderboard($1)", [tournament.id]);
+
+    for (const board of [eventBoard, tournamentBoard]) {
+      const ids = board.map((row) => String(row.player_steam_id));
+      expect(ids).toContain(finishedPlayer);
+      expect(ids).not.toContain(livePlayer);
+      const row = board.find(
+        (entry) => String(entry.player_steam_id) === finishedPlayer,
+      );
+      expect(Number(row?.matches_played)).toBe(1);
+    }
+  });
 });

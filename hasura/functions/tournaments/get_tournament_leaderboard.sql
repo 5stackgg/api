@@ -35,11 +35,11 @@ BEGIN
 
   RETURN QUERY
   WITH t_matches AS (
-    SELECT DISTINCT tb.match_id
+    SELECT DISTINCT tb.match_id, m.status IN ('Finished', 'Tie', 'Forfeit', 'Surrendered') AS finished
     FROM public.tournament_brackets tb
     JOIN public.tournament_stages ts ON ts.id = tb.tournament_stage_id
+    JOIN public.matches m ON m.id = tb.match_id
     WHERE ts.tournament_id = _tournament_id
-      AND tb.match_id IS NOT NULL
   ),
   agg AS (
     SELECT
@@ -50,7 +50,7 @@ BEGIN
         SUM(pmms.hs_kills)::int      AS hs_kills,
         SUM(pmms.damage)::float      AS damage,
         SUM(pmms.rounds_played)::int AS rounds_played,
-        COUNT(DISTINCT pmms.match_id)::int AS matches_played,
+        (COUNT(DISTINCT pmms.match_id) FILTER (WHERE tm.finished))::int AS matches_played,
         -- Round-weighted, so a one-map cameo cannot outrank a full run.
         CASE WHEN SUM(h.rounds_played) > 0
              THEN SUM(COALESCE(h.hltv_rating, 0) * h.rounds_played)
@@ -63,6 +63,9 @@ BEGIN
            ON h.match_map_id = pmms.match_map_id
           AND h.steam_id = pmms.steam_id
     GROUP BY pmms.steam_id
+    -- Live matches still feed the stats, but a player is listed only once one
+    -- of their matches has finished.
+    HAVING COUNT(DISTINCT pmms.match_id) FILTER (WHERE tm.finished) >= 1
   )
   SELECT
     a.steam_id::text,

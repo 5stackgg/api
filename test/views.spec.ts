@@ -587,9 +587,13 @@ describe("read-side views and aggregations (SQL-driven)", () => {
     // A finished '5stack' match with a materialized map to hang kills on. The
     // stat categories inner-join match_options, so bareMatch (optionless, the
     // demo-import shape) would be invisible to them.
-    const statMatch = async () => {
+    const statMatch = async (status = "Finished") => {
       const { poolId } = await fx.mapPool(1);
       const match = await fx.match({ mapPoolId: poolId });
+      await postgres.query("UPDATE matches SET status = $2 WHERE id = $1", [
+        match.id,
+        status,
+      ]);
       const [map] = await postgres.query<Array<{ id: string }>>(
         "SELECT id FROM match_maps WHERE match_id = $1",
         [match.id],
@@ -995,6 +999,31 @@ describe("read-side views and aggregations (SQL-driven)", () => {
         const rows = await leaderboard(category, 30, "Competitive");
         const row = rows.find((r) => r.player_steam_id === player);
         expect(Number(row?.matches_played)).toBe(2);
+      }
+    });
+
+    it("counts only finished matches toward Matches and the minimum", async () => {
+      const finished = await statMatch();
+      const live = await statMatch("Live");
+      const [player, victim] = await fx.players(2);
+      await fx.kill(finished.ctx, player, victim, { headshot: true });
+      await fx.kill(live.ctx, player, victim);
+      await fx.round(finished.ctx.mapId, 1);
+      await fx.round(live.ctx.mapId, 1);
+
+      const boards = ["best_kdr", "highest_hs_pct", "best_rating", "best_udr"];
+      for (const category of boards) {
+        const rows = await leaderboard(category, 30, "Competitive");
+        const row = rows.find((r) => r.player_steam_id === player);
+        expect(Number(row?.matches_played)).toBe(1);
+      }
+      const [kdr] = await leaderboard("best_kdr", 30, "Competitive");
+      expect(Number(kdr.secondary_value)).toBe(2);
+
+      await fx.setting("leaderboard_min_matches", "2");
+      for (const category of boards) {
+        const rows = await leaderboard(category, 30, "Competitive");
+        expect(rows.map((r) => r.player_steam_id)).not.toContain(player);
       }
     });
 
