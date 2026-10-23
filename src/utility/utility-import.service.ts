@@ -292,18 +292,19 @@ export class UtilityImportService {
       return { dry_run: dryRun, origin_source: source, lineups };
     }
 
+    const hasFiles = `(l.trajectory_file IS NOT NULL
+         OR l.preview_file IS NOT NULL
+         OR l.smoke_voxels_file IS NOT NULL
+         OR EXISTS (
+           SELECT 1
+             FROM public.utility_lineup_renders r
+            WHERE r.utility_lineup_id = l.id
+         ))`;
+
     const withFiles = await this.postgres.query<Array<{ id: string }>>(
       `SELECT l.id::text AS id
          FROM public.utility_lineups l
-        WHERE l.origin_source = $1
-          AND (l.trajectory_file IS NOT NULL
-               OR l.preview_file IS NOT NULL
-               OR l.smoke_voxels_file IS NOT NULL
-               OR EXISTS (
-                 SELECT 1
-                   FROM public.utility_lineup_renders r
-                  WHERE r.utility_lineup_id = l.id
-               ))`,
+        WHERE l.origin_source = $1 AND ${hasFiles}`,
       [source],
     );
 
@@ -319,9 +320,11 @@ export class UtilityImportService {
       });
     }
 
-    // A seeded source is thousands of lineups that never had a file.
+    // A seeded source is thousands of lineups that never had a file. One that
+    // took one on since the list above stays for the next purge.
     await this.postgres.query(
-      "DELETE FROM public.utility_lineups WHERE origin_source = $1",
+      `DELETE FROM public.utility_lineups l
+        WHERE l.origin_source = $1 AND NOT ${hasFiles}`,
       [source],
     );
 

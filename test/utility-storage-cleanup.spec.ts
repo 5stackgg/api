@@ -25,6 +25,7 @@ describe("utility lineup storage (SQL-driven)", () => {
   let refused: Set<string>;
   let swept: Array<string>;
   let refuseSweep: (prefix: string) => boolean;
+  let duringSweep: () => Promise<void>;
 
   const s3 = {
     bucketName: "5stack",
@@ -50,6 +51,7 @@ describe("utility lineup storage (SQL-driven)", () => {
       if (refuseSweep(prefix)) {
         throw new Error("AccessDenied");
       }
+      await duringSweep();
       swept.push(prefix);
       for (const key of [...bucket.keys()]) {
         if (key.startsWith(prefix)) {
@@ -108,6 +110,7 @@ describe("utility lineup storage (SQL-driven)", () => {
     refused = new Set();
     swept = [];
     refuseSweep = () => false;
+    duringSweep = async () => undefined;
     await postgres.query("DELETE FROM utility_lineup_renders");
     await postgres.query("DELETE FROM utility_lineups");
     await postgres.query("DELETE FROM players");
@@ -364,6 +367,29 @@ describe("utility lineup storage (SQL-driven)", () => {
         "SELECT id FROM utility_lineups WHERE origin_source = 'editor'",
       );
       expect(rows).toEqual([]);
+    });
+
+    it("leaves a lineup that took on a file mid-purge, rather than its file", async () => {
+      const filmedOne = await lineup("editor");
+      const late = await lineup("editor");
+      store(...(await filmed(filmedOne, await render(filmedOne, "done"))));
+      duringSweep = async () => {
+        await postgres.query(
+          "UPDATE utility_lineups SET trajectory_file = $2 WHERE id = $1::uuid",
+          [late, `utility/${late}/trajectory.v3.1.json.gz`],
+        );
+        store(`utility/${late}/trajectory.v3.1.json.gz`);
+      };
+
+      await purge();
+
+      const left = await postgres.query<Array<{ id: string }>>(
+        "SELECT id::text AS id FROM utility_lineups WHERE origin_source = 'editor'",
+      );
+      expect(left).toEqual([{ id: late }]);
+      expect([...bucket.keys()]).toEqual([
+        `utility/${late}/trajectory.v3.1.json.gz`,
+      ]);
     });
 
     it("never leaves a lineup without its files, or files without their lineup", async () => {
