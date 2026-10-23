@@ -1,4 +1,5 @@
 import { SteamGcService } from "./steam-gc.service";
+import { SteamPresenceService } from "../steam-presence/steam-presence.service";
 
 // extractMatchInfo is a pure private static; reach it directly rather than
 // standing up the GC client.
@@ -55,5 +56,73 @@ describe("SteamGcService.extractMatchInfo", () => {
   it("returns null when the gc gave us nothing at all", () => {
     expect(extractMatchInfo([])).toBeNull();
     expect(extractMatchInfo(null)).toBeNull();
+  });
+});
+
+describe("SteamGcService logon", () => {
+  const ACCOUNT = "gc-bot";
+
+  const gcLogOn = async (refreshToken: string | null) => {
+    const service = new SteamGcService(
+      { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as never,
+      {
+        get: jest.fn((key: string) =>
+          key === "steam.steamUser" ? ACCOUNT : "hunter2",
+        ),
+      } as never,
+      { get: jest.fn(async () => refreshToken), put: jest.fn() } as never,
+    );
+    const client = { logOn: jest.fn() };
+
+    await service["logOn"](client as never);
+
+    return client.logOn.mock.calls[0][0];
+  };
+
+  const presenceLogOn = async (refreshToken: string) => {
+    const service = new SteamPresenceService(
+      { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as never,
+      { get: jest.fn(() => ({})) } as never,
+      { get: jest.fn(async () => refreshToken), put: jest.fn() } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+    const account = { id: "friends-1", username: ACCOUNT, password: "x" };
+    const client = { logOn: jest.fn() };
+    service["clients"].set(account.id, client as never);
+
+    await service["logOn"](client as never, account);
+
+    return client.logOn.mock.calls[0][0];
+  };
+
+  it("logs in with its own logon id from the stored refresh token", async () => {
+    const details = await gcLogOn("refresh-token");
+
+    expect(details.refreshToken).toBe("refresh-token");
+    expect(details.logonID).toBeGreaterThan(0);
+    expect(details.logonID).toBeLessThanOrEqual(2 ** 32 - 1);
+  });
+
+  it("logs in with the same logon id from STEAM_USER credentials", async () => {
+    const fromToken = await gcLogOn("refresh-token");
+    const details = await gcLogOn(null);
+
+    expect(details).toMatchObject({
+      accountName: ACCOUNT,
+      password: "hunter2",
+    });
+    expect(details.logonID).toBeGreaterThan(0);
+    expect(details.logonID).toBe(fromToken.logonID);
+  });
+
+  it("never shares a logon id with Steam Presence on the same account", async () => {
+    const gc = await gcLogOn("refresh-token");
+    const presence = await presenceLogOn("refresh-token");
+
+    expect(presence).toEqual({ refreshToken: "refresh-token" });
+    expect(gc.logonID ?? 0).not.toBe(presence.logonID ?? 0);
   });
 });
