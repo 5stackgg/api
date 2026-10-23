@@ -116,7 +116,10 @@ export class PluginsController {
         scope: manifest.scope ?? null,
         module: manifest.module ?? manifest.exposedModule ?? null,
         requiredRole: manifest.requiredRole ?? null,
-        profileTabLabel: manifest.profileTabLabel ?? null,
+        profileTabLabel:
+          typeof manifest.profileTabLabel === "string"
+            ? manifest.profileTabLabel.trim() || null
+            : null,
         featured: manifest.featured === true,
         deployments: PluginsController.resolveDeployments(
           manifest.deployments,
