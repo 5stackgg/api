@@ -373,6 +373,23 @@ describe("tournament match rules once a stage has matches (SQL-driven)", () => {
         mr: 8,
         best_of: 3,
       });
+
+      await update(
+        await tournamentOptionsId(tournament.id),
+        "check_in_setting = 'Admin', tv_delay = 60",
+      );
+
+      const [followed] = await postgres.query<
+        Array<{ check_in_setting: string; tv_delay: number }>
+      >(
+        `SELECT mo.check_in_setting, mo.tv_delay
+         FROM tournament_brackets tb
+         INNER JOIN matches m ON m.id = tb.match_id
+         INNER JOIN match_options mo ON mo.id = m.match_options_id
+         WHERE tb.id = $1`,
+        [final.id],
+      );
+      expect(followed).toEqual({ check_in_setting: "Admin", tv_delay: 45 });
     });
 
     it("can't bring other rules into a started stage, and give way to the stage's again", async () => {
