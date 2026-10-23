@@ -2335,19 +2335,51 @@ export class MatchAssistantService {
     });
 
     for (const server of servers) {
-      await this.queue.add(
-        MatchJobs.AssignWaitingMatch,
-        { region: server.region },
-        {
-          attempts: 3,
-          backoff: {
-            type: "exponential",
-            delay: 5 * 1000,
-          },
-          removeOnFail: true,
-          removeOnComplete: true,
+      await this.queueAssignWaitingMatch(server.region);
+    }
+  }
+
+  private async queueAssignWaitingMatch(region: string) {
+    await this.queue.add(
+      MatchJobs.AssignWaitingMatch,
+      { region },
+      {
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 5 * 1000,
         },
-      );
+        removeOnFail: true,
+        removeOnComplete: true,
+      },
+    );
+  }
+
+  // Under every hand-off that never ran: a retry chain that died with the api,
+  // a pod that outlived the teardown wait, a demo upload hold that ran out.
+  private async assignStrandedWaitingMatches() {
+    const { matches } = await this.hasura.query({
+      matches: {
+        __args: {
+          where: {
+            status: {
+              _eq: "WaitingForServer",
+            },
+            source: {
+              _neq: "practice",
+            },
+          },
+        },
+        region: true,
+      },
+    });
+
+    for (const region of new Set(
+      matches.map((match) => match.region).filter(Boolean),
+    )) {
+      if ((await this.countFreeOnDemandServers(region)) > 0) {
+        await this.queueAssignWaitingMatch(region);
+      }
     }
   }
 
@@ -2588,6 +2620,14 @@ export class MatchAssistantService {
     } catch (error) {
       this.logger.error(
         `[match-server-reaper] freeing the servers of ended matches failed: ${error?.message}`,
+      );
+    }
+
+    try {
+      await this.assignStrandedWaitingMatches();
+    } catch (error) {
+      this.logger.error(
+        `[match-server-reaper] handing free servers to waiting matches failed: ${error?.message}`,
       );
     }
 

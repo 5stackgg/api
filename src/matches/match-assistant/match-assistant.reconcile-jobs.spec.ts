@@ -74,7 +74,9 @@ describe("MatchAssistantService — reconciling on-demand server Jobs", () => {
     deleteNamespacedJob.mock.calls.map(([request]) => request.name);
 
   const matchLookups = () =>
-    hasura.query.mock.calls.filter(([request]) => request.matches);
+    hasura.query.mock.calls.filter(
+      ([request]) => request.matches && !request.matches.__args?.where?.status,
+    );
 
   beforeEach(() => {
     for (const fn of [
@@ -594,6 +596,63 @@ describe("MatchAssistantService — reconciling on-demand server Jobs", () => {
       await service.reconcileOnDemandServerJobs();
 
       expect(serverReleases()).toHaveLength(0);
+    });
+  });
+
+  describe("a region whose waiting matches a free server is left beside", () => {
+    let free: number;
+
+    const handOffs = () =>
+      (service as any).queue.add.mock.calls.filter(
+        ([name]: [string]) => name === "AssignWaitingMatch",
+      );
+
+    beforeEach(() => {
+      free = 1;
+      listNamespacedJob.mockResolvedValue({ items: [] });
+      const answer = hasura.query.getMockImplementation()!;
+      hasura.query.mockImplementation(async (request: any) => {
+        if (request.matches?.__args?.where?.status) {
+          return {
+            matches: [{ region: "USE" }, { region: "USE" }, { region: null }],
+          };
+        }
+        if (request.servers_aggregate) {
+          return { servers_aggregate: { aggregate: { count: free } } };
+        }
+        return answer(request);
+      });
+    });
+
+    it("is queued for a hand-off", async () => {
+      await service.reconcileOnDemandServerJobs();
+
+      expect(handOffs()).toEqual([
+        ["AssignWaitingMatch", { region: "USE" }, expect.anything()],
+      ]);
+    });
+
+    it("is left alone with no server free", async () => {
+      free = 0;
+
+      await service.reconcileOnDemandServerJobs();
+
+      expect(handOffs()).toHaveLength(0);
+    });
+
+    it("still lets orphaned Jobs be removed when it cannot be read", async () => {
+      listNamespacedJob.mockResolvedValue({ items: [job()] });
+      const answer = hasura.query.getMockImplementation()!;
+      hasura.query.mockImplementation(async (request: any) => {
+        if (request.matches?.__args?.where?.status) {
+          throw new Error("hasura unavailable");
+        }
+        return answer(request);
+      });
+
+      await service.reconcileOnDemandServerJobs();
+
+      expect(deletedJobs()).toEqual([JOB_NAME]);
     });
   });
 
