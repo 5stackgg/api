@@ -68,7 +68,8 @@ export class MatchAssistantService {
     "practice",
   ];
   public static readonly ON_DEMAND_SERVER_BOOT_CHECK_DELAY_MS = 15 * 1000;
-  public static readonly ON_DEMAND_SERVER_STOP_CHECK_DELAY_MS = 15 * 1000;
+  public static readonly ON_DEMAND_SERVER_STOP_CHECK_DELAY_MS = 3 * 1000;
+  private static readonly ON_DEMAND_SERVER_STOP_TIMEOUT_MS = 2 * 60 * 1000;
   private static readonly ON_DEMAND_SERVER_TEARDOWN_TIMEOUT_MS = 15 * 1000;
   // Must outlast the previous Job's teardown, yet expire well inside
   // assignServer's ~55s of retries.
@@ -2123,15 +2124,19 @@ export class MatchAssistantService {
   }
 
   // A SIGUSR1 sent before setup.sh hands PID 1 to server.sh is silently ignored.
-  // A check queued without a job name predates u- jobs, so it signalled an m- one.
+  // A check queued without a job name predates u- jobs, so it signalled an m- one,
+  // and one without signalledAt was queued two minutes out.
+  // False while the server is still exiting, for the caller to check again.
   public async removeUnstoppedOnDemandServer(
     matchId: string,
     jobUid: string,
     jobName = MatchAssistantService.GetMatchServerJobId(matchId),
-  ) {
+    signalledAt?: number,
+  ): Promise<boolean> {
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const batch = kc.makeApiClient(BatchV1Api);
+    const core = kc.makeApiClient(CoreV1Api);
 
     const job = await this.readOnDemandServerJob(batch, jobName);
 
@@ -2144,17 +2149,40 @@ export class MatchAssistantService {
       ]);
 
       if (MatchAssistantService.holdsOnDemandServer(matches.at(0), servers)) {
-        return;
+        return true;
       }
 
-      this.logger.warn(
-        `[${matchId}] on demand server did not stop after it was signalled, removing it`,
-      );
+      const { items: pods } = await core.listNamespacedPod({
+        namespace: this.namespace,
+        labelSelector: `job-name=${jobName}`,
+      });
 
-      await this.removeOnDemandServerJob(matchId, jobName, { uid: jobUid });
+      if (
+        pods.some(
+          (pod) =>
+            MatchAssistantService.isOwnedBy(pod, jobUid) &&
+            MatchAssistantService.isPodLive(pod),
+        )
+      ) {
+        if (
+          signalledAt &&
+          Date.now() - signalledAt <
+            MatchAssistantService.ON_DEMAND_SERVER_STOP_TIMEOUT_MS
+        ) {
+          return false;
+        }
+
+        this.logger.warn(
+          `[${matchId}] on demand server did not stop after it was signalled, removing it`,
+        );
+
+        await this.removeOnDemandServerJob(matchId, jobName, { uid: jobUid });
+      }
     }
 
     await this.releaseEndedMatchServer(matchId);
+
+    return true;
   }
 
   // A match played again freed the server it ended on (tau_matches), so one it
@@ -2622,6 +2650,7 @@ export class MatchAssistantService {
         matchId,
         jobName,
         jobUid: job.metadata?.uid,
+        signalledAt: Date.now(),
       },
       {
         delay: MatchAssistantService.ON_DEMAND_SERVER_STOP_CHECK_DELAY_MS,

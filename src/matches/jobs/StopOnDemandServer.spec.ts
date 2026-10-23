@@ -5,6 +5,7 @@ jest.mock("@kubernetes/client-node", () => ({
   Exec: class Exec {},
 }));
 
+import { DelayedError } from "bullmq";
 import { StopOnDemandServer } from "./StopOnDemandServer";
 
 describe("StopOnDemandServer", () => {
@@ -17,7 +18,7 @@ describe("StopOnDemandServer", () => {
   beforeEach(() => {
     matchAssistant = {
       stopEndedMatchServer: jest.fn(),
-      removeUnstoppedOnDemandServer: jest.fn(),
+      removeUnstoppedOnDemandServer: jest.fn(async () => true),
     };
     processor = new StopOnDemandServer(matchAssistant as any);
   });
@@ -38,8 +39,39 @@ describe("StopOnDemandServer", () => {
       "match-1",
       "uid-1",
       "u-match-1",
+      undefined,
     );
     expect(matchAssistant.stopEndedMatchServer).not.toHaveBeenCalled();
+  });
+
+  it("checks back again while the server it signalled is still exiting", async () => {
+    matchAssistant.removeUnstoppedOnDemandServer.mockResolvedValue(false);
+    const job = {
+      data: {
+        matchId: "match-1",
+        jobName: "m-match-1",
+        jobUid: "uid-1",
+        signalledAt: 1000,
+      },
+      token: "token-1",
+      moveToDelayed: jest.fn(),
+    };
+    const before = Date.now();
+
+    await expect(processor.process(job as any)).rejects.toBeInstanceOf(
+      DelayedError,
+    );
+
+    expect(matchAssistant.removeUnstoppedOnDemandServer).toHaveBeenCalledWith(
+      "match-1",
+      "uid-1",
+      "m-match-1",
+      1000,
+    );
+    const [[until, token]] = job.moveToDelayed.mock.calls;
+    expect(token).toBe("token-1");
+    expect(until - before).toBeGreaterThanOrEqual(3 * 1000);
+    expect(until - before).toBeLessThan(5 * 1000);
   });
 
   it("fails the job when the teardown fails, so BullMQ retries it", async () => {

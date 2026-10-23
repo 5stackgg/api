@@ -1,5 +1,5 @@
 import { MatchAssistantService } from "../match-assistant/match-assistant.service";
-import { Job } from "bullmq";
+import { DelayedError, Job } from "bullmq";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { MatchQueues } from "../enums/MatchQueues";
 import { WorkerHost } from "@nestjs/bullmq";
@@ -15,16 +15,27 @@ export class StopOnDemandServer extends WorkerHost {
       matchId: string;
       jobName?: string;
       jobUid?: string;
+      signalledAt?: number;
     }>,
   ): Promise<void> {
-    const { matchId, jobName, jobUid } = job.data;
+    const { matchId, jobName, jobUid, signalledAt } = job.data;
 
     if (jobUid) {
-      await this.matchAssistant.removeUnstoppedOnDemandServer(
-        matchId,
-        jobUid,
-        jobName,
-      );
+      if (
+        !(await this.matchAssistant.removeUnstoppedOnDemandServer(
+          matchId,
+          jobUid,
+          jobName,
+          signalledAt,
+        ))
+      ) {
+        await job.moveToDelayed(
+          Date.now() +
+            MatchAssistantService.ON_DEMAND_SERVER_STOP_CHECK_DELAY_MS,
+          job.token,
+        );
+        throw new DelayedError();
+      }
       return;
     }
 

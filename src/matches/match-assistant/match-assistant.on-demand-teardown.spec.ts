@@ -213,10 +213,13 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       expect(deleteNamespacedJob).not.toHaveBeenCalled();
       expect(scheduledMatchesQueue.add).toHaveBeenCalledWith(
         "StopOnDemandServer",
-        { matchId: "match-1", jobName: "m-match-1", jobUid: "uid-1" },
-        expect.objectContaining({
-          delay: MatchAssistantService.ON_DEMAND_SERVER_STOP_CHECK_DELAY_MS,
-        }),
+        {
+          matchId: "match-1",
+          jobName: "m-match-1",
+          jobUid: "uid-1",
+          signalledAt: expect.any(Number),
+        },
+        expect.objectContaining({ delay: 3 * 1000 }),
       );
     });
 
@@ -281,6 +284,9 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       readNamespacedJob
         .mockResolvedValueOnce(activeJob("uid-1"))
         .mockRejectedValue(notFound);
+      listNamespacedPod.mockResolvedValueOnce({
+        items: [runningPod("uid-1")],
+      });
 
       await service.removeUnstoppedOnDemandServer("match-1", "uid-1");
 
@@ -293,6 +299,9 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       readNamespacedJob
         .mockResolvedValueOnce(activeJob("uid-1"))
         .mockRejectedValue(notFound);
+      listNamespacedPod.mockResolvedValueOnce({
+        items: [runningPod("uid-1")],
+      });
 
       await service.removeUnstoppedOnDemandServer("match-1", "uid-1");
 
@@ -310,13 +319,15 @@ describe("MatchAssistantService — on-demand server teardown", () => {
     it("leaves a Job that replaced it between the read and the delete", async () => {
       readNamespacedJob.mockResolvedValueOnce(activeJob("uid-1"));
       deleteNamespacedJob.mockRejectedValue({ code: 409 });
-      listNamespacedPod.mockResolvedValue({
-        items: [creatingPod("uid-2", "m-match-1-fghij")],
-      });
+      listNamespacedPod
+        .mockResolvedValueOnce({ items: [runningPod("uid-1")] })
+        .mockResolvedValue({
+          items: [creatingPod("uid-2", "m-match-1-fghij")],
+        });
 
       await expect(
         service.removeUnstoppedOnDemandServer("match-1", "uid-1"),
-      ).resolves.toBeUndefined();
+      ).resolves.toBe(true);
 
       expect(deleteNamespacedPod).not.toHaveBeenCalled();
     });
@@ -325,13 +336,15 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       readNamespacedJob
         .mockResolvedValueOnce(activeJob("uid-1"))
         .mockRejectedValue(notFound);
+      const listed = {
+        items: [
+          runningPod("uid-1", "m-match-1-abcde"),
+          creatingPod("uid-2", "m-match-1-fghij"),
+        ],
+      };
       listNamespacedPod
-        .mockResolvedValueOnce({
-          items: [
-            runningPod("uid-1", "m-match-1-abcde"),
-            creatingPod("uid-2", "m-match-1-fghij"),
-          ],
-        })
+        .mockResolvedValueOnce(listed)
+        .mockResolvedValueOnce(listed)
         .mockResolvedValue({ items: [] });
 
       await service.removeUnstoppedOnDemandServer("match-1", "uid-1");
@@ -345,6 +358,9 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       readNamespacedJob
         .mockResolvedValueOnce(activeJob("uid-1"))
         .mockRejectedValue(notFound);
+      listNamespacedPod.mockResolvedValueOnce({
+        items: [runningPod("uid-1")],
+      });
 
       await service.removeUnstoppedOnDemandServer("match-1", "uid-1");
 
@@ -407,6 +423,9 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       readNamespacedJob
         .mockResolvedValueOnce(activeJob("uid-1"))
         .mockRejectedValue(notFound);
+      listNamespacedPod.mockResolvedValueOnce({
+        items: [runningPod("uid-1")],
+      });
 
       await service.removeUnstoppedOnDemandServer("match-1", "uid-1");
 
@@ -415,6 +434,63 @@ describe("MatchAssistantService — on-demand server teardown", () => {
         hasura.mutation.mock.invocationCallOrder.at(-1)!,
       );
       releasedEndedMatchServer();
+    });
+
+    it("checks again while the server it signalled is still exiting", async () => {
+      readNamespacedJob.mockResolvedValue(activeJob("uid-1"));
+      listNamespacedPod.mockResolvedValue({ items: [runningPod("uid-1")] });
+
+      await expect(
+        service.removeUnstoppedOnDemandServer(
+          "match-1",
+          "uid-1",
+          "m-match-1",
+          Date.now() - 3 * 1000,
+        ),
+      ).resolves.toBe(false);
+
+      expect(deleteNamespacedJob).not.toHaveBeenCalled();
+      expect(serverReleases()).toHaveLength(0);
+    });
+
+    it("removes the server it signalled once it has had two minutes to exit", async () => {
+      readNamespacedJob
+        .mockResolvedValueOnce(activeJob("uid-1"))
+        .mockRejectedValue(notFound);
+      listNamespacedPod
+        .mockResolvedValueOnce({ items: [runningPod("uid-1")] })
+        .mockResolvedValue({ items: [] });
+
+      await expect(
+        service.removeUnstoppedOnDemandServer(
+          "match-1",
+          "uid-1",
+          "m-match-1",
+          Date.now() - 2 * 60 * 1000,
+        ),
+      ).resolves.toBe(true);
+
+      expect(deleteNamespacedJob).toHaveBeenCalled();
+      expect(serverReleases()).toHaveLength(1);
+    });
+
+    it("leaves a Job whose server already exited, logs and all", async () => {
+      readNamespacedJob.mockResolvedValue(activeJob("uid-1"));
+      listNamespacedPod.mockResolvedValue({
+        items: [pod("Succeeded", { terminated: { exitCode: 0 } })],
+      });
+
+      await expect(
+        service.removeUnstoppedOnDemandServer(
+          "match-1",
+          "uid-1",
+          "m-match-1",
+          Date.now() - 3 * 1000,
+        ),
+      ).resolves.toBe(true);
+
+      expect(deleteNamespacedJob).not.toHaveBeenCalled();
+      expect(serverReleases()).toHaveLength(1);
     });
 
     it("keeps the server while a pod of its deleted Job is still terminating", async () => {
@@ -550,7 +626,12 @@ describe("MatchAssistantService — on-demand server teardown", () => {
         expect(signalled()).toHaveLength(1);
         expect(scheduledMatchesQueue.add).toHaveBeenCalledWith(
           "StopOnDemandServer",
-          { matchId: "match-1", jobName: "m-match-1", jobUid: "uid-1" },
+          {
+            matchId: "match-1",
+            jobName: "m-match-1",
+            jobUid: "uid-1",
+            signalledAt: expect.any(Number),
+          },
           expect.anything(),
         );
       },
