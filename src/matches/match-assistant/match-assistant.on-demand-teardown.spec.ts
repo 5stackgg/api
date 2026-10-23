@@ -1329,6 +1329,23 @@ describe("MatchAssistantService — on-demand server teardown", () => {
         }
         return {};
       });
+      let locked = false;
+      const queuedUnderLock: Array<string> = [];
+      cache.lock.mockImplementation(
+        async (_key: string, fn: () => Promise<unknown>) => {
+          locked = true;
+          try {
+            return await fn();
+          } finally {
+            locked = false;
+          }
+        },
+      );
+      queue.add.mockImplementation(async (name: string) => {
+        if (locked) {
+          queuedUnderLock.push(name);
+        }
+      });
 
       await expect(
         (service as any).assignOnDemandServer("match-1", {
@@ -1337,6 +1354,7 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       ).resolves.toBe(true);
 
       expect(assignServer).not.toHaveBeenCalled();
+      expect(queuedUnderLock).not.toContain("AssignWaitingMatch");
       const wake = queue.add.mock.calls.findIndex(
         ([name]) => name === "AssignWaitingMatch",
       );
