@@ -8,6 +8,7 @@ AS $$
 BEGIN
     IF TG_OP = 'TRUNCATE' THEN
         DELETE FROM public.player_elo_current;
+        PERFORM public.refresh_player_elo_ratings(NULL);
     ELSIF TG_OP = 'INSERT' THEN
         PERFORM public.refresh_player_elo_current(ARRAY(SELECT DISTINCT steam_id FROM new_rows));
     ELSIF TG_OP = 'DELETE' THEN

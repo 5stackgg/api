@@ -15,6 +15,7 @@ import { ReindexTables } from "./jobs/ReindexTables";
 import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
 import { RedisModule } from "src/redis/redis.module";
 import { GetDatabaseBackups } from "./jobs/GetDatabaseBackups";
+import { RefreshPlayerEloRatings } from "./jobs/RefreshPlayerEloRatings";
 import { S3Module } from "src/s3/s3.module";
 import { PostgresController } from "./postgres.controller";
 
@@ -52,6 +53,7 @@ import { PostgresController } from "./postgres.controller";
     PostgresAnalyzeJob,
     ReindexTables,
     GetDatabaseBackups,
+    RefreshPlayerEloRatings,
     ...getQueuesProcessors("Postgres"),
     loggerFactory(),
   ],
@@ -67,6 +69,7 @@ export class PostgresModule {
       [PostgresAnalyzeJob.name]: { pattern: "0 * * * *" },
       [ReindexTables.name]: { pattern: "0 0 * * 0" },
       [GetDatabaseBackups.name]: { pattern: "0 4 * * *" },
+      [RefreshPlayerEloRatings.name]: { every: 60_000 },
     });
   }
 }
