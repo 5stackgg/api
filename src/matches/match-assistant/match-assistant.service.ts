@@ -168,8 +168,8 @@ export class MatchAssistantService {
   }
 
   // The plugins prefix their match commands, css_ on CounterStrikeSharp and
-  // sw_ on SwiftlyS2. A server that has not reported its runtime yet runs the
-  // deployment's.
+  // sw_ on SwiftlyS2. A server that has not reported its runtime yet runs its
+  // node's pinned one, or the deployment's.
   public async setServerPaused(matchId: string, paused: boolean) {
     const { matches_by_pk } = await this.hasura.query({
       matches_by_pk: {
@@ -178,13 +178,19 @@ export class MatchAssistantService {
         },
         server: {
           plugin_runtime: true,
+          game_server_node: {
+            pin_plugin_runtime: true,
+          },
         },
       },
     });
 
+    const server = matches_by_pk?.server;
     const runtime =
-      matches_by_pk?.server?.plugin_runtime ??
-      (await this.pluginRuntimeService.getPluginRuntime());
+      server?.plugin_runtime ??
+      (await this.pluginRuntimeService.resolvePluginRuntime(
+        server?.game_server_node,
+      ));
     const prefix = runtime === "counterstrikesharp" ? "css" : "sw";
 
     return await this.command(

@@ -748,7 +748,9 @@ describe("MatchRecoveryService", () => {
           match: matchRow({ map_status: mapStatus }),
         });
 
-        await expect(service.setMatchPaused("match-1", true)).resolves.toEqual({
+        await expect(
+          service.setMatchPaused("match-1", true, VIEWER),
+        ).resolves.toEqual({
           success: true,
         });
         expect(matchAssistant.setServerPaused).toHaveBeenCalledWith(
@@ -763,7 +765,9 @@ describe("MatchRecoveryService", () => {
         match: matchRow({ map_status: "Paused" }),
       });
 
-      await expect(service.setMatchPaused("match-1", false)).resolves.toEqual({
+      await expect(
+        service.setMatchPaused("match-1", false, VIEWER),
+      ).resolves.toEqual({
         success: true,
       });
       expect(matchAssistant.setServerPaused).toHaveBeenCalledWith(
@@ -772,12 +776,35 @@ describe("MatchRecoveryService", () => {
       );
     });
 
-    // Players can already call a pause from chat, so unlike a restore there is
-    // no vote for an organizer on one of the teams to skip.
-    it("lets an organizer on one of the teams pause", async () => {
+    // A console resume skips the plugin's rules, such as both teams having to
+    // resume a technical pause, as a restore skips the teams' vote.
+    it.each([
+      [true, "Live"],
+      [false, "Paused"],
+    ])(
+      "refuses paused=%s from an organizer on one of the teams",
+      async (paused, mapStatus) => {
+        const { service, matchAssistant } = setup({
+          affiliated: true,
+          match: matchRow({ map_status: mapStatus }),
+        });
+
+        await expect(
+          service.setMatchPaused("match-1", paused, VIEWER),
+        ).rejects.toThrow(
+          "organizers on one of the teams can't pause or resume the match",
+        );
+        expect(matchAssistant.setServerPaused).not.toHaveBeenCalled();
+      },
+    );
+
+    it("still lets a moderator on one of the teams pause", async () => {
       const { service, matchAssistant } = setup({ affiliated: true });
 
-      await service.setMatchPaused("match-1", true);
+      await service.setMatchPaused("match-1", true, {
+        ...VIEWER,
+        role: "moderator",
+      });
 
       expect(matchAssistant.setServerPaused).toHaveBeenCalledWith(
         "match-1",
@@ -801,18 +828,18 @@ describe("MatchRecoveryService", () => {
         match: matchRow(overrides),
       });
 
-      await expect(service.setMatchPaused("match-1", paused)).rejects.toThrow(
-        message,
-      );
+      await expect(
+        service.setMatchPaused("match-1", paused, VIEWER),
+      ).rejects.toThrow(message);
       expect(matchAssistant.setServerPaused).not.toHaveBeenCalled();
     });
 
     it("says so when the server can't be reached", async () => {
       const { service } = setup({ serverResponse: undefined });
 
-      await expect(service.setMatchPaused("match-1", true)).rejects.toThrow(
-        "the match server can't be reached",
-      );
+      await expect(
+        service.setMatchPaused("match-1", true, VIEWER),
+      ).rejects.toThrow("the match server can't be reached");
     });
   });
 });

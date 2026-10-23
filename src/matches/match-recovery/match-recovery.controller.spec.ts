@@ -114,8 +114,8 @@ describe("MatchRecoveryController", () => {
     expect(recovery.extendVetoClock).toHaveBeenCalledWith("match-1", 30);
     expect(recovery.extendMatchAutoCancel).toHaveBeenCalledWith("match-1", 15);
     expect(recovery.setMatchPaused.mock.calls).toEqual([
-      ["match-1", true],
-      ["match-1", false],
+      ["match-1", true, user],
+      ["match-1", false, user],
     ]);
   });
 
@@ -133,7 +133,11 @@ describe("MatchRecoveryController", () => {
       }),
     ).resolves.toEqual({ success: true });
 
-    expect(recovery.setMatchPaused).toHaveBeenCalledWith("match-1", true);
+    expect(recovery.setMatchPaused).toHaveBeenCalledWith(
+      "match-1",
+      true,
+      creator,
+    );
   });
 
   // Hasura types it Boolean!, but the hook can be posted to directly.

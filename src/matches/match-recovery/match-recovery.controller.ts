@@ -52,7 +52,11 @@ export class MatchRecoveryController {
       throw Error("paused must be true or false");
     }
 
-    return await this.recovery.setMatchPaused(data.match_id, data.paused);
+    return await this.recovery.setMatchPaused(
+      data.match_id,
+      data.paused,
+      data.user,
+    );
   }
 
   @HasuraAction()
