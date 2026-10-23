@@ -165,19 +165,20 @@ AS $$
     SELECT public.sanction_policy_scope(_source) IN ('both', _scope);
 $$;
 
--- A VAC ban bars only the game it was issued in, and Steam never says which game
--- that was. One issued before CS:GO's closed beta (2011-11-30) cannot be a CS:GO
--- ban, which is the only kind CS2 carries over, so it never kept anyone off CS2.
+-- Steam never says which game a VAC ban was issued in, so only a ban from
+-- CS2's limited test (2023-03-22) onward is held against a player here; an
+-- older one is not, even when it could be a CS:GO ban.
 -- days_since_last_ban dates the newest ban on the account: when that one
--- predates the beta, so does every other.
-CREATE OR REPLACE FUNCTION public.vac_ban_predates_csgo(_days_since_last_ban integer)
+-- predates CS2, so does every other.
+CREATE OR REPLACE FUNCTION public.vac_ban_predates_cs2(_last_ban_at timestamptz)
 RETURNS boolean
 LANGUAGE sql
 STABLE
 AS $$
-    SELECT now() - make_interval(days => COALESCE(_days_since_last_ban, 0))
-           < '2011-11-30'::timestamptz;
+    SELECT _last_ban_at < '2023-03-22 00:00:00+00'::timestamptz;
 $$;
+
+DROP FUNCTION IF EXISTS public.vac_ban_predates_csgo(integer);
 
 -- Occurrence count and the most recent occurrence, per source, already narrowed
 -- to the source's decay window. Every source answers the same two questions;
@@ -217,16 +218,22 @@ BEGIN
     ELSIF _source = 'vac_ban' THEN
         -- Steam is the record here, not a table of ours: the occurrence count
         -- is how many VAC bans the account carries and the occurrence time is
-        -- derived from days_since_last_ban, both refreshed by SteamBansService
-        -- before it decides anything.
+        -- last_vac_ban_at, both refreshed by SteamBansService before it decides
+        -- anything.
         RETURN QUERY
-            SELECT GREATEST(p.vac_ban_count, 1),
-                   now() - make_interval(days => COALESCE(p.days_since_last_ban, 0))
+            SELECT GREATEST(p.vac_ban_count, 1), b.last_ban_at
               FROM public.players p
+              CROSS JOIN LATERAL (
+                SELECT COALESCE(
+                         p.last_vac_ban_at,
+                         COALESCE(p.steam_bans_checked_at, now())
+                           - make_interval(days => COALESCE(p.days_since_last_ban, 0))
+                       ) AS last_ban_at
+              ) b
              WHERE p.steam_id = _steam_id
                AND (p.vac_banned OR p.vac_ban_count > 0)
-               AND NOT public.vac_ban_predates_csgo(p.days_since_last_ban)
-               AND now() - make_interval(days => COALESCE(p.days_since_last_ban, 0)) > _cutoff;
+               AND NOT public.vac_ban_predates_cs2(b.last_ban_at)
+               AND b.last_ban_at > _cutoff;
     END IF;
 
     RETURN;
