@@ -2311,6 +2311,18 @@ export class MatchAssistantService {
             reserved_by_match_id: {
               _is_null: true,
             },
+            game_server_node: {
+              status: {
+                _eq: "Online",
+              },
+              enabled: {
+                _eq: true,
+              },
+              enabled_for_match_making: {
+                _eq: true,
+              },
+            },
+            ...MatchAssistantService.pendingDemoUploadExclusion(),
           },
         },
         region: true,

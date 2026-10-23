@@ -518,6 +518,30 @@ describe("MatchAssistantService — on-demand server teardown", () => {
         expect(assignServer).not.toHaveBeenCalled();
       });
 
+      // A render slot on a GPU-only node, or a node not taking matches, would
+      // send every waiting match through an assignment for nothing.
+      it("queues only a server a waiting match could be given", async () => {
+        await checkBack();
+
+        const lookup = hasura.query.mock.calls
+          .map(([request]) => request.servers?.__args?.where)
+          .find((where) => where?.id?._in);
+        expect(lookup).toEqual(
+          expect.objectContaining({
+            game_server_node: {
+              status: { _eq: "Online" },
+              enabled: { _eq: true },
+              enabled_for_match_making: { _eq: true },
+            },
+            _not: {
+              matches: expect.objectContaining({
+                match_maps: expect.anything(),
+              }),
+            },
+          }),
+        );
+      });
+
       it("queues a server a match moved off for the oldest waiting match", async () => {
         matchStatus = "Live";
 
