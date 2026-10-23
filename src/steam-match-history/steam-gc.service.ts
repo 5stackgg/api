@@ -37,6 +37,7 @@ export class SteamGcService
   private gcReady = false;
   private connecting?: Promise<void>;
   private idleTimer?: NodeJS.Timeout;
+  private readonly inFlight = new Set<(error: Error) => void>();
 
   constructor(
     private readonly logger: Logger,
@@ -187,6 +188,11 @@ export class SteamGcService
       clearTimeout(this.idleTimer);
       this.idleTimer = undefined;
     }
+    for (const fail of this.inFlight) {
+      fail(
+        new SteamGcConnectionError("steam gc session ended before it answered"),
+      );
+    }
     this.gcReady = false;
     const client = this.client;
     const cs = this.cs;
@@ -217,6 +223,11 @@ export class SteamGcService
   public async resolveShareCode(
     shareCode: string,
   ): Promise<ResolvedMatch | null> {
+    if (this.idleTimer) {
+      clearTimeout(this.idleTimer);
+      this.idleTimer = undefined;
+    }
+
     await this.ensureReady();
 
     const cs = this.cs;
@@ -225,25 +236,34 @@ export class SteamGcService
     }
 
     try {
-      const matches = await new Promise<unknown>((resolve) => {
-        const timer = setTimeout(() => {
+      const matches = await new Promise<unknown>((resolve, reject) => {
+        const settle = (): void => {
+          clearTimeout(timer);
           cs.removeListener("matchList", onMatchList);
+          this.inFlight.delete(fail);
+        };
+
+        const fail = (error: Error): void => {
+          settle();
+          reject(error);
+        };
+
+        const timer = setTimeout(() => {
           this.logger.warn(`steam-gc timeout resolving ${shareCode}`);
-          resolve(null);
+          fail(new SteamGcConnectionError("steam gc did not answer in time"));
         }, REQUEST_TIMEOUT_MS);
 
         const onMatchList = (list: unknown): void => {
-          clearTimeout(timer);
-          cs.removeListener("matchList", onMatchList);
+          settle();
           resolve(list);
         };
 
+        this.inFlight.add(fail);
         cs.on("matchList", onMatchList);
         try {
           cs.requestGame(shareCode);
         } catch (err) {
-          clearTimeout(timer);
-          cs.removeListener("matchList", onMatchList);
+          settle();
           this.logger.error(
             `steam-gc requestGame threw for ${shareCode}: ${(err as Error).message}`,
           );
