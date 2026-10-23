@@ -90,3 +90,32 @@ CREATE TRIGGER tbiu_draft_games_claim_match_options
     BEFORE INSERT OR UPDATE OF match_options_id ON public.draft_games
     FOR EACH ROW
     EXECUTE FUNCTION public.tbiu_claim_match_options();
+
+-- A quick-hosted lobby has no options row: the api copies these regions onto
+-- its match as admin, so a LAN one is checked here, where the host writes it.
+-- Only the regions a save adds count.
+CREATE OR REPLACE FUNCTION public.tbiu_draft_games_lan_regions() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    _existing text[] := ARRAY[]::text[];
+BEGIN
+    IF TG_OP = 'UPDATE' THEN
+        _existing := OLD.regions;
+    END IF;
+
+    PERFORM assert_lan_regions_reachable(ARRAY(
+        SELECT unnest(NEW.regions)
+        EXCEPT
+        SELECT unnest(_existing)
+    ));
+
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tbiu_draft_games_lan_regions ON public.draft_games;
+CREATE TRIGGER tbiu_draft_games_lan_regions
+    BEFORE INSERT OR UPDATE OF regions ON public.draft_games
+    FOR EACH ROW
+    EXECUTE FUNCTION public.tbiu_draft_games_lan_regions();
