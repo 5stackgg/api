@@ -86,8 +86,8 @@ describe("steam bans", () => {
   it.each([
     ["2007-01-25", 0],
     ["2016-09-01", 0],
-    ["2023-03-20", 0],
-    ["2023-03-24", 1],
+    ["2023-03-21", 0],
+    ["2023-03-22", 1],
     ["2024-02-09", 1],
   ])(
     "a VAC ban last issued on %s leaves %i active auto-ban(s)",
@@ -101,11 +101,15 @@ describe("steam bans", () => {
     },
   );
 
-  const ban = (steamId: string, sanctionedBy: string | null = null) =>
+  const ban = (
+    steamId: string,
+    sanctionedBy: string | null = null,
+    reason = sanctionedBy ? "banned" : "Auto: Steam 1 VAC ban(s), last 1d ago",
+  ) =>
     postgres.query(
       `INSERT INTO player_sanctions (player_steam_id, type, sanctioned_by_steam_id, reason)
-       VALUES ($1::bigint, 'ban', $2::bigint, 'banned')`,
-      [steamId, sanctionedBy],
+       VALUES ($1::bigint, 'ban', $2::bigint, $3)`,
+      [steamId, sanctionedBy, reason],
     );
 
   it("lifts an existing auto-ban whose VAC ban predates CS2", async () => {
@@ -117,6 +121,22 @@ describe("steam bans", () => {
 
     expect(await activeBans(player)).toBe(0);
   });
+
+  it.each([
+    ["2023-03-20", 0],
+    ["2023-03-21", 1],
+  ])(
+    "an existing auto-ban for a VAC ban last issued on %s leaves %i active",
+    async (lastBanOn, expected) => {
+      const player = await fx.player();
+      await ban(player);
+      steamReports(player, lastBanOn);
+
+      await service().checkPlayers([player]);
+
+      expect(await activeBans(player)).toBe(expected);
+    },
+  );
 
   it("lifts an auto-ban once Steam no longer reports a VAC ban", async () => {
     const player = await fx.player();
@@ -152,9 +172,20 @@ describe("steam bans", () => {
     expect(await activeBans(player)).toBe(1);
   });
 
+  it("never lifts a staff ban whose issuer is gone", async () => {
+    const player = await fx.player();
+    await ban(player, null, "griefing");
+    steamReports(player, "2016-09-01");
+
+    await service().checkPlayers([player]);
+
+    expect(await activeBans(player)).toBe(1);
+  });
+
   it("keeps a pre-CS2 VAC ban out of a scoped cooldown", async () => {
     const oldBan = await fx.player();
     const cs2Ban = await fx.player();
+    const staleOldBan = await fx.player();
     await postgres.query(
       `INSERT INTO settings (name, value) VALUES ('public.sanction_vac_ban_scope', 'matchmaking')`,
     );
@@ -165,6 +196,15 @@ describe("steam bans", () => {
               days_since_last_ban = CASE WHEN steam_id = $1::bigint THEN $3::int ELSE $4::int END
         WHERE steam_id IN ($1::bigint, $2::bigint)`,
       [oldBan, cs2Ban, daysSince("2016-09-01"), daysSince("2024-02-09")],
+    );
+    await postgres.query(
+      `UPDATE players
+          SET vac_banned = true,
+              vac_ban_count = 1,
+              days_since_last_ban = '2026-08-20'::date - '2023-02-20'::date,
+              steam_bans_checked_at = '2026-08-20'
+        WHERE steam_id = $1::bigint`,
+      [staleOldBan],
     );
 
     const expiry = async (steamId: string) => {
@@ -177,6 +217,7 @@ describe("steam bans", () => {
 
     expect(await expiry(oldBan)).toBeNull();
     expect(await expiry(cs2Ban)).toBe("infinity");
+    expect(await expiry(staleOldBan)).toBeNull();
   });
 
   describe("lifting auto-bans already issued before the cutoff moved to CS2", () => {
@@ -191,13 +232,13 @@ describe("steam bans", () => {
     const steamChecked = (
       steamId: string,
       lastBanOn: string,
-      checkedOn: string,
+      checkedOn: string | null,
     ) =>
       postgres.query(
         `UPDATE players
             SET vac_banned = true,
                 vac_ban_count = 1,
-                days_since_last_ban = $3::date - $2::date,
+                days_since_last_ban = COALESCE($3::date, now()::date) - $2::date,
                 steam_bans_checked_at = $3::date
           WHERE steam_id = $1::bigint`,
         [steamId, lastBanOn, checkedOn],
@@ -205,21 +246,29 @@ describe("steam bans", () => {
 
     it("lifts an auto-ban for a pre-CS2 VAC ban, dated from when Steam was asked", async () => {
       const preCs2 = await fx.player();
+      const neverRechecked = await fx.player();
       const cs2 = await fx.player();
       const staffBanned = await fx.player();
+      const issuerGone = await fx.player();
       const staff = await fx.player(undefined, "administrator");
       await steamChecked(preCs2, "2023-03-10", "2023-04-01");
+      await steamChecked(neverRechecked, "2016-09-01", null);
       await steamChecked(cs2, "2023-03-24", "2023-04-01");
       await steamChecked(staffBanned, "2016-09-01", "2025-01-01");
+      await steamChecked(issuerGone, "2016-09-01", "2025-01-01");
       await ban(preCs2);
+      await ban(neverRechecked);
       await ban(cs2);
       await ban(staffBanned, staff);
+      await ban(issuerGone, null, "griefing");
 
       await postgres.query(up);
 
       expect(await activeBans(preCs2)).toBe(0);
+      expect(await activeBans(neverRechecked)).toBe(0);
       expect(await activeBans(cs2)).toBe(1);
       expect(await activeBans(staffBanned)).toBe(1);
+      expect(await activeBans(issuerGone)).toBe(1);
     });
   });
 });

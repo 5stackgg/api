@@ -170,13 +170,12 @@ $$;
 -- older one is not, even when it could be a CS:GO ban.
 -- days_since_last_ban dates the newest ban on the account: when that one
 -- predates CS2, so does every other.
-CREATE OR REPLACE FUNCTION public.vac_ban_predates_cs2(_days_since_last_ban integer)
+CREATE OR REPLACE FUNCTION public.vac_ban_predates_cs2(_last_ban_at timestamptz)
 RETURNS boolean
 LANGUAGE sql
 STABLE
 AS $$
-    SELECT now() - make_interval(days => COALESCE(_days_since_last_ban, 0))
-           < '2023-03-22'::timestamptz;
+    SELECT _last_ban_at < '2023-03-22'::timestamptz;
 $$;
 
 DROP FUNCTION IF EXISTS public.vac_ban_predates_csgo(integer);
@@ -219,16 +218,19 @@ BEGIN
     ELSIF _source = 'vac_ban' THEN
         -- Steam is the record here, not a table of ours: the occurrence count
         -- is how many VAC bans the account carries and the occurrence time is
-        -- derived from days_since_last_ban, both refreshed by SteamBansService
-        -- before it decides anything.
+        -- days_since_last_ban counted back from when Steam was asked, both
+        -- refreshed by SteamBansService before it decides anything.
         RETURN QUERY
-            SELECT GREATEST(p.vac_ban_count, 1),
-                   now() - make_interval(days => COALESCE(p.days_since_last_ban, 0))
+            SELECT GREATEST(p.vac_ban_count, 1), b.last_ban_at
               FROM public.players p
+              CROSS JOIN LATERAL (
+                SELECT COALESCE(p.steam_bans_checked_at, now())
+                       - make_interval(days => COALESCE(p.days_since_last_ban, 0)) AS last_ban_at
+              ) b
              WHERE p.steam_id = _steam_id
                AND (p.vac_banned OR p.vac_ban_count > 0)
-               AND NOT public.vac_ban_predates_cs2(p.days_since_last_ban)
-               AND now() - make_interval(days => COALESCE(p.days_since_last_ban, 0)) > _cutoff;
+               AND NOT public.vac_ban_predates_cs2(b.last_ban_at)
+               AND b.last_ban_at > _cutoff;
     END IF;
 
     RETURN;

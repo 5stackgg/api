@@ -467,6 +467,7 @@ export class SteamBansService {
         WHERE player_steam_id = ANY($1::bigint[])
           AND type = 'ban'
           AND sanctioned_by_steam_id IS NULL
+          AND reason LIKE 'Auto: Steam%'
           AND deleted_at IS NULL
           AND (remove_sanction_date IS NULL OR remove_sanction_date > now())
         RETURNING player_steam_id::text AS player_steam_id`,
@@ -482,13 +483,16 @@ export class SteamBansService {
 
   private static readonly CS2_LIMITED_TEST = Date.UTC(2023, 2, 22);
 
-  // The same cutoff as public.vac_ban_predates_cs2. The lift decides it here,
-  // not in SQL, so an api that boots before hasura has applied the function
-  // still lifts and bans instead of failing every check.
+  // A day short of public.vac_ban_predates_cs2's cutoff: DaysSinceLastBan is
+  // whole days, so a ban from the eve of CS2 dates to either side of the cutoff
+  // depending on the hour it is checked, and lifting on the same line would
+  // lift and re-ban it in turn. The lift decides it here, not in SQL, so an api
+  // that boots before hasura has applied the function still lifts and bans
+  // instead of failing every check.
   private static predatesCs2(ban: SteamBan): boolean {
     return (
       Date.now() - (ban.DaysSinceLastBan ?? 0) * 86_400_000 <
-      SteamBansService.CS2_LIMITED_TEST
+      SteamBansService.CS2_LIMITED_TEST - 86_400_000
     );
   }
 
