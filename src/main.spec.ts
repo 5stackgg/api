@@ -2,80 +2,71 @@ import "reflect-metadata";
 
 jest.mock("./app.module", () => ({ AppModule: class AppModule {} }));
 
-import {
-  INestApplication,
-  Injectable,
-  OnApplicationShutdown,
-  OnModuleDestroy,
-} from "@nestjs/common";
-import { DiscoveryModule } from "@nestjs/core";
-import { Test } from "@nestjs/testing";
+import { EventEmitter } from "events";
+import { INestApplication } from "@nestjs/common";
 import { WorkerHost } from "@nestjs/bullmq";
-import { closeOnShutdownSignals, SHUTDOWN_DEADLINE_MS } from "./main";
+import {
+  closeOnShutdownSignals,
+  SHUTDOWN_DEADLINE_MS,
+  SHUTDOWN_ENDPOINT_DELAY_MS,
+  SHUTDOWN_REQUEST_DRAIN_MS,
+} from "./main";
 
-const events: Array<string> = [];
-let closeWorker: () => Promise<void>;
-
-@Injectable()
 class QueueProcessor extends WorkerHost {
-  constructor() {
+  constructor(close: () => Promise<void>) {
     super();
-    (this as unknown as { _worker: unknown })._worker = {
-      close: () => closeWorker(),
-    };
+    (this as unknown as { _worker: unknown })._worker = { close };
   }
 
   async process() {}
 }
 
 // A job class extends WorkerHost too, but only a processor gets a worker.
-@Injectable()
 class Job extends WorkerHost {
   async process() {}
 }
 
-@Injectable()
-class RedisConnections implements OnApplicationShutdown {
-  onApplicationShutdown() {
-    events.push("redis disconnected");
-  }
-}
-
-@Injectable()
-class S3Clients implements OnModuleDestroy {
-  onModuleDestroy() {
-    events.push("s3 destroyed");
-  }
-}
-
 describe("closeOnShutdownSignals", () => {
-  let app: INestApplication;
-  let exit: jest.SpyInstance;
   const signals = ["SIGTERM", "SIGINT"] as const;
   const listenersBefore = new Map<string, Array<Function>>();
+  let events: Array<string>;
+  let server: EventEmitter & { close: jest.Mock };
+  let app: { close: jest.Mock };
+  let exit: jest.SpyInstance;
+  let closeWorker: () => Promise<void>;
+  const dev = process.env.DEV;
 
-  beforeEach(async () => {
-    events.length = 0;
+  beforeEach(() => {
+    jest.useFakeTimers();
+    delete process.env.DEV;
+    events = [];
     closeWorker = async () => {
-      await new Promise((resolve) => setImmediate(resolve));
-      events.push("worker closed");
+      events.push("workers closed");
     };
     for (const signal of signals) {
       listenersBefore.set(signal, process.listeners(signal));
     }
-    exit = jest
-      .spyOn(process, "exit")
-      .mockImplementation((): never => undefined as never);
+    exit = jest.spyOn(process, "exit").mockImplementation((code): never => {
+      events.push(`exit ${code}`);
+      return undefined as never;
+    });
     jest.spyOn(console, "warn").mockImplementation(() => {});
-    jest.spyOn(console, "error").mockImplementation(() => {});
 
-    const moduleRef = await Test.createTestingModule({
-      imports: [DiscoveryModule],
-      providers: [QueueProcessor, Job, RedisConnections, S3Clients],
-    }).compile();
-    app = moduleRef.createNestApplication({ logger: false });
-    await app.init();
-    closeOnShutdownSignals(app);
+    server = Object.assign(new EventEmitter(), {
+      close: jest.fn(() => events.push("stopped listening")),
+    });
+    app = { close: jest.fn() };
+    closeOnShutdownSignals({
+      ...app,
+      getHttpServer: () => server,
+      get: () => ({
+        getProviders: () => [
+          { instance: new QueueProcessor(() => closeWorker()) },
+          { instance: new Job() },
+          { instance: {} },
+        ],
+      }),
+    } as unknown as INestApplication);
   });
 
   afterEach(() => {
@@ -86,64 +77,109 @@ describe("closeOnShutdownSignals", () => {
         }
       }
     }
+    jest.clearAllTimers();
     jest.useRealTimers();
     jest.restoreAllMocks();
+    if (dev === undefined) {
+      delete process.env.DEV;
+    } else {
+      process.env.DEV = dev;
+    }
   });
 
-  const settle = async () => {
-    for (let i = 0; i < 10; i++) {
-      await new Promise((resolve) => setImmediate(resolve));
-    }
+  const request = () => {
+    const response = new EventEmitter();
+    server.emit("request", {}, response);
+    return () => response.emit("close");
   };
 
-  it.each(signals)(
-    "on %s lets the queue workers finish before anything they use is closed, then exits",
-    async (signal) => {
-      process.emit(signal);
-      await settle();
+  it("on SIGTERM keeps serving while its endpoints go, then stops listening, closes the workers and exits", async () => {
+    process.emit("SIGTERM", "SIGTERM");
 
-      expect(events).toEqual([
-        "worker closed",
-        "s3 destroyed",
-        "redis disconnected",
-      ]);
-      expect(exit).toHaveBeenCalledWith(0);
-    },
-  );
+    await jest.advanceTimersByTimeAsync(SHUTDOWN_ENDPOINT_DELAY_MS - 1);
+    expect(events).toEqual([]);
 
-  it("ignores another signal while it is shutting down", async () => {
-    const close = jest.spyOn(app, "close");
+    await jest.advanceTimersByTimeAsync(1);
+    expect(events).toEqual(["stopped listening", "workers closed", "exit 0"]);
+  });
 
-    process.emit("SIGTERM");
-    process.emit("SIGINT");
-    await settle();
+  it("closes no app, and so no socket", async () => {
+    process.emit("SIGTERM", "SIGTERM");
+    await jest.advanceTimersByTimeAsync(SHUTDOWN_DEADLINE_MS);
 
-    expect(close).toHaveBeenCalledTimes(1);
+    expect(app.close).not.toHaveBeenCalled();
+  });
+
+  it("in dev, on SIGTERM too, stops listening at once", async () => {
+    process.env.DEV = "true";
+
+    process.emit("SIGTERM", "SIGTERM");
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(events).toEqual(["stopped listening", "workers closed", "exit 0"]);
+  });
+
+  it("on SIGINT stops listening at once", async () => {
+    process.emit("SIGINT", "SIGINT");
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(events).toEqual(["stopped listening", "workers closed", "exit 0"]);
+  });
+
+  it("lets a request in flight finish before it exits", async () => {
+    const finish = request();
+
+    process.emit("SIGINT", "SIGINT");
+    await jest.advanceTimersByTimeAsync(1_000);
+    expect(events).toEqual(["stopped listening", "workers closed"]);
+
+    finish();
+    await jest.advanceTimersByTimeAsync(0);
+    expect(events.at(-1)).toBe("exit 0");
+  });
+
+  it("gives up on a request that doesn't finish after the drain limit", async () => {
+    request();
+
+    process.emit("SIGINT", "SIGINT");
+    await jest.advanceTimersByTimeAsync(SHUTDOWN_REQUEST_DRAIN_MS - 1);
+    expect(exit).not.toHaveBeenCalled();
+
+    await jest.advanceTimersByTimeAsync(1);
     expect(exit.mock.calls).toEqual([[0]]);
   });
 
-  it("exits with an error if shutting down fails", async () => {
+  it("exits at once on a second signal", async () => {
+    process.emit("SIGTERM", "SIGTERM");
+    process.emit("SIGINT", "SIGINT");
+
+    expect(exit.mock.calls).toEqual([[1]]);
+    expect(server.close).not.toHaveBeenCalled();
+  });
+
+  it("exits cleanly even when a worker fails to close", async () => {
     closeWorker = async () => {
       throw new Error("redis went away");
     };
 
-    process.emit("SIGTERM");
-    await settle();
+    process.emit("SIGINT", "SIGINT");
+    await jest.advanceTimersByTimeAsync(0);
 
-    expect(exit).toHaveBeenCalledWith(1);
+    expect(exit.mock.calls).toEqual([[0]]);
   });
 
   it("gives up at the deadline, inside the pod's grace period", async () => {
-    jest.useFakeTimers({ doNotFake: ["setImmediate", "nextTick"] });
     closeWorker = () => new Promise(() => {});
 
-    process.emit("SIGTERM");
-    await settle();
-    jest.advanceTimersByTime(SHUTDOWN_DEADLINE_MS - 1);
+    process.emit("SIGTERM", "SIGTERM");
+    await jest.advanceTimersByTimeAsync(SHUTDOWN_DEADLINE_MS - 1);
     expect(exit).not.toHaveBeenCalled();
 
-    jest.advanceTimersByTime(1);
-    expect(exit).toHaveBeenCalledWith(1);
+    await jest.advanceTimersByTimeAsync(1);
+    expect(exit.mock.calls).toEqual([[1]]);
     expect(SHUTDOWN_DEADLINE_MS).toBeLessThan(30_000);
+    expect(SHUTDOWN_ENDPOINT_DELAY_MS + SHUTDOWN_REQUEST_DRAIN_MS).toBeLessThan(
+      SHUTDOWN_DEADLINE_MS,
+    );
   });
 });

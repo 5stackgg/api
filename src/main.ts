@@ -1,4 +1,5 @@
 import session from "express-session";
+import { Server, ServerResponse } from "http";
 import { INestApplication } from "@nestjs/common";
 import { DiscoveryService, NestFactory } from "@nestjs/core";
 import { WorkerHost } from "@nestjs/bullmq";
@@ -24,52 +25,94 @@ require("events").EventEmitter.defaultMaxListeners = Number(
   process.env.NODE_MAX_LISTENERS || "100",
 );
 
-// Inside the 30 seconds the pod gets between SIGTERM and SIGKILL.
+// The pod gets 30 seconds between SIGTERM and SIGKILL.
 export const SHUTDOWN_DEADLINE_MS = 20_000;
+
+// Long enough for the pod's removal from the Service to reach the ingress, so
+// requests stop arriving before the listener goes.
+export const SHUTDOWN_ENDPOINT_DELAY_MS = 5_000;
+
+export const SHUTDOWN_REQUEST_DRAIN_MS = 10_000;
 
 // node is PID 1 in the container, where SIGTERM does nothing unless something
 // handles it, so every deploy waited out the grace period and was killed.
-// The queue workers finish their jobs first: Nest closes them last of all,
-// after the Redis connections, S3 clients and Steam sessions those jobs use.
+//
+// Nest's app.close() is deliberately not called: it closes every socket, and
+// the sockets' close handlers end demo playback, node sessions and lobby
+// presence that the new pod picks up. The sockets drop with the process, as
+// they always have, and their clients reconnect to the new pod.
 export function closeOnShutdownSignals(app: INestApplication) {
+  const server: Server = app.getHttpServer();
+  let inFlight = 0;
+  let idle = () => {};
+
+  server.on("request", (_request, response: ServerResponse) => {
+    inFlight++;
+    response.once("close", () => {
+      inFlight--;
+      if (inFlight === 0) {
+        idle();
+      }
+    });
+  });
+
+  const wait = (ms: number) =>
+    new Promise<void>((resolve) => setTimeout(resolve, ms));
+
   let closing = false;
 
   const shutdown = async (signal: NodeJS.Signals) => {
     if (closing) {
+      process.exit(1);
       return;
     }
     closing = true;
 
-    setTimeout(() => {
+    const deadline = setTimeout(() => {
       console.warn(
         `api did not shut down within ${SHUTDOWN_DEADLINE_MS}ms of ${signal}, exiting`,
       );
       process.exit(1);
-    }, SHUTDOWN_DEADLINE_MS).unref();
+    }, SHUTDOWN_DEADLINE_MS);
 
-    let code = 0;
-    try {
-      // Job classes extend WorkerHost too; only the queue processors have a
-      // worker.
-      const workers = app
-        .get(DiscoveryService)
-        .getProviders()
-        .map(({ instance }) => instance)
-        .filter((instance) => instance instanceof WorkerHost)
-        .flatMap((host: WorkerHost) => {
-          try {
-            return [host.worker];
-          } catch {
-            return [];
-          }
-        });
-      await Promise.all(workers.map((worker) => worker.close()));
-      await app.close();
-    } catch (error) {
-      console.error("api did not shut down cleanly", error);
-      code = 1;
+    // Only a pod being replaced has endpoints to wait out; a Ctrl-C or a dev
+    // restart does not.
+    if (signal === "SIGTERM" && !process.env.DEV) {
+      await wait(SHUTDOWN_ENDPOINT_DELAY_MS);
     }
-    process.exit(code);
+
+    // Upgraded sockets keep the server open, so its callback is not awaited.
+    server.close();
+
+    const requestsDone =
+      inFlight === 0
+        ? Promise.resolve()
+        : new Promise<void>((resolve) => {
+            idle = resolve;
+          });
+
+    // Job classes extend WorkerHost too; only the queue processors have a
+    // worker.
+    const workers = app
+      .get(DiscoveryService)
+      .getProviders()
+      .map(({ instance }) => instance)
+      .filter((instance) => instance instanceof WorkerHost)
+      .flatMap((host: WorkerHost) => {
+        try {
+          return [host.worker];
+        } catch {
+          return [];
+        }
+      });
+
+    await Promise.allSettled([
+      ...workers.map((worker) => worker.close()),
+      Promise.race([requestsDone, wait(SHUTDOWN_REQUEST_DRAIN_MS)]),
+    ]);
+
+    clearTimeout(deadline);
+    process.exit(0);
   };
 
   process.on("SIGTERM", shutdown);
