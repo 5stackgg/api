@@ -133,6 +133,23 @@ describe("recently_banned_players (SQL-driven)", () => {
       [steam, vac, game, daysAgo, checkedDaysAgo],
     );
 
+  const banDates = (steam: string, vacDaysAgo: number, gameDaysAgo: number) =>
+    postgres.query(
+      `UPDATE players
+          SET last_vac_ban_at = now() - make_interval(days => $2),
+              last_game_ban_at = now() - make_interval(days => $3)
+        WHERE steam_id = $1`,
+      [steam, vacDaysAgo, gameDaysAgo],
+    );
+
+  const utcDay = async (daysAgo: number) => {
+    const [{ value }] = await postgres.query<Array<{ value: string }>>(
+      "SELECT ((now() AT TIME ZONE 'UTC')::date - $1::int)::text AS value",
+      [daysAgo],
+    );
+    return value;
+  };
+
   const sanction = async (
     steam: string,
     {
@@ -290,23 +307,6 @@ describe("recently_banned_players (SQL-driven)", () => {
       expect(await list({ kinds: ["game"], window: 7 })).toEqual([]);
     });
 
-    const banDates = (steam: string, vacDaysAgo: number, gameDaysAgo: number) =>
-      postgres.query(
-        `UPDATE players
-            SET last_vac_ban_at = now() - make_interval(days => $2),
-                last_game_ban_at = now() - make_interval(days => $3)
-          WHERE steam_id = $1`,
-        [steam, vacDaysAgo, gameDaysAgo],
-      );
-
-    const utcDay = async (daysAgo: number) => {
-      const [{ value }] = await postgres.query<Array<{ value: string }>>(
-        "SELECT ((now() AT TIME ZONE 'UTC')::date - $1::int)::text AS value",
-        [daysAgo],
-      );
-      return value;
-    };
-
     it("dates each kind of Steam ban on its own", async () => {
       const both = await fx.player("bothkinds");
       await steamBan(both, { vac: 1, game: 1, daysAgo: 2 });
@@ -449,6 +449,26 @@ describe("recently_banned_players (SQL-driven)", () => {
 
       expect(ids(await list({ timing: "arrived_banned" }))).toEqual([arrived]);
       expect(ids(await list({ timing: "played_first" }))).toEqual([fresh]);
+    });
+
+    it("counts from the newest ban of the kinds asked for", async () => {
+      const both = await fx.player("bothkinds");
+      const other = await fx.player("other");
+      await steamBan(both, { vac: 1, game: 1, daysAgo: 2 });
+      await banDates(both, 18, 2);
+      await match({ lineup1: [both], lineup2: [other], daysAgo: 10 });
+      await match({ lineup1: [both], lineup2: [other], daysAgo: 1 });
+
+      const [vac] = await list({ kinds: ["vac"] });
+      expect(vac.arrived_banned).toBe(true);
+      expect(vac.matches_since_steam_ban).toBe(2);
+      expect(
+        ids(await list({ kinds: ["vac"], timing: "arrived_banned" })),
+      ).toEqual([both]);
+
+      const [anyKind] = await list();
+      expect(anyKind.arrived_banned).toBe(false);
+      expect(anyKind.matches_since_steam_ban).toBe(1);
     });
   });
 
