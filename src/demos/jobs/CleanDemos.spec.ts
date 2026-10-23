@@ -216,7 +216,7 @@ const setup = (
     return table.map((demo) => demo.id);
   };
 
-  return { job, objects, pages, logger, attempted, remaining };
+  return { job, demoMetadata, objects, pages, logger, attempted, remaining };
 };
 
 const oldDemos = (count: number, size: number) => {
@@ -349,7 +349,7 @@ describe("CleanDemos", () => {
     ["demo", "demos/match/old-00.dem"],
     ["playback blob", "demos/match/old-00.playback.json.gz"],
   ])(
-    "keeps the row and stops when S3 cannot remove the %s",
+    "keeps the row and moves on when S3 cannot remove the %s",
     async (_, failing) => {
       const { job, objects, remaining, attempted, logger } = setup(
         [
@@ -362,32 +362,91 @@ describe("CleanDemos", () => {
 
       const deleted = await job.process();
 
-      expect(remaining()).toEqual(["recent", "old-00", "old-01"]);
-      expect(deleted).toBe(0);
+      expect(attempted()).toEqual(["old-00", "old-01"]);
+      expect(remaining()).toEqual(["recent", "old-00"]);
       expect(objects.has(failing)).toBe(true);
-      expect(attempted()).toEqual(["old-00"]);
-      expect(logger.warn).toHaveBeenCalledWith(
+      expect(deleted).toBe(1);
+      expect(logger.error).toHaveBeenCalledWith(
         expect.stringContaining("[clean-demos] unable to delete demo old-00"),
       );
     },
   );
 
-  it("stops when the row cannot be deleted, and the next run finishes it", async () => {
-    const rows = [row("recent", 98 * GB, 1), ...oldDemos(3, GB)];
-    const first = setup(rows, { rowDeleteFailing: ["old-00"] });
+  it("moves on when a row cannot be deleted, and a later run finishes it", async () => {
+    const first = setup([row("recent", 98 * GB, 1), ...oldDemos(3, GB)], {
+      rowDeleteFailing: ["old-00"],
+    });
 
     const deleted = await first.job.process();
 
-    expect(first.remaining()).toEqual(["recent", "old-00", "old-01", "old-02"]);
-    expect(deleted).toBe(0);
+    expect(first.remaining()).toEqual(["recent", "old-00", "old-02"]);
     expect(first.objects.has("demos/match/old-00.dem")).toBe(false);
-    expect(first.attempted()).toEqual(["old-00"]);
+    expect(deleted).toBe(1);
 
-    const next = setup(rows.slice());
+    const next = setup([
+      row("recent", 99 * GB, 1),
+      row("old-00", GB, 100),
+      row("old-02", GB, 98),
+    ]);
     next.objects.delete("demos/match/old-00.dem");
 
     await expect(next.job.process()).resolves.toBe(1);
-    expect(next.remaining()).toEqual(["recent", "old-01", "old-02"]);
+    expect(next.remaining()).toEqual(["recent", "old-02"]);
+  });
+
+  it("keeps deleting past an oldest demo that can never be deleted", async () => {
+    const { job, attempted, remaining, pages } = setup(
+      [row("recent", 95 * GB, 1), ...oldDemos(15, GB)],
+      { s3Failing: ["demos/match/old-00.dem"] },
+    );
+
+    const deleted = await job.process();
+
+    expect(attempted().filter((id) => id === "old-00")).toHaveLength(1);
+    expect(pages.flat().filter((id) => id === "old-00")).toHaveLength(1);
+    expect(deleted).toBe(10);
+    expect(remaining()).toEqual([
+      "recent",
+      "old-00",
+      "old-11",
+      "old-12",
+      "old-13",
+      "old-14",
+    ]);
+  });
+
+  it("stops after three deletes fail in a row", async () => {
+    const { job, attempted, remaining, logger } = setup(
+      [row("recent", 95 * GB, 1), ...oldDemos(10, GB)],
+      {
+        s3Failing: [0, 1, 2, 3, 4].map((i) => `demos/match/old-0${i}.dem`),
+      },
+    );
+
+    const deleted = await job.process();
+
+    expect(attempted()).toEqual(["old-00", "old-01", "old-02"]);
+    expect(remaining()).toHaveLength(11);
+    expect(deleted).toBe(0);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringContaining("3 deletes failed in a row"),
+    );
+  });
+
+  it("leaves other callers' deleteDemo lenient: the row goes even when S3 fails", async () => {
+    const { demoMetadata, objects, remaining, logger } = setup(
+      [row("old-00", GB, 100, GB)],
+      { s3Failing: ["demos/match/old-00.dem"] },
+    );
+
+    await demoMetadata.deleteDemo("old-00");
+
+    expect(remaining()).toEqual([]);
+    expect(objects.has("demos/match/old-00.dem")).toBe(true);
+    expect(objects.has("demos/match/old-00.playback.json.gz")).toBe(false);
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("demos/match/old-00.dem"),
+    );
   });
 
   it("stops when a demo it deleted is listed again", async () => {

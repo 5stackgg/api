@@ -7,6 +7,8 @@ import { DemoMetadataService } from "../demo-metadata.service";
 
 @UseQueue("Demos", DemoQueues.Demos)
 export class CleanDemos extends WorkerHost {
+  private static readonly MAX_FAILURES_IN_A_ROW = 3;
+
   private maxStorageInBytes: number;
   private minRetentionInDays: number;
   private totalStoredBytes: number;
@@ -85,11 +87,13 @@ export class CleanDemos extends WorkerHost {
     ).toISOString();
 
     const deleted = new Set<string>();
+    const failed = new Set<string>();
+    let failuresInARow = 0;
     let freedBytes = 0;
     let stopped = false;
 
     while (!stopped && this.totalStoredBytes > this.maxStorageInBytes) {
-      const demos = await this.findOldestDemos(finishedAfter);
+      const demos = await this.findOldestDemos(finishedAfter, [...failed]);
 
       if (demos.length === 0) {
         break;
@@ -111,12 +115,24 @@ export class CleanDemos extends WorkerHost {
         try {
           await this.demoMetadata.deleteDemo(demo.id, { strict: true });
         } catch (error) {
-          this.logger.warn(
-            `[clean-demos] unable to delete demo ${demo.id}, stopping: ${(error as Error)?.message}`,
+          failed.add(demo.id);
+          failuresInARow++;
+          this.logger.error(
+            `[clean-demos] unable to delete demo ${demo.id}: ${(error as Error)?.message}`,
           );
-          stopped = true;
-          break;
+
+          if (failuresInARow >= CleanDemos.MAX_FAILURES_IN_A_ROW) {
+            this.logger.error(
+              `[clean-demos] ${failuresInARow} deletes failed in a row, stopping`,
+            );
+            stopped = true;
+            break;
+          }
+
+          continue;
         }
+
+        failuresInARow = 0;
 
         const bytes = (demo.size ?? 0) + (demo.playback_size ?? 0);
         deleted.add(demo.id);
@@ -137,12 +153,15 @@ export class CleanDemos extends WorkerHost {
     return deleted.size;
   }
 
-  private async findOldestDemos(finishedAfter: string) {
+  private async findOldestDemos(finishedAfter: string, failed: Array<string>) {
     const { match_map_demos } = await this.hasura.query({
       match_map_demos: {
         __args: {
           limit: 10,
           where: {
+            id: {
+              _nin: failed,
+            },
             _or: [
               {
                 size: {
