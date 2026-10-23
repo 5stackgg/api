@@ -355,6 +355,7 @@ export class SteamBansService {
                    WHERE ps.player_steam_id = p.steam_id
                      AND ps.type = 'ban'
                      AND ps.sanctioned_by_steam_id IS NULL
+                     AND ps.reason LIKE 'Auto: Steam%'
                      AND ps.deleted_at IS NOT NULL
                      AND ps.deleted_at::date >= v.last_vac_ban_at::date
                 ) THEN p.vac_banned
@@ -413,6 +414,7 @@ export class SteamBansService {
              WHERE ps.player_steam_id = p.steam_id
                AND ps.type = 'ban'
                AND ps.sanctioned_by_steam_id IS NULL
+               AND ps.reason LIKE 'Auto: Steam%'
                AND ps.deleted_at IS NOT NULL
                AND ps.deleted_at::date >= p.last_vac_ban_at::date
           )

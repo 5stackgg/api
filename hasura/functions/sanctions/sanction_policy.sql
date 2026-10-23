@@ -234,6 +234,13 @@ BEGIN
                AND (p.vac_banned OR p.vac_ban_count > 0)
                AND NOT public.vac_ban_predates_cs2(b.last_ban_at)
                AND b.last_ban_at > _cutoff;
+    ELSIF _source = 'faceit_ban' THEN
+        RETURN QUERY
+            SELECT 1, p.faceit_banned_at
+              FROM public.players p
+             WHERE p.steam_id = _steam_id
+               AND p.faceit_banned_at > _cutoff
+               AND (p.faceit_ban_ends_at IS NULL OR p.faceit_ban_ends_at > now());
     END IF;
 
     RETURN;

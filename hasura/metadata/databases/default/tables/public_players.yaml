@@ -463,6 +463,8 @@ select_permissions:
         - avatar_url
         - country
         - custom_avatar_url
+        - faceit_ban_ends_at
+        - faceit_banned_at
         - faceit_elo
         - faceit_nickname
         - faceit_player_id
@@ -517,6 +519,8 @@ select_permissions:
         - avatar_url
         - country
         - custom_avatar_url
+        - faceit_ban_ends_at
+        - faceit_banned_at
         - faceit_elo
         - faceit_nickname
         - faceit_player_id
@@ -577,6 +581,8 @@ select_permissions:
         - country
         - last_read_news_at
         - custom_avatar_url
+        - faceit_ban_ends_at
+        - faceit_banned_at
         - faceit_elo
         - faceit_nickname
         - faceit_player_id

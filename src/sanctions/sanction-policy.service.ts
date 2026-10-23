@@ -1,7 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { PostgresService } from "src/postgres/postgres.service";
 
-export type SanctionSource = "match_abandon" | "vac_ban" | "tournament_no_show";
+export type SanctionSource =
+  | "match_abandon"
+  | "vac_ban"
+  | "faceit_ban"
+  | "tournament_no_show";
 
 export type SanctionScope = "matchmaking" | "tournaments" | "both";
 

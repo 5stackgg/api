@@ -16,9 +16,11 @@ import {
 import { FaceitController } from "./faceit.controller";
 import { FaceitService } from "./faceit.service";
 import { FaceitMatchImportService } from "./faceit-match-import.service";
+import { FaceitBansService } from "./faceit-bans.service";
 import { FaceitQueues } from "./enums/FaceitQueues";
 import { PollAllFaceitMatchHistory } from "./jobs/PollAllFaceitMatchHistory";
 import { ImportFaceitMatch } from "./jobs/ImportFaceitMatch";
+import { CheckFaceitBans } from "./jobs/CheckFaceitBans";
 
 @Module({
   imports: [
@@ -28,12 +30,19 @@ import { ImportFaceitMatch } from "./jobs/ImportFaceitMatch";
     BullModule.registerQueue({
       name: FaceitQueues.ImportFaceitMatch,
     }),
+    BullModule.registerQueue({
+      name: FaceitQueues.CheckFaceitBans,
+    }),
     BullBoardModule.forFeature({
       name: FaceitQueues.PollAllFaceitMatchHistory,
       adapter: BullMQAdapter,
     }),
     BullBoardModule.forFeature({
       name: FaceitQueues.ImportFaceitMatch,
+      adapter: BullMQAdapter,
+    }),
+    BullBoardModule.forFeature({
+      name: FaceitQueues.CheckFaceitBans,
       adapter: BullMQAdapter,
     }),
     CacheModule,
@@ -47,8 +56,10 @@ import { ImportFaceitMatch } from "./jobs/ImportFaceitMatch";
     loggerFactory(),
     FaceitService,
     FaceitMatchImportService,
+    FaceitBansService,
     PollAllFaceitMatchHistory,
     ImportFaceitMatch,
+    CheckFaceitBans,
     ...getQueuesProcessors("Faceit"),
   ],
   exports: [FaceitService],

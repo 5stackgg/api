@@ -717,8 +717,8 @@ describe("teams, rosters and lineup membership (SQL-driven)", () => {
         [player],
       );
       const [sanction] = await postgres.query<Array<{ id: string }>>(
-        `INSERT INTO player_sanctions (player_steam_id, type, sanctioned_by_steam_id)
-         VALUES ($1, 'ban', NULL) RETURNING id`,
+        `INSERT INTO player_sanctions (player_steam_id, type, sanctioned_by_steam_id, reason)
+         VALUES ($1, 'ban', NULL, 'Auto: Steam 1 VAC ban(s), last 1d ago') RETURNING id`,
         [player],
       );
 
@@ -732,6 +732,30 @@ describe("teams, rosters and lineup membership (SQL-driven)", () => {
         [player],
       );
       expect(row.vac_banned).toBe(false);
+    });
+
+    it("soft-deleting a FACEIT auto-ban leaves the VAC flag alone", async () => {
+      const player = await seedPlayer();
+      await postgres.query(
+        "UPDATE players SET vac_banned = true WHERE steam_id = $1",
+        [player],
+      );
+      const [sanction] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO player_sanctions (player_steam_id, type, sanctioned_by_steam_id, reason)
+         VALUES ($1, 'ban', NULL, 'Auto: FACEIT cheating ban') RETURNING id`,
+        [player],
+      );
+
+      await postgres.query(
+        "UPDATE player_sanctions SET deleted_at = now() WHERE id = $1",
+        [sanction.id],
+      );
+
+      const [row] = await postgres.query<Array<{ vac_banned: boolean }>>(
+        "SELECT vac_banned FROM players WHERE steam_id = $1",
+        [player],
+      );
+      expect(row.vac_banned).toBe(true);
     });
 
     it("soft-deleting a manual ban leaves the VAC flag alone", async () => {
