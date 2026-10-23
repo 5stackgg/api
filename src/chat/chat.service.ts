@@ -4554,18 +4554,29 @@ export class ChatService implements OnApplicationBootstrap {
   }
 
   public async joinLobbyViaGame(matchId: string, steamId: string) {
-    const { players_by_pk: player } = await this.hasuraService.query({
-      players_by_pk: {
-        __args: {
-          steam_id: steamId,
+    const { players_by_pk: player, matches_by_pk: match } =
+      await this.hasuraService.query({
+        players_by_pk: {
+          __args: {
+            steam_id: steamId,
+          },
+          name: true,
+          role: true,
+          steam_id: true,
+          avatar_url: true,
+          discord_id: true,
         },
-        name: true,
-        role: true,
-        steam_id: true,
-        avatar_url: true,
-        discord_id: true,
-      },
-    });
+        matches_by_pk: {
+          __args: {
+            id: matchId,
+          },
+          status: true,
+        },
+      });
+
+    if (!match || ChatService.TERMINAL_MATCH_STATUSES.includes(match.status)) {
+      return;
+    }
 
     const userData = await this.addUserToLobby(
       ChatLobbyType.Match,

@@ -21,27 +21,25 @@ describe("ChatService match lobby while a player is in the game server", () => {
   const hasura = {
     getPlayerRole: jest.fn(async () => "user"),
     query: jest.fn(async (query: any) => {
+      const response: Record<string, unknown> = {};
+
       if (query.players_by_pk) {
         const steamId = String(query.players_by_pk.__args.steam_id);
 
-        return {
-          players_by_pk: {
-            steam_id: steamId,
-            name: `P${steamId.slice(-3)}`,
-            role: "user",
-          },
+        response.players_by_pk = {
+          steam_id: steamId,
+          name: `P${steamId.slice(-3)}`,
+          role: "user",
         };
       }
 
       if (query.matches_by_pk) {
-        return {
-          matches_by_pk: {
-            is_in_lineup: true,
-            is_coach: false,
-            is_organizer: null,
-            status,
-            source: null,
-          },
+        response.matches_by_pk = {
+          is_in_lineup: true,
+          is_coach: false,
+          is_organizer: null,
+          status,
+          source: null,
         };
       }
 
@@ -59,10 +57,10 @@ describe("ChatService match lobby while a player is in the game server", () => {
           LINEUP.includes(steamId) &&
           connected.has(steamId);
 
-        return { match_lineup_players: inServer ? [{ id: "mlp" }] : [] };
+        response.match_lineup_players = inServer ? [{ id: "mlp" }] : [];
       }
 
-      return {};
+      return response;
     }),
   };
 
@@ -392,6 +390,20 @@ describe("ChatService match lobby while a player is in the game server", () => {
       expect(seenBy(PLAYER, TEAMMATE)).toEqual([
         { event: "joined", inGame: false },
       ]);
+    });
+
+    it("does not mark a player in game who connects after it ended", async () => {
+      await openTab(TEAMMATE);
+      await openTab(PLAYER);
+      status = "Finished";
+      redis.publish.mockClear();
+
+      await connectToServer(PLAYER);
+      await connectToServer(ORGANIZER);
+
+      expect(presence(PLAYER)).toEqual({ inGame: false });
+      expect(presence(ORGANIZER)).toBeNull();
+      expect(seenBy(TEAMMATE, PLAYER)).toEqual([]);
     });
 
     it("leaves entries with a tab open that were not in game alone", async () => {

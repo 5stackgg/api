@@ -717,7 +717,14 @@ export class MatchesController {
 
       if (ended && !wasEnded) {
         await this.chatService.anchorMatchArchive(matchId);
-        await this.chatService.endMatchLobby(matchId);
+        try {
+          await this.chatService.endMatchLobby(matchId);
+        } catch (error) {
+          this.logger.warn(
+            `unable to clear the in-game state of match ${matchId}'s lobby`,
+            error,
+          );
+        }
       } else if (wasEnded && !ended) {
         await this.chatService.reopenMatchArchive(matchId);
       }
