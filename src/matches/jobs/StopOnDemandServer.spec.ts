@@ -40,6 +40,7 @@ describe("StopOnDemandServer", () => {
       "uid-1",
       "u-match-1",
       undefined,
+      undefined,
     );
     expect(matchAssistant.stopEndedMatchServer).not.toHaveBeenCalled();
   });
@@ -52,6 +53,7 @@ describe("StopOnDemandServer", () => {
         jobName: "m-match-1",
         jobUid: "uid-1",
         signalledAt: 1000,
+        serverId: "server-1",
       },
       token: "token-1",
       moveToDelayed: jest.fn(),
@@ -67,6 +69,7 @@ describe("StopOnDemandServer", () => {
       "uid-1",
       "m-match-1",
       1000,
+      "server-1",
     );
     const [[until, token]] = job.moveToDelayed.mock.calls;
     expect(token).toBe("token-1");

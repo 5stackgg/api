@@ -2791,56 +2791,15 @@ export class MatchesController {
 
   @HasuraEvent()
   public async server_availability(data: HasuraEventData<servers_set_input>) {
-    // An on-demand server boots a pod per match, and is freed once the last one is gone.
-    const freedOnDemand =
-      !data.new.is_dedicated && !!data.old?.reserved_by_match_id;
-
     if (
       data.new.enabled === false ||
-      (data.new.connected === false && !freedOnDemand) ||
+      data.new.connected === false ||
       data.new.reserved_by_match_id !== null
     ) {
       return;
     }
 
-    const { matches } = await this.hasura.query({
-      matches: {
-        __args: {
-          where: {
-            status: {
-              _eq: "WaitingForServer",
-            },
-            _or: [
-              {
-                region: {
-                  _is_null: true,
-                },
-              },
-              {
-                region: {
-                  _eq: data.new.region,
-                },
-              },
-            ],
-          },
-          limit: 1,
-          order_by: [
-            {
-              created_at: "asc",
-            },
-          ],
-        },
-        id: true,
-      },
-    });
-
-    const match = matches.at(0);
-
-    if (!match) {
-      return;
-    }
-
-    await this.matchAssistant.assignServer(match.id);
+    await this.matchAssistant.assignWaitingMatch(data.new.region);
   }
 
   @HasuraEvent()

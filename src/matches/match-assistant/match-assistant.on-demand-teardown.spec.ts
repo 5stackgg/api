@@ -223,6 +223,33 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       );
     });
 
+    it("tells its check which server the signalled pod was booted on", async () => {
+      readNamespacedJob.mockResolvedValue({
+        ...activeJob("uid-1"),
+        spec: {
+          template: {
+            spec: {
+              containers: [
+                {
+                  name: "game-server",
+                  env: [{ name: "SERVER_ID", value: "server-1" }],
+                },
+              ],
+            },
+          },
+        },
+      });
+      listNamespacedPod.mockResolvedValue({ items: [runningPod()] });
+
+      await service.stopOnDemandServer("match-1");
+
+      expect(scheduledMatchesQueue.add).toHaveBeenCalledWith(
+        "StopOnDemandServer",
+        expect.objectContaining({ serverId: "server-1" }),
+        expect.anything(),
+      );
+    });
+
     it("leaves a Job that already finished alone, logs and all", async () => {
       readNamespacedJob.mockResolvedValue({
         metadata: { name: "m-match-1", uid: "uid-1" },
@@ -434,6 +461,73 @@ describe("MatchAssistantService — on-demand server teardown", () => {
         hasura.mutation.mock.invocationCallOrder.at(-1)!,
       );
       releasedEndedMatchServer();
+    });
+
+    describe("once the server it signalled is gone", () => {
+      let assignServer: jest.SpyInstance;
+      let matchStatus: string;
+
+      beforeEach(() => {
+        matchStatus = "Finished";
+        assignServer = jest
+          .spyOn(service, "assignServer")
+          .mockResolvedValue(undefined);
+        hasura.query.mockImplementation(async (request: any) => {
+          if (request.matches_by_pk) {
+            return { matches_by_pk: { status: matchStatus, source: "5stack" } };
+          }
+          if (request.matches?.__args?.where?.status) {
+            return { matches: [{ id: "match-2" }] };
+          }
+          if (request.matches) {
+            return {
+              matches: [
+                { id: "match-1", status: matchStatus, server_id: null },
+              ],
+            };
+          }
+          if (request.servers?.__args?.where?.id) {
+            return { servers: [{ id: "server-1", region: "USE" }] };
+          }
+          if (request.servers) {
+            return { servers: [] };
+          }
+          return {};
+        });
+      });
+
+      const checkBack = () =>
+        service.removeUnstoppedOnDemandServer(
+          "match-1",
+          "uid-1",
+          "m-match-1",
+          Date.now() - 3 * 1000,
+          "server-1",
+        );
+
+      it("hands the ended match's server to the oldest waiting match", async () => {
+        await checkBack();
+
+        expect(assignServer).toHaveBeenCalledWith("match-2");
+      });
+
+      it("hands a server a match moved off to the oldest waiting match", async () => {
+        matchStatus = "Live";
+
+        await checkBack();
+
+        expect(serverReleases()).toHaveLength(0);
+        expect(assignServer).toHaveBeenCalledWith("match-2");
+      });
+
+      it("hands out nothing while the server is still exiting", async () => {
+        readNamespacedJob.mockResolvedValue(activeJob("uid-1"));
+        listNamespacedPod.mockResolvedValue({ items: [runningPod("uid-1")] });
+
+        await checkBack();
+
+        expect(assignServer).not.toHaveBeenCalled();
+      });
     });
 
     it("checks again while the server it signalled is still exiting", async () => {

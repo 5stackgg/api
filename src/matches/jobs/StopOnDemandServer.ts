@@ -16,9 +16,10 @@ export class StopOnDemandServer extends WorkerHost {
       jobName?: string;
       jobUid?: string;
       signalledAt?: number;
+      serverId?: string;
     }>,
   ): Promise<void> {
-    const { matchId, jobName, jobUid, signalledAt } = job.data;
+    const { matchId, jobName, jobUid, signalledAt, serverId } = job.data;
 
     if (jobUid) {
       if (
@@ -27,6 +28,7 @@ export class StopOnDemandServer extends WorkerHost {
           jobUid,
           jobName,
           signalledAt,
+          serverId,
         ))
       ) {
         await job.moveToDelayed(

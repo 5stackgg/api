@@ -504,7 +504,7 @@ describe("MatchAssistantService — reconciling on-demand server Jobs", () => {
       await service.reconcileOnDemandServerJobs();
 
       expect(serverReleases()).toEqual([
-        {
+        expect.objectContaining({
           __args: expect.objectContaining({
             where: {
               reserved_by_match_id: { _eq: MATCH_ID },
@@ -516,8 +516,7 @@ describe("MatchAssistantService — reconciling on-demand server Jobs", () => {
               },
             },
           }),
-          __typename: true,
-        },
+        }),
       ]);
     });
 

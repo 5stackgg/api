@@ -2032,11 +2032,11 @@ export class MatchAssistantService {
 
     // A signalled server holds its ports until it exits: its stop check frees it.
     if (!stopping) {
-      if (options.releaseOnlyIfEnded) {
-        await this.releaseEndedMatchServer(matchId);
-      } else {
-        await this.releaseOnDemandServer(matchId, options.serverId);
-      }
+      await this.assignWaitingMatchesTo(
+        options.releaseOnlyIfEnded
+          ? await this.releaseEndedMatchServer(matchId)
+          : await this.releaseOnDemandServer(matchId, options.serverId),
+      );
     }
 
     await this.setServerError(matchId, null);
@@ -2094,8 +2094,8 @@ export class MatchAssistantService {
     matchId: string,
     serverId?: string,
     condition?: servers_bool_exp,
-  ) {
-    await this.hasura.mutation({
+  ): Promise<Array<string>> {
+    const { update_servers } = await this.hasura.mutation({
       update_servers: {
         __args: {
           where: {
@@ -2118,9 +2118,85 @@ export class MatchAssistantService {
             reserved_by_match_id: null,
           },
         },
-        __typename: true,
+        returning: {
+          id: true,
+        },
       },
     });
+
+    return (update_servers?.returning ?? []).map((server) => server.id);
+  }
+
+  // An on-demand server is freed by the api once its pod is gone, and that write
+  // wakes nobody: server_availability waits on a server that is up.
+  private async assignWaitingMatchesTo(serverIds: Array<string>) {
+    if (serverIds.length === 0) {
+      return;
+    }
+
+    const { servers } = await this.hasura.query({
+      servers: {
+        __args: {
+          where: {
+            id: {
+              _in: serverIds,
+            },
+            enabled: {
+              _eq: true,
+            },
+            reserved_by_match_id: {
+              _is_null: true,
+            },
+          },
+        },
+        region: true,
+      },
+    });
+
+    for (const region of new Set(servers.map((server) => server.region))) {
+      await this.assignWaitingMatch(region);
+    }
+  }
+
+  public async assignWaitingMatch(region: string) {
+    const { matches } = await this.hasura.query({
+      matches: {
+        __args: {
+          where: {
+            status: {
+              _eq: "WaitingForServer",
+            },
+            _or: [
+              {
+                region: {
+                  _is_null: true,
+                },
+              },
+              {
+                region: {
+                  _eq: region,
+                },
+              },
+            ],
+          },
+          limit: 1,
+          order_by: [
+            {
+              created_at: "asc",
+            },
+          ],
+        },
+        id: true,
+      },
+    });
+
+    const match = matches.at(0);
+
+    if (!match) {
+      return;
+    }
+
+    await this.assignServer(match.id);
   }
 
   // A SIGUSR1 sent before setup.sh hands PID 1 to server.sh is silently ignored.
@@ -2132,6 +2208,7 @@ export class MatchAssistantService {
     jobUid: string,
     jobName = MatchAssistantService.GetMatchServerJobId(matchId),
     signalledAt?: number,
+    serverId?: string,
   ): Promise<boolean> {
     const kc = new KubeConfig();
     kc.loadFromDefault();
@@ -2180,7 +2257,10 @@ export class MatchAssistantService {
       }
     }
 
-    await this.releaseEndedMatchServer(matchId);
+    await this.assignWaitingMatchesTo([
+      ...(await this.releaseEndedMatchServer(matchId)),
+      ...(serverId ? [serverId] : []),
+    ]);
 
     return true;
   }
@@ -2191,22 +2271,20 @@ export class MatchAssistantService {
   private async releaseEndedMatchServer(
     matchId: string,
     serverId?: string,
-  ): Promise<boolean> {
+  ): Promise<Array<string>> {
     if (!(await this.hasMatchEnded(matchId))) {
-      return false;
+      return [];
     }
 
     if ((await this.getLiveServerPods(matchId)).length > 0) {
-      return false;
+      return [];
     }
 
-    await this.releaseOnDemandServer(
+    return await this.releaseOnDemandServer(
       matchId,
       serverId,
       MatchAssistantService.reservedByEndedMatch(),
     );
-
-    return true;
   }
 
   private async getLiveServerPods(matchId: string): Promise<Array<V1Pod>> {
@@ -2326,10 +2404,12 @@ export class MatchAssistantService {
         if (removed) {
           for (const server of servers) {
             if (server.reserved_by_match_id === matchId) {
-              await this.releaseOnDemandServer(
-                matchId,
-                server.id,
-                MatchAssistantService.reservationNotHeld(matchId),
+              await this.assignWaitingMatchesTo(
+                await this.releaseOnDemandServer(
+                  matchId,
+                  server.id,
+                  MatchAssistantService.reservationNotHeld(matchId),
+                ),
               );
             }
           }
@@ -2365,15 +2445,16 @@ export class MatchAssistantService {
     });
 
     for (const server of servers) {
-      if (
-        await this.releaseEndedMatchServer(
-          server.reserved_by_match_id,
-          server.id,
-        )
-      ) {
+      const released = await this.releaseEndedMatchServer(
+        server.reserved_by_match_id,
+        server.id,
+      );
+
+      if (released.length > 0) {
         this.logger.warn(
           `[${server.reserved_by_match_id}] match ended and its server is gone, freed on demand server ${server.id}`,
         );
+        await this.assignWaitingMatchesTo(released);
       }
     }
   }
@@ -2651,6 +2732,9 @@ export class MatchAssistantService {
         jobName,
         jobUid: job.metadata?.uid,
         signalledAt: Date.now(),
+        serverId: job.spec?.template?.spec?.containers
+          ?.at(0)
+          ?.env?.find((env) => env.name === "SERVER_ID")?.value,
       },
       {
         delay: MatchAssistantService.ON_DEMAND_SERVER_STOP_CHECK_DELAY_MS,

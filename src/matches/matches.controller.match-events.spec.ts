@@ -112,6 +112,7 @@ describe("MatchesController — match_events on-demand servers", () => {
       stopOnDemandServer: jest.fn(),
       releaseOnDemandServer: jest.fn(),
       assignServer: jest.fn(),
+      assignWaitingMatch: jest.fn(),
       reserveDedicatedServer: jest.fn(),
     };
     scheduledMatchesQueue = { add: jest.fn() };
@@ -396,29 +397,30 @@ describe("MatchesController — match_events on-demand servers", () => {
           id: "server-1",
           region: "USE",
           enabled: true,
-          connected: false,
-          is_dedicated: false,
+          connected: true,
+          is_dedicated: true,
           reserved_by_match_id: null,
           ...overrides,
         },
       } as any);
 
-    beforeEach(() => {
-      const answer = hasura.query.getMockImplementation()!;
-      hasura.query.mockImplementation(async (request: any) =>
-        request.matches ? { matches: [{ id: "match-2" }] } : answer(request),
-      );
-    });
-
-    it("goes to the oldest waiting match once an ended match's pod is gone", async () => {
+    it("goes to the oldest waiting match in its region", async () => {
       await freed();
 
-      expect(matchAssistant.assignServer).toHaveBeenCalledWith("match-2");
+      expect(matchAssistant.assignWaitingMatch).toHaveBeenCalledWith("USE");
     });
 
     it("is not handed out when it is a dedicated server that is not up", async () => {
-      await freed({ is_dedicated: true });
+      await freed({ connected: false });
 
+      expect(matchAssistant.assignWaitingMatch).not.toHaveBeenCalled();
+    });
+
+    // The api hands out one it freed itself; nobody is woken when an assignment gives one back.
+    it("is not handed out when the api frees an on-demand one", async () => {
+      await freed({ connected: false, is_dedicated: false });
+
+      expect(matchAssistant.assignWaitingMatch).not.toHaveBeenCalled();
       expect(matchAssistant.assignServer).not.toHaveBeenCalled();
     });
 
@@ -436,7 +438,7 @@ describe("MatchesController — match_events on-demand servers", () => {
         },
       } as any);
 
-      expect(matchAssistant.assignServer).not.toHaveBeenCalled();
+      expect(matchAssistant.assignWaitingMatch).not.toHaveBeenCalled();
     });
   });
 
