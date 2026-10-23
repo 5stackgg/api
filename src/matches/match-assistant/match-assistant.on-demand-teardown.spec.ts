@@ -1220,16 +1220,40 @@ describe("MatchAssistantService — on-demand server teardown", () => {
     });
 
     describe("a server another match's pod is still on", () => {
-      const otherMatchPod = (phase: string, deleting = false) => ({
+      const otherMatchPod = (
+        phase: string,
+        deleting = false,
+        serverId = "server-1",
+      ) => ({
         metadata: {
           name: "m-match-2-abcde",
           ...(deleting ? { deletionTimestamp: new Date() } : {}),
         },
         spec: {
+          affinity: {
+            nodeAffinity: {
+              requiredDuringSchedulingIgnoredDuringExecution: {
+                nodeSelectorTerms: [
+                  {
+                    matchExpressions: [
+                      {
+                        key: "kubernetes.io/hostname",
+                        operator: "In",
+                        values: ["node-1"],
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
           containers: [
             {
               name: "game-server",
-              env: [{ name: "SERVER_ID", value: "server-1" }],
+              env: [
+                { name: "SERVER_ID", value: serverId },
+                { name: "SERVER_PORT", value: "27015" },
+              ],
             },
           ],
         },
@@ -1242,7 +1266,11 @@ describe("MatchAssistantService — on-demand server teardown", () => {
         matchPods = [];
         const answer = hasura.query.getMockImplementation()!;
         hasura.query.mockImplementation(async (request: any) =>
-          request.servers?.__args?.where?.id?._nin?.includes("server-1")
+          request.servers?.__args?.where?._and?.[0]?._not?._or?.some(
+            (slot: any) =>
+              slot.game_server_node_id?._eq === "node-1" &&
+              slot.port?._eq === 27015,
+          )
             ? { servers: [] }
             : answer(request),
         );
@@ -1252,6 +1280,27 @@ describe("MatchAssistantService — on-demand server teardown", () => {
           }
           return { items: [] };
         });
+      });
+
+      it("asks only for match pods that have not finished", async () => {
+        await (service as any).assignOnDemandServer("match-1");
+
+        expect(listNamespacedPod).toHaveBeenCalledWith(
+          expect.objectContaining({
+            labelSelector: "app=game-server,role=match",
+            fieldSelector: "status.phase!=Succeeded,status.phase!=Failed",
+          }),
+        );
+      });
+
+      it("is not handed out under the new row a node edit made for its port", async () => {
+        matchPods = [otherMatchPod("Running", false, "server-before-edit")];
+
+        await expect(
+          (service as any).assignOnDemandServer("match-1"),
+        ).resolves.toBe(false);
+
+        expect(createNamespacedJob).not.toHaveBeenCalled();
       });
 
       it("is not handed out while that pod runs", async () => {

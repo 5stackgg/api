@@ -80,6 +80,9 @@ export class MatchAssistantService {
   private static readonly ORPHANED_JOB_ENDED_GRACE_MS = 10 * 60 * 1000;
   private static readonly MATCH_SERVER_JOB_SELECTOR =
     "app=game-server,role=match";
+  // A terminating pod is still Running.
+  private static readonly UNFINISHED_POD_SELECTOR =
+    "status.phase!=Succeeded,status.phase!=Failed";
   private static readonly MATCH_SERVER_JOB_NAME =
     /^m-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
   private static readonly UUID =
@@ -1110,9 +1113,9 @@ export class MatchAssistantService {
           );
         }
 
-        let occupiedServerIds: Array<string>;
+        let occupied: servers_bool_exp;
         try {
-          occupiedServerIds = await this.getOccupiedServerIds();
+          occupied = await this.occupiedServerExclusion();
         } catch (error) {
           this.logger.error(
             `[${matchId}] unable to list the servers match pods still run on`,
@@ -1152,10 +1155,10 @@ export class MatchAssistantService {
                 reserved_by_match_id: {
                   _is_null: true,
                 },
-                ...(occupiedServerIds.length > 0
-                  ? { id: { _nin: occupiedServerIds } }
-                  : {}),
-                ...MatchAssistantService.pendingDemoUploadExclusion(),
+                _and: [
+                  occupied,
+                  MatchAssistantService.pendingDemoUploadExclusion(),
+                ],
                 game_server_node: renderNodeIds
                   ? { id: { _in: renderNodeIds } }
                   : {
@@ -1650,8 +1653,9 @@ export class MatchAssistantService {
   }
 
   // A pod holds its server's host ports until it exits, whether or not the row
-  // is still reserved: a match that moved off it frees the row straight away.
-  private async getOccupiedServerIds(): Promise<Array<string>> {
+  // is still reserved: a match that moved off it frees the row straight away,
+  // and a node edit makes new rows for the same ports.
+  private async occupiedServerExclusion(): Promise<servers_bool_exp> {
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const core = kc.makeApiClient(CoreV1Api);
@@ -1659,17 +1663,39 @@ export class MatchAssistantService {
     const { items: pods } = await core.listNamespacedPod({
       namespace: this.namespace,
       labelSelector: MatchAssistantService.MATCH_SERVER_JOB_SELECTOR,
+      fieldSelector: MatchAssistantService.UNFINISHED_POD_SELECTOR,
     });
 
-    return pods
+    const occupied = pods
       .filter((pod) => MatchAssistantService.isPodLive(pod))
-      .map(
-        (pod) =>
+      .map((pod) => ({
+        node:
+          pod.spec?.affinity?.nodeAffinity?.requiredDuringSchedulingIgnoredDuringExecution?.nodeSelectorTerms
+            ?.at(0)
+            ?.matchExpressions?.find(
+              (expression) => expression.key === "kubernetes.io/hostname",
+            )
+            ?.values?.at(0) ?? pod.spec?.nodeName,
+        port: Number(
           pod.spec?.containers
             ?.at(0)
-            ?.env?.find((env) => env.name === "SERVER_ID")?.value,
-      )
-      .filter((serverId): serverId is string => !!serverId);
+            ?.env?.find((env) => env.name === "SERVER_PORT")?.value,
+        ),
+      }))
+      .filter(({ node, port }) => node && port);
+
+    if (occupied.length === 0) {
+      return {};
+    }
+
+    return {
+      _not: {
+        _or: occupied.map(({ node, port }) => ({
+          game_server_node_id: { _eq: node },
+          port: { _eq: port },
+        })),
+      },
+    };
   }
 
   public async hasMatchEnded(matchId: string): Promise<boolean> {
