@@ -73,4 +73,15 @@ describe("HasuraController auth hook", () => {
       "x-hasura-role": "user",
     });
   });
+
+  it("answers a signed-in socket that asks to be anonymous as a guest", async () => {
+    signedIn = { steam_id: "76561198000000001" };
+    const response = await hook()
+      .set(HasuraController.ANONYMOUS_HEADER, "1")
+      .expect(200);
+    expect(response.body).toEqual({
+      "x-hasura-user-id": "0",
+      "x-hasura-role": "guest",
+    });
+  });
 });

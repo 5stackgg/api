@@ -53,6 +53,11 @@ export const HasuraAction = (): MethodDecorator => {
 
 @Controller("hasura")
 export class HasuraController {
+  // The web's public socket sends this so its subscriptions run as a guest:
+  // Hasura then polls one row for everyone watching instead of one per
+  // signed-in viewer. It can only ever lower a session to a guest's.
+  public static readonly ANONYMOUS_HEADER = "x-5stack-anonymous";
+
   // Longer than any one attempt should take, so a crashed attempt's claim
   // does not hold the event back for long.
   private static readonly EVENT_RUNNING_TTL_SECONDS = 5 * 60;
@@ -72,7 +77,7 @@ export class HasuraController {
   public async hasura(@Req() request: Request) {
     const user = request.user;
 
-    if (!user) {
+    if (!user || request.headers[HasuraController.ANONYMOUS_HEADER]) {
       return {
         "x-hasura-user-id": "0",
         "x-hasura-role": "guest",
