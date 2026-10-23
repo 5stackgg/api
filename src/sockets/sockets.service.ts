@@ -23,6 +23,33 @@ import { DemoSessionWatcherService } from "src/matches/game-streamer/demo-sessio
 import { presenceFocusKey } from "src/notifications/push/notification-delivery";
 import { HasuraService } from "src/hasura/hasura.service";
 
+// What the online list shows for each player; every field is readable by guests.
+const ONLINE_PROFILE_FIELDS = {
+  steam_id: true,
+  name: true,
+  role: true,
+  country: true,
+  avatar_url: true,
+  custom_avatar_url: true,
+  roster_image_url: true,
+  is_banned: true,
+  is_gagged: true,
+  is_muted: true,
+  vac_banned: true,
+  vac_ban_count: true,
+  game_ban_count: true,
+  days_since_last_ban: true,
+  premier_rank: true,
+  premier_rank_updated_at: true,
+  faceit_skill_level: true,
+  faceit_elo: true,
+  faceit_url: true,
+  faceit_nickname: true,
+  elo: true,
+  allow_message_requests: true,
+} as const;
+const ONLINE_PROFILE_TTL_SECONDS = 10 * 60;
+
 @Injectable()
 export class SocketsService implements OnModuleInit, OnApplicationShutdown {
   private redis: Redis;
@@ -118,6 +145,10 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
           break;
       }
     });
+  }
+
+  public static GET_ONLINE_PROFILE(steamId: string) {
+    return `players-online:profile:${steamId}`;
   }
 
   public static GET_POD_KEY(nodeId: string) {
@@ -342,14 +373,15 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
 
   private async welcome(client: FiveStackWebSocketClient) {
     try {
-      if (!(await this.sendPeopleOnline())) {
-        client.send(
-          JSON.stringify({
-            event: "players-online",
-            data: await this.peopleOnline(),
-          }),
-        );
-      }
+      const online = await this.peopleOnline();
+      client.send(
+        JSON.stringify({
+          event: "players-online:profiles",
+          data: await this.onlineProfiles(online),
+        }),
+      );
+      client.send(JSON.stringify({ event: "players-online", data: online }));
+      await this.sendPeopleOnline();
       await this.matchmaking.sendRegionStats(client.user);
       await this.matchmakingLobbyService.sendQueueDetailsToPlayer(
         client.user.steam_id,
@@ -594,14 +626,91 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
     return players.map((player) => player.slice(8)).sort();
   }
 
-  // Every open tab looks up the players a roster brings, so a roster no
-  // different from the last one any pod broadcast is not sent again.
+  // Looked up once per player and shared by every tab, instead of each tab
+  // querying the players a roster brings.
+  private async onlineProfiles(steamIds: Array<string>) {
+    if (steamIds.length === 0) {
+      return [];
+    }
+
+    try {
+      const cached = await this.redis.mget(
+        steamIds.map((steamId) => SocketsService.GET_ONLINE_PROFILE(steamId)),
+      );
+      const profiles = cached.filter(Boolean).map((json) => JSON.parse(json));
+      const missing = steamIds.filter((_, index) => !cached[index]);
+
+      if (missing.length > 0) {
+        const { players } = await this.hasura.query({
+          players: {
+            __args: { where: { steam_id: { _in: missing } } },
+            ...ONLINE_PROFILE_FIELDS,
+          },
+        });
+
+        for (const player of players) {
+          const profile = { ...player, steam_id: String(player.steam_id) };
+          profiles.push(profile);
+          await this.redis.set(
+            SocketsService.GET_ONLINE_PROFILE(profile.steam_id),
+            JSON.stringify(profile),
+            "EX",
+            ONLINE_PROFILE_TTL_SECONDS,
+          );
+        }
+      }
+
+      return profiles;
+    } catch (error) {
+      this.logger.warn("unable to load online player profiles", error);
+      return [];
+    }
+  }
+
+  public async sendOnlineProfiles(
+    client: FiveStackWebSocketClient,
+    steamIds: unknown,
+  ) {
+    if (!Array.isArray(steamIds)) {
+      return;
+    }
+
+    const online = new Set(await this.peopleOnline());
+    const requested = [...new Set(steamIds.map(String))]
+      .filter((steamId) => online.has(steamId))
+      .slice(0, 500);
+
+    client.send(
+      JSON.stringify({
+        event: "players-online:profiles",
+        data: await this.onlineProfiles(requested),
+      }),
+    );
+  }
+
+  // A roster no different from the last one any pod broadcast is not sent
+  // again; the profiles of players who just came online go out ahead of it.
   public async sendPeopleOnline() {
     const data = await this.peopleOnline();
     const roster = JSON.stringify(data);
 
     if (roster === this.lastPeopleOnline) {
       return false;
+    }
+
+    const previous = this.lastPeopleOnline
+      ? new Set<string>(JSON.parse(this.lastPeopleOnline))
+      : new Set<string>();
+    const joined = data.filter((steamId) => !previous.has(steamId));
+
+    if (joined.length > 0) {
+      await this.redis.publish(
+        `broadcast-message`,
+        JSON.stringify({
+          event: `players-online:profiles`,
+          data: await this.onlineProfiles(joined),
+        }),
+      );
     }
 
     await this.redis.publish(

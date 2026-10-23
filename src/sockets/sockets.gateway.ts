@@ -68,6 +68,20 @@ export class SocketsGateway implements OnGatewayConnection {
     );
   }
 
+  @SubscribeMessage("players-online:profiles")
+  public async handleOnlineProfiles(
+    @MessageBody() data: { steamIds?: unknown },
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+  ): Promise<void> {
+    await client.authentication;
+
+    if (!client.user) {
+      return;
+    }
+
+    await this.sockets.sendOnlineProfiles(client, data?.steamIds);
+  }
+
   // Nest binds every /ws/web gateway's message handlers without waiting for
   // this, so each handler awaits client.authentication before it trusts
   // client.user.

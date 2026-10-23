@@ -129,6 +129,10 @@ const handlers: Array<
 > = [
   ["ping", (g, c) => g.sockets.handleMessage(c)],
   [
+    "players-online:profiles",
+    (g, c) => g.sockets.handleOnlineProfiles({ steamIds: ["1"] }, c),
+  ],
+  [
     "presence",
     (g, c) => g.sockets.handlePresence({ visible: true, focus: "x" }, c),
   ],

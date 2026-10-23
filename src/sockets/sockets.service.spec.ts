@@ -27,6 +27,10 @@ function makeService() {
     del: jest.fn().mockResolvedValue(1),
     hdel: jest.fn().mockResolvedValue(1),
     keys: jest.fn().mockResolvedValue([]),
+    mget: jest.fn(
+      async (keys: string[]): Promise<Array<string | null>> =>
+        keys.map((): string | null => null),
+    ),
     exists: jest.fn().mockResolvedValue(1),
     publish: jest.fn().mockResolvedValue(1),
     subscribe: jest.fn().mockResolvedValue(1),
@@ -42,7 +46,14 @@ function makeService() {
   };
   const logger = { warn: jest.fn(), error: jest.fn(), log: jest.fn() };
   const demoSessionWatcher = { clientClosed: jest.fn() };
-  const hasura = { getPlayerRole: jest.fn().mockResolvedValue("user") };
+  const hasura = {
+    getPlayerRole: jest.fn().mockResolvedValue("user"),
+    query: jest.fn(async (request: any) => ({
+      players: request.players.__args.where.steam_id._in.map(
+        (steam_id: string) => ({ steam_id, name: `player ${steam_id}` }),
+      ),
+    })),
+  };
 
   const service = new SocketsService(
     logger as any,
@@ -351,7 +362,9 @@ describe("SocketsService.sendMessageToSteamId", () => {
     await closeListener(closing)();
     await publish(redis, USER.steam_id, "matchmaking:details", {});
 
-    expect(closing.send).not.toHaveBeenCalled();
+    expect(closing.send).not.toHaveBeenCalledWith(
+      sent("matchmaking:details", {}),
+    );
     expect(staying.send).toHaveBeenCalledWith(sent("matchmaking:details", {}));
   });
 
@@ -581,6 +594,116 @@ describe("SocketsService players online", () => {
     expect(second.send).toHaveBeenCalledWith(
       JSON.stringify({ event: "players-online", data: [USER.steam_id] }),
     );
+  });
+
+  const published = (redis: ReturnType<typeof makeService>["redis"]) =>
+    redis.publish.mock.calls
+      .filter(([channel]: [string]) => channel === "broadcast-message")
+      .map(([, message]: [string, string]) => JSON.parse(message));
+  const sentTo = (client: any) =>
+    client.send.mock.calls.map(([message]: [string]) => JSON.parse(message));
+  const profile = (steam_id: string) => ({
+    steam_id,
+    name: `player ${steam_id}`,
+  });
+
+  it("sends a tab that connects every online player's profile ahead of the roster", async () => {
+    const { service, redis } = makeService();
+    redis.keys.mockResolvedValue(["players:2", "players:1"]);
+    signIn(USER);
+
+    const client = socket();
+    await service.setupSocket(client, {} as any);
+    await settle();
+
+    const events = sentTo(client).filter(({ event }: { event: string }) =>
+      event.startsWith("players-online"),
+    );
+    expect(events.slice(0, 2)).toEqual([
+      {
+        event: "players-online:profiles",
+        data: [profile("1"), profile("2")],
+      },
+      { event: "players-online", data: ["1", "2"] },
+    ]);
+  });
+
+  it("broadcasts the profiles of players who just came online ahead of the roster", async () => {
+    const { service, redis } = makeService();
+    redis.keys.mockResolvedValue(["players:1"]);
+    await service.sendPeopleOnline();
+    redis.keys.mockResolvedValue(["players:1", "players:2"]);
+    await service.sendPeopleOnline();
+    redis.keys.mockResolvedValue(["players:2"]);
+    await service.sendPeopleOnline();
+
+    expect(published(redis)).toEqual([
+      { event: "players-online:profiles", data: [profile("1")] },
+      { event: "players-online", data: ["1"] },
+      { event: "players-online:profiles", data: [profile("2")] },
+      { event: "players-online", data: ["1", "2"] },
+      { event: "players-online", data: ["2"] },
+    ]);
+  });
+
+  it("looks each player up once and serves later tabs from the cache", async () => {
+    const { service, redis, hasura } = makeService();
+    redis.keys.mockResolvedValue(["players:1", "players:2"]);
+    redis.mget.mockImplementation(async (keys: string[]) =>
+      keys.map((key) =>
+        key === "players-online:profile:1"
+          ? JSON.stringify(profile("1"))
+          : null,
+      ),
+    );
+
+    await service.sendPeopleOnline();
+
+    expect(hasura.query).toHaveBeenCalledTimes(1);
+    expect(
+      hasura.query.mock.calls[0][0].players.__args.where.steam_id._in,
+    ).toEqual(["2"]);
+    expect(redis.set).toHaveBeenCalledWith(
+      "players-online:profile:2",
+      JSON.stringify(profile("2")),
+      "EX",
+      expect.any(Number),
+    );
+    expect(published(redis)[0]).toEqual({
+      event: "players-online:profiles",
+      data: [profile("1"), profile("2")],
+    });
+  });
+
+  it("answers a tab asking for profiles, only for players who are online", async () => {
+    const { service, redis, hasura } = makeService();
+    redis.keys.mockResolvedValue(["players:1"]);
+    const client = socket();
+
+    await service.sendOnlineProfiles(client, ["1", "999", "1"]);
+    await service.sendOnlineProfiles(client, "1");
+
+    expect(
+      hasura.query.mock.calls.map(
+        ([request]: [any]) => request.players.__args.where.steam_id._in,
+      ),
+    ).toEqual([["1"]]);
+    expect(sentTo(client)).toEqual([
+      { event: "players-online:profiles", data: [profile("1")] },
+    ]);
+  });
+
+  it("still broadcasts the roster when the profiles can't be loaded", async () => {
+    const { service, redis, hasura } = makeService();
+    redis.keys.mockResolvedValue(["players:1"]);
+    hasura.query.mockRejectedValue(new Error("connection error"));
+
+    await service.sendPeopleOnline();
+
+    expect(published(redis)).toEqual([
+      { event: "players-online:profiles", data: [] },
+      { event: "players-online", data: ["1"] },
+    ]);
   });
 });
 
