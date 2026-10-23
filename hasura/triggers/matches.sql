@@ -241,7 +241,8 @@ BEGIN
 
     IF NEW.status IN ('Tie', 'Forfeit', 'Canceled', 'Finished', 'Surrendered') THEN
         select server_id into _server_id from matches where id = NEW.id;
-        UPDATE servers SET reserved_by_match_id = null WHERE id = _server_id;
+        UPDATE servers SET reserved_by_match_id = null
+         WHERE id = _server_id AND reserved_by_match_id = NEW.id;
     END IF;
 
     IF is_tournament_match(NEW)
@@ -319,8 +320,11 @@ BEGIN
     SELECT auto_cancellation, auto_cancel_duration INTO _auto_cancellation, _auto_cancel_duration_override FROM resolve_match_auto_cancel(NEW.id);
     _auto_cancel_duration := COALESCE(_auto_cancel_duration_override, get_int_setting('auto_cancel_duration', 15))::text || ' minutes';
 
+    -- An ended match's server is freed before match_events clears its
+    -- server_id, so by then it can be the next match's.
     IF OLD.server_id IS NOT NULL AND (NEW.server_id IS NULL OR OLD.server_id != NEW.server_id) THEN
-        UPDATE servers SET reserved_by_match_id = null WHERE id = OLD.server_id;
+        UPDATE servers SET reserved_by_match_id = null
+         WHERE id = OLD.server_id AND reserved_by_match_id = OLD.id;
     END IF;
 
     IF (NEW.status = 'WaitingForServer' AND OLD.status = 'WaitingForServer') AND (NEW.region != OLD.region OR NEW.server_id != OLD.server_id) THEN

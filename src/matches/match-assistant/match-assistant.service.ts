@@ -1962,16 +1962,22 @@ export class MatchAssistantService {
       remove?: boolean;
       serverId?: string;
       releaseOnlyIfEnded?: boolean;
+      jobUids?: Map<string, string>;
     } = {},
   ) {
     this.logger.log(`[${matchId}] stopping match servers`);
 
     try {
-      for (const jobName of await this.getMatchServerJobIds(matchId)) {
+      for (const jobName of options.jobUids?.keys() ??
+        (await this.getMatchServerJobIds(matchId))) {
         if (options.remove) {
           await this.removeOnDemandServerJob(matchId, jobName, { wait: true });
         } else {
-          await this.signalOnDemandServerStop(matchId, jobName);
+          await this.signalOnDemandServerStop(
+            matchId,
+            jobName,
+            options.jobUids?.get(jobName),
+          );
         }
       }
     } catch (error) {
@@ -1993,16 +1999,52 @@ export class MatchAssistantService {
     await this.setServerError(matchId, null);
   }
 
-  // The queued stop can run after a restart, when the Job under this name is the new server's.
+  // The queued stop can run after a restart, when the Job under this name is
+  // the new server's, so it signals only the Jobs it read before the check.
   public async stopEndedMatchServer(matchId: string) {
-    if (!(await this.hasMatchEnded(matchId))) {
+    const jobUids = await this.getMatchServerJobUids(matchId);
+
+    if (await this.holdsAnOnDemandServer(matchId)) {
       this.logger.log(
         `[${matchId}] match was started again, leaving its server running`,
       );
       return;
     }
 
-    await this.stopOnDemandServer(matchId, { releaseOnlyIfEnded: true });
+    await this.stopOnDemandServer(matchId, {
+      jobUids,
+      releaseOnlyIfEnded: true,
+    });
+  }
+
+  private async getMatchServerJobUids(matchId: string) {
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const batch = kc.makeApiClient(BatchV1Api);
+
+    const jobUids = new Map<string, string>();
+    for (const jobName of await this.getMatchServerJobIds(matchId)) {
+      const job = await this.readOnDemandServerJob(batch, jobName);
+
+      if (job && !MatchAssistantService.isJobFinished(job)) {
+        jobUids.set(jobName, job.metadata?.uid);
+      }
+    }
+
+    return jobUids;
+  }
+
+  private async holdsAnOnDemandServer(matchId: string) {
+    const { matches, servers } = await this.getOnDemandServerJobMatches([
+      matchId,
+    ]);
+    const match = matches.at(0);
+
+    return (
+      !!match &&
+      !MatchAssistantService.TERMINAL_MATCH_STATUSES.includes(match.status) &&
+      servers.length > 0
+    );
   }
 
   public async releaseOnDemandServer(
@@ -2395,7 +2437,11 @@ export class MatchAssistantService {
         ];
   }
 
-  private async signalOnDemandServerStop(matchId: string, jobName: string) {
+  private async signalOnDemandServerStop(
+    matchId: string,
+    jobName: string,
+    jobUid?: string,
+  ) {
     const kc = new KubeConfig();
     kc.loadFromDefault();
 
@@ -2404,7 +2450,11 @@ export class MatchAssistantService {
 
     const job = await this.readOnDemandServerJob(batch, jobName);
 
-    if (!job || MatchAssistantService.isJobFinished(job)) {
+    if (
+      !job ||
+      MatchAssistantService.isJobFinished(job) ||
+      (jobUid && job.metadata?.uid !== jobUid)
+    ) {
       return;
     }
 
