@@ -21,6 +21,7 @@ describe("utility lineup edits (SQL-driven)", () => {
   let postgres: PostgresService;
   let fx: Fixtures;
   let lineups: UtilityLineupsService;
+  const removedFiles: Array<string> = [];
 
   beforeAll(async () => {
     db = await bootMigratedDb("UtilityEditTest");
@@ -32,6 +33,9 @@ describe("utility lineup edits (SQL-driven)", () => {
       {
         uploadTrajectory: jest.fn(async (): Promise<string> => "key"),
         removeTrajectories: jest.fn(async (): Promise<void> => undefined),
+        removeFiles: jest.fn(async (keys: Array<string>): Promise<void> => {
+          removedFiles.push(...keys);
+        }),
       } as unknown as never,
       {
         get: jest.fn(async (_key: string, fallback?: unknown) => fallback),
@@ -50,6 +54,7 @@ describe("utility lineup edits (SQL-driven)", () => {
   });
 
   beforeEach(async () => {
+    removedFiles.length = 0;
     await postgres.query("DELETE FROM utility_lineups");
     await postgres.query("DELETE FROM utility_collections");
     await postgres.query("DELETE FROM teams");
@@ -285,6 +290,39 @@ describe("utility lineup edits (SQL-driven)", () => {
     expect(row.trajectory_file).toBeNull();
     expect(row.confidence).toBe("low");
     expect(Number(row.land_x)).toBe(400);
+  });
+
+  // Nothing names them once the columns are cleared, so they would sit in the
+  // bucket until the lineup itself is deleted.
+  it("removes the recorded flight and smoke the move threw away", async () => {
+    const AUTHOR = await fx.player();
+    const id = await insertLineup(AUTHOR, {
+      trajectory_file: "utility/x/t.json.gz",
+      smoke_voxels_file: "clips/utility/x.smoke.1.json",
+    });
+
+    await lineups.updateLineup({
+      lineupId: id,
+      steamId: AUTHOR,
+      geometry: { ...GEOMETRY, land_x: 400 },
+    });
+
+    expect(removedFiles).toEqual([
+      "utility/x/t.json.gz",
+      "clips/utility/x.smoke.1.json",
+    ]);
+  });
+
+  it("removes no file on a rename", async () => {
+    const AUTHOR = await fx.player();
+    const id = await insertLineup(AUTHOR, {
+      trajectory_file: "utility/x/t.json.gz",
+    });
+
+    await lineups.updateLineup({ lineupId: id, steamId: AUTHOR, name: "B" });
+
+    expect(removedFiles).toEqual([]);
+    expect((await rowOf(id)).trajectory_file).toBe("utility/x/t.json.gz");
   });
 
   it("keeps the author's own record when the landing barely moves", async () => {

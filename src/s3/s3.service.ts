@@ -362,7 +362,6 @@ export class S3Service implements OnModuleDestroy {
     prefix: string,
     bucket: string,
     strict: boolean,
-    exact = false,
   ): Promise<number> {
     const client = this.raw();
 
@@ -387,7 +386,7 @@ export class S3Service implements OnModuleDestroy {
         ...(listed.Versions ?? []),
         ...(listed.DeleteMarkers ?? []),
       ]
-        .filter((entry) => !!entry.Key && (!exact || entry.Key === prefix))
+        .filter((entry) => !!entry.Key)
         .map((entry) => ({
           Key: entry.Key,
           ...(entry.VersionId && entry.VersionId !== "null"
@@ -468,20 +467,93 @@ export class S3Service implements OnModuleDestroy {
     keys: string[],
     bucket: string = this.bucket,
   ): Promise<string[]> {
-    const removed: string[] = [];
+    const client = this.raw();
+    const failed = new Set<string>();
+    const versions: Array<{ Key: string; VersionId?: string }> = [];
 
-    for (const key of keys) {
+    for (let i = 0; i < keys.length; i += 25) {
+      await Promise.all(
+        keys.slice(i, i + 25).map(async (key) => {
+          try {
+            versions.push(...(await this.versionsOf(client, key, bucket)));
+          } catch (error) {
+            failed.add(key);
+            this.logger.error(
+              `unable to list ${key}: ${(error as Error)?.message}`,
+            );
+          }
+        }),
+      );
+    }
+
+    for (let i = 0; i < versions.length; i += 1000) {
+      const batch = versions.slice(i, i + 1000);
       try {
-        await this.sweepPrefix(key, bucket, true, true);
-        removed.push(key);
+        const result = await client.send(
+          new DeleteObjectsCommand({
+            Bucket: bucket,
+            Delete: { Objects: batch },
+          }),
+        );
+        for (const error of result?.Errors ?? []) {
+          failed.add(error.Key);
+          this.logger.error(
+            `unable to remove ${error.Key}: ${error.Code} ${error.Message ?? ""}`.trim(),
+          );
+        }
       } catch (error) {
+        for (const entry of batch) {
+          failed.add(entry.Key);
+        }
         this.logger.error(
-          `unable to remove ${key}: ${(error as Error)?.message}`,
+          `unable to remove ${batch.length} object version(s): ${(error as Error)?.message}`,
         );
       }
     }
 
-    return removed;
+    return keys.filter((key) => !failed.has(key));
+  }
+
+  private async versionsOf(
+    client: S3Client,
+    key: string,
+    bucket: string,
+  ): Promise<Array<{ Key: string; VersionId?: string }>> {
+    const versions: Array<{ Key: string; VersionId?: string }> = [];
+    let keyMarker: string | undefined;
+    let versionIdMarker: string | undefined;
+
+    do {
+      const listed = await client.send(
+        new ListObjectVersionsCommand({
+          Bucket: bucket,
+          Prefix: key,
+          KeyMarker: keyMarker,
+          VersionIdMarker: versionIdMarker,
+        }),
+      );
+
+      for (const entry of [
+        ...(listed.Versions ?? []),
+        ...(listed.DeleteMarkers ?? []),
+      ]) {
+        if (entry.Key === key) {
+          versions.push({
+            Key: key,
+            ...(entry.VersionId && entry.VersionId !== "null"
+              ? { VersionId: entry.VersionId }
+              : {}),
+          });
+        }
+      }
+
+      keyMarker = listed.IsTruncated ? listed.NextKeyMarker : undefined;
+      versionIdMarker = listed.IsTruncated
+        ? listed.NextVersionIdMarker
+        : undefined;
+    } while (keyMarker || versionIdMarker);
+
+    return versions;
   }
 
   public async remove(

@@ -240,6 +240,37 @@ describe("S3Service.removeKeys", () => {
     ]);
   });
 
+  it("lists each key and removes them all in one request", async () => {
+    const service = build("rustfs", "9000", false);
+    const send = jest.fn(
+      async (command: {
+        constructor: { name: string };
+        input: { Prefix?: string };
+      }) =>
+        command.constructor.name === "ListObjectVersionsCommand"
+          ? {
+              Versions: [{ Key: command.input.Prefix, VersionId: "v1" }],
+              IsTruncated: false,
+            }
+          : {},
+    );
+    (service as any).rawClients.set("internal", { send, destroy: jest.fn() });
+
+    await service.removeKeys([
+      "clips/utility/a/r.mp4",
+      "clips/utility/b/r.mp4",
+      "clips/utility/c/r.mp4",
+    ]);
+
+    const names = send.mock.calls.map(([command]) => command.constructor.name);
+    expect(
+      names.filter((name) => name === "ListObjectVersionsCommand"),
+    ).toHaveLength(3);
+    expect(
+      names.filter((name) => name === "DeleteObjectsCommand"),
+    ).toHaveLength(1);
+  });
+
   it("leaves out a key the store refused", async () => {
     const { service } = withClient({
       Errors: [

@@ -353,6 +353,10 @@ export class UtilityArtifactsService {
     );
   }
 
+  public async removeFiles(keys: Array<string>): Promise<void> {
+    await this.s3.removeKeys(keys);
+  }
+
   public async removeTrajectories(lineupId: string): Promise<void> {
     await this.s3.removePrefixStrictly(`utility/${lineupId}/`);
   }

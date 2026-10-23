@@ -3,6 +3,8 @@ import { PostgresService } from "./../src/postgres/postgres.service";
 import { S3ScanService } from "./../src/s3-scan/s3-scan.service";
 import { UtilityArtifactsService } from "./../src/utility/utility-artifacts.service";
 import { UtilityLineupsService } from "./../src/utility/utility-lineups.service";
+import { UtilityImportService } from "./../src/utility/utility-import.service";
+import { User } from "./../src/auth/types/User";
 import { UtilityCalloutsService } from "./../src/utility/utility-callouts.service";
 import { UtilityPendingLineup } from "./../src/utility/utility-load.service";
 import { Fixtures } from "./utils/fixtures";
@@ -22,7 +24,7 @@ describe("utility lineup storage (SQL-driven)", () => {
   let report: Buffer | null;
   let refused: Set<string>;
   let swept: Array<string>;
-  let sweepFails: boolean;
+  let refuseSweep: (prefix: string) => boolean;
 
   const s3 = {
     bucketName: "5stack",
@@ -45,7 +47,7 @@ describe("utility lineup storage (SQL-driven)", () => {
         return true;
       }),
     removePrefixStrictly: async (prefix: string) => {
-      if (sweepFails) {
+      if (refuseSweep(prefix)) {
         throw new Error("AccessDenied");
       }
       swept.push(prefix);
@@ -66,16 +68,19 @@ describe("utility lineup storage (SQL-driven)", () => {
       { send: jest.fn() } as unknown as never,
     );
 
+  const artifacts = () =>
+    new UtilityArtifactsService(
+      new Logger("UtilityStorageTest"),
+      s3 as unknown as never,
+      postgres,
+      {} as unknown as never,
+    );
+
   const lineups = () =>
     new UtilityLineupsService(
       new Logger("UtilityStorageTest"),
       postgres,
-      new UtilityArtifactsService(
-        new Logger("UtilityStorageTest"),
-        s3 as unknown as never,
-        postgres,
-        {} as unknown as never,
-      ),
+      artifacts(),
       {
         get: jest.fn(async (_key: string, fallback?: unknown) => fallback),
         put: jest.fn(async (): Promise<boolean> => true),
@@ -102,23 +107,25 @@ describe("utility lineup storage (SQL-driven)", () => {
     report = null;
     refused = new Set();
     swept = [];
-    sweepFails = false;
+    refuseSweep = () => false;
     await postgres.query("DELETE FROM utility_lineup_renders");
     await postgres.query("DELETE FROM utility_lineups");
     await postgres.query("DELETE FROM players");
     author = await fx.player();
   });
 
-  async function lineup() {
+  async function lineup(source = "plugin") {
     const [row] = await postgres.query<Array<{ id: string }>>(
       `INSERT INTO utility_lineups
          (map_name, utility_type, side, technique,
           origin_x, origin_y, origin_z, view_yaw, view_pitch,
-          land_x, land_y, land_z, name, author_steam_id, visibility)
+          land_x, land_y, land_z, name, author_steam_id, visibility,
+          origin_source)
        VALUES ('de_mirage', 'Smoke', 'TERRORIST', 'Jump',
-               1, 2, 3, 90, -20, 10, 20, 30, 'A main deep', $1::bigint, 'Public')
+               1, 2, 3, 90, -20, 10, 20, 30, 'A main deep', $1::bigint, 'Public',
+               $2)
        RETURNING id::text AS id`,
-      [author],
+      [author, source],
     );
     return row.id;
   }
@@ -283,7 +290,7 @@ describe("utility lineup storage (SQL-driven)", () => {
       const id = await lineup();
       const live = await render(id, "done");
       store(...(await filmed(id, live)));
-      sweepFails = true;
+      refuseSweep = () => true;
 
       await expect(lineups().deleteLineup(id, author)).rejects.toThrow(
         /AccessDenied/,
@@ -298,6 +305,16 @@ describe("utility lineup storage (SQL-driven)", () => {
       ]);
     });
 
+    it("sweeps the lineup's own id, however the caller spelled it", async () => {
+      const id = await lineup();
+      const live = await render(id, "done");
+      store(...(await filmed(id, live)));
+
+      await lineups().deleteLineup(id.toUpperCase(), author);
+
+      expect(bucket.size).toBe(0);
+    });
+
     it("lets a moderator delete somebody else's lineup, and nobody else", async () => {
       const id = await lineup();
       const stranger = await fx.player();
@@ -310,6 +327,64 @@ describe("utility lineup storage (SQL-driven)", () => {
       await lineups().deleteLineup(id, stranger, true);
 
       expect(swept).toEqual([`utility/${id}/`, `clips/utility/${id}`]);
+    });
+  });
+
+  describe("purging a source", () => {
+    const purge = async () => {
+      await postgres.query(
+        "UPDATE settings SET value = 'true' WHERE name = 'public.utility_import_enabled'",
+      );
+      const admin = await fx.player("op", "administrator");
+      return new UtilityImportService(
+        new Logger("UtilityStorageTest"),
+        postgres,
+        artifacts(),
+      ).purgeSource({ steam_id: admin, role: "administrator" } as User, {
+        origin_source: "editor",
+      });
+    };
+
+    it("takes the files of every lineup it deletes, rendering or not", async () => {
+      const filmedOne = await lineup("editor");
+      const filming = await lineup("editor");
+      const seeded = await lineup("editor");
+      const live = await render(filmedOne, "done");
+      const inFlight = await render(filming, "rendering");
+      store(
+        ...(await filmed(filmedOne, live)),
+        `clips/utility/${filming}/${inFlight}/stance.webp`,
+      );
+
+      await purge();
+
+      expect(bucket.size).toBe(0);
+      expect(swept).not.toContain(`clips/utility/${seeded}`);
+      const rows = await postgres.query<Array<{ id: string }>>(
+        "SELECT id FROM utility_lineups WHERE origin_source = 'editor'",
+      );
+      expect(rows).toEqual([]);
+    });
+
+    it("never leaves a lineup without its files, or files without their lineup", async () => {
+      const other = await lineup("editor");
+      const refused = await lineup("editor");
+      store(...(await filmed(other, await render(other, "done"))));
+      store(...(await filmed(refused, await render(refused, "done"))));
+      refuseSweep = (prefix) => prefix === `utility/${refused}/`;
+
+      await expect(purge()).rejects.toThrow(/AccessDenied/);
+
+      const left = (
+        await postgres.query<Array<{ id: string }>>(
+          "SELECT id::text AS id FROM utility_lineups WHERE origin_source = 'editor'",
+        )
+      ).map((row) => row.id);
+      expect(left).toContain(refused);
+      for (const id of [refused, other]) {
+        const files = [...bucket.keys()].filter((key) => key.includes(id));
+        expect(files).toHaveLength(left.includes(id) ? 5 : 0);
+      }
     });
   });
 });

@@ -292,32 +292,38 @@ export class UtilityImportService {
       return { dry_run: dryRun, origin_source: source, lineups };
     }
 
-    await this.postgres.transaction(async (client) => {
-      const { rows: deleted } = await client.query<{
-        id: string;
-        has_artifacts: boolean;
-      }>(
-        `DELETE FROM public.utility_lineups l
-          WHERE l.origin_source = $1
-      RETURNING l.id::text AS id,
-                (l.trajectory_file IS NOT NULL
-                 OR l.preview_file IS NOT NULL
-                 OR l.smoke_voxels_file IS NOT NULL
-                 OR EXISTS (
-                   SELECT 1
-                     FROM public.utility_lineup_renders r
-                    WHERE r.utility_lineup_id = l.id
-                 )) AS has_artifacts`,
-        [source],
-      );
+    const withFiles = await this.postgres.query<Array<{ id: string }>>(
+      `SELECT l.id::text AS id
+         FROM public.utility_lineups l
+        WHERE l.origin_source = $1
+          AND (l.trajectory_file IS NOT NULL
+               OR l.preview_file IS NOT NULL
+               OR l.smoke_voxels_file IS NOT NULL
+               OR EXISTS (
+                 SELECT 1
+                   FROM public.utility_lineup_renders r
+                  WHERE r.utility_lineup_id = l.id
+               ))`,
+      [source],
+    );
 
-      // A seeded source is thousands of lineups that never had a file; each
-      // sweep is two listings.
-      for (const lineup of deleted.filter((row) => row.has_artifacts)) {
+    // One at a time, so a sweep that fails keeps back only its own lineup.
+    for (const lineup of withFiles) {
+      await this.postgres.transaction(async (client) => {
+        await client.query(
+          "DELETE FROM public.utility_lineups WHERE id = $1::uuid",
+          [lineup.id],
+        );
         await this.artifacts.removeTrajectories(lineup.id);
         await this.artifacts.removePreview(lineup.id);
-      }
-    });
+      });
+    }
+
+    // A seeded source is thousands of lineups that never had a file.
+    await this.postgres.query(
+      "DELETE FROM public.utility_lineups WHERE origin_source = $1",
+      [source],
+    );
 
     this.logger.log(
       `[utility-import] ${user.steam_id} purged ${lineups} '${source}' lineup(s)`,

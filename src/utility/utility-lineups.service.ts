@@ -1252,10 +1252,30 @@ export class UtilityLineupsService {
       return { id: row.id, progress_reset: false };
     }
 
-    await this.postgres.query(
-      `UPDATE public.utility_lineups SET ${sets.join(", ")} WHERE id = $1::uuid`,
+    const [replaced] = await this.postgres.query<
+      Array<{
+        trajectory_file: string | null;
+        smoke_voxels_file: string | null;
+      }>
+    >(
+      `UPDATE public.utility_lineups l
+          SET ${sets.join(", ")}
+         FROM (SELECT id, trajectory_file, smoke_voxels_file
+                 FROM public.utility_lineups
+                WHERE id = $1::uuid
+                  FOR UPDATE) old
+        WHERE l.id = old.id
+    RETURNING old.trajectory_file, old.smoke_voxels_file`,
       values,
     );
+
+    if (options.geometry) {
+      await this.artifacts.removeFiles(
+        [replaced?.trajectory_file, replaced?.smoke_voxels_file].filter(
+          (key): key is string => !!key,
+        ),
+      );
+    }
 
     return { id: row.id, progress_reset: progressReset };
   }
@@ -1357,10 +1377,10 @@ export class UtilityLineupsService {
     await this.postgres.transaction(async (client) => {
       await client.query(
         "DELETE FROM public.utility_lineups WHERE id = $1::uuid",
-        [lineupId],
+        [row.id],
       );
-      await this.artifacts.removeTrajectories(lineupId);
-      await this.artifacts.removePreview(lineupId);
+      await this.artifacts.removeTrajectories(row.id);
+      await this.artifacts.removePreview(row.id);
     });
   }
 
