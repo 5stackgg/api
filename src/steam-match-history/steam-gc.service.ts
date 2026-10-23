@@ -14,6 +14,10 @@ const REFRESH_TOKEN_CACHE_KEY = "steam-gc:refresh-token";
 const REQUEST_TIMEOUT_MS = 30_000;
 const GC_READY_TIMEOUT_MS = 30_000;
 const IDLE_LOGOFF_MS = 5 * 60_000;
+// Steam ends the older of two sessions of one account from the same public IP
+// with the same logon id, and Steam Presence logs in with steam-user's default
+// of 0. The GC bot may be one of the Presence accounts.
+const LOGON_ID = 0x5347_4301;
 
 export type ResolvedMatch = {
   // Null when the GC answered but the demo link has expired or is missing —
@@ -172,12 +176,13 @@ export class SteamGcService
     const refreshToken = await this.cache.get(REFRESH_TOKEN_CACHE_KEY);
     if (refreshToken && typeof refreshToken === "string") {
       this.logger.log("steam-gc logging in with stored refresh token");
-      client.logOn({ refreshToken });
+      client.logOn({ refreshToken, logonID: LOGON_ID });
     } else {
       this.logger.log("steam-gc logging in with STEAM_USER credentials");
       client.logOn({
         accountName: this.config.get<string>("steam.steamUser"),
         password: this.config.get<string>("steam.steamPassword"),
+        logonID: LOGON_ID,
       });
     }
   }

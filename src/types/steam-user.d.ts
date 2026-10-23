@@ -10,6 +10,7 @@ declare module "steam-user" {
     password?: string;
     refreshToken?: string;
     twoFactorCode?: string;
+    logonID?: number;
   }
 
   class SteamUser extends EventEmitter {
