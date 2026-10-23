@@ -1,0 +1,2 @@
+-- The ids this replaced were never Valve's, and imports are also matched by
+-- share code, so there is nothing worth putting back.

@@ -28,30 +28,42 @@ const build = (
     }),
   };
   const logger = { warn: jest.fn() };
+  const steamMatchHistory = {
+    enqueueResolve: jest.fn(async (): Promise<void> => undefined),
+  };
 
   const reconcile = new ReconcilePendingMatchImports(
     logger as never,
     postgres as never,
     queue as never,
     queue as never,
+    steamMatchHistory as never,
   );
 
-  return { reconcile, updates };
+  return { reconcile, updates, steamMatchHistory };
 };
 
 describe("ReconcilePendingMatchImports", () => {
-  it("fails a stranded row whose jobs are gone", async () => {
-    const { reconcile, updates } = build(["111"]);
+  it("queues the resolve again for a row with no job under its id, once", async () => {
+    const jobs: Record<string, FakeJob> = {};
+    const { reconcile, updates, steamMatchHistory } = build(["111"], jobs);
 
     await reconcile.process();
 
+    expect(steamMatchHistory.enqueueResolve).toHaveBeenCalledWith("111");
+    expect(updates).toEqual([]);
+
+    jobs["resolve-111"] = { state: "completed" };
+    await reconcile.process();
+
+    expect(steamMatchHistory.enqueueResolve).toHaveBeenCalledTimes(1);
     expect(updates).toEqual([
       ["111", "import job ended without finishing the import", "15 minutes"],
     ]);
   });
 
-  it("carries the failed job's reason onto the row", async () => {
-    const { reconcile, updates } = build(["222"], {
+  it("carries the failed job's reason onto the row instead of queueing it again", async () => {
+    const { reconcile, updates, steamMatchHistory } = build(["222"], {
       "resolve-222": {
         state: "failed",
         failedReason: 'column "parties" does not exist',
@@ -61,6 +73,7 @@ describe("ReconcilePendingMatchImports", () => {
     await reconcile.process();
 
     expect(updates[0]?.[1]).toBe('column "parties" does not exist');
+    expect(steamMatchHistory.enqueueResolve).not.toHaveBeenCalled();
   });
 
   it("fails a row whose parse job stalled out after resolve completed", async () => {

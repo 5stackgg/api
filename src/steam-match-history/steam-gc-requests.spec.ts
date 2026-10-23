@@ -71,7 +71,7 @@ const build = () => {
       session().cs.emit("connectedToGC");
       await jest.advanceTimersByTimeAsync(0);
     }
-    expect(session().cs.requestGame).toHaveBeenLastCalledWith(shareCode);
+    expect(session().cs.requestGame).toHaveBeenCalled();
     return { pending };
   };
 
@@ -183,6 +183,31 @@ describe("SteamGcService.resolveShareCode", () => {
     await expect(pending).resolves.toMatchObject({
       demoUrl: `http://replay/${MATCH_ID}.dem.bz2`,
       mapName: "de_dust2",
+    });
+  });
+
+  it("asks the GC for the decoded match, not the share code", async () => {
+    const { request, session } = build();
+
+    await request("CSGO-dDTOM-tT9ur-wEavE-uqERi-LCSGO");
+    const [details] = session().cs.requestGame.mock.lastCall;
+
+    expect(details).toEqual({
+      matchId: "3354591961205914320",
+      outcomeId: "3354591961208377040",
+      token: "63488",
+    });
+  });
+
+  it("takes the reply for a share code that has CSGO inside it", async () => {
+    const { request, session } = build();
+
+    const { pending } = await request("CSGO-dDTOM-tT9ur-wEavE-uqERi-LCSGO");
+    session().cs.emit("matchList", [reply("3354591961205914320")]);
+    await jest.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS);
+
+    await expect(pending).resolves.toMatchObject({
+      demoUrl: "http://replay/3354591961205914320.dem.bz2",
     });
   });
 

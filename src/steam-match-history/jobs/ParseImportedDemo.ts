@@ -8,6 +8,7 @@ import { DemoParserService } from "../../demos/demo-parser.service";
 import { playbackRequest } from "../../demos/demo-metadata.service";
 import { SteamMatchHistoryQueues } from "../enums/SteamMatchHistoryQueues";
 import { MatchImportService } from "../match-import.service";
+import { decodeShareCode } from "../shareCode";
 
 export type ParseImportedDemoPayload = {
   valve_match_id: string;
@@ -38,7 +39,10 @@ export class ParseImportedDemo extends WorkerHost {
   }
 
   async process(job: Job<ParseImportedDemoPayload>): Promise<void> {
-    const { valve_match_id } = job.data;
+    // Jobs queued before the share-code alphabet fix carry a wrong id.
+    const valve_match_id = job.data.share_code
+      ? decodeShareCode(job.data.share_code).matchId.toString()
+      : job.data.valve_match_id;
 
     // Already imported — don't reprocess; an admin must delete it to re-import.
     const existing = await this.matchImport.findExistingExternalMatch(

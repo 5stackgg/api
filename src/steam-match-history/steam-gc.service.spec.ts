@@ -1,3 +1,4 @@
+import GlobalOffensive from "globaloffensive";
 import { SteamGcService } from "./steam-gc.service";
 import { SteamPresenceService } from "../steam-presence/steam-presence.service";
 
@@ -124,5 +125,26 @@ describe("SteamGcService logon", () => {
 
     expect(presence).toEqual({ refreshToken: "refresh-token" });
     expect(gc.logonID ?? 0).not.toBe(presence.logonID ?? 0);
+  });
+});
+
+describe("globaloffensive requestGame", () => {
+  it("takes a match's decoded parts the way SteamGcService sends them", () => {
+    const send = jest.fn();
+
+    GlobalOffensive.prototype.requestGame.call(
+      { _send: send },
+      {
+        matchId: "3354591961205914320",
+        outcomeId: "3354591961208377040",
+        token: "63488",
+      },
+    );
+
+    expect(send).toHaveBeenCalledWith(expect.anything(), expect.anything(), {
+      matchid: "3354591961205914320",
+      outcomeid: "3354591961208377040",
+      token: "63488",
+    });
   });
 });
