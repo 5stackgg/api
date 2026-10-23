@@ -26,8 +26,22 @@ describe("StopOnDemandServer", () => {
   it("stops the match's server", async () => {
     await processor.process({ data: { matchId: "match-1" } } as any);
 
-    expect(matchAssistant.stopEndedMatchServer).toHaveBeenCalledWith("match-1");
+    expect(matchAssistant.stopEndedMatchServer).toHaveBeenCalledWith(
+      "match-1",
+      undefined,
+    );
     expect(matchAssistant.removeUnstoppedOnDemandServer).not.toHaveBeenCalled();
+  });
+
+  it("tells the stop which server the match ended on", async () => {
+    await processor.process({
+      data: { matchId: "match-1", serverId: "server-1" },
+    } as any);
+
+    expect(matchAssistant.stopEndedMatchServer).toHaveBeenCalledWith(
+      "match-1",
+      "server-1",
+    );
   });
 
   it("checks back on a server it already signalled", async () => {

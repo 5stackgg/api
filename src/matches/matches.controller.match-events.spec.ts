@@ -298,7 +298,7 @@ describe("MatchesController — match_events on-demand servers", () => {
 
     const [[, data, options]] = stopJobs();
 
-    expect(data).toEqual({ matchId: "match-1" });
+    expect(data).toEqual({ matchId: "match-1", serverId: "server-1" });
     expect(options?.delay ?? 0).toBe(0);
     expect(options?.attempts).toBeGreaterThan(1);
   });

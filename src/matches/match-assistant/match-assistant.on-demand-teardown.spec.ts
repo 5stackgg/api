@@ -505,28 +505,46 @@ describe("MatchAssistantService — on-demand server teardown", () => {
           "server-1",
         );
 
-      it("hands the ended match's server to the oldest waiting match", async () => {
+      const wakes = () =>
+        queue.add.mock.calls.filter(([name]) => name === "AssignWaitingMatch");
+
+      // On its own queue, with its own retries, off the single scheduled-matches worker.
+      it("queues the ended match's server for the oldest waiting match", async () => {
         await checkBack();
 
-        expect(assignServer).toHaveBeenCalledWith("match-2");
+        expect(wakes()).toEqual([
+          ["AssignWaitingMatch", { region: "USE" }, expect.anything()],
+        ]);
+        expect(assignServer).not.toHaveBeenCalled();
       });
 
-      it("hands a server a match moved off to the oldest waiting match", async () => {
+      it("queues a server a match moved off for the oldest waiting match", async () => {
         matchStatus = "Live";
 
         await checkBack();
 
         expect(serverReleases()).toHaveLength(0);
-        expect(assignServer).toHaveBeenCalledWith("match-2");
+        expect(wakes()).toHaveLength(1);
       });
 
-      it("hands out nothing while the server is still exiting", async () => {
+      it("queues nothing while the server is still exiting", async () => {
         readNamespacedJob.mockResolvedValue(activeJob("uid-1"));
         listNamespacedPod.mockResolvedValue({ items: [runningPod("uid-1")] });
 
         await checkBack();
 
-        expect(assignServer).not.toHaveBeenCalled();
+        expect(wakes()).toHaveLength(0);
+      });
+
+      // The stop job retries when queueing fails, and by then the row is already free.
+      it("queues the server it was told the match ended on, though freeing it found nothing", async () => {
+        hasura.mutation.mockResolvedValue({
+          update_servers: { returning: [] },
+        });
+
+        await service.stopEndedMatchServer("match-1", "server-1");
+
+        expect(wakes()).toHaveLength(1);
       });
     });
 

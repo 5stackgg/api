@@ -1136,7 +1136,7 @@ export class MatchesController {
 
     await this.scheduledMatchesQueue.add(
       StopOnDemandServer.name,
-      { matchId },
+      { matchId, serverId },
       MatchesController.stopOnDemandServerJobOptions(delay),
     );
   }
@@ -1241,7 +1241,7 @@ export class MatchesController {
       if (serverId) {
         await this.scheduledMatchesQueue.add(
           StopOnDemandServer.name,
-          { matchId },
+          { matchId, serverId },
           MatchesController.stopOnDemandServerJobOptions(),
         );
       }

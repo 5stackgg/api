@@ -2107,6 +2107,7 @@ export class MatchAssistantService {
       serverId?: string;
       releaseOnlyIfEnded?: boolean;
       jobUids?: Map<string, string>;
+      endedServerId?: string;
     } = {},
   ) {
     this.logger.log(`[${matchId}] stopping match servers`);
@@ -2141,11 +2142,12 @@ export class MatchAssistantService {
     if (options.remove) {
       await this.releaseOnDemandServer(matchId, options.serverId);
     } else if (!stopping) {
-      await this.assignWaitingMatchesTo(
-        options.releaseOnlyIfEnded
+      await this.assignWaitingMatchesTo([
+        ...(options.releaseOnlyIfEnded
           ? await this.releaseEndedMatchServer(matchId)
-          : await this.releaseOnDemandServer(matchId, options.serverId),
-      );
+          : await this.releaseOnDemandServer(matchId, options.serverId)),
+        ...(options.endedServerId ? [options.endedServerId] : []),
+      ]);
     }
 
     await this.setServerError(matchId, null);
@@ -2153,7 +2155,7 @@ export class MatchAssistantService {
 
   // The queued stop can run after a restart, when the Job under this name is
   // the new server's, so it signals only the Jobs it read before the check.
-  public async stopEndedMatchServer(matchId: string) {
+  public async stopEndedMatchServer(matchId: string, serverId?: string) {
     const jobUids = await this.getMatchServerJobUids(matchId);
 
     if (await this.holdsAnOnDemandServer(matchId)) {
@@ -2166,6 +2168,7 @@ export class MatchAssistantService {
     await this.stopOnDemandServer(matchId, {
       jobUids,
       releaseOnlyIfEnded: true,
+      endedServerId: serverId,
     });
   }
 
@@ -2262,8 +2265,20 @@ export class MatchAssistantService {
       },
     });
 
-    for (const region of new Set(servers.map((server) => server.region))) {
-      await this.assignWaitingMatch(region);
+    for (const server of servers) {
+      await this.queue.add(
+        MatchJobs.AssignWaitingMatch,
+        { region: server.region },
+        {
+          attempts: 3,
+          backoff: {
+            type: "exponential",
+            delay: 5 * 1000,
+          },
+          removeOnFail: true,
+          removeOnComplete: true,
+        },
+      );
     }
   }
 

@@ -41,6 +41,6 @@ export class StopOnDemandServer extends WorkerHost {
       return;
     }
 
-    await this.matchAssistant.stopEndedMatchServer(matchId);
+    await this.matchAssistant.stopEndedMatchServer(matchId, serverId);
   }
 }
