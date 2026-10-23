@@ -20,7 +20,7 @@ BEGIN
         END IF;
     END IF;
 
-    IF NOT is_server_available(match.id, match.server_id) THEN
+    IF NOT is_server_available(match_id => match.id, match_server_id => match.server_id) THEN
         RAISE EXCEPTION 'Cannot start match because a server is not available' USING ERRCODE = '22000';
     END IF;
 END;

@@ -128,4 +128,61 @@ describe("server reservations (SQL-driven)", () => {
       expect(await reservedBy(serverId)).toBe(next.id);
     });
   });
+
+  // The match page's "server not available" hint reads is_match_server_available.
+  describe("a match's server availability", () => {
+    const available = async (matchId: string) => {
+      const [row] = await postgres.query<Array<{ available: boolean }>>(
+        "SELECT public.is_match_server_available(m) AS available FROM matches m WHERE m.id = $1",
+        [matchId],
+      );
+      return row.available;
+    };
+
+    const waitingFor = async (serverId: string) => {
+      const match = await fx.match({
+        regions: ["Resv"],
+        mapPoolId: (await fx.mapPool(1)).poolId,
+      });
+      await postgres.query("UPDATE matches SET server_id = $1 WHERE id = $2", [
+        serverId,
+        match.id,
+      ]);
+      return match;
+    };
+
+    it("is available to the match holding it", async () => {
+      const match = await liveOn(await serverOf(true));
+
+      expect(await available(match.id)).toBe(true);
+    });
+
+    it("is available to a match while nobody holds it", async () => {
+      const match = await waitingFor(await serverOf(true));
+
+      expect(await available(match.id)).toBe(true);
+    });
+
+    it("is not available to a match while another match holds it", async () => {
+      const serverId = await serverOf(true);
+      await liveOn(serverId);
+      const match = await waitingFor(serverId);
+
+      expect(await available(match.id)).toBe(false);
+      await expect(
+        postgres.query("UPDATE matches SET status = 'Live' WHERE id = $1", [
+          match.id,
+        ]),
+      ).rejects.toThrow(/server is not available/);
+    });
+
+    it("is not available to a match with no server", async () => {
+      const match = await fx.match({
+        regions: ["Resv"],
+        mapPoolId: (await fx.mapPool(1)).poolId,
+      });
+
+      expect(await available(match.id)).toBe(false);
+    });
+  });
 });
