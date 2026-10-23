@@ -7,6 +7,8 @@ import { DemoMetadataService } from "../demo-metadata.service";
 
 @UseQueue("Demos", DemoQueues.Demos)
 export class CleanDemos extends WorkerHost {
+  private static readonly PAGE_SIZE = 10;
+
   private maxStorageInBytes: number;
   private minRetentionInDays: number;
   private totalStoredBytes: number;
@@ -76,42 +78,102 @@ export class CleanDemos extends WorkerHost {
   }
 
   private async deleteOldDemos() {
-    if (this.totalStoredBytes < this.maxStorageInBytes) {
+    if (this.totalStoredBytes <= this.maxStorageInBytes) {
       return 0;
     }
 
-    const demosToDelete = await this.findDemosToDelete();
-
-    if (demosToDelete.length > 0) {
-      this.logger.log(
-        `Marked ${demosToDelete.length} demos for deletion, freeing up ${this.formatStorageSize(demosToDelete.reduce((total, demo) => total + (demo.size ?? 0) + (demo.playback_size ?? 0), 0))}`,
-      );
-      for (const demo of demosToDelete) {
-        await this.demoMetadata.deleteDemo(demo.id);
-        break;
-      }
-    }
-
-    return demosToDelete.length;
-  }
-
-  private async findDemosToDelete(): Promise<
-    Array<{
-      id: string;
-      size: number;
-      playback_size: number | null;
-      file: string;
-    }>
-  > {
     const finishedAfter = new Date(
       Date.now() - this.minRetentionInDays * 24 * 60 * 60 * 1000,
     ).toISOString();
 
+    const deleted = new Set<string>();
+    const failed = new Set<string>();
+    let failuresInARow = 0;
+    let freedBytes = 0;
+    let stopped = false;
+
+    while (!stopped && this.totalStoredBytes > this.maxStorageInBytes) {
+      const demos = await this.findOldestDemos(finishedAfter, [...failed]);
+
+      if (demos.length === 0) {
+        break;
+      }
+
+      for (const demo of demos) {
+        if (this.totalStoredBytes <= this.maxStorageInBytes) {
+          break;
+        }
+
+        if (deleted.has(demo.id)) {
+          this.logger.warn(
+            `[clean-demos] demo ${demo.id} is still listed after it was deleted, stopping`,
+          );
+          stopped = true;
+          break;
+        }
+
+        try {
+          await this.demoMetadata.deleteDemo(demo.id, { strict: true });
+        } catch (error) {
+          failed.add(demo.id);
+          failuresInARow++;
+          this.logger.error(
+            `[clean-demos] unable to delete demo ${demo.id}: ${(error as Error)?.message}`,
+          );
+
+          if (failuresInARow >= CleanDemos.PAGE_SIZE) {
+            this.logger.error(
+              `[clean-demos] ${failuresInARow} deletes failed in a row, stopping`,
+            );
+            stopped = true;
+            break;
+          }
+
+          continue;
+        }
+
+        failuresInARow = 0;
+
+        const bytes = (demo.size ?? 0) + (demo.playback_size ?? 0);
+        deleted.add(demo.id);
+        this.totalStoredBytes -= bytes;
+        freedBytes += bytes;
+        this.logger.log(
+          `[clean-demos] deleted demo ${demo.id}, freeing up ${this.formatStorageSize(bytes)}`,
+        );
+      }
+    }
+
+    if (deleted.size > 0) {
+      this.logger.log(
+        `Deleted ${deleted.size} demos, freeing up ${this.formatStorageSize(freedBytes)}`,
+      );
+    }
+
+    return deleted.size;
+  }
+
+  private async findOldestDemos(finishedAfter: string, failed: Array<string>) {
     const { match_map_demos } = await this.hasura.query({
       match_map_demos: {
         __args: {
-          limit: 10,
+          limit: CleanDemos.PAGE_SIZE,
           where: {
+            id: {
+              _nin: failed,
+            },
+            _or: [
+              {
+                size: {
+                  _gt: 0,
+                },
+              },
+              {
+                playback_size: {
+                  _gt: 0,
+                },
+              },
+            ],
             match: {
               ended_at: {
                 _lt: finishedAfter,
@@ -124,32 +186,18 @@ export class CleanDemos extends WorkerHost {
                 ended_at: "asc",
               },
             },
+            {
+              id: "asc",
+            },
           ],
         },
         id: true,
         size: true,
         playback_size: true,
-        file: true,
       },
     });
 
-    const demosToDelete = [];
-
-    for (const demo of match_map_demos) {
-      demosToDelete.push(demo);
-      this.totalStoredBytes -= (demo.size ?? 0) + (demo.playback_size ?? 0);
-
-      if (this.totalStoredBytes > this.maxStorageInBytes) {
-        break;
-      }
-    }
-
-    if (this.totalStoredBytes > this.maxStorageInBytes) {
-      const moreDemosToDelete = await this.findDemosToDelete();
-      demosToDelete.push(...moreDemosToDelete);
-    }
-
-    return demosToDelete;
+    return match_map_demos;
   }
 
   private formatStorageSize(bytes: number): string {
