@@ -415,22 +415,56 @@ describe("CleanDemos", () => {
     ]);
   });
 
-  it("stops after three deletes fail in a row", async () => {
-    const { job, attempted, remaining, logger } = setup(
-      [row("recent", 95 * GB, 1), ...oldDemos(10, GB)],
-      {
-        s3Failing: [0, 1, 2, 3, 4].map((i) => `demos/match/old-0${i}.dem`),
-      },
+  it("carries on past a best-of-three whose demos are all locked", async () => {
+    const ended = new Date(Date.now() - 120 * DAY).toISOString();
+    const locked = ["bo3-1", "bo3-2", "bo3-3"].map((id) => ({
+      ...row(id, GB, 120),
+      ended_at: ended,
+    }));
+    const { job, attempted } = setup(
+      [row("recent", 95 * GB, 1), ...locked, ...oldDemos(5, GB)],
+      { s3Failing: locked.map((demo) => demo.file) },
     );
 
     const deleted = await job.process();
 
-    expect(attempted()).toEqual(["old-00", "old-01", "old-02"]);
-    expect(remaining()).toHaveLength(11);
+    expect(attempted()).toEqual([
+      "bo3-1",
+      "bo3-2",
+      "bo3-3",
+      "old-00",
+      "old-01",
+      "old-02",
+    ]);
+    expect(deleted).toBe(3);
+  });
+
+  it("stops after a page of deletes fail in a row", async () => {
+    const demos = oldDemos(15, GB);
+    const { job, attempted, logger } = setup(
+      [row("recent", 95 * GB, 1), ...demos],
+      { s3Failing: demos.slice(0, 12).map((demo) => demo.file) },
+    );
+
+    const deleted = await job.process();
+
+    expect(attempted()).toEqual(demos.slice(0, 10).map((demo) => demo.id));
     expect(deleted).toBe(0);
     expect(logger.error).toHaveBeenCalledWith(
-      expect.stringContaining("3 deletes failed in a row"),
+      expect.stringContaining("10 deletes failed in a row"),
     );
+  });
+
+  it("does not stop for failures that a successful delete separates", async () => {
+    const demos = oldDemos(24, GB);
+    const { job, attempted } = setup([row("recent", 88 * GB, 1), ...demos], {
+      s3Failing: demos.filter((_, i) => i % 2 === 0).map((demo) => demo.file),
+    });
+
+    const deleted = await job.process();
+
+    expect(attempted()).toHaveLength(24);
+    expect(deleted).toBe(12);
   });
 
   it("leaves other callers' deleteDemo lenient: the row goes even when S3 fails", async () => {

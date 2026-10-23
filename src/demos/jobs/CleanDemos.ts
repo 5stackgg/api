@@ -7,7 +7,7 @@ import { DemoMetadataService } from "../demo-metadata.service";
 
 @UseQueue("Demos", DemoQueues.Demos)
 export class CleanDemos extends WorkerHost {
-  private static readonly MAX_FAILURES_IN_A_ROW = 3;
+  private static readonly PAGE_SIZE = 10;
 
   private maxStorageInBytes: number;
   private minRetentionInDays: number;
@@ -121,7 +121,7 @@ export class CleanDemos extends WorkerHost {
             `[clean-demos] unable to delete demo ${demo.id}: ${(error as Error)?.message}`,
           );
 
-          if (failuresInARow >= CleanDemos.MAX_FAILURES_IN_A_ROW) {
+          if (failuresInARow >= CleanDemos.PAGE_SIZE) {
             this.logger.error(
               `[clean-demos] ${failuresInARow} deletes failed in a row, stopping`,
             );
@@ -157,7 +157,7 @@ export class CleanDemos extends WorkerHost {
     const { match_map_demos } = await this.hasura.query({
       match_map_demos: {
         __args: {
-          limit: 10,
+          limit: CleanDemos.PAGE_SIZE,
           where: {
             id: {
               _nin: failed,
