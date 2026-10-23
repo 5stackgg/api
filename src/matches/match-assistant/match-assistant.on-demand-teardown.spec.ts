@@ -906,7 +906,8 @@ describe("MatchAssistantService — on-demand server teardown", () => {
   });
 
   describe("handing a freed server to a waiting match", () => {
-    let assignServer: jest.SpyInstance;
+    let assignOnDemandServer: jest.SpyInstance;
+    let outcomes: Record<string, boolean | "retry">;
     let waiting: Array<{ id: string; source?: string }>;
     let reservations: Array<{
       id: string;
@@ -914,10 +915,25 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       boot_status: string | null;
     }>;
 
+    const attempts = () =>
+      assignOnDemandServer.mock.calls.map(([matchId]) => matchId);
+
+    // The real assignServer, retry and all, down to the on-demand attempt.
     beforeEach(() => {
-      assignServer = jest
-        .spyOn(service, "assignServer")
-        .mockResolvedValue(true);
+      jest.useFakeTimers({ doNotFake: ["Date"] });
+      outcomes = {};
+      assignOnDemandServer = jest
+        .spyOn(service as any, "assignOnDemandServer")
+        .mockImplementation(async (matchId: string) => {
+          const outcome = outcomes[matchId] ?? true;
+          if (outcome === "retry") {
+            throw new FailedToCreateOnDemandServer();
+          }
+          return outcome;
+        });
+      jest
+        .spyOn(service as any, "assignDedicatedServer")
+        .mockResolvedValue(false);
       waiting = [{ id: "match-a" }, { id: "match-b" }, { id: "match-c" }];
       reservations = [
         {
@@ -972,10 +988,24 @@ describe("MatchAssistantService — on-demand server teardown", () => {
           };
         }
         if (request.matches_by_pk) {
-          return { matches_by_pk: { source: "5stack" } };
+          return {
+            matches_by_pk: {
+              id: request.matches_by_pk.__args.id,
+              status: "WaitingForServer",
+              region: "USE",
+              source: "5stack",
+              server_error: null,
+              options: { prefer_dedicated_server: false },
+            },
+          };
         }
         return {};
       });
+    });
+
+    afterEach(() => {
+      jest.clearAllTimers();
+      jest.useRealTimers();
     });
 
     it("re-arms the boot check of a booting match it goes past", async () => {
@@ -991,7 +1021,7 @@ describe("MatchAssistantService — on-demand server teardown", () => {
     it("goes past a match whose own server is still booting", async () => {
       await service.assignWaitingMatch("USE");
 
-      expect(assignServer.mock.calls).toEqual([["match-b"]]);
+      expect(attempts()).toEqual(["match-b"]);
     });
 
     it("takes a match whose booting server's Job is gone", async () => {
@@ -999,7 +1029,7 @@ describe("MatchAssistantService — on-demand server teardown", () => {
 
       await service.assignWaitingMatch("USE");
 
-      expect(assignServer.mock.calls).toEqual([["match-a"]]);
+      expect(attempts()).toEqual(["match-a"]);
     });
 
     it("takes a match whose server has waited ten minutes for its first ping", async () => {
@@ -1015,7 +1045,7 @@ describe("MatchAssistantService — on-demand server teardown", () => {
 
       await service.assignWaitingMatch("USE");
 
-      expect(assignServer.mock.calls).toEqual([["match-a"]]);
+      expect(attempts()).toEqual(["match-a"]);
     });
 
     it("goes past a booting match when its Job cannot be read", async () => {
@@ -1025,7 +1055,7 @@ describe("MatchAssistantService — on-demand server teardown", () => {
 
       await service.assignWaitingMatch("USE");
 
-      expect(assignServer.mock.calls).toEqual([["match-b"]]);
+      expect(attempts()).toEqual(["match-b"]);
     });
 
     // A practice match waits for a server only once its session has failed.
@@ -1035,16 +1065,27 @@ describe("MatchAssistantService — on-demand server teardown", () => {
 
       await service.assignWaitingMatch("USE");
 
-      expect(assignServer.mock.calls).toEqual([["match-b"]]);
+      expect(attempts()).toEqual(["match-b"]);
     });
 
-    it("goes past a match it could not place to the next one", async () => {
+    // Its retries will take the server; another match trying too would race it.
+    it("leaves the server to the oldest match while its attempt retries", async () => {
       reservations = [];
-      assignServer.mockImplementation(async (id: string) => id !== "match-a");
+      outcomes = { "match-a": "retry" };
 
-      await service.assignWaitingMatch("USE");
+      await expect(service.assignWaitingMatch("USE")).resolves.toBe(1);
 
-      expect(assignServer.mock.calls).toEqual([["match-a"], ["match-b"]]);
+      expect(attempts()).toEqual(["match-a"]);
+      expect(jest.getTimerCount()).toBe(1);
+    });
+
+    it("stops when the oldest match finds no server free", async () => {
+      reservations = [];
+      outcomes = { "match-a": false };
+
+      await expect(service.assignWaitingMatch("USE", 2)).resolves.toBe(0);
+
+      expect(attempts()).toEqual(["match-a"]);
     });
 
     it("places as many waiting matches as it has servers, each tried once", async () => {
@@ -1052,20 +1093,7 @@ describe("MatchAssistantService — on-demand server teardown", () => {
 
       await expect(service.assignWaitingMatch("USE", 2)).resolves.toBe(2);
 
-      expect(assignServer.mock.calls).toEqual([["match-a"], ["match-b"]]);
-    });
-
-    it("tries each waiting match once when none can be placed", async () => {
-      reservations = [];
-      assignServer.mockResolvedValue(false);
-
-      await expect(service.assignWaitingMatch("USE", 2)).resolves.toBe(0);
-
-      expect(assignServer.mock.calls).toEqual([
-        ["match-a"],
-        ["match-b"],
-        ["match-c"],
-      ]);
+      expect(attempts()).toEqual(["match-a", "match-b"]);
     });
 
     it("goes to the oldest waiting match when none is booting", async () => {
@@ -1073,7 +1101,23 @@ describe("MatchAssistantService — on-demand server teardown", () => {
 
       await service.assignWaitingMatch("USE");
 
-      expect(assignServer.mock.calls).toEqual([["match-a"]]);
+      expect(attempts()).toEqual(["match-a"]);
+    });
+
+    // Another attempt for the same match may have placed it meanwhile.
+    it("only says a match is waiting for a server once retries run out if it still has none", async () => {
+      outcomes = { "match-a": "retry" };
+
+      await service.assignServer("match-a", 10);
+
+      const [waitingWrite] = hasura.mutation.mock.calls
+        .map(([mutation]) => mutation?.update_matches)
+        .filter(
+          (update) => update?.__args?._set?.status === "WaitingForServer",
+        );
+      expect(waitingWrite.__args.where).toEqual(
+        expect.objectContaining({ server_id: { _is_null: true } }),
+      );
     });
   });
 
@@ -1537,7 +1581,7 @@ describe("MatchAssistantService — on-demand server teardown", () => {
     });
 
     it("says when it placed the match", async () => {
-      await expect(service.assignServer("match-1")).resolves.toBe(true);
+      await expect(service.assignServer("match-1")).resolves.toBe("placed");
     });
 
     it("says when it could not place the match", async () => {
@@ -1566,7 +1610,7 @@ describe("MatchAssistantService — on-demand server teardown", () => {
         return { matches: [], servers: [] };
       });
 
-      await expect(service.assignServer("match-1")).resolves.toBe(false);
+      await expect(service.assignServer("match-1")).resolves.toBe("unplaced");
     });
 
     it("does not look for a server for a match that already ended", async () => {

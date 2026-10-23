@@ -213,7 +213,7 @@ describe("MatchAssistantService", () => {
       .spyOn(service as any, "startMatch")
       .mockResolvedValue(undefined);
 
-    await expect(service.assignServer("match-1")).resolves.toBe(true);
+    await expect(service.assignServer("match-1")).resolves.toBe("placed");
 
     expect(startMatch).not.toHaveBeenCalled();
   });
@@ -239,7 +239,7 @@ describe("MatchAssistantService", () => {
       .spyOn(service as any, "assignDedicatedServer")
       .mockResolvedValue(true);
 
-    await expect(service.assignServer("match-1")).resolves.toBe(false);
+    await expect(service.assignServer("match-1")).resolves.toBe("unplaced");
 
     expect(assignDedicated).not.toHaveBeenCalled();
     expect(waitingForServerWrites()).toHaveLength(1);
@@ -568,7 +568,7 @@ describe("MatchAssistantService", () => {
       .spyOn(service as any, "assignDedicatedServer")
       .mockResolvedValue(true);
 
-    await expect(service.assignServer("match-1")).resolves.toBe(true);
+    await expect(service.assignServer("match-1")).resolves.toBe("placed");
 
     expect(assignOnDemand).toHaveBeenCalled();
     expect(assignDedicated).not.toHaveBeenCalled();

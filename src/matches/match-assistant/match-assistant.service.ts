@@ -518,7 +518,8 @@ export class MatchAssistantService {
    * between the two would win the read and lose the row.
    *
    * Excluding WaitingForServer itself is what keeps the assignment path from
-   * firing the status webhook twice when the step that failed already said so.
+   * firing the status webhook twice when the step that failed already said so,
+   * and a match with a server is one another attempt has placed meanwhile.
    */
   private async markWaitingForServer(matchId: string): Promise<void> {
     await this.hasura.mutation({
@@ -534,6 +535,9 @@ export class MatchAssistantService {
                 "WaitingForServer",
               ],
             },
+            server_id: {
+              _is_null: true,
+            },
           },
           _set: {
             status: "WaitingForServer",
@@ -544,8 +548,11 @@ export class MatchAssistantService {
     });
   }
 
-  // True once the match has a server; a retry it schedules says nothing here.
-  public async assignServer(matchId: string, tries = 0): Promise<boolean> {
+  // Retrying: it failed to boot one and will try again by itself.
+  public async assignServer(
+    matchId: string,
+    tries = 0,
+  ): Promise<"placed" | "retrying" | "unplaced"> {
     if (tries === 0) {
       await this.setServerError(matchId, null);
     }
@@ -570,7 +577,7 @@ export class MatchAssistantService {
       MatchAssistantService.TERMINAL_MATCH_STATUSES.includes(match.status)
     ) {
       this.logger.log(`[${matchId}] match has ended, not assigning a server`);
-      return false;
+      return "unplaced";
     }
 
     const onDemandOnly = MatchAssistantService.ON_DEMAND_ONLY_SOURCES.includes(
@@ -586,7 +593,7 @@ export class MatchAssistantService {
 
         if (assignedDedicated) {
           await this.startMatch(matchId);
-          return true;
+          return "placed";
         }
       } catch (error) {
         this.logger.error(
@@ -599,7 +606,7 @@ export class MatchAssistantService {
     try {
       const isAssignedOnDemand = await this.assignOnDemandServer(matchId);
       if (isAssignedOnDemand) {
-        return true;
+        return "placed";
       }
     } catch (error) {
       this.logger.error(
@@ -612,19 +619,19 @@ export class MatchAssistantService {
             `[${matchId}] max retries reached for server assignment`,
           );
           await this.markWaitingForServer(matchId);
-          return false;
+          return "unplaced";
         }
         setTimeout(async () => {
           this.logger.log(`[${matchId}] try retry assign server....`);
           await this.assignServer(matchId, ++tries);
         }, tries * 1000);
-        return false;
+        return "retrying";
       }
     }
 
     // The fallbacks end in startMatch, which would write Live over a match canceled meanwhile.
     if (await this.hasMatchEnded(matchId)) {
-      return false;
+      return "unplaced";
     }
 
     // No pod, and no second pool to fall back on. Saying so is what turns the
@@ -636,7 +643,7 @@ export class MatchAssistantService {
         `[${matchId}] practice match, and no on demand server could be booted`,
       );
       await this.markWaitingForServer(match.id);
-      return false;
+      return "unplaced";
     }
 
     // we already checked above, so we can skip trying to assign again
@@ -645,13 +652,13 @@ export class MatchAssistantService {
         `[${matchId}] unable to assign dedicated server, trying on demand`,
       );
       await this.markWaitingForServer(match.id);
-      return false;
+      return "unplaced";
     }
 
     try {
       if (await this.assignDedicatedServer(match.id, match.region)) {
         await this.startMatch(matchId);
-        return true;
+        return "placed";
       }
     } catch (error) {
       this.logger.error(
@@ -666,7 +673,7 @@ export class MatchAssistantService {
 
     await this.markWaitingForServer(match.id);
 
-    return false;
+    return "unplaced";
   }
 
   /**
@@ -2358,8 +2365,9 @@ export class MatchAssistantService {
       },
     });
 
-    // Each match is tried once: one stays WaitingForServer while its own server
-    // boots, and one that cannot be placed makes way for the next.
+    // Oldest first, each tried once: one stays WaitingForServer while its own
+    // server boots. One retrying takes a server with it, and one that finds
+    // nothing free means none is.
     let placed = 0;
 
     for (const match of matches) {
@@ -2372,9 +2380,11 @@ export class MatchAssistantService {
         continue;
       }
 
-      if (await this.assignServer(match.id)) {
-        placed++;
+      if ((await this.assignServer(match.id)) === "unplaced") {
+        break;
       }
+
+      placed++;
     }
 
     return placed;
