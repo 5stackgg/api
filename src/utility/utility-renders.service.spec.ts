@@ -85,10 +85,13 @@ describe("UtilityRendersService", () => {
     put: jest.Mock;
     has: jest.Mock;
     removePrefix: jest.Mock;
-    remove?: jest.Mock;
+    removeKeys: jest.Mock;
   };
   let queue: { add: jest.Mock };
   let logger: { log: jest.Mock; warn: jest.Mock; error: jest.Mock };
+
+  const removedKeys = () =>
+    s3.removeKeys.mock.calls.flatMap(([keys]) => keys as Array<string>);
 
   beforeEach(() => {
     postgres = { query: jest.fn() };
@@ -96,6 +99,7 @@ describe("UtilityRendersService", () => {
       put: jest.fn(),
       has: jest.fn().mockResolvedValue(false),
       removePrefix: jest.fn().mockResolvedValue(0),
+      removeKeys: jest.fn(async (keys: Array<string>) => keys),
     };
     queue = { add: jest.fn() };
     logger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
@@ -911,21 +915,26 @@ describe("UtilityRendersService", () => {
         ])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
-      s3.remove = jest.fn();
 
       const result = await service.finalizeUpload("job-2", {} as any, null);
 
       expect(result.file).not.toBe(`clips/utility/${LINEUP.id}.mp4`);
-      expect(s3.remove).toHaveBeenCalledWith(`clips/utility/${LINEUP.id}.mp4`);
-      expect(s3.remove).toHaveBeenCalledWith(`clips/utility/${LINEUP.id}.jpg`);
+      expect(removedKeys()).toContain(`clips/utility/${LINEUP.id}.mp4`);
+      expect(removedKeys()).toContain(`clips/utility/${LINEUP.id}.jpg`);
     });
 
-    it("leaves the thumbnail alone when the pod never uploaded one", async () => {
+    // The previous thumbnail is removed below, so keeping its key would point
+    // the lineup at a file that is gone.
+    it("drops the previous thumbnail when the pod never uploaded one", async () => {
       uploading();
 
       await service.finalizeUpload("job-1", {} as any, null);
 
-      expect(lineupUpdate()[2]).toBeNull();
+      const [sql, bindings] = postgres.query.mock.calls.find(([text]) =>
+        String(text).includes("UPDATE public.utility_lineups"),
+      );
+      expect(sql).toContain("preview_thumbnail = $3,");
+      expect(bindings[2]).toBeNull();
     });
 
     it("records the stills this render uploaded alongside its clip", async () => {
@@ -1013,12 +1022,11 @@ describe("UtilityRendersService", () => {
         ])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
-      s3.remove = jest.fn();
 
       await service.finalizeUpload("job-1", {} as any, null);
 
       expect(lineupUpdate()[4]).toBeNull();
-      expect(s3.remove).toHaveBeenCalledWith(
+      expect(removedKeys()).toContain(
         `clips/utility/${LINEUP.id}/job-0/aim.jpg`,
       );
     });
@@ -1057,7 +1065,6 @@ describe("UtilityRendersService", () => {
           },
         ])
         .mockResolvedValueOnce([{ id: "render-new" }]);
-      s3.remove = jest.fn();
 
       await expect(service.deletePreview("render-new")).resolves.toBe(true);
 
@@ -1066,8 +1073,8 @@ describe("UtilityRendersService", () => {
           String(sql).includes("UPDATE public.utility_lineups"),
         ),
       ).toBe(true);
-      expect(s3.remove).toHaveBeenCalledWith(current);
-      expect(s3.remove).toHaveBeenCalledWith(
+      expect(removedKeys()).toContain(current);
+      expect(removedKeys()).toContain(
         `clips/utility/${LINEUP.id}/render-new/aim.webp`,
       );
     });
@@ -1082,7 +1089,6 @@ describe("UtilityRendersService", () => {
           },
         ])
         .mockResolvedValueOnce([{ id: "render-old" }]);
-      s3.remove = jest.fn();
 
       await expect(service.deletePreview("render-old")).resolves.toBe(true);
 
@@ -1091,7 +1097,7 @@ describe("UtilityRendersService", () => {
           String(sql).includes("UPDATE public.utility_lineups"),
         ),
       ).toBe(false);
-      expect(s3.remove).not.toHaveBeenCalled();
+      expect(removedKeys()).toEqual([]);
     });
 
     it("takes the preview with a render deleted before it reported done", async () => {
@@ -1112,7 +1118,6 @@ describe("UtilityRendersService", () => {
           },
         ])
         .mockResolvedValueOnce([{ id: "render-new" }]);
-      s3.remove = jest.fn();
 
       await service.deletePreview("render-new");
 
@@ -1152,11 +1157,10 @@ describe("UtilityRendersService", () => {
         ])
         .mockResolvedValueOnce([{ count: "1" }])
         .mockResolvedValueOnce([{ id: "render-old" }]);
-      s3.remove = jest.fn();
 
       await service.deletePreview("render-old");
 
-      expect(s3.remove).not.toHaveBeenCalled();
+      expect(removedKeys()).toEqual([]);
     });
   });
 

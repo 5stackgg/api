@@ -1252,10 +1252,30 @@ export class UtilityLineupsService {
       return { id: row.id, progress_reset: false };
     }
 
-    await this.postgres.query(
-      `UPDATE public.utility_lineups SET ${sets.join(", ")} WHERE id = $1::uuid`,
+    const [replaced] = await this.postgres.query<
+      Array<{
+        trajectory_file: string | null;
+        smoke_voxels_file: string | null;
+      }>
+    >(
+      `UPDATE public.utility_lineups l
+          SET ${sets.join(", ")}
+         FROM (SELECT id, trajectory_file, smoke_voxels_file
+                 FROM public.utility_lineups
+                WHERE id = $1::uuid
+                  FOR UPDATE) old
+        WHERE l.id = old.id
+    RETURNING old.trajectory_file, old.smoke_voxels_file`,
       values,
     );
+
+    if (options.geometry) {
+      await this.artifacts.removeFiles(
+        [replaced?.trajectory_file, replaced?.smoke_voxels_file].filter(
+          (key): key is string => !!key,
+        ),
+      );
+    }
 
     return { id: row.id, progress_reset: progressReset };
   }
@@ -1331,7 +1351,11 @@ export class UtilityLineupsService {
     return configured;
   }
 
-  public async deleteLineup(lineupId: string, steamId: string): Promise<void> {
+  public async deleteLineup(
+    lineupId: string,
+    steamId: string,
+    actorIsModerator = false,
+  ): Promise<void> {
     const [row] = await this.postgres.query<
       Array<{ id: string; author_steam_id: string }>
     >(
@@ -1344,16 +1368,20 @@ export class UtilityLineupsService {
       throw Error("lineup not found");
     }
 
-    if (row.author_steam_id !== steamId) {
+    if (!actorIsModerator && row.author_steam_id !== steamId) {
       throw Error("you did not author this lineup");
     }
 
-    await this.artifacts.removeTrajectories(lineupId);
-    await this.artifacts.removePreview(lineupId);
-    await this.postgres.query(
-      "DELETE FROM public.utility_lineups WHERE id = $1::uuid",
-      [lineupId],
-    );
+    // Deleted first so a refused delete never reaches S3, committed last so a
+    // failed sweep keeps the row its files are found by.
+    await this.postgres.transaction(async (client) => {
+      await client.query(
+        "DELETE FROM public.utility_lineups WHERE id = $1::uuid",
+        [row.id],
+      );
+      await this.artifacts.removeTrajectories(row.id);
+      await this.artifacts.removePreview(row.id);
+    });
   }
 
   // Promotes a lineup the plugin already recorded inside this session. The

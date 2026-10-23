@@ -416,15 +416,7 @@ export class UtilityRendersService {
    * clearing its columns and removing the two objects is the whole teardown.
    */
   private async removeStills(keys: Array<string>): Promise<void> {
-    for (const key of keys) {
-      try {
-        await this.s3.remove(key);
-      } catch (error) {
-        this.logger.warn(
-          `[utility-render] could not remove ${key}: ${(error as Error)?.message}`,
-        );
-      }
-    }
+    await this.s3.removeKeys(keys);
   }
 
   // A lineup carries one preview, and since clips are keyed per render the
@@ -1328,7 +1320,7 @@ export class UtilityRendersService {
     await this.postgres.query(
       `UPDATE public.utility_lineups
           SET preview_file = $2,
-              preview_thumbnail = COALESCE($3, preview_thumbnail),
+              preview_thumbnail = $3,
               preview_duration_ms = COALESCE($4::int, preview_duration_ms),
               preview_stills = $5::jsonb,
               preview_rendered_at = now(),

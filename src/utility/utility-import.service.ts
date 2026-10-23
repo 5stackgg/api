@@ -292,26 +292,39 @@ export class UtilityImportService {
       return { dry_run: dryRun, origin_source: source, lineups };
     }
 
-    // The rows go away either way; the S3 objects only go away if something
-    // removes them first. Seeded lineups never have one, so this is empty for
-    // the case that motivated the action and correct for the ones that do not.
-    const withArtifacts = await this.postgres.query<Array<{ id: string }>>(
-      `SELECT id::text AS id
-         FROM public.utility_lineups
-        WHERE origin_source = $1
-          AND (trajectory_file IS NOT NULL
-               OR preview_file IS NOT NULL
-               OR smoke_voxels_file IS NOT NULL)`,
+    const hasFiles = `(l.trajectory_file IS NOT NULL
+         OR l.preview_file IS NOT NULL
+         OR l.smoke_voxels_file IS NOT NULL
+         OR EXISTS (
+           SELECT 1
+             FROM public.utility_lineup_renders r
+            WHERE r.utility_lineup_id = l.id
+         ))`;
+
+    const withFiles = await this.postgres.query<Array<{ id: string }>>(
+      `SELECT l.id::text AS id
+         FROM public.utility_lineups l
+        WHERE l.origin_source = $1 AND ${hasFiles}`,
       [source],
     );
 
-    for (const lineup of withArtifacts) {
-      await this.artifacts.removeTrajectories(lineup.id);
-      await this.artifacts.removePreview(lineup.id);
+    // One at a time, so a sweep that fails keeps back only its own lineup.
+    for (const lineup of withFiles) {
+      await this.postgres.transaction(async (client) => {
+        await client.query(
+          "DELETE FROM public.utility_lineups WHERE id = $1::uuid",
+          [lineup.id],
+        );
+        await this.artifacts.removeTrajectories(lineup.id);
+        await this.artifacts.removePreview(lineup.id);
+      });
     }
 
+    // A seeded source is thousands of lineups that never had a file. One that
+    // took one on since the list above stays for the next purge.
     await this.postgres.query(
-      "DELETE FROM public.utility_lineups WHERE origin_source = $1",
+      `DELETE FROM public.utility_lineups l
+        WHERE l.origin_source = $1 AND NOT ${hasFiles}`,
       [source],
     );
 

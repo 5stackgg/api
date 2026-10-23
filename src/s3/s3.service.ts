@@ -460,30 +460,100 @@ export class S3Service implements OnModuleDestroy {
     return prefixes;
   }
 
+  // Every version of each key, as removePrefix does, but never a key that only
+  // starts with it. Answers with the keys that are gone, so a caller can keep
+  // track of one the store refused.
   public async removeKeys(
     keys: string[],
     bucket: string = this.bucket,
-  ): Promise<number> {
-    const client = await this.files(bucket);
+  ): Promise<string[]> {
+    const client = this.raw();
+    const failed = new Set<string>();
+    const versions: Array<{ Key: string; VersionId?: string }> = [];
 
-    let removed = 0;
-    for (let i = 0; i < keys.length; i += 1000) {
-      const batch = keys.slice(i, i + 1000);
+    for (let i = 0; i < keys.length; i += 25) {
+      await Promise.all(
+        keys.slice(i, i + 25).map(async (key) => {
+          try {
+            versions.push(...(await this.versionsOf(client, key, bucket)));
+          } catch (error) {
+            failed.add(key);
+            this.logger.error(
+              `unable to list ${key}: ${(error as Error)?.message}`,
+            );
+          }
+        }),
+      );
+    }
 
-      // The bulk delete resolves even when individual keys fail, collecting
-      // them in `errors` -- counting the batch instead of what came back
-      // reports a clean sweep over objects that are still there.
-      const result = await client.delete(batch);
-
-      removed += result.deleted.length;
-
-      for (const failure of result.errors ?? []) {
+    for (let i = 0; i < versions.length; i += 1000) {
+      const batch = versions.slice(i, i + 1000);
+      try {
+        const result = await client.send(
+          new DeleteObjectsCommand({
+            Bucket: bucket,
+            Delete: { Objects: batch },
+          }),
+        );
+        for (const error of result?.Errors ?? []) {
+          failed.add(error.Key);
+          this.logger.error(
+            `unable to remove ${error.Key}: ${error.Code} ${error.Message ?? ""}`.trim(),
+          );
+        }
+      } catch (error) {
+        for (const entry of batch) {
+          failed.add(entry.Key);
+        }
         this.logger.error(
-          `unable to remove ${failure.key}: ${failure.error.message}`,
+          `unable to remove ${batch.length} object version(s): ${(error as Error)?.message}`,
         );
       }
     }
-    return removed;
+
+    return keys.filter((key) => !failed.has(key));
+  }
+
+  private async versionsOf(
+    client: S3Client,
+    key: string,
+    bucket: string,
+  ): Promise<Array<{ Key: string; VersionId?: string }>> {
+    const versions: Array<{ Key: string; VersionId?: string }> = [];
+    let keyMarker: string | undefined;
+    let versionIdMarker: string | undefined;
+
+    do {
+      const listed = await client.send(
+        new ListObjectVersionsCommand({
+          Bucket: bucket,
+          Prefix: key,
+          KeyMarker: keyMarker,
+          VersionIdMarker: versionIdMarker,
+        }),
+      );
+
+      for (const entry of [
+        ...(listed.Versions ?? []),
+        ...(listed.DeleteMarkers ?? []),
+      ]) {
+        if (entry.Key === key) {
+          versions.push({
+            Key: key,
+            ...(entry.VersionId && entry.VersionId !== "null"
+              ? { VersionId: entry.VersionId }
+              : {}),
+          });
+        }
+      }
+
+      keyMarker = listed.IsTruncated ? listed.NextKeyMarker : undefined;
+      versionIdMarker = listed.IsTruncated
+        ? listed.NextVersionIdMarker
+        : undefined;
+    } while (keyMarker || versionIdMarker);
+
+    return versions;
   }
 
   public async remove(

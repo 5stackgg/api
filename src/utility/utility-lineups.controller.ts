@@ -2,6 +2,7 @@ import { Controller } from "@nestjs/common";
 import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
 import { User } from "../auth/types/User";
+import { isRoleAbove } from "../utilities/isRoleAbove";
 import { UtilityImportService } from "./utility-import.service";
 import { UtilityLineupsService } from "./utility-lineups.service";
 import { UtilityPracticeService } from "./utility-practice.service";
@@ -66,6 +67,20 @@ export class UtilityLineupsController {
       name: data.name ?? null,
       collection_id: data.collection_id ?? null,
     });
+  }
+
+  @HasuraAction()
+  public async deleteUtilityLineup(data: {
+    user: User;
+    utility_lineup_id: string;
+  }) {
+    await this.lineups.deleteLineup(
+      data.utility_lineup_id,
+      String(data.user.steam_id),
+      isRoleAbove(data.user.role, "moderator"),
+    );
+
+    return { success: true };
   }
 
   @HasuraAction()

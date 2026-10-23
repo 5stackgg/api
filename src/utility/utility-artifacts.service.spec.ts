@@ -28,7 +28,11 @@ const ROW = {
 describe("UtilityArtifactsService smoke voxels", () => {
   let service: UtilityArtifactsService;
   let postgres: { query: jest.Mock };
-  let s3: { put: jest.Mock; remove: jest.Mock; removePrefix: jest.Mock };
+  let s3: {
+    put: jest.Mock;
+    removeKeys: jest.Mock;
+    removePrefixStrictly: jest.Mock;
+  };
   let parser: { smokeVoxels: jest.Mock };
   let logger: { log: jest.Mock; warn: jest.Mock; error: jest.Mock };
 
@@ -38,8 +42,8 @@ describe("UtilityArtifactsService smoke voxels", () => {
     };
     s3 = {
       put: jest.fn().mockResolvedValue(undefined),
-      remove: jest.fn().mockResolvedValue(true),
-      removePrefix: jest.fn().mockResolvedValue(0),
+      removeKeys: jest.fn(async (keys: Array<string>) => keys),
+      removePrefixStrictly: jest.fn().mockResolvedValue(0),
     };
     parser = { smokeVoxels: jest.fn().mockResolvedValue(ROW) };
     logger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
@@ -63,7 +67,7 @@ describe("UtilityArtifactsService smoke voxels", () => {
   it("puts the smoke where deleting the lineup sweeps", async () => {
     await service.removePreview(LINEUP);
 
-    const [prefix] = s3.removePrefix.mock.calls[0];
+    const [prefix] = s3.removePrefixStrictly.mock.calls[0];
     expect(prefix).toBe(UtilityRendersService.GetLineupPreviewS3Prefix(LINEUP));
     expect(
       UtilityArtifactsService.smokeVoxelsKey(LINEUP, Date.now()).startsWith(
@@ -88,7 +92,7 @@ describe("UtilityArtifactsService smoke voxels", () => {
     expect(sql).toContain("smoke_voxels_file = $2");
     expect(sql).toContain("smoke_voxels_at = now()");
     expect(bindings).toEqual([LINEUP, key]);
-    expect(s3.remove).not.toHaveBeenCalled();
+    expect(s3.removeKeys).not.toHaveBeenCalled();
   });
 
   it("removes the smoke it replaced", async () => {
@@ -98,9 +102,9 @@ describe("UtilityArtifactsService smoke voxels", () => {
 
     await service.storeSmokeVoxels(LINEUP, CAPTURE);
 
-    expect(s3.remove).toHaveBeenCalledWith(
+    expect(s3.removeKeys).toHaveBeenCalledWith([
       `clips/utility/${LINEUP}.smoke.1.json`,
-    );
+    ]);
   });
 
   it("stores nothing when the parser rebuilt nothing", async () => {
@@ -139,6 +143,6 @@ describe("UtilityArtifactsService smoke voxels", () => {
     postgres.query.mockResolvedValueOnce([]);
 
     await expect(service.storeSmokeVoxelRow(LINEUP, ROW)).resolves.toBe(false);
-    expect(s3.remove).toHaveBeenCalledWith(s3.put.mock.calls[0][0]);
+    expect(s3.removeKeys).toHaveBeenCalledWith([s3.put.mock.calls[0][0]]);
   });
 });

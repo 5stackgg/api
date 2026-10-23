@@ -149,6 +149,16 @@ describe("hasura table metadata", () => {
     ).toEqual(["administrator"]);
   });
 
+  // A lineup's clips, stills and trajectories are in S3, and only the
+  // deleteUtilityLineup action removes them with the row.
+  it("lets no role delete a utility lineup directly", () => {
+    const lineups = tables.find(
+      ({ file }) => file === "public_utility_lineups.yaml",
+    );
+
+    expect(lineups?.metadata?.delete_permissions ?? []).toEqual([]);
+  });
+
   // Steam and Discord sync write these with the admin secret. A player's
   // avatar_url is loaded by a render pod's browser inside the cluster, so
   // whoever can write it chooses what that browser fetches.

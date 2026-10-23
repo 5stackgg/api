@@ -183,13 +183,7 @@ export class UtilityArtifactsService {
     );
 
     if (previousKey && previousKey !== key) {
-      try {
-        await this.s3.remove(previousKey);
-      } catch (error) {
-        this.logger.warn(
-          `[utility-trajectory] failed to remove old blob ${previousKey}: ${(error as Error)?.message}`,
-        );
-      }
+      await this.s3.removeKeys([previousKey]);
     }
 
     this.logger.log(
@@ -275,12 +269,12 @@ export class UtilityArtifactsService {
       // Deleted before this landed: its sweep has already run, so nothing else
       // would ever remove this.
       if (!previous) {
-        await this.s3.remove(key);
+        await this.s3.removeKeys([key]);
         return false;
       }
 
       if (previous.smoke_voxels_file && previous.smoke_voxels_file !== key) {
-        await this.s3.remove(previous.smoke_voxels_file);
+        await this.s3.removeKeys([previous.smoke_voxels_file]);
       }
     } catch (error) {
       this.logger.warn(
@@ -349,29 +343,21 @@ export class UtilityArtifactsService {
     return await this.s3.has(key);
   }
 
-  // Deleting the row leaves the blob behind, and a versioned bucket keeps every
-  // cache-busted generation of it — sweep the whole prefix, not just the key
-  // the row happened to be pointing at.
-  // The rendered clip, its thumbnail, every still and the recorded smoke: the
-  // lineup row is the only thing that names them, so they go when it does.
+  // The lineup row is the only thing that names these files, and a versioned
+  // bucket keeps every cache-busted generation of them, so the whole prefix
+  // goes. Strict: a lineup whose files are still there keeps its row, rather
+  // than leaving files nothing points at.
   public async removePreview(lineupId: string): Promise<void> {
-    const prefix = UtilityRendersService.GetLineupPreviewS3Prefix(lineupId);
-    try {
-      await this.s3.removePrefix(prefix);
-    } catch (error) {
-      this.logger.warn(
-        `[utility-preview] failed to sweep ${prefix}: ${(error as Error)?.message}`,
-      );
-    }
+    await this.s3.removePrefixStrictly(
+      UtilityRendersService.GetLineupPreviewS3Prefix(lineupId),
+    );
+  }
+
+  public async removeFiles(keys: Array<string>): Promise<void> {
+    await this.s3.removeKeys(keys);
   }
 
   public async removeTrajectories(lineupId: string): Promise<void> {
-    try {
-      await this.s3.removePrefix(`utility/${lineupId}/`);
-    } catch (error) {
-      this.logger.warn(
-        `[utility-trajectory] failed to sweep utility/${lineupId}/: ${(error as Error)?.message}`,
-      );
-    }
+    await this.s3.removePrefixStrictly(`utility/${lineupId}/`);
   }
 }

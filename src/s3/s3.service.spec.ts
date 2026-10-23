@@ -198,3 +198,92 @@ describe("S3Service.removePrefix", () => {
     ).rejects.toThrow(/AccessDenied/);
   });
 });
+
+describe("S3Service.removeKeys", () => {
+  const withClient = (deleted: Record<string, unknown> = {}) => {
+    const service = build("rustfs", "9000", false);
+    const send = jest.fn(async (command: { constructor: { name: string } }) =>
+      command.constructor.name === "ListObjectVersionsCommand"
+        ? {
+            Versions: [
+              { Key: "clips/utility/a/r.mp4", VersionId: "v1" },
+              { Key: "clips/utility/a/r.mp4", VersionId: "v2" },
+              { Key: "clips/utility/a/r.mp4.part", VersionId: "v3" },
+            ],
+            IsTruncated: false,
+          }
+        : deleted,
+    );
+
+    (service as any).rawClients.set("internal", { send, destroy: jest.fn() });
+
+    return { service, send };
+  };
+
+  const deletedObjects = (send: jest.Mock) =>
+    send.mock.calls
+      .map(([command]) => command)
+      .filter((command) => command.constructor.name === "DeleteObjectsCommand")
+      .flatMap((command) => command.input.Delete.Objects);
+
+  // A plain delete on a versioned bucket only hides the object, and the
+  // versions underneath keep being billed.
+  it("removes every version of a key, and no key that only starts with it", async () => {
+    const { service, send } = withClient();
+
+    await expect(
+      service.removeKeys(["clips/utility/a/r.mp4"]),
+    ).resolves.toEqual(["clips/utility/a/r.mp4"]);
+    expect(deletedObjects(send)).toEqual([
+      { Key: "clips/utility/a/r.mp4", VersionId: "v1" },
+      { Key: "clips/utility/a/r.mp4", VersionId: "v2" },
+    ]);
+  });
+
+  it("lists each key and removes them all in one request", async () => {
+    const service = build("rustfs", "9000", false);
+    const send = jest.fn(
+      async (command: {
+        constructor: { name: string };
+        input: { Prefix?: string };
+      }) =>
+        command.constructor.name === "ListObjectVersionsCommand"
+          ? {
+              Versions: [{ Key: command.input.Prefix, VersionId: "v1" }],
+              IsTruncated: false,
+            }
+          : {},
+    );
+    (service as any).rawClients.set("internal", { send, destroy: jest.fn() });
+
+    await service.removeKeys([
+      "clips/utility/a/r.mp4",
+      "clips/utility/b/r.mp4",
+      "clips/utility/c/r.mp4",
+    ]);
+
+    const names = send.mock.calls.map(([command]) => command.constructor.name);
+    expect(
+      names.filter((name) => name === "ListObjectVersionsCommand"),
+    ).toHaveLength(3);
+    expect(
+      names.filter((name) => name === "DeleteObjectsCommand"),
+    ).toHaveLength(1);
+  });
+
+  it("leaves out a key the store refused", async () => {
+    const { service } = withClient({
+      Errors: [
+        {
+          Key: "clips/utility/a/r.mp4",
+          Code: "AccessDenied",
+          Message: "no deleteFiles capability",
+        },
+      ],
+    });
+
+    await expect(
+      service.removeKeys(["clips/utility/a/r.mp4"]),
+    ).resolves.toEqual([]);
+  });
+});
