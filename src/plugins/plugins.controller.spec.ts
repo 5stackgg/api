@@ -59,4 +59,16 @@ describe("PluginsController detect", () => {
       expect(res.body.profileTabLabel).toBeNull();
     }
   });
+
+  it("drops a profile tab label that isn't text", async () => {
+    for (const profileTabLabel of [42, { en: "Inventory" }, "   "]) {
+      const res = await detect({
+        name: "Hello",
+        slug: "hello",
+        profileTabLabel,
+      });
+
+      expect(res.body.profileTabLabel).toBeNull();
+    }
+  });
 });
