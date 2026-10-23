@@ -14,6 +14,7 @@ const WEIGHTS = {
   "tournament-group-stages.spec.ts": 16,
   "tournament-roster-lineup-refresh.spec.ts": 15,
   "map-veto.spec.ts": 15,
+  "hasura-socket-sessions.spec.ts": 15,
   "tournament-reset.spec.ts": 11,
   "tournament-bracket-match-recreate.spec.ts": 10,
   "fixtures-warm-reapply.spec.ts": 10,
