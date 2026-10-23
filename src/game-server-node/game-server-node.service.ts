@@ -1919,7 +1919,6 @@ export class GameServerNodeService {
                   ],
                   resources: {
                     requests: {
-                      cpu: "500m",
                       memory: "2Gi",
                     },
                     limits: {
