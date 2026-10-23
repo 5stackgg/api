@@ -726,6 +726,13 @@ type Mutation {
 }
 
 type Mutation {
+  setMatchPaused(
+    match_id: uuid!
+    paused: Boolean!
+  ): SuccessOutput
+}
+
+type Mutation {
   resumeClipRenderBatch(
     match_map_id: uuid!
   ): SuccessOutput

@@ -442,6 +442,45 @@ export class MatchRecoveryService {
     return { success: true };
   }
 
+  // The plugin takes a console pause as an admin's technical pause: both teams
+  // resume it from chat, or an organizer resumes it at once.
+  public async setMatchPaused(
+    matchId: string,
+    paused: boolean,
+    viewer: RecoveryViewer,
+  ) {
+    const match = await this.getMatch(matchId);
+
+    const statuses = paused ? ["Live", "Overtime"] : ["Paused"];
+    if (match.status !== "Live" || !statuses.includes(match.map_status ?? "")) {
+      throw Error(
+        paused ? "there is no live map to pause" : "the map isn't paused",
+      );
+    }
+
+    if (
+      this.isBlockedTeamMember(
+        viewer,
+        await this.isTeamAffiliated(match, viewer.steam_id),
+      )
+    ) {
+      throw Error(
+        "organizers on one of the teams can't pause or resume the match",
+      );
+    }
+
+    const response = await this.matchAssistant.setServerPaused(matchId, paused);
+    if (response === undefined) {
+      throw Error("the match server can't be reached");
+    }
+
+    this.logger.log(
+      `[${matchId}] organizer ${paused ? "paused" : "resumed"} map ${match.match_map_id}`,
+    );
+
+    return { success: true };
+  }
+
   public parseKeyValues(text: string): KeyValues {
     const tokens = this.tokenize(text);
     let index = 0;
@@ -686,13 +725,17 @@ export class MatchRecoveryService {
       return "not_in_progress";
     }
 
-    // The in-game reset needs both teams to vote for it; an organizer who is on
-    // one of them would skip that vote.
-    if (affiliated && !isRoleAbove(viewer.role, "moderator")) {
+    if (this.isBlockedTeamMember(viewer, affiliated)) {
       return "team_member";
     }
 
     return null;
+  }
+
+  // An in-game reset needs both teams to vote for it, and a pause both teams
+  // to resume it; an organizer who is on one of them would skip that.
+  private isBlockedTeamMember(viewer: RecoveryViewer, affiliated: boolean) {
+    return affiliated && !isRoleAbove(viewer.role, "moderator");
   }
 
   private expectedPlayers(match: MatchRow) {
