@@ -741,7 +741,6 @@ cat <<-EOF >/etc/rancher/k3s/config.yaml
 	  - "cpu-manager-policy=static"
 	  - "cpu-manager-reconcile-period=5s"
 	  - "system-reserved=cpu=1"
-	  - "kube-reserved=cpu=1"
 EOF
         ok "node-ip set to \${TAILSCALE_IP}"
 
