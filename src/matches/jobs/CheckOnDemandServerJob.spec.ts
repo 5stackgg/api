@@ -6,7 +6,10 @@ jest.mock("@kubernetes/client-node", () => ({
 }));
 
 import { DelayedError } from "bullmq";
-import { CheckOnDemandServerJob } from "./CheckOnDemandServerJob";
+import {
+  CheckOnDemandServerJob,
+  CheckOnDemandServerJobEvents,
+} from "./CheckOnDemandServerJob";
 import { MatchAssistantService } from "../match-assistant/match-assistant.service";
 
 describe("CheckOnDemandServerJob", () => {
@@ -87,5 +90,33 @@ describe("CheckOnDemandServerJob", () => {
     ).resolves.toBeUndefined();
 
     expect(discordMatchOverview.updateMatchOverview).not.toHaveBeenCalled();
+  });
+});
+
+describe("CheckOnDemandServerJobEvents", () => {
+  let matchAssistant: { delayCheckOnDemandServer: jest.Mock };
+  let events: CheckOnDemandServerJobEvents;
+
+  beforeEach(() => {
+    matchAssistant = { delayCheckOnDemandServer: jest.fn() };
+    events = new CheckOnDemandServerJobEvents(matchAssistant as any);
+  });
+
+  // QueueEvents hands the listener the job's id and failure, not the job.
+  it("re-arms the boot check that failed", async () => {
+    await events.onFailed({
+      jobId: "match.0b6f3c9e-4a57-4d2f-9f0e-3c2b1a0d9e8f.server",
+      failedReason: "hasura unavailable",
+    });
+
+    expect(matchAssistant.delayCheckOnDemandServer).toHaveBeenCalledWith(
+      "0b6f3c9e-4a57-4d2f-9f0e-3c2b1a0d9e8f",
+    );
+  });
+
+  it("leaves any other failed job on the queue alone", async () => {
+    await events.onFailed({ jobId: "42", failedReason: "boom" });
+
+    expect(matchAssistant.delayCheckOnDemandServer).not.toHaveBeenCalled();
   });
 });

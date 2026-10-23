@@ -51,10 +51,14 @@ export class CheckOnDemandServerJobEvents extends QueueEventsHost {
     super();
   }
 
+  // QueueEvents carries only the job id, which names the match its check is for
+  // (delayCheckOnDemandServer).
   @OnQueueEvent("failed")
-  public async onFailed(error: Error, job: Job) {
-    if (job.name === CheckOnDemandServerJob.name) {
-      await this.matchAssistant.delayCheckOnDemandServer(job.data.matchId);
+  public async onFailed({ jobId }: { jobId: string; failedReason: string }) {
+    const matchId = /^match\.(.+)\.server$/.exec(jobId)?.[1];
+
+    if (matchId) {
+      await this.matchAssistant.delayCheckOnDemandServer(matchId);
     }
   }
 }
