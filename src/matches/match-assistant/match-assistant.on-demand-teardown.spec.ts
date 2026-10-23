@@ -1304,6 +1304,34 @@ describe("MatchAssistantService — on-demand server teardown", () => {
         ]);
       });
 
+      it("keeps the server it was given when the hand-off cannot be queued", async () => {
+        bootStatus = "Failed";
+        const answer = hasura.query.getMockImplementation()!;
+        hasura.query.mockImplementation(async (request: any) =>
+          request.servers?.__args?.where?.id?._in
+            ? { servers: [{ id: "server-1", region: "USE" }] }
+            : answer(request),
+        );
+        hasura.mutation.mockImplementation(async (request: any) => {
+          if (request.update_servers) {
+            return { update_servers: { returning: [{ id: "server-1" }] } };
+          }
+          if (request.update_matches) {
+            return { update_matches: { affected_rows: 1 } };
+          }
+          return {};
+        });
+        queue.add.mockImplementation(async (name: string) => {
+          if (name === "AssignWaitingMatch") {
+            throw new Error("redis unavailable");
+          }
+        });
+
+        await expect(
+          (service as any).assignOnDemandServer("match-1"),
+        ).resolves.toBe(true);
+      });
+
       it("is booted again when its server failed to boot", async () => {
         bootStatus = "Failed";
 

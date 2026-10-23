@@ -1614,7 +1614,11 @@ export class MatchAssistantService {
       });
     } finally {
       // Out of the lock: the match may have taken another server than the one it gave back.
-      await this.assignWaitingMatchesTo(removedServerIds);
+      await this.assignWaitingMatchesTo(removedServerIds).catch((error) => {
+        this.logger.error(
+          `[${matchId}] unable to hand the server it gave back to a waiting match: ${error?.message}`,
+        );
+      });
     }
   }
 
