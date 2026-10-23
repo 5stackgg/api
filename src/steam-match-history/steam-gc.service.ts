@@ -7,6 +7,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import SteamUser from "steam-user";
 import GlobalOffensive from "globaloffensive";
+import { ShareCode } from "globaloffensive-sharecode";
 import { CacheService } from "../cache/cache.service";
 
 const CS2_APP_ID = 730;
@@ -124,6 +125,19 @@ export class SteamGcService
       }
     });
 
+    // globaloffensive emits error on a fatal GC logon, and an error event with
+    // no listener throws out of steam-user's message handler.
+    cs.on("error", (err: Error) => {
+      this.logger.error(`steam-gc gc error: ${err.message}`);
+      if (!settled) {
+        settled = true;
+        rejectReady(new SteamGcConnectionError(err.message));
+      }
+      if (this.cs === cs) {
+        this.teardown();
+      }
+    });
+
     cs.on("connectedToGC", () => {
       if (this.cs !== cs) {
         return;
@@ -235,6 +249,9 @@ export class SteamGcService
       throw new SteamGcConnectionError("steam-gc not connected");
     }
 
+    const decoded = new ShareCode(shareCode).decode();
+    const matchId = decoded ? decoded.matchId : null;
+
     try {
       const matches = await new Promise<unknown>((resolve, reject) => {
         const settle = (): void => {
@@ -251,9 +268,20 @@ export class SteamGcService
         const timer = setTimeout(() => {
           this.logger.warn(`steam-gc timeout resolving ${shareCode}`);
           fail(new SteamGcConnectionError("steam gc did not answer in time"));
+          if (this.cs === cs) {
+            this.teardown();
+          }
         }, REQUEST_TIMEOUT_MS);
 
+        // The GC's match list says nothing about which request it answers.
         const onMatchList = (list: unknown): void => {
+          const answered = (Array.isArray(list) ? list : []).at(0)?.matchid;
+          if (answered && String(answered) !== matchId) {
+            this.logger.warn(
+              `steam-gc ignored a reply for match ${answered} while resolving ${shareCode}`,
+            );
+            return;
+          }
           settle();
           resolve(list);
         };

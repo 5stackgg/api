@@ -1,39 +1,81 @@
-import { EventEmitter } from "events";
 import { SteamGcConnectionError, SteamGcService } from "./steam-gc.service";
 import { ResolveMatchMetadata } from "./jobs/ResolveMatchMetadata";
 
-const SHARE_CODE = "CSGO-aaaaa-bbbbb-ccccc-ddddd-eeeee";
+const mockClients: Array<any> = [];
+const mockGcs: Array<any> = [];
+
+jest.mock("steam-user", () => {
+  const { EventEmitter } = jest.requireActual("events");
+
+  return class extends EventEmitter {
+    static EPersonaState = { Online: 1 };
+    logOn = jest.fn();
+    logOff = jest.fn();
+    setPersona = jest.fn();
+    gamesPlayed = jest.fn();
+
+    constructor() {
+      super();
+      mockClients.push(this);
+    }
+  };
+});
+
+jest.mock("globaloffensive", () => {
+  const { EventEmitter } = jest.requireActual("events");
+
+  return class extends EventEmitter {
+    requestGame = jest.fn();
+
+    constructor() {
+      super();
+      mockGcs.push(this);
+    }
+  };
+});
+
+const SHARE_CODE = "CSGO-GADqf-jjyJ8-cSP2r-smZRo-TO2xK";
+const MATCH_ID = "3230642215713767580";
+const OTHER_SHARE_CODE = "CSGO-vGqmL-vb2x2-nTQtU-e9dco-qWHzN";
+const OTHER_MATCH_ID = "3354591898827227340";
 const VALVE_MATCH_ID = "1174469974867590708";
 const REQUEST_TIMEOUT_MS = 30_000;
 const IDLE_LOGOFF_MS = 5 * 60_000;
 
-const MATCH = {
+const reply = (matchid: string) => ({
+  matchid,
   matchtime: 1700000000,
   watchablematchinfo: { game_map: "de_dust2" },
-  roundstatsall: [{ map: "http://replay/demo.dem.bz2", reservation: {} }],
-};
+  roundstatsall: [{ map: `http://replay/${matchid}.dem.bz2` }],
+});
 
 const build = () => {
+  mockClients.length = 0;
+  mockGcs.length = 0;
+
   const logger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
   const service = new SteamGcService(
     logger as never,
     { get: jest.fn(() => "gc-bot") } as never,
-    { get: jest.fn(), put: jest.fn() } as never,
+    { get: jest.fn(async (): Promise<null> => null), put: jest.fn() } as never,
   );
-  const client = Object.assign(new EventEmitter(), { logOff: jest.fn() });
-  const cs = Object.assign(new EventEmitter(), { requestGame: jest.fn() });
 
-  service["client"] = client as never;
-  service["cs"] = cs as never;
-  service["gcReady"] = true;
+  const session = () => ({ client: mockClients.at(-1), cs: mockGcs.at(-1) });
 
-  const requested = async () => {
+  const request = async (shareCode = SHARE_CODE) => {
+    const sessions = mockGcs.length;
+    const pending = service.resolveShareCode(shareCode);
+    pending.catch((): void => undefined);
     await jest.advanceTimersByTimeAsync(0);
-    expect(cs.requestGame).toHaveBeenCalled();
-    cs.requestGame.mockClear();
+    if (mockGcs.length > sessions) {
+      session().cs.emit("connectedToGC");
+      await jest.advanceTimersByTimeAsync(0);
+    }
+    expect(session().cs.requestGame).toHaveBeenLastCalledWith(shareCode);
+    return { pending };
   };
 
-  return { service, client, cs, requested };
+  return { service, logger, session, request };
 };
 
 const resolveJob = (steamGc: SteamGcService) => {
@@ -81,76 +123,121 @@ describe("SteamGcService.resolveShareCode", () => {
     jest.useRealTimers();
   });
 
-  it("rejects, so the import is retried, when the session ends mid-request", async () => {
-    const { service, requested } = build();
+  it("rejects, so the import is retried, when the session is replaced mid-request", async () => {
+    const { request, session } = build();
 
-    const request = service.resolveShareCode(SHARE_CODE);
-    const outcome = expect(request).rejects.toBeInstanceOf(
-      SteamGcConnectionError,
+    const { pending } = await request();
+    session().client.emit("error", new Error("LogonSessionReplaced"));
+
+    await expect(pending).rejects.toThrow(
+      new SteamGcConnectionError("steam gc session ended before it answered"),
     );
-    await requested();
-    service["teardown"]();
-    await jest.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS);
-
-    await outcome;
   });
 
-  it("rejects, so the import is retried, when the GC never answers", async () => {
-    const { service, requested } = build();
+  it("rejects when the GC never answers, and logs in fresh for the retry", async () => {
+    const { request, session } = build();
 
-    const request = service.resolveShareCode(SHARE_CODE);
-    const outcome = expect(request).rejects.toBeInstanceOf(
-      SteamGcConnectionError,
-    );
-    await requested();
+    const { pending } = await request();
+    const { client } = session();
     await jest.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS);
 
-    await outcome;
+    await expect(pending).rejects.toThrow(
+      new SteamGcConnectionError("steam gc did not answer in time"),
+    );
+    expect(client.logOff).toHaveBeenCalled();
+
+    await request();
+    expect(mockClients).toHaveLength(2);
+  });
+
+  it.each([
+    ["its match", [reply(OTHER_MATCH_ID)]],
+    ["no match", []],
+  ])(
+    "ignores a reply with %s that lands after its request timed out",
+    async (_, late) => {
+      const { request, session } = build();
+
+      const { pending: first } = await request(OTHER_SHARE_CODE);
+      const stale = session().cs;
+      await jest.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS);
+      await expect(first).rejects.toBeInstanceOf(SteamGcConnectionError);
+
+      const { pending: second } = await request(SHARE_CODE);
+      stale.emit("matchList", late);
+      session().cs.emit("matchList", [reply(MATCH_ID)]);
+
+      await expect(second).resolves.toMatchObject({
+        demoUrl: `http://replay/${MATCH_ID}.dem.bz2`,
+      });
+    },
+  );
+
+  it("ignores a reply for another match while waiting for its own", async () => {
+    const { request, session } = build();
+
+    const { pending } = await request(SHARE_CODE);
+    session().cs.emit("matchList", [reply(OTHER_MATCH_ID)]);
+    session().cs.emit("matchList", [reply(MATCH_ID)]);
+
+    await expect(pending).resolves.toMatchObject({
+      demoUrl: `http://replay/${MATCH_ID}.dem.bz2`,
+      mapName: "de_dust2",
+    });
   });
 
   it("returns null when the GC answers without the match", async () => {
-    const { service, cs, requested } = build();
+    const { request, session } = build();
 
-    const request = service.resolveShareCode(SHARE_CODE);
-    await requested();
-    cs.emit("matchList", []);
+    const { pending } = await request();
+    session().cs.emit("matchList", []);
 
-    await expect(request).resolves.toBeNull();
+    await expect(pending).resolves.toBeNull();
   });
 
-  it("resolves the match the GC answers with", async () => {
-    const { service, cs, requested } = build();
+  it("rejects the request when the GC reports a logon error", async () => {
+    const { request, session } = build();
 
-    const request = service.resolveShareCode(SHARE_CODE);
-    await requested();
-    cs.emit("matchList", [MATCH]);
+    const { pending } = await request();
 
-    await expect(request).resolves.toMatchObject({
-      demoUrl: "http://replay/demo.dem.bz2",
-      mapName: "de_dust2",
-    });
+    expect(() => {
+      session().cs.emit("error", new Error("Logon Fatal Error: 5"));
+    }).not.toThrow();
+    await expect(pending).rejects.toThrow(
+      new SteamGcConnectionError("steam gc session ended before it answered"),
+    );
+  });
+
+  it("rejects the connection when the GC reports a logon error before it is ready", async () => {
+    const { service, session } = build();
+
+    const pending = service.resolveShareCode(SHARE_CODE);
+    pending.catch((): void => undefined);
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(() => {
+      session().cs.emit("error", new Error("Logon Fatal Error: 5"));
+    }).not.toThrow();
+    await expect(pending).rejects.toThrow(
+      new SteamGcConnectionError("Logon Fatal Error: 5"),
+    );
   });
 
   it("does not log off in the middle of a request started just before the idle timeout", async () => {
-    const { service, client, cs, requested } = build();
+    const { request, session } = build();
 
-    const first = service.resolveShareCode(SHARE_CODE);
-    await requested();
-    cs.emit("matchList", [MATCH]);
+    const { pending: first } = await request();
+    session().cs.emit("matchList", [reply(MATCH_ID)]);
     await first;
 
     await jest.advanceTimersByTimeAsync(IDLE_LOGOFF_MS - 1_000);
-    const second = service.resolveShareCode(SHARE_CODE);
-    const outcome = expect(second).resolves.toMatchObject({
-      mapName: "de_dust2",
-    });
-    await requested();
+    const { pending: second } = await request();
     await jest.advanceTimersByTimeAsync(2_000);
-    cs.emit("matchList", [MATCH]);
-    await jest.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS);
+    session().cs.emit("matchList", [reply(MATCH_ID)]);
 
-    await outcome;
-    expect(client.logOff).not.toHaveBeenCalled();
+    await expect(second).resolves.toMatchObject({ mapName: "de_dust2" });
+    expect(session().client.logOff).not.toHaveBeenCalled();
+    expect(mockClients).toHaveLength(1);
   });
 });
 
@@ -163,29 +250,30 @@ describe("ResolveMatchMetadata when the GC does not answer", () => {
     jest.useRealTimers();
   });
 
-  it("leaves the import for the retry while attempts remain", async () => {
-    const { service } = build();
+  const runUnanswered = async (attemptsMade: number) => {
+    const { service, session } = build();
     const { run, failures } = resolveJob(service);
 
-    const outcome = expect(run(0)).rejects.toBeInstanceOf(
-      SteamGcConnectionError,
-    );
+    const pending = run(attemptsMade);
+    pending.catch((): void => undefined);
+    await jest.advanceTimersByTimeAsync(0);
+    session().cs.emit("connectedToGC");
     await jest.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS);
 
-    await outcome;
+    return { pending, failures };
+  };
+
+  it("leaves the import for the retry while attempts remain", async () => {
+    const { pending, failures } = await runUnanswered(0);
+
+    await expect(pending).rejects.toBeInstanceOf(SteamGcConnectionError);
     expect(failures).toEqual([]);
   });
 
   it("marks the import Failed with the reason on the last attempt", async () => {
-    const { service } = build();
-    const { run, failures } = resolveJob(service);
+    const { pending, failures } = await runUnanswered(4);
 
-    const outcome = expect(run(4)).rejects.toBeInstanceOf(
-      SteamGcConnectionError,
-    );
-    await jest.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS);
-
-    await outcome;
+    await expect(pending).rejects.toBeInstanceOf(SteamGcConnectionError);
     expect(failures).toEqual([
       [VALVE_MATCH_ID, "steam gc did not answer in time"],
     ]);
