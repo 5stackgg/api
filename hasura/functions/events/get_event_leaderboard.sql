@@ -15,6 +15,9 @@ CREATE OR REPLACE FUNCTION public.get_event_leaderboard(
   _event_id UUID,
   _category TEXT,
   _match_type TEXT DEFAULT NULL,
+  -- Ignored. Kept only so web builds that still send it validate; drop it a
+  -- release after web stopped passing it.
+  _min_rounds INT DEFAULT NULL,
   hasura_session JSON DEFAULT NULL
 )
 RETURNS SETOF public.leaderboard_entries
