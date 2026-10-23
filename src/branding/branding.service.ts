@@ -4,6 +4,14 @@ import { S3Service } from "../s3/s3.service";
 import { HasuraService } from "../hasura/hasura.service";
 
 const PWA_ICON_SIZES = [192, 512] as const;
+
+// Each uploaded branding file and the public setting that records its path.
+export type BrandingFile = "logo" | "favicon" | "banner";
+const SETTING_FOR: Record<BrandingFile, string> = {
+  logo: "public.logo_url",
+  favicon: "public.favicon_url",
+  banner: "public.banner_url",
+};
 const PWA_ICON_BACKGROUND = { r: 10, g: 10, b: 14, alpha: 1 };
 
 @Injectable()
@@ -15,7 +23,7 @@ export class BrandingService {
   ) {}
 
   async uploadFile(
-    type: "logo" | "favicon",
+    type: BrandingFile,
     buffer: Buffer,
     mimetype: string,
   ): Promise<string> {
@@ -24,10 +32,7 @@ export class BrandingService {
 
     await this.s3.put(path, buffer);
 
-    const settingName =
-      type === "logo" ? "public.logo_url" : "public.favicon_url";
-
-    await this.upsertSetting(settingName, path);
+    await this.upsertSetting(SETTING_FOR[type], path);
 
     this.logger.log(`Uploaded branding ${type} to ${path}`);
     return path;
@@ -102,9 +107,8 @@ export class BrandingService {
       .toBuffer();
   }
 
-  async getFile(type: "logo" | "favicon") {
-    const settingName =
-      type === "logo" ? "public.logo_url" : "public.favicon_url";
+  async getFile(type: BrandingFile) {
+    const settingName = SETTING_FOR[type];
 
     const { settings_by_pk } = await this.hasura.query({
       settings_by_pk: {
@@ -135,9 +139,7 @@ export class BrandingService {
     };
   }
 
-  async deleteFile(
-    type: "logo" | "favicon" | "pwa" | "icon",
-  ): Promise<boolean> {
+  async deleteFile(type: BrandingFile | "pwa" | "icon"): Promise<boolean> {
     if (type === "icon") {
       await this.deleteFile("logo");
       await this.deleteFile("favicon");
@@ -157,8 +159,7 @@ export class BrandingService {
       return true;
     }
 
-    const settingName =
-      type === "logo" ? "public.logo_url" : "public.favicon_url";
+    const settingName = SETTING_FOR[type];
 
     const { settings_by_pk } = await this.hasura.query({
       settings_by_pk: {
