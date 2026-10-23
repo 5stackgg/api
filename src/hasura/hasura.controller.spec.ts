@@ -10,6 +10,7 @@ import {
 import { HasuraService } from "./hasura.service";
 import { CacheService } from "../cache/cache.service";
 import { PostgresService } from "../postgres/postgres.service";
+import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 
 const handled: Array<{ kind: string; data: Record<string, unknown> }> = [];
 let countedRuns = 0;
@@ -21,6 +22,13 @@ class HookSpecController {
   public async hookSpecAction(data: Record<string, unknown>) {
     handled.push({ kind: "action", data });
     return { ok: true };
+  }
+
+  @HasuraAction()
+  public async hookSpecLanAction(data: {
+    lanRegions: () => Promise<Array<string>>;
+  }) {
+    return { lanRegions: await data.lanRegions() };
   }
 
   @HasuraEvent()
@@ -98,10 +106,31 @@ describe("HasuraController hooks", () => {
           }),
         },
         { provide: PostgresService, useValue: { query: jest.fn() } },
+        {
+          provide: RedisManagerService,
+          useValue: {
+            getConnection: () => ({
+              hgetall: async (key: string) =>
+                key === "latency-test:session-1"
+                  ? {
+                      lan: JSON.stringify({
+                        region: "Lan",
+                        latency: 1,
+                        isLan: true,
+                      }),
+                    }
+                  : {},
+            }),
+          },
+        },
       ],
     }).compile();
 
     app = module.createNestApplication({ logger: false });
+    app.use((req: any, _res: unknown, next: () => void) => {
+      req.session = { id: "session-1" };
+      next();
+    });
     await app.init();
   });
 
@@ -120,6 +149,20 @@ describe("HasuraController hooks", () => {
     expect(handled).toEqual([
       { kind: "action", data: expect.objectContaining({ match_id: "1" }) },
     ]);
+  });
+
+  it("hands an action the LAN regions of the caller's session, not the body's", async () => {
+    const response = await action().send({
+      action: { name: "hookSpecLanAction" },
+      input: {},
+      session_variables: {
+        "x-hasura-role": "user",
+        "x-hasura-lan-regions": JSON.stringify(["Forged"]),
+      },
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toEqual({ lanRegions: ["Lan"] });
   });
 
   it("runs a JSON event", async () => {

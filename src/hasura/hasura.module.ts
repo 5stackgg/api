@@ -16,10 +16,12 @@ import {
   scheduleJobs,
 } from "../utilities/QueueProcessors";
 import { AuthModule } from "src/auth/auth.module";
+import { RedisModule } from "../redis/redis.module";
 
 @Module({
   imports: [
     CacheModule,
+    RedisModule,
     PostgresModule,
     AuthModule,
     BullModule.registerQueue({

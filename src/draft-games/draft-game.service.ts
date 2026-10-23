@@ -101,7 +101,11 @@ export class DraftGameService {
     );
   }
 
-  public async createDraftGame(user: User, settings: CreateDraftGameSettings) {
+  public async createDraftGame(
+    user: User,
+    settings: CreateDraftGameSettings,
+    lanRegions: Array<string> = [],
+  ) {
     if (!DraftGameService.DRAFTABLE_TYPES.includes(settings.type)) {
       throw new DraftGameError("Invalid draft game type");
     }
@@ -112,6 +116,12 @@ export class DraftGameService {
         settings.team_2_id,
       ]);
     }
+
+    await this.verifyLanRegions(
+      user,
+      lanRegions,
+      DraftGameService.requestedRegions(settings),
+    );
 
     // Organizers can open a lobby they manage but do not play in; everyone else
     // is always seeded as the first accepted player.
@@ -1168,6 +1178,74 @@ export class DraftGameService {
     return insert_match_options_one.id;
   }
 
+  private static requestedRegions(
+    settings: Partial<CreateDraftGameSettings>,
+  ): Array<string> {
+    const options = settings.options as { regions?: unknown } | undefined;
+
+    return [
+      ...DraftGameService.regionList(settings.regions),
+      ...DraftGameService.regionList(options?.regions),
+    ];
+  }
+
+  // Settings arrive as untyped jsonb, and GraphQL coerces a lone string into a
+  // one-region list on write, so a string would slip past the LAN check.
+  private static regionList(regions: unknown): Array<string> {
+    if (regions === undefined || regions === null) {
+      return [];
+    }
+
+    if (
+      !Array.isArray(regions) ||
+      regions.some((region) => typeof region !== "string")
+    ) {
+      throw new DraftGameError("Invalid regions");
+    }
+
+    return regions;
+  }
+
+  // The rule assert_lan_regions_reachable() applies to a match insert: below
+  // match_organizer, a LAN region only for a player the LAN probe placed on it.
+  // Lobbies write their match options as admin, so it has to be repeated here.
+  private async verifyLanRegions(
+    user: User,
+    lanRegions: Array<string>,
+    regions: Array<string>,
+  ) {
+    if (regions.length === 0 || isRoleAbove(user.role, "match_organizer")) {
+      return;
+    }
+
+    const { server_regions } = await this.hasura.query({
+      server_regions: {
+        __args: {
+          where: {
+            is_lan: { _eq: true },
+          },
+        },
+        value: true,
+      },
+    });
+
+    // Matched without case: sanitize_match_options_regions() does, so "lan"
+    // still lands the match on "Lan".
+    const requested = regions.map((region) => region.toLowerCase());
+
+    if (
+      server_regions.some(
+        (region) =>
+          requested.includes(region.value.toLowerCase()) &&
+          !lanRegions.includes(region.value),
+      )
+    ) {
+      throw new DraftGameError(
+        "You must be on the LAN to play in a LAN region",
+      );
+    }
+  }
+
   private async verifyTeamAccess(
     user: User,
     teamIds: Array<string | undefined>,
@@ -1211,6 +1289,7 @@ export class DraftGameService {
     user: User,
     draftGameId: string,
     settings: Partial<CreateDraftGameSettings>,
+    lanRegions: Array<string> = [],
   ) {
     return this.draftLock(draftGameId, async () => {
       const draftGame = await this.getDraftGame(draftGameId);
@@ -1230,6 +1309,14 @@ export class DraftGameService {
           "Settings can only be changed before the draft",
         );
       }
+
+      await this.verifyLanRegions(
+        user,
+        lanRegions,
+        DraftGameService.requestedRegions(settings).filter(
+          (region) => !draftGame.regions?.includes(region),
+        ),
+      );
 
       const nextMode = (settings.mode ||
         draftGame.mode) as e_draft_game_mode_enum;

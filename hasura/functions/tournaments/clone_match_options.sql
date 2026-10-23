@@ -23,7 +23,9 @@ BEGIN
     -- producing tournaments whose matches quietly ignore their own settings.
     _options.id := gen_random_uuid();
 
+    PERFORM set_config('fivestack.regions_system_write', 'true', true);
     INSERT INTO match_options VALUES (_options.*);
+    PERFORM set_config('fivestack.regions_system_write', 'false', true);
 
     RETURN _options.id;
 END;

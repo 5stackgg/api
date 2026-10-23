@@ -71,10 +71,15 @@ export class DraftGamesController {
   }
 
   @HasuraAction()
-  public async createDraftGame(data: { user: User; settings: any }) {
+  public async createDraftGame(data: {
+    user: User;
+    settings: any;
+    lanRegions: () => Promise<Array<string>>;
+  }) {
     const draftGameId = await this.draftGameService.createDraftGame(
       data.user,
       data.settings,
+      await data.lanRegions(),
     );
     return { draftGameId };
   }
@@ -84,11 +89,13 @@ export class DraftGamesController {
     user: User;
     draftGameId: string;
     settings: any;
+    lanRegions: () => Promise<Array<string>>;
   }) {
     await this.draftGameService.updateDraftSettings(
       data.user,
       data.draftGameId,
       data.settings,
+      await data.lanRegions(),
     );
     return { success: true };
   }

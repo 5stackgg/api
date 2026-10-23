@@ -15,6 +15,10 @@ import { SteamGuard } from "../auth/strategies/SteamGuard";
 import { ApiKeyGuard } from "../auth/strategies/ApiKeyGuard";
 import { HasuraService } from "./hasura.service";
 import { CacheService } from "../cache/cache.service";
+import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
+import { SocketsService } from "../sockets/sockets.service";
+import { isRoleAbove } from "../utilities/isRoleAbove";
+import Redis from "ioredis";
 
 type Handler = {
   target: unknown;
@@ -58,6 +62,10 @@ export class HasuraController {
   // signed-in viewer. It can only ever lower a session to a guest's.
   public static readonly ANONYMOUS_HEADER = "x-5stack-anonymous";
 
+  // The LAN regions the LAN probe placed this browser session on, as a JSON
+  // array. lan_region_reachable() reads it for roles below match_organizer.
+  public static readonly LAN_REGIONS_SESSION_VARIABLE = "x-hasura-lan-regions";
+
   // Hasura asks this hook once per socket and keeps that role until the
   // max-age in the JSON body (it ignores a Cache-Control header), then drops
   // the socket so it reconnects through here. Community Edition asks again for
@@ -72,12 +80,17 @@ export class HasuraController {
   // its 60s timeout plus the 10s interval.
   private static readonly EVENT_DONE_TTL_SECONDS = 2 * 60 * 60;
 
+  private readonly redis: Redis;
+
   constructor(
     private readonly logger: Logger,
     private readonly hasuraService: HasuraService,
     private readonly modulesContainer: ModulesContainer,
     private readonly cache: CacheService,
-  ) {}
+    redisManager: RedisManagerService,
+  ) {
+    this.redis = redisManager.getConnection();
+  }
 
   @Get()
   public async hasura(@Req() request: Request) {
@@ -90,7 +103,16 @@ export class HasuraController {
       };
     }
 
-    const session = await this.hasuraService.getHasuraHeaders(user.steam_id);
+    const headers = await this.hasuraService.getHasuraHeaders(user.steam_id);
+    const session: Record<string, string> = { ...headers };
+
+    if (!isRoleAbove(headers["x-hasura-role"], "match_organizer")) {
+      const lanRegions = await this.getLanRegions(request.session?.id);
+      if (lanRegions.length > 0) {
+        session[HasuraController.LAN_REGIONS_SESSION_VARIABLE] =
+          JSON.stringify(lanRegions);
+      }
+    }
 
     if (session["x-hasura-role"] === "user") {
       return session;
@@ -121,6 +143,9 @@ export class HasuraController {
     }
 
     input.session = request.session;
+    // Read from the session, never the body: this endpoint takes whatever a
+    // caller posts.
+    input.lanRegions = () => this.getLanRegions(request.session?.id);
 
     try {
       return response.json(await resolver[action.name].bind(resolver, input)());
@@ -204,6 +229,21 @@ export class HasuraController {
         await this.cache.releaseLock(runningKey, token);
       }
     }
+  }
+
+  private async getLanRegions(sessionId?: string): Promise<Array<string>> {
+    if (!sessionId) {
+      return [];
+    }
+
+    const results = await this.redis.hgetall(
+      SocketsService.GET_PLAYER_CLIENT_LATENCY_TEST(sessionId),
+    );
+
+    return Object.values(results)
+      .map((result) => JSON.parse(result))
+      .filter((result) => result.isLan === true)
+      .map((result) => result.region);
   }
 
   private getResolver(handler: Handler): HandleResolver {

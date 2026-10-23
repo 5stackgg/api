@@ -50,11 +50,14 @@ BEGIN
         _sanitized_regions := ARRAY[]::text[];
     END IF;
 
+    -- Only the LANs this session may play on: the fallback runs inside
+    -- players' own match inserts and veto picks.
     IF COALESCE(array_length(_sanitized_regions, 1), 0) = 0 THEN
         SELECT array_agg(sr.value ORDER BY sr.value) INTO _sanitized_regions
         FROM server_regions sr
         WHERE sr.is_lan = true
-          AND total_region_server_count(sr) > 0;
+          AND total_region_server_count(sr) > 0
+          AND lan_region_reachable(sr.value);
     END IF;
 
     IF _sanitized_regions IS NULL THEN
