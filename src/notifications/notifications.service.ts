@@ -106,6 +106,29 @@ export class NotificationsService {
     );
   }
 
+  // VAC and FACEIT each keep their own automatic ban row, so the second one on
+  // a player who is already banned has nothing new to tell anyone.
+  async isRedundantAutoBan(sanctionId: string): Promise<boolean> {
+    const [row] = await this.postgres.query<Array<{ redundant: boolean }>>(
+      `SELECT EXISTS (
+         SELECT 1
+           FROM public.player_sanctions ps
+           JOIN public.player_sanctions other
+             ON other.player_steam_id = ps.player_steam_id
+          WHERE ps.id = $1::uuid
+            AND ps.type = 'ban'
+            AND ps.sanctioned_by_steam_id IS NULL
+            AND other.type = 'ban'
+            AND other.deleted_at IS NULL
+            AND (other.created_at, other.id) < (ps.created_at, ps.id)
+            AND (other.remove_sanction_date IS NULL
+                 OR other.remove_sanction_date > ps.created_at)
+       ) AS redundant`,
+      [sanctionId],
+    );
+    return row?.redundant === true;
+  }
+
   public static escapeHtml(value: string | null | undefined): string {
     return String(value ?? "")
       .replace(/&/g, "&amp;")

@@ -26,7 +26,7 @@ export class FaceitBansService {
   private static readonly BASE_URL = "https://open.faceit.com/data/v4";
   private static readonly GAMES = ["cs2", "csgo"];
   private static readonly MAX_AGE_HOURS = 1;
-  private static readonly SWEEP_BATCH = 500;
+  private static readonly SWEEP_BATCH = 1500;
   private static readonly SWEEP_PRIORITY = 10;
   private readonly apiKey: string;
 
@@ -54,13 +54,30 @@ export class FaceitBansService {
         name: "CheckFaceitBans",
         data: { steamId },
         opts: {
-          jobId: `check-faceit-bans.${steamId}`,
+          jobId: FaceitBansService.jobId(steamId),
           priority,
           removeOnComplete: true,
           removeOnFail: true,
         },
       })),
     );
+
+    if (priority) {
+      return;
+    }
+
+    // A sweep job already waiting under the same id would otherwise keep its
+    // place behind the rest of the sweep.
+    for (const steamId of steamIds) {
+      const job = await queue.getJob(FaceitBansService.jobId(steamId));
+      if (job?.priority) {
+        await job.changePriority({ priority: 0 }).catch((): void => undefined);
+      }
+    }
+  }
+
+  private static jobId(steamId: string): string {
+    return `check-faceit-bans.${steamId}`;
   }
 
   public static activeCheatingBan(
@@ -106,20 +123,30 @@ export class FaceitBansService {
     }
 
     const rows = await this.postgres.query<Array<{ steam_id: string }>>(
-      `SELECT p.steam_id::text AS steam_id
-         FROM public.players p
-        WHERE EXISTS (
-          SELECT 1
-            FROM public.match_lineup_players mlp
-            JOIN public.matches m
-              ON mlp.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
-           WHERE mlp.steam_id = p.steam_id
-             AND m.created_at >= now() - interval '6 months'
-             AND (p.faceit_bans_checked_at IS NULL
-                  OR p.faceit_bans_checked_at < now() - interval '1 day'
-                  OR m.created_at > p.faceit_bans_checked_at)
-        )
-        ORDER BY p.faceit_bans_checked_at ASC NULLS FIRST
+      `WITH recent AS (
+         SELECT mlp.steam_id, max(m.created_at) AS last_played_at
+           FROM public.matches m
+           JOIN public.match_lineup_players mlp
+             ON mlp.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
+          WHERE m.created_at >= now() - interval '6 months'
+            AND mlp.steam_id IS NOT NULL
+          GROUP BY mlp.steam_id
+       ),
+       due AS (
+         SELECT p.steam_id,
+                p.faceit_bans_checked_at,
+                r.last_played_at,
+                r.last_played_at > COALESCE(p.faceit_bans_checked_at, '-infinity') AS played_since
+           FROM recent r
+           JOIN public.players p ON p.steam_id = r.steam_id
+       )
+       SELECT steam_id::text AS steam_id
+         FROM due
+        WHERE played_since
+           OR faceit_bans_checked_at < now() - interval '1 day'
+        ORDER BY played_since DESC,
+                 CASE WHEN played_since THEN last_played_at END DESC,
+                 faceit_bans_checked_at ASC
         LIMIT $1`,
       [FaceitBansService.SWEEP_BATCH],
     );
@@ -143,13 +170,9 @@ export class FaceitBansService {
     }
 
     const [player] = await this.postgres.query<
-      Array<{
-        faceit_player_id: string | null;
-        faceit_banned_at: Date | null;
-        faceit_ban_ends_at: Date | null;
-      }>
+      Array<{ faceit_player_id: string | null }>
     >(
-      `SELECT faceit_player_id, faceit_banned_at, faceit_ban_ends_at
+      `SELECT faceit_player_id
          FROM public.players
         WHERE steam_id = $1::bigint
           AND (faceit_bans_checked_at IS NULL
@@ -165,22 +188,18 @@ export class FaceitBansService {
       ? { id: player.faceit_player_id, url: null }
       : await this.findAccount(steamId);
 
-    if (account === undefined) {
-      return;
-    }
+    const bans = account ? await this.fetchBans(account.id) : null;
 
-    if (account === null) {
+    // Nothing is known that wasn't before, so nothing changes; the check is
+    // still stamped so a player FACEIT keeps failing on can't hold the head of
+    // every sweep.
+    if (!account || !bans) {
       await this.postgres.query(
         `UPDATE public.players
             SET faceit_bans_checked_at = now()
           WHERE steam_id = $1::bigint`,
         [steamId],
       );
-      return;
-    }
-
-    const bans = await this.fetchBans(account.id);
-    if (!bans) {
       return;
     }
 
@@ -201,17 +220,12 @@ export class FaceitBansService {
       return;
     }
 
-    const changed =
-      player.faceit_banned_at?.getTime() !== ban.startsAt.getTime() ||
-      (player.faceit_ban_ends_at?.getTime() ?? null) !==
-        (ban.endsAt?.getTime() ?? null);
-
-    await this.applyAutoBan(steamId, changed);
+    await this.applyAutoBan(steamId);
   }
 
-  // An existing row is only re-dated when FACEIT's ban has changed since the
-  // last check, so an end a moderator set by hand holds until FACEIT moves.
-  private async applyAutoBan(steamId: string, changed: boolean): Promise<void> {
+  // The row mirrors FACEIT's ban on every check. A moderator overrides it by
+  // removing it, which holds until FACEIT issues a newer ban.
+  private async applyAutoBan(steamId: string): Promise<void> {
     const [result] = await this.postgres.query<
       Array<{ updated: number; inserted: number }>
     >(
@@ -241,8 +255,7 @@ export class FaceitBansService {
             SET remove_sanction_date = t.remove_sanction_date,
                 reason = $2
            FROM target t
-          WHERE $3::boolean
-            AND ps.player_steam_id = t.steam_id
+          WHERE ps.player_steam_id = t.steam_id
             AND ps.type = 'ban'
             AND ps.sanctioned_by_steam_id IS NULL
             AND ps.reason LIKE 'Auto: FACEIT%'
@@ -268,7 +281,7 @@ export class FaceitBansService {
        )
        SELECT (SELECT count(*) FROM updated)::int AS updated,
               (SELECT count(*) FROM inserted)::int AS inserted`,
-      [steamId, "Auto: FACEIT cheating ban", changed],
+      [steamId, "Auto: FACEIT cheating ban"],
     );
 
     if (result?.inserted || result?.updated) {
@@ -299,18 +312,15 @@ export class FaceitBansService {
     }
   }
 
-  // undefined: FACEIT could not be asked. null: no FACEIT account. An account
-  // banned before CS2 came to FACEIT only has a csgo profile.
-  private async findAccount(
-    steamId: string,
-  ): Promise<FaceitAccount | null | undefined> {
+  // An account banned before CS2 came to FACEIT only has a csgo profile.
+  private async findAccount(steamId: string): Promise<FaceitAccount | null> {
     for (const game of FaceitBansService.GAMES) {
       const response = await this.get(
         `/players?game=${game}&game_player_id=${encodeURIComponent(steamId)}`,
       );
 
       if (!response) {
-        return undefined;
+        return null;
       }
 
       if (response.status === 404) {

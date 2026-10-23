@@ -103,3 +103,39 @@ describe("FaceitBansService.activeCheatingBan", () => {
     ).toEqual({ startsAt: new Date("2026-01-01T00:00:00Z"), endsAt: null });
   });
 });
+
+describe("FaceitBansService.enqueueChecks", () => {
+  const queueWith = (priority: number) => {
+    const changePriority = jest.fn(async (): Promise<void> => undefined);
+    return {
+      changePriority,
+      queue: {
+        addBulk: jest.fn(async (): Promise<Array<unknown>> => []),
+        getJob: jest.fn(async () => ({ priority, changePriority })),
+      },
+    };
+  };
+
+  it("moves a sign-in ahead of a sweep job already waiting for the player", async () => {
+    const { queue, changePriority } = queueWith(10);
+
+    await FaceitBansService.enqueueChecks(queue as any, ["76561198000000001"]);
+
+    expect(queue.getJob).toHaveBeenCalledWith(
+      "check-faceit-bans.76561198000000001",
+    );
+    expect(changePriority).toHaveBeenCalledWith({ priority: 0 });
+  });
+
+  it("leaves the order alone for the sweep itself", async () => {
+    const { queue } = queueWith(10);
+
+    await FaceitBansService.enqueueChecks(
+      queue as any,
+      ["76561198000000001"],
+      10,
+    );
+
+    expect(queue.getJob).not.toHaveBeenCalled();
+  });
+});

@@ -5,6 +5,7 @@ import {
   FaceitBansService,
 } from "../src/faceit/faceit-bans.service";
 import { SteamBansService } from "../src/steam-match-history/steam-bans.service";
+import { NotificationsService } from "../src/notifications/notifications.service";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 
@@ -171,7 +172,7 @@ describe("faceit bans", () => {
     expect(await activeBans(player)).toHaveLength(0);
   });
 
-  it("keeps the ban when FACEIT cannot be asked", async () => {
+  it("keeps the ban when FACEIT cannot be asked, and waits before asking again", async () => {
     const player = await fx.player();
     faceitReports([cheating(null)]);
     await service().checkPlayer(player);
@@ -185,7 +186,7 @@ describe("faceit bans", () => {
       "SELECT faceit_bans_checked_at AS checked FROM players WHERE steam_id = $1::bigint",
       [player],
     );
-    expect(row.checked).toBeNull();
+    expect(row.checked).not.toBeNull();
   });
 
   it("asks FACEIT at most once an hour per player", async () => {
@@ -346,11 +347,14 @@ describe("faceit bans", () => {
 
   it("moves the ban's end when FACEIT makes it permanent", async () => {
     const player = await fx.player();
-    faceitReports([cheating(days(100))]);
+    const startsAt = days(-30);
+    faceitReports([
+      { reason: "cheating", starts_at: startsAt, ends_at: days(100) },
+    ]);
     await service().checkPlayer(player);
 
     await recheck(player);
-    faceitReports([cheating(null)]);
+    faceitReports([{ reason: "cheating", starts_at: startsAt, ends_at: null }]);
     await service().checkPlayer(player);
 
     const bans = await activeBans(player);
@@ -403,7 +407,7 @@ describe("faceit bans", () => {
     );
   });
 
-  it("keeps a moderator's end date until FACEIT changes the ban", async () => {
+  it("puts FACEIT's end back on a ban that was ended by hand", async () => {
     const player = await fx.player();
     faceitReports([cheating(null)]);
     await service().checkPlayer(player);
@@ -414,15 +418,10 @@ describe("faceit bans", () => {
 
     await recheck(player);
     await service().checkPlayer(player);
-    expect(await activeBans(player)).toHaveLength(0);
 
-    await recheck(player);
-    faceitReports([
-      cheating(null),
-      { reason: "cheating", starts_at: days(-1), ends_at: null },
-    ]);
-    await service().checkPlayer(player);
-    expect(await activeBans(player)).toHaveLength(1);
+    const bans = await activeBans(player);
+    expect(bans).toHaveLength(1);
+    expect(bans[0].remove_sanction_date).toBeNull();
   });
 
   it("writes a VAC ban beside an active FACEIT ban", async () => {
@@ -460,6 +459,30 @@ describe("faceit bans", () => {
       "Auto: FACEIT cheating ban",
       "Auto: Steam 1 VAC ban(s), last 30d ago",
     ]);
+
+    const notifications = new NotificationsService(
+      {} as never,
+      postgres,
+      new Logger("FaceitBansTest"),
+      { get: () => ({}) } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+    const rows = await postgres.query<Array<{ id: string; reason: string }>>(
+      "SELECT id, reason FROM player_sanctions WHERE player_steam_id = $1::bigint",
+      [player],
+    );
+    const redundant = Object.fromEntries(
+      await Promise.all(
+        rows.map(async (row) => [
+          row.reason.split(" ")[1],
+          await notifications.isRedundantAutoBan(row.id),
+        ]),
+      ),
+    );
+    expect(redundant).toEqual({ FACEIT: false, Steam: true });
   });
 
   it("ends a narrowed cooldown when FACEIT's ban ends", async () => {
@@ -498,6 +521,8 @@ describe("faceit bans", () => {
     const playedSinceCheck = await fx.player();
     const checkedLongAgo = await fx.player();
     const inactive = await fx.player();
+    const playedLongAgo = await fx.player();
+    const secondLineup = await fx.player();
     await postgres.query(
       `UPDATE players SET faceit_bans_checked_at = CASE
          WHEN steam_id = $1::bigint THEN now() - interval '2 hours'
@@ -508,19 +533,31 @@ describe("faceit bans", () => {
        WHERE steam_id IN ($1::bigint, $2::bigint, $3::bigint, $4::bigint)`,
       [checkedSinceMatch, playedSinceCheck, checkedLongAgo, inactive],
     );
+    await postgres.query(
+      `UPDATE players SET faceit_bans_checked_at = now() - interval '3 days'
+        WHERE steam_id IN ($1::bigint, $2::bigint)`,
+      [playedLongAgo, secondLineup],
+    );
 
-    const play = async (steamId: string, createdAt: string) => {
+    const play = async (steamId: string, createdAt: string, lineup = 1) => {
       const { matchId } = await fx.bareMatch();
-      const [match] = await postgres.query<Array<{ lineup_1_id: string }>>(
-        "UPDATE matches SET created_at = now() - $2::interval WHERE id = $1 RETURNING lineup_1_id",
+      const [match] = await postgres.query<
+        Array<{ lineup_1_id: string; lineup_2_id: string }>
+      >(
+        "UPDATE matches SET created_at = now() - $2::interval WHERE id = $1 RETURNING lineup_1_id, lineup_2_id",
         [matchId, createdAt],
       );
-      await fx.lineupPlayer(match.lineup_1_id, steamId);
+      await fx.lineupPlayer(
+        lineup === 1 ? match.lineup_1_id : match.lineup_2_id,
+        steamId,
+      );
     };
     await play(neverChecked, "1 day");
     await play(checkedSinceMatch, "3 hours");
     await play(playedSinceCheck, "1 hour");
     await play(checkedLongAgo, "30 days");
+    await play(playedLongAgo, "7 months");
+    await play(secondLineup, "60 days", 2);
     queue.addBulk.mockClear();
 
     await service().queueStaleChecks();
@@ -529,9 +566,12 @@ describe("faceit bans", () => {
       data: { steamId: string };
       opts: { priority?: number };
     }>;
-    expect(jobs.map((job) => job.data.steamId).sort()).toEqual(
-      [neverChecked, playedSinceCheck, checkedLongAgo].sort(),
-    );
+    expect(jobs.map((job) => job.data.steamId)).toEqual([
+      playedSinceCheck,
+      neverChecked,
+      secondLineup,
+      checkedLongAgo,
+    ]);
     expect(jobs.every((job) => job.opts.priority === 10)).toBe(true);
   });
 });
