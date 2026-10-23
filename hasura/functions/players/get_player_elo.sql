@@ -2,7 +2,7 @@
 -- per ladder the per-type functions below look up. Seasons off: the lifetime
 -- ladder alone (pre-seasons behavior). Seasons on: the active season's rating,
 -- else the lifetime one, plus the tournament ladder.
-CREATE OR REPLACE FUNCTION public.get_player_elo(player public.players) RETURNS jsonb
+CREATE OR REPLACE FUNCTION public.compute_player_elo(_steam_id bigint) RETURNS jsonb
     LANGUAGE sql STABLE
     AS $$
     SELECT CASE WHEN s.seasons THEN jsonb_build_object(
@@ -21,10 +21,17 @@ CREATE OR REPLACE FUNCTION public.get_player_elo(player public.players) RETURNS 
             'rush', lr.rush)
         END
     FROM (SELECT seasons_enabled() AS seasons, get_active_season() AS season_id) s
-    LEFT JOIN player_elo_current lr ON lr.steam_id = player.steam_id AND lr.ladder = 'lifetime'
-    LEFT JOIN player_elo_current sr ON sr.steam_id = player.steam_id AND sr.ladder = 'season' AND sr.season_id = s.season_id
-    LEFT JOIN player_elo_current tr ON tr.steam_id = player.steam_id AND tr.ladder = 'tournament';
+    LEFT JOIN player_elo_current lr ON lr.steam_id = _steam_id AND lr.ladder = 'lifetime'
+    LEFT JOIN player_elo_current sr ON sr.steam_id = _steam_id AND sr.ladder = 'season' AND sr.season_id = s.season_id
+    LEFT JOIN player_elo_current tr ON tr.steam_id = _steam_id AND tr.ladder = 'tournament';
 $$;
+
+-- What compute_player_elo answered, kept on players.elo_ratings
+-- (player_elo_ratings.sql). One expression, so Postgres inlines it into the
+-- query as a column read; a player not stored yet is worked out on the spot.
+CREATE OR REPLACE FUNCTION public.get_player_elo(player public.players) RETURNS jsonb
+    LANGUAGE sql STABLE
+    AS $$ SELECT COALESCE(player.elo_ratings, public.compute_player_elo(player.steam_id)) $$;
 
 drop function if exists public.get_player_elo_by_type;
 

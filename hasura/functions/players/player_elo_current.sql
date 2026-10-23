@@ -40,5 +40,7 @@ BEGIN
               ELSE pe.season_id IS NULL AND pe.is_tournament
           END
     GROUP BY pe.steam_id, l.ladder, l.season_id;
+
+    PERFORM public.refresh_player_elo_ratings(_steam_ids);
 END;
 $$;

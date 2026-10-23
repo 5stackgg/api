@@ -16,6 +16,11 @@ BEGIN
         PERFORM public.rebalance_all_team_rosters();
     END IF;
 
+    IF NEW.name = 'public.seasons_enabled'
+       AND (TG_OP = 'INSERT' OR NEW.value IS DISTINCT FROM OLD.value) THEN
+        PERFORM public.refresh_player_elo_ratings_if_stale();
+    END IF;
+
     RETURN NEW;
 END;
 $$;
