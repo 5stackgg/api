@@ -241,6 +241,9 @@ DECLARE
   _all_time_peak boolean;
   _is_rolling_window boolean;
   _is_active_season boolean;
+  -- Every filter below checks it as `_min_matches <= 1 OR ...`: at the default
+  -- that folds away, so a value-only rank can still skip match_counts.
+  _min_matches int := get_int_setting('leaderboard_min_matches', 1);
 BEGIN
   IF _season_id IS NOT NULL THEN
     SELECT s.starts_at, COALESCE(s.ends_at, now())
@@ -439,7 +442,8 @@ BEGIN
     LEFT JOIN win_streak ws ON ws.steam_id = pk_e.steam_id
     LEFT JOIN source_change sch ON sch.steam_id = pk_e.steam_id
     JOIN players p ON p.steam_id = pk_e.steam_id
-    WHERE lower(_source) = 'overall' OR COALESCE(mc.matches_played, 0) > 0
+    WHERE (lower(_source) = 'overall' OR COALESCE(mc.matches_played, 0) > 0)
+      AND (_min_matches <= 1 OR COALESCE(mc.matches_played, 0) >= _min_matches)
     ORDER BY value DESC;
 
   ELSIF _is_active_season THEN
@@ -555,7 +559,8 @@ BEGIN
     LEFT JOIN win_streak ws ON ws.steam_id = rp.steam_id
     LEFT JOIN source_change sch ON sch.steam_id = rp.steam_id
     JOIN players p ON p.steam_id = rp.steam_id
-    WHERE lower(_source) = 'overall' OR COALESCE(mc.matches_played, 0) > 0
+    WHERE (lower(_source) = 'overall' OR COALESCE(mc.matches_played, 0) > 0)
+      AND (_min_matches <= 1 OR COALESCE(mc.matches_played, 0) >= _min_matches)
     ORDER BY value DESC;
 
   ELSE
@@ -681,7 +686,8 @@ BEGIN
     LEFT JOIN win_streak ws ON ws.steam_id = pk_e.steam_id
     LEFT JOIN source_change sch ON sch.steam_id = pk_e.steam_id
     JOIN players p ON p.steam_id = pk_e.steam_id
-    WHERE lower(_source) = 'overall' OR COALESCE(mc.matches_played, 0) > 0
+    WHERE (lower(_source) = 'overall' OR COALESCE(mc.matches_played, 0) > 0)
+      AND (_min_matches <= 1 OR COALESCE(mc.matches_played, 0) >= _min_matches)
     ORDER BY value DESC;
   END IF;
 END;
@@ -704,6 +710,7 @@ AS $$
 DECLARE
   _from timestamptz;
   _to timestamptz;
+  _min_matches int := get_int_setting('leaderboard_min_matches', 1);
 BEGIN
   IF _season_id IS NOT NULL THEN
     SELECT s.starts_at, COALESCE(s.ends_at, now())
@@ -719,56 +726,44 @@ BEGIN
   END IF;
 
   RETURN QUERY
-  WITH kills AS (
+  WITH totals AS (
     SELECT
-      pk.attacker_steam_id as steam_id,
-      COUNT(*) as kill_count,
+      side.steam_id,
+      COUNT(*) FILTER (WHERE side.is_attacker AND pk.attacker_steam_id != pk.attacked_steam_id) as kill_count,
+      COUNT(*) FILTER (WHERE NOT side.is_attacker) as death_count,
       COUNT(DISTINCT pk.match_id)::int as match_count
     FROM player_kills pk
     JOIN matches m ON m.id = pk.match_id
     JOIN match_options mo ON mo.id = m.match_options_id
-    WHERE pk.attacker_steam_id IS NOT NULL
-      AND pk.attacker_steam_id != pk.attacked_steam_id
+    CROSS JOIN LATERAL (
+      VALUES (pk.attacker_steam_id, true), (pk.attacked_steam_id, false)
+    ) side(steam_id, is_attacker)
+    WHERE side.steam_id IS NOT NULL
       AND m.source = '5stack'
       AND m.counts_toward_ranking = true
       AND ((_from IS NULL OR pk.time >= _from) AND (_to IS NULL OR pk.time < _to))
       AND (_match_type IS NULL OR mo.type = _match_type)
       AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pk.match_id))
       AND (lower(_source) = 'overall' OR public._leaderboard_match_source(pk.match_id) = lower(_source))
-    GROUP BY pk.attacker_steam_id
-  ),
-  deaths AS (
-    SELECT
-      dk.attacked_steam_id as steam_id,
-      COUNT(*) as death_count
-    FROM player_kills dk
-    JOIN matches m2 ON m2.id = dk.match_id
-    JOIN match_options mo2 ON mo2.id = m2.match_options_id
-    WHERE 1=1
-      AND m2.source = '5stack'
-      AND m2.counts_toward_ranking = true
-      AND ((_from IS NULL OR dk.time >= _from) AND (_to IS NULL OR dk.time < _to))
-      AND (_match_type IS NULL OR mo2.type = _match_type)
-      AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = dk.match_id))
-      AND (lower(_source) = 'overall' OR public._leaderboard_match_source(dk.match_id) = lower(_source))
-    GROUP BY dk.attacked_steam_id
+    GROUP BY side.steam_id
   )
   SELECT
-    k.steam_id::text           as player_steam_id,
+    t.steam_id::text           as player_steam_id,
     p.name                     as player_name,
     p.avatar_url               as player_avatar_url,
     p.country                  as player_country,
-    CASE WHEN COALESCE(d.death_count, 0) = 0
-      THEN k.kill_count::float
-      ELSE ROUND((k.kill_count::numeric / d.death_count::numeric), 2)::float
+    CASE WHEN t.death_count = 0
+      THEN t.kill_count::float
+      ELSE ROUND((t.kill_count::numeric / t.death_count::numeric), 2)::float
     END                        as value,
-    k.kill_count::float        as secondary_value,
-    COALESCE(d.death_count, 0)::float as tertiary_value,
-    k.match_count              as matches_played,
+    t.kill_count::float        as secondary_value,
+    t.death_count::float       as tertiary_value,
+    t.match_count              as matches_played,
     p.custom_avatar_url        as player_custom_avatar_url
-  FROM kills k
-  LEFT JOIN deaths d ON d.steam_id = k.steam_id
-  JOIN players p ON p.steam_id = k.steam_id
+  FROM totals t
+  JOIN players p ON p.steam_id = t.steam_id
+  WHERE t.kill_count > 0
+    AND t.match_count >= _min_matches
   ORDER BY value DESC;
 END;
 $$;
@@ -790,6 +785,7 @@ AS $$
 DECLARE
   _from timestamptz;
   _to timestamptz;
+  _min_matches int := get_int_setting('leaderboard_min_matches', 1);
 BEGIN
   IF _season_id IS NOT NULL THEN
     SELECT s.starts_at, COALESCE(s.ends_at, now())
@@ -837,6 +833,7 @@ BEGIN
   FROM player_matches pm
   JOIN players p ON p.steam_id = pm.steam_id
   GROUP BY pm.steam_id, p.name, p.avatar_url, p.country, p.custom_avatar_url
+  HAVING COUNT(*) >= _min_matches
   ORDER BY value DESC;
 END;
 $$;
@@ -858,6 +855,7 @@ AS $$
 DECLARE
   _from timestamptz;
   _to timestamptz;
+  _min_matches int := get_int_setting('leaderboard_min_matches', 1);
 BEGIN
   IF _season_id IS NOT NULL THEN
     SELECT s.starts_at, COALESCE(s.ends_at, now())
@@ -873,29 +871,41 @@ BEGIN
   END IF;
 
   RETURN QUERY
+  WITH totals AS (
+    SELECT
+      side.steam_id,
+      COUNT(*) FILTER (WHERE side.is_attacker AND pk.attacker_steam_id != pk.attacked_steam_id) as kill_count,
+      COUNT(*) FILTER (WHERE side.is_attacker AND pk.attacker_steam_id != pk.attacked_steam_id AND pk.headshot) as headshot_count,
+      COUNT(DISTINCT pk.match_id)::int as match_count
+    FROM player_kills pk
+    JOIN matches m ON m.id = pk.match_id
+    JOIN match_options mo ON mo.id = m.match_options_id
+    CROSS JOIN LATERAL (
+      VALUES (pk.attacker_steam_id, true), (pk.attacked_steam_id, false)
+    ) side(steam_id, is_attacker)
+    WHERE side.steam_id IS NOT NULL
+      AND m.source = '5stack'
+      AND m.counts_toward_ranking = true
+      AND ((_from IS NULL OR pk.time >= _from) AND (_to IS NULL OR pk.time < _to))
+      AND (_match_type IS NULL OR mo.type = _match_type)
+      AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pk.match_id))
+      AND (lower(_source) = 'overall' OR public._leaderboard_match_source(pk.match_id) = lower(_source))
+    GROUP BY side.steam_id
+  )
   SELECT
-    pk.attacker_steam_id::text as player_steam_id,
+    t.steam_id::text           as player_steam_id,
     p.name                     as player_name,
     p.avatar_url               as player_avatar_url,
     p.country                  as player_country,
-    ROUND((SUM(CASE WHEN pk.headshot THEN 1 ELSE 0 END)::numeric / COUNT(*)::numeric) * 100, 2)::float as value,
-    COUNT(*)::float            as secondary_value,
+    ROUND((t.headshot_count::numeric / t.kill_count::numeric) * 100, 2)::float as value,
+    t.kill_count::float        as secondary_value,
     NULL::float                as tertiary_value,
-    COUNT(DISTINCT pk.match_id)::int as matches_played,
+    t.match_count              as matches_played,
     p.custom_avatar_url        as player_custom_avatar_url
-  FROM player_kills pk
-  JOIN players p ON p.steam_id = pk.attacker_steam_id
-  JOIN matches m ON m.id = pk.match_id
-  JOIN match_options mo ON mo.id = m.match_options_id
-  WHERE pk.attacker_steam_id IS NOT NULL
-    AND pk.attacker_steam_id != pk.attacked_steam_id
-    AND m.source = '5stack'
-      AND m.counts_toward_ranking = true
-    AND ((_from IS NULL OR pk.time >= _from) AND (_to IS NULL OR pk.time < _to))
-    AND (_match_type IS NULL OR mo.type = _match_type)
-    AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pk.match_id))
-    AND (lower(_source) = 'overall' OR public._leaderboard_match_source(pk.match_id) = lower(_source))
-  GROUP BY pk.attacker_steam_id, p.name, p.avatar_url, p.country, p.custom_avatar_url
+  FROM totals t
+  JOIN players p ON p.steam_id = t.steam_id
+  WHERE t.kill_count > 0
+    AND t.match_count >= _min_matches
   ORDER BY value DESC;
 END;
 $$;
@@ -1119,6 +1129,7 @@ AS $$
 DECLARE
   _from timestamptz;
   _to timestamptz;
+  _min_matches int := get_int_setting('leaderboard_min_matches', 1);
 BEGIN
   IF _season_id IS NOT NULL THEN
     SELECT s.starts_at, COALESCE(s.ends_at, now())
@@ -1160,6 +1171,7 @@ BEGIN
       AND (_role IS NULL OR r.role = _role)
     GROUP BY h.steam_id
     HAVING SUM(h.rounds_played) >= get_int_setting('leaderboard_min_rounds', 20)
+       AND COUNT(DISTINCT h.match_id) >= _min_matches
   )
   SELECT
     a.steam_id::text   AS player_steam_id,
@@ -1205,6 +1217,7 @@ AS $$
 DECLARE
   _from timestamptz;
   _to timestamptz;
+  _min_matches int := get_int_setting('leaderboard_min_matches', 1);
 BEGIN
   IF _season_id IS NOT NULL THEN
     SELECT s.starts_at, COALESCE(s.ends_at, now())
@@ -1243,6 +1256,7 @@ BEGIN
       AND (_role IS NULL OR r.role = _role)
     GROUP BY s.steam_id
     HAVING SUM(s.rounds_played) >= get_int_setting('leaderboard_min_rounds', 20)
+       AND COUNT(DISTINCT s.match_id) >= _min_matches
   )
   SELECT
     a.steam_id::text          AS player_steam_id,
