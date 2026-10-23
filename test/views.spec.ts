@@ -38,6 +38,7 @@ describe("read-side views and aggregations (SQL-driven)", () => {
     await postgres.query(
       "DELETE FROM settings WHERE name = 'public.seasons_enabled'",
     );
+    await fx.setting("leaderboard_min_matches", "1");
   });
 
   const T = (minutesAgo: number) =>
@@ -981,6 +982,81 @@ describe("read-side views and aggregations (SQL-driven)", () => {
 
       expect((await leaderboard("best_kdr", 30, "Competitive")).length).toBe(0);
       expect((await leaderboard("best_kdr", 0, "Competitive")).length).toBe(1);
+    });
+
+    it("best_kdr and highest_hs_pct count a match the player only died in", async () => {
+      const first = await statMatch();
+      const second = await statMatch();
+      const [player, victim] = await fx.players(2);
+      await fx.kill(first.ctx, player, victim, { headshot: true });
+      await fx.kill(second.ctx, victim, player);
+
+      for (const category of ["best_kdr", "highest_hs_pct"]) {
+        const rows = await leaderboard(category, 30, "Competitive");
+        const row = rows.find((r) => r.player_steam_id === player);
+        expect(Number(row?.matches_played)).toBe(2);
+      }
+    });
+
+    it("leaderboard_min_matches keeps players below it off every match board", async () => {
+      await fx.enableSeasons(true);
+      const seasonId = await fx.season(T(60 * 24 * 7));
+
+      const [regular, rookieA, rookieB] = await fx.players(3);
+      await ratedDuel(regular, rookieA);
+      await ratedDuel(regular, rookieB);
+      const first = await statMatch();
+      const second = await statMatch();
+      await fx.kill(first.ctx, rookieA, regular, { headshot: true });
+      await fx.kill(first.ctx, regular, rookieA, { round: 2 });
+      await fx.kill(second.ctx, regular, rookieB);
+      await fx.round(first.ctx.mapId, 1);
+      await fx.round(first.ctx.mapId, 2);
+      await fx.round(second.ctx.mapId, 1);
+
+      const ladders = [
+        () => leaderboard("elo", 30, "Duel"),
+        () => leaderboard("best_win_rate", 30, "Duel"),
+        () => leaderboard("best_kdr", 30, "Competitive"),
+        () => leaderboard("highest_hs_pct", 30, "Competitive"),
+        () => leaderboard("best_rating", 30, "Competitive"),
+        () => leaderboard("best_udr", 30, "Competitive"),
+        () =>
+          postgres.query<Array<LeaderboardRow>>(
+            "SELECT * FROM get_leaderboard('elo', 30, 'Duel', true)",
+          ),
+        () => seasonLeaderboard(seasonId, "Duel"),
+      ];
+      const players = async (ladder: () => Promise<Array<LeaderboardRow>>) =>
+        (await ladder()).map((r) => r.player_steam_id).sort();
+
+      for (const ladder of ladders) {
+        expect(await players(ladder)).toContain(rookieA);
+      }
+
+      await fx.setting("leaderboard_min_matches", "2");
+
+      for (const ladder of ladders) {
+        expect(await players(ladder)).toEqual([regular]);
+      }
+
+      const rank = (steamId: string) =>
+        postgres.query<Array<{ rank: number; total: number }>>(
+          "SELECT * FROM get_player_leaderboard_rank('elo', 30, $1, 'Duel')",
+          [steamId],
+        );
+      expect(await rank(rookieA)).toEqual([]);
+      const [regularRank] = await rank(regular);
+      expect(Number(regularRank.rank)).toBe(1);
+      expect(Number(regularRank.total)).toBe(1);
+
+      await postgres.query(
+        "DELETE FROM settings WHERE name = 'leaderboard_min_matches'",
+      );
+
+      for (const ladder of ladders) {
+        expect(await players(ladder)).toEqual([]);
+      }
     });
 
     it("get_player_leaderboard_rank locates a player inside the ladder", async () => {

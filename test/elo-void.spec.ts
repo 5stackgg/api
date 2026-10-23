@@ -140,6 +140,7 @@ describe("ELO void (SQL-driven)", () => {
     await postgres.query(
       "DELETE FROM settings WHERE name IN ('public.seasons_enabled', 'leaver_elo_penalty')",
     );
+    await fx.setting("leaderboard_min_matches", "1");
 
     cache = new CacheService({ getConnection: () => redis } as any, logger);
     queued = [];

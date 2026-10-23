@@ -382,6 +382,7 @@ describe("unranked game modes (SQL-driven)", () => {
     postgres = db.postgres;
     fx = new Fixtures(postgres);
     await seedRegionWithServer(postgres, "TestA", 27015);
+    await fx.setting("leaderboard_min_matches", "1");
   }, 600_000);
 
   afterAll(async () => {
