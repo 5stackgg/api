@@ -1141,7 +1141,9 @@ describe("awards (SQL-driven)", () => {
         "INSERT INTO settings (name, value) VALUES ('leaderboard_min_matches', '3')",
       );
 
-      await postgres.query("SELECT calculate_season_awards($1)", [season.id]);
+      await postgres.query("UPDATE seasons SET ends_at = now() WHERE id = $1", [
+        season.id,
+      ]);
 
       const rows = await postgres.query<Array<{ player_steam_id: string }>>(
         `SELECT ar.player_steam_id
