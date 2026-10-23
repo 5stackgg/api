@@ -27,6 +27,8 @@ describe("MatchesController — match_events on-demand servers", () => {
   >;
   let currentMatch: Record<string, unknown>;
   let chat: Record<string, jest.Mock>;
+  let notifications: Record<string, jest.Mock>;
+  let eloCalculationQueue: { add: jest.Mock };
   let tournamentVoice: Record<string, jest.Mock>;
 
   const stopJobs = () =>
@@ -135,11 +137,19 @@ describe("MatchesController — match_events on-demand servers", () => {
       createMatchVoiceChannels: jest.fn(),
       movePlayersToMatchChannels: jest.fn(),
     };
+    notifications = {
+      resolveMatchAlerts: jest.fn(async (): Promise<void> => undefined),
+      sendMatchWaitingForServerNotification: jest.fn(
+        async (): Promise<void> => undefined,
+      ),
+    };
+    eloCalculationQueue = { add: jest.fn() };
     chat = {
       removeLobby: jest.fn(),
       removeMatchArchive: jest.fn(),
       anchorMatchArchive: jest.fn(),
       reopenMatchArchive: jest.fn(),
+      endMatchLobby: jest.fn(),
     };
 
     controller = new MatchesController(
@@ -152,14 +162,9 @@ describe("MatchesController — match_events on-demand servers", () => {
       discordBotMessaging as any,
       { updateMatchOverview: jest.fn() } as any,
       { removeTeamChannels: jest.fn() } as any,
-      {
-        resolveMatchAlerts: jest.fn(async (): Promise<void> => undefined),
-        sendMatchWaitingForServerNotification: jest.fn(
-          async (): Promise<void> => undefined,
-        ),
-      } as any,
+      notifications as any,
       chat as any,
-      { add: jest.fn() } as any,
+      eloCalculationQueue as any,
       {} as any,
       {} as any,
       {} as any,
@@ -205,6 +210,43 @@ describe("MatchesController — match_events on-demand servers", () => {
       },
     );
 
+    it.each(["Finished", "Tie", "Canceled", "Forfeit", "Surrendered"])(
+      "ends the match lobby's in-game state once the match is %s",
+      async (ended) => {
+        await controller.match_events({
+          op: "UPDATE",
+          old: row({ status: "Live" }),
+          new: row({ status: ended }),
+        } as any);
+
+        expect(chat.endMatchLobby).toHaveBeenCalledWith("match-1");
+      },
+    );
+
+    it("still finishes ending the match when the lobby cannot be cleaned up", async () => {
+      chat.endMatchLobby.mockRejectedValue(new Error("redis unavailable"));
+
+      await controller.match_events({
+        op: "UPDATE",
+        old: row({ status: "Live" }),
+        new: row({ status: "Finished" }),
+      } as any);
+
+      expect(notifications.resolveMatchAlerts).toHaveBeenCalledWith("match-1");
+      expect(eloCalculationQueue.add).toHaveBeenCalledWith("EloCalculation", {
+        matchId: "match-1",
+      });
+      expect(hasura.mutation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          update_matches_by_pk: expect.objectContaining({
+            __args: expect.objectContaining({
+              _set: { server_id: null },
+            }),
+          }),
+        }),
+      );
+    });
+
     it("is not anchored again by a later update of an ended match", async () => {
       await controller.match_events({
         op: "UPDATE",
@@ -213,6 +255,7 @@ describe("MatchesController — match_events on-demand servers", () => {
       } as any);
 
       expect(chat.anchorMatchArchive).not.toHaveBeenCalled();
+      expect(chat.endMatchLobby).not.toHaveBeenCalled();
     });
 
     it("slides again even when the match's voice channels cannot be made", async () => {

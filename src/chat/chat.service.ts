@@ -586,7 +586,7 @@ export class ChatService implements OnApplicationBootstrap {
     return 1
   `;
 
-  private static readonly MATCH_CHAT_LOG_STATUSES: e_match_status_enum[] = [
+  private static readonly TERMINAL_MATCH_STATUSES: e_match_status_enum[] = [
     "Finished",
     "Tie",
     "Canceled",
@@ -4388,6 +4388,14 @@ export class ChatService implements OnApplicationBootstrap {
     );
 
     if (removed === 1 && count === 0) {
+      if (
+        type === ChatLobbyType.Match &&
+        userData.inGame &&
+        (await this.isInMatchServer(id, client.user.steam_id))
+      ) {
+        return;
+      }
+
       await this.removeUserData(type, id, client.user.steam_id);
       void this.to(type, id, "left", {
         user: {
@@ -4405,6 +4413,48 @@ export class ChatService implements OnApplicationBootstrap {
           inGame: userData.inGame,
         },
       });
+    }
+  }
+
+  // The game server reports a disconnect only for lineup players, and none at
+  // all once the match is over, so for anyone else the last tab closing is the
+  // only cleanup their lobby entry gets.
+  private async isInMatchServer(matchId: string, steamId: string) {
+    try {
+      const { match_lineup_players } = await this.hasuraService.query({
+        match_lineup_players: {
+          __args: {
+            where: {
+              steam_id: {
+                _eq: steamId,
+              },
+              is_connected: {
+                _eq: true,
+              },
+              lineup: {
+                match_id: {
+                  _eq: matchId,
+                },
+                match: {
+                  status: {
+                    _nin: ChatService.TERMINAL_MATCH_STATUSES,
+                  },
+                },
+              },
+            },
+            limit: 1,
+          },
+          id: true,
+        },
+      });
+
+      return match_lineup_players.length > 0;
+    } catch (error) {
+      this.logger.warn(
+        `[${matchId}] unable to check whether ${steamId} is in the server, dropping them from the lobby`,
+        (error as Error)?.message,
+      );
+      return false;
     }
   }
 
@@ -4504,18 +4554,29 @@ export class ChatService implements OnApplicationBootstrap {
   }
 
   public async joinLobbyViaGame(matchId: string, steamId: string) {
-    const { players_by_pk: player } = await this.hasuraService.query({
-      players_by_pk: {
-        __args: {
-          steam_id: steamId,
+    const { players_by_pk: player, matches_by_pk: match } =
+      await this.hasuraService.query({
+        players_by_pk: {
+          __args: {
+            steam_id: steamId,
+          },
+          name: true,
+          role: true,
+          steam_id: true,
+          avatar_url: true,
+          discord_id: true,
         },
-        name: true,
-        role: true,
-        steam_id: true,
-        avatar_url: true,
-        discord_id: true,
-      },
-    });
+        matches_by_pk: {
+          __args: {
+            id: matchId,
+          },
+          status: true,
+        },
+      });
+
+    if (!match || ChatService.TERMINAL_MATCH_STATUSES.includes(match.status)) {
+      return;
+    }
 
     const userData = await this.addUserToLobby(
       ChatLobbyType.Match,
@@ -4565,6 +4626,44 @@ export class ChatService implements OnApplicationBootstrap {
         steam_id: steamId,
       },
     });
+  }
+
+  // The server stops reporting anyone once the match is over, so whoever it
+  // last reported in game would stay that way.
+  public async endMatchLobby(matchId: string) {
+    const users = await this.getAllUsersInLobby(ChatLobbyType.Match, matchId);
+
+    for (const { steamId, ...userData } of users) {
+      const sessions = await this.redis.scard(
+        this.sessionsKey(ChatLobbyType.Match, matchId, steamId),
+      );
+
+      if (sessions === 0) {
+        await this.removeUserData(ChatLobbyType.Match, matchId, steamId);
+        void this.to(ChatLobbyType.Match, matchId, "left", {
+          user: {
+            ...userData.user,
+            inGame: false,
+          },
+        });
+        continue;
+      }
+
+      if (!userData.inGame) {
+        continue;
+      }
+
+      await this.setUserData(ChatLobbyType.Match, matchId, steamId, {
+        ...userData,
+        inGame: false,
+      });
+      void this.to(ChatLobbyType.Match, matchId, "joined", {
+        user: {
+          ...userData.user,
+          inGame: false,
+        },
+      });
+    }
   }
 
   private async addUserToLobby(
@@ -4742,7 +4841,7 @@ export class ChatService implements OnApplicationBootstrap {
       [matchId, viewer],
     );
 
-    if (!match || !ChatService.MATCH_CHAT_LOG_STATUSES.includes(match.status)) {
+    if (!match || !ChatService.TERMINAL_MATCH_STATUSES.includes(match.status)) {
       return null;
     }
 
