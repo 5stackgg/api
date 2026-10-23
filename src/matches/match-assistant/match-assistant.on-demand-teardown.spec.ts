@@ -978,6 +978,16 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       });
     });
 
+    it("re-arms the boot check of a booting match it goes past", async () => {
+      await service.assignWaitingMatch("USE");
+
+      expect(queue.add).toHaveBeenCalledWith(
+        "CheckOnDemandServerJob",
+        { matchId: "match-a" },
+        expect.objectContaining({ jobId: "match.match-a.server" }),
+      );
+    });
+
     it("goes past a match whose own server is still booting", async () => {
       await service.assignWaitingMatch("USE");
 
@@ -1287,6 +1297,19 @@ describe("MatchAssistantService — on-demand server teardown", () => {
           }
           return answer(request);
         });
+      });
+
+      // Nothing else would call startMatch if its check had died.
+      it("re-arms the boot check of the server it leaves booting", async () => {
+        readNamespacedJob.mockResolvedValue(activeJob("uid-1"));
+
+        await service.assignServer("match-1");
+
+        expect(queue.add).toHaveBeenCalledWith(
+          "CheckOnDemandServerJob",
+          { matchId: "match-1" },
+          expect.objectContaining({ jobId: "match.match-1.server" }),
+        );
       });
 
       it("keeps the server it is booting when it is woken again", async () => {

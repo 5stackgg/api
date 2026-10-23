@@ -1085,6 +1085,7 @@ export class MatchAssistantService {
           this.logger.log(
             `[${matchId}] match already has an on demand server, leaving it`,
           );
+          await this.delayCheckOnDemandServer(matchId);
           return true;
         }
 
@@ -1625,6 +1626,8 @@ export class MatchAssistantService {
     }
   }
 
+  // Its boot check is what starts the match, so a caller leaving a match
+  // booting re-arms it: the jobId keeps one that is still queued.
   // Only while its Job runs: one removed from outside leaves the row booting
   // for good, and a server that never pinged in ten minutes is not going to.
   // Kubernetes that cannot be read counts as booting, so nothing is torn down blind.
@@ -2356,6 +2359,7 @@ export class MatchAssistantService {
       }
 
       if (await this.isBootingOnDemandServer(match.id)) {
+        await this.delayCheckOnDemandServer(match.id);
         continue;
       }
 
