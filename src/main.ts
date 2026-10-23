@@ -25,8 +25,9 @@ require("events").EventEmitter.defaultMaxListeners = Number(
   process.env.NODE_MAX_LISTENERS || "100",
 );
 
-// The pod gets 30 seconds between SIGTERM and SIGKILL.
-export const SHUTDOWN_DEADLINE_MS = 20_000;
+// The pod gets 30 seconds between SIGTERM and SIGKILL; this leaves room for
+// the exit itself.
+export const SHUTDOWN_DEADLINE_MS = 27_000;
 
 // Long enough for the pod's removal from the Service to reach the ingress, so
 // requests stop arriving before the listener goes.
@@ -43,14 +44,25 @@ export const SHUTDOWN_REQUEST_DRAIN_MS = 10_000;
 // they always have, and their clients reconnect to the new pod.
 export function closeOnShutdownSignals(app: INestApplication) {
   const server: Server = app.getHttpServer();
-  let inFlight = 0;
+  const inFlight = new Set<ServerResponse>();
+  let closing = false;
   let idle = () => {};
 
-  server.on("request", (_request, response: ServerResponse) => {
-    inFlight++;
+  // A kept-alive connection, like Hasura's pooled ones, stays on this pod and
+  // can bring in requests after the listener closes, so once shutting down
+  // every response closes its connection. Ahead of Express, which can answer
+  // a request before a later listener sees it.
+  server.prependListener("request", (_request, response: ServerResponse) => {
+    if (closing) {
+      response.setHeader("Connection", "close");
+    }
+    inFlight.add(response);
     response.once("close", () => {
-      inFlight--;
-      if (inFlight === 0) {
+      inFlight.delete(response);
+      if (closing) {
+        server.closeIdleConnections();
+      }
+      if (inFlight.size === 0) {
         idle();
       }
     });
@@ -59,14 +71,19 @@ export function closeOnShutdownSignals(app: INestApplication) {
   const wait = (ms: number) =>
     new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-  let closing = false;
-
   const shutdown = async (signal: NodeJS.Signals) => {
     if (closing) {
       process.exit(1);
       return;
     }
     closing = true;
+
+    // A dev restart (start:dev, the hot-swap pod) has to come straight back.
+    if (process.env.DEV) {
+      server.close();
+      process.exit(0);
+      return;
+    }
 
     const deadline = setTimeout(() => {
       console.warn(
@@ -75,41 +92,55 @@ export function closeOnShutdownSignals(app: INestApplication) {
       process.exit(1);
     }, SHUTDOWN_DEADLINE_MS);
 
-    // Only a pod being replaced has endpoints to wait out; a Ctrl-C or a dev
-    // restart does not.
-    if (signal === "SIGTERM" && !process.env.DEV) {
+    for (const response of inFlight) {
+      if (!response.headersSent) {
+        response.setHeader("Connection", "close");
+      }
+    }
+
+    // The new pod is already up with its own workers, so these stop taking
+    // jobs now. Job classes extend WorkerHost too; only the queue processors
+    // have a worker.
+    const workersClosed = Promise.allSettled(
+      app
+        .get(DiscoveryService)
+        .getProviders()
+        .map(({ instance }) => instance)
+        .filter((instance) => instance instanceof WorkerHost)
+        .flatMap((host: WorkerHost) => {
+          try {
+            return [host.worker];
+          } catch {
+            return [];
+          }
+        })
+        .map((worker) => worker.close()),
+    );
+
+    // Only a pod being replaced has endpoints to wait out.
+    if (signal === "SIGTERM") {
       await wait(SHUTDOWN_ENDPOINT_DELAY_MS);
     }
 
     // Upgraded sockets keep the server open, so its callback is not awaited.
     server.close();
+    let capped = false;
+    const cap = wait(SHUTDOWN_REQUEST_DRAIN_MS).then(() => {
+      capped = true;
+    });
 
-    const requestsDone =
-      inFlight === 0
-        ? Promise.resolve()
-        : new Promise<void>((resolve) => {
-            idle = resolve;
-          });
+    await workersClosed;
 
-    // Job classes extend WorkerHost too; only the queue processors have a
-    // worker.
-    const workers = app
-      .get(DiscoveryService)
-      .getProviders()
-      .map(({ instance }) => instance)
-      .filter((instance) => instance instanceof WorkerHost)
-      .flatMap((host: WorkerHost) => {
-        try {
-          return [host.worker];
-        } catch {
-          return [];
-        }
-      });
-
-    await Promise.allSettled([
-      ...workers.map((worker) => worker.close()),
-      Promise.race([requestsDone, wait(SHUTDOWN_REQUEST_DRAIN_MS)]),
-    ]);
+    // Checked again as each request finishes, since another can come in as
+    // the last one does.
+    while (inFlight.size > 0 && !capped) {
+      await Promise.race([
+        new Promise<void>((resolve) => {
+          idle = resolve;
+        }),
+        cap,
+      ]);
+    }
 
     clearTimeout(deadline);
     process.exit(0);
