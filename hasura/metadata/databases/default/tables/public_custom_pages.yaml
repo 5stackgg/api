@@ -17,6 +17,7 @@ insert_permissions:
         - is_default
         - nav_group
         - nav_order
+        - nav_featured
         - profile_tab_label
         - plugin_slug
         - deployments
@@ -38,6 +39,7 @@ select_permissions:
         - is_default
         - nav_group
         - nav_order
+        - nav_featured
         - profile_tab_label
         - plugin_slug
         - deployments
@@ -62,6 +64,7 @@ select_permissions:
         - is_default
         - nav_group
         - nav_order
+        - nav_featured
         - profile_tab_label
         - plugin_slug
       filter:
@@ -86,6 +89,7 @@ select_permissions:
         - is_default
         - nav_group
         - nav_order
+        - nav_featured
         - profile_tab_label
         - plugin_slug
       filter:
@@ -114,6 +118,7 @@ select_permissions:
         - is_default
         - nav_group
         - nav_order
+        - nav_featured
         - profile_tab_label
         - plugin_slug
       filter:
@@ -143,6 +148,7 @@ select_permissions:
         - is_default
         - nav_group
         - nav_order
+        - nav_featured
         - profile_tab_label
         - plugin_slug
       filter:
@@ -173,6 +179,7 @@ select_permissions:
         - is_default
         - nav_group
         - nav_order
+        - nav_featured
         - profile_tab_label
         - plugin_slug
       filter:
@@ -204,6 +211,7 @@ select_permissions:
         - is_default
         - nav_group
         - nav_order
+        - nav_featured
         - profile_tab_label
         - plugin_slug
       filter:
@@ -236,6 +244,7 @@ select_permissions:
         - is_default
         - nav_group
         - nav_order
+        - nav_featured
         - profile_tab_label
         - plugin_slug
       filter:
@@ -269,6 +278,7 @@ update_permissions:
         - is_default
         - nav_group
         - nav_order
+        - nav_featured
         - profile_tab_label
         - plugin_slug
         - deployments

@@ -51,9 +51,14 @@ export class BrandingController {
   ) {
     this.requireAdmin(request);
 
-    if (type !== "logo" && type !== "favicon" && type !== "icon") {
+    if (
+      type !== "logo" &&
+      type !== "favicon" &&
+      type !== "icon" &&
+      type !== "banner"
+    ) {
       throw new BadRequestException(
-        "Type must be 'logo', 'favicon' or 'icon'",
+        "Type must be 'logo', 'favicon', 'icon' or 'banner'",
       );
     }
 
@@ -91,7 +96,7 @@ export class BrandingController {
 
   @Get(":type")
   async serve(@Param("type") type: string, @Res() res: Response) {
-    if (type !== "logo" && type !== "favicon") {
+    if (type !== "logo" && type !== "favicon" && type !== "banner") {
       throw new NotFoundException();
     }
 
@@ -118,10 +123,11 @@ export class BrandingController {
       type !== "logo" &&
       type !== "favicon" &&
       type !== "pwa" &&
-      type !== "icon"
+      type !== "icon" &&
+      type !== "banner"
     ) {
       throw new BadRequestException(
-        "Type must be 'logo', 'favicon', 'pwa' or 'icon'",
+        "Type must be 'logo', 'favicon', 'pwa', 'icon' or 'banner'",
       );
     }
 
