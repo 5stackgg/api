@@ -835,6 +835,89 @@ describe("MatchAssistantService — on-demand server teardown", () => {
     });
   });
 
+  describe("handing a freed server to a waiting match", () => {
+    let assignServer: jest.SpyInstance;
+    let waiting: Array<{ id: string; source?: string }>;
+    let reservations: Array<{
+      id: string;
+      reserved_by_match_id: string;
+      boot_status: string | null;
+    }>;
+
+    beforeEach(() => {
+      assignServer = jest
+        .spyOn(service, "assignServer")
+        .mockResolvedValue(undefined);
+      waiting = [{ id: "match-a" }, { id: "match-b" }, { id: "match-c" }];
+      reservations = [
+        {
+          id: "server-1",
+          reserved_by_match_id: "match-a",
+          boot_status: "Booting",
+        },
+      ];
+      readNamespacedJob.mockImplementation(async ({ name }: any) => {
+        if (name === "m-match-a") {
+          return {
+            metadata: {
+              name,
+              uid: "uid-a",
+              creationTimestamp: new Date(),
+            },
+            status: { active: 1 },
+          };
+        }
+        throw notFound;
+      });
+      hasura.query.mockImplementation(async (request: any) => {
+        if (request.matches?.__args?.where?.status) {
+          return { matches: waiting };
+        }
+        if (request.matches) {
+          const [id] = request.matches.__args.where.id._in;
+          const reservation = reservations.find(
+            (server) => server.reserved_by_match_id === id,
+          );
+          return {
+            matches: [
+              {
+                id,
+                status: "WaitingForServer",
+                server_id: reservation?.id ?? null,
+              },
+            ],
+          };
+        }
+        if (request.servers) {
+          const [id] = request.servers.__args.where.reserved_by_match_id._in;
+          return {
+            servers: reservations.filter(
+              (server) => server.reserved_by_match_id === id,
+            ),
+          };
+        }
+        if (request.matches_by_pk) {
+          return { matches_by_pk: { source: "5stack" } };
+        }
+        return {};
+      });
+    });
+
+    it("goes past a match whose own server is still booting", async () => {
+      await service.assignWaitingMatch("USE");
+
+      expect(assignServer.mock.calls).toEqual([["match-b"]]);
+    });
+
+    it("goes to the oldest waiting match when none is booting", async () => {
+      reservations = [];
+
+      await service.assignWaitingMatch("USE");
+
+      expect(assignServer.mock.calls).toEqual([["match-a"]]);
+    });
+  });
+
   describe("removing a server outright", () => {
     it("deletes the Job before its pods", async () => {
       listNamespacedPod

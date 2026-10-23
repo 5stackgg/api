@@ -2205,7 +2205,6 @@ export class MatchAssistantService {
               },
             ],
           },
-          limit: 1,
           order_by: [
             {
               created_at: "asc",
@@ -2216,13 +2215,15 @@ export class MatchAssistantService {
       },
     });
 
-    const match = matches.at(0);
+    // A match stays WaitingForServer while its own server boots.
+    for (const match of matches) {
+      if (await this.isBootingOnDemandServer(match.id)) {
+        continue;
+      }
 
-    if (!match) {
+      await this.assignServer(match.id);
       return;
     }
-
-    await this.assignServer(match.id);
   }
 
   // A SIGUSR1 sent before setup.sh hands PID 1 to server.sh is silently ignored.
