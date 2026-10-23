@@ -1,4 +1,5 @@
 import { ScrimsController } from "./scrims.controller";
+import { HasuraService } from "../hasura/hasura.service";
 
 describe("ScrimsController events", () => {
   const NOW = new Date("2026-10-20T18:00:00.000Z").getTime();
@@ -30,7 +31,7 @@ describe("ScrimsController events", () => {
       runScrimAlerts: jest.fn(),
       isScrimOpen: jest.fn().mockResolvedValue(true),
     };
-    controller = new ScrimsController(scrims as any, queue as any);
+    controller = new ScrimsController(scrims as any, queue as any, {} as any);
   });
 
   afterEach(() => {
@@ -186,5 +187,58 @@ describe("ScrimsController events", () => {
     expect(woken()).toEqual([
       { name: "RunScrimAlert", data: { alertId: "a1" }, inMs: 2000 },
     ]);
+  });
+});
+
+describe("ScrimsController scrim requests in a LAN region", () => {
+  const user = { name: "Manager", role: "user", steam_id: "100" } as any;
+
+  let scrims: { isManager: jest.Mock; createScrimRequest: jest.Mock };
+  let controller: ScrimsController;
+
+  beforeEach(() => {
+    scrims = {
+      isManager: jest.fn().mockResolvedValue(true),
+      createScrimRequest: jest.fn(),
+    };
+    const hasura = {
+      query: jest.fn(async () => ({
+        server_regions: [{ value: "Lan" }],
+      })),
+      assertLanRegionsReachable: (
+        ...args: Parameters<HasuraService["assertLanRegionsReachable"]>
+      ) =>
+        HasuraService.prototype.assertLanRegionsReachable.apply(hasura, args),
+    };
+    controller = new ScrimsController(scrims as any, {} as any, hasura as any);
+  });
+
+  const send = (region: string | undefined, lanRegions: Array<string>) =>
+    controller.sendScrimRequest({
+      user,
+      from_team_id: "a",
+      to_team_id: "b",
+      proposed_scheduled_at: "2026-10-24T18:00:00.000Z",
+      region,
+      lanRegions: async () => lanRegions,
+    });
+
+  it("refuses a manager off the LAN", async () => {
+    await expect(send("lan", [])).rejects.toThrow(
+      "You must be on the LAN to play in a LAN region",
+    );
+    expect(scrims.createScrimRequest).not.toHaveBeenCalled();
+  });
+
+  it("sends one for a manager the probe placed on the LAN", async () => {
+    await expect(send("Lan", ["Lan"])).resolves.toEqual({ success: true });
+    expect(scrims.createScrimRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ region: "Lan" }),
+    );
+  });
+
+  it("leaves online and unset regions alone", async () => {
+    await expect(send("US East", [])).resolves.toEqual({ success: true });
+    await expect(send(undefined, [])).resolves.toEqual({ success: true });
   });
 });

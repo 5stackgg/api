@@ -29,8 +29,6 @@ BEGIN
         FROM servers where enabled = true and type = 'Ranked';
 
     IF NEW.regions IS NOT NULL THEN
-        PERFORM assert_lan_regions_reachable(NEW.regions);
-
         SELECT count(*) INTO lan_count 
         FROM server_regions 
         WHERE value = ANY(NEW.regions) AND is_lan = true;
@@ -48,8 +46,15 @@ BEGIN
 
     IF region_count = 1 THEN
         NEW.region_veto = false;
-        NEW.regions = (SELECT array_agg(region) FROM servers where enabled = true);
+        NEW.regions = (
+            SELECT array_agg(DISTINCT region) FROM servers
+            WHERE enabled = true AND type = 'Ranked'
+        );
     END IF;
+
+    -- On the final list: the single-region shortcut above can put the match
+    -- on a LAN too.
+    PERFORM assert_lan_regions_reachable(NEW.regions);
 
     PERFORM assert_game_mode_selectable(NEW.game_mode_id);
 

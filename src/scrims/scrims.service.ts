@@ -6,6 +6,7 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { MatchAssistantService } from "../matches/match-assistant/match-assistant.service";
 import { AppConfig } from "../configs/types/AppConfig";
 import { ConfigService } from "@nestjs/config";
+import { isRoleAbove } from "../utilities/isRoleAbove";
 import {
   e_notification_types_enum,
   e_player_roles_enum,
@@ -124,19 +125,68 @@ export class ScrimsService {
     );
   }
 
+  // A team listing any region has not chosen a LAN, so a LAN region only
+  // counts when both teams name it.
   public static regionsOverlap(
     a: ScrimSettings | null | undefined,
     b: ScrimSettings | null | undefined,
+    lanRegions: Array<string> = [],
   ): Array<string> {
     const aRegions = a?.regions ?? [];
     const bRegions = b?.regions ?? [];
+    const online = (regions: Array<string>) =>
+      regions.filter(
+        (region) => !ScrimsService.lanRegionOf(region, lanRegions),
+      );
     if (aRegions.length === 0) {
-      return bRegions;
+      return online(bRegions);
     }
     if (bRegions.length === 0) {
-      return aRegions;
+      return online(aRegions);
     }
     return aRegions.filter((region) => bRegions.includes(region));
+  }
+
+  // Accepting books the match, so that is when a LAN region has to be one the
+  // accepting manager is on, as when starting any LAN match. Otherwise the
+  // next region the teams share stands in.
+  public static scrimRegion(
+    candidates: Array<string>,
+    lanRegions: Array<string>,
+    accepter: { role: e_player_roles_enum; lanRegions: Array<string> },
+  ): string | undefined {
+    if (candidates.length === 0) {
+      return undefined;
+    }
+
+    const region = candidates.find((candidate) => {
+      const lan = ScrimsService.lanRegionOf(candidate, lanRegions);
+      return (
+        !lan ||
+        isRoleAbove(accepter.role, "match_organizer") ||
+        accepter.lanRegions.includes(lan)
+      );
+    });
+
+    if (!region) {
+      throw Error("You must be on the LAN to play in a LAN region");
+    }
+
+    return ScrimsService.lanRegionOf(region, lanRegions) ?? region;
+  }
+
+  private static lanRegionOf(
+    region: string,
+    lanRegions: Array<string>,
+  ): string | undefined {
+    return lanRegions.find((lan) => lan.toLowerCase() === region.toLowerCase());
+  }
+
+  private async lanRegionValues(): Promise<Array<string>> {
+    const rows = await this.postgres.query<Array<{ value: string }>>(
+      "SELECT value FROM server_regions WHERE is_lan = true",
+    );
+    return rows.map((row) => row.value);
   }
 
   public static matchDurationMinutes(bestOf?: number | null): number {
@@ -487,6 +537,8 @@ export class ScrimsService {
     requestId: string;
     steamId: string;
     accept: boolean;
+    role: e_player_roles_enum;
+    lanRegions: () => Promise<Array<string>>;
   }): Promise<void> {
     const { requestId, steamId, accept } = params;
 
@@ -526,7 +578,10 @@ export class ScrimsService {
       return;
     }
 
-    await this.acceptScrimRequest(request);
+    await this.acceptScrimRequest(request, {
+      role: params.role,
+      lanRegions: await params.lanRegions(),
+    });
   }
 
   public async counterScrimRequest(params: {
@@ -768,15 +823,18 @@ export class ScrimsService {
     return expired.length;
   }
 
-  public async acceptScrimRequest(request: {
-    id: string;
-    from_team_id: string;
-    to_team_id: string;
-    proposed_scheduled_at: string;
-    region?: string | null;
-    match_options_id?: string | null;
-    requested_by_steam_id: string;
-  }): Promise<void> {
+  public async acceptScrimRequest(
+    request: {
+      id: string;
+      from_team_id: string;
+      to_team_id: string;
+      proposed_scheduled_at: string;
+      region?: string | null;
+      match_options_id?: string | null;
+      requested_by_steam_id: string;
+    },
+    accepter: { role: e_player_roles_enum; lanRegions: Array<string> },
+  ): Promise<void> {
     if (new Date(request.proposed_scheduled_at).getTime() <= Date.now()) {
       throw Error("cannot schedule a scrim in the past");
     }
@@ -790,8 +848,17 @@ export class ScrimsService {
     const fromSettings = await this.getScrimSettings(request.from_team_id);
     const toSettings = await this.getScrimSettings(request.to_team_id);
 
-    const regions = ScrimsService.regionsOverlap(fromSettings, toSettings);
-    const region = request.region ?? regions.at(0) ?? undefined;
+    const lanRegions = await this.lanRegionValues();
+    const regions = ScrimsService.regionsOverlap(
+      fromSettings,
+      toSettings,
+      lanRegions,
+    );
+    const region = ScrimsService.scrimRegion(
+      request.region ? [request.region, ...regions] : regions,
+      lanRegions,
+      accepter,
+    );
 
     const match = await this.matchAssistant.createTeamVsTeamMatch(
       request.from_team_id,
@@ -1281,6 +1348,7 @@ export class ScrimsService {
     const proposedAt = new Date(Date.now() + ScrimsService.PROPOSE_LEAD_MS);
     const blocked = await this.loadOpenScrimPairs();
     const only = teamIds ? new Set(teamIds) : undefined;
+    const lanRegions = await this.lanRegionValues();
 
     for (let i = 0; i < candidates.length; i++) {
       for (let j = i + 1; j < candidates.length; j++) {
@@ -1295,7 +1363,7 @@ export class ScrimsService {
           continue;
         }
 
-        const regions = ScrimsService.regionsOverlap(a, b);
+        const regions = ScrimsService.regionsOverlap(a, b, lanRegions);
         if (regions.length === 0) {
           continue;
         }

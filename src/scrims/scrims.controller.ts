@@ -3,6 +3,7 @@ import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
+import { HasuraService } from "../hasura/hasura.service";
 import { User } from "../auth/types/User";
 import { wakeJobAt } from "../utilities/QueueProcessors";
 import { ScrimsService } from "./scrims.service";
@@ -29,6 +30,7 @@ export class ScrimsController {
   constructor(
     private readonly scrims: ScrimsService,
     @InjectQueue(ScrimQueues.ScrimMatcher) private readonly queue: Queue,
+    private readonly hasura: HasuraService,
   ) {}
 
   @HasuraEvent({ retry: true })
@@ -121,6 +123,7 @@ export class ScrimsController {
     proposed_scheduled_at: string;
     region?: string;
     best_of?: number;
+    lanRegions: () => Promise<Array<string>>;
   }) {
     const {
       user,
@@ -133,6 +136,14 @@ export class ScrimsController {
 
     if (!(await this.scrims.isManager(from_team_id, user.steam_id))) {
       throw Error("you are not a manager of this team");
+    }
+
+    if (region) {
+      await this.hasura.assertLanRegionsReachable(
+        user.role,
+        await data.lanRegions(),
+        [region],
+      );
     }
 
     await this.scrims.createScrimRequest({
@@ -155,6 +166,7 @@ export class ScrimsController {
     user: User;
     request_id: string;
     accept: boolean;
+    lanRegions: () => Promise<Array<string>>;
   }) {
     const { user, request_id, accept } = data;
 
@@ -162,6 +174,8 @@ export class ScrimsController {
       requestId: request_id,
       steamId: user.steam_id,
       accept,
+      role: user.role,
+      lanRegions: data.lanRegions,
     });
 
     return {

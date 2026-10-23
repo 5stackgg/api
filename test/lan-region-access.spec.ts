@@ -271,6 +271,238 @@ describe("LAN region access (SQL-driven)", () => {
     });
   });
 
+  describe("team scrim regions", () => {
+    const saveListing = (
+      role: string,
+      teamId: string,
+      regions: Array<string>,
+      lanRegions?: Array<string>,
+    ) =>
+      asPlayer(
+        role,
+        lanRegions,
+        `INSERT INTO team_scrim_settings (team_id, regions, notes)
+         VALUES ($1, $2, 'saved')
+         ON CONFLICT (team_id) DO UPDATE
+         SET regions = EXCLUDED.regions, notes = EXCLUDED.notes
+         RETURNING regions`,
+        [teamId, regions],
+      );
+
+    const listedTeam = async (regions: Array<string>) => {
+      const team = await fx.team();
+      await postgres.query(
+        "INSERT INTO team_scrim_settings (team_id, regions) VALUES ($1, $2)",
+        [team.id, regions],
+      );
+      return team.id;
+    };
+
+    it("refuses a manager off the LAN listing a LAN region", async () => {
+      const team = await fx.team();
+      await expect(saveListing("user", team.id, ["Lan"])).rejects.toThrow(
+        /must be on the LAN/,
+      );
+    });
+
+    it("lets a manager the probe placed on the LAN list it", async () => {
+      const team = await fx.team();
+      await expect(
+        saveListing("user", team.id, ["Lan"], ["Lan"]),
+      ).resolves.toEqual([{ regions: ["Lan"] }]);
+    });
+
+    it("keeps a listed LAN region when a manager off the LAN saves again", async () => {
+      const teamId = await listedTeam(["Lan"]);
+      await expect(saveListing("user", teamId, ["Lan"])).resolves.toEqual([
+        { regions: ["Lan"] },
+      ]);
+    });
+
+    it("refuses a manager off the LAN adding another LAN region", async () => {
+      const teamId = await listedTeam(["Lan"]);
+      await expect(
+        saveListing("user", teamId, ["Lan", "Lan2"]),
+      ).rejects.toThrow(/must be on the LAN/);
+    });
+
+    it("lets a match_organizer off the LAN list it", async () => {
+      const team = await fx.team();
+      await expect(
+        saveListing("match_organizer", team.id, ["Lan"]),
+      ).resolves.toEqual([{ regions: ["Lan"] }]);
+    });
+  });
+
+  describe("a match's own region and server", () => {
+    const matchOn = async (regions: Array<string>, region: string) => {
+      const [options] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO match_options (mr, best_of, type, map_pool_id, region_veto, regions)
+         VALUES (12, 1, 'Competitive', $1, false, $2) RETURNING id`,
+        [poolId, regions],
+      );
+      const [match] = await postgres.query<Array<{ id: string }>>(
+        "INSERT INTO matches (match_options_id, region) VALUES ($1, $2) RETURNING id",
+        [options.id, region],
+      );
+      return match.id;
+    };
+
+    const moveMatch = (
+      id: string,
+      set: { region?: string; serverRegion?: string },
+      lanRegions?: Array<string>,
+    ) =>
+      asPlayer(
+        "user",
+        lanRegions,
+        `UPDATE matches
+         SET region = COALESCE($2, region),
+             server_id = COALESCE(
+               (SELECT id FROM servers WHERE region = $3 LIMIT 1),
+               server_id
+             )
+         WHERE id = $1 RETURNING region`,
+        [id, set.region ?? null, set.serverRegion ?? null],
+      );
+
+    it("refuses an organizer off the LAN moving their match onto a LAN", async () => {
+      const id = await matchOn(["TestA"], "TestA");
+      await expect(moveMatch(id, { region: "Lan" })).rejects.toThrow(
+        /must be on the LAN/,
+      );
+    });
+
+    it("refuses an organizer off the LAN putting their match on a LAN server", async () => {
+      const id = await matchOn(["TestA"], "TestA");
+      await expect(moveMatch(id, { serverRegion: "Lan" })).rejects.toThrow(
+        /must be on the LAN/,
+      );
+    });
+
+    it("lets a user the probe placed on the LAN move their match there", async () => {
+      const id = await matchOn(["TestA"], "TestA");
+      await expect(moveMatch(id, { region: "Lan" }, ["Lan"])).resolves.toEqual([
+        { region: "Lan" },
+      ]);
+    });
+
+    it("lets an organizer off the LAN pick another of the match's own regions", async () => {
+      const id = await matchOn(["Lan", "Lan2"], "Lan");
+      await expect(moveMatch(id, { region: "Lan2" })).resolves.toEqual([
+        { region: "Lan2" },
+      ]);
+    });
+  });
+
+  describe("lobby regions", () => {
+    const host = "76561198000000001";
+
+    beforeAll(async () => {
+      await postgres.query(
+        `INSERT INTO players (steam_id, name, role) VALUES ($1, 'Player', 'user')
+         ON CONFLICT DO NOTHING`,
+        [host],
+      );
+    });
+
+    beforeEach(async () => {
+      await postgres.query("DELETE FROM draft_games WHERE host_steam_id = $1", [
+        host,
+      ]);
+    });
+
+    const lobby = async (regions: Array<string>) => {
+      const [row] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO draft_games (host_steam_id, type, regions)
+         VALUES ($1, 'Wingman', $2) RETURNING id`,
+        [host, regions],
+      );
+      return row.id;
+    };
+
+    const setRegions = (
+      id: string,
+      regions: Array<string>,
+      lanRegions?: Array<string>,
+    ) =>
+      asPlayer(
+        "user",
+        lanRegions,
+        "UPDATE draft_games SET regions = $2 WHERE id = $1 RETURNING regions",
+        [id, regions],
+      );
+
+    it("refuses a host off the LAN opening a lobby on a LAN", async () => {
+      await expect(
+        asPlayer(
+          "user",
+          undefined,
+          `INSERT INTO draft_games (host_steam_id, type, regions)
+           VALUES ($1, 'Wingman', '{Lan}')`,
+          [host],
+        ),
+      ).rejects.toThrow(/must be on the LAN/);
+    });
+
+    it("refuses a host off the LAN moving a lobby onto a LAN", async () => {
+      const id = await lobby(["TestA"]);
+      await expect(setRegions(id, ["Lan"])).rejects.toThrow(
+        /must be on the LAN/,
+      );
+    });
+
+    it("lets a host the probe placed on the LAN move a lobby there", async () => {
+      const id = await lobby(["TestA"]);
+      await expect(setRegions(id, ["Lan"], ["Lan"])).resolves.toEqual([
+        { regions: ["Lan"] },
+      ]);
+    });
+
+    it("keeps a LAN lobby's region when a host off the LAN saves it again", async () => {
+      const id = await lobby(["Lan"]);
+      await expect(setRegions(id, ["Lan"])).resolves.toEqual([
+        { regions: ["Lan"] },
+      ]);
+    });
+  });
+
+  describe("when one region has every match server", () => {
+    const rankedOnlyIn = (region: string) =>
+      postgres.query(
+        "UPDATE servers SET type = CASE WHEN region = $1 THEN 'Ranked' ELSE 'Casual' END",
+        [region],
+      );
+
+    afterEach(async () => {
+      await postgres.query("UPDATE servers SET type = 'Ranked'");
+    });
+
+    it("leaves a LAN's other servers out of the match's regions", async () => {
+      await rankedOnlyIn("TestA");
+      const [options] = (await createOptions("user", ["TestA"])) as Array<{
+        id: string;
+      }>;
+      const [row] = await postgres.query<Array<{ regions: Array<string> }>>(
+        "SELECT regions FROM match_options WHERE id = $1",
+        [options.id],
+      );
+      expect(row.regions).toEqual(["TestA"]);
+    });
+
+    it("refuses a user off the LAN when that region is a LAN", async () => {
+      await rankedOnlyIn("Lan");
+      await expect(createOptions("user", [])).rejects.toThrow(
+        /must be on the LAN/,
+      );
+    });
+
+    it("lets a user the probe placed on that LAN create a match", async () => {
+      await rankedOnlyIn("Lan");
+      await expect(createOptions("user", [], ["Lan"])).resolves.toHaveLength(1);
+    });
+  });
+
   it("leaves the api's own inserts alone", async () => {
     await expect(
       postgres.query(
