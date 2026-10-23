@@ -60,7 +60,8 @@ export class HasuraController {
 
   // Hasura asks this hook once per socket and keeps that role until the
   // max-age in the JSON body (it ignores a Cache-Control header), then drops
-  // the socket so it reconnects through here. HTTP requests ask every time.
+  // the socket so it reconnects through here. Community Edition asks again for
+  // every HTTP request; Cloud and Enterprise would cache those for the max-age.
   private static readonly ELEVATED_SESSION_MAX_AGE_SECONDS = 5 * 60;
 
   // Longer than any one attempt should take, so a crashed attempt's claim

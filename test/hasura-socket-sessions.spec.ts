@@ -21,7 +21,8 @@ type Socket = {
 
 // Hasura asks the auth hook (GET /hasura) once per socket, on connection_init,
 // and once per HTTP request. These pin what the engine does with a max-age in
-// the hook's answer.
+// the hook's answer. That is Community Edition, which production runs: Cloud
+// and Enterprise also cache the hook's HTTP answers for the same max-age.
 describe("Hasura auth hook sessions", () => {
   const database = `test_hasura_socket_sessions_${randomBytes(4).toString("hex")}`;
   const connection = {
@@ -245,7 +246,7 @@ describe("Hasura auth hook sessions", () => {
     },
   );
 
-  it("asks the hook on every HTTP request, whatever max-age it gave", async () => {
+  it("asks the hook on every HTTP request on Community Edition, whatever max-age it gave", async () => {
     answer("http", "administrator", { "Cache-Control": "max-age=300" });
     expect(await httpInsert("http")).toBe("administrator");
 
