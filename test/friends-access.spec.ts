@@ -167,4 +167,115 @@ describe("friends-only lobbies and drafts", () => {
       member: friendsOf(["Open", "Private"]),
     });
   });
+
+  describe("cost", () => {
+    const plan = (sql: string, params: Array<unknown>) =>
+      postgres.transaction(async (client) => {
+        for (let i = 0; i < 3; i++) {
+          await client.query(
+            `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${sql}`,
+            params,
+          );
+        }
+        const { rows } = await client.query(
+          `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${sql}`,
+          params,
+        );
+        return rows[0]["QUERY PLAN"][0].Plan;
+      });
+
+    const befriendMany = async (viewer: string, count: number) => {
+      const others = await fx.players(count);
+      await postgres.query(
+        `INSERT INTO friends (player_steam_id, other_player_steam_id, status)
+         SELECT $1, unnest($2::bigint[]), 'Accepted'`,
+        [viewer, others],
+      );
+      return others;
+    };
+
+    // Every friends-only lobby, draft, player and pick a list shows asks
+    // whether one of its members is the viewer's friend.
+    it("answers is_friend from the pair alone, however many friends either has", async () => {
+      const [host, few, many, stranger] = await fx.players(4);
+      for (const viewer of [few, many]) {
+        await postgres.query(
+          `INSERT INTO friends (player_steam_id, other_player_steam_id, status)
+           VALUES ($1, $2, 'Accepted')`,
+          [viewer, host],
+        );
+      }
+      await befriendMany(few, 3);
+      await befriendMany(many, 300);
+      await befriendMany(host, 300);
+      await postgres.query("VACUUM ANALYZE friends");
+
+      const ask = async (viewer: string) => {
+        const params = [
+          host,
+          JSON.stringify({
+            "x-hasura-role": "user",
+            "x-hasura-user-id": viewer,
+          }),
+        ];
+        const [{ is_friend }] = await postgres.query<
+          Array<{ is_friend: boolean }>
+        >(
+          "SELECT is_friend(p, $2::json) AS is_friend FROM players p WHERE p.steam_id = $1",
+          params,
+        );
+        const root = await plan(
+          "SELECT is_friend(p, $2::json) FROM players p WHERE p.steam_id = $1",
+          params,
+        );
+        return {
+          is_friend,
+          buffers: root["Shared Hit Blocks"] + root["Shared Read Blocks"],
+        };
+      };
+
+      const [a, b, c] = [await ask(few), await ask(many), await ask(stranger)];
+      expect([a.is_friend, b.is_friend, c.is_friend]).toEqual([
+        true,
+        true,
+        false,
+      ]);
+      expect(b.buffers - a.buffers).toBeLessThanOrEqual(2);
+      expect(a.buffers).toBeLessThanOrEqual(12);
+    }, 120_000);
+
+    // A friend's in-match state comes from one read of the matches in play for
+    // the whole list, not one per friend.
+    it("reads the matches in play once for a whole friends list", async () => {
+      const [viewer] = await fx.players(1);
+      const friends = await befriendMany(viewer, 30);
+      const { poolId } = await fx.mapPool(1);
+      for (let i = 0; i < 6; i++) {
+        const match = await fx.match({ bestOf: 1, mapPoolId: poolId });
+        await fx.lineupPlayer(match.lineup_1_id, friends[i]);
+        await postgres.query("UPDATE matches SET status = $2 WHERE id = $1", [
+          match.id,
+          i % 2 ? "Live" : "Veto",
+        ]);
+      }
+
+      const root = await plan(
+        `SELECT f.steam_id, f.is_in_another_match FROM v_my_friends f
+          WHERE f.friend_steam_id = $1`,
+        [viewer],
+      );
+      const scans: Array<{ loops: number }> = [];
+      const walk = (node: Record<string, any>) => {
+        if (node["Relation Name"] === "matches") {
+          scans.push({ loops: node["Actual Loops"] });
+        }
+        (node.Plans ?? []).forEach(walk);
+      };
+      walk(root);
+
+      expect(root["Actual Rows"]).toBe(30);
+      expect(scans.length).toBeGreaterThan(0);
+      expect(scans.filter(({ loops }) => loops > 1)).toEqual([]);
+    }, 120_000);
+  });
 });

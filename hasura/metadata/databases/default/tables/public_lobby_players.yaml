@@ -25,9 +25,8 @@ insert_permissions:
                     _eq: Friends
                 - players:
                     player:
-                      friends:
-                        steam_id:
-                          _eq: X-Hasura-User-Id
+                      is_friend:
+                        _eq: true
             - access:
                 _eq: Open
       set:
@@ -55,9 +54,8 @@ select_permissions:
                             _eq: Friends
                         - players:
                             player:
-                              friends:
-                                steam_id:
-                                  _eq: X-Hasura-User-Id
+                              is_friend:
+                                _eq: true
                     - access:
                         _eq: Open
                     - players:
