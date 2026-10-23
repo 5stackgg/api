@@ -909,6 +909,40 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       expect(assignServer.mock.calls).toEqual([["match-b"]]);
     });
 
+    it("takes a match whose booting server's Job is gone", async () => {
+      readNamespacedJob.mockRejectedValue(notFound);
+
+      await service.assignWaitingMatch("USE");
+
+      expect(assignServer.mock.calls).toEqual([["match-a"]]);
+    });
+
+    it("takes a match whose server has waited ten minutes for its first ping", async () => {
+      reservations[0].boot_status = "WaitingForPing";
+      readNamespacedJob.mockResolvedValue({
+        metadata: {
+          name: "m-match-a",
+          uid: "uid-a",
+          creationTimestamp: new Date(Date.now() - 11 * 60 * 1000),
+        },
+        status: { active: 1 },
+      });
+
+      await service.assignWaitingMatch("USE");
+
+      expect(assignServer.mock.calls).toEqual([["match-a"]]);
+    });
+
+    it("goes past a booting match when its Job cannot be read", async () => {
+      readNamespacedJob.mockRejectedValue(
+        Object.assign(new Error("connect ECONNREFUSED"), { code: 500 }),
+      );
+
+      await service.assignWaitingMatch("USE");
+
+      expect(assignServer.mock.calls).toEqual([["match-b"]]);
+    });
+
     it("goes to the oldest waiting match when none is booting", async () => {
       reservations = [];
 
@@ -1137,10 +1171,18 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       });
 
       it("keeps the server it is booting when it is woken again", async () => {
+        readNamespacedJob.mockResolvedValue(activeJob("uid-1"));
+
         await service.assignServer("match-1");
 
         expect(deleteNamespacedJob).not.toHaveBeenCalled();
         expect(createNamespacedJob).not.toHaveBeenCalled();
+      });
+
+      it("is booted again when its booting server's Job is gone", async () => {
+        await service.assignServer("match-1");
+
+        expect(createNamespacedJob).toHaveBeenCalled();
       });
 
       it("is booted again when its server failed to boot", async () => {

@@ -70,6 +70,7 @@ export class MatchAssistantService {
   public static readonly ON_DEMAND_SERVER_BOOT_CHECK_DELAY_MS = 15 * 1000;
   public static readonly ON_DEMAND_SERVER_STOP_CHECK_DELAY_MS = 3 * 1000;
   private static readonly ON_DEMAND_SERVER_STOP_TIMEOUT_MS = 2 * 60 * 1000;
+  private static readonly ON_DEMAND_SERVER_PING_TIMEOUT_MS = 10 * 60 * 1000;
   private static readonly ON_DEMAND_SERVER_TEARDOWN_TIMEOUT_MS = 15 * 1000;
   // Must outlast the previous Job's teardown, yet expire well inside
   // assignServer's ~55s of retries.
@@ -1601,15 +1602,51 @@ export class MatchAssistantService {
     });
   }
 
+  // Only while its Job runs: one removed from outside leaves the row booting
+  // for good, and a server that never pinged in ten minutes is not going to.
+  // Kubernetes that cannot be read counts as booting, so nothing is torn down blind.
   private async isBootingOnDemandServer(matchId: string) {
     const { matches, servers } = await this.getOnDemandServerJobMatches([
       matchId,
     ]);
+    const match = matches.at(0);
+    const booting = servers.filter((server) => server.boot_status !== "Failed");
 
-    return MatchAssistantService.holdsOnDemandServer(
-      matches.at(0),
-      servers.filter((server) => server.boot_status !== "Failed"),
-    );
+    if (!MatchAssistantService.holdsOnDemandServer(match, booting)) {
+      return false;
+    }
+
+    const waitingForPing =
+      booting.find((server) => server.id === match.server_id)?.boot_status ===
+      "WaitingForPing";
+
+    try {
+      const kc = new KubeConfig();
+      kc.loadFromDefault();
+      const batch = kc.makeApiClient(BatchV1Api);
+
+      for (const jobName of await this.getMatchServerJobIds(matchId)) {
+        const job = await this.readOnDemandServerJob(batch, jobName);
+
+        if (!job || MatchAssistantService.isJobFinished(job)) {
+          continue;
+        }
+
+        return (
+          !waitingForPing ||
+          Date.now() -
+            new Date(job.metadata?.creationTimestamp ?? Date.now()).getTime() <
+            MatchAssistantService.ON_DEMAND_SERVER_PING_TIMEOUT_MS
+        );
+      }
+
+      return false;
+    } catch (error) {
+      this.logger.warn(
+        `[${matchId}] unable to read its on demand server Job, leaving it booting: ${error?.message}`,
+      );
+      return true;
+    }
   }
 
   // A pod holds its server's host ports until it exits, whether or not the row
