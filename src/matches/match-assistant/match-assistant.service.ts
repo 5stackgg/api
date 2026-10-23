@@ -2031,13 +2031,11 @@ export class MatchAssistantService {
 
     // A signalled server holds its ports until it exits: its stop check frees it.
     if (!stopping) {
-      await this.releaseOnDemandServer(
-        matchId,
-        options.serverId,
-        options.releaseOnlyIfEnded
-          ? MatchAssistantService.reservedByEndedMatch()
-          : undefined,
-      );
+      if (options.releaseOnlyIfEnded) {
+        await this.releaseEndedMatchServer(matchId);
+      } else {
+        await this.releaseOnDemandServer(matchId, options.serverId);
+      }
     }
 
     await this.setServerError(matchId, null);
@@ -2156,11 +2154,44 @@ export class MatchAssistantService {
       await this.removeOnDemandServerJob(matchId, jobName, { uid: jobUid });
     }
 
+    await this.releaseEndedMatchServer(matchId);
+  }
+
+  // A match played again freed the server it ended on (tau_matches), so one it
+  // reserves now is a newer Job's. A pod holds the ports until it is gone, not
+  // its Job: one deleted in the background can still be terminating.
+  private async releaseEndedMatchServer(
+    matchId: string,
+    serverId?: string,
+  ): Promise<boolean> {
+    if (!(await this.hasMatchEnded(matchId))) {
+      return false;
+    }
+
+    if ((await this.getLiveServerPods(matchId)).length > 0) {
+      return false;
+    }
+
     await this.releaseOnDemandServer(
       matchId,
-      undefined,
+      serverId,
       MatchAssistantService.reservedByEndedMatch(),
     );
+
+    return true;
+  }
+
+  private async getLiveServerPods(matchId: string): Promise<Array<V1Pod>> {
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const core = kc.makeApiClient(CoreV1Api);
+
+    const { items: pods } = await core.listNamespacedPod({
+      namespace: this.namespace,
+      labelSelector: `job-name in (${(await this.getMatchServerJobIds(matchId)).join(",")})`,
+    });
+
+    return pods.filter((pod) => MatchAssistantService.isPodLive(pod));
   }
 
   public async reconcileOnDemandServerJobs(): Promise<void> {
@@ -2185,7 +2216,6 @@ export class MatchAssistantService {
 
     const now = Date.now();
     const candidates = new Map<string, V1Job>();
-    const running = new Set<string>();
     let unlabelledServerJobsRemain = false;
 
     for (const job of jobs) {
@@ -2194,8 +2224,6 @@ export class MatchAssistantService {
       if (!matchId || MatchAssistantService.isJobFinished(job)) {
         continue;
       }
-
-      running.add(matchId);
 
       if (job.metadata?.labels?.role !== "match") {
         unlabelledServerJobsRemain = true;
@@ -2217,7 +2245,7 @@ export class MatchAssistantService {
 
     this.unlabelledServerJobsRemain = unlabelledServerJobsRemain;
 
-    await this.releaseStoppedMatchServers(running);
+    await this.releaseStoppedMatchServers();
 
     if (candidates.size === 0) {
       return;
@@ -2292,7 +2320,7 @@ export class MatchAssistantService {
 
   // An ended match keeps its on-demand server until its stop sees the pod gone,
   // which a stop that kept failing never did.
-  private async releaseStoppedMatchServers(running: Set<string>) {
+  private async releaseStoppedMatchServers() {
     const { servers } = await this.hasura.query({
       servers: {
         __args: {
@@ -2309,19 +2337,16 @@ export class MatchAssistantService {
     });
 
     for (const server of servers) {
-      if (running.has(server.reserved_by_match_id)) {
-        continue;
+      if (
+        await this.releaseEndedMatchServer(
+          server.reserved_by_match_id,
+          server.id,
+        )
+      ) {
+        this.logger.warn(
+          `[${server.reserved_by_match_id}] match ended and its server is gone, freed on demand server ${server.id}`,
+        );
       }
-
-      this.logger.warn(
-        `[${server.reserved_by_match_id}] match ended and its server is gone, freeing on demand server ${server.id}`,
-      );
-
-      await this.releaseOnDemandServer(
-        server.reserved_by_match_id,
-        server.id,
-        MatchAssistantService.reservedByEndedMatch(),
-      );
     }
   }
 

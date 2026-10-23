@@ -349,6 +349,14 @@ describe("MatchAssistantService — reconciling on-demand server Jobs", () => {
     ];
     reservedServers = [{ id: "server-2", reserved_by_match_id: MATCH_ID }];
     deleteNamespacedJob.mockRejectedValue({ code: 409 });
+    listNamespacedPod.mockResolvedValue({
+      items: [
+        {
+          metadata: { name: `${JOB_NAME}-fghij` },
+          status: { phase: "Pending" },
+        },
+      ],
+    });
 
     await service.reconcileOnDemandServerJobs();
 
@@ -522,10 +530,46 @@ describe("MatchAssistantService — reconciling on-demand server Jobs", () => {
         }),
       ];
       reservedServers = endedReservations;
+      listNamespacedPod.mockResolvedValue({
+        items: [
+          {
+            metadata: { name: `${JOB_NAME}-abcde` },
+            status: { phase: "Running" },
+          },
+        ],
+      });
 
       await service.reconcileOnDemandServerJobs();
 
       expect(deleteNamespacedJob).not.toHaveBeenCalled();
+      expect(serverReleases()).toHaveLength(0);
+    });
+
+    it("stays with its match while a pod of its finished Job is still terminating", async () => {
+      listNamespacedJob.mockResolvedValue({
+        items: [
+          job({
+            status: {
+              active: 0,
+              conditions: [{ type: "Complete", status: "True" }],
+            },
+          }),
+        ],
+      });
+      listNamespacedPod.mockResolvedValue({
+        items: [
+          {
+            metadata: {
+              name: `${JOB_NAME}-abcde`,
+              deletionTimestamp: new Date(),
+            },
+            status: { phase: "Running" },
+          },
+        ],
+      });
+
+      await service.reconcileOnDemandServerJobs();
+
       expect(serverReleases()).toHaveLength(0);
     });
 
