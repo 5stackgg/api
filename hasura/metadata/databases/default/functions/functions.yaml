@@ -1,6 +1,7 @@
 - "!include public_active_matches.yaml"
 - "!include public_approve_league_season_movements.yaml"
 - "!include public_clone_league_season.yaml"
+- "!include public_clone_tournament_bracket_options.yaml"
 - "!include public_get_event_leaderboard.yaml"
 - "!include public_get_leaderboard.yaml"
 - "!include public_get_league_season_leaderboard.yaml"

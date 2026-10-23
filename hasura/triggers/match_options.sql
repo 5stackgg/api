@@ -179,7 +179,6 @@ BEGIN
                         WHERE m.match_options_id = OLD.id
                         LIMIT 1
                     ))
-                OR (_in_play = 'bracket' AND NEW.best_of IS DISTINCT FROM OLD.best_of)
                 OR EXISTS (
                     SELECT 1 FROM unnest(match_options_rule_columns()) AS rule(col)
                     WHERE to_jsonb(NEW) -> rule.col IS DISTINCT FROM to_jsonb(OLD) -> rule.col

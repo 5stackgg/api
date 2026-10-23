@@ -1,4 +1,3 @@
--- NULL for a bracket with options of its own: its match keeps their best_of.
 CREATE OR REPLACE FUNCTION public.tournament_bracket_best_of(_bracket public.tournament_brackets)
 RETURNS int
 LANGUAGE plpgsql
@@ -10,10 +9,6 @@ DECLARE
     _wins_needed int := 3;
     _swiss_match_type text;
 BEGIN
-    IF _bracket.match_options_id IS NOT NULL THEN
-        RETURN NULL;
-    END IF;
-
     SELECT * INTO _stage
     FROM tournament_stages
     WHERE id = _bracket.tournament_stage_id;

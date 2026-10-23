@@ -286,7 +286,6 @@ describe("tournament match rules once a stage has matches (SQL-driven)", () => {
       );
 
       await expect(update(own.id, "mr = 8")).rejects.toThrow(LOCKED);
-      await expect(update(own.id, "best_of = 3")).rejects.toThrow(LOCKED);
       await update(own.id, "tv_delay = 30");
       await expect(
         postgres.query(
@@ -308,6 +307,155 @@ describe("tournament match rules once a stage has matches (SQL-driven)", () => {
 
       await expect(attachOwnOptions(first.id, tournament.id)).rejects.toThrow(
         /whose teams are known/,
+      );
+    });
+
+    const cloneAs = async (steamId: string, bracketId: string) =>
+      (await runAsUser(postgres, steamId, "user", (query) =>
+        query(
+          `SELECT match_options_id
+           FROM clone_tournament_bracket_options($1, $2::json)`,
+          [
+            bracketId,
+            JSON.stringify({
+              "x-hasura-role": "user",
+              "x-hasura-user-id": steamId,
+            }),
+          ],
+        ),
+      )) as Array<{ match_options_id: string }>;
+
+    const finalOf = async (stageId: string) =>
+      (await tfx.getBrackets(stageId)).find((bracket) => bracket.round === 2)!;
+
+    it("go to an empty bracket of a started stage, and its match is hosted by them under the stage's rules", async () => {
+      const tournament = await tfx.createTournament(SE4);
+      await closeRegistration(tournament);
+      await tfx.setStatus(tournament.id, tournament.organizer, "Live");
+      const final = await finalOf(tournament.stageIds[0]);
+      const [own] = await cloneAs(tournament.organizer, final.id);
+
+      await update(
+        own.match_options_id,
+        "regions = '{TestLan}', region_veto = false, ready_setting = 'Admin', tv_delay = 45",
+      );
+      await expect(update(own.match_options_id, "mr = 12")).rejects.toThrow(
+        LOCKED,
+      );
+      await postgres.query(
+        `UPDATE tournament_stages SET settings = '{"round_best_of": {"WB:2": 3}}'
+         WHERE id = $1`,
+        [tournament.stageIds[0]],
+      );
+
+      await tfx.playRound(tournament.stageIds[0], 1);
+
+      const [match] = await postgres.query<
+        Array<{
+          region: string;
+          ready_setting: string;
+          tv_delay: number;
+          mr: number;
+          best_of: number;
+        }>
+      >(
+        `SELECT m.region, mo.ready_setting, mo.tv_delay, mo.mr, mo.best_of
+         FROM tournament_brackets tb
+         INNER JOIN matches m ON m.id = tb.match_id
+         INNER JOIN match_options mo ON mo.id = m.match_options_id
+         WHERE tb.id = $1`,
+        [final.id],
+      );
+      expect(match).toEqual({
+        region: "TestLan",
+        ready_setting: "Admin",
+        tv_delay: 45,
+        mr: 8,
+        best_of: 3,
+      });
+
+      await update(
+        await tournamentOptionsId(tournament.id),
+        "check_in_setting = 'Admin', tv_delay = 60",
+      );
+
+      const [followed] = await postgres.query<
+        Array<{ check_in_setting: string; tv_delay: number }>
+      >(
+        `SELECT mo.check_in_setting, mo.tv_delay
+         FROM tournament_brackets tb
+         INNER JOIN matches m ON m.id = tb.match_id
+         INNER JOIN match_options mo ON mo.id = m.match_options_id
+         WHERE tb.id = $1`,
+        [final.id],
+      );
+      expect(followed).toEqual({ check_in_setting: "Admin", tv_delay: 45 });
+    });
+
+    it("can't bring other rules into a started stage, and give way to the stage's again", async () => {
+      const tournament = await tfx.createTournament(SE4);
+      await closeRegistration(tournament);
+      const [first] = await tfx.getBrackets(tournament.stageIds[0]);
+      const final = await finalOf(tournament.stageIds[0]);
+
+      const [other] = await postgres.query<Array<{ id: string }>>(
+        `SELECT clone_match_options(match_options_id) AS id
+         FROM tournaments WHERE id = $1`,
+        [tournament.id],
+      );
+      await update(other.id, "mr = 12");
+      await expect(
+        postgres.query(
+          "UPDATE tournament_brackets SET match_options_id = $2 WHERE id = $1",
+          [final.id, other.id],
+        ),
+      ).rejects.toThrow(LOCKED);
+      await expect(cloneAs(tournament.organizer, first.id)).rejects.toThrow(
+        /whose teams are known/,
+      );
+
+      const [own] = await cloneAs(tournament.organizer, final.id);
+      await postgres.query(
+        "UPDATE tournament_brackets SET match_options_id = NULL WHERE id = $1",
+        [final.id],
+      );
+
+      expect(
+        await postgres.query("SELECT id FROM match_options WHERE id = $1", [
+          own.match_options_id,
+        ]),
+      ).toEqual([]);
+    });
+
+    it("follow their stage's later settings while they still hold the stage's value", async () => {
+      const tournament = await tfx.createTournament(SE4);
+      const stageOptionsId = await giveStageOwnOptions(
+        tournament.stageIds[0],
+        tournament.id,
+      );
+      await closeRegistration(tournament);
+      const [own] = await cloneAs(
+        tournament.organizer,
+        (await finalOf(tournament.stageIds[0])).id,
+      );
+      await update(own.match_options_id, "tv_delay = 45");
+
+      await update(stageOptionsId, "tv_delay = 60, ready_setting = 'Captains'");
+
+      const [row] = await postgres.query<
+        Array<{ tv_delay: number; ready_setting: string }>
+      >("SELECT tv_delay, ready_setting FROM match_options WHERE id = $1", [
+        own.match_options_id,
+      ]);
+      expect(row).toEqual({ tv_delay: 45, ready_setting: "Captains" });
+    });
+
+    it("are only given by the tournament's organizers", async () => {
+      const tournament = await tfx.createTournament(SE4);
+      const final = await finalOf(tournament.stageIds[0]);
+
+      await expect(cloneAs(await fx.player(), final.id)).rejects.toThrow(
+        /Must be an organizer/,
       );
     });
   });

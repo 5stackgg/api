@@ -23,10 +23,29 @@ AS $$
     ];
 $$;
 
+-- A fresh Custom pool with the same maps is the same pool.
+CREATE OR REPLACE FUNCTION public.match_options_same_rules(_a uuid, _b uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+AS $$
+    SELECT COALESCE((
+        SELECT NOT EXISTS (
+                SELECT 1 FROM unnest(match_options_rule_columns()) AS rule(col)
+                WHERE rule.col <> 'map_pool_id'
+                  AND to_jsonb(a) -> rule.col IS DISTINCT FROM to_jsonb(b) -> rule.col
+            )
+            AND (SELECT array_agg(map_id ORDER BY map_id) FROM public._map_pool WHERE map_pool_id = a.map_pool_id)
+                IS NOT DISTINCT FROM
+                (SELECT array_agg(map_id ORDER BY map_id) FROM public._map_pool WHERE map_pool_id = b.map_pool_id)
+        FROM public.match_options a, public.match_options b
+        WHERE a.id = _a AND b.id = _b
+    ), false);
+$$;
+
 -- 'match' for a tournament match's own row, 'bracket' for a bracket's own row
 -- once its pairing is known or its stage has a match, 'template' for a
 -- tournament or stage row that a stage with matches plays, NULL otherwise.
--- A bracket's row is cloned as is, best_of included, so it locks like a match.
 CREATE OR REPLACE FUNCTION public.tournament_match_options_in_play(_match_options_id uuid)
 RETURNS text
 LANGUAGE sql
