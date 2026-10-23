@@ -1018,6 +1018,14 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       );
     });
 
+    it("goes past a booting match whose boot check cannot be re-armed", async () => {
+      queue.add.mockRejectedValue(new Error("redis unavailable"));
+
+      await service.assignWaitingMatch("USE");
+
+      expect(attempts()).toEqual(["match-b"]);
+    });
+
     it("goes past a match whose own server is still booting", async () => {
       await service.assignWaitingMatch("USE");
 
@@ -1354,6 +1362,17 @@ describe("MatchAssistantService — on-demand server teardown", () => {
           { matchId: "match-1" },
           expect.objectContaining({ jobId: "match.match-1.server" }),
         );
+      });
+
+      it("keeps the server it is booting when its boot check cannot be re-armed", async () => {
+        readNamespacedJob.mockResolvedValue(activeJob("uid-1"));
+        queue.add.mockRejectedValue(new Error("redis unavailable"));
+
+        await expect(
+          (service as any).assignOnDemandServer("match-1"),
+        ).resolves.toBe(true);
+
+        expect(deleteNamespacedJob).not.toHaveBeenCalled();
       });
 
       it("keeps the server it is booting when it is woken again", async () => {
