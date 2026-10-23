@@ -948,7 +948,8 @@ export class MatchesController {
     await this.discordMatchOverview.updateMatchOverview(matchId);
   }
 
-  // An UPDATE reads only `new`: the server_id-nulling write re-fires with the server still in `old`.
+  // An UPDATE reads `old` only on the write that ends the match: the
+  // server_id-nulling write after it re-fires with the server still in `old`.
   private static endedMatchServerId(
     data: HasuraEventData<matches_set_input>,
   ): string | null {
@@ -956,11 +957,19 @@ export class MatchesController {
       return (data.old.server_id as string) ?? null;
     }
 
-    if (MatchesController.TERMINAL_STATUSES.includes(data.new.status)) {
-      return (data.new.server_id as string) ?? null;
+    if (!MatchesController.TERMINAL_STATUSES.includes(data.new.status)) {
+      return null;
     }
 
-    return null;
+    if (data.new.server_id) {
+      return data.new.server_id as string;
+    }
+
+    if (MatchesController.TERMINAL_STATUSES.includes(data.old.status)) {
+      return null;
+    }
+
+    return (data.old.server_id as string) ?? null;
   }
 
   private async endMatchBroadcast(

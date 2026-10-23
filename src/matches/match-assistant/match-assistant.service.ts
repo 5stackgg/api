@@ -2374,7 +2374,13 @@ export class MatchAssistantService {
 
     this.unlabelledServerJobsRemain = unlabelledServerJobsRemain;
 
-    await this.releaseStoppedMatchServers();
+    try {
+      await this.releaseStoppedMatchServers();
+    } catch (error) {
+      this.logger.error(
+        `[match-server-reaper] freeing the servers of ended matches failed: ${error?.message}`,
+      );
+    }
 
     if (candidates.size === 0) {
       return;

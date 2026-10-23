@@ -516,6 +516,16 @@ describe("MatchesController — match_events on-demand servers", () => {
     expect(stopJobs()).toHaveLength(0);
   });
 
+  it("stops the server of a match ended and taken off it in one write", async () => {
+    await controller.match_events({
+      op: "UPDATE",
+      old: row({ status: "Live" }),
+      new: row({ status: "Canceled", server_id: null }),
+    } as any);
+
+    expect(stopJobs()).toHaveLength(1);
+  });
+
   it("does not stop again when its own server_id write re-fires the event", async () => {
     await controller.match_events({
       op: "UPDATE",

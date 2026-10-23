@@ -572,6 +572,22 @@ describe("MatchAssistantService — reconciling on-demand server Jobs", () => {
       expect(serverReleases()).toHaveLength(0);
     });
 
+    it("still lets orphaned Jobs be removed when it cannot be freed", async () => {
+      hasura.query.mockImplementation(async (request: any) => {
+        if (request.servers?.__args?.where?.current_match) {
+          throw new Error("hasura unavailable");
+        }
+        if (request.matches) {
+          return { matches: [] };
+        }
+        return { servers: [] };
+      });
+
+      await service.reconcileOnDemandServerJobs();
+
+      expect(deletedJobs()).toEqual([JOB_NAME]);
+    });
+
     it("stays with its match when the Jobs cannot be listed", async () => {
       listNamespacedJob.mockRejectedValue(new Error("forbidden"));
 
