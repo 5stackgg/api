@@ -871,7 +871,12 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       });
       hasura.query.mockImplementation(async (request: any) => {
         if (request.matches?.__args?.where?.status) {
-          return { matches: waiting };
+          const excluded = request.matches.__args.where.source?._neq;
+          return {
+            matches: waiting.filter(
+              (match) => (match.source ?? "5stack") !== excluded,
+            ),
+          };
         }
         if (request.matches) {
           const [id] = request.matches.__args.where.id._in;
@@ -937,6 +942,16 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       readNamespacedJob.mockRejectedValue(
         Object.assign(new Error("connect ECONNREFUSED"), { code: 500 }),
       );
+
+      await service.assignWaitingMatch("USE");
+
+      expect(assignServer.mock.calls).toEqual([["match-b"]]);
+    });
+
+    // A practice match waits for a server only once its session has failed.
+    it("goes past a practice match", async () => {
+      reservations = [];
+      waiting = [{ id: "practice-1", source: "practice" }, { id: "match-b" }];
 
       await service.assignWaitingMatch("USE");
 

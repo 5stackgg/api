@@ -2229,6 +2229,10 @@ export class MatchAssistantService {
             status: {
               _eq: "WaitingForServer",
             },
+            // A practice match waits for a server only once its session failed.
+            source: {
+              _neq: "practice",
+            },
             _or: [
               {
                 region: {

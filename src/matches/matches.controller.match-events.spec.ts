@@ -429,6 +429,31 @@ describe("MatchesController — match_events on-demand servers", () => {
     expect(stopJobs()[0][2]?.delay ?? 0).toBe(0);
   });
 
+  it("hands a node that comes online to as many waiting matches as it has free servers", async () => {
+    const answer = hasura.query.getMockImplementation()!;
+    hasura.query.mockImplementation(async (request: any) =>
+      request.game_server_nodes_by_pk
+        ? {
+            game_server_nodes_by_pk: {
+              gpu: false,
+              servers_aggregate: { aggregate: { count: 2 } },
+            },
+          }
+        : answer(request),
+    );
+
+    await controller.node_server_availability({
+      op: "UPDATE",
+      old: { id: "node-1", status: "Offline" },
+      new: { id: "node-1", status: "Online", enabled: true, region: "USE" },
+    } as any);
+
+    expect(matchAssistant.assignWaitingMatch.mock.calls).toEqual([
+      ["USE"],
+      ["USE"],
+    ]);
+  });
+
   describe("a server that becomes free", () => {
     const freed = (overrides: Record<string, unknown> = {}) =>
       controller.server_availability({

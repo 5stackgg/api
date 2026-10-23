@@ -2856,39 +2856,8 @@ export class MatchesController {
     const totalMatchesToFind =
       game_server_nodes_by_pk.servers_aggregate.aggregate.count;
 
-    const { matches } = await this.hasura.query({
-      matches: {
-        __args: {
-          where: {
-            status: {
-              _eq: "WaitingForServer",
-            },
-            _or: [
-              {
-                region: {
-                  _is_null: true,
-                },
-              },
-              {
-                region: {
-                  _eq: data.new.region,
-                },
-              },
-            ],
-          },
-          limit: totalMatchesToFind,
-          order_by: [
-            {
-              created_at: "asc",
-            },
-          ],
-        },
-        id: true,
-      },
-    });
-
-    for (const match of matches) {
-      await this.matchAssistant.assignServer(match.id);
+    for (let assigned = 0; assigned < totalMatchesToFind; assigned++) {
+      await this.matchAssistant.assignWaitingMatch(data.new.region);
     }
   }
 
