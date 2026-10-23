@@ -552,28 +552,19 @@ export class DemoMetadataService {
     return (rows?.[0]?.source ?? "5stack") !== "5stack";
   }
 
-  public async deleteDemo(matchMapDemoId: string): Promise<void> {
+  public async deleteDemo(
+    matchMapDemoId: string,
+    { strict = false }: { strict?: boolean } = {},
+  ): Promise<void> {
     const demo = await this.fetchDemoById(matchMapDemoId);
     if (!demo) {
       return;
     }
     if (!DemoMetadataService.isExternalDemoUrl(demo.file)) {
-      try {
-        await this.s3.removePrefix(demo.file);
-      } catch (error) {
-        this.logger.warn(
-          `[demo-delete] failed to remove .dem ${demo.file}: ${(error as Error)?.message}`,
-        );
-      }
+      await this.removeDemoFile(".dem", demo.file, strict);
     }
     if (demo.playback_file) {
-      try {
-        await this.s3.removePrefix(demo.playback_file);
-      } catch (error) {
-        this.logger.warn(
-          `[demo-delete] failed to remove playback blob ${demo.playback_file}: ${(error as Error)?.message}`,
-        );
-      }
+      await this.removeDemoFile("playback blob", demo.playback_file, strict);
     }
     await this.hasura.mutation({
       delete_match_map_demos_by_pk: {
@@ -581,6 +572,20 @@ export class DemoMetadataService {
         __typename: true,
       },
     });
+  }
+
+  private async removeDemoFile(what: string, prefix: string, strict: boolean) {
+    if (strict) {
+      await this.s3.removePrefixStrictly(prefix);
+      return;
+    }
+    try {
+      await this.s3.removePrefix(prefix);
+    } catch (error) {
+      this.logger.warn(
+        `[demo-delete] failed to remove ${what} ${prefix}: ${(error as Error)?.message}`,
+      );
+    }
   }
 
   public async deleteDemosForMatch(matchId: string): Promise<void> {

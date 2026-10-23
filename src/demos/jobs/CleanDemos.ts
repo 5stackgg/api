@@ -84,12 +84,12 @@ export class CleanDemos extends WorkerHost {
       Date.now() - this.minRetentionInDays * 24 * 60 * 60 * 1000,
     ).toISOString();
 
-    const attempted: Array<string> = [];
-    let deleted = 0;
+    const deleted = new Set<string>();
     let freedBytes = 0;
+    let stopped = false;
 
-    while (this.totalStoredBytes > this.maxStorageInBytes) {
-      const demos = await this.findOldestDemos(finishedAfter, attempted);
+    while (!stopped && this.totalStoredBytes > this.maxStorageInBytes) {
+      const demos = await this.findOldestDemos(finishedAfter);
 
       if (demos.length === 0) {
         break;
@@ -100,45 +100,61 @@ export class CleanDemos extends WorkerHost {
           break;
         }
 
-        attempted.push(demo.id);
+        if (deleted.has(demo.id)) {
+          this.logger.warn(
+            `[clean-demos] demo ${demo.id} is still listed after it was deleted, stopping`,
+          );
+          stopped = true;
+          break;
+        }
 
         try {
-          await this.demoMetadata.deleteDemo(demo.id);
+          await this.demoMetadata.deleteDemo(demo.id, { strict: true });
         } catch (error) {
           this.logger.warn(
-            `[clean-demos] failed to delete demo ${demo.id}: ${(error as Error)?.message}`,
+            `[clean-demos] unable to delete demo ${demo.id}, stopping: ${(error as Error)?.message}`,
           );
-          continue;
+          stopped = true;
+          break;
         }
 
         const bytes = (demo.size ?? 0) + (demo.playback_size ?? 0);
+        deleted.add(demo.id);
         this.totalStoredBytes -= bytes;
         freedBytes += bytes;
-        deleted++;
+        this.logger.log(
+          `[clean-demos] deleted demo ${demo.id}, freeing up ${this.formatStorageSize(bytes)}`,
+        );
       }
     }
 
-    if (deleted > 0) {
+    if (deleted.size > 0) {
       this.logger.log(
-        `Deleted ${deleted} demos, freeing up ${this.formatStorageSize(freedBytes)}`,
+        `Deleted ${deleted.size} demos, freeing up ${this.formatStorageSize(freedBytes)}`,
       );
     }
 
-    return deleted;
+    return deleted.size;
   }
 
-  private async findOldestDemos(
-    finishedAfter: string,
-    attempted: Array<string>,
-  ) {
+  private async findOldestDemos(finishedAfter: string) {
     const { match_map_demos } = await this.hasura.query({
       match_map_demos: {
         __args: {
           limit: 10,
           where: {
-            id: {
-              _nin: attempted,
-            },
+            _or: [
+              {
+                size: {
+                  _gt: 0,
+                },
+              },
+              {
+                playback_size: {
+                  _gt: 0,
+                },
+              },
+            ],
             match: {
               ended_at: {
                 _lt: finishedAfter,
