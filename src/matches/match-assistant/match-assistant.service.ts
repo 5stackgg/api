@@ -1058,6 +1058,7 @@ export class MatchAssistantService {
     const map = match.match_maps.at(0).map;
 
     let locked = false;
+    let removedServerIds: Array<string> = [];
 
     const assigned = this.cache.lock(
       `get-on-demand-server:${match.region}`,
@@ -1092,7 +1093,9 @@ export class MatchAssistantService {
         // assignment, (c) delete propagation is slow — the wait-until-gone loop
         // inside stopOnDemandServer(remove=true) ensures the name is free.
         try {
-          await this.stopOnDemandServer(matchId, { remove: true });
+          removedServerIds = await this.stopOnDemandServer(matchId, {
+            remove: true,
+          });
         } catch (error) {
           this.logger.error(
             `[${matchId}] unable to remove the previous on demand server`,
@@ -1598,16 +1601,21 @@ export class MatchAssistantService {
     );
 
     // cache.lock throws a plain Error after ~1s of contention; assignServer's retries handle it.
-    return assigned.catch((error) => {
-      if (locked) {
-        throw error;
-      }
+    try {
+      return await assigned.catch((error) => {
+        if (locked) {
+          throw error;
+        }
 
-      this.logger.warn(
-        `[${matchId}] on demand server pool is busy, retrying: ${error?.message}`,
-      );
-      throw new FailedToCreateOnDemandServer();
-    });
+        this.logger.warn(
+          `[${matchId}] on demand server pool is busy, retrying: ${error?.message}`,
+        );
+        throw new FailedToCreateOnDemandServer();
+      });
+    } finally {
+      // Out of the lock: the match may have taken another server than the one it gave back.
+      await this.assignWaitingMatchesTo(removedServerIds);
+    }
   }
 
   // Only while its Job runs: one removed from outside leaves the row booting
@@ -2109,7 +2117,7 @@ export class MatchAssistantService {
       jobUids?: Map<string, string>;
       endedServerId?: string;
     } = {},
-  ) {
+  ): Promise<Array<string>> {
     this.logger.log(`[${matchId}] stopping match servers`);
 
     let stopping = false;
@@ -2137,11 +2145,19 @@ export class MatchAssistantService {
       throw error;
     }
 
-    // The assignment removing them takes a server next. A signalled server
-    // holds its ports until it exits: its stop check frees it.
+    // The assignment removing them hands out what it freed once it has picked
+    // its own. A signalled server holds its ports until it exits: its stop
+    // check frees it.
     if (options.remove) {
-      await this.releaseOnDemandServer(matchId, options.serverId);
-    } else if (!stopping) {
+      const removed = await this.releaseOnDemandServer(
+        matchId,
+        options.serverId,
+      );
+      await this.setServerError(matchId, null);
+      return removed;
+    }
+
+    if (!stopping) {
       await this.assignWaitingMatchesTo([
         ...(options.releaseOnlyIfEnded
           ? await this.releaseEndedMatchServer(matchId)
@@ -2151,6 +2167,8 @@ export class MatchAssistantService {
     }
 
     await this.setServerError(matchId, null);
+
+    return [];
   }
 
   // The queued stop can run after a restart, when the Job under this name is

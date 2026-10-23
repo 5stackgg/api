@@ -1190,7 +1190,7 @@ describe("MatchAssistantService — on-demand server teardown", () => {
     });
 
     // The assignment picks a server next, under the lock a woken match would need.
-    it("hands the server it gives back to nobody before picking its next one", async () => {
+    it("hands the server it gives back to a waiting match only after picking its next one", async () => {
       const assignServer = jest
         .spyOn(service, "assignServer")
         .mockResolvedValue(undefined);
@@ -1221,9 +1221,13 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       ).resolves.toBe(true);
 
       expect(assignServer).not.toHaveBeenCalled();
-      expect(
-        queue.add.mock.calls.filter(([name]) => name === "AssignWaitingMatch"),
-      ).toHaveLength(0);
+      const wake = queue.add.mock.calls.findIndex(
+        ([name]) => name === "AssignWaitingMatch",
+      );
+      expect(wake).toBeGreaterThanOrEqual(0);
+      expect(queue.add.mock.invocationCallOrder[wake]).toBeGreaterThan(
+        createNamespacedJob.mock.invocationCallOrder[0],
+      );
     });
 
     describe("a match that already holds an on-demand server", () => {
@@ -1268,6 +1272,36 @@ describe("MatchAssistantService — on-demand server teardown", () => {
         await service.assignServer("match-1");
 
         expect(createNamespacedJob).toHaveBeenCalled();
+      });
+
+      // It may well take another server than the one it gave back.
+      it("hands the server it failed to boot on to the next waiting match", async () => {
+        bootStatus = "Failed";
+        const answer = hasura.query.getMockImplementation()!;
+        hasura.query.mockImplementation(async (request: any) =>
+          request.servers?.__args?.where?.id?._in
+            ? { servers: [{ id: "server-1", region: "USE" }] }
+            : answer(request),
+        );
+        hasura.mutation.mockImplementation(async (request: any) => {
+          if (request.update_servers) {
+            return { update_servers: { returning: [{ id: "server-1" }] } };
+          }
+          if (request.update_matches) {
+            return { update_matches: { affected_rows: 1 } };
+          }
+          return {};
+        });
+
+        await service.assignServer("match-1");
+
+        expect(
+          queue.add.mock.calls.filter(
+            ([name]) => name === "AssignWaitingMatch",
+          ),
+        ).toEqual([
+          ["AssignWaitingMatch", { region: "USE" }, expect.anything()],
+        ]);
       });
 
       it("is booted again when its server failed to boot", async () => {

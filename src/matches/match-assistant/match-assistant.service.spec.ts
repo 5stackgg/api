@@ -310,9 +310,7 @@ describe("MatchAssistantService", () => {
         return { matches: [], servers: [], game_server_nodes: [] };
       });
       jest.spyOn(service as any, "hasMatchEnded").mockResolvedValue(false);
-      jest
-        .spyOn(service as any, "stopOnDemandServer")
-        .mockResolvedValue(undefined);
+      jest.spyOn(service as any, "stopOnDemandServer").mockResolvedValue([]);
       const { KubeConfig } = jest.requireMock("@kubernetes/client-node");
       KubeConfig.prototype.loadFromDefault = jest.fn();
       KubeConfig.prototype.makeApiClient = jest.fn(() => ({
