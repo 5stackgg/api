@@ -96173,6 +96173,46 @@ type query_root {
   migration_hashes_hashes_by_pk(name: String!): migration_hashes_hashes
 
   """
+  execute function "my_active_matches" which returns "matches"
+  """
+  my_active_matches(
+    """distinct select on columns"""
+    distinct_on: [matches_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [matches_order_by!]
+
+    """filter the rows returned"""
+    where: matches_bool_exp
+  ): [matches!]!
+
+  """
+  execute function "my_active_matches" and query aggregates on result of table type "matches"
+  """
+  my_active_matches_aggregate(
+    """distinct select on columns"""
+    distinct_on: [matches_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [matches_order_by!]
+
+    """filter the rows returned"""
+    where: matches_bool_exp
+  ): matches_aggregate!
+
+  """
   fetch data from the table: "v_my_friends"
   """
   my_friends(
@@ -116788,6 +116828,46 @@ type subscription_root {
     """filter the rows returned"""
     where: migration_hashes_hashes_bool_exp
   ): [migration_hashes_hashes!]!
+
+  """
+  execute function "my_active_matches" which returns "matches"
+  """
+  my_active_matches(
+    """distinct select on columns"""
+    distinct_on: [matches_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [matches_order_by!]
+
+    """filter the rows returned"""
+    where: matches_bool_exp
+  ): [matches!]!
+
+  """
+  execute function "my_active_matches" and query aggregates on result of table type "matches"
+  """
+  my_active_matches_aggregate(
+    """distinct select on columns"""
+    distinct_on: [matches_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [matches_order_by!]
+
+    """filter the rows returned"""
+    where: matches_bool_exp
+  ): matches_aggregate!
 
   """
   fetch data from the table: "v_my_friends"

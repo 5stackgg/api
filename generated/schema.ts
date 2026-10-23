@@ -30352,6 +30352,10 @@ export interface query_root {
     migration_hashes_hashes_aggregate: migration_hashes_hashes_aggregate
     /** fetch data from the table: "migration_hashes.hashes" using primary key columns */
     migration_hashes_hashes_by_pk: (migration_hashes_hashes | null)
+    /** execute function "my_active_matches" which returns "matches" */
+    my_active_matches: matches[]
+    /** execute function "my_active_matches" and query aggregates on result of table type "matches" */
+    my_active_matches_aggregate: matches_aggregate
     /** fetch data from the table: "v_my_friends" */
     my_friends: my_friends[]
     /** fetch aggregated fields from the table: "v_my_friends" */
@@ -34517,6 +34521,10 @@ export interface subscription_root {
     migration_hashes_hashes_by_pk: (migration_hashes_hashes | null)
     /** fetch data from the table in a streaming manner: "migration_hashes.hashes" */
     migration_hashes_hashes_stream: migration_hashes_hashes[]
+    /** execute function "my_active_matches" which returns "matches" */
+    my_active_matches: matches[]
+    /** execute function "my_active_matches" and query aggregates on result of table type "matches" */
+    my_active_matches_aggregate: matches_aggregate
     /** fetch data from the table: "v_my_friends" */
     my_friends: my_friends[]
     /** fetch aggregated fields from the table: "v_my_friends" */
@@ -104482,6 +104490,30 @@ export interface query_rootGenqlSelection{
     where?: (migration_hashes_hashes_bool_exp | null)} })
     /** fetch data from the table: "migration_hashes.hashes" using primary key columns */
     migration_hashes_hashes_by_pk?: (migration_hashes_hashesGenqlSelection & { __args: {name: Scalars['String']} })
+    /** execute function "my_active_matches" which returns "matches" */
+    my_active_matches?: (matchesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (matches_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (matches_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (matches_bool_exp | null)} })
+    /** execute function "my_active_matches" and query aggregates on result of table type "matches" */
+    my_active_matches_aggregate?: (matches_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (matches_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (matches_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (matches_bool_exp | null)} })
     /** fetch data from the table: "v_my_friends" */
     my_friends?: (my_friendsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -116423,6 +116455,30 @@ export interface subscription_rootGenqlSelection{
     cursor: (migration_hashes_hashes_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (migration_hashes_hashes_bool_exp | null)} })
+    /** execute function "my_active_matches" which returns "matches" */
+    my_active_matches?: (matchesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (matches_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (matches_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (matches_bool_exp | null)} })
+    /** execute function "my_active_matches" and query aggregates on result of table type "matches" */
+    my_active_matches_aggregate?: (matches_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (matches_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (matches_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (matches_bool_exp | null)} })
     /** fetch data from the table: "v_my_friends" */
     my_friends?: (my_friendsGenqlSelection & { __args?: {
     /** distinct select on columns */

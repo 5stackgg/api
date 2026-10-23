@@ -120,10 +120,35 @@ function makeServices(
 
 export async function endPool(postgres: PostgresService): Promise<void> {
   // Drain the pool before its database goes away, otherwise pg emits an
-  // idle-client error when the socket is torn out from under it.
-  await (
-    postgres as unknown as { pool: { end(): Promise<void> } }
-  )?.pool?.end();
+  // idle-client error when the socket is torn out from under it. end()
+  // resolves once each idle client is asked to close, not once it has, so a
+  // FORCE drop can still reach one that is closing: nothing is listening to
+  // the pool by then, and the error would fail the whole suite.
+  const pool = (
+    postgres as unknown as {
+      pool?: { end(): Promise<void>; on(event: "error", fn: () => void): void };
+    }
+  )?.pool;
+  pool?.on("error", () => {});
+  await pool?.end();
+}
+
+// Waits for a database's own connections to finish closing, so dropping it
+// with FORCE terminates nothing that is still in use.
+async function settleConnections(
+  admin: Client,
+  database: string,
+): Promise<void> {
+  for (let i = 0; i < 50; i++) {
+    const { rows } = await admin.query<{ count: string }>(
+      "SELECT count(*) AS count FROM pg_stat_activity WHERE datname = $1",
+      [database],
+    );
+    if (Number(rows[0].count) === 0) {
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
 }
 
 // Boots a throwaway Postgres and drives the real HasuraService.setup() through
@@ -321,9 +346,12 @@ async function cloneFromTemplate(loggerName: string): Promise<SqlTestDb> {
       // The container now outlives the run, so a clone that is not dropped here
       // stays on disk forever. A failure to drop must not fail the suite.
       try {
-        await withAdmin(connection, (admin) =>
-          admin.query(`DROP DATABASE IF EXISTS "${database}" WITH (FORCE)`),
-        );
+        await withAdmin(connection, async (admin) => {
+          await settleConnections(admin, database);
+          await admin.query(
+            `DROP DATABASE IF EXISTS "${database}" WITH (FORCE)`,
+          );
+        });
       } catch {
         // The sweep on the next run picks it up.
       }
