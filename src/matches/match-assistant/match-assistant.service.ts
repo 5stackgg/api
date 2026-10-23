@@ -1000,9 +1000,18 @@ export class MatchAssistantService {
     const isRender = isPractice && (await this.isRenderPracticeMatch(matchId));
     const needsGpu =
       isRender && !(await this.isDiscoveryPracticeMatch(matchId));
-    const renderNodeIds = needsGpu
-      ? await this.renderNodeIdsFor(match.region)
-      : null;
+    let renderNodeIds: Array<string> | null = null;
+    if (needsGpu) {
+      try {
+        renderNodeIds = await this.renderNodeIdsFor(match.region);
+      } catch (error) {
+        this.logger.error(
+          `[${matchId}] unable to find a node free to render on`,
+          error?.response?.body?.message || error,
+        );
+        throw new FailedToCreateOnDemandServer();
+      }
+    }
 
     if (renderNodeIds?.length === 0) {
       this.logger.warn(

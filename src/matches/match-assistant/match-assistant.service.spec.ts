@@ -6,6 +6,7 @@ jest.mock("@kubernetes/client-node", () => ({
 }));
 
 import { MatchAssistantService } from "./match-assistant.service";
+import { FailedToCreateOnDemandServer } from "../errors/FailedToCreateOnDemandServer";
 
 describe("MatchAssistantService", () => {
   let service: MatchAssistantService;
@@ -280,6 +281,39 @@ describe("MatchAssistantService", () => {
     // The pod films its server over loopback, so the server comes out of the
     // slots of nodes whose GPU is free to film it: in the render's region, or
     // on a GPU-only node, which takes no matches but keeps a slot for this.
+    // The assignment's retries ride out a Kubernetes blip; the render fails without them.
+    it("retries a render's server when the pods cannot be listed", async () => {
+      postgres.query.mockImplementation(async (sql: string) =>
+        sql.includes("is_discovery") ? [{ discovery: false }] : [],
+      );
+      hasura.query.mockImplementation(async (query: any) => {
+        if (query.matches_by_pk) {
+          return {
+            matches_by_pk: {
+              source: "practice",
+              region: "Lan",
+              match_maps: [{ map: { name: "de_mirage" }, order: 1 }],
+            },
+          };
+        }
+        if (query.utility_practice_sessions) {
+          return { utility_practice_sessions: [{ id: "session-1" }] };
+        }
+        return { matches: [], servers: [], game_server_nodes: [] };
+      });
+      const { KubeConfig } = jest.requireMock("@kubernetes/client-node");
+      KubeConfig.prototype.loadFromDefault = jest.fn();
+      KubeConfig.prototype.makeApiClient = jest.fn(() => ({
+        listNamespacedPod: jest.fn(async () => {
+          throw new Error("connect ECONNREFUSED");
+        }),
+      }));
+
+      await expect(
+        (service as any).assignOnDemandServer("match-1"),
+      ).rejects.toBeInstanceOf(FailedToCreateOnDemandServer);
+    });
+
     it("books a render's server on a node whose GPU can film it, whatever the node takes", async () => {
       postgres.query.mockImplementation(async (sql: string) => {
         if (sql.includes("is_discovery")) {
