@@ -92,6 +92,10 @@ export class MatchesController {
   // Finished (delayChangeMap(5) in the game-server plugin).
   private static readonly PLUGIN_TV_STOP_SECONDS = 5;
 
+  // The server outlives the TV feed by this much, so the plugin's own tv_stop
+  // is done before the server is.
+  private static readonly SERVER_STOP_MARGIN_SECONDS = 5;
+
   // A map still in one of these when the match ends was cut short from outside
   // the plugin (an organizer forfeit, tie or winner), so the TV feed is still a
   // whole tv_delay behind.
@@ -1029,7 +1033,17 @@ export class MatchesController {
       return 0;
     }
 
-    const feedEndsIn = await this.tvFeedEndsInSeconds(data, matchId);
+    let feedEndsIn = MatchesController.PLUGIN_TV_STOP_SECONDS;
+
+    try {
+      feedEndsIn = await this.tvFeedEndsInSeconds(data, matchId);
+    } catch (error) {
+      this.logger.error(
+        `[${matchId}] failed to check how far behind the TV feed is: ${
+          (error as Error)?.message
+        }`,
+      );
+    }
 
     const playout = await this.matchRelayService
       .playoutSeconds(matchId)
@@ -1043,40 +1057,28 @@ export class MatchesController {
     matchId: string,
     inPlayStatuses = MatchesController.IN_PLAY_MAP_STATUSES,
   ): Promise<number> {
-    let feedEndsIn = MatchesController.PLUGIN_TV_STOP_SECONDS;
-
-    try {
-      const { match_maps, match_options_by_pk } = await this.hasura.query({
-        match_maps: {
-          __args: {
-            where: {
-              match_id: { _eq: matchId },
-              status: { _in: inPlayStatuses },
-            },
-            limit: 1,
+    const { match_maps, match_options_by_pk } = await this.hasura.query({
+      match_maps: {
+        __args: {
+          where: {
+            match_id: { _eq: matchId },
+            status: { _in: inPlayStatuses },
           },
-          id: true,
+          limit: 1,
         },
-        match_options_by_pk: {
-          __args: {
-            id: data.new.match_options_id,
-          },
-          tv_delay: true,
+        id: true,
+      },
+      match_options_by_pk: {
+        __args: {
+          id: data.new.match_options_id,
         },
-      });
+        tv_delay: true,
+      },
+    });
 
-      if (match_maps.length > 0) {
-        feedEndsIn = match_options_by_pk?.tv_delay ?? 0;
-      }
-    } catch (error) {
-      this.logger.error(
-        `[${matchId}] failed to check how far behind the TV feed is: ${
-          (error as Error)?.message
-        }`,
-      );
-    }
-
-    return feedEndsIn;
+    return match_maps.length > 0
+      ? (match_options_by_pk?.tv_delay ?? 0)
+      : MatchesController.PLUGIN_TV_STOP_SECONDS;
   }
 
   private static stopOnDemandServerJobOptions(delaySeconds = 0) {
@@ -1111,11 +1113,12 @@ export class MatchesController {
     let delay = 0;
 
     if (data.op !== "DELETE" && data.new.status !== "Canceled") {
-      delay = await this.tvFeedEndsInSeconds(
-        data,
-        matchId,
-        MatchesController.RECORDING_MAP_STATUSES,
-      );
+      delay =
+        (await this.tvFeedEndsInSeconds(
+          data,
+          matchId,
+          MatchesController.RECORDING_MAP_STATUSES,
+        )) + MatchesController.SERVER_STOP_MARGIN_SECONDS;
     }
 
     this.logger.log(

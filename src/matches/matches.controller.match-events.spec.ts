@@ -318,11 +318,52 @@ describe("MatchesController — match_events on-demand servers", () => {
 
     expect(stopJobs()).toHaveLength(1);
     expect(stopJobs()[0][2]).toEqual(
-      expect.objectContaining({ delay: 5 * 1000 }),
+      expect.objectContaining({ delay: 10 * 1000 }),
     );
   });
 
-  // The plugin waits out tv_delay before it finishes the map, then stops the TV 5s later.
+  it("retries the event when it cannot tell how far behind the TV feed is", async () => {
+    const answer = hasura.query.getMockImplementation()!;
+    hasura.query.mockImplementation(async (request: any) => {
+      if (request.match_maps) {
+        throw new Error("hasura unavailable");
+      }
+      return answer(request);
+    });
+
+    await expect(
+      controller.match_events({
+        op: "UPDATE",
+        old: row({ status: "Live" }),
+        new: row({ status: "Finished" }),
+      } as any),
+    ).rejects.toThrow("hasura unavailable");
+
+    expect(stopJobs()).toHaveLength(0);
+  });
+
+  it("still ends the broadcast when it cannot tell how far behind the TV feed is", async () => {
+    const answer = hasura.query.getMockImplementation()!;
+    hasura.query.mockImplementation(async (request: any) => {
+      if (request.match_maps) {
+        throw new Error("hasura unavailable");
+      }
+      return answer(request);
+    });
+
+    await controller
+      .match_events({
+        op: "UPDATE",
+        old: row({ status: "Live", server_id: "dedicated-1" }),
+        new: row({ status: "Finished", server_id: "dedicated-1" }),
+      } as any)
+      .catch((): void => undefined);
+
+    expect(broadcastStopJobs()[0][2].delay).toBe(5 * 1000);
+  });
+
+  // The plugin waits out tv_delay before it finishes the map, then stops the TV
+  // 5s later, and the server outlives that by as much again.
   it("stops a finished match's server once the plugin has stopped the TV", async () => {
     await controller.match_events({
       op: "UPDATE",
@@ -331,7 +372,7 @@ describe("MatchesController — match_events on-demand servers", () => {
     } as any);
 
     expect(stopJobs()[0][2]).toEqual(
-      expect.objectContaining({ delay: 5 * 1000 }),
+      expect.objectContaining({ delay: 10 * 1000 }),
     );
   });
 
@@ -345,7 +386,7 @@ describe("MatchesController — match_events on-demand servers", () => {
     } as any);
 
     expect(stopJobs()[0][2]).toEqual(
-      expect.objectContaining({ delay: 30 * 1000 }),
+      expect.objectContaining({ delay: 35 * 1000 }),
     );
   });
 
@@ -371,7 +412,7 @@ describe("MatchesController — match_events on-demand servers", () => {
     } as any);
 
     expect(stopJobs()[0][2]).toEqual(
-      expect.objectContaining({ delay: 30 * 1000 }),
+      expect.objectContaining({ delay: 35 * 1000 }),
     );
     expect(broadcastStopJobs()[0][2].delay).toBe(5 * 1000);
   });
