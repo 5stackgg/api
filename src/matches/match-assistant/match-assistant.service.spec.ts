@@ -307,7 +307,7 @@ describe("MatchAssistantService", () => {
         if (query.utility_practice_sessions) {
           return { utility_practice_sessions: [{ id: "session-1" }] };
         }
-        return { servers: [], game_server_nodes: [] };
+        return { matches: [], servers: [], game_server_nodes: [] };
       });
       jest.spyOn(service as any, "hasMatchEnded").mockResolvedValue(false);
       jest
@@ -331,7 +331,7 @@ describe("MatchAssistantService", () => {
       ).toEqual([["gpu-only", "lan-gpu"], "Lan"]);
 
       const serversQuery = hasura.query.mock.calls.find(
-        ([query]) => query.servers,
+        ([query]) => query.servers?.__args?.where?.game_server_node,
       )[0];
       expect(serversQuery.servers.__args.where.game_server_node).toEqual({
         id: { _in: ["gpu-only", "lan-gpu"] },

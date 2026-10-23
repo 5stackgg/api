@@ -946,6 +946,9 @@ describe("MatchAssistantService — on-demand server teardown", () => {
         if (request.game_server_nodes) {
           return { game_server_nodes: nodes };
         }
+        if (request.matches) {
+          return { matches: [] };
+        }
         if (request.servers) {
           return {
             servers: [
@@ -981,6 +984,61 @@ describe("MatchAssistantService — on-demand server teardown", () => {
           };
         }
         return {};
+      });
+    });
+
+    describe("a match that already holds an on-demand server", () => {
+      let bootStatus: string | null;
+
+      beforeEach(() => {
+        bootStatus = "Booting";
+        const answer = hasura.query.getMockImplementation()!;
+        hasura.query.mockImplementation(async (request: any) => {
+          if (request.matches) {
+            return {
+              matches: [
+                { id: "match-1", status: "Live", server_id: "server-1" },
+              ],
+            };
+          }
+          if (request.servers?.__args?.where?.reserved_by_match_id?._in) {
+            return {
+              servers: [
+                {
+                  id: "server-1",
+                  reserved_by_match_id: "match-1",
+                  boot_status: bootStatus,
+                },
+              ],
+            };
+          }
+          return answer(request);
+        });
+      });
+
+      it("keeps the server it is booting when it is woken again", async () => {
+        await service.assignServer("match-1");
+
+        expect(deleteNamespacedJob).not.toHaveBeenCalled();
+        expect(createNamespacedJob).not.toHaveBeenCalled();
+      });
+
+      it("is booted again when its server failed to boot", async () => {
+        bootStatus = "Failed";
+
+        await service.assignServer("match-1");
+
+        expect(createNamespacedJob).toHaveBeenCalled();
+      });
+
+      it("is booted again when it is rebooted", async () => {
+        await expect(
+          (service as any).assignOnDemandServer("match-1", {
+            preserveMatchStatus: true,
+          }),
+        ).resolves.toBe(true);
+
+        expect(createNamespacedJob).toHaveBeenCalled();
       });
     });
 
@@ -1245,7 +1303,8 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       const serverQuery = () =>
         hasura.query.mock.calls
           .map(([request]) => request)
-          .find((request) => request.servers)?.servers;
+          .find((request) => request.servers?.__args?.where?.game_server_node)
+          ?.servers;
 
       it("names its Job u-", async () => {
         await (service as any).assignOnDemandServer("match-1");

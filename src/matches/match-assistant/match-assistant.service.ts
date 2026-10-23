@@ -1063,6 +1063,18 @@ export class MatchAssistantService {
           return false;
         }
 
+        // Every server freed in the region wakes the oldest waiting match,
+        // which stays WaitingForServer while its own server boots.
+        if (
+          !options?.preserveMatchStatus &&
+          (await this.isBootingOnDemandServer(matchId))
+        ) {
+          this.logger.log(
+            `[${matchId}] match already has an on demand server, leaving it`,
+          );
+          return true;
+        }
+
         this.logger.log(`[${matchId}] assigning on demand server`);
 
         // Always tear down any existing k8s job for this match before creating
@@ -1587,6 +1599,17 @@ export class MatchAssistantService {
       );
       throw new FailedToCreateOnDemandServer();
     });
+  }
+
+  private async isBootingOnDemandServer(matchId: string) {
+    const { matches, servers } = await this.getOnDemandServerJobMatches([
+      matchId,
+    ]);
+
+    return MatchAssistantService.holdsOnDemandServer(
+      matches.at(0),
+      servers.filter((server) => server.boot_status !== "Failed"),
+    );
   }
 
   // A pod holds its server's host ports until it exits, whether or not the row
@@ -2494,6 +2517,7 @@ export class MatchAssistantService {
         },
         id: true,
         reserved_by_match_id: true,
+        boot_status: true,
       },
     });
 
