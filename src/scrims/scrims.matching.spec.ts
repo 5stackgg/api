@@ -182,6 +182,15 @@ describe("ScrimsService matching", () => {
       ).toBe("Lan");
     });
 
+    it("books a LAN under its own spelling", () => {
+      expect(
+        ScrimsService.scrimRegion(["lan"], lanRegions, {
+          role: "user",
+          lanRegions: ["Lan"],
+        }),
+      ).toBe("Lan");
+    });
+
     it("falls back to an online region the teams share for a manager off the LAN", () => {
       expect(
         ScrimsService.scrimRegion(["lan", "US East"], lanRegions, offLan),

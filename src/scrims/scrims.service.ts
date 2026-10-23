@@ -172,7 +172,7 @@ export class ScrimsService {
       throw Error("You must be on the LAN to play in a LAN region");
     }
 
-    return region;
+    return ScrimsService.lanRegionOf(region, lanRegions) ?? region;
   }
 
   private static lanRegionOf(
