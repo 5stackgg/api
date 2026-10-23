@@ -407,6 +407,10 @@ export class SteamBansService {
                AND ps.type = 'ban'
                AND ps.deleted_at IS NULL
                AND (ps.remove_sanction_date IS NULL OR ps.remove_sanction_date > now())
+               AND NOT (
+                 ps.sanctioned_by_steam_id IS NULL
+                 AND COALESCE(ps.reason, '') LIKE 'Auto: FACEIT%'
+               )
           )
           AND NOT EXISTS (
             SELECT 1

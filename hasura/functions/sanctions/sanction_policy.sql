@@ -320,6 +320,7 @@ STABLE
 AS $$
 DECLARE
     _occurrences record;
+    _expiry timestamptz;
 BEGIN
     SELECT * INTO _occurrences FROM public.sanction_occurrences(_source, _steam_id);
 
@@ -327,11 +328,21 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    RETURN public.sanction_expiry(
+    _expiry := public.sanction_expiry(
         _source,
         _occurrences.occurrence_count,
         _occurrences.last_occurred_at
     );
+
+    -- A FACEIT ban is never held here past the end FACEIT gave it.
+    IF _source = 'faceit_ban' AND _expiry IS NOT NULL THEN
+        SELECT LEAST(_expiry, COALESCE(p.faceit_ban_ends_at, 'infinity'::timestamptz))
+          INTO _expiry
+          FROM public.players p
+         WHERE p.steam_id = _steam_id;
+    END IF;
+
+    RETURN _expiry;
 END;
 $$;
 

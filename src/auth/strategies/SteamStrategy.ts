@@ -13,6 +13,7 @@ import { RedisManagerService } from "../../redis/redis-manager/redis-manager.ser
 import { SteamMatchHistoryQueues } from "../../steam-match-history/enums/SteamMatchHistoryQueues";
 import { SteamBansService } from "../../steam-match-history/steam-bans.service";
 import { FaceitQueues } from "../../faceit/enums/FaceitQueues";
+import { FaceitBansService } from "../../faceit/faceit-bans.service";
 import { e_player_roles_enum } from "../../../generated";
 
 interface SteamProfile {
@@ -143,20 +144,12 @@ export class SteamStrategy extends PassportStrategy(_SteamStrategy) {
       );
     });
 
-    void this.faceitBansQueue
-      .add(
-        "CheckFaceitBans",
-        { steamId },
-        {
-          jobId: `check-faceit-bans.${steamId}`,
-          removeOnComplete: true,
-          removeOnFail: true,
-        },
-      )
-      .catch((err) => {
+    void FaceitBansService.enqueueChecks(this.faceitBansQueue, [steamId]).catch(
+      (err) => {
         this.logger.error(
           `on-login faceit-bans enqueue failed for ${steamId}: ${(err as Error)?.message ?? err}`,
         );
-      });
+      },
+    );
   }
 }

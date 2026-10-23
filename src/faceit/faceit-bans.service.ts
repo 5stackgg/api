@@ -1,6 +1,9 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
 import { PostgresService } from "../postgres/postgres.service";
+import { FaceitQueues } from "./enums/FaceitQueues";
 
 export type FaceitBan = {
   reason?: string;
@@ -13,19 +16,51 @@ export type FaceitCheatingBan = {
   endsAt: Date | null;
 };
 
+type FaceitAccount = {
+  id: string;
+  url: string | null;
+};
+
 @Injectable()
 export class FaceitBansService {
   private static readonly BASE_URL = "https://open.faceit.com/data/v4";
   private static readonly GAMES = ["cs2", "csgo"];
   private static readonly MAX_AGE_HOURS = 1;
+  private static readonly SWEEP_BATCH = 500;
+  private static readonly SWEEP_PRIORITY = 10;
   private readonly apiKey: string;
 
   constructor(
     private readonly logger: Logger,
     private readonly postgres: PostgresService,
     private readonly config: ConfigService,
+    @InjectQueue(FaceitQueues.CheckFaceitBans)
+    private readonly queue: Queue,
   ) {
     this.apiKey = this.config.get<string>("faceit.apiKey") ?? "";
+  }
+
+  public static async enqueueChecks(
+    queue: Queue,
+    steamIds: Array<string>,
+    priority?: number,
+  ): Promise<void> {
+    if (steamIds.length === 0) {
+      return;
+    }
+
+    await queue.addBulk(
+      steamIds.map((steamId) => ({
+        name: "CheckFaceitBans",
+        data: { steamId },
+        opts: {
+          jobId: `check-faceit-bans.${steamId}`,
+          priority,
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
+      })),
+    );
   }
 
   public static activeCheatingBan(
@@ -63,15 +98,58 @@ export class FaceitBansService {
     };
   }
 
+  // Signing in is rare (sessions roll), so players who played since their last
+  // check are queued within the hour, and every recently active player daily.
+  public async queueStaleChecks(): Promise<void> {
+    if (!this.apiKey) {
+      return;
+    }
+
+    const rows = await this.postgres.query<Array<{ steam_id: string }>>(
+      `SELECT p.steam_id::text AS steam_id
+         FROM public.players p
+        WHERE EXISTS (
+          SELECT 1
+            FROM public.match_lineup_players mlp
+            JOIN public.matches m
+              ON mlp.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
+           WHERE mlp.steam_id = p.steam_id
+             AND m.created_at >= now() - interval '6 months'
+             AND (p.faceit_bans_checked_at IS NULL
+                  OR p.faceit_bans_checked_at < now() - interval '1 day'
+                  OR m.created_at > p.faceit_bans_checked_at)
+        )
+        ORDER BY p.faceit_bans_checked_at ASC NULLS FIRST
+        LIMIT $1`,
+      [FaceitBansService.SWEEP_BATCH],
+    );
+
+    if (rows.length === 0) {
+      return;
+    }
+
+    this.logger.log(`faceit-bans: queued ${rows.length} player(s) to re-check`);
+
+    await FaceitBansService.enqueueChecks(
+      this.queue,
+      rows.map((row) => row.steam_id),
+      FaceitBansService.SWEEP_PRIORITY,
+    );
+  }
+
   public async checkPlayer(steamId: string): Promise<void> {
     if (!this.apiKey) {
       return;
     }
 
     const [player] = await this.postgres.query<
-      Array<{ faceit_player_id: string | null }>
+      Array<{
+        faceit_player_id: string | null;
+        faceit_banned_at: Date | null;
+        faceit_ban_ends_at: Date | null;
+      }>
     >(
-      `SELECT faceit_player_id
+      `SELECT faceit_player_id, faceit_banned_at, faceit_ban_ends_at
          FROM public.players
         WHERE steam_id = $1::bigint
           AND (faceit_bans_checked_at IS NULL
@@ -83,14 +161,15 @@ export class FaceitBansService {
       return;
     }
 
-    const playerId =
-      player.faceit_player_id ?? (await this.findPlayerId(steamId));
+    const account = player.faceit_player_id
+      ? { id: player.faceit_player_id, url: null }
+      : await this.findAccount(steamId);
 
-    if (playerId === undefined) {
+    if (account === undefined) {
       return;
     }
 
-    if (playerId === null) {
+    if (account === null) {
       await this.postgres.query(
         `UPDATE public.players
             SET faceit_bans_checked_at = now()
@@ -100,7 +179,7 @@ export class FaceitBansService {
       return;
     }
 
-    const bans = await this.fetchBans(playerId);
+    const bans = await this.fetchBans(account.id);
     if (!bans) {
       return;
     }
@@ -111,9 +190,10 @@ export class FaceitBansService {
       `UPDATE public.players
           SET faceit_banned_at = $2::timestamptz,
               faceit_ban_ends_at = $3::timestamptz,
+              faceit_url = COALESCE(faceit_url, $4),
               faceit_bans_checked_at = now()
         WHERE steam_id = $1::bigint`,
-      [steamId, ban?.startsAt ?? null, ban?.endsAt ?? null],
+      [steamId, ban?.startsAt ?? null, ban?.endsAt ?? null, account.url],
     );
 
     if (!ban) {
@@ -121,23 +201,25 @@ export class FaceitBansService {
       return;
     }
 
-    await this.applyAutoBan(steamId);
+    const changed =
+      player.faceit_banned_at?.getTime() !== ban.startsAt.getTime() ||
+      (player.faceit_ban_ends_at?.getTime() ?? null) !==
+        (ban.endsAt?.getTime() ?? null);
+
+    await this.applyAutoBan(steamId, changed);
   }
 
-  private async applyAutoBan(steamId: string): Promise<void> {
+  // An existing row is only re-dated when FACEIT's ban has changed since the
+  // last check, so an end a moderator set by hand holds until FACEIT moves.
+  private async applyAutoBan(steamId: string, changed: boolean): Promise<void> {
     const [result] = await this.postgres.query<
       Array<{ updated: number; inserted: number }>
     >(
       `WITH target AS (
          SELECT p.steam_id,
-                -- NULL is a ban with no end, so LEAST keeps whichever of the
-                -- policy and FACEIT ends first.
-                LEAST(
-                  NULLIF(
-                    public.player_source_sanction_expiry('faceit_ban', p.steam_id),
-                    'infinity'::timestamptz
-                  ),
-                  p.faceit_ban_ends_at
+                NULLIF(
+                  public.player_source_sanction_expiry('faceit_ban', p.steam_id),
+                  'infinity'::timestamptz
                 ) AS remove_sanction_date
            FROM public.players p
           WHERE p.steam_id = $1::bigint
@@ -159,7 +241,8 @@ export class FaceitBansService {
             SET remove_sanction_date = t.remove_sanction_date,
                 reason = $2
            FROM target t
-          WHERE ps.player_steam_id = t.steam_id
+          WHERE $3::boolean
+            AND ps.player_steam_id = t.steam_id
             AND ps.type = 'ban'
             AND ps.sanctioned_by_steam_id IS NULL
             AND ps.reason LIKE 'Auto: FACEIT%'
@@ -185,7 +268,7 @@ export class FaceitBansService {
        )
        SELECT (SELECT count(*) FROM updated)::int AS updated,
               (SELECT count(*) FROM inserted)::int AS inserted`,
-      [steamId, "Auto: FACEIT cheating ban"],
+      [steamId, "Auto: FACEIT cheating ban", changed],
     );
 
     if (result?.inserted || result?.updated) {
@@ -218,9 +301,9 @@ export class FaceitBansService {
 
   // undefined: FACEIT could not be asked. null: no FACEIT account. An account
   // banned before CS2 came to FACEIT only has a csgo profile.
-  private async findPlayerId(
+  private async findAccount(
     steamId: string,
-  ): Promise<string | null | undefined> {
+  ): Promise<FaceitAccount | null | undefined> {
     for (const game of FaceitBansService.GAMES) {
       const response = await this.get(
         `/players?game=${game}&game_player_id=${encodeURIComponent(steamId)}`,
@@ -234,9 +317,19 @@ export class FaceitBansService {
         continue;
       }
 
-      const data = (await response.json()) as { player_id?: string };
+      const data = (await response.json()) as {
+        player_id?: string;
+        faceit_url?: string;
+      };
 
-      return data.player_id ?? null;
+      if (!data.player_id) {
+        return null;
+      }
+
+      return {
+        id: data.player_id,
+        url: data.faceit_url ? data.faceit_url.replace("{lang}", "en") : null,
+      };
     }
 
     return null;

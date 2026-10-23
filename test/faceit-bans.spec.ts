@@ -18,6 +18,7 @@ describe("faceit bans", () => {
     db = await bootMigratedDb("FaceitBansTest");
     postgres = db.postgres;
     fx = new Fixtures(postgres, 76561196300000000n);
+    await fx.region();
   }, 600_000);
 
   afterAll(async () => {
@@ -26,6 +27,7 @@ describe("faceit bans", () => {
 
   beforeEach(async () => {
     await postgres.query("DELETE FROM player_sanctions");
+    await postgres.query("DELETE FROM match_lineup_players");
     await postgres.query("DELETE FROM players");
     await postgres.query(
       `DELETE FROM settings
@@ -38,9 +40,15 @@ describe("faceit bans", () => {
   });
 
   const service = () =>
-    new FaceitBansService(new Logger("FaceitBansTest"), postgres, {
-      get: () => "test-faceit-key",
-    } as never);
+    new FaceitBansService(
+      new Logger("FaceitBansTest"),
+      postgres,
+      { get: () => "test-faceit-key" } as never,
+      queue as never,
+    );
+
+  const queue = { addBulk: jest.fn(async (): Promise<Array<unknown>> => []) };
+  const FACEIT_URL = "https://www.faceit.com/en/players/cheater";
 
   const days = (count: number) =>
     new Date(Date.now() + count * 86_400_000).toISOString();
@@ -60,7 +68,14 @@ describe("faceit bans", () => {
       if (game) {
         const status = accounts[game] ?? 404;
         return new Response(
-          JSON.stringify(status === 200 ? { player_id: "faceit-id" } : {}),
+          JSON.stringify(
+            status === 200
+              ? {
+                  player_id: "faceit-id",
+                  faceit_url: "https://www.faceit.com/{lang}/players/cheater",
+                }
+              : {},
+          ),
           { status },
         );
       }
@@ -386,5 +401,137 @@ describe("faceit bans", () => {
     expect(bans[0].remove_sanction_date?.toISOString()).toBe(
       new Date(startsAt.getTime() + 86_400_000).toISOString(),
     );
+  });
+
+  it("keeps a moderator's end date until FACEIT changes the ban", async () => {
+    const player = await fx.player();
+    faceitReports([cheating(null)]);
+    await service().checkPlayer(player);
+    await postgres.query(
+      "UPDATE player_sanctions SET remove_sanction_date = now() - interval '1 minute' WHERE player_steam_id = $1::bigint",
+      [player],
+    );
+
+    await recheck(player);
+    await service().checkPlayer(player);
+    expect(await activeBans(player)).toHaveLength(0);
+
+    await recheck(player);
+    faceitReports([
+      cheating(null),
+      { reason: "cheating", starts_at: days(-1), ends_at: null },
+    ]);
+    await service().checkPlayer(player);
+    expect(await activeBans(player)).toHaveLength(1);
+  });
+
+  it("writes a VAC ban beside an active FACEIT ban", async () => {
+    const player = await fx.player();
+    faceitReports([cheating(null)]);
+    await service().checkPlayer(player);
+
+    global.fetch = jest.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            players: [
+              {
+                SteamId: player,
+                CommunityBanned: false,
+                VACBanned: true,
+                NumberOfVACBans: 1,
+                DaysSinceLastBan: 30,
+                NumberOfGameBans: 0,
+                EconomyBan: "none",
+              },
+            ],
+          }),
+        ),
+    ) as never;
+    await new SteamBansService(
+      new Logger("FaceitBansTest"),
+      postgres,
+      { get: () => "test-steam-key" } as never,
+      { getConnection: () => ({}) } as never,
+      {} as never,
+    ).checkPlayers([player]);
+
+    expect((await activeBans(player)).map((ban) => ban.reason).sort()).toEqual([
+      "Auto: FACEIT cheating ban",
+      "Auto: Steam 1 VAC ban(s), last 30d ago",
+    ]);
+  });
+
+  it("ends a narrowed cooldown when FACEIT's ban ends", async () => {
+    const player = await fx.player();
+    await postgres.query(
+      "INSERT INTO settings (name, value) VALUES ('public.sanction_faceit_ban_scope', 'matchmaking')",
+    );
+    const endsAt = days(30);
+    faceitReports([cheating(endsAt)]);
+
+    await service().checkPlayer(player);
+
+    const [row] = await postgres.query<Array<{ expiry: Date | null }>>(
+      "SELECT public.player_sanction_expiry($1::bigint, 'matchmaking') AS expiry",
+      [player],
+    );
+    expect(row.expiry?.toISOString()).toBe(endsAt);
+  });
+
+  it("keeps the FACEIT profile link the account lookup found", async () => {
+    const player = await fx.player();
+    faceitReports([cheating(null)], { csgo: 200 });
+
+    await service().checkPlayer(player);
+
+    const [row] = await postgres.query<Array<{ faceit_url: string | null }>>(
+      "SELECT faceit_url FROM players WHERE steam_id = $1::bigint",
+      [player],
+    );
+    expect(row.faceit_url).toBe(FACEIT_URL);
+  });
+
+  it("queues players who played since their last check, and every active player daily", async () => {
+    const neverChecked = await fx.player();
+    const checkedSinceMatch = await fx.player();
+    const playedSinceCheck = await fx.player();
+    const checkedLongAgo = await fx.player();
+    const inactive = await fx.player();
+    await postgres.query(
+      `UPDATE players SET faceit_bans_checked_at = CASE
+         WHEN steam_id = $1::bigint THEN now() - interval '2 hours'
+         WHEN steam_id = $2::bigint THEN now() - interval '2 hours'
+         WHEN steam_id = $3::bigint THEN now() - interval '2 days'
+         ELSE now() - interval '2 days'
+       END
+       WHERE steam_id IN ($1::bigint, $2::bigint, $3::bigint, $4::bigint)`,
+      [checkedSinceMatch, playedSinceCheck, checkedLongAgo, inactive],
+    );
+
+    const play = async (steamId: string, createdAt: string) => {
+      const { matchId } = await fx.bareMatch();
+      const [match] = await postgres.query<Array<{ lineup_1_id: string }>>(
+        "UPDATE matches SET created_at = now() - $2::interval WHERE id = $1 RETURNING lineup_1_id",
+        [matchId, createdAt],
+      );
+      await fx.lineupPlayer(match.lineup_1_id, steamId);
+    };
+    await play(neverChecked, "1 day");
+    await play(checkedSinceMatch, "3 hours");
+    await play(playedSinceCheck, "1 hour");
+    await play(checkedLongAgo, "30 days");
+    queue.addBulk.mockClear();
+
+    await service().queueStaleChecks();
+
+    const jobs = (queue.addBulk.mock.calls[0] as any)[0] as Array<{
+      data: { steamId: string };
+      opts: { priority?: number };
+    }>;
+    expect(jobs.map((job) => job.data.steamId).sort()).toEqual(
+      [neverChecked, playedSinceCheck, checkedLongAgo].sort(),
+    );
+    expect(jobs.every((job) => job.opts.priority === 10)).toBe(true);
   });
 });
