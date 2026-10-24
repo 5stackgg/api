@@ -1,13 +1,9 @@
 DROP VIEW IF EXISTS v_team_ranks;
 
--- Team-ranks-only ELO, by match type. get_player_elo()/get_player_season_elo_by_type()
--- fall back to a player's lifetime-latest player_elo row when they have no row
--- for the active season. That is right for their other callers (matchmaking
--- balancing, the friends list, the players.elo GraphQL field), but the team
--- header should agree with what the profile shows for that case: the season
--- row if there is one, otherwise the season starting ELO -- never a stale
--- lifetime value. This helper applies that rule for v_team_ranks alone,
--- leaving the shared get_player_elo functions untouched.
+-- Team-ranks-only ELO, by match type: the season row if there is one,
+-- otherwise the season starting ELO -- never a stale lifetime value. Unlike
+-- get_player_elo(), which leaves a type the player was never rated in empty,
+-- this counts every playing roster member at 5000 there too.
 CREATE OR REPLACE FUNCTION public._team_rank_elo_by_type(player public.players, _type text) RETURNS numeric
     LANGUAGE plpgsql STABLE
     AS $$

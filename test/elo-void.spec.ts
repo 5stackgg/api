@@ -499,7 +499,7 @@ describe("ELO void (SQL-driven)", () => {
       expect((await leaderboard(0, true))[a].value).toBe(lost.current);
     });
 
-    it("does not stand in for a lifetime rating at the start of a season", async () => {
+    it("leaves a player on the season start, not last season's rating", async () => {
       await fx.enableSeasons();
       await fx.season("2025-06-01", null);
       await fx.season("2025-01-01", "2025-06-01");
@@ -519,7 +519,20 @@ describe("ELO void (SQL-driven)", () => {
       await generate(cheated.id);
       expect((await rows(cheated.id))[a].current).toBe(5000);
 
-      expect(Number((await profileElo(a)).elo.duel)).toBe(lifetime);
+      expect(Number((await profileElo(a)).elo.duel)).toBe(5000);
+    });
+
+    it("does not rate a player whose only match this season it was", async () => {
+      await fx.enableSeasons();
+      await fx.season("2025-06-01", null);
+      const [a, b] = await fx.players(2);
+
+      const cheated = await duel(a, b);
+      await voidElo(cheated.id);
+      await generate(cheated.id);
+      expect((await rows(cheated.id))[a].current).toBe(5000);
+
+      expect((await profileElo(a)).elo.duel).toBeNull();
     });
 
     it("puts nobody on the ELO board and is not a match played", async () => {

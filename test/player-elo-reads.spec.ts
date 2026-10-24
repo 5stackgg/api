@@ -170,13 +170,35 @@ describe("player elo reads", () => {
 
     expect(await read(player)).toEqual({
       competitive: 2200,
-      wingman: 990,
-      duel: 700,
+      wingman: 5000,
+      duel: 5000,
       rush: null,
       tournament_competitive: 2000,
       tournament_wingman: 990,
       tournament_duel: null,
       tournament_rush: null,
+    });
+  });
+
+  it("starts a season at 5000 for a player rated only in tournaments", async () => {
+    const season = await activeSeason();
+    const player = await fx.player();
+    await elo(player, "Competitive", 7773, ago(10), { bracketed: true });
+
+    expect(await read(player)).toMatchObject({
+      competitive: 5000,
+      tournament_competitive: 7773,
+    });
+    const [gate] = await postgres.query<Array<{ v: string }>>(
+      "SELECT get_player_season_elo_by_type(p, 'Competitive', $2) AS v FROM players p WHERE steam_id = $1",
+      [player, season],
+    );
+    expect(Number(gate.v)).toBe(5000);
+
+    await elo(player, "Competitive", 5258, ago(1), { seasonId: season });
+    expect(await read(player)).toMatchObject({
+      competitive: 5258,
+      tournament_competitive: 7773,
     });
   });
 
@@ -274,7 +296,7 @@ describe("player elo reads", () => {
          )
          SELECT jsonb_object_agg(t.key, coalesce(
                   (SELECT current FROM r WHERE r.type = t.type AND r.season_id = $2 ORDER BY created_at DESC LIMIT 1),
-                  (SELECT current FROM r WHERE r.type = t.type ORDER BY created_at DESC LIMIT 1)))
+                  (SELECT 5000 FROM r WHERE r.type = t.type LIMIT 1)))
              || jsonb_object_agg('tournament_' || t.key,
                   (SELECT current FROM r WHERE r.type = t.type AND r.season_id IS NULL AND r.bracketed ORDER BY created_at DESC LIMIT 1)) AS elo
            FROM t`,
