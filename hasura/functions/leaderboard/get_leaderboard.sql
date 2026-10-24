@@ -1129,6 +1129,14 @@ RETURNS SETOF public.player_leaderboard_rank
 LANGUAGE plpgsql STABLE
 AS $$
 BEGIN
+  -- These two aggregate every kill to place one player (85-122 s a call on
+  -- alpenscene, enough to fill every connection when profiles and the player
+  -- panel ask for them). No rank for them until they read stored per-match
+  -- stats.
+  IF _category IN ('best_kdr', 'highest_hs_pct') THEN
+    RETURN;
+  END IF;
+
   RETURN QUERY
   WITH ranked AS (
     SELECT

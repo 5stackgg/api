@@ -125,9 +125,24 @@ describe("read-side views and aggregations (SQL-driven)", () => {
       );
       const ctx = { matchId: match.id, mapId: map.id };
 
-      await fx.kill(ctx, c, b, { round: 1, time: T(10), attackerTeam: "TERRORIST", victimTeam: "CT" });
-      await fx.kill(ctx, a, c, { round: 1, time: T(9), attackerTeam: "CT", victimTeam: "TERRORIST" });
-      await fx.kill(ctx, a, d, { round: 1, time: T(8), attackerTeam: "CT", victimTeam: "TERRORIST" });
+      await fx.kill(ctx, c, b, {
+        round: 1,
+        time: T(10),
+        attackerTeam: "TERRORIST",
+        victimTeam: "CT",
+      });
+      await fx.kill(ctx, a, c, {
+        round: 1,
+        time: T(9),
+        attackerTeam: "CT",
+        victimTeam: "TERRORIST",
+      });
+      await fx.kill(ctx, a, d, {
+        round: 1,
+        time: T(8),
+        attackerTeam: "CT",
+        victimTeam: "TERRORIST",
+      });
       await fx.round(ctx.mapId, 1, { winningSide: "CT", time: T(7) });
 
       const clutches = await postgres.query<
@@ -303,9 +318,7 @@ describe("read-side views and aggregations (SQL-driven)", () => {
       expect(loser.match_result).toBe("loss");
       // current_elo is the pre-match rating; updated_elo the post-match one.
       expect(Number(winner.current_elo)).toBe(5000);
-      expect(Number(winner.updated_elo)).toBe(
-        5000 + Number(winner.elo_change),
-      );
+      expect(Number(winner.updated_elo)).toBe(5000 + Number(winner.elo_change));
     });
 
     it("profile aggregation returns per-type ladders (seasons off)", async () => {
@@ -345,11 +358,10 @@ describe("read-side views and aggregations (SQL-driven)", () => {
   describe("v_team_ranks", () => {
     it("averages the displayed rating sources across the roster, ignoring gaps", async () => {
       const team = await fx.team(1);
-      const roster = await postgres.query<
-        Array<{ player_steam_id: string }>
-      >("SELECT player_steam_id FROM team_roster WHERE team_id = $1 ORDER BY player_steam_id", [
-        team.id,
-      ]);
+      const roster = await postgres.query<Array<{ player_steam_id: string }>>(
+        "SELECT player_steam_id FROM team_roster WHERE team_id = $1 ORDER BY player_steam_id",
+        [team.id],
+      );
       const [p1, p2] = roster.map((r) => r.player_steam_id);
 
       // Competitive elo rows for both (via the ledger the view actually reads).
@@ -603,7 +615,10 @@ describe("read-side views and aggregations (SQL-driven)", () => {
 
     // Marks a match as a tournament match by hanging a bracket off it, which is
     // what the leaderboard's tournament detection actually keys on.
-    const markAsTournamentMatch = async (matchId: string, organizer: string) => {
+    const markAsTournamentMatch = async (
+      matchId: string,
+      organizer: string,
+    ) => {
       const [options] = await postgres.query<Array<{ id: string }>>(
         `INSERT INTO match_options (mr, best_of, type, map_pool_id, map_veto, region_veto, regions)
          SELECT 8, 1, 'Competitive', id, false, true, '{TestA}'
@@ -1088,16 +1103,25 @@ describe("read-side views and aggregations (SQL-driven)", () => {
       }
     });
 
+    it("get_player_leaderboard_rank gives no rank for the kill-feed categories", async () => {
+      for (const category of ["best_kdr", "highest_hs_pct"]) {
+        const rows = await postgres.query(
+          "SELECT * FROM get_player_leaderboard_rank($1, 0, $2)",
+          [category, "76561197960265728"],
+        );
+        expect(rows).toEqual([]);
+      }
+    });
+
     it("get_player_leaderboard_rank locates a player inside the ladder", async () => {
       const [champ, rival] = await fx.players(2);
       await ratedDuel(champ, rival);
 
       const [rank] = await postgres.query<
         Array<{ rank: number; total: number; value: number }>
-      >(
-        "SELECT * FROM get_player_leaderboard_rank('elo', 30, $1, 'Duel')",
-        [rival],
-      );
+      >("SELECT * FROM get_player_leaderboard_rank('elo', 30, $1, 'Duel')", [
+        rival,
+      ]);
       expect(Number(rank.rank)).toBe(2);
       expect(Number(rank.total)).toBe(2);
     });
