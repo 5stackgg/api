@@ -483,6 +483,27 @@ describe("PresenceService", () => {
       });
     });
 
+    it("comes back only once 10% under the limit after going over it", async () => {
+      const { presence, redis } = makePresence({}, "10");
+      const client = tab(A, "client-1");
+      const listedNow = async () => {
+        await presence.page(client, { requestId: "r" });
+        return pages(client).at(-1)!.listed;
+      };
+      const crowd = players(11);
+
+      online(redis, ...crowd.slice(0, 10));
+      expect(await listedNow()).toBe(true);
+      online(redis, crowd[10]);
+      expect(await listedNow()).toBe(false);
+      await redis.zrem(PresenceService.ONLINE, crowd[10]);
+      expect(await listedNow()).toBe(false);
+      await redis.zrem(PresenceService.ONLINE, crowd[9]);
+      expect(await listedNow()).toBe(true);
+      online(redis, crowd[9]);
+      expect(await listedNow()).toBe(true);
+    });
+
     it("reads the setting once in a while, not on every arrival", async () => {
       const { presence, postgres } = makePresence();
 
@@ -505,12 +526,13 @@ describe("PresenceService", () => {
       await presence.cameOnline(B);
       await presence.cameOnline(C);
       await presence.wentOffline(C);
+      await presence.wentOffline(B);
       presence.onApplicationShutdown();
 
       expect(watched()).toEqual([
         { event: "online-presence", data: { steam_id: A, online: true } },
         { event: "online-presence", data: { steam_id: B, online: true } },
-        { event: "online-presence", data: { steam_id: C, online: false } },
+        { event: "online-presence", data: { steam_id: B, online: false } },
       ]);
     });
 

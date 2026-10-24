@@ -44,6 +44,7 @@ export type PresenceProfile = { steam_id: string } & Record<string, unknown>;
 export class PresenceService implements OnApplicationShutdown {
   public static readonly ONLINE = "presence:online";
   public static readonly LAN_REGIONS = "presence:lan-regions";
+  public static readonly LISTED = "presence:listed";
   public static readonly CHECK_LIMIT = 50;
   public static readonly COUNT_INTERVAL_MS = 5_000;
   public static readonly PAGE_SIZE = 25;
@@ -546,13 +547,22 @@ export class PresenceService implements OnApplicationShutdown {
     }
   }
 
+  // Once over the limit the list only comes back 10% under it, so a count
+  // hovering at the limit doesn't switch it on and off with every arrival.
   private async listed(count?: number) {
     const max = await this.listMaxSetting();
     if (max === 0) {
       return false;
     }
 
-    return (count ?? (await this.redis.zcard(PresenceService.ONLINE))) <= max;
+    const online = count ?? (await this.redis.zcard(PresenceService.ONLINE));
+    const wasListed = (await this.redis.get(PresenceService.LISTED)) !== "0";
+    const listed = online <= (wasListed ? max : Math.floor(max * 0.9));
+    if (listed !== wasListed) {
+      await this.redis.set(PresenceService.LISTED, listed ? "1" : "0");
+    }
+
+    return listed;
   }
 
   // Read on every arrival and departure, so it is kept for a while rather than
