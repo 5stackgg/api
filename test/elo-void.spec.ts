@@ -522,6 +522,19 @@ describe("ELO void (SQL-driven)", () => {
       expect(Number((await profileElo(a)).elo.duel)).toBe(5000);
     });
 
+    it("does not rate a player whose only match this season it was", async () => {
+      await fx.enableSeasons();
+      await fx.season("2025-06-01", null);
+      const [a, b] = await fx.players(2);
+
+      const cheated = await duel(a, b);
+      await voidElo(cheated.id);
+      await generate(cheated.id);
+      expect((await rows(cheated.id))[a].current).toBe(5000);
+
+      expect((await profileElo(a)).elo.duel).toBeNull();
+    });
+
     it("puts nobody on the ELO board and is not a match played", async () => {
       const [a, b, c, d] = await fx.players(4);
       const onlyVoided = await duel(a, b, { endedDaysAgo: 2 });

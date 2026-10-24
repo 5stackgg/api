@@ -18,13 +18,19 @@ import { GetDatabaseBackups } from "./jobs/GetDatabaseBackups";
 import { RefreshPlayerEloRatings } from "./jobs/RefreshPlayerEloRatings";
 import { S3Module } from "src/s3/s3.module";
 import { PostgresController } from "./postgres.controller";
+import { TypesenseQueues } from "../type-sense/enums/TypesenseQueues";
 
 @Module({
   imports: [
     S3Module,
-    BullModule.registerQueue({
-      name: PostgresQueues.Postgres,
-    }),
+    BullModule.registerQueue(
+      {
+        name: PostgresQueues.Postgres,
+      },
+      {
+        name: TypesenseQueues.PlayerReindex,
+      },
+    ),
     BullModule.registerFlowProducerAsync({
       name: "reindex",
       imports: [RedisModule],
