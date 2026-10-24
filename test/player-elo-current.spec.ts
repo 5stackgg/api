@@ -88,7 +88,10 @@ describe("player elo after writes", () => {
               (SELECT CASE WHEN $2 THEN
                   jsonb_object_agg(t.key, coalesce(
                     (SELECT current FROM r WHERE r.steam_id = p.steam_id AND r.type = t.type AND r.season_id = $3 ORDER BY created_at DESC LIMIT 1),
-                    (SELECT current FROM r WHERE r.steam_id = p.steam_id AND r.type = t.type ORDER BY created_at DESC LIMIT 1)))
+                    CASE WHEN $3::uuid IS NULL
+                      THEN (SELECT current FROM r WHERE r.steam_id = p.steam_id AND r.type = t.type ORDER BY created_at DESC LIMIT 1)
+                      ELSE (SELECT 5000 FROM r WHERE r.steam_id = p.steam_id AND r.type = t.type LIMIT 1)
+                    END))
                   || jsonb_object_agg('tournament_' || t.key,
                     (SELECT current FROM r WHERE r.steam_id = p.steam_id AND r.type = t.type AND r.season_id IS NULL AND r.bracketed ORDER BY created_at DESC LIMIT 1))
                 ELSE

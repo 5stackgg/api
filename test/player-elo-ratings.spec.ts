@@ -33,10 +33,10 @@ describe("stored player elo", () => {
       CREATE FUNCTION test_elo_from_current(player public.players) RETURNS jsonb
       LANGUAGE sql STABLE AS $$
         SELECT CASE WHEN s.seasons THEN jsonb_build_object(
-                'competitive', COALESCE(sr.competitive, lr.competitive),
-                'wingman', COALESCE(sr.wingman, lr.wingman),
-                'duel', COALESCE(sr.duel, lr.duel),
-                'rush', COALESCE(sr.rush, lr.rush),
+                'competitive', COALESCE(sr.competitive, CASE WHEN s.season_id IS NULL THEN lr.competitive WHEN lr.competitive IS NOT NULL THEN 5000 END),
+                'wingman', COALESCE(sr.wingman, CASE WHEN s.season_id IS NULL THEN lr.wingman WHEN lr.wingman IS NOT NULL THEN 5000 END),
+                'duel', COALESCE(sr.duel, CASE WHEN s.season_id IS NULL THEN lr.duel WHEN lr.duel IS NOT NULL THEN 5000 END),
+                'rush', COALESCE(sr.rush, CASE WHEN s.season_id IS NULL THEN lr.rush WHEN lr.rush IS NOT NULL THEN 5000 END),
                 'tournament_competitive', tr.competitive,
                 'tournament_wingman', tr.wingman,
                 'tournament_duel', tr.duel,
@@ -152,12 +152,13 @@ describe("stored player elo", () => {
     await elo(player, "Wingman", 900, ago(10));
     const season = await fx.season(ago(400), ago(300));
     await elo(player, "Wingman", 1300, ago(350), season);
+    expect((await stored(player)).stored).toMatchObject({ wingman: 900 });
 
     await fx.season(ago(5), null);
 
     const row = await stored(player);
     expect(row.stored).toEqual(row.computed);
-    expect(row.stored).toMatchObject({ wingman: 900 });
+    expect(row.stored).toMatchObject({ wingman: 5000 });
   });
 
   it("follows the active season ending with nothing written", async () => {
