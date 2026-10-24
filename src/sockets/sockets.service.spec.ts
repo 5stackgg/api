@@ -449,7 +449,7 @@ describe("SocketsService presence", () => {
   });
 
   it("puts a player who dropped out of presence back online on their next ping", async () => {
-    const { service, redis, matchmaking } = makeService();
+    const { service, redis, matchmaking, presence } = makeService();
     // SET ... GET finds no presence left
     redis.set.mockResolvedValueOnce(null);
 
@@ -463,10 +463,7 @@ describe("SocketsService presence", () => {
       "GET",
     );
     expect(matchmaking.cancelOffline).toHaveBeenCalledWith(USER.steam_id);
-    expect(redis.publish).toHaveBeenCalledWith(
-      "broadcast-message",
-      expect.stringContaining("players-online"),
-    );
+    expect(presence.cameOnline).toHaveBeenCalledWith(USER.steam_id);
   });
 
   it("takes a demoted player's old role off their open socket on its next ping", async () => {
@@ -498,24 +495,20 @@ describe("SocketsService presence", () => {
   });
 
   it("puts a player back online when their frozen tab answers a protocol ping", async () => {
-    const { service, redis, matchmaking } = makeService();
+    const { service, redis, matchmaking, presence } = makeService();
     const client = await connect(service);
     const pong = client.on.mock.calls.find(
       ([event]: [string]) => event === "pong",
     )[1];
     matchmaking.cancelOffline.mockClear();
-    redis.publish.mockClear();
+    presence.cameOnline.mockClear();
     redis.set.mockResolvedValueOnce(null);
-    redis.keys.mockResolvedValue([`players:${USER.steam_id}`]);
 
     pong();
     await settle();
 
     expect(matchmaking.cancelOffline).toHaveBeenCalledWith(USER.steam_id);
-    expect(redis.publish).toHaveBeenCalledWith(
-      "broadcast-message",
-      expect.stringContaining("players-online"),
-    );
+    expect(presence.cameOnline).toHaveBeenCalledWith(USER.steam_id);
   });
 
   it("leaves the offline job alone on the ping of a player who is online", async () => {
@@ -526,71 +519,6 @@ describe("SocketsService presence", () => {
 
     expect(matchmaking.cancelOffline).not.toHaveBeenCalled();
     expect(redis.publish).not.toHaveBeenCalled();
-  });
-});
-
-describe("SocketsService players online", () => {
-  afterEach(() => {
-    sessionLoad.impl = (_request, next) => next();
-  });
-
-  const settle = () => new Promise((resolve) => setImmediate(resolve));
-  const rosters = (redis: ReturnType<typeof makeService>["redis"]) =>
-    redis.publish.mock.calls
-      .filter(([channel]: [string]) => channel === "broadcast-message")
-      .map(([, message]: [string, string]) => JSON.parse(message))
-      .filter(({ event }: { event: string }) => event === "players-online")
-      .map(({ data }: { data: string[] }) => data);
-
-  it("broadcasts the roster only when it changes", async () => {
-    const { service, redis } = makeService();
-    redis.keys.mockResolvedValue(["players:2", "players:1"]);
-
-    await service.sendPeopleOnline();
-    await service.sendPeopleOnline();
-    redis.keys.mockResolvedValue(["players:1", "players:2"]);
-    await service.sendPeopleOnline();
-    redis.keys.mockResolvedValue(["players:1", "players:2", "players:3"]);
-    await service.sendPeopleOnline();
-
-    expect(rosters(redis)).toEqual([
-      ["1", "2"],
-      ["1", "2", "3"],
-    ]);
-  });
-
-  it("does not resend a roster another pod already broadcast", async () => {
-    const { service, redis } = makeService();
-    const onMessage = redis.on.mock.calls.find(
-      ([event]: [string]) => event === "message",
-    )[1];
-    redis.keys.mockResolvedValue(["players:1"]);
-
-    onMessage(
-      "broadcast-message",
-      JSON.stringify({ event: "players-online", data: ["1"] }),
-    );
-    await service.sendPeopleOnline();
-
-    expect(rosters(redis)).toEqual([]);
-  });
-
-  it("sends a tab that connects the roster without rebroadcasting an unchanged one", async () => {
-    const { service, redis } = makeService();
-    redis.keys.mockResolvedValue([`players:${USER.steam_id}`]);
-    signIn(USER);
-
-    const first = socket();
-    await service.setupSocket(first, {} as any);
-    await settle();
-    const second = socket();
-    await service.setupSocket(second, {} as any);
-    await settle();
-
-    expect(rosters(redis)).toEqual([[USER.steam_id]]);
-    expect(second.send).toHaveBeenCalledWith(
-      JSON.stringify({ event: "players-online", data: [USER.steam_id] }),
-    );
   });
 });
 
@@ -616,7 +544,7 @@ describe("SocketsService offline", () => {
   // A reload's new socket registers while the old one is closing; whatever it
   // cancels has to be queued already.
   it("queues the offline job before anyone can see the player gone", async () => {
-    const { service, redis, matchmaking } = makeService();
+    const { service, redis, matchmaking, presence } = makeService();
     redis.keys.mockResolvedValue([`players:${USER.steam_id}`]);
     const client = await connect(service);
     redis.keys.mockResolvedValue([]);
@@ -630,7 +558,7 @@ describe("SocketsService offline", () => {
           ([key]: [string]) => key === `players:${USER.steam_id}`,
         )
       ];
-    const announced = redis.publish.mock.invocationCallOrder.at(-1);
+    const announced = presence.wentOffline.mock.invocationCallOrder[0];
 
     expect(queued).toBeLessThan(removed);
     expect(queued).toBeLessThan(announced);
@@ -818,5 +746,49 @@ describe("SocketsService presence", () => {
       }),
     );
     expect(elsewhere.send).not.toHaveBeenCalled();
+  });
+
+  it("delivers who comes and goes only to tabs showing everyone online", async () => {
+    const { service, redis } = makeService();
+    const onMessage = redis.on.mock.calls.find(
+      ([event]: [string]) => event === "message",
+    )[1];
+    const watching = await connect(service);
+    const other = await connect(service);
+    watching.watchingOnline = true;
+    watching.send.mockClear();
+    other.send.mockClear();
+
+    onMessage(
+      "online-message",
+      JSON.stringify({
+        event: "online-presence",
+        data: { steam_id: "1", online: false },
+      }),
+    );
+
+    expect(watching.send).toHaveBeenCalledWith(
+      JSON.stringify({
+        event: "online-presence",
+        data: { steam_id: "1", online: false },
+      }),
+    );
+    expect(other.send).not.toHaveBeenCalled();
+  });
+
+  it("no longer sends anyone the roster of everyone online", async () => {
+    const { service, redis } = makeService();
+    redis.keys.mockResolvedValue([`players:${USER.steam_id}`]);
+
+    const client = await connect(service);
+    await closeListener(client)();
+
+    const events = [
+      ...client.send.mock.calls.map(([message]: [string]) => message),
+      ...redis.publish.mock.calls.map(
+        ([, message]: [string, string]) => message,
+      ),
+    ].map((message: string) => JSON.parse(message).event);
+    expect(events).not.toContain("players-online");
   });
 });

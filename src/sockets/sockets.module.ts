@@ -8,6 +8,7 @@ import { loggerFactory } from "../utilities/LoggerFactory";
 import { RedisModule } from "src/redis/redis.module";
 import { MatchMaking } from "src/matchmaking/matchmaking.module";
 import { HasuraModule } from "src/hasura/hasura.module";
+import { PostgresModule } from "src/postgres/postgres.module";
 import { SocketsController } from "./sockets.controller";
 import { SocketsService } from "./sockets.service";
 import { GameStreamerModule } from "src/matches/game-streamer/game-streamer.module";
@@ -25,6 +26,7 @@ import {
     RedisModule,
     MatchMaking,
     HasuraModule,
+    PostgresModule,
     GameStreamerModule,
     BullModule.registerQueue({
       name: SocketQueues.Presence,

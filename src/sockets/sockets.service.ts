@@ -29,7 +29,6 @@ import { latencyTestKey, playerClientsKey, playerKey } from "./presence-keys";
 export class SocketsService implements OnModuleInit, OnApplicationShutdown {
   private redis: Redis;
   private appConfig: AppConfig;
-  private lastPeopleOnline?: string;
   private nodeId: string = process.env.POD_NAME;
 
   private clients: Map<string, FiveStackWebSocketClient> = new Map();
@@ -80,6 +79,7 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
     void sub.subscribe("broadcast-message");
     void sub.subscribe("send-message-to-steam-id");
     void sub.subscribe("lan-message");
+    void sub.subscribe("online-message");
     sub.on("message", (channel, message) => {
       let parsed: unknown;
       try {
@@ -113,9 +113,6 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
 
       switch (channel) {
         case "broadcast-message":
-          if (event === "players-online") {
-            this.lastPeopleOnline = JSON.stringify(data);
-          }
           void this.broadcastMessage(event, data);
           break;
         case "send-message-to-steam-id":
@@ -123,6 +120,9 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
           break;
         case "lan-message":
           this.sendMessageToLan(region, event, data);
+          break;
+        case "online-message":
+          this.sendMessageToOnlineWatchers(event, data);
           break;
       }
     });
@@ -333,7 +333,6 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
       await this.redis.del(SocketsService.GET_PLAYER_KEY(client.user.steam_id));
 
       await this.presence.wentOffline(client.user.steam_id);
-      await this.sendPeopleOnline();
     });
   }
 
@@ -356,17 +355,6 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
     try {
       await this.presence.welcome(client);
       await this.presence.syncLan(client);
-
-      // The whole roster is for tabs from before the circle and LAN lists, and
-      // goes once they have reloaded.
-      if (!(await this.sendPeopleOnline())) {
-        client.send(
-          JSON.stringify({
-            event: "players-online",
-            data: await this.peopleOnline(),
-          }),
-        );
-      }
       await this.matchmaking.sendRegionStats(client.user);
       await this.matchmakingLobbyService.sendQueueDetailsToPlayer(
         client.user.steam_id,
@@ -478,7 +466,6 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
 
     await this.matchmaking.cancelOffline(steamId);
     await this.presence.cameOnline(steamId);
-    await this.sendPeopleOnline();
   }
 
   // The socket keeps the user it was opened with, and the handlers on it check
@@ -561,6 +548,16 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
     }
   }
 
+  private sendMessageToOnlineWatchers(event: string, data: unknown) {
+    const message = JSON.stringify({ event, data });
+
+    for (const client of Array.from(this.clients.values())) {
+      if (client.watchingOnline && client.readyState === client.OPEN) {
+        client.send(message);
+      }
+    }
+  }
+
   public async sendMessageToClient(
     clientId: string,
     event: string,
@@ -618,33 +615,5 @@ export class SocketsService implements OnModuleInit, OnApplicationShutdown {
     for (const clientId of clientIds) {
       this.clients.get(clientId)?.send(message);
     }
-  }
-
-  private async peopleOnline() {
-    const players = await this.redis.keys("players:*");
-
-    return players.map((player) => player.slice(8)).sort();
-  }
-
-  // Every open tab looks up the players a roster brings, so a roster no
-  // different from the last one any pod broadcast is not sent again.
-  public async sendPeopleOnline() {
-    const data = await this.peopleOnline();
-    const roster = JSON.stringify(data);
-
-    if (roster === this.lastPeopleOnline) {
-      return false;
-    }
-
-    await this.redis.publish(
-      `broadcast-message`,
-      JSON.stringify({
-        event: `players-online`,
-        data,
-      }),
-    );
-    this.lastPeopleOnline = roster;
-
-    return true;
   }
 }
