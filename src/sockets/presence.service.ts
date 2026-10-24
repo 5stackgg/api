@@ -549,17 +549,19 @@ export class PresenceService implements OnApplicationShutdown {
 
   // Once over the limit the list only comes back 10% under it, so a count
   // hovering at the limit doesn't switch it on and off with every arrival.
+  // Tabs hear only when it switches; a connecting tab is told in welcome.
   private async listed(count?: number) {
     const max = await this.listMaxSetting();
-    if (max === 0) {
-      return false;
-    }
-
     const online = count ?? (await this.redis.zcard(PresenceService.ONLINE));
     const wasListed = (await this.redis.get(PresenceService.LISTED)) !== "0";
-    const listed = online <= (wasListed ? max : Math.floor(max * 0.9));
+    const listed =
+      max > 0 && online <= (wasListed ? max : Math.floor(max * 0.9));
     if (listed !== wasListed) {
       await this.redis.set(PresenceService.LISTED, listed ? "1" : "0");
+      await this.redis.publish(
+        "broadcast-message",
+        JSON.stringify({ event: "players-online:listed", data: listed }),
+      );
     }
 
     return listed;
@@ -653,16 +655,11 @@ export class PresenceService implements OnApplicationShutdown {
 
   private async publishCount() {
     try {
-      const count = await this.redis.zcard(PresenceService.ONLINE);
-      await this.redis.publish(
-        "broadcast-message",
-        JSON.stringify({ event: "players-online:count", data: count }),
-      );
       await this.redis.publish(
         "broadcast-message",
         JSON.stringify({
-          event: "players-online:listed",
-          data: await this.listed(count),
+          event: "players-online:count",
+          data: await this.redis.zcard(PresenceService.ONLINE),
         }),
       );
     } catch (error) {
