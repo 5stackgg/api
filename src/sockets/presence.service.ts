@@ -2,10 +2,13 @@ import { Injectable, Logger, OnApplicationShutdown } from "@nestjs/common";
 import { Redis } from "ioredis";
 import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
 import { HasuraService } from "src/hasura/hasura.service";
+import { PostgresService } from "src/postgres/postgres.service";
+import { SystemSettingName } from "src/system/enums/SystemSettingName";
 import { FiveStackWebSocketClient } from "./types/FiveStackWebSocketClient";
 import { latencyTestKey, playerClientKey, playerKey } from "./presence-keys";
 
-// What a LAN list shows for each player; every field is readable by guests.
+// What the LAN and online lists show for each player; every field is readable
+// by guests.
 const PROFILE_FIELDS = {
   steam_id: true,
   name: true,
@@ -35,24 +38,31 @@ export type PresenceProfile = { steam_id: string } & Record<string, unknown>;
 
 // Who is online goes to the people it concerns: a player's circle (friends and
 // teammates) hears when they come and go, a LAN hears about its own players,
-// and everyone else only gets the count.
+// and everyone else gets the count, plus the list of everyone while it is short
+// enough to list.
 @Injectable()
 export class PresenceService implements OnApplicationShutdown {
   public static readonly ONLINE = "presence:online";
   public static readonly LAN_REGIONS = "presence:lan-regions";
   public static readonly CHECK_LIMIT = 50;
   public static readonly COUNT_INTERVAL_MS = 5_000;
+  public static readonly PAGE_SIZE = 25;
+  public static readonly LIST_MAX_DEFAULT = 200;
+  private static readonly LIST_MAX_TTL_MS = 30_000;
+  private static readonly QUERY_MAX_LENGTH = 64;
   private static readonly CIRCLE_TTL_SECONDS = 3 * 60;
   private static readonly PROFILE_TTL_SECONDS = 2 * 60;
 
   private redis: Redis;
   private countTimer?: NodeJS.Timeout;
   private countPending = false;
+  private listMax?: { value: number; readAt: number };
 
   constructor(
     private readonly logger: Logger,
     redisManager: RedisManagerService,
     private readonly hasura: HasuraService,
+    private readonly postgres: PostgresService,
   ) {
     this.redis = redisManager.getConnection();
   }
@@ -89,6 +99,7 @@ export class PresenceService implements OnApplicationShutdown {
 
     this.countChanged();
     await this.notifyCircle(String(steamId), true);
+    await this.notifyWatchers(String(steamId), true);
   }
 
   public async wentOffline(steamId: string) {
@@ -102,14 +113,13 @@ export class PresenceService implements OnApplicationShutdown {
 
     this.countChanged();
     await this.notifyCircle(String(steamId), false);
+    await this.notifyWatchers(String(steamId), false);
   }
 
   public async welcome(client: FiveStackWebSocketClient) {
-    this.send(
-      client,
-      "players-online:count",
-      await this.redis.zcard(PresenceService.ONLINE),
-    );
+    const count = await this.redis.zcard(PresenceService.ONLINE);
+    this.send(client, "players-online:count", count);
+    this.send(client, "players-online:listed", await this.listed(count));
     await this.sendFriendsOnline(client, false);
   }
 
@@ -138,6 +148,88 @@ export class PresenceService implements OnApplicationShutdown {
       requestId: data.requestId,
       online: await this.online(steamIds),
     });
+  }
+
+  // Everyone online but the asker, newest first, a page at a time. The cursor is
+  // the last row's place in that order rather than an offset, so players coming
+  // and going between pages never repeat or skip anyone.
+  public async page(
+    client: FiveStackWebSocketClient,
+    data: { requestId?: unknown; after?: unknown; query?: unknown },
+  ) {
+    const reply = (
+      listed: boolean,
+      players: PresenceProfile[] = [],
+      next: string | null = null,
+    ) =>
+      this.send(client, "players-online:page", {
+        requestId: data?.requestId,
+        listed,
+        players,
+        next,
+      });
+
+    if (!(await this.listed())) {
+      reply(false);
+      return;
+    }
+
+    const me = String(client.user.steam_id);
+    const scores = await this.redis.zrevrange(
+      PresenceService.ONLINE,
+      0,
+      -1,
+      "WITHSCORES",
+    );
+    const [afterScore, afterSteamId] =
+      typeof data?.after === "string" ? data.after.split(":") : [];
+    const rows: Array<{ steamId: string; score: number }> = [];
+    for (let index = 0; index < scores.length; index += 2) {
+      const row = { steamId: scores[index], score: Number(scores[index + 1]) };
+      const isAfter =
+        afterScore === undefined ||
+        row.score < Number(afterScore) ||
+        (row.score === Number(afterScore) && row.steamId < afterSteamId);
+      if (row.steamId !== me && isAfter) {
+        rows.push(row);
+      }
+    }
+
+    const query =
+      typeof data?.query === "string"
+        ? data.query
+            .trim()
+            .toLowerCase()
+            .slice(0, PresenceService.QUERY_MAX_LENGTH)
+        : "";
+
+    let players: PresenceProfile[];
+    let more: boolean;
+    if (query) {
+      const matches = (
+        await this.profiles(rows.map(({ steamId }) => steamId))
+      ).filter(
+        (player) =>
+          String(player.name ?? "")
+            .toLowerCase()
+            .includes(query) || player.steam_id.includes(query),
+      );
+      players = matches.slice(0, PresenceService.PAGE_SIZE);
+      more = matches.length > players.length;
+    } else {
+      const page = rows.slice(0, PresenceService.PAGE_SIZE);
+      players = await this.profiles(page.map(({ steamId }) => steamId));
+      more = rows.length > page.length;
+    }
+
+    const last = rows.find(
+      ({ steamId }) => steamId === players.at(-1)?.steam_id,
+    );
+    reply(true, players, more && last ? `${last.score}:${last.steamId}` : null);
+  }
+
+  public watch(client: FiveStackWebSocketClient, data: { watching?: unknown }) {
+    client.watchingOnline = data?.watching === true;
   }
 
   // A tab's LAN can change under it (the probe runs again, the laptop moves),
@@ -433,6 +525,72 @@ export class PresenceService implements OnApplicationShutdown {
     }
   }
 
+  private async notifyWatchers(steamId: string, online: boolean) {
+    try {
+      if (!(await this.listed())) {
+        return;
+      }
+
+      await this.redis.publish(
+        "online-message",
+        JSON.stringify({
+          event: "online-presence",
+          data: { steam_id: steamId, online },
+        }),
+      );
+    } catch (error) {
+      this.logger.warn(
+        `unable to tell the online list ${steamId} came or went`,
+        error,
+      );
+    }
+  }
+
+  private async listed(count?: number) {
+    const max = await this.listMaxSetting();
+    if (max === 0) {
+      return false;
+    }
+
+    return (count ?? (await this.redis.zcard(PresenceService.ONLINE))) <= max;
+  }
+
+  // Read on every arrival and departure, so it is kept for a while rather than
+  // asked of postgres each time.
+  private async listMaxSetting() {
+    if (
+      this.listMax &&
+      Date.now() - this.listMax.readAt < PresenceService.LIST_MAX_TTL_MS
+    ) {
+      return this.listMax.value;
+    }
+
+    let value = PresenceService.LIST_MAX_DEFAULT;
+    try {
+      const [row] = await this.postgres.query<Array<{ value: string }>>(
+        `SELECT value FROM public.settings WHERE name = $1 LIMIT 1`,
+        [SystemSettingName.OnlineListMax],
+      );
+      value = PresenceService.listMaxFrom(row?.value);
+    } catch (error) {
+      this.logger.warn("unable to read the online list limit", error);
+    }
+
+    this.listMax = { value, readAt: Date.now() };
+    return value;
+  }
+
+  public static listMaxFrom(value?: string | null) {
+    if (value === undefined || value === null || value.trim() === "") {
+      return PresenceService.LIST_MAX_DEFAULT;
+    }
+
+    const max = Number(value);
+    return Number.isFinite(max) && max >= 0
+      ? Math.floor(max)
+      : PresenceService.LIST_MAX_DEFAULT;
+  }
+
   private async online(steamIds: Array<string>) {
     if (steamIds.length === 0) {
       return [];
@@ -485,11 +643,16 @@ export class PresenceService implements OnApplicationShutdown {
 
   private async publishCount() {
     try {
+      const count = await this.redis.zcard(PresenceService.ONLINE);
+      await this.redis.publish(
+        "broadcast-message",
+        JSON.stringify({ event: "players-online:count", data: count }),
+      );
       await this.redis.publish(
         "broadcast-message",
         JSON.stringify({
-          event: "players-online:count",
-          data: await this.redis.zcard(PresenceService.ONLINE),
+          event: "players-online:listed",
+          data: await this.listed(count),
         }),
       );
     } catch (error) {
@@ -537,7 +700,7 @@ export class PresenceService implements OnApplicationShutdown {
         .map((steamId) => bySteamId.get(steamId))
         .filter((profile): profile is PresenceProfile => !!profile);
     } catch (error) {
-      this.logger.warn("unable to load LAN player profiles", error);
+      this.logger.warn("unable to load player profiles", error);
       return [];
     }
   }

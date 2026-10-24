@@ -99,6 +99,35 @@ export class SocketsGateway implements OnGatewayConnection {
     await this.presence.check(client, data);
   }
 
+  @SubscribeMessage("players-online:page")
+  public async handleOnlinePage(
+    @MessageBody()
+    data: { requestId?: unknown; after?: unknown; query?: unknown },
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+  ): Promise<void> {
+    await client.authentication;
+
+    if (!client.user) {
+      return;
+    }
+
+    await this.presence.page(client, data);
+  }
+
+  @SubscribeMessage("players-online:watch")
+  public async handleOnlineWatch(
+    @MessageBody() data: { watching?: unknown },
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+  ): Promise<void> {
+    await client.authentication;
+
+    if (!client.user) {
+      return;
+    }
+
+    this.presence.watch(client, data);
+  }
+
   // Nest binds every /ws/web gateway's message handlers without waiting for
   // this, so each handler awaits client.authentication before it trusts
   // client.user.

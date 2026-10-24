@@ -13,4 +13,5 @@ export type FiveStackWebSocketClient = WebSocket.WebSocket & {
   lanRegion?: string | null;
   lanClosed?: boolean;
   lanQueue?: Promise<void>;
+  watchingOnline?: boolean;
 };

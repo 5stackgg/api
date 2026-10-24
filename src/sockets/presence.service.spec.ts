@@ -66,6 +66,13 @@ class FakeRedis {
       zset.has(member) ? String(zset.get(member)) : null,
     );
   }
+  async zrevrange(key: string) {
+    return [...this.zsetOf(key).entries()]
+      .sort(([memberA, a], [memberB, b]) =>
+        b === a ? memberB.localeCompare(memberA) : b - a,
+      )
+      .flatMap(([member, score]) => [member, String(score)]);
+  }
   async zrange(key: string) {
     return [...this.zsetOf(key).entries()]
       .sort(([, a], [, b]) => a - b)
@@ -107,6 +114,7 @@ const D = "76561198000000004";
 
 function makePresence(
   circles: Record<string, { friends: string[][]; team: string[] }> = {},
+  listMax?: string,
 ) {
   const redis = new FakeRedis();
   const hasura = {
@@ -131,13 +139,19 @@ function makePresence(
       };
     }),
   };
+  const postgres = {
+    query: jest.fn(async () =>
+      listMax === undefined ? [] : [{ value: listMax }],
+    ),
+  };
   const logger = { warn: jest.fn(), error: jest.fn(), log: jest.fn() };
   const presence = new PresenceService(
     logger as any,
     { getConnection: () => redis } as any,
     hasura as any,
+    postgres as any,
   );
-  return { presence, redis, hasura };
+  return { presence, redis, hasura, postgres };
 }
 
 const tab = (steamId: string, id: string, sessionId = `session-${id}`) =>
@@ -259,6 +273,7 @@ describe("PresenceService", () => {
 
       expect(sent(client)).toEqual([
         { event: "players-online:count", data: 3 },
+        { event: "players-online:listed", data: true },
         { event: "friends-online", data: [B, D] },
       ]);
     });
@@ -301,6 +316,235 @@ describe("PresenceService", () => {
         data: { requestId: "r-1", online: [B, "9"] },
       },
     ]);
+  });
+
+  describe("everyone online", () => {
+    const arrive = (redis: FakeRedis, steamId: string, at: number) => {
+      redis.zsets.set(
+        PresenceService.ONLINE,
+        new Map([
+          ...(redis.zsets.get(PresenceService.ONLINE) ?? new Map()),
+          [steamId, at],
+        ]),
+      );
+    };
+
+    const pages = (
+      client: any,
+    ): Array<{
+      requestId: string;
+      listed: boolean;
+      players: string[];
+      next: string | null;
+    }> =>
+      sent(client)
+        .filter(({ event }: any) => event === "players-online:page")
+        .map(({ data }: any) => ({
+          ...data,
+          players: data.players.map(({ steam_id }: any) => steam_id),
+        }));
+
+    const players = (count: number) =>
+      Array.from(
+        { length: count },
+        (_, index) => `76561198100000${String(index).padStart(3, "0")}`,
+      );
+
+    it("reads the limit from its setting, 200 when unset or unreadable", () => {
+      expect(PresenceService.listMaxFrom(undefined)).toBe(200);
+      expect(PresenceService.listMaxFrom(null)).toBe(200);
+      expect(PresenceService.listMaxFrom(" ")).toBe(200);
+      expect(PresenceService.listMaxFrom("lots")).toBe(200);
+      expect(PresenceService.listMaxFrom("-5")).toBe(200);
+      expect(PresenceService.listMaxFrom("0")).toBe(0);
+      expect(PresenceService.listMaxFrom("50.7")).toBe(50);
+    });
+
+    it("pages newest first without the asker, 25 at a time", async () => {
+      const { presence, redis } = makePresence();
+      const everyone = players(30);
+      everyone.forEach((steamId, index) => arrive(redis, steamId, index + 1));
+      arrive(redis, A, 100);
+      const client = tab(A, "client-1");
+
+      await presence.page(client, { requestId: "r-1" });
+      const [first] = pages(client);
+      await presence.page(client, { requestId: "r-2", after: first.next });
+      const [, second] = pages(client);
+
+      const newestFirst = [...everyone].reverse();
+      expect(first).toEqual({
+        requestId: "r-1",
+        listed: true,
+        players: newestFirst.slice(0, 25),
+        next: `6:${everyone[5]}`,
+      });
+      expect(second).toEqual({
+        requestId: "r-2",
+        listed: true,
+        players: newestFirst.slice(25),
+        next: null,
+      });
+    });
+
+    it("never repeats or skips anyone when players come and go between pages", async () => {
+      const { presence, redis } = makePresence();
+      const everyone = players(30);
+      everyone.forEach((steamId, index) => arrive(redis, steamId, index + 1));
+      const client = tab(A, "client-1");
+      await presence.page(client, { requestId: "r-1" });
+      const [first] = pages(client);
+
+      arrive(redis, B, 200);
+      arrive(redis, C, 201);
+      await redis.zrem(PresenceService.ONLINE, everyone[29]);
+      await redis.zrem(PresenceService.ONLINE, everyone[3]);
+      await presence.page(client, { requestId: "r-2", after: first.next });
+
+      expect(pages(client)[1].players).toEqual([
+        everyone[4],
+        everyone[2],
+        everyone[1],
+        everyone[0],
+      ]);
+    });
+
+    it("keeps the order of players who came online in the same millisecond", async () => {
+      const { presence, redis } = makePresence();
+      const everyone = players(27);
+      everyone.forEach((steamId) => arrive(redis, steamId, 5));
+      const client = tab(A, "client-1");
+
+      await presence.page(client, { requestId: "r-1" });
+      await presence.page(client, {
+        requestId: "r-2",
+        after: pages(client)[0].next,
+      });
+
+      expect(pages(client).flatMap(({ players }) => players)).toEqual(
+        [...everyone].reverse(),
+      );
+    });
+
+    it("searches everyone online by name and pages the matches", async () => {
+      const { presence, redis } = makePresence();
+      const everyone = players(60);
+      everyone.forEach((steamId, index) => {
+        arrive(redis, steamId, index + 1);
+        redis.strings.set(
+          PresenceService.PROFILE_KEY(steamId),
+          JSON.stringify({
+            steam_id: steamId,
+            name: index % 2 ? `Bravo ${index}` : `Alpha ${index}`,
+          }),
+        );
+      });
+      const client = tab(A, "client-1");
+
+      await presence.page(client, { requestId: "r-1", query: " ALPHA " });
+      const [first] = pages(client);
+      await presence.page(client, {
+        requestId: "r-2",
+        query: "alpha",
+        after: first.next,
+      });
+      await presence.page(client, { requestId: "r-3", query: everyone[7] });
+
+      const alphas = everyone.filter((_, index) => index % 2 === 0).reverse();
+      expect(pages(client).map(({ players }) => players)).toEqual([
+        alphas.slice(0, 25),
+        alphas.slice(25),
+        [everyone[7]],
+      ]);
+      expect(pages(client)[1].next).toBeNull();
+    });
+
+    it("lists no one once more are online than the setting allows, or when it is 0", async () => {
+      const over = makePresence({}, "2");
+      online(over.redis, A, B, C);
+      const client = tab(A, "client-1");
+      await over.presence.page(client, { requestId: "r-1" });
+
+      const off = makePresence({}, "0");
+      online(off.redis, A, B);
+      const other = tab(A, "client-2");
+      await off.presence.page(other, { requestId: "r-2" });
+      await off.presence.welcome(other);
+
+      expect(pages(client)).toEqual([
+        { requestId: "r-1", listed: false, players: [], next: null },
+      ]);
+      expect(pages(other)).toEqual([
+        { requestId: "r-2", listed: false, players: [], next: null },
+      ]);
+      expect(sent(other)).toContainEqual({
+        event: "players-online:listed",
+        data: false,
+      });
+    });
+
+    it("reads the setting once in a while, not on every arrival", async () => {
+      const { presence, postgres } = makePresence();
+
+      await presence.cameOnline(A);
+      await presence.cameOnline(B);
+      await presence.wentOffline(A);
+      presence.onApplicationShutdown();
+
+      expect(postgres.query).toHaveBeenCalledTimes(1);
+    });
+
+    it("tells the tabs showing the list who came and went while it is listed", async () => {
+      const { presence, redis } = makePresence({}, "2");
+      const watched = () =>
+        redis.published
+          .filter(({ channel }) => channel === "online-message")
+          .map(({ message }) => message);
+
+      await presence.cameOnline(A);
+      await presence.cameOnline(B);
+      await presence.cameOnline(C);
+      await presence.wentOffline(C);
+      presence.onApplicationShutdown();
+
+      expect(watched()).toEqual([
+        { event: "online-presence", data: { steam_id: A, online: true } },
+        { event: "online-presence", data: { steam_id: B, online: true } },
+        { event: "online-presence", data: { steam_id: C, online: false } },
+      ]);
+    });
+
+    it("says whether everyone is listed whenever it sends the count", async () => {
+      jest.useFakeTimers();
+      const { presence, redis } = makePresence({}, "1");
+      const broadcasts = () =>
+        redis.published
+          .filter(({ channel }) => channel === "broadcast-message")
+          .map(({ message }) => message);
+
+      await presence.cameOnline(A);
+      await jest.advanceTimersByTimeAsync(0);
+      await presence.cameOnline(B);
+      await jest.advanceTimersByTimeAsync(PresenceService.COUNT_INTERVAL_MS);
+      presence.onApplicationShutdown();
+
+      expect(broadcasts()).toEqual([
+        { event: "players-online:count", data: 1 },
+        { event: "players-online:listed", data: true },
+        { event: "players-online:count", data: 2 },
+        { event: "players-online:listed", data: false },
+      ]);
+    });
+
+    it("marks which tabs are showing the list", () => {
+      const { presence } = makePresence();
+      const client = tab(A, "client-1");
+
+      presence.watch(client, { watching: true });
+      expect(client.watchingOnline).toBe(true);
+      presence.watch(client, { watching: "yes" });
+      expect(client.watchingOnline).toBe(false);
+    });
   });
 
   describe("LANs", () => {

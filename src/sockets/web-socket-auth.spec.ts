@@ -135,6 +135,14 @@ const handlers: Array<
       g.sockets.handleOnlineCheck({ requestId: "r-1", steamIds: ["1"] }, c),
   ],
   [
+    "players-online:page",
+    (g, c) => g.sockets.handleOnlinePage({ requestId: "r-1" }, c),
+  ],
+  [
+    "players-online:watch",
+    (g, c) => g.sockets.handleOnlineWatch({ watching: true }, c),
+  ],
+  [
     "presence",
     (g, c) => g.sockets.handlePresence({ visible: true, focus: "x" }, c),
   ],
